@@ -1,5 +1,6 @@
 .staticBG {
   background-color: rgb(31, 31, 31);
+  height: 100%;
 }
 
 .Homepage {
@@ -50,7 +51,6 @@
 .logobox {
   width: 75%;
   float: left;
-  padding: 2%;
 }
 
 .logo {
@@ -65,6 +65,7 @@
 }
 
 .App-header {
+  padding: 10px;
   position: relative;
   width: 100%;
 }
@@ -75,4 +76,8 @@
 
 .App-intro {
   font-size: large;
+}
+
+.pagePlaceholder {
+  color:white;
 }
