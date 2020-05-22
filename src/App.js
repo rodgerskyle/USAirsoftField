@@ -1,52 +1,43 @@
-import React, { Component } from 'react';
-import banner from './assets/airsoftbanner.jpg';
-import logo from './assets/us-airsoft-logo.png';
+import React from 'react';
 import './App.css';
-import { Navbar, Nav, Button, NavItem } from 'react-bootstrap/';
-import { Link, BrowserRouter as Router, Route, Switch } from "react-router-dom";
-import { LinkContainer } from "react-router-bootstrap";
+import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
+import Login from "./Login"
+import Navigation from "./Navigation"
+import { withAuthentication } from './components/session';
+import { PasswordForgetForm } from './passwordForgot';
+import AccountPage from './components/Pages/Account';
+import Home from './components/Pages/home'
+import Admin from './components/Pages/Admin'
+import SignUpForm from './components/Pages/Signup'
+import EnterWins from './components/Pages/enterwins';
+import EnterLosses from './components/Pages/enterlosses';
 
 
-class App extends Component {
-  render() {
-    return (
+const App = () => (
       <Router>
         <div className="staticBG">
-          <div className="App-header">
-            <div className="logobox">
-              <img src={logo} className="logo" />
-            </div>
-            <div className="login">
-              <Button variant="outline-success">
-                <LinkContainer to="/login">
-                  <NavItem>Login</NavItem>
-                </LinkContainer>
-              </Button>
-            </div>
-          </div>
-          <div className="navbar">
-            <Navbar collapseOnSelect expand="lg" bg="dark" variant="dark">
-              <Nav className="mr-auto">
-                <NavItem>
-                  <Link className="nav-link" to="/">Home</Link>
-                </NavItem>
-              </Nav>
-              <Navbar.Toggle aria-controls="responsive-navbar-nav" />
-              <Navbar.Collapse id="responsive-navbar-nav">
-                <Nav className="mr-auto">
-                  <NavItem>   
-                    <Link className="nav-link" to="/leaderboard">Leaderboard</Link> 
-                  </NavItem>
-                  <NavItem>    
-                    <Link className="nav-link" to="/pricing">Pricing</Link> 
-                  </NavItem>
-                </Nav>
-              </Navbar.Collapse>
-            </Navbar>
-          </div>
+          <Navigation />
           <Switch>
+            <Route path="/enterwins">
+              <EnterWins />
+            </Route>
+            <Route path="/enterlosses">
+              <EnterLosses />
+            </Route>
+            <Route path="/register">
+              <SignUpForm />
+            </Route>
+            <Route path="/admin">
+              <Admin />
+            </Route>
+            <Route path="/account">
+              <AccountPage />
+            </Route>
+            <Route path="/forgotpassword">
+              <PasswordForgetForm />
+            </Route>
             <Route path="/login">
-              <Login />
+              <LoginRoute />
             </Route>
             <Route path="/leaderboard">
               <Leaderboard />
@@ -60,25 +51,16 @@ class App extends Component {
           </Switch>
         </div>
       </Router>
-    );
-  }
-}
-function Home() {
-  return <div className="banner">
-    <img src={banner} className="bannerimg" />
-    <div className="overlay"></div>
-    <div className="overlayText">
-      The premier airsoft arena in the United States, Home of the first Stat Tracking & Leaderboard system!
-            </div>
-  </div>;
-}
+);
+
 function Leaderboard() {
   return <h2 className="pagePlaceholder">Leaderboard</h2>;
 }
 function Pricing() {
   return <h2 className="pagePlaceholder">Pricing</h2>;
 }
-function Login() {
-  return <h2 className="pagePlaceholder">Login</h2>;
+
+function LoginRoute() {
+  return <div className="pagePlaceholder"><Login /></div>
 }
-export default App;
+export default withAuthentication(App);
