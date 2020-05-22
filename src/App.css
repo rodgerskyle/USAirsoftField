@@ -1,10 +1,11 @@
 .staticBG {
-  background-color: rgb(31, 31, 31);
-  height: 100%;
+  background-color: rgb(27, 26, 26);
+  width: 100vw;
+  height: 100vh;
 }
 
 .Homepage {
-  background-color: darkgray;
+  background-color: rgb(31, 31, 31);
   text-align: center;
 }
 
@@ -48,6 +49,10 @@
   width: 100%;
 }
 
+.bg-nav {
+  background-color: rgb(143, 143, 143);
+}
+
 .logobox {
   width: 75%;
   float: left;
@@ -65,7 +70,7 @@
 }
 
 .App-header {
-  padding: 10px;
+  padding: 20px;
   position: relative;
   width: 100%;
 }
@@ -80,4 +85,18 @@
 
 .pagePlaceholder {
   color:white;
+  text-align: center;
+}
+
+.welcome {
+  color:white;
+  float: left;
+  padding-right: 10px;
+}
+
+.form-box {
+  color:white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
