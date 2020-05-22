@@ -4,14 +4,15 @@ import { compose } from 'recompose';
  
 import { withFirebase } from './components/Firebase';
 import { PasswordForgetLink } from './passwordForgot';
-import { SignUpLink } from './components/Pages/Signup';
+
+//import { SignUpLink } from './components/Pages/Signup';
+//    <SignUpLink /> 
  
 const SignInPage = () => (
   <div>
     <h1>SignIn</h1>
     <SignInForm />
     <PasswordForgetLink />
-    <SignUpLink /> 
   </div>
 );
 

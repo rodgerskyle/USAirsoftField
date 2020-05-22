@@ -21,7 +21,7 @@ const NavigationAuth = ({ authUser }) => (
 <div>
     <div className="App-header">
         <div className="logobox">
-            <img src={logo} className="logo" />
+            <img src={logo} alt="US Airsoft logo" className="logo" />
         </div>
         <div className="login">
             <p className="welcome">
@@ -51,19 +51,20 @@ const NavigationAuth = ({ authUser }) => (
                     <NavItem>
                         <Link className="nav-link" to="/account">My Account</Link>
                     </NavItem>
+
                     {!!authUser.roles[ROLES.ADMIN] && (
                     <NavDropdown title="Admin" id="nav-dropdown">
-                    <NavDropdown.Item eventKey="4.1">
-                        <Link className="nav-link" to="/enterwins">Update Wins</Link>
-                    </NavDropdown.Item>
-                    <NavDropdown.Item eventKey="4.2">
-                        <Link className="nav-link" to="/enterlosses">Update Losses</Link>
-                    </NavDropdown.Item>
-                    <NavDropdown.Divider />
-                    <NavDropdown.Item eventKey="4.3">
-                        <Link className="nav-link" to="/admin">Testing</Link>
-                    </NavDropdown.Item>
-                  </NavDropdown>
+                        <LinkContainer to="/enterwins">
+                            <NavDropdown.Item eventKey={4.1}>Update Wins</NavDropdown.Item>
+                        </LinkContainer>
+                        <LinkContainer to="/enterlosses">
+                            <NavDropdown.Item eventKey={4.2}>Update Losses</NavDropdown.Item>
+                        </LinkContainer>
+                        <NavDropdown.Divider />
+                        <LinkContainer to="/admin">
+                            <NavDropdown.Item eventKey={4.3}>Testing</NavDropdown.Item>
+                        </LinkContainer>
+                    </NavDropdown>
                     )}
                 </Nav>
             </Navbar.Collapse>
@@ -76,7 +77,7 @@ const NavigationNonAuth = () => (
     <div>
     <div className="App-header">
         <div className="logobox">
-            <img src={logo} className="logo" />
+            <img src={logo} alt="US Airsoft logo" className="logo" />
         </div>
         <div className="login">
             <Button variant="outline-secondary">

@@ -9,6 +9,8 @@ import { Button, Form } from 'react-bootstrap/';
 
 import * as ROLES from '../constants/roles';
 
+require('dotenv').config();
+
 class EnterWins extends Component {
     constructor(props) {
         super(props);
@@ -38,8 +40,18 @@ class EnterWins extends Component {
 
     updateUser = (event) => {
         event.preventDefault()
-        var apiCall = this.state.value + "test";
-        console.log(apiCall)
+        //Make API CALL HERE
+        var apiCall = process.env.REACT_APP_API_CALL_WIN + this.state.value;
+        fetch(apiCall)
+        .then((response) => {
+            var x = response;
+            console.log(x);
+            //this.setState({ results: response},
+            //)
+            }
+        )
+        //console.log(apiCall)
+        //End API call
         document.getElementById("usernameBox").focus();
         this.setState({value: ""})
     }
