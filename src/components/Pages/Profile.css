@@ -5,6 +5,7 @@ body{
     line-height: 28px;
     letter-spacing: 0.8px;
     margin-top:20px;
+    background-color: #1b1a1a;
 }
 .stats-desc {
     color: white;
