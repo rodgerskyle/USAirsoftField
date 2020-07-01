@@ -50,7 +50,9 @@
 }
 
 .bg-nav {
-  background-color: rgb(143, 143, 143);
+  background-color: #343a40!important;
+  border-bottom: 3px solid black;
+  border-top: 3px solid black;
 }
 
 .logobox {
@@ -59,9 +61,7 @@
 }
 
 .logo {
-  object-fit: contain;
-  height: auto;
-  width: 30%;
+  max-width: 90%;
 }
 
 .loginbox {
@@ -103,4 +103,8 @@
 
 .test {
   text-align: center;
+}
+
+.profile-style {
+  color: white;
 }
