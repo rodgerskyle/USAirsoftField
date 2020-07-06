@@ -1,6 +1,7 @@
 import app from 'firebase/app';
 import 'firebase/auth';
 import 'firebase/database';
+import 'firebase/storage';
 require('dotenv').config();
 
 const config = {
@@ -20,6 +21,7 @@ class Firebase {
 
         this.auth = app.auth();
         this.db = app.database();
+        this.st = app.storage();
     }
     // *** Auth API ***
     doCreateUserWithEmailAndPassword = (email, password) =>
@@ -59,6 +61,10 @@ class Firebase {
                 fallback();
             }
         });
+
+    // Database API
+
+    storage = img => this.st.ref().child(`ranks/${img}`);
 
     // User API
 

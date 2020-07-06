@@ -57,7 +57,15 @@ const NavigationAuth = ({ authUser }) => (
                             <Link className="nav-link" to="/pricing">Pricing</Link>
                         </NavItem>
                         <NavItem>
-                            <Link className="nav-link" to="/account">My Account</Link>
+                            <NavDropdown title="Account" id="nav-dropdown">
+                                <LinkContainer to="/account">
+                                    <NavDropdown.Item eventKey={4.1}>My Profile</NavDropdown.Item>
+                                </LinkContainer>
+                                <NavDropdown.Divider />
+                                <LinkContainer to="/profilesettings">
+                                    <NavDropdown.Item eventKey={4.2}>Settings</NavDropdown.Item>
+                                </LinkContainer>
+                            </NavDropdown>
                         </NavItem>
 
                         {!!authUser.roles[ROLES.ADMIN] && (
