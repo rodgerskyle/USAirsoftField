@@ -6,6 +6,7 @@ import Navigation from "./Navigation"
 import { withAuthentication } from './components/session';
 import { PasswordForgetForm } from './passwordForgot';
 import AccountPage from './components/Pages/Account';
+import ProfileSettings from './components/Pages/Profilesettings';
 import Home from './components/Pages/home'
 import Admin from './components/Pages/Admin'
 import SignUpForm from './components/Pages/Signup'
@@ -18,6 +19,9 @@ const App = () => (
         <div className="staticBG">
           <Navigation />
           <Switch>
+            <Route path="/profilesettings">
+              <ProfileSettings />
+            </Route>
             <Route path="/enterwins">
               <EnterWins />
             </Route>

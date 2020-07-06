@@ -1,22 +1,46 @@
-import React, { Component } from 'react';
+import React, { Component } from 'react' ;
 
 import { Container, Row, Col } from 'react-bootstrap/';
+
+import { AuthUserContext, withAuthorization } from '../session';
 
 import { withFirebase } from '../Firebase';
 
 import './Profile.css';
 
+//var storageRef = storage.ref();
+//var rank = storageRef.child('ranks/generalicon.png');
+var rank = null;
 
 class Profile extends Component {
-    constructor(props) {
-        super(props);
+  constructor(props) {
+    super(props);
 
-        this.state = {};
-    }
+    this.state = {
+        generalicon: '',
+    };
+    this.getImage('generalicon');
+/*      this.setState({
+          rankImg: this.props.firebase.storage('generalicon.png'),
+      }) */
+  }
+
+  //Get image function
+  getImage (image) {
+    let { state } = this
+    this.props.firebase.storage(`${image}.png`).getDownloadURL().then((url) => {
+      state[image] = url
+      this.setState(state)
+    }).catch((error) => {
+      // Handle any errors
+    })
+  }
 
 
-    render() {
-        return (
+  render() {
+    return (
+  <AuthUserContext.Consumer>
+    {authUser => (
             <div>
                 <Container>
                     <div className="team-single">
@@ -26,16 +50,9 @@ class Profile extends Component {
                                     <img src="https://bootdey.com/img/Content/avatar/avatar7.png" alt="" />
                                 </div>
                                 <div className="bg-light-gray padding-30px-all md-padding-25px-all sm-padding-20px-all text-center description">
-                                    <h4 className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600">USERNAME HERE</h4>
-                                    <p className="sm-width-95 sm-margin-auto">We are proud of child student. We teaching great activities and best program for your kids.</p>
-                                    <div className="margin-20px-top team-single-icons">
-                                        <ul className="no-margin">
-                                            <li><a href="javascript:void(0)"><i className="fab fa-facebook-f"></i></a></li>
-                                            <li><a href="javascript:void(0)"><i className="fab fa-twitter"></i></a></li>
-                                            <li><a href="javascript:void(0)"><i className="fab fa-google-plus-g"></i></a></li>
-                                            <li><a href="javascript:void(0)"><i className="fab fa-instagram"></i></a></li>
-                                        </ul>
-                                    </div>
+                                    <h4 className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600">{authUser.username}</h4>
+                                    <p className="sm-width-95 sm-margin-auto">Rank: General</p>
+                                    <img className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600" src={this.state.generalicon}/>
                                 </div>
                             </div>
 
@@ -115,11 +132,16 @@ class Profile extends Component {
                         </Row>
                     </div>
                 </Container>
-
-
             </div>
-        )
-    };
-};
+    )}
+  </AuthUserContext.Consumer>
+    )
+  }
+}
 
-export default withFirebase(Profile);
+//const Profile = () => (
+//);
+
+const condition = authUser => !!authUser;
+
+export default withFirebase(withAuthorization(condition)(Profile));
