@@ -105,7 +105,7 @@ body{
     padding: 30px;
 }
 .bg-light-gray {
-    background-color: #f7f7f7;
+    background-color: white;
 }
 .text-center {
     text-align: center!important;
@@ -113,6 +113,11 @@ body{
 img {
     max-width: 100%;
     height: auto;
+}
+
+.profile-pic {
+    width:400px;
+    height:250px;
 }
 
 
@@ -123,7 +128,7 @@ img {
 
 .list-style9 li {
     position: relative;
-    padding: 0 0 15px 0;
+    /*padding: 0 0 15px 0;*/
     margin: 0 0 15px 0;
     border-bottom: 1px dashed rgba(0, 0, 0, 0.1)
 }
@@ -241,4 +246,8 @@ a.text-lightred:hover {
 
 .bg-lightred {
     background-color: #ff5722
+}
+
+.rank-title {
+    margin-bottom: 0;
 }

@@ -112,3 +112,12 @@
 .account-page {
   background-color: rgb(27, 26, 26);
 }
+
+.imgUpload {
+  text-align: center;
+}
+
+.imgUpload-text {
+  text-align: center;
+  color: white;
+}
