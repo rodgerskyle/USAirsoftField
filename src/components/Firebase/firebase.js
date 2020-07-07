@@ -66,6 +66,8 @@ class Firebase {
 
     storage = img => this.st.ref().child(`ranks/${img}`);
 
+    pictures = img => this.st.ref().child(`images/${img}`);
+
     // User API
 
     user = uid => this.db.ref(`users/${uid}`);

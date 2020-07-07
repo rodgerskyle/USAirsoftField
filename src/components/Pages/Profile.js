@@ -8,24 +8,36 @@ import { withFirebase } from '../Firebase';
 
 import './Profile.css';
 
-//var storageRef = storage.ref();
-//var rank = storageRef.child('ranks/generalicon.png');
-var rank = null;
-
 class Profile extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
         generalicon: '',
+        profileicon: '',
+        authUser: JSON.parse(localStorage.getItem('authUser')),
     };
-    this.getImage('generalicon');
-/*      this.setState({
-          rankImg: this.props.firebase.storage('generalicon.png'),
-      }) */
   }
 
-  //Get image function
+    componentDidMount() {
+        //Figure out rank logic here
+        this.getImage('generalicon');
+        this.getProfile(`${this.state.authUser.uid}/profilepic`);
+    }
+
+
+  //Get image function for profile image = uid
+  getProfile (uid) {
+    let { state } = this
+    this.props.firebase.pictures(`${uid}.png`).getDownloadURL().then((url) => {
+      state["profileicon"] = url
+      this.setState(state)
+    }).catch((error) => {
+      // Handle any errors
+    })
+  }
+
+  //Get image function for rank
   getImage (image) {
     let { state } = this
     this.props.firebase.storage(`${image}.png`).getDownloadURL().then((url) => {
@@ -47,12 +59,12 @@ class Profile extends Component {
                         <Row>
                             <div className="col-lg-4 col-md-5 xs-margin-30px-bottom">
                                 <div className="team-single-img">
-                                    <img src="https://bootdey.com/img/Content/avatar/avatar7.png" alt="" />
+                                    <img className="profile-pic" src={this.state.profileicon} alt="" />
                                 </div>
                                 <div className="bg-light-gray padding-30px-all md-padding-25px-all sm-padding-20px-all text-center description">
                                     <h4 className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600">{authUser.username}</h4>
-                                    <p className="sm-width-95 sm-margin-auto">Rank: General</p>
-                                    <img className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600" src={this.state.generalicon}/>
+                                    <p className="sm-width-95 sm-margin-auto rank-title">Rank: General</p>
+                                    <img className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600" src={this.state.generalicon} alt="Players rank"/>
                                 </div>
                             </div>
 
@@ -65,10 +77,10 @@ class Profile extends Component {
                                                 <Row>
                                                     <Col>
                                                         <i className="fas fa-graduation-cap text-orange"></i>
-                                                        <strong className="margin-10px-left text-orange">Degree:</strong>
+                                                        <strong className="margin-10px-left text-orange">Name:</strong>
                                                     </Col>
                                                     <Col md={7}>
-                                                        <p>Master's Degrees</p>
+                                                        <p>{authUser.name}</p>
                                                     </Col>
                                                 </Row>
 
@@ -76,12 +88,12 @@ class Profile extends Component {
                                             <li>
 
                                                 <Row>
-                                                    <Col md={4}>
+                                                    <Col>
                                                         <i className="far fa-gem text-yellow"></i>
-                                                        <strong className="margin-10px-left text-yellow">Exp.:</strong>
+                                                        <strong className="margin-10px-left text-yellow">Points:</strong>
                                                     </Col>
                                                     <Col md={7}>
-                                                        <p>4 Year in Education</p>
+                                                        <p>{authUser.points}</p>
                                                     </Col>
                                                 </Row>
 
@@ -91,10 +103,10 @@ class Profile extends Component {
                                                 <Row>
                                                     <Col md={5}>
                                                         <i className="far fa-file text-lightred"></i>
-                                                        <strong className="margin-10px-left text-lightred">Courses:</strong>
+                                                        <strong className="margin-10px-left text-lightred">Wins:</strong>
                                                     </Col>
                                                     <Col md={7}>
-                                                        <p>Design Category</p>
+                                                        <p>{authUser.wins}</p>
                                                     </Col>
                                                 </Row>
 
@@ -104,10 +116,10 @@ class Profile extends Component {
                                                 <Row>
                                                     <Col md={5}>
                                                         <i className="fas fa-map-marker-alt text-green"></i>
-                                                        <strong className="margin-10px-left text-green">Address:</strong>
+                                                        <strong className="margin-10px-left text-green">Losses:</strong>
                                                     </Col>
                                                     <Col md={7}>
-                                                        <p>Regina ST, London, SK.</p>
+                                                        <p>{authUser.losses}</p>
                                                     </Col>
                                                 </Row>
 
@@ -117,10 +129,23 @@ class Profile extends Component {
                                                 <Row>
                                                     <div className="col-md-5 col-5">
                                                         <i className="fas fa-mobile-alt text-purple"></i>
-                                                        <strong className="margin-10px-left xs-margin-four-left text-purple">Phone:</strong>
+                                                        <strong className="margin-10px-left xs-margin-four-left text-purple">Free games:</strong>
                                                     </div>
                                                     <div className="col-md-7 col-7">
-                                                        <p>(+44) 123 456 789</p>
+                                                        <p>{authUser.freegames}</p>
+                                                    </div>
+                                                </Row>
+
+                                            </li>
+                                            <li>
+
+                                                <Row>
+                                                    <div className="col-md-5 col-5">
+                                                        <i className="fas fa-mobile-alt text-purple"></i>
+                                                        <strong className="margin-10px-left xs-margin-four-left text-purple">Affiliated Team:</strong>
+                                                    </div>
+                                                    <div className="col-md-7 col-7">
+                                                        <p>{authUser.team != "" ? authUser.team : "N/A"}</p>
                                                     </div>
                                                 </Row>
 
@@ -138,9 +163,6 @@ class Profile extends Component {
     )
   }
 }
-
-//const Profile = () => (
-//);
 
 const condition = authUser => !!authUser;
 

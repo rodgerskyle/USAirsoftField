@@ -5,6 +5,7 @@ import { Container, Row, Col } from 'react-bootstrap/';
 import { PasswordForgetForm } from '../../passwordForgot';
 import PasswordChangeForm from '../../passwordChange';
 import { AuthUserContext, withAuthorization } from '../session';
+import ImageUpload from './ImageUpload';
 
 const ProfileSettings = () => (
   <AuthUserContext.Consumer>
@@ -23,6 +24,7 @@ const ProfileSettings = () => (
             </Col>
           </Row>
         </Container>
+        <ImageUpload />
       </div>
     )}
   </AuthUserContext.Consumer>
