@@ -145,7 +145,7 @@ class Profile extends Component {
                                                         <strong className="margin-10px-left xs-margin-four-left text-purple">Affiliated Team:</strong>
                                                     </div>
                                                     <div className="col-md-7 col-7">
-                                                        <p>{authUser.team != "" ? authUser.team : "N/A"}</p>
+                                                        <p>{authUser.team !== "" ? authUser.team : "N/A"}</p>
                                                     </div>
                                                 </Row>
 

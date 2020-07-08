@@ -1,11 +1,8 @@
 import React, { Component } from 'react';
 
-import { Container, Row, Col } from 'react-bootstrap/';
-
 import { AuthUserContext, withAuthorization } from '../session';
 
 import { withFirebase } from '../Firebase';
-import { auth } from 'firebase';
 
 class ImageUpload extends Component {
     constructor(props) {
@@ -26,7 +23,6 @@ class ImageUpload extends Component {
 
     handleUpload = (uid) => {
         const { image } = this.state;
-        const isInvalid = this.state === null;
         const uploadTask = this.props.firebase.pictures(`${uid}/profilepic.png`).put(image);
         uploadTask.on(
             "state_changed",
