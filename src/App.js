@@ -12,6 +12,7 @@ import Admin from './components/Pages/Admin'
 import SignUpForm from './components/Pages/Signup'
 import EnterWins from './components/Pages/enterwins';
 import EnterLosses from './components/Pages/enterlosses';
+import Leaderboard from './components/Pages/leaderboard';
 
 
 const App = () => (
@@ -57,9 +58,6 @@ const App = () => (
       </Router>
 );
 
-function Leaderboard() {
-  return <h2 className="pagePlaceholder">Leaderboard</h2>;
-}
 function Pricing() {
   return <h2 className="pagePlaceholder">Pricing</h2>;
 }
