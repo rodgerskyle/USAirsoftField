@@ -7,6 +7,15 @@ body{
     margin-top:20px;
     background-color: #1b1a1a;
 }
+.extra-box {
+    margin-top: 30px;
+}
+.win-box {
+    background-color: lightgreen !important;
+}
+.loss-box {
+    background-color: #cd5c5c !important;
+}
 .stats-desc {
     color: white;
 }
@@ -250,4 +259,55 @@ a.text-lightred:hover {
 
 .rank-title {
     margin-bottom: 0;
+}
+
+.user-name {
+    font-size: 35px;
+    text-align: center;
+    margin-bottom: 1.8rem;
+}
+
+/* New css for stats cards */
+
+/**********************
+/***** Services *******
+/*********************/
+@import url('https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css');
+#our-stats{
+    padding: 60px 0;
+}
+
+#our-stats .h1{
+    color: #007b5e!important;
+}
+
+#our-stats a{
+    color: #000!important;
+    text-decoration:none;
+}
+#our-stats i{
+    color: #007b5e!important;
+}
+
+.counter {
+    background-color: #f5f5f5;
+    padding: 35px 0;
+    border-radius: 5px;
+}
+
+.counter i,
+.counter .count-title{
+    margin-bottom: 15px;
+    color: black;
+}
+
+
+.counter p{
+    font-style:italic;
+    margin-bottom:0;
+    color:black;
+}
+
+.stat-box {
+    margin-bottom: 30px;
 }
