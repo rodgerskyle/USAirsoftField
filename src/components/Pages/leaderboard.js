@@ -3,7 +3,7 @@ import { Table } from 'react-bootstrap/';
 import '../../App.css';
 
 import rankimages from '../constants/smallrankimgs';
-import { Link } from "react-router-dom";
+import Td from '../constants/td';
 
 import { withFirebase } from '../Firebase';
 
@@ -148,10 +148,10 @@ const UserList = ({ users, images, getRank}) => (
 
                 <tr key={user.uid}>
                     <th scope="row">{i+1}</th>
-                        <td><img src={images.length !== 0 ? images[getRank(user.points)] : null} 
-                        alt="Player Rank" /></td>
-                        <td>{user.name}</td>
-                        <td>{user.points}</td>
+                        <Td><img src={images.length !== 0 ? images[getRank(user.points)] : null} 
+                        alt="Player Rank" /></Td>
+                        <Td to={'/profilelookup/'+user.uid}>{user.name}</Td>
+                        <Td>{user.points}</Td>
                 </tr>
             ))}
         </tbody>
