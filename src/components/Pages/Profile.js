@@ -29,7 +29,6 @@ class Profile extends Component {
         //Figure out rank logic here
         this.getRank();
         this.getProfile(`${this.state.authUser.uid}/profilepic`);
-        console.log(this.state.images[this.state.rankindex].src);
     }
 
 
@@ -146,6 +145,7 @@ class Profile extends Component {
     }
 
     //Get image function for rank
+    //Grabbing files from firebase storage (old)
     getImage(image) {
         let { state } = this
         this.props.firebase.storage(`${image}.png`).getDownloadURL().then((url) => {
