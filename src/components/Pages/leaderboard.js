@@ -2,6 +2,9 @@ import React, { Component } from 'react';
 import { Table } from 'react-bootstrap/';
 import '../../App.css';
 
+import { Container, Row, Col } from 'react-bootstrap/';
+import BootstrapSwitchButton from 'bootstrap-switch-button-react';
+
 import rankimages from '../constants/smallrankimgs';
 import Td from '../constants/td';
 
@@ -16,6 +19,8 @@ class Leaderboards extends Component {
             loading: false,
             users: [],
             getRankState: this.getRank,
+            monthly: false,
+            currentMonth: true,
         };
     }
 
@@ -122,18 +127,51 @@ class Leaderboards extends Component {
 
         return (
             <div className="pagePlaceholder">
-                <h1>Leaderboards</h1>
+                <Container>
+                    <Row>
+                        <Col>
+                            {this.state.monthly === true ?
+                            <BootstrapSwitchButton
+                                checked={this.state.currentMonth}
+                                onstyle="dark"
+                                width={120}
+                                onlabel='Current Month'
+                                offlabel='Previous Month'
+                                onChange={() => {
+                                    this.setState({ currentMonth: !this.state.currentMonth})
+                                }}
+                            /> : null}
+                        </Col>
+                        <Col>
+                            <h1>Leaderboards</h1>
+                        </Col>
+                        <Col>
+                            <BootstrapSwitchButton
+                                checked={!this.state.monthly}
+                                onstyle="dark"
+                                width={120}
+                                onlabel='All Time'
+                                offlabel='Monthly'
+                                onChange={() => {
+                                    this.setState({ monthly: !this.state.monthly})
+                                }}
+                            />
+                        </Col>
+                    </Row>
+                </Container>
 
                 {loading && <div>Loading ...</div>}
 
-                <UserList users={users} images={this.state.images} getRank={getRankState}/>
+                <UserList users={users} images={this.state.images} getRank={getRankState} 
+                    monthly={this.state.monthly} currentMonth={this.state.currentMonth} 
+                />
             </div>
         );
     }
 }
 
 
-const UserList = ({ users, images, getRank}) => (
+const UserList = ({ users, images, getRank, monthly, currentMonth }) => (
     <Table className="table table-striped table-dark">
         <thead>
             <tr>
@@ -144,14 +182,20 @@ const UserList = ({ users, images, getRank}) => (
             </tr>
         </thead>
         <tbody>
-            {users.sort((a,b) => a.points < b.points ? 1 : -1).map((user, i) => (
-
+            {users.sort((a, b) => 
+            monthly ? (currentMonth ? (a.currentmonth < b.currentmonth ? 1 : -1) :
+             (a.previousmonth < b.previousmonth ? 1 : -1)) :
+            (a.points < b.points ? 1 : -1))
+            .map((user, i) => (
                 <tr key={user.uid}>
-                    <th scope="row">{i+1}</th>
-                        <Td><img src={images.length !== 0 ? images[getRank(user.points)] : null} 
+                    <th scope="row"><p className={i===0 ? "firstPlace" : (i===1 ? "secondPlace" : (i===2 ? "thirdPlace" : null))}>
+                    {i + 1}</p></th>
+                    <Td><img src={images.length !== 0 ? images[getRank(user.points)] : null}
                         alt="Player Rank" /></Td>
-                        <Td to={'/profilelookup/'+user.uid}>{user.name}</Td>
-                        <Td>{user.points}</Td>
+                    <Td to={'/profilelookup/' + user.uid}>{user.name}</Td>
+                    <Td>
+                        {monthly ? (currentMonth ? (user.currentmonth) : (user.previousmonth)) : user.points}
+                    </Td>
                 </tr>
             ))}
         </tbody>

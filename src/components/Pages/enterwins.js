@@ -16,21 +16,42 @@ class EnterWins extends Component {
         super(props);
 
         this.state = {
-            results:"Here is where results will appear",
+            results: "Here is where results will appear",
             value: '',
+            loading: false,
+            users: [],
         };
         this.handleChange = this.handleChange.bind(this);
     }
 
     handleChange(event) {
-        this.setState({value: event.target.value});
+        this.setState({ value: event.target.value });
     }
 
-    componentDidMount(){
+    componentWillUnmount() {
+        this.props.firebase.users().off();
+    }
+
+    componentDidMount() {
         document.getElementById("usernameBox").focus();
-        document.addEventListener("keypress", 
-        (tmp) => this.handleKeypress(tmp))
-      }
+        document.addEventListener("keypress",
+            (tmp) => this.handleKeypress(tmp))
+        this.setState({ loading: true });
+
+        this.props.firebase.users().on('value', snapshot => {
+            const usersObject = snapshot.val();
+
+            const usersList = Object.keys(usersObject).map(key => ({
+                ...usersObject[key],
+                uid: key,
+            }));
+
+            this.setState({
+                users: usersList,
+                loading: false,
+            });
+        });
+    }
 
     handleKeypress(event) {
         if (event.keyCode === 13) {
@@ -41,41 +62,62 @@ class EnterWins extends Component {
     updateUser = (event) => {
         event.preventDefault()
         //Make API CALL HERE
-        var apiCall = process.env.REACT_APP_API_CALL_WIN + this.state.value;
-        fetch(apiCall)
-        .then((response) => {
-            var x = response;
-            console.log(x);
-            //this.setState({ results: response},
-            //)
+        //Find user by username
+        var index = -1;
+        for (var i=0; i < this.state.users.length; i++) {
+            if (this.state.users[i].username === this.state.value) {
+                index = i;
+                break;
             }
-        )
-        //console.log(apiCall)
+        }
+        if (index !== -1) {
+            var uid = this.state.users[index].uid;
+            var points = this.state.users[index].points;
+            var wins = this.state.users[index].wins;
+            var freegames = this.state.users[index].freegames;
+            var currentmonth = this.state.users[index].currentmonth;
+            var previousmonth = this.state.users[index].previousmonth;
+            if (((points+10) % 450) < (points % 450)) {
+                freegames++;
+            }
+            points+=10;
+            currentmonth+=10;
+            previousmonth+=10;
+            wins+=1;
+            this.props.firebase.user(uid).update({
+                points, wins, freegames, currentmonth, previousmonth
+            });
+            this.setState({results: "User " + this.state.value + " was updated successfully."});
+        }
+        else {
+            this.setState({results: "User " + this.state.value + " was not found."});
+        }
         //End API call
         document.getElementById("usernameBox").focus();
-        this.setState({value: ""})
+        this.setState({ value: "" })
     }
 
     render() {
         return (
             <div>
                 <h1 className="pagePlaceholder">Admin - Enter Wins</h1>
-                <div className="form-box">
-                <Form id="formBox" onSubmit={this.updateUser}>
-                    <Form.Group controlId="usernameBox">
-                        <Form.Label>Username</Form.Label>
-                        <Form.Control onChange={this.handleChange}
-                        value={this.state.value}
-                        placeholder="Enter username to add points to" />
-                        <Form.Text id="userName" className="text-muted">
-                            {this.state.results}
-                        </Form.Text>
-                        <Button type="submit" id="register" variant="primary">
-                            Submit
+                {!this.state.loading ?
+                    <div className="form-box">
+                        <Form id="formBox" onSubmit={this.updateUser}>
+                            <Form.Group controlId="usernameBox">
+                                <Form.Label>Username</Form.Label>
+                                <Form.Control onChange={this.handleChange}
+                                    value={this.state.value}
+                                    placeholder="Enter username to add points to" />
+                                <Form.Text id="userName" className="text-muted">
+                                    {this.state.results}
+                                </Form.Text>
+                                <Button type="submit" id="register" variant="primary">
+                                    Submit
                         </Button>
-                    </Form.Group>
-                </Form>
-                </div>
+                            </Form.Group>
+                        </Form>
+                    </div> : <h2 className="pagePlaceholder">Loading...</h2>}
             </div>
         );
     }
