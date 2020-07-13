@@ -76,16 +76,14 @@ class EnterWins extends Component {
             var wins = this.state.users[index].wins;
             var freegames = this.state.users[index].freegames;
             var currentmonth = this.state.users[index].currentmonth;
-            var previousmonth = this.state.users[index].previousmonth;
             if (((points+10) % 450) < (points % 450)) {
                 freegames++;
             }
             points+=10;
             currentmonth+=10;
-            previousmonth+=10;
             wins+=1;
             this.props.firebase.user(uid).update({
-                points, wins, freegames, currentmonth, previousmonth
+                points, wins, freegames, currentmonth
             });
             this.setState({results: "User " + this.state.value + " was updated successfully."});
         }
