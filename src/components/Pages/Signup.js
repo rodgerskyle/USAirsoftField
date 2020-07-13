@@ -59,13 +59,16 @@ class SignUpFormBase extends Component {
     const points = 50;
     const wins = 0;
     const losses = 0;
+    const previousmonth = 0
+    const currentmonth = 0
     var tempuser = '';
     for (var i=0; i<name.length; i++) {
       if (name[i]!==" ") {
         tempuser+=name[i];
       }
     }
-    const username = tempuser;
+    const username = tempuser.toLowerCase();
+    //We need to check if username exists
     const freegames = 0;
     const team = '';
     const roles = [];
@@ -86,6 +89,8 @@ class SignUpFormBase extends Component {
             freegames,
             username,
             team,
+            previousmonth,
+            currentmonth,
           });
       })
       .then(authUser => {
@@ -98,33 +103,6 @@ class SignUpFormBase extends Component {
       });
   this.state.secondaryApp.auth().signOut();
   event.preventDefault();
-    /*this.props.firebase
-      .doCreateUserWithEmailAndPassword(email, passwordOne)
-      .then(authUser => {
-        // Create a user in your Firebase realtime database
-        return this.props.firebase
-          .user(authUser.user.uid)
-          .set({
-            name,
-            email,
-            roles,
-            points,
-            wins,
-            losses,
-            freegames,
-            username,
-            team,
-          });
-      })
-      .then(authUser => {
-        this.setState({ ...INITIAL_STATE });
-        //this.props.history.push("/");
-      })
-      .catch(error => {
-        this.setState({ error });
-      });
- 
-    event.preventDefault();*/
   }
  
   onChange = event => {

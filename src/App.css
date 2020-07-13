@@ -121,3 +121,22 @@
   text-align: center;
   color: white;
 }
+
+.firstPlace {
+  font-family: sans-serif;
+  color: gold;
+  margin-bottom: 0;
+  font-size: x-large;
+}
+.secondPlace {
+  font-family: sans-serif;
+  color: silver;
+  margin-bottom: 0;
+  font-size: larger;
+}
+.thirdPlace {
+  font-family: sans-serif;
+  color: #CD7F32	;
+  margin-bottom: 0;
+  font-size: large;
+}
