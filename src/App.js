@@ -13,6 +13,7 @@ import SignUpForm from './components/Pages/Signup'
 import EnterWins from './components/Pages/enterwins';
 import EnterLosses from './components/Pages/enterlosses';
 import Leaderboard from './components/Pages/leaderboard';
+import ProfileLookup from './components/Pages/Profilelookup';
 
 
 const App = () => (
@@ -20,8 +21,17 @@ const App = () => (
         <div className="staticBG">
           <Navigation />
           <Switch>
+            <Route exact path="/profilelookup/:id"
+            render={(props) => (
+              <ProfileLookup {...props} />
+            )}
+            >
+            </Route>
             <Route path="/profilesettings">
               <ProfileSettings />
+            </Route>
+            <Route path="/signup">
+              <SignUpForm />
             </Route>
             <Route path="/enterwins">
               <EnterWins />
