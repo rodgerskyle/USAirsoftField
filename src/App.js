@@ -14,13 +14,25 @@ import EnterWins from './components/Pages/enterwins';
 import EnterLosses from './components/Pages/enterlosses';
 import Leaderboard from './components/Pages/leaderboard';
 import ProfileLookup from './components/Pages/Profilelookup';
-
+import Pricing from './components/Pages/Pricing';
+import Teams from './components/Pages/Teams';
+import Pictures from './components/Pages/Pictures';
+import Videos from './components/Pages/Videos';
+import Rules from './components/Pages/Rules';
+import Gametypes from './components/Pages/Gametypes';
+import Contact from './components/Pages/Contact';
+import Membership from './components/Pages/Membership';
+import Waiver from './components/Pages/Waiver';
+import Map from './components/Pages/Map';
 
 const App = () => (
       <Router>
         <div className="staticBG">
           <Navigation />
           <Switch>
+            <Route path="/teams">
+              <Teams />
+            </Route>
             <Route exact path="/profilelookup/:id"
             render={(props) => (
               <ProfileLookup {...props} />
@@ -67,10 +79,6 @@ const App = () => (
         </div>
       </Router>
 );
-
-function Pricing() {
-  return <h2 className="pagePlaceholder">Pricing</h2>;
-}
 
 function LoginRoute() {
   return <div className="pagePlaceholder"><Login /></div>
