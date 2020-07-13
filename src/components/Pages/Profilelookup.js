@@ -38,6 +38,10 @@ class ProfileLookup extends Component {
         });
     }
 
+    componentWillUnmount() {
+        this.props.firebase.user(this.props.match.params.id).off();
+    }
+
 
     //Figuring out rank logic
     getRank() {
