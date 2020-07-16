@@ -61,7 +61,7 @@
 }
 
 .logo {
-  max-width: 90%;
+  max-width: 70% !important;
 }
 
 .loginbox {
@@ -88,11 +88,6 @@
   text-align: center;
 }
 
-.welcome {
-  color:white;
-  float: left;
-  padding-right: 10px;
-}
 
 .form-box {
   color:white;
@@ -139,4 +134,33 @@
   color: #CD7F32	;
   margin-bottom: 0;
   font-size: large;
+}
+.pdfStyle {
+  background-color: rgb(27, 26, 26);
+  text-align: center;
+  color: white;
+}
+.mapStyle {
+  background-color: rgb(27, 26, 26);
+  text-align: center;
+  color: white;
+}
+.logout {
+  float:right;
+}
+
+.login {
+  float:right;
+}
+
+.welcome {
+  color:white;
+  float: right;
+  padding-right: 10px;
+}
+
+.pdfFile {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }

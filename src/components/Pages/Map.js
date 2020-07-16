@@ -1,14 +1,20 @@
 import React, { Component } from 'react';
-import { Table } from 'react-bootstrap/';
 import '../../App.css';
 
+import map from '../../assets/MapHigherRes.jpg';
+import lowmap from '../../assets/MapLowerRes.jpg'
+
+import { SideBySideMagnifier, MagnifierContainer, MagnifierZoom, MagnifierPreview } from "react-image-magnifiers";
+
+import {
+    Magnifier,
+    GlassMagnifier,
+    PictureInPictureMagnifier,
+    MOUSE_ACTIVATION,
+    TOUCH_ACTIVATION
+} from "react-image-magnifiers";
+
 import { Container, Row, Col } from 'react-bootstrap/';
-import BootstrapSwitchButton from 'bootstrap-switch-button-react';
-
-import rankimages from '../constants/smallrankimgs';
-import Td from '../constants/td';
-
-import { withFirebase } from '../Firebase';
 
 class Map extends Component {
     constructor(props) {
@@ -20,8 +26,21 @@ class Map extends Component {
 
     render() {
         return (
-            <div className="pagePlaceholder">
+            <div className="mapStyle">
                 <h2>Map</h2>
+                <Container>
+                    <Row>
+                        <Col>
+                            <SideBySideMagnifier 
+                                imageSrc={lowmap}
+                                imageAlt="Example"
+                                largeImageSrc={map}
+                                alwaysInPlace="true"
+                                overlayOpacity={1}
+                            />
+                        </Col>
+                    </Row>
+                </Container>
             </div>
         );
     }

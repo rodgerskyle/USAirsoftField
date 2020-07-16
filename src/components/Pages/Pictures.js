@@ -18,6 +18,7 @@ class Pictures extends Component {
         };
     }
 
+
     render() {
         return (
             <div className="pagePlaceholder">
