@@ -30,8 +30,8 @@ class PasswordForgetFormBase extends Component {
       .then(() => {
         this.setState({ ...INITIAL_STATE });
       })
-      .catch(error => {
-        this.setState({ error });
+      .catch(error_p => {
+        this.setState({ error: "If this is an email, there will be an password forgot link in your inbox." });
       });
  
     event.preventDefault();
@@ -47,7 +47,7 @@ class PasswordForgetFormBase extends Component {
     const isInvalid = email === '';
  
     return (
-      <form onSubmit={this.onSubmit}>
+      <form onSubmit={this.onSubmit} className="recap">
         <input
           name="email"
           value={this.state.email}
@@ -58,15 +58,14 @@ class PasswordForgetFormBase extends Component {
         <button disabled={isInvalid} type="submit">
           Reset My Password
         </button>
- 
-        {error && <p>{error.message}</p>}
+        <p className="forgotP">{error}</p>
       </form>
     );
   }
 }
  
 const PasswordForgetLink = () => (
-  <p>
+  <p className="forgotPass">
     <Link to="/forgotpassword">Forgot Password?</Link>
   </p>
 );
