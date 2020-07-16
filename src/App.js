@@ -30,6 +30,30 @@ const App = () => (
         <div className="staticBG">
           <Navigation />
           <Switch>
+            <Route path="/map">
+              <Map />
+            </Route>
+            <Route path="/waiver">
+              <Waiver />
+            </Route>
+            <Route path="/membership">
+              <Membership />
+            </Route>
+            <Route path="/contact">
+              <Contact />
+            </Route>
+            <Route path="/gametypes">
+              <Gametypes/>
+            </Route>
+            <Route path="/rules">
+              <Rules />
+            </Route>
+            <Route path="/videos">
+              <Videos />
+            </Route>
+            <Route path="/pictures">
+              <Pictures />
+            </Route>
             <Route path="/teams">
               <Teams />
             </Route>

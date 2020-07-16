@@ -46,7 +46,7 @@ class Waiver extends Component {
                                 disabled={this.state.pageNumber-1 >= 0 ? true : false}>
                                     Prev</button>
                                 <button onClick={this.goToNextPage} 
-                                disabled={this.state.pageNumber+1 <= this.state.numPages ? true : false}>
+                                disabled={this.state.pageNumber+1 <= this.state.numPages ? false : true}>
                                     Next</button>
                             </nav>
                         <a href={waiver} target='_blank'>
