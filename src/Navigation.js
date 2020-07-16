@@ -118,7 +118,7 @@ const NavigationAuth = ({ authUser }) => (
                                 </LinkContainer>
                                 <NavDropdown.Divider />
                                 <LinkContainer to="/contact">
-                                    <NavDropdown.Item eventKey={4.4}>Contact Us</NavDropdown.Item>
+                                    <NavDropdown.Item eventKey={4.5}>Contact Us</NavDropdown.Item>
                                 </LinkContainer>
                             </NavDropdown>
                         </NavItem>

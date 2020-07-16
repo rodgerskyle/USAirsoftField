@@ -164,3 +164,17 @@
   justify-content: center;
   align-items: center;
 }
+
+.recap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.forgotP {
+  color: white;
+}
+
+.forgotPass {
+  padding-top: 10px;
+}
