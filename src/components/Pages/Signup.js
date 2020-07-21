@@ -23,6 +23,7 @@ const config = {
 };
 
  
+console.log((new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear()));
  
 const SignUpPage = () => (
   <div className="pagePlaceholder">
@@ -61,6 +62,7 @@ class SignUpFormBase extends Component {
     const losses = 0;
     const previousmonth = 0
     const currentmonth = 0
+    const renewal = (new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear()+1);
     var tempuser = '';
     for (var i=0; i<name.length; i++) {
       if (name[i]!==" ") {
@@ -91,6 +93,7 @@ class SignUpFormBase extends Component {
             team,
             previousmonth,
             currentmonth,
+            renewal
           });
       })
       .then(authUser => {

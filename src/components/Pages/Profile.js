@@ -133,7 +133,6 @@ class Profile extends Component {
         this.setState({ rank: tmp_rank, rankindex: index })
     }
 
-
     //Get image function for profile image = uid
     getProfile(uid) {
         this.props.firebase.pictures(`${uid}.png`).getDownloadURL().then((url) => {
@@ -176,9 +175,9 @@ class Profile extends Component {
                                             <p className="sm-width-95 sm-margin-auto rank-title">Rank: {this.state.rank}</p>
                                         </div>
                                         <div className="bg-light-gray padding-30px-all md-padding-25px-all sm-padding-20px-all text-center description extra-box">
-                                            <h2 className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600">Leaderboard Placement:</h2>
-                                            <h5 className="timer count-title count-number" data-to="1700" data-speed="1500">Top: {authUser.points}</h5>
-                                            <h5 className="timer count-title count-number" data-to="1700" data-speed="1500">Monthly: {authUser.points}</h5>
+                                            <h2 className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600">Subscription:</h2>
+                                            <br></br>
+                                            <h5 className="timer count-title count-number" data-to="1700" data-speed="1500">Renew Date: {authUser.renewal}</h5>
                                         </div>
                                     </div>
 

@@ -35,8 +35,7 @@ class Map extends Component {
                                 imageSrc={lowmap}
                                 imageAlt="Example"
                                 largeImageSrc={map}
-                                alwaysInPlace="true"
-                                overlayOpacity={1}
+                                alwaysInPlace={true}
                             />
                         </Col>
                     </Row>
