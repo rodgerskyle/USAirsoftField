@@ -68,11 +68,19 @@ class Firebase {
 
     pictures = img => this.st.ref().child(`images/${img}`);
 
+    teamsPictures = img => this.st.ref().child(`teams/${img}`);
+
     // User API
 
     user = uid => this.db.ref(`users/${uid}`);
 
     users = () => this.db.ref('users');
+
+    // Team API
+
+    team = name => this.db.ref(`teams/${name}`);
+
+    teams = () => this.db.ref(`teams`);
 
 }
 
