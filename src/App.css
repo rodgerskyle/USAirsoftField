@@ -190,3 +190,14 @@
   padding-left: 10px;
   display: inline-block;
 }
+
+.team-name {
+  vertical-align: middle !important;
+  color: white !important;
+  font-size: 1.2em;
+}
+
+.team-info {
+  justify-content: center;
+  align-items: center;
+}

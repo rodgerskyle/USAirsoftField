@@ -24,6 +24,7 @@ import Contact from './components/Pages/Contact';
 import Membership from './components/Pages/Membership';
 import Waiver from './components/Pages/Waiver';
 import Map from './components/Pages/Map';
+import Teampage from './components/Pages/Teampage'
 
 const App = () => (
       <Router>
@@ -54,9 +55,14 @@ const App = () => (
             <Route path="/pictures">
               <Pictures />
             </Route>
-            <Route path="/teams">
+            <Route exact path="/teams">
               <Teams />
             </Route>
+            <Route exact path="/teams/:id"
+            render={(props) => (
+              <Teampage {...props} />
+            )}
+            ></Route>
             <Route exact path="/profilelookup/:id"
             render={(props) => (
               <ProfileLookup {...props} />

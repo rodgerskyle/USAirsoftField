@@ -4,7 +4,7 @@ import '../../App.css';
 
 import { Container, Row, Col } from 'react-bootstrap/';
 import './Profile.css';
-import BootstrapSwitchButton from 'bootstrap-switch-button-react';
+import Td from '../constants/td';
 
 import { withFirebase } from '../Firebase';
 
@@ -19,11 +19,11 @@ class Teams extends Component {
         };
     }
 
-    //Get image function for profile image = uid
+    //Get image function for team image = teamname
     getPicture(teamname) {
         this.props.firebase.teamsPictures(`${teamname}.png`).getDownloadURL().then((url) => {
             var temp = this.state.teamicon;
-            temp.push(url);
+            temp[teamname] = url;
             this.setState({ teamicon: temp })
         }).catch((error) => {
             // Handle any errors NOT DONE
@@ -94,16 +94,20 @@ class Teams extends Component {
 
 
     const TeamList = ({ teams, teamicon }) => (
-      <ul>
-        {teams.map((team, i) => (
-          <li key={team.teamname}>
-            <img src={teamicon.length === teams.length ? teamicon[i]: null}></img>
-            <span>
-              <strong>{team.teamname}</strong>
-            </span>
-          </li>
-        ))}
-      </ul>
+    <Table className="table table-striped table-dark">
+        <tbody>
+            {teams.map((team, i) => (
+            <tr key={team.teamname}>
+                <Td to={"/teams/"+team.teamname}>
+                    <img src={teamicon.length === 0 ? teamicon[team.teamname]: null} alt={"Team " + team.teamname}></img>
+                </Td>
+                <Td cl="team-name" to={"/teams/"+team.teamname}>
+                    <strong>{(team.teamname).toUpperCase()}</strong>
+                </Td>
+            </tr>
+            ))}
+        </tbody>
+        </Table>
     );
 
 
