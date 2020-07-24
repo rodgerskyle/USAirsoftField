@@ -29,8 +29,21 @@ class Profile extends Component {
 
     componentDidMount() {
         //Figure out rank logic here
-        this.getRank();
-        this.getProfile(`${this.state.authUser.uid}/profilepic`);
+        this.props.firebase.user(this.state.authUser.uid).on('value', snapshot => {
+            const userObject = snapshot.val();
+
+            this.setState({
+                authUser: userObject,
+            }, function(){
+                //After setstate, then grab points and profile
+                this.getRank();
+                this.getProfile(`${userObject.uid}/profilepic`);
+            } );
+        });
+    }
+
+    componentWillUnmount() {
+        this.props.firebase.user(this.state.authUser.uid).off();
     }
 
 
