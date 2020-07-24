@@ -12,6 +12,8 @@ import './Profile.css';
 
 import rankimages from '../constants/rankimgs';
 
+import Td from '../constants/td';
+
 class Profile extends Component {
     constructor(props) {
         super(props);
@@ -223,7 +225,8 @@ class Profile extends Component {
                                                 <Col>
                                                     <div className="counter">
                                                         <i className="fa fa-users fa-2x text-green"></i>
-                                                        <h2 className="timer count-title count-number" data-to="1700" data-speed="1500">{authUser.team !== "" ? authUser.team : "N/A"}</h2>
+                                                        <h2 className="timer count-title count-number" data-to="1700" data-speed="1500">{authUser.team !== "" ?
+                                                        <Td cl="team-link" to={"/teams/"+this.state.authUser.team}>{this.state.authUser.team}</Td> : "N/A"}</h2>
                                                         <p className="count-text ">Team</p>
                                                     </div>
                                                 </Col>

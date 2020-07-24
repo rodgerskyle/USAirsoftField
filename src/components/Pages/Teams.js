@@ -59,8 +59,8 @@ class Teams extends Component {
 
     render() {
         return (
-            <div className="pagePlaceholder">
-                <h2>Teams</h2>
+            <div className="staticBG">
+                <h2 className="page-header">Teams</h2>
                 <Container>
                     <Row>
                         <Col>
@@ -76,10 +76,12 @@ class Teams extends Component {
                         </Button>
                         </Col>
                         <Col>
+                        <Td to="/manageteam">
                         <Button variant="outline-danger">
-                        <p className="team-rows">Team Issues</p>
+                        <p className="team-rows">Manage Team</p>
                                 <i className="fa fa-exclamation-circle fa-2x text-white team-rows-icons"></i>
                         </Button>
+                        </Td>
                         </Col>
                     </Row>
                     <br></br>

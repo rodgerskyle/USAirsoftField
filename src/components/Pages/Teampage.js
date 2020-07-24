@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 
 import { Container, Row, Col } from 'react-bootstrap/';
 
+import { Link } from 'react-router-dom';
+
 import { withFirebase } from '../Firebase';
 
 import './Profile.css';
@@ -30,17 +32,21 @@ class Teampage extends Component {
 
             this.setState({
                 teamObject: Object,
-            }, function(){
+            }, function () {
                 //After setstate, then grab points and profile
                 this.getPicture(this.props.match.params.id);
                 this.getUsers(this.props.match.params.id);
-            } );
+            });
         });
     }
 
     componentWillUnmount() {
         this.props.firebase.team(this.props.match.params.id).off();
         this.props.firebase.user(this.state.teamObject.leader).off();
+        //For loop for team members
+        for (var i = 0; i < this.state.teamObject.members.length; i++) {
+            this.props.firebase.user(this.state.teamObject.members[i]).off()
+        }
     }
 
 
@@ -152,7 +158,7 @@ class Teampage extends Component {
             this.setState({ teamicon: url })
         }).catch((error) => {
             // Handle any errors NOT DONE
-            this.setState({ })
+            this.setState({})
         })
     }
 
@@ -164,47 +170,59 @@ class Teampage extends Component {
             this.setState({
                 leader: userObject.name,
             }
-             );
+            );
         });
+        for (var i = 0; i < this.state.teamObject.members.length; i++) {
+            this.props.firebase.user(this.state.teamObject.members[i]).on('value', snapshot => {
+                const userObject = snapshot.val();
+                var temp = this.state.members;
+                temp.push(userObject);
+
+                this.setState({
+                    members: temp,
+                }
+                );
+            });
+        }
     }
 
 
     render() {
         return (
-                    <div className="account-page">
-                        <Container>
-                            <div className="team-single">
-                                <Row className="team-info">
-                                    <div>
-                                        <div className="team-single-img">
-                                            <img src={this.state.teamicon} alt="" />
+            <div className="account-page">
+                <Container>
+                    <div className="team-single">
+                        <Row className="team-info">
+                            <div>
+                                <div className="team-single-img">
+                                    <img className="team-icon-individual" src={this.state.teamicon} alt="" />
+                                </div>
+                                <Row className="text-center stat-box">
+                                    <Col>
+                                        <div className="counter">
+                                            <i className="fa fa-users fa-2x text-black"></i>
+                                            <h2 className="timer count-title count-number" data-to="100" data-speed="1500">{(this.props.match.params.id).toUpperCase()}</h2>
+                                            <p className="count-text ">Team Name</p>
                                         </div>
-                                            <Row className="text-center stat-box">
-                                                <Col>
-                                                    <div className="counter">
-                                                        <i className="fa fa-users fa-2x text-black"></i>
-                                                        <h2 className="timer count-title count-number" data-to="100" data-speed="1500">{(this.props.match.params.id).toUpperCase()}</h2>
-                                                        <p className="count-text ">Team Name</p>
-                                                    </div>
-                                                </Col>
-                                                <Col>
-                                                    <div className="counter">
-                                                        <i className="fa fa-user-circle fa-2x"></i>
-                                                        <h2 className="timer count-title count-number" data-to="1700" data-speed="1500">{this.state.leader}</h2>
-                                                        <p className="count-text ">Team Leader</p>
-                                                    </div>
-                                                </Col>
-                                            </Row>
-                                        <div className="bg-light-gray padding-30px-all md-padding-25px-all sm-padding-20px-all text-center description extra-box">
-                                            <h2 className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600">Leaderboard Placement:</h2>
-                                            <h5 className="timer count-title count-number" data-to="1700" data-speed="1500">Top:</h5>
-                                            <h5 className="timer count-title count-number" data-to="1700" data-speed="1500">Monthly:</h5>
+                                    </Col>
+                                    <Col>
+                                        <div className="counter">
+                                            <i className="fa fa-user-circle fa-2x"></i>
+                                            <Link className="profile-link" to={"/profilelookup/" + this.state.teamObject.leader}>
+                                                <h2 className="timer count-title count-number" data-to="1700" data-speed="1500">{this.state.leader}</h2>
+                                            </Link>
+                                            <p className="count-text ">Team Leader</p>
                                         </div>
-                                    </div>
+                                    </Col>
                                 </Row>
+                                <div className="bg-light-gray padding-30px-all md-padding-25px-all sm-padding-20px-all text-center description extra-box team-members-box">
+                                    <h2 className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600">Members:</h2>
+                                </div>
                             </div>
-                        </Container>
+                        </Row>
                     </div>
+                </Container>
+            </div>
         )
     }
 }

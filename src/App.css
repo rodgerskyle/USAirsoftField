@@ -1,6 +1,6 @@
 .staticBG {
   background-color: rgb(27, 26, 26);
-  height: 100vh;
+  height: 110vh;
 }
 
 .Homepage {
@@ -200,4 +200,47 @@
 .team-info {
   justify-content: center;
   align-items: center;
+}
+
+.profile-link {
+  color: white;
+}
+
+.team-icon-individual {
+  margin-bottom: 15px;
+  margin-top: 8px;
+}
+
+.team-members-box {
+  margin-bottom: 30px;
+}
+
+.team-manage-text {
+  color: white;
+}
+
+.team-manage-blank {
+  color: white;
+  align-items: center;
+  justify-content: center;
+}
+
+.team-manage-button {
+  margin-top: 10px;
+}
+
+.team-manage-button-2 {
+  margin-top: 10px;
+  margin-left: 5px;
+}
+
+.page-header {
+  color:white;
+  text-align: center;
+}
+
+.team-link {
+  align-items: center;
+  justify-content: center;
+  color: black;
 }
