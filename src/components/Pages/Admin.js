@@ -5,6 +5,9 @@ import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
 import { compose } from 'recompose';
 
+import { Button } from 'react-bootstrap/';
+
+
 import * as ROLES from '../constants/roles';
  
 class AdminPage extends Component {
@@ -39,12 +42,30 @@ class AdminPage extends Component {
         this.props.firebase.users().off();
     }
 
+    addTeam() {
+      const leader = " ";
+      var members = []; //add people here
+      const teammates = members;
+      /*this.props.firebase.team("ort3").set({
+        leader,
+        teammates,
+      })*/
+      this.props.firebase.team('outlaws').set({
+        leader,
+        teammates,
+      });
+      console.log("success")
+    }
+
     render() {
         const { users, loading } = this.state;
      
         return (
           <div className="pagePlaceholder">
             <h1>Admin</h1>
+            <Button type="submit" id="register" variant="primary" onClick={() => this.addTeam()}>
+                                    Submit
+                        </Button>
      
             {loading && <div>Loading ...</div>}
      

@@ -26,6 +26,7 @@ import Waiver from './components/Pages/Waiver';
 import Map from './components/Pages/Map';
 import Teampage from './components/Pages/Teampage'
 import Teammanage from './components/Pages/Teammanage'
+import Teamcreate from './components/Pages/Teamcreate'
 
 const App = () => (
       <Router>
@@ -64,8 +65,11 @@ const App = () => (
               <Teampage {...props} />
             )}
             ></Route>
-            <Route exact path="/Manageteam">
+            <Route exact path="/manageteam">
               <Teammanage />
+            </Route>
+            <Route exact path="/createteam">
+              <Teamcreate />
             </Route>
             <Route exact path="/profilelookup/:id"
             render={(props) => (

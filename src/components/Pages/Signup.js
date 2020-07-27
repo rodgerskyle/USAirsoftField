@@ -23,8 +23,6 @@ const config = {
 };
 
  
-console.log((new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear()));
- 
 const SignUpPage = () => (
   <div className="pagePlaceholder">
     <h1>SignUp</h1>

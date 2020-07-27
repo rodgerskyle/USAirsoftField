@@ -64,10 +64,12 @@ class Teams extends Component {
                 <Container>
                     <Row>
                         <Col>
+                        <Td to="/createteam">
                         <Button variant="outline-success">
                         <p className="team-rows">Create Team</p>
                                 <i className="fa fa-plus-square fa-2x text-white team-rows-icons"></i>
                         </Button>
+                        </Td>
                         </Col>
                         <Col>
                         <Button variant="outline-info">

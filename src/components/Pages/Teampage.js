@@ -32,6 +32,7 @@ class Teampage extends Component {
 
             this.setState({
                 teamObject: Object,
+                members: Object.members,
             }, function () {
                 //After setstate, then grab points and profile
                 this.getPicture(this.props.match.params.id);
@@ -172,18 +173,6 @@ class Teampage extends Component {
             }
             );
         });
-        for (var i = 0; i < this.state.teamObject.members.length; i++) {
-            this.props.firebase.user(this.state.teamObject.members[i]).on('value', snapshot => {
-                const userObject = snapshot.val();
-                var temp = this.state.members;
-                temp.push(userObject);
-
-                this.setState({
-                    members: temp,
-                }
-                );
-            });
-        }
     }
 
 
@@ -218,6 +207,7 @@ class Teampage extends Component {
                                 <div className="bg-light-gray padding-30px-all md-padding-25px-all sm-padding-20px-all text-center description extra-box team-members-box">
                                     <h2 className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600">Members:</h2>
                                 </div>
+                                <TeamUserlist users={this.state.members}/>
                             </div>
                         </Row>
                     </div>
@@ -226,5 +216,17 @@ class Teampage extends Component {
         )
     }
 }
+
+    const TeamUserlist = ({ users }) => (
+        <Col>
+            {users.map(user => (
+            <div className="counter team-member-list" key={user[0]}>
+                <i className="fa fa-users fa-2x text-black"></i>
+                <h2 className="timer count-title count-number" data-to="100" data-speed="1500">{user[0]}</h2>
+                <p className="count-text ">Member</p>
+            </div>
+            ))}
+        </Col>
+    );
 
 export default withFirebase(Teampage);

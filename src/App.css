@@ -223,6 +223,7 @@
   color: white;
   align-items: center;
   justify-content: center;
+  text-align: center;
 }
 
 .team-manage-button {
@@ -243,4 +244,20 @@
   align-items: center;
   justify-content: center;
   color: black;
+}
+
+.team-member-list {
+  text-align: center;
+}
+
+.team-upload {
+  color:white !important;
+}
+
+.progress {
+  width: 250px;
+}
+
+.upload-button {
+  margin-left: 15px;
 }
