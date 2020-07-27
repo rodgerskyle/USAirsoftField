@@ -24,12 +24,15 @@ class TeamCreate extends Component {
             authUser: JSON.parse(localStorage.getItem('authUser')),
             teamObject: '',
             teamicon: '',
-            teamname: '',
+            teamname: "",
             description: '',
             progress: 0,
             image: null,
             url: '',
             uploaded: false,
+            complete: false,
+            previous: '',
+            page: true,
         };
     }
 
@@ -37,6 +40,27 @@ class TeamCreate extends Component {
     }
 
     componentWillUnmount() {
+        if (this.state.complete === false) {
+            if (this.state.uploaded === true) {
+                this.props.firebase.teamsPictures(`${this.state.previous}.png`).delete().then(function () {
+                    // File deleted successfully
+                }).catch(function (error) {
+                    // Uh-oh, an error occurred!
+                });
+            }
+        }
+    }
+
+    //Continue to next page assuming all validators are checked
+    nextPage(e) {
+        e.preventDefault();
+        this.setState({ page: !this.state.page })
+        console.log(this.state.teamname)
+    }
+
+    previousPage(e) {
+        e.preventDefault();
+        this.setState({ page: !this.state.page })
     }
 
 
@@ -48,54 +72,72 @@ class TeamCreate extends Component {
         this.props.firebase.team(this.state.teambox.toLowerCase()).set({
             members
         })
+        this.setState({ complete: true })
     }
-
-    handleUpload = (teamname) => {
-        const { image } = this.state;
-        const uploadTask = this.props.firebase.teamsPictures(`${teamname}.png`).put(image);
-        uploadTask.on(
-            "state_changed",
-            snapshot => {
-                // progress function ...
-                const progress = Math.round(
-                    (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-                );
-                this.setState({ progress });
-            },
-            error => {
-                // Error function ...
-                console.log(error);
-            },
-            () => {
-                // complete function ...
-                this.props.firebase
-                    .teamsPictures(`${teamname}.png`)
-                    .getDownloadURL()
-                    .then(url => {
-                        this.setState({ url });
-                    });
-                this.setState({ uploaded: true})
-            }
-        );
-    };
 
     handleChange = e => {
         if (e.target.files[0]) {
             const image = e.target.files[0];
-            this.setState(() => ({ image }));
+            this.setState(() => ({ image }), function() {
+                const { image, uploaded, previous, teamname } = this.state;
+
+                var t_name = teamname.toString().toLowerCase();
+
+                //Handling the case if a user had previously uploaded an image
+                if (uploaded === true) {
+                    this.props.firebase.teamsPictures(`${previous}.png`).delete().then(function () {
+                        // File deleted successfully
+                    }).catch(function (error) {
+                        // Uh-oh, an error occurred!
+                    });
+                }
+
+                const uploadTask = this.props.firebase.teamsPictures(`${t_name}.png`).put(image);
+                uploadTask.on(
+                    "state_changed",
+                    snapshot => {
+                        // progress function ...
+                        const progress = Math.round(
+                            (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+                        );
+                        this.setState({ progress });
+                    },
+                    error => {
+                        // Error function ...
+                        console.log(error);
+                    },
+                    () => {
+                        // complete function ...
+                        this.props.firebase
+                            .teamsPictures(`${t_name}.png`)
+                            .getDownloadURL()
+                            .then(url => {
+                                this.setState({ url });
+                            });
+                        this.setState({
+                            uploaded: true,
+                            previous: t_name
+                        })
+                    }
+                );
+            })
         }
     };
 
     onChange = event => {
-        this.setState({ [event.target.name]: event.target.value });
+        this.setState({ teamname: event.target.value });
+    };
+
+    onChangeDesc = event => {
+        this.setState({ description: event.target.value });
     };
 
     render() {
-        const { addbox, removebox, description, members, picture } = this.state;
+        const { addbox, removebox, description, members, picture, page, teamname } = this.state;
 
 
-        const isInvalid = this.state.image === null || this.state.teamname === '';
-        
+        const isInvalid = this.state.image === null || this.state.teamname.length === 0;
+
         const canSubmit = this.state.uploaded === false;
 
         return (
@@ -104,51 +146,75 @@ class TeamCreate extends Component {
                     <div className="staticBG">
                         {authUser.team !== '' ?
                             <p className="team-manage-blank">You already have a team, you must quit your team first.</p>
-                            :
-                            <Container>
-                                <div className="team-single-img">
-                                    <img className="team-icon-individual" src={this.state.url || alticon} alt="" />
-                                </div>
-                                <Row>
-                                        <div className="file-field input-field">
-                                            <div className="btn team-upload">
-                                                <span>File</span>
-                                                <input type="file" onChange={this.handleChange} />
-                                            </div>
-                                        </div>
-                                </Row>
-                                <Row>
-                                    <Col md={3}>
-                                        <progress value={this.state.progress} max="100" className="progress" />
-                                    </Col>
-                                    <Col>
-                                        <Button className="upload-button" onClick={(() => this.handleUpload(this.state.teamname))}
-                                            disabled={isInvalid}>
-                                                Upload
+                            : (page ?
+                                <Container>
+                                    <Form className="team-manage-text" onSubmit={(e) => this.nextPage(e)}>
+                                        <Form.Group controlId="exampleForm.ControlInput1">
+                                            <Form.Label>Team Name:</Form.Label>
+                                            <Form.Control
+                                                type="name"
+                                                placeholder="ex: Bandits"
+                                                value={teamname}
+                                                onChange={(e) => {
+                                                    this.onChange(e);
+                                                }}
+                                            />
+                                        </Form.Group>
+                                        <Form.Group controlId="exampleForm.ControlTextarea1">
+                                            <Form.Label>Add Description Here:</Form.Label>
+                                            <Form.Control 
+                                                as="textarea" rows="3" 
+                                                placeholder="Tell us about your team!"
+                                                value={description}
+                                                onChange={(e) => {
+                                                    this.onChangeDesc(e);
+                                                }}
+                                            />
+                                            <Button className="next-button" variant="outline-secondary" type="submit"
+                                            >
+                                                Next
                                         </Button>
-                                    </Col>
-                                </Row>
-                                <Form className="team-manage-text" onSubmit={(e) => this.createTeam(e)}>
-                                    <Form.Group controlId="exampleForm.ControlInput1">
-                                        <Form.Label>Team Name:</Form.Label>
-                                        <Form.Control 
-                                        type="name" 
-                                        placeholder="team name" 
-                                        onChange={(teamname) => {
-                                            this.setState({ teamname });
-                                        }}
-                                        />
-                                    </Form.Group>
-                                    <Form.Group controlId="exampleForm.ControlTextarea1">
-                                        <Form.Label>Add Description Here:</Form.Label>
-                                        <Form.Control as="textarea" rows="3" />
-                                        <Button className="team-manage-button" variant="outline-success" type="submit" 
-                                            disabled={ canSubmit }>
-                                            Submit
-                                    </Button>
-                                    </Form.Group>
-                                </Form>
-                            </Container>
+                                        </Form.Group>
+                                    </Form>
+                                </Container>
+                                :
+                                <Container>
+                                    <p className="team-upload-text">Team Image Upload:</p>
+                                    <div className="team-single-img">
+                                        <img className="team-icon-individual" src={this.state.url || alticon} alt="" />
+                                    </div>
+                                    <Row>
+                                        <Col md={6}>
+                                            <div className="file-field input-field">
+                                                <div className="btn team-upload">
+                                                    <span>File</span>
+                                                    <input type="file" onChange={this.handleChange} />
+                                                </div>
+                                            </div>
+                                        </Col>
+                                    </Row>
+                                    <Row>
+                                        <Col md={3}>
+                                            <progress value={this.state.progress} max="100" className="progress" />
+                                        </Col>
+                                    </Row>
+                                    <Row >
+                                        <Col md={1}>
+                                            <Button className="previous-button" variant="outline-secondary" onClick={((e) => this.previousPage(e))}
+                                            >
+                                                Previous
+                                            </Button>
+                                        </Col>
+                                        <Col>
+                                            <Button className="submit-button" variant="outline-success" onClick={((e) => this.createTeam(e))}
+                                            >
+                                                Submit
+                                            </Button>
+                                        </Col>
+                                    </Row>
+                                </Container>
+                            )
+                        }
                         }
                     </div>
                 )

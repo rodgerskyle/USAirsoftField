@@ -103,7 +103,8 @@ class Teams extends Component {
             {teams.map((team, i) => (
             <tr key={team.teamname}>
                 <Td to={"/teams/"+team.teamname}>
-                    <img src={teamicon.length === 0 ? teamicon[team.teamname]: null} alt={"Team " + team.teamname}></img>
+                    <img className="team-pictures" 
+                    src={teamicon.length === 0 ? teamicon[team.teamname]: null} alt={"Team " + team.teamname}></img>
                 </Td>
                 <Td cl="team-name" to={"/teams/"+team.teamname}>
                     <strong>{(team.teamname).toUpperCase()}</strong>

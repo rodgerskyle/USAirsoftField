@@ -207,8 +207,9 @@
 }
 
 .team-icon-individual {
-  margin-bottom: 15px;
   margin-top: 8px;
+  width: 654px;
+  height: 192px;
 }
 
 .team-members-box {
@@ -259,5 +260,34 @@
 }
 
 .upload-button {
+  margin-top: 10px;
+}
+
+.team-pictures {
+  width: 654px;
+  height: 192px;
+}
+
+.team-upload-warning {
+  margin-top: 10px;
+  margin-left: 10px;
+  color: white;
+}
+
+.team-upload-text {
+  color:white !important;
+  margin-bottom: 0rem !important;
+}
+
+.next-button {
+  margin-top: 10px;
+}
+
+.previous-button {
+  margin-top: 10px;
+}
+
+.submit-button {
+  margin-top: 10px;
   margin-left: 15px;
 }
