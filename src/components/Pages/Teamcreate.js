@@ -19,6 +19,7 @@ class TeamCreate extends Component {
         super(props);
 
         this.onChange = this.onChange.bind(this);
+        this.nextPage = this.nextPage.bind(this);
 
         this.state = {
             authUser: JSON.parse(localStorage.getItem('authUser')),
@@ -33,6 +34,7 @@ class TeamCreate extends Component {
             complete: false,
             previous: '',
             page: true,
+            error: '',
         };
     }
 
@@ -53,9 +55,22 @@ class TeamCreate extends Component {
 
     //Continue to next page assuming all validators are checked
     nextPage(e) {
+        const { page } = this.state;
         e.preventDefault();
-        this.setState({ page: !this.state.page })
-        console.log(this.state.teamname)
+        if (this.state.teamname !== "") {
+            this.props.firebase.team(this.state.teamname.toString().toLowerCase()).ref.once("value", (data) => {
+                //Check for existance
+                if (data.val() === null) {
+                    this.setState({ page: !page })
+                }
+                else {
+                    this.setState({ error: "Team name already exists! Please enter another name."})
+                }
+            });
+        }
+        else {
+            this.setState({ error: "Team name cannot be empty!"})
+        }
     }
 
     previousPage(e) {
@@ -136,8 +151,6 @@ class TeamCreate extends Component {
         const { addbox, removebox, description, members, picture, page, teamname } = this.state;
 
 
-        const isInvalid = this.state.image === null || this.state.teamname.length === 0;
-
         const canSubmit = this.state.uploaded === false;
 
         return (
@@ -176,6 +189,11 @@ class TeamCreate extends Component {
                                         </Button>
                                         </Form.Group>
                                     </Form>
+                                    <Row>
+                                        <Col>
+                                            <p className="error-team-create">{this.state.error}</p>
+                                        </Col>
+                                    </Row>
                                 </Container>
                                 :
                                 <Container>
