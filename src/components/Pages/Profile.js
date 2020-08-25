@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 
 import { Container, Row, Col } from 'react-bootstrap/';
 
+import { Link } from 'react-router-dom';
+
 import default_profile from '../../assets/default.png';
 
 import { AuthUserContext, withAuthorization } from '../session';
@@ -11,8 +13,6 @@ import { withFirebase } from '../Firebase';
 import './Profile.css';
 
 import rankimages from '../constants/rankimgs';
-
-import Td from '../constants/td';
 
 class Profile extends Component {
     constructor(props) {
@@ -239,7 +239,7 @@ class Profile extends Component {
                                                     <div className="counter">
                                                         <i className="fa fa-users fa-2x text-green"></i>
                                                         <h2 className="timer count-title count-number" data-to="1700" data-speed="1500">{authUser.team !== "" ?
-                                                        <Td cl="team-link" to={"/teams/"+this.state.authUser.team}>{this.state.authUser.team}</Td> : "N/A"}</h2>
+                                                        <Link className="team-link" to={"/teams/"+this.state.authUser.team}>{this.state.authUser.team}</Link> : "N/A"}</h2>
                                                         <p className="count-text ">Team</p>
                                                     </div>
                                                 </Col>

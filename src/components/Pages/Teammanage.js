@@ -107,7 +107,7 @@ class TeamManage extends Component {
             <AuthUserContext.Consumer>
                 {authUser => (
                     <div className="staticBG">
-                        {authUser.team === null ?
+                        {authUser.team === "" ?
                             <p className="team-manage-blank">You do not have a team</p>
                             :
                             <Container>
