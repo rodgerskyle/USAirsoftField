@@ -82,12 +82,17 @@ class TeamCreate extends Component {
     //create team
     createTeam(e) {
         e.preventDefault();
-        var members = [];
         //Create message to show they were removed and reset input box
-        this.props.firebase.team(this.state.teambox.toLowerCase()).set({
-            members
-        })
-        this.setState({ complete: true })
+        var createTeam = this.props.firebase.createTeam();
+        createTeam({teamname: this.state.teamname, description: this.state.description
+         }).then(function(result) {
+            // Read result of the Cloud Function.
+            var update = result.data.message;
+            if (update == "Complete") {
+                //If team was created without issue set completion to true
+                this.setState({complete: true})
+            }
+        });
     }
 
     handleChange = e => {

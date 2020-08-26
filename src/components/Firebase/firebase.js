@@ -2,6 +2,7 @@ import app from 'firebase/app';
 import 'firebase/auth';
 import 'firebase/database';
 import 'firebase/storage';
+import 'firebase/functions';
 require('dotenv').config();
 
 const config = {
@@ -22,6 +23,7 @@ class Firebase {
         this.auth = app.auth();
         this.db = app.database();
         this.st = app.storage();
+        this.func = app.functions();
     }
     // *** Auth API ***
     doCreateUserWithEmailAndPassword = (email, password) =>
@@ -61,6 +63,10 @@ class Firebase {
                 fallback();
             }
         });
+
+    // Functions API
+
+    createTeam = () => this.func.httpsCallable('createTeam');
 
     // Database API
 

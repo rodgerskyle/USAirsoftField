@@ -45,8 +45,12 @@ class Teampage extends Component {
         this.props.firebase.team(this.props.match.params.id).off();
         this.props.firebase.user(this.state.teamObject.leader).off();
         //For loop for team members
-        for (var i = 0; i < this.state.teamObject.members.length; i++) {
-            this.props.firebase.user(this.state.teamObject.members[i]).off()
+        var error = false;
+        try { const temp = this.state.teamObject.members.length;} catch(e) {error = true;}
+        if (error === false) {
+            for (var i = 0; i < this.state.teamObject.members.length; i++) {
+                this.props.firebase.user(this.state.teamObject.members[i]).off()
+            }
         }
     }
 
@@ -207,7 +211,9 @@ class Teampage extends Component {
                                 <div className="bg-light-gray padding-30px-all md-padding-25px-all sm-padding-20px-all text-center description extra-box team-members-box">
                                     <h2 className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600">Members:</h2>
                                 </div>
-                                <TeamUserlist users={this.state.members}/>
+                                { this.state.members === null ?
+                                    <TeamUserlist users={this.state.members}/> : ""
+                                }
                             </div>
                         </Row>
                     </div>
