@@ -22,6 +22,7 @@ class ProfileLookup extends Component {
             rankindex: 0,
             profileicon: '',
             authUser: '',
+            team: '',
         };
     }
 
@@ -32,6 +33,7 @@ class ProfileLookup extends Component {
 
             this.setState({
                 authUser: userObject,
+                team: userObject.team.toUpperCase(),
             }, function(){
                 //After setstate, then grab points and profile
                 this.getRank();
@@ -224,7 +226,7 @@ class ProfileLookup extends Component {
                                                     <div className="counter">
                                                         <i className="fa fa-users fa-2x text-green"></i>
                                                         <h2 className="timer count-title count-number team-link" data-to="1700" data-speed="1500">{this.state.authUser.team !== "" ? 
-                                                        <Link className="team-link" to={"/teams/"+this.state.authUser.team}>{this.state.authUser.team}</Link> : "N/A"}</h2>
+                                                        <Link className="team-link" to={"/teams/"+this.state.authUser.team}>{this.state.team}</Link> : "N/A"}</h2>
                                                         <p className="count-text ">Team</p>
                                                     </div>
                                                 </Col>
