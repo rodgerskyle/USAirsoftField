@@ -25,7 +25,12 @@ class TeamManage extends Component {
             addbox: [],
             removebox: [],
             description: '',
-            members: ['kyle', 'bob', 'john'],
+            members: '',
+            requests: '',
+            requestSelected: [],
+            AcceptRequestState: this.AcceptRequest,
+            DeclineRequestState: this.DeclineRequest,
+            onChangeSelectionReqState: this.onChangeSelectionReq,
         };
     }
 
@@ -38,6 +43,8 @@ class TeamManage extends Component {
 
                 this.setState({
                     teamObject: Object,
+                    requests: Object.requests,
+                    members: Object.members,
                 }, function () {
                     //After setstate, then grab points and profile
                     this.getPicture(this.state.authUser.team.toLowerCase());
@@ -66,14 +73,14 @@ class TeamManage extends Component {
         e.preventDefault();
         console.log(this.state.addbox[0]);
         //Create message to show they were added and reset input box
-        var members = this.state.teamObject.members;
+        var requests = this.state.teamObject.requests;
         var user = this.state.addbox[0];
         user = "martinhernandez"
         var uid = "OzZdvadHPkcOgO5YEefjzJfLffb2";
         let member = [user, uid];
-        members.push(member);
-        console.log(members);
-        this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({ members })
+        requests.push(member);
+        console.log(requests);
+        this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({ requests })
     }
 
     //Remove member from team
@@ -83,7 +90,7 @@ class TeamManage extends Component {
         //Create message to show they were removed and reset input box
         var members = this.state.teamObject.members;
         var found = false;
-        for (var i=0; i<members.length; i++) {
+        for (var i = 0; i < members.length; i++) {
             if (members[i][0] === this.state.removebox[0]) {
                 found = true;
                 delete members[i];
@@ -93,12 +100,51 @@ class TeamManage extends Component {
             //This player isnt on team
         }
         console.log(members);
+        console.log(this.state.requests)
         this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({ members })
     }
 
-  onChange = event => {
-    this.setState({ [event.target.name]: event.target.value });
-  };
+    onChange = event => {
+        this.setState({ [event.target.name]: event.target.value });
+    };
+
+    onChangeSelectionReq = (e) => {
+        this.setState({ requestSelected: e.target.value });
+    };
+
+    // For accepting requests to join the team
+    AcceptRequest = (e) => {
+        e.preventDefault();
+        // Grabs index selected and grabbing user info
+        var index = this.state.requestSelected;
+        if (index !== "" || index !== null) {
+            var requests = this.state.teamObject.requests;
+            var members = this.state.teamObject.members;
+            var user = members[index][0];
+            var uid =  members[index][1];
+            let member = [user, uid];
+
+            // Get rid of person off the request list and add them to members
+            requests.splice(index, 1)
+            members.push(member);
+            this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({ requests, members })
+        }
+    }
+
+    // For declining requests to join the team
+    DeclineRequest = (e) => {
+        e.preventDefault();
+        // Grabs index selected and grabbing user info
+        var index = this.state.requestSelected;
+
+        if (index !== "" || index !== null) {
+            var requests = this.state.teamObject.requests;
+
+            // Get rid of person off the request list
+            requests.splice(index, 1)
+            this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({ requests })
+        }
+    }
 
     render() {
         const { addbox, removebox, description, members } = this.state;
@@ -114,60 +160,17 @@ class TeamManage extends Component {
                                 <div className="team-single-img">
                                     <img className="team-icon-individual" src={this.state.teamicon} alt="" />
                                 </div>
-                                <Form className="team-manage-text" onSubmit={(e) => this.addMember(e)}>
-                                    <Form.Group controlId="exampleForm.ControlInput1">
-                                        <Form.Label>Add Team Member (Input their Username here):</Form.Label>
-                                        <Typeahead
-                                            labelKey="addbox"
-                                            id="team-member-add"
-                                            placeholder="ex: johnsmith"
-                                            onChange={(addbox) => {
-                                                this.setState({addbox});
-                                              }}
-                                            options={members}
-                                            selected={this.state.addbox}
-                                        />
-                                        <Button className="team-manage-button" variant="outline-success" type="submit">
-                                            Add Member
-                                    </Button>
-                                    </Form.Group>
-                                </Form>
-                                <Form className="team-manage-text" onSubmit={(e) => this.removeMember(e)}>
-                                    <Form.Group controlId="exampleForm.ControlInput1">
-                                        <Form.Label>Remove Team Member (Input their Username here):</Form.Label>
-                                        <Typeahead
-                                            labelKey="removebox"
-                                            id="team-member-remove"
-                                            placeholder="ex: johnsmith"
-                                            onChange={(removebox) => {
-                                                this.setState({removebox});
-                                              }}
-                                            options={members}
-                                            selected={this.state.removebox}
-                                        />
-                                        <Button className="team-manage-button" variant="outline-danger" type="submit">
-                                            Remove Member
-                                        </Button>
-                                        </Form.Group>
-                                </Form>
-                                <Form className="team-manage-text">
-                                    <Form.Group controlId="exampleForm.ControlSelect2">
-                                        <Form.Label>Players wanting to join:</Form.Label>
-                                        <Form.Control as="select" multiple>
-                                            <option>1</option>
-                                            <option>2</option>
-                                            <option>3</option>
-                                            <option>4</option>
-                                            <option>5</option>
-                                        </Form.Control>
-                                        <Button className="team-manage-button" variant="outline-success" type="submit">
-                                            Accept Request
-                                    </Button>
-                                        <Button className="team-manage-button-2" variant="outline-danger" type="submit">
-                                            Decline Request
-                                    </Button>
-                                    </Form.Group>
-                                </Form>
+                                {this.state.members !== '' ? 
+                                    <MembersList members={this.state.members} /> :
+                                    <MembersList members={[]}/>
+                                }
+                                {this.state.requests !== '' ? 
+                                    <RequestList requests={this.state.requests} decline={this.state.DeclineRequestState} 
+                                    accept={this.state.AcceptRequestState} onChange={this.state.onChangeSelectionReqState}/> :
+                                    <RequestList requests={[]} decline={this.state.DeclineRequestState} 
+                                    accept={this.state.AcceptRequestState} onChange={this.state.onChangeSelectionReqState}
+                                    />
+                                }
                                 <Form className="team-manage-text">
                                     <Form.Group controlId="exampleForm.ControlTextarea1">
                                         <Form.Label>Add Description Here:</Form.Label>
@@ -187,6 +190,106 @@ class TeamManage extends Component {
     }
 }
 
+const MembersList = ({ members }) => (
+    <Form className="team-manage-text">
+        <Form.Group controlId="exampleForm.ControlSelect2">
+            <Form.Label>Team Members:</Form.Label>
+            <Form.Control as="select" multiple>
+                {members.map(index => (
+                    <option key={index}>{index[0]}</option>
+                ))}
+            </Form.Control>
+            <Button className="team-manage-button" variant="outline-success" type="submit">
+                Promote to leader
+            </Button>
+            <Button className="team-manage-button-2" variant="outline-danger" type="submit">
+                Kick
+            </Button>
+        </Form.Group>
+    </Form>
+);
+
+
+const RequestList = ({ requests, accept, decline, onChange }) => (
+    <Form className="team-manage-text">
+        <Form.Group controlId="exampleForm.ControlSelect2">
+            <Form.Label>Players wanting to join:</Form.Label>
+            <Form.Control as="select" multiple
+            onChange={ (e) => onChange(e)}
+            >
+                {requests.map((index, i) => (
+                    <option value={i} key={i}>{index[0]}</option>
+                ))}
+            </Form.Control>
+            <Button className="team-manage-button" variant="outline-success" type="button" onClick={(e) => accept(e)}>
+                Accept Request
+            </Button>
+            <Button className="team-manage-button-2" variant="outline-danger" type="button" onClick={(e) => decline(e)}>
+                Decline Request
+            </Button>
+        </Form.Group>
+    </Form>
+);
+
 const condition = authUser => !!authUser;
 
 export default withFirebase(withAuthorization(condition)(TeamManage));
+
+/* OLD CODE
+
+                                <Form className="team-manage-text" onSubmit={(e) => this.addMember(e)}>
+                                    <Form.Group controlId="exampleForm.ControlInput1">
+                                        <Form.Label>Add Team Member (Input their Username here):</Form.Label>
+                                        <Typeahead
+                                            labelKey="addbox"
+                                            id="team-member-add"
+                                            placeholder="ex: johnsmith"
+                                            onChange={(addbox) => {
+                                                this.setState({ addbox });
+                                            }}
+                                            options={members}
+                                            selected={this.state.addbox}
+                                        />
+                                        <Button className="team-manage-button" variant="outline-success" type="submit">
+                                            Add Member
+                                    </Button>
+                                    </Form.Group>
+                                </Form>
+                                <Form className="team-manage-text" onSubmit={(e) => this.removeMember(e)}>
+                                    <Form.Group controlId="exampleForm.ControlInput1">
+                                        <Form.Label>Remove Team Member (Input their Username here):</Form.Label>
+                                        <Typeahead
+                                            labelKey="removebox"
+                                            id="team-member-remove"
+                                            placeholder="ex: johnsmith"
+                                            onChange={(removebox) => {
+                                                this.setState({ removebox });
+                                            }}
+                                            options={members}
+                                            selected={this.state.removebox}
+                                        />
+                                        <Button className="team-manage-button" variant="outline-danger" type="submit">
+                                            Remove Member
+                                        </Button>
+                                    </Form.Group>
+                                </Form>
+
+                                <Form className="team-manage-text">
+                                    <Form.Group controlId="exampleForm.ControlSelect2">
+                                        <Form.Label>Players wanting to join:</Form.Label>
+                                        <Form.Control as="select" multiple>
+                                            <option>1</option>
+                                            <option>2</option>
+                                            <option>3</option>
+                                            <option>4</option>
+                                            <option>5</option>
+                                        </Form.Control>
+                                        <Button className="team-manage-button" variant="outline-success" type="submit">
+                                            Accept Request
+                                    </Button>
+                                        <Button className="team-manage-button-2" variant="outline-danger" type="submit">
+                                            Decline Request
+                                    </Button>
+                                    </Form.Group>
+                                </Form>
+*/
