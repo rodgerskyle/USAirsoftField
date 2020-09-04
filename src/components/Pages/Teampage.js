@@ -20,7 +20,7 @@ class Teampage extends Component {
             rankindex: 0,
             teamicon: '',
             teamObject: '',
-            members: [],
+            members: '',
             leader: '',
         };
     }
@@ -32,7 +32,7 @@ class Teampage extends Component {
 
             this.setState({
                 teamObject: Object,
-                members: Object.members,
+                members: typeof Object.members !== 'undefined' ? Object.members : '',
             }, function () {
                 //After setstate, then grab points and profile
                 this.getPicture(this.props.match.params.id);
@@ -211,7 +211,7 @@ class Teampage extends Component {
                                 <div className="bg-light-gray padding-30px-all md-padding-25px-all sm-padding-20px-all text-center description extra-box team-members-box">
                                     <h2 className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600">Members:</h2>
                                 </div>
-                                { this.state.members === null ?
+                                { this.state.members !== '' ?
                                     <TeamUserlist users={this.state.members}/> : ""
                                 }
                             </div>
