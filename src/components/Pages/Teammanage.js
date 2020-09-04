@@ -28,9 +28,13 @@ class TeamManage extends Component {
             members: '',
             requests: '',
             requestSelected: [],
+            memberSelected: [],
             AcceptRequestState: this.AcceptRequest,
             DeclineRequestState: this.DeclineRequest,
+            KickMemberState: this.KickMember,
+            PromoteToLeaderState: this.PromoteToLeader,
             onChangeSelectionReqState: this.onChangeSelectionReq,
+            onChangeSelectionMemState: this.onChangeSelectionMem,
         };
     }
 
@@ -112,6 +116,10 @@ class TeamManage extends Component {
         this.setState({ requestSelected: e.target.value });
     };
 
+    onChangeSelectionMem = (e) => {
+        this.setState({ memberSelected: e.target.value });
+    };
+
     // For accepting requests to join the team
     AcceptRequest = (e) => {
         e.preventDefault();
@@ -146,6 +154,36 @@ class TeamManage extends Component {
         }
     }
 
+    // For kicking people off the team
+    KickMember = (e) => {
+        e.preventDefault();
+        // Grabs index selected and grabbing user info
+        var index = this.state.memberSelected;
+        if (index !== "" || index !== null) {
+            var members = this.state.teamObject.members;
+
+            // Get rid of person off the request list
+            members.splice(index, 1)
+            this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({ members })
+
+            // Need to call function get rid of them off the team on their profile
+        }
+    }
+
+    // For promoting member to leader
+    PromoteToLeader = (e) => {
+        e.preventDefault();
+        // Grabs index selected and grabbing user info
+        var index = this.state.memberSelected;
+        if (index !== "" || index !== null) {
+            var members = this.state.teamObject.members;
+
+            // Change leader to member selected
+            var leader = members[index][1];
+            this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({ leader })
+        }
+    }
+
     render() {
         const { addbox, removebox, description, members } = this.state;
 
@@ -161,8 +199,10 @@ class TeamManage extends Component {
                                     <img className="team-icon-individual" src={this.state.teamicon} alt="" />
                                 </div>
                                 {this.state.members !== '' ? 
-                                    <MembersList members={this.state.members} /> :
-                                    <MembersList members={[]}/>
+                                    <MembersList members={this.state.members} kick={this.state.KickMemberState}
+                                    promote={this.state.PromoteToLeaderState} onChange={this.state.onChangeSelectionMemState}/> :
+                                    <MembersList members={[]} kick={this.state.KickMemberState}
+                                    promote={this.state.PromoteToLeaderState} onChange={this.state.onChangeSelectionMemState}/>
                                 }
                                 {this.state.requests !== '' ? 
                                     <RequestList requests={this.state.requests} decline={this.state.DeclineRequestState} 
@@ -190,19 +230,21 @@ class TeamManage extends Component {
     }
 }
 
-const MembersList = ({ members }) => (
+const MembersList = ({ members, promote, kick, onChange }) => (
     <Form className="team-manage-text">
         <Form.Group controlId="exampleForm.ControlSelect2">
             <Form.Label>Team Members:</Form.Label>
-            <Form.Control as="select" multiple>
-                {members.map(index => (
-                    <option key={index}>{index[0]}</option>
+            <Form.Control as="select" multiple
+            onChange={ (e) => onChange(e)}
+            >
+                {members.map((index, i) => (
+                    <option value={i} key={i}>{index[0]}</option>
                 ))}
             </Form.Control>
-            <Button className="team-manage-button" variant="outline-success" type="submit">
+            <Button className="team-manage-button" variant="outline-success" type="button" onClick={(e) => promote(e)}>
                 Promote to leader
             </Button>
-            <Button className="team-manage-button-2" variant="outline-danger" type="submit">
+            <Button className="team-manage-button-2" variant="outline-danger" type="button" onClick={(e) => kick(e)}>
                 Kick
             </Button>
         </Form.Group>
