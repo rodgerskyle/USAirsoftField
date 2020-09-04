@@ -39,7 +39,6 @@ class TeamManage extends Component {
     }
 
     componentDidMount() {
-
         if (this.state.authUser.team !== null) {
             //Figure out rank logic here
             this.props.firebase.team(this.state.authUser.team.toLowerCase()).on('value', snapshot => {
@@ -47,8 +46,8 @@ class TeamManage extends Component {
 
                 this.setState({
                     teamObject: Object,
-                    requests: Object.requests,
-                    members: Object.members,
+                    requests: typeof Object.requests !== 'undefined' ? Object.requests : '',
+                    members: typeof Object.members !== 'undefined' ? Object.members: '',
                 }, function () {
                     //After setstate, then grab points and profile
                     this.getPicture(this.state.authUser.team.toLowerCase());
@@ -133,9 +132,18 @@ class TeamManage extends Component {
             let member = [user, uid];
 
             // Get rid of person off the request list and add them to members
-            requests.splice(index, 1)
-            members.push(member);
-            this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({ requests, members })
+            var manageTeam = this.props.firebase.createTeam();
+            manageTeam({option: "accept", user: uid
+            }).then(function(result) {
+                // Read result of the Cloud Function.
+                var update = result.data.message;
+                if (update == "Complete") {
+                    //If team was updated without issue, continue with change
+                    requests.splice(index, 1)
+                    members.push(member);
+                    this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({ requests, members })
+                }
+            });
         }
     }
 
@@ -162,11 +170,19 @@ class TeamManage extends Component {
         if (index !== "" || index !== null) {
             var members = this.state.teamObject.members;
 
-            // Get rid of person off the request list
-            members.splice(index, 1)
-            this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({ members })
 
             // Need to call function get rid of them off the team on their profile
+            var manageTeam = this.props.firebase.createTeam();
+            manageTeam({option: "kick", user: members[index][1]
+            }).then(function(result) {
+                // Read result of the Cloud Function.
+                var update = result.data.message;
+                if (update == "Complete") {
+                    //If team was updated without issue, continue with change
+                    members.splice(index, 1)
+                    this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({ members })
+                }
+            });
         }
     }
 
@@ -198,19 +214,10 @@ class TeamManage extends Component {
                                 <div className="team-single-img">
                                     <img className="team-icon-individual" src={this.state.teamicon} alt="" />
                                 </div>
-                                {this.state.members !== '' ? 
                                     <MembersList members={this.state.members} kick={this.state.KickMemberState}
-                                    promote={this.state.PromoteToLeaderState} onChange={this.state.onChangeSelectionMemState}/> :
-                                    <MembersList members={[]} kick={this.state.KickMemberState}
                                     promote={this.state.PromoteToLeaderState} onChange={this.state.onChangeSelectionMemState}/>
-                                }
-                                {this.state.requests !== '' ? 
                                     <RequestList requests={this.state.requests} decline={this.state.DeclineRequestState} 
-                                    accept={this.state.AcceptRequestState} onChange={this.state.onChangeSelectionReqState}/> :
-                                    <RequestList requests={[]} decline={this.state.DeclineRequestState} 
-                                    accept={this.state.AcceptRequestState} onChange={this.state.onChangeSelectionReqState}
-                                    />
-                                }
+                                    accept={this.state.AcceptRequestState} onChange={this.state.onChangeSelectionReqState}/>
                                 <Form className="team-manage-text">
                                     <Form.Group controlId="exampleForm.ControlTextarea1">
                                         <Form.Label>Add Description Here:</Form.Label>
@@ -236,10 +243,10 @@ const MembersList = ({ members, promote, kick, onChange }) => (
             <Form.Label>Team Members:</Form.Label>
             <Form.Control as="select" multiple
             onChange={ (e) => onChange(e)}
-            >
-                {members.map((index, i) => (
+            > 
+                {members !== '' ? members.map((index, i) => (
                     <option value={i} key={i}>{index[0]}</option>
-                ))}
+                )): ""}
             </Form.Control>
             <Button className="team-manage-button" variant="outline-success" type="button" onClick={(e) => promote(e)}>
                 Promote to leader
@@ -259,9 +266,9 @@ const RequestList = ({ requests, accept, decline, onChange }) => (
             <Form.Control as="select" multiple
             onChange={ (e) => onChange(e)}
             >
-                {requests.map((index, i) => (
+                {requests !== '' ? requests.map((index, i) => (
                     <option value={i} key={i}>{index[0]}</option>
-                ))}
+                )): ""}
             </Form.Control>
             <Button className="team-manage-button" variant="outline-success" type="button" onClick={(e) => accept(e)}>
                 Accept Request

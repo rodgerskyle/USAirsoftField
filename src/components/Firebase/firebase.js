@@ -68,6 +68,8 @@ class Firebase {
 
     createTeam = () => this.func.httpsCallable('createTeam');
 
+    manageTeam = () => this.func.httpsCallable('manageTeam');
+
     // Database API
 
     storage = img => this.st.ref().child(`ranks/${img}`);
