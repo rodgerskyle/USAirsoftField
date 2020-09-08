@@ -28,10 +28,13 @@ class TeamManage extends Component {
             members: '',
             requests: '',
             requestSelected: [],
+            requestError: '',
             memberSelected: [],
+            memberError: '',
             AcceptRequestState: this.AcceptRequest,
             DeclineRequestState: this.DeclineRequest,
             KickMemberState: this.KickMember,
+            QuitTeamState : this.QuitTeam,
             PromoteToLeaderState: this.PromoteToLeader,
             onChangeSelectionReqState: this.onChangeSelectionReq,
             onChangeSelectionMemState: this.onChangeSelectionMem,
@@ -71,42 +74,6 @@ class TeamManage extends Component {
         })
     }
 
-    //Add member to team
-    addMember(e) {
-        e.preventDefault();
-        console.log(this.state.addbox[0]);
-        //Create message to show they were added and reset input box
-        var requests = this.state.teamObject.requests;
-        var user = this.state.addbox[0];
-        user = "martinhernandez"
-        var uid = "OzZdvadHPkcOgO5YEefjzJfLffb2";
-        let member = [user, uid];
-        requests.push(member);
-        console.log(requests);
-        this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({ requests })
-    }
-
-    //Remove member from team
-    removeMember(e) {
-        e.preventDefault();
-        console.log(this.state.removebox[0]);
-        //Create message to show they were removed and reset input box
-        var members = this.state.teamObject.members;
-        var found = false;
-        for (var i = 0; i < members.length; i++) {
-            if (members[i][0] === this.state.removebox[0]) {
-                found = true;
-                delete members[i];
-            }
-        }
-        if (found === false) {
-            //This player isnt on team
-        }
-        console.log(members);
-        console.log(this.state.requests)
-        this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({ members })
-    }
-
     onChange = event => {
         this.setState({ [event.target.name]: event.target.value });
     };
@@ -124,25 +91,25 @@ class TeamManage extends Component {
         e.preventDefault();
         // Grabs index selected and grabbing user info
         var index = this.state.requestSelected;
-        if (index !== "" || index !== null) {
-            var requests = this.state.teamObject.requests;
-            var members = this.state.teamObject.members;
-            var user = members[index][0];
-            var uid =  members[index][1];
+        if (index !== "" && index !== null && typeof index !== 'undefined') {
+            var requests = this.state.requests;
+            var members = this.state.members !== '' ? this.state.members : [];
+            var user = requests[index][0];
+            var uid =  requests[index][1];
             let member = [user, uid];
 
             // Get rid of person off the request list and add them to members
-            var manageTeam = this.props.firebase.createTeam();
-            manageTeam({option: "accept", user: uid
-            }).then(function(result) {
-                // Read result of the Cloud Function.
-                var update = result.data.message;
-                if (update == "Complete") {
-                    //If team was updated without issue, continue with change
-                    requests.splice(index, 1)
-                    members.push(member);
-                    this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({ requests, members })
-                }
+            var acceptRequest = this.props.firebase.acceptRequest();
+            acceptRequest({user: uid, team: this.state.authUser.team, new_member: member, member_index: index}).then( function(result) {
+                //If team was updated without issue, continue with change
+                console.log(result.error)
+            }).catch(function(error){
+                console.log("here?")
+                this.setState({requestError: "Error: " + error.message})
+                //this.setState({requestError: details})
+                //Remove from request list if on team already too if that was the error message NEEDS WORK
+                //requests.splice(index, 1)
+                //this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({ requests }) 
             });
         }
     }
@@ -153,7 +120,7 @@ class TeamManage extends Component {
         // Grabs index selected and grabbing user info
         var index = this.state.requestSelected;
 
-        if (index !== "" || index !== null) {
+        if (index !== "" && index !== null && typeof index !== 'undefined') {
             var requests = this.state.teamObject.requests;
 
             // Get rid of person off the request list
@@ -167,23 +134,43 @@ class TeamManage extends Component {
         e.preventDefault();
         // Grabs index selected and grabbing user info
         var index = this.state.memberSelected;
-        if (index !== "" || index !== null) {
+        if (index !== "" && index !== null && typeof index !== 'undefined') {
             var members = this.state.teamObject.members;
+            var uid = members[index][1];
 
 
             // Need to call function get rid of them off the team on their profile
-            var manageTeam = this.props.firebase.createTeam();
-            manageTeam({option: "kick", user: members[index][1]
+            var kickMember = this.props.firebase.kickMember();
+            kickMember({team: this.state.authUser.team, user: uid, member_index: index
             }).then(function(result) {
                 // Read result of the Cloud Function.
-                var update = result.data.message;
-                if (update == "Complete") {
+                //var update = result.data.message;
+                console.log(result.data)
+                //if (update === "Complete") {
                     //If team was updated without issue, continue with change
-                    members.splice(index, 1)
-                    this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({ members })
-                }
+                    //members.splice(index, 1)
+                    //this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({ members })
+                //}
+            }).catch(function(error) {
+                console.log("error: " +error)
             });
         }
+    }
+
+    QuitTeam = (e) => {
+        e.preventDefault();
+        var manageTeam = this.props.firebase.manageTeam();
+        manageTeam({option: "quit", user: '', team: ''
+        }).then(function(result) {
+            // Read result of the Cloud Function.
+            var update = result.data.message;
+            if (update === "Complete") {
+                //If team was updated without issue, you are off the team
+            }
+            else {
+                this.setState({memberError: "You cannot be leader to quit the team."})
+            }
+        });
     }
 
     // For promoting member to leader
@@ -191,7 +178,7 @@ class TeamManage extends Component {
         e.preventDefault();
         // Grabs index selected and grabbing user info
         var index = this.state.memberSelected;
-        if (index !== "" || index !== null) {
+        if (index !== "" && index !== null && typeof index !== 'undefined') {
             var members = this.state.teamObject.members;
 
             // Change leader to member selected
@@ -215,9 +202,13 @@ class TeamManage extends Component {
                                     <img className="team-icon-individual" src={this.state.teamicon} alt="" />
                                 </div>
                                     <MembersList members={this.state.members} kick={this.state.KickMemberState}
-                                    promote={this.state.PromoteToLeaderState} onChange={this.state.onChangeSelectionMemState}/>
+                                    promote={this.state.PromoteToLeaderState} onChange={this.state.onChangeSelectionMemState}
+                                    quit={this.state.QuitTeamState} errortext={this.state.memberError}
+                                    />
                                     <RequestList requests={this.state.requests} decline={this.state.DeclineRequestState} 
-                                    accept={this.state.AcceptRequestState} onChange={this.state.onChangeSelectionReqState}/>
+                                    accept={this.state.AcceptRequestState} onChange={this.state.onChangeSelectionReqState}
+                                    errortext={this.state.requestError}
+                                    />
                                 <Form className="team-manage-text">
                                     <Form.Group controlId="exampleForm.ControlTextarea1">
                                         <Form.Label>Add Description Here:</Form.Label>
@@ -237,7 +228,7 @@ class TeamManage extends Component {
     }
 }
 
-const MembersList = ({ members, promote, kick, onChange }) => (
+const MembersList = ({ members, promote, kick, onChange, quit, errortext }) => (
     <Form className="team-manage-text">
         <Form.Group controlId="exampleForm.ControlSelect2">
             <Form.Label>Team Members:</Form.Label>
@@ -254,12 +245,16 @@ const MembersList = ({ members, promote, kick, onChange }) => (
             <Button className="team-manage-button-2" variant="outline-danger" type="button" onClick={(e) => kick(e)}>
                 Kick
             </Button>
+            <Button className="team-manage-button-2" variant="outline-danger" type="submit" onClick={(e) => quit(e)}>
+                Quit Team
+            </Button>
         </Form.Group>
+        <p>{errortext}</p>
     </Form>
 );
 
 
-const RequestList = ({ requests, accept, decline, onChange }) => (
+const RequestList = ({ requests, accept, decline, onChange, errortext }) => (
     <Form className="team-manage-text">
         <Form.Group controlId="exampleForm.ControlSelect2">
             <Form.Label>Players wanting to join:</Form.Label>
@@ -277,68 +272,10 @@ const RequestList = ({ requests, accept, decline, onChange }) => (
                 Decline Request
             </Button>
         </Form.Group>
+        <p>{errortext}</p>
     </Form>
 );
 
 const condition = authUser => !!authUser;
 
 export default withFirebase(withAuthorization(condition)(TeamManage));
-
-/* OLD CODE
-
-                                <Form className="team-manage-text" onSubmit={(e) => this.addMember(e)}>
-                                    <Form.Group controlId="exampleForm.ControlInput1">
-                                        <Form.Label>Add Team Member (Input their Username here):</Form.Label>
-                                        <Typeahead
-                                            labelKey="addbox"
-                                            id="team-member-add"
-                                            placeholder="ex: johnsmith"
-                                            onChange={(addbox) => {
-                                                this.setState({ addbox });
-                                            }}
-                                            options={members}
-                                            selected={this.state.addbox}
-                                        />
-                                        <Button className="team-manage-button" variant="outline-success" type="submit">
-                                            Add Member
-                                    </Button>
-                                    </Form.Group>
-                                </Form>
-                                <Form className="team-manage-text" onSubmit={(e) => this.removeMember(e)}>
-                                    <Form.Group controlId="exampleForm.ControlInput1">
-                                        <Form.Label>Remove Team Member (Input their Username here):</Form.Label>
-                                        <Typeahead
-                                            labelKey="removebox"
-                                            id="team-member-remove"
-                                            placeholder="ex: johnsmith"
-                                            onChange={(removebox) => {
-                                                this.setState({ removebox });
-                                            }}
-                                            options={members}
-                                            selected={this.state.removebox}
-                                        />
-                                        <Button className="team-manage-button" variant="outline-danger" type="submit">
-                                            Remove Member
-                                        </Button>
-                                    </Form.Group>
-                                </Form>
-
-                                <Form className="team-manage-text">
-                                    <Form.Group controlId="exampleForm.ControlSelect2">
-                                        <Form.Label>Players wanting to join:</Form.Label>
-                                        <Form.Control as="select" multiple>
-                                            <option>1</option>
-                                            <option>2</option>
-                                            <option>3</option>
-                                            <option>4</option>
-                                            <option>5</option>
-                                        </Form.Control>
-                                        <Button className="team-manage-button" variant="outline-success" type="submit">
-                                            Accept Request
-                                    </Button>
-                                        <Button className="team-manage-button-2" variant="outline-danger" type="submit">
-                                            Decline Request
-                                    </Button>
-                                    </Form.Group>
-                                </Form>
-*/

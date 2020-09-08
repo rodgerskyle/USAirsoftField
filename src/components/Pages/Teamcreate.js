@@ -88,7 +88,7 @@ class TeamCreate extends Component {
          }).then(function(result) {
             // Read result of the Cloud Function.
             var update = result.data.message;
-            if (update == "Complete") {
+            if (update === "Complete") {
                 //If team was created without issue set completion to true
                 this.setState({complete: true})
             }
@@ -237,7 +237,6 @@ class TeamCreate extends Component {
                                     </Row>
                                 </Container>
                             )
-                        }
                         }
                     </div>
                 )

@@ -70,6 +70,10 @@ class Firebase {
 
     manageTeam = () => this.func.httpsCallable('manageTeam');
 
+    acceptRequest = () => this.func.httpsCallable('acceptRequest');
+
+    kickMember = () => this.func.httpsCallable('kickMember');
+
     // Database API
 
     storage = img => this.st.ref().child(`ranks/${img}`);
