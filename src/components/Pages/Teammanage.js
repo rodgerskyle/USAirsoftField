@@ -31,6 +31,7 @@ class TeamManage extends Component {
             requestError: '',
             memberSelected: [],
             memberError: '',
+            checkBox: false,
             AcceptRequestState: this.AcceptRequest,
             DeclineRequestState: this.DeclineRequest,
             KickMemberState: this.KickMember,
@@ -51,6 +52,7 @@ class TeamManage extends Component {
                     teamObject: Object,
                     requests: typeof Object.requests !== 'undefined' ? Object.requests : '',
                     members: typeof Object.members !== 'undefined' ? Object.members: '',
+                    description: typeof Object.description !== 'undefined' ? Object.description: '',
                 }, function () {
                     //After setstate, then grab points and profile
                     this.getPicture(this.state.authUser.team.toLowerCase());
@@ -85,6 +87,14 @@ class TeamManage extends Component {
     onChangeSelectionMem = (e) => {
         this.setState({ memberSelected: e.target.value });
     };
+
+    onChangeCheck = (e) => {
+        this.setState({ checkBox: !this.state.checkBox})
+    }
+
+    onChangeDescription = (e) => {
+        this.setState({ description: e.target.value})
+    }
 
     // For accepting requests to join the team
     AcceptRequest = (e) => {
@@ -157,19 +167,15 @@ class TeamManage extends Component {
         }
     }
 
+    // For quitting the team assuming team has no players
     QuitTeam = (e) => {
         e.preventDefault();
-        var manageTeam = this.props.firebase.manageTeam();
-        manageTeam({option: "quit", user: '', team: ''
+        var quitTeam = this.props.firebase.quitTeam();
+        quitTeam({team: this.state.authUser.team
         }).then(function(result) {
-            // Read result of the Cloud Function.
-            var update = result.data.message;
-            if (update === "Complete") {
-                //If team was updated without issue, you are off the team
-            }
-            else {
-                this.setState({memberError: "You cannot be leader to quit the team."})
-            }
+            console.log(result.data)
+        }).catch(function(error) {
+            console.log("error: " +error)
         });
     }
 
@@ -183,8 +189,38 @@ class TeamManage extends Component {
 
             // Change leader to member selected
             var leader = members[index][1];
-            this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({ leader })
+            // Get rid of promoted player off of member list and add self to member list first
+            var members = this.state.members;
+            let member = [this.state.authUser.name, this.state.authUser.uid];
+            members.splice(index, 1);
+            members.push(member)
+            this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({ members, leader })
         }
+    }
+
+    // For disbanding team
+    DisbandTeam = (e) => {
+        e.preventDefault();
+        // Make sure team is empty first
+        // Verify that user wants to disband team
+        if (this.state.checkBox === true) {
+            e.preventDefault();
+            var disbandTeam = this.props.firebase.quitTeam();
+            disbandTeam({team: this.state.authUser.team
+            }).then(function(result) {
+                console.log(result.data)
+            }).catch(function(error) {
+                console.log("error: " +error)
+            });
+        }
+    }
+
+    // Updating the team description
+    UpdateDescription = (e) => {
+        e.preventDefault();
+        //update description 
+        let description = this.state.description
+        this.props.firebase.team(this.state.authUser.team.toLowerCase()).update(description)
     }
 
     render() {
@@ -212,12 +248,24 @@ class TeamManage extends Component {
                                 <Form className="team-manage-text">
                                     <Form.Group controlId="exampleForm.ControlTextarea1">
                                         <Form.Label>Add Description Here:</Form.Label>
-                                        <Form.Control as="textarea" rows="3" />
-                                        <Button className="team-manage-button" variant="outline-success" type="submit">
-                                            Submit
-                                    </Button>
+                                        <Form.Control as="textarea" rows="3" value={this.state.description}
+                                        onChange={(e) => this.onChangeDescription(e)}/>
+                                        <Button className="team-manage-button" variant="outline-success" 
+                                        type="button" onClick={(e) => this.UpdateDescription(e)}>
+                                            Update
+                                        </Button>
                                     </Form.Group>
                                 </Form>
+                                <Button variant="outline-danger" size="md" block 
+                                type="button" onClick={(e) => this.DisbandTeam(e)}>
+                                    Disband team
+                                </Button>
+                                <Form.Group controlId="formBasicCheckbox">
+                                    <Form.Check checked={this.state.checkBox} 
+                                    onChange={this.onChangeCheck}
+                                    type="checkbox" className="team-manage-text"
+                                    label="By checking this, you confirm to disband your team" />
+                                </Form.Group>
                             </Container>
                         }
                     </div>
