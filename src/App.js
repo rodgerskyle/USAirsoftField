@@ -27,6 +27,7 @@ import Map from './components/Pages/Map';
 import Teampage from './components/Pages/Teampage'
 import Teammanage from './components/Pages/Teammanage'
 import Teamcreate from './components/Pages/Teamcreate'
+import Teamjoin from './components/Pages/Teamjoin'
 
 const App = () => (
       <Router>
@@ -70,6 +71,9 @@ const App = () => (
             </Route>
             <Route exact path="/createteam">
               <Teamcreate />
+            </Route>
+            <Route exact path="/jointeam">
+              <Teamjoin />
             </Route>
             <Route exact path="/profilelookup/:id"
             render={(props) => (

@@ -78,6 +78,8 @@ class Firebase {
 
     disbandTeam = () => this.func.httpsCallable('disbandTeam');
 
+    requestTeam = () => this.func.httpsCallable('requestTeam');
+
     // Database API
 
     storage = img => this.st.ref().child(`ranks/${img}`);

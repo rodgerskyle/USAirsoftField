@@ -85,7 +85,7 @@ class TeamCreate extends Component {
         //Create message to show they were removed and reset input box
         var createTeam = this.props.firebase.createTeam();
         createTeam({teamname: this.state.teamname, description: this.state.description
-         }).then(function(result) {
+         }).then( (result) => {
             // Read result of the Cloud Function.
             var update = result.data.message;
             if (update === "Complete") {

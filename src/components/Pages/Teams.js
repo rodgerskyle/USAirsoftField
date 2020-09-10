@@ -72,10 +72,12 @@ class Teams extends Component {
                         </Td>
                         </Col>
                         <Col>
+                        <Td to="/jointeam">
                         <Button variant="outline-info">
                         <p className="team-rows">Join Team</p>
                                 <i className="fa fa-users fa-2x text-white team-rows-icons"></i>
                         </Button>
+                        </Td>
                         </Col>
                         <Col>
                         <Td to="/manageteam">
@@ -97,23 +99,25 @@ class Teams extends Component {
 
 
 
-    const TeamList = ({ teams, teamicon }) => (
-    <Table className="table table-striped table-dark">
-        <tbody>
-            {teams.map((team, i) => (
-            <tr key={team.teamname}>
-                <Td to={"/teams/"+team.teamname}>
-                    <img className="team-pictures" 
-                    src={teamicon.length === 0 ? teamicon[team.teamname]: null} alt={"Team " + team.teamname}></img>
-                </Td>
-                <Td cl="team-name" to={"/teams/"+team.teamname}>
-                    <strong>{(team.teamname).toUpperCase()}</strong>
-                </Td>
-            </tr>
-            ))}
-        </tbody>
-        </Table>
-    );
+const TeamList = ({ teams, teamicon }) => (
+<Table className="table table-striped table-dark">
+    <tbody>
+        {teams.map((team, i) => (
+        <tr key={team.teamname}>
+            <Td to={"/teams/"+team.teamname}>
+                <img className="team-pictures" 
+                src={teamicon.length === 0 ? teamicon[team.teamname]: null} alt={"Team " + team.teamname}></img>
+            </Td>
+            <Td cl="team-name" to={"/teams/"+team.teamname}>
+                <strong>{(team.teamname).toUpperCase()}</strong>
+            </Td>
+        </tr>
+        ))}
+    </tbody>
+    </Table>
+);
+
+
 
 
 export default withFirebase(Teams);
