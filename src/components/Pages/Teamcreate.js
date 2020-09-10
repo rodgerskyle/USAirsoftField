@@ -90,7 +90,9 @@ class TeamCreate extends Component {
             var update = result.data.message;
             if (update === "Complete") {
                 //If team was created without issue set completion to true
-                this.setState({complete: true})
+                this.setState({complete: true}, () => {
+                    window.location.href="/teams";
+                })
             }
         });
     }

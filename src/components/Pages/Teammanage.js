@@ -36,6 +36,7 @@ class TeamManage extends Component {
             checkBox: false,
             requestLoading: false,
             membersLoading: false,
+            deleting: false,
             AcceptRequestState: this.AcceptRequest,
             DeclineRequestState: this.DeclineRequest,
             KickMemberState: this.KickMember,
@@ -47,7 +48,7 @@ class TeamManage extends Component {
     }
 
     componentDidMount() {
-        if (this.state.authUser.team !== null) {
+        if (this.state.authUser.team !== null && this.state.deleting === false) {
             //Figure out rank logic here
             this.props.firebase.team(this.state.authUser.team.toLowerCase()).on('value', snapshot => {
                 const Object = snapshot.val();
@@ -116,17 +117,13 @@ class TeamManage extends Component {
             var acceptRequest = this.props.firebase.acceptRequest();
             acceptRequest({user: uid, teamname: this.state.authUser.team,
                  new_member: member, member_index: index, team: this.state.teamObject
-                }).then( function(result) {
+                }).then( (result) => {
                 //If team was updated without issue, continue with change
-                console.log(result)
+                if (result.data.message === "Complete")
+                    this.setState({requestError: "Request Accepted.", requestLoading: false})
             }).catch( (error) => {
                 console.log(error)
                 this.setState({requestError: "Error: " + error.message})
-                //Remove from request list if on team already too if that was the error message NEEDS WORK
-                requests.splice(index, 1)
-                this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({ requests }).then(() => {
-                    this.setState({requestMessage: "Request Accepted.", requestLoading: false})
-                })
             });
         }
     }
@@ -180,10 +177,14 @@ class TeamManage extends Component {
         e.preventDefault();
         var quitTeam = this.props.firebase.quitTeam();
         quitTeam({user: this.state.authUser
-        }).then(function(result) {
-            console.log(result.data)
+        }).then( (result) => {
             // Change cache to reflect change
-        }).catch(function(error) {
+            if (result.data.message === "Complete") {
+                var tempUser = this.state.authUser;
+                tempUser.team = "";
+                localStorage.setItem('authUser', JSON.stringify(tempUser));
+            }
+        }).catch( (error) => {
             console.log("error: " +error)
         });
     }
@@ -195,12 +196,11 @@ class TeamManage extends Component {
         var index = this.state.memberSelected;
         if (index !== "" && index !== null && typeof index !== 'undefined') {
             this.setState({memberLoading: true})
-            var members = this.state.teamObject.members;
+            var members = this.state.members;
 
             // Change leader to member selected
             var leader = members[index][1];
             // Get rid of promoted player off of member list and add self to member list first
-            var members = this.state.members;
             let member = [this.state.authUser.name, this.state.authUser.uid];
             members.splice(index, 1);
             members.push(member)
@@ -216,14 +216,20 @@ class TeamManage extends Component {
         // Make sure team is empty first
         // Verify that user wants to disband team
         if (this.state.checkBox === true) {
-            e.preventDefault();
+            this.setState({deleting: true})
             //Pass in user object
             var disbandTeam = this.props.firebase.disbandTeam();
-            disbandTeam({team: this.state.authUser.team, user : this.state.authUser
-            }).then(function(result) {
-                console.log(result.data)
-            }).catch(function(error) {
+            disbandTeam({team: this.state.authUser.team, user: this.state.authUser
+            }).then( (result) => {
+                if (result.data.message === "Complete") {
+                    // WIP on making sure cache is updated
+                    var tempUser = this.state.authUser;
+                    tempUser.team = "";
+                    localStorage.setItem('authUser', JSON.stringify(tempUser));
+                }
+            }).catch( (error) => {
                 console.log("error: " +error)
+                this.setState({deleting: false})
             });
         }
     }
@@ -293,7 +299,7 @@ class TeamManage extends Component {
 
 const MembersList = ({ members, promote, kick, onChange, quit, errortext }) => (
     <Form className="team-manage-text">
-        <Form.Group controlId="exampleForm.ControlSelect2">
+        <Form.Group controlId="member-select">
             <Form.Label>Team Members:</Form.Label>
             <Form.Control as="select" multiple
             onChange={ (e) => onChange(e)}
@@ -319,7 +325,7 @@ const MembersList = ({ members, promote, kick, onChange, quit, errortext }) => (
 
 const RequestList = ({ requests, accept, decline, onChange, errortext }) => (
     <Form className="team-manage-text">
-        <Form.Group controlId="exampleForm.ControlSelect2">
+        <Form.Group controlId="request-select">
             <Form.Label>Players wanting to join:</Form.Label>
             <Form.Control as="select" multiple
             onChange={ (e) => onChange(e)}
