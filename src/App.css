@@ -339,10 +339,14 @@
   padding-top: 20px;
 }
 
+.background-static-lb::before {
+  background-color: black;
+}
+
 .background-static-lb{
-  background-image: url("assets/background-lb.jpeg");
+  background: url("assets/background-lb.jpeg") center no-repeat;
+  background-size: 100% 100%;
   color: white;
-  background-color: rgb(4, 4, 4);
   height: 110vh;
   margin-top: -.7rem;
 }
