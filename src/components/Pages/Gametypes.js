@@ -37,45 +37,47 @@ goToNextPage = () =>
 render() {
     const { pageNumber, numPages } = this.state;
     return (
-        <div className="pdfStyle">
-            <h2>Gametypes</h2>
-            <Container fluid>
-                <Row className="align-items-center">
-                    <Col>
-                        <nav>
-                            <button onClick={this.goToPrevPage}
-                                disabled={this.state.pageNumber - 1 > 0 ? false : true}>
-                                Prev</button>
-                            <button onClick={this.goToNextPage}
-                                disabled={this.state.pageNumber + 1 <= this.state.numPages ? false : true}>
-                                Next</button>
-                        </nav>
-                        <a href={gametypes} target='_blank'>
-                            <i className="fa fa-print fa-2x text-white"></i>
-                        </a>
-                    </Col>
-                </Row>
-                <Row className="align-items-center">
-                    <Col className="pdfFile">
-                        <div style={{ width: 600 }}>
-                            <Document
-                                file={gametypes}
-                                onLoadSuccess={this.onDocumentLoadSuccess}
-                            >
-                                <Page pageNumber={pageNumber} width={600} />
-                            </Document>
-                        </div>
-                    </Col>
-                </Row>
-                <Row className="align-items-center col-md-auto">
-                    <Col>
-                        <p>
-                            Page {pageNumber} of {numPages}
-                        </p>
+        <div className="background-static-all">
+            <div className="pdfStyle">
+                <h2>Gametypes</h2>
+                <Container fluid>
+                    <Row className="align-items-center">
+                        <Col>
+                            <nav>
+                                <button onClick={this.goToPrevPage}
+                                    disabled={this.state.pageNumber - 1 > 0 ? false : true}>
+                                    Prev</button>
+                                <button onClick={this.goToNextPage}
+                                    disabled={this.state.pageNumber + 1 <= this.state.numPages ? false : true}>
+                                    Next</button>
+                            </nav>
+                            <a href={gametypes} target='_blank'>
+                                <i className="fa fa-print fa-2x text-white"></i>
+                            </a>
+                        </Col>
+                    </Row>
+                    <Row className="align-items-center">
+                        <Col className="pdfFile">
+                            <div style={{ width: 600 }}>
+                                <Document
+                                    file={gametypes}
+                                    onLoadSuccess={this.onDocumentLoadSuccess}
+                                >
+                                    <Page pageNumber={pageNumber} width={600} />
+                                </Document>
+                            </div>
+                        </Col>
+                    </Row>
+                    <Row className="align-items-center col-md-auto">
+                        <Col>
+                            <p>
+                                Page {pageNumber} of {numPages}
+                            </p>
 
-                    </Col>
-                </Row>
-            </Container>
+                        </Col>
+                    </Row>
+                </Container>
+            </div>
         </div>
     );
 }

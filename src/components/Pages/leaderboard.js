@@ -21,6 +21,8 @@ class Leaderboards extends Component {
             getRankState: this.getRank,
             monthly: false,
             currentMonth: true,
+            thisMonth: "",
+            lastMonth: "",
         };
     }
 
@@ -99,9 +101,38 @@ class Leaderboards extends Component {
         index--;
         return index;
     }
+    
+    //Grabbing month and storing it
+    getMonths(month) {
+        if (month === 1)
+            this.setState({thisMonth: "January", lastMonth: "December"})
+        else if (month === 2)
+            this.setState({thisMonth: "February", lastMonth: "January"})
+        else if (month === 3)
+            this.setState({thisMonth: "March", lastMonth: "February"})
+        else if (month === 4)
+            this.setState({thisMonth: "April", lastMonth: "March"})
+        else if (month === 5)
+            this.setState({thisMonth: "May", lastMonth: "April"})
+        else if (month === 6)
+            this.setState({thisMonth: "June", lastMonth: "May"})
+        else if (month === 7)
+            this.setState({thisMonth: "July", lastMonth: "June"})
+        else if (month === 8)
+            this.setState({thisMonth: "August", lastMonth: "July"})
+        else if (month === 9)
+            this.setState({thisMonth: "September", lastMonth: "August"})
+        else if (month === 10)
+            this.setState({thisMonth: "October", lastMonth: "September"})
+        else if (month === 11)
+            this.setState({thisMonth: "November", lastMonth: "October"})
+        else if (month === 12)
+            this.setState({thisMonth: "December", lastMonth: "November"})
+    }
 
     componentDidMount() {
         this.setState({ loading: true });
+        this.getMonths(parseInt(new Date().getMonth().toLocaleString()) + 1)
 
         this.props.firebase.users().on('value', snapshot => {
             const usersObject = snapshot.val();
@@ -126,17 +157,17 @@ class Leaderboards extends Component {
         const { users, loading, getRankState } = this.state;
 
         return (
-            <div className="pagePlaceholder">
-                <Container>
-                    <Row>
-                        <Col>
+            <div className="background-static-lb">
+                <Container className="leaderboard-page">
+                    <Row className="header-lb">
+                        <Col className="button-left-lb">
                             {this.state.monthly === true ?
                             <BootstrapSwitchButton
                                 checked={this.state.currentMonth}
                                 onstyle="dark"
                                 width={120}
-                                onlabel='Current Month'
-                                offlabel='Previous Month'
+                                onlabel={this.state.thisMonth}
+                                offlabel={this.state.lastMonth}
                                 onChange={() => {
                                     this.setState({ currentMonth: !this.state.currentMonth})
                                 }}
@@ -145,7 +176,7 @@ class Leaderboards extends Component {
                         <Col>
                             <h1>Leaderboards</h1>
                         </Col>
-                        <Col>
+                        <Col className="button-right-lb">
                             <BootstrapSwitchButton
                                 checked={!this.state.monthly}
                                 onstyle="dark"
@@ -158,13 +189,14 @@ class Leaderboards extends Component {
                             />
                         </Col>
                     </Row>
+                    <Row>
+                        {loading && <div>Loading ...</div>}
+
+                        <UserList users={users} images={this.state.images} getRank={getRankState} 
+                            monthly={this.state.monthly} currentMonth={this.state.currentMonth} 
+                        />
+                    </Row>
                 </Container>
-
-                {loading && <div>Loading ...</div>}
-
-                <UserList users={users} images={this.state.images} getRank={getRankState} 
-                    monthly={this.state.monthly} currentMonth={this.state.currentMonth} 
-                />
             </div>
         );
     }
@@ -172,12 +204,14 @@ class Leaderboards extends Component {
 
 
 const UserList = ({ users, images, getRank, monthly, currentMonth }) => (
-    <Table className="table table-striped table-dark">
-        <thead>
+    <Table className="table table-striped table-dark table-lb">
+        <thead className="header-lb">
             <tr>
                 <th scope="col">#</th>
                 <th scope="col">Rank</th>
                 <th scope="col">Name</th>
+                <th scope="col">Wins</th>
+                <th scope="col">Losses</th>
                 <th scope="col">Points</th>
             </tr>
         </thead>
@@ -192,7 +226,9 @@ const UserList = ({ users, images, getRank, monthly, currentMonth }) => (
                     {i + 1}</p></th>
                     <Td><img src={images.length !== 0 ? images[getRank(user.points)] : null}
                         alt="Player Rank" /></Td>
-                    <Td to={'/profilelookup/' + user.uid}>{user.name}</Td>
+                    <Td cl="profilelink-lb" to={'/profilelookup/' + user.uid}>{user.name}</Td>
+                    <Td cl="wins-lb">{user.wins}</Td>
+                    <Td cl="losses-lb">{user.losses}</Td>
                     <Td>
                         {monthly ? (currentMonth ? (user.currentmonth) : (user.previousmonth)) : user.points}
                     </Td>

@@ -61,7 +61,7 @@ class AdminPage extends Component {
         const { users, loading } = this.state;
      
         return (
-          <div className="pagePlaceholder">
+          <div className="background-static-all">
             <h1>Admin</h1>
             <Button type="submit" id="register" variant="primary" onClick={() => this.addTeam()}>
                                     Submit

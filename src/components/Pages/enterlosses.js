@@ -94,7 +94,7 @@ class EnterLosses extends Component {
 
     render() {
         return (
-            <div>
+            <div className="background-static-all">
                 <h1 className="pagePlaceholder">Admin - Enter Losses</h1>
                 <div className="form-box">
                 <Form id="formBox" onSubmit={this.updateUser}>

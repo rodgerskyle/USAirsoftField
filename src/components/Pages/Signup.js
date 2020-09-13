@@ -24,9 +24,11 @@ const config = {
 
  
 const SignUpPage = () => (
-  <div className="pagePlaceholder">
-    <h1>SignUp</h1>
-    <SignUpForm />
+  <div className="background-static-all">
+    <div className="pagePlaceholder">
+      <h1>SignUp</h1>
+      <SignUpForm />
+    </div>
   </div>
 );
 

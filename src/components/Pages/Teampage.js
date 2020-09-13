@@ -182,7 +182,7 @@ class Teampage extends Component {
 
     render() {
         return (
-            <div className="account-page">
+            <div className="background-static-all">
                 <Container>
                     <div className="team-single">
                         <Row className="team-info">

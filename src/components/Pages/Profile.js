@@ -177,7 +177,7 @@ class Profile extends Component {
         return (
             <AuthUserContext.Consumer>
                 {authUser => (
-                    <div>
+                    <div className="background-static-all">
                         <Container>
                             <div className="team-single">
                                 <Row>

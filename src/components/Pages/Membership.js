@@ -20,8 +20,10 @@ class Membership extends Component {
 
     render() {
         return (
-            <div className="pagePlaceholder">
-                <h2>Membership</h2>
+            <div className="background-static-all">
+                <div className="pagePlaceholder">
+                    <h2>Membership</h2>
+                </div>
             </div>
         );
     }

@@ -34,11 +34,11 @@ class ProfileLookup extends Component {
             this.setState({
                 authUser: userObject,
                 team: userObject.team.toUpperCase(),
-            }, function(){
+            }, function () {
                 //After setstate, then grab points and profile
                 this.getRank();
                 this.getProfile(`${this.props.match.params.id}/profilepic`);
-            } );
+            });
         });
     }
 
@@ -162,81 +162,81 @@ class ProfileLookup extends Component {
 
     render() {
         return (
-                    <div className="account-page">
-                        <Container>
-                            <div className="team-single">
-                                <Row>
-                                    <div className="col-lg-4 col-md-5 xs-margin-30px-bottom">
-                                        <div className="team-single-img">
-                                            <img className="profile-pic" src={this.state.profileicon} alt="" />
-                                        </div>
-                                        <div className="bg-light-gray padding-30px-all md-padding-25px-all sm-padding-20px-all text-center description">
-                                            <h4 className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600">{this.state.authUser.username}</h4>
-                                            <img className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600" src={this.state.images.length !== 0 ? this.state.images[this.state.rankindex] : null}
-                                                alt="Players rank" />
-                                            <p className="sm-width-95 sm-margin-auto rank-title">Rank: {this.state.rank}</p>
-                                        </div>
-                                        <div className="bg-light-gray padding-30px-all md-padding-25px-all sm-padding-20px-all text-center description extra-box">
-                                            <h2 className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600">Leaderboard Placement:</h2>
-                                            <h5 className="timer count-title count-number" data-to="1700" data-speed="1500">Top: {this.state.authUser.points}</h5>
-                                            <h5 className="timer count-title count-number" data-to="1700" data-speed="1500">Monthly: {this.state.authUser.points}</h5>
-                                        </div>
+            <div className="background-static-all">
+                    <Container>
+                        <div className="team-single">
+                            <Row>
+                                <div className="col-lg-4 col-md-5 xs-margin-30px-bottom">
+                                    <div className="team-single-img">
+                                        <img className="profile-pic" src={this.state.profileicon} alt="" />
                                     </div>
-
-                                    <div className="col-lg-8 col-md-7 stats-desc">
-                                        <div className="team-single-text padding-50px-left sm-no-padding-left">
-                                            <p className="no-margin-bottom user-name">{this.state.authUser.name}</p>
-
-                                            <Row className="text-center stat-box">
-                                                <Col>
-                                                    <div className="counter">
-                                                        <i className="fa fa-trophy fa-2x text-green"></i>
-                                                        <h2 className="timer count-title count-number" data-to="1700" data-speed="1500">{this.state.authUser.points}</h2>
-                                                        <p className="count-text ">Points</p>
-                                                    </div>
-                                                </Col>
-                                            </Row>
-
-                                            <Row className="text-center stat-box">
-                                                <Col>
-                                                    <div className="win-box counter">
-                                                        <i className="fa fa-check-circle fa-2x text-green"></i>
-                                                        <h2 className="timer count-title count-number" data-to="100" data-speed="1500">{this.state.authUser.wins}</h2>
-                                                        <p className="count-text ">Wins</p>
-                                                    </div>
-                                                </Col>
-                                                <Col>
-                                                    <div className="loss-box counter">
-                                                        <i className="fa fa-times fa-2x text-green"></i>
-                                                        <h2 className="timer count-title count-number" data-to="1700" data-speed="1500">{this.state.authUser.losses}</h2>
-                                                        <p className="count-text ">Losses</p>
-                                                    </div>
-                                                </Col>
-                                            </Row>
-
-                                            <Row className="text-center stat-box">
-                                                <Col>
-                                                    <div className="counter">
-                                                        <i className="fa fa-code fa-2x text-green"></i>
-                                                        <h2 className="timer count-title count-number" data-to="100" data-speed="1500">{this.state.authUser.freegames}</h2>
-                                                        <p className="count-text ">Free Games</p>
-                                                    </div>
-                                                </Col>
-                                                <Col>
-                                                    <div className="counter">
-                                                        <i className="fa fa-users fa-2x text-green"></i>
-                                                        <h2 className="timer count-title count-number team-link" data-to="1700" data-speed="1500">{this.state.authUser.team !== "" ? 
-                                                        <Link className="team-link" to={"/teams/"+this.state.authUser.team}>{this.state.team}</Link> : "N/A"}</h2>
-                                                        <p className="count-text ">Team</p>
-                                                    </div>
-                                                </Col>
-                                            </Row>
-                                        </div>
+                                    <div className="bg-light-gray padding-30px-all md-padding-25px-all sm-padding-20px-all text-center description">
+                                        <h4 className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600">{this.state.authUser.username}</h4>
+                                        <img className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600" src={this.state.images.length !== 0 ? this.state.images[this.state.rankindex] : null}
+                                            alt="Players rank" />
+                                        <p className="sm-width-95 sm-margin-auto rank-title">Rank: {this.state.rank}</p>
                                     </div>
-                                </Row>
-                            </div>
-                        </Container>
-                    </div>
+                                    <div className="bg-light-gray padding-30px-all md-padding-25px-all sm-padding-20px-all text-center description extra-box">
+                                        <h2 className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600">Leaderboard Placement:</h2>
+                                        <h5 className="timer count-title count-number" data-to="1700" data-speed="1500">Top: {this.state.authUser.points}</h5>
+                                        <h5 className="timer count-title count-number" data-to="1700" data-speed="1500">Monthly: {this.state.authUser.points}</h5>
+                                    </div>
+                                </div>
+
+                                <div className="col-lg-8 col-md-7 stats-desc">
+                                    <div className="team-single-text padding-50px-left sm-no-padding-left">
+                                        <p className="no-margin-bottom user-name">{this.state.authUser.name}</p>
+
+                                        <Row className="text-center stat-box">
+                                            <Col>
+                                                <div className="counter">
+                                                    <i className="fa fa-trophy fa-2x text-green"></i>
+                                                    <h2 className="timer count-title count-number" data-to="1700" data-speed="1500">{this.state.authUser.points}</h2>
+                                                    <p className="count-text ">Points</p>
+                                                </div>
+                                            </Col>
+                                        </Row>
+
+                                        <Row className="text-center stat-box">
+                                            <Col>
+                                                <div className="win-box counter">
+                                                    <i className="fa fa-check-circle fa-2x text-green"></i>
+                                                    <h2 className="timer count-title count-number" data-to="100" data-speed="1500">{this.state.authUser.wins}</h2>
+                                                    <p className="count-text ">Wins</p>
+                                                </div>
+                                            </Col>
+                                            <Col>
+                                                <div className="loss-box counter">
+                                                    <i className="fa fa-times fa-2x text-green"></i>
+                                                    <h2 className="timer count-title count-number" data-to="1700" data-speed="1500">{this.state.authUser.losses}</h2>
+                                                    <p className="count-text ">Losses</p>
+                                                </div>
+                                            </Col>
+                                        </Row>
+
+                                        <Row className="text-center stat-box">
+                                            <Col>
+                                                <div className="counter">
+                                                    <i className="fa fa-code fa-2x text-green"></i>
+                                                    <h2 className="timer count-title count-number" data-to="100" data-speed="1500">{this.state.authUser.freegames}</h2>
+                                                    <p className="count-text ">Free Games</p>
+                                                </div>
+                                            </Col>
+                                            <Col>
+                                                <div className="counter">
+                                                    <i className="fa fa-users fa-2x text-green"></i>
+                                                    <h2 className="timer count-title count-number team-link" data-to="1700" data-speed="1500">{this.state.authUser.team !== "" ?
+                                                        <Link className="team-link" to={"/teams/" + this.state.authUser.team}>{this.state.team}</Link> : "N/A"}</h2>
+                                                    <p className="count-text ">Team</p>
+                                                </div>
+                                            </Col>
+                                        </Row>
+                                    </div>
+                                </div>
+                            </Row>
+                        </div>
+                    </Container>
+            </div>
         )
     }
 }

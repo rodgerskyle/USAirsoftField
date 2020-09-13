@@ -1,6 +1,10 @@
 .staticBG {
+  background-image: linear-gradient(rgb(27, 26, 26), black);
+  height: auto;
+}
+
+.staticBGold {
   background-color: rgb(27, 26, 26);
-  height: 110vh;
 }
 
 .Homepage {
@@ -8,8 +12,12 @@
   text-align: center;
 }
 
+.header-row {
+  display: inherit !important;
+}
+
 .banner {
-  margin-top: 20px;
+  padding-top: 20px;
   margin-left: 2%;
   margin-right: 2%;
   margin-bottom: 20px;
@@ -60,7 +68,8 @@
 }
 
 .logo {
-  max-width: 70% !important;
+  max-width: 40% !important;
+  min-width: 300px;
 }
 
 .loginbox {
@@ -103,10 +112,6 @@
   color: white;
 }
 
-.account-page {
-  background-color: rgb(27, 26, 26);
-}
-
 .imgUpload {
   text-align: center;
 }
@@ -135,12 +140,10 @@
   font-size: large;
 }
 .pdfStyle {
-  background-color: rgb(27, 26, 26);
   text-align: center;
   color: white;
 }
 .mapStyle {
-  background-color: rgb(27, 26, 26);
   text-align: center;
   color: white;
 }
@@ -295,3 +298,67 @@
 .error-team-create {
   color: red;
 }
+
+.wins-lb {
+  color: rgb(0, 180, 0);
+}
+
+.losses-lb {
+  color: red;
+}
+
+.profilelink-lb:link {
+  color: white
+}
+
+.profilelink-lb:visited {
+  color: white
+}
+
+.table-lb {
+  opacity: .8 !important;
+}
+
+.header-lb {
+  border-bottom: 1px solid rgb(255, 217, 0, .5);
+}
+
+.button-left-lb {
+  text-align: left;
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+.button-right-lb {
+  text-align: right;
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+.title-lb {
+  padding-top: 20px;
+}
+
+.background-static-lb{
+  background-image: url("assets/background-lb.jpeg");
+  color: white;
+  background-color: rgb(4, 4, 4);
+  height: 110vh;
+  margin-top: -.7rem;
+}
+
+.background-static-all::before {
+  background-color: rgb(4, 4 ,4);
+}
+
+.background-static-all {
+  background: url("assets/background-all.jpeg") center no-repeat;
+  background-size: 100% 100%;
+  height: 110vh;
+  margin-top: -.7rem;
+}
+
+.header-lb {
+  padding-top: 20px;
+}
+

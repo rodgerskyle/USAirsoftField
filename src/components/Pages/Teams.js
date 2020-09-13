@@ -59,7 +59,7 @@ class Teams extends Component {
 
     render() {
         return (
-            <div className="staticBG">
+            <div className="background-static-all">
                 <h2 className="page-header">Teams</h2>
                 <Container>
                     <Row>

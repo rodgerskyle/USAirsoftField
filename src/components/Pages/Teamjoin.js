@@ -95,7 +95,7 @@ class TeamJoin extends Component {
         return (
             <AuthUserContext.Consumer>
                 {authUser => (
-                    <div className="staticBG">
+                    <div className="background-static-all">
                         {authUser.team !== "" ?
                             <p className="team-manage-blank">You already have a team</p>
                             :

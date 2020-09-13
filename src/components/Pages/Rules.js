@@ -37,6 +37,7 @@ goToNextPage = () =>
 render() {
     const { pageNumber, numPages } = this.state;
     return (
+        <div className="background-static-all">
         <div className="pdfStyle">
             <h2>Rules</h2>
             <Container fluid>
@@ -76,6 +77,7 @@ render() {
                     </Col>
                 </Row>
             </Container>
+        </div>
         </div>
     );
 }

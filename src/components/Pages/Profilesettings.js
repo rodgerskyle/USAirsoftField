@@ -10,7 +10,7 @@ import ImageUpload from './ImageUpload';
 const ProfileSettings = () => (
   <AuthUserContext.Consumer>
     {authUser => (
-      <div className="account-page">
+      <div className="background-static-all">
         <h1 className="pagePlaceholder">Account Settings</h1>
         <Container>
           <Row>

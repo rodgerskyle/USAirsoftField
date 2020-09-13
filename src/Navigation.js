@@ -19,10 +19,10 @@ const Navigation = ({ authUser }) => (
 );
 
 const NavigationAuth = ({ authUser }) => (
-    <div>
+    <div className="staticBG">
         <div className="App-header">
             <Container fluid>
-                <Row>
+                <Row className="header-row">
                     <Col className="align-self-start">
                         <img src={logo} alt="US Airsoft logo" className="img-fluid logo" />
                     </Col>
@@ -130,10 +130,10 @@ const NavigationAuth = ({ authUser }) => (
 );
 
 const NavigationNonAuth = () => (
-    <div>
+    <div className="staticBG">
         <div className="App-header">
             <Container fluid>
-                <Row>
+                <Row className="header-row">
                     <Col className="align-self-start">
                         <img src={logo} alt="US Airsoft logo" className="img-fluid logo" />
                     </Col>

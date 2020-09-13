@@ -26,20 +26,22 @@ class Map extends Component {
 
     render() {
         return (
-            <div className="mapStyle">
-                <h2>Map</h2>
-                <Container>
-                    <Row>
-                        <Col>
-                            <SideBySideMagnifier 
-                                imageSrc={lowmap}
-                                imageAlt="Example"
-                                largeImageSrc={map}
-                                alwaysInPlace={true}
-                            />
-                        </Col>
-                    </Row>
-                </Container>
+            <div className="background-static-all">
+                <div className="mapStyle">
+                    <h2>Map</h2>
+                    <Container>
+                        <Row>
+                            <Col>
+                                <SideBySideMagnifier 
+                                    imageSrc={lowmap}
+                                    imageAlt="Example"
+                                    largeImageSrc={map}
+                                    alwaysInPlace={true}
+                                />
+                            </Col>
+                        </Row>
+                    </Container>
+                </div>
             </div>
         );
     }

@@ -163,7 +163,7 @@ class TeamCreate extends Component {
         return (
             <AuthUserContext.Consumer>
                 {authUser => (
-                    <div className="staticBG">
+                    <div className="background-static-all">
                         {authUser.team !== '' ?
                             <p className="team-manage-blank">You already have a team, you must quit your team first.</p>
                             : (page ?

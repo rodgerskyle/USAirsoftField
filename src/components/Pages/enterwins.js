@@ -97,7 +97,7 @@ class EnterWins extends Component {
 
     render() {
         return (
-            <div>
+            <div className="background-static-all">
                 <h1 className="pagePlaceholder">Admin - Enter Wins</h1>
                 {!this.state.loading ?
                     <div className="form-box">
