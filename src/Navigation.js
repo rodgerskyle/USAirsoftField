@@ -40,8 +40,8 @@ const NavigationAuth = ({ authUser }) => (
             <div className="login">
             </div>
         </div>
-        <div className="navbar">
-            <Navbar collapseOnSelect expand="lg" bg="nav" variant="dark">
+        <div>
+            <Navbar collapseOnSelect expand="lg" bg="nav" variant="dark" className="navbar-all">
                 <Nav className="mr-auto">
                     <NavItem>
                         <Link className="nav-link" to="/">Home</Link>
@@ -149,7 +149,7 @@ const NavigationNonAuth = () => (
                 </Row>
             </Container>
         </div>
-        <div className="navbar">
+        <div className="navbar-all">
             <Navbar collapseOnSelect expand="lg" bg="nav" variant="dark">
                 <Nav className="mr-auto">
                     <NavItem>

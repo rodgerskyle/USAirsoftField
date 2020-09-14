@@ -100,6 +100,10 @@ class Firebase {
 
     teams = () => this.db.ref(`teams`);
 
+    // UID API
+
+    uid = () => this.auth.currentUser.uid;
+
 }
 
 export default Firebase;

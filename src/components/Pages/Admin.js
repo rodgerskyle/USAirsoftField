@@ -43,18 +43,6 @@ class AdminPage extends Component {
     }
 
     addTeam() {
-      const leader = " ";
-      var members = []; //add people here
-      const teammates = members;
-      /*this.props.firebase.team("ort3").set({
-        leader,
-        teammates,
-      })*/
-      this.props.firebase.team('outlaws').set({
-        leader,
-        teammates,
-      });
-      console.log("success")
     }
 
     render() {
@@ -62,14 +50,16 @@ class AdminPage extends Component {
      
         return (
           <div className="background-static-all">
-            <h1>Admin</h1>
-            <Button type="submit" id="register" variant="primary" onClick={() => this.addTeam()}>
-                                    Submit
-                        </Button>
-     
-            {loading && <div>Loading ...</div>}
-     
-            <UserList users={users} />
+            <div className="pagePlaceholder">
+              <h1>Admin</h1>
+              <Button type="submit" id="register" variant="primary" onClick={() => this.addTeam()}>
+                                      Submit
+                          </Button>
+      
+              {loading && <div>Loading ...</div>}
+      
+              <UserList users={users} />
+            </div>
           </div>
         );
       }

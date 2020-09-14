@@ -36,10 +36,10 @@ class Profile extends Component {
             this.setState({
                 authUser: userObject,
                 team: userObject.team.toUpperCase(),
-            }, function(){
+            }, () => {
                 //After setstate, then grab points and profile
                 this.getRank();
-                this.getProfile(`${userObject.uid}/profilepic`);
+                this.getProfile(`${this.props.firebase.uid()}/profilepic`);
             } );
         });
     }
@@ -159,19 +159,6 @@ class Profile extends Component {
             this.setState({ profileicon: default_profile })
         })
     }
-
-    //Get image function for rank
-    //Grabbing files from firebase storage (old)
-    getImage(image) {
-        let { state } = this
-        this.props.firebase.storage(`${image}.png`).getDownloadURL().then((url) => {
-            state[image] = url
-            this.setState(state)
-        }).catch((error) => {
-            // Handle any errors
-        })
-    }
-
 
     render() {
         return (

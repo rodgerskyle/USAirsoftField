@@ -2,8 +2,6 @@ import React, { Component } from 'react';
 
 import { Container, Row, Col, Form, Button } from 'react-bootstrap/';
 
-import { Typeahead } from 'react-bootstrap-typeahead';
-
 import { AuthUserContext, withAuthorization } from '../session';
 
 import { withFirebase } from '../Firebase';
@@ -82,19 +80,25 @@ class TeamCreate extends Component {
     //create team
     createTeam(e) {
         e.preventDefault();
-        //Create message to show they were removed and reset input box
-        var createTeam = this.props.firebase.createTeam();
-        createTeam({teamname: this.state.teamname, description: this.state.description
-         }).then( (result) => {
-            // Read result of the Cloud Function.
-            var update = result.data.message;
-            if (update === "Complete") {
-                //If team was created without issue set completion to true
-                this.setState({complete: true}, () => {
-                    window.location.href="/teams";
-                })
-            }
-        });
+
+        if (this.state.uploaded) {
+            //Create message to show they were removed and reset input box
+            var createTeam = this.props.firebase.createTeam();
+            createTeam({teamname: this.state.teamname, description: this.state.description
+            }).then( (result) => {
+                // Read result of the Cloud Function.
+                var update = result.data.message;
+                if (update === "Complete") {
+                    //If team was created without issue set completion to true
+                    this.setState({complete: true}, () => {
+                        window.location.href="/teams";
+                    })
+                }
+            });
+        }
+        else {
+            this.setState({error: "You must upload an image first."})
+        }
     }
 
     handleChange = e => {
@@ -155,7 +159,7 @@ class TeamCreate extends Component {
     };
 
     render() {
-        const { addbox, removebox, description, members, picture, page, teamname } = this.state;
+        const { description, members, page, teamname } = this.state;
 
 
         const canSubmit = this.state.uploaded === false;
@@ -237,6 +241,7 @@ class TeamCreate extends Component {
                                             </Button>
                                         </Col>
                                     </Row>
+                                    <Row>{this.state.error}</Row>
                                 </Container>
                             )
                         }
