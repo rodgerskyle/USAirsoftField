@@ -2,22 +2,48 @@ import React, { Component } from 'react';
 
 import { AuthUserContext, withAuthorization } from '../session';
 
+import { Container, Row, Col, Form, Button } from 'react-bootstrap/';
+
 import { withFirebase } from '../Firebase';
 
 class ImageUpload extends Component {
     constructor(props) {
         super(props);
+
         this.state = {
             image: null,
             url: "",
-            progress: 0,
+            authUser: JSON.parse(localStorage.getItem('authUser')),
+            loading: true,
+            user: "",
         };
+    }
+
+    componentWillMount() {
+        this.authSubscription = this.props.firebase.auth.onAuthStateChanged((user) => {
+            this.getProfile(`${user.uid}/profilepic`);
+        });
+    }
+
+    componentWillUnmount() {
+        this.authSubscription();
+    }
+
+    //Get image function for profile image = uid
+    getProfile(uid) {
+        this.props.firebase.pictures(`${uid}.png`).getDownloadURL().then((url) => {
+            this.setState({ url })
+        }).catch((error) => {
+            // Handle any errors
+            this.setState({ url: ""})
+        })
     }
 
     handleChange = e => {
         if (e.target.files[0]) {
             const image = e.target.files[0];
-            this.setState(() => ({ image }));
+            const url = URL.createObjectURL(e.target.files[0])
+            this.setState(() => ({ image, url}));
         }
     };
 
@@ -53,42 +79,30 @@ class ImageUpload extends Component {
         return (
             <AuthUserContext.Consumer>
                 {authUser => (
-                    <div className="container">
-                        <br />
-                        <h2 className="imgUpload-text">New Profile Picture</h2>
-                        <br />
-                        <br />
-                        <div className="row">
-                            <progress value={this.state.progress} max="100" className="progress" />
-                        </div>
-                        <br />
-                        <br />
-                        <br />
-                        <div className="file-field input-field">
-                            <div className="btn">
-                                <span>File</span>
-                                <input type="file" onChange={this.handleChange} />
-                            </div>
-                            <div className="file-path-wrapper">
-                                <input className="file-path validate" type="text" />
-                            </div>
-                        </div>
-                        <button
-                            onClick={(() => this.handleUpload(authUser.uid))}
-                            className="waves-effect waves-light btn"
-                            disabled={isInvalid}
-                        >
-                            Upload
-                        </button>
-                        <br />
-                        <br />
+                    <Container>
                         <img
-                            src={this.state.url || "https://via.placeholder.com/400x300"}
+                            src={this.state.url || "https://via.placeholder.com/400x250"}
                             alt="Uploaded Images"
-                            height="300"
+                            height="250"
                             width="400"
                         />
-                    </div>
+                        <div className="file-field input-field">
+                            <div className="btn">
+                                <span className="imgUpload-text">File</span>
+                                <input type="file" onChange={this.handleChange} 
+                                className="imgUpload-input"
+                                />
+                            </div>
+                        </div>
+                        <Button
+                            onClick={(() => this.handleUpload(authUser.uid))}
+                            variant="outline-success"
+                            className="imgUpload-submit"
+                            disabled={isInvalid}
+                        >
+                            Submit
+                        </Button>
+                    </Container>
 
                 )}
             </AuthUserContext.Consumer>

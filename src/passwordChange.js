@@ -1,4 +1,6 @@
 import React, { Component } from 'react';
+
+import { Container, Row, Col } from 'react-bootstrap/';
  
 import { withFirebase } from './components/Firebase';
  
@@ -42,20 +44,34 @@ class PasswordChangeForm extends Component {
  
     return (
       <form onSubmit={this.onSubmit}>
-        <input
-          name="passwordOne"
-          value={passwordOne}
-          onChange={this.onChange}
-          type="password"
-          placeholder="New Password"
-        />
-        <input
-          name="passwordTwo"
-          value={passwordTwo}
-          onChange={this.onChange}
-          type="password"
-          placeholder="Confirm New Password"
-        />
+        <Row>
+          <Col>
+            <p className="password-text">Password :</p>
+          </Col>
+          <Col>
+            <input
+              name="passwordOne"
+              value={passwordOne}
+              onChange={this.onChange}
+              type="password"
+              placeholder="New Password"
+            />
+          </Col>
+        </Row>
+        <Row>
+          <Col>
+            <p className="password-text">Confirm Password :</p>
+          </Col>
+          <Col>
+            <input
+              name="passwordTwo"
+              value={passwordTwo}
+              onChange={this.onChange}
+              type="password"
+              placeholder="Confirm New Password"
+            />
+          </Col>
+        </Row>
         <button disabled={isInvalid} type="submit">
           Reset My Password
         </button>

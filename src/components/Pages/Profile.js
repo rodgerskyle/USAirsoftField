@@ -28,24 +28,18 @@ class Profile extends Component {
         };
     }
 
-    componentDidMount() {
+    componentWillMount() {
         //Figure out rank logic here
-        this.props.firebase.user(this.state.authUser.uid).on('value', snapshot => {
-            const userObject = snapshot.val();
-
-            this.setState({
-                authUser: userObject,
-                team: userObject.team.toUpperCase(),
-            }, () => {
-                //After setstate, then grab points and profile
-                this.getRank();
-                this.getProfile(`${this.props.firebase.uid()}/profilepic`);
-            } );
+        this.authSubscription = this.props.firebase.auth.onAuthStateChanged((user) => {
+            // grab points and profile
+            this.getRank();
+            this.getProfile(`${user.uid}/profilepic`);
         });
     }
 
     componentWillUnmount() {
-        this.props.firebase.user(this.state.authUser.uid).off();
+        //this.props.firebase.user(this.state.authUser.uid).off();
+        this.authSubscription();
     }
 
 
@@ -228,7 +222,7 @@ class Profile extends Component {
                                                     <div className="counter">
                                                         <i className="fa fa-users fa-2x text-green"></i>
                                                         <h2 className="timer count-title count-number" data-to="1700" data-speed="1500">{authUser.team !== "" ?
-                                                        <Link className="team-link" to={"/teams/"+this.state.authUser.team}>{this.state.authUser.team.toUpperCase()}</Link> : "N/A"}</h2>
+                                                        <Link className="team-link" to={"/teams/"+authUser.team}>{authUser.team.toUpperCase()}</Link> : "N/A"}</h2>
                                                         <p className="count-text ">Team</p>
                                                     </div>
                                                 </Col>

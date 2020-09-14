@@ -14,17 +14,14 @@ const ProfileSettings = () => (
         <h1 className="pagePlaceholder">Account Settings</h1>
         <Container>
           <Row>
-            <Col md={{ span: 6, offset: 3 }}>
-              <PasswordForgetForm />
+            <Col>
+              <ImageUpload />
             </Col>
-          </Row>
-          <Row>
-            <Col md={{ span: 6, offset: 3 }}>
+            <Col>
               <PasswordChangeForm />
             </Col>
           </Row>
         </Container>
-        <ImageUpload />
       </div>
     )}
   </AuthUserContext.Consumer>
