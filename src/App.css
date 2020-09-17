@@ -326,8 +326,14 @@
   opacity: .8 !important;
 }
 
-.header-lb::after {
+.header-lb {
   border-bottom: 1px solid rgb(255, 217, 0, .5);
+  background-color: rgb(36, 36, 36);
+}
+
+.header-th-lb {
+  border-bottom: 1px solid rgb(255, 217, 0, .5) !important;
+  border-bottom-width: 1px !important;
 }
 
 .button-left-lb {
@@ -369,6 +375,10 @@
 
 .password-text {
   color: white;
+}
+
+body {
+  background-color: rgb(4, 4, 4) !important;
 }
 
 

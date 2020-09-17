@@ -1,6 +1,6 @@
 import React from 'react';
 import logo from './assets/us-airsoft-logo.png';
-import { Navbar, Nav, Button, NavItem, NavDropdown, image } from 'react-bootstrap/';
+import { Navbar, Nav, Button, NavItem, NavDropdown } from 'react-bootstrap/';
 import { Container, Row, Col } from 'react-bootstrap/';
 import { Link } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
@@ -149,8 +149,8 @@ const NavigationNonAuth = () => (
                 </Row>
             </Container>
         </div>
-        <div className="navbar-all">
-            <Navbar collapseOnSelect expand="lg" bg="nav" variant="dark">
+        <div>
+            <Navbar collapseOnSelect expand="lg" bg="nav" variant="dark" className="navbar-all">
                 <Nav className="mr-auto">
                     <NavItem>
                         <Link className="nav-link" to="/">Home</Link>

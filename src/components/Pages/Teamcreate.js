@@ -62,12 +62,12 @@ class TeamCreate extends Component {
                     this.setState({ page: !page })
                 }
                 else {
-                    this.setState({ error: "Team name already exists! Please enter another name."})
+                    this.setState({ error: "Team name already exists! Please enter another name." })
                 }
             });
         }
         else {
-            this.setState({ error: "Team name cannot be empty!"})
+            this.setState({ error: "Team name cannot be empty!" })
         }
     }
 
@@ -81,74 +81,77 @@ class TeamCreate extends Component {
     createTeam(e) {
         e.preventDefault();
 
-        if (this.state.uploaded) {
-            //Create message to show they were removed and reset input box
-            var createTeam = this.props.firebase.createTeam();
-            createTeam({teamname: this.state.teamname, description: this.state.description
-            }).then( (result) => {
-                // Read result of the Cloud Function.
-                var update = result.data.message;
-                if (update === "Complete") {
-                    //If team was created without issue set completion to true
-                    this.setState({complete: true}, () => {
-                        window.location.href="/teams";
+        const { image, uploaded, previous, teamname } = this.state;
+
+        if (image !== null) {
+
+            var t_name = teamname.toString().toLowerCase();
+
+            //Handling the case if a user had previously uploaded an image
+            if (uploaded === true) {
+                this.props.firebase.teamsPictures(`${previous}.png`).delete().then(function () {
+                    // File deleted successfully
+                }).catch(function (error) {
+                    // Uh-oh, an error occurred!
+                });
+            }
+
+            const uploadTask = this.props.firebase.teamsPictures(`${t_name}.png`).put(image);
+            uploadTask.on(
+                "state_changed",
+                snapshot => {
+                    // progress function ...
+                    const progress = Math.round(
+                        (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+                    );
+                    this.setState({ progress });
+                },
+                error => {
+                    // Error function ...
+                    console.log(error);
+                },
+                () => {
+                    // complete function ...
+                    this.props.firebase
+                        .teamsPictures(`${t_name}.png`)
+                        .getDownloadURL()
+                        .then(url => {
+                            this.setState({ url });
+                        });
+                    this.setState({
+                        uploaded: true,
+                        previous: t_name
+                    }, function () {
+                        //Create message to show they were removed and reset input box
+                        var createTeam = this.props.firebase.createTeam();
+                        createTeam({
+                            teamname: this.state.teamname, description: this.state.description
+                        }).then((result) => {
+                            // Read result of the Cloud Function.
+                            var update = result.data.message;
+                            if (update === "Complete") {
+                                //If team was created without issue set completion to true
+                                this.setState({ complete: true }, () => {
+                                    window.location.href = "/teams";
+                                })
+                            }
+                        });
                     })
                 }
-            });
+            );
         }
         else {
-            this.setState({error: "You must upload an image first."})
+            this.setState({ error: "You must upload an image first." })
         }
     }
 
     handleChange = e => {
         if (e.target.files[0]) {
             const image = e.target.files[0];
-            this.setState(() => ({ image }), function() {
-                const { image, uploaded, previous, teamname } = this.state;
-
-                var t_name = teamname.toString().toLowerCase();
-
-                //Handling the case if a user had previously uploaded an image
-                if (uploaded === true) {
-                    this.props.firebase.teamsPictures(`${previous}.png`).delete().then(function () {
-                        // File deleted successfully
-                    }).catch(function (error) {
-                        // Uh-oh, an error occurred!
-                    });
-                }
-
-                const uploadTask = this.props.firebase.teamsPictures(`${t_name}.png`).put(image);
-                uploadTask.on(
-                    "state_changed",
-                    snapshot => {
-                        // progress function ...
-                        const progress = Math.round(
-                            (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-                        );
-                        this.setState({ progress });
-                    },
-                    error => {
-                        // Error function ...
-                        console.log(error);
-                    },
-                    () => {
-                        // complete function ...
-                        this.props.firebase
-                            .teamsPictures(`${t_name}.png`)
-                            .getDownloadURL()
-                            .then(url => {
-                                this.setState({ url });
-                            });
-                        this.setState({
-                            uploaded: true,
-                            previous: t_name
-                        })
-                    }
-                );
-            })
+            const url = URL.createObjectURL(e.target.files[0])
+            this.setState({image, url })
         }
-    };
+    }
 
     onChange = event => {
         this.setState({ teamname: event.target.value });
@@ -159,10 +162,8 @@ class TeamCreate extends Component {
     };
 
     render() {
-        const { description, members, page, teamname } = this.state;
+        const { description, page, teamname } = this.state;
 
-
-        const canSubmit = this.state.uploaded === false;
 
         return (
             <AuthUserContext.Consumer>
@@ -186,8 +187,8 @@ class TeamCreate extends Component {
                                         </Form.Group>
                                         <Form.Group controlId="exampleForm.ControlTextarea1">
                                             <Form.Label>Add Description Here:</Form.Label>
-                                            <Form.Control 
-                                                as="textarea" rows="3" 
+                                            <Form.Control
+                                                as="textarea" rows="3"
                                                 placeholder="Tell us about your team!"
                                                 value={description}
                                                 onChange={(e) => {

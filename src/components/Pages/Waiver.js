@@ -50,7 +50,7 @@ class Waiver extends Component {
                                     disabled={this.state.pageNumber+1 <= this.state.numPages ? false : true}>
                                         Next</button>
                                 </nav>
-                            <a href={waiver} target='_blank'>
+                            <a href={waiver} target='_blank' rel="noopener noreferrer">
                                 <i className="fa fa-print fa-2x text-white"></i>
                             </a>
                             </Col>

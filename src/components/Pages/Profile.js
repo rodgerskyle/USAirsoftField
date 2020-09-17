@@ -28,7 +28,7 @@ class Profile extends Component {
         };
     }
 
-    componentWillMount() {
+    componentDidMount() {
         //Figure out rank logic here
         this.authSubscription = this.props.firebase.auth.onAuthStateChanged((user) => {
             // grab points and profile
