@@ -51,7 +51,7 @@ render() {
                                 disabled={this.state.pageNumber + 1 <= this.state.numPages ? false : true}>
                                 Next</button>
                         </nav>
-                        <a href={rules} target='_blank'>
+                        <a href={rules} target='_blank' rel="noopener noreferrer">
                             <i className="fa fa-print fa-2x text-white"></i>
                         </a>
                     </Col>

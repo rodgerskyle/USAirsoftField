@@ -159,7 +159,7 @@ class Leaderboards extends Component {
         return (
             <div className="background-static-lb">
                 <Container className="leaderboard-page">
-                    <Row className="header-lb">
+                    <Row>
                         <Col className="button-left-lb">
                             {this.state.monthly === true ?
                             <BootstrapSwitchButton
@@ -207,12 +207,12 @@ const UserList = ({ users, images, getRank, monthly, currentMonth }) => (
     <Table className="table table-striped table-dark table-lb">
         <thead className="header-lb">
             <tr>
-                <th scope="col">#</th>
-                <th scope="col">Rank</th>
-                <th scope="col">Name</th>
-                <th scope="col">Wins</th>
-                <th scope="col">Losses</th>
-                <th scope="col">Points</th>
+                <th scope="col" className="header-th-lb">#</th>
+                <th scope="col" className="header-th-lb">Rank</th>
+                <th scope="col" className="header-th-lb">Name</th>
+                <th scope="col" className="header-th-lb">Wins</th>
+                <th scope="col" className="header-th-lb">Losses</th>
+                <th scope="col" className="header-th-lb">Points</th>
             </tr>
         </thead>
         <tbody>
@@ -222,8 +222,8 @@ const UserList = ({ users, images, getRank, monthly, currentMonth }) => (
             (a.points < b.points ? 1 : -1))
             .map((user, i) => (
                 <tr key={user.uid}>
-                    <th scope="row"><p className={i===0 ? "firstPlace" : (i===1 ? "secondPlace" : (i===2 ? "thirdPlace" : null))}>
-                    {i + 1}</p></th>
+                    <Td scope="row"><p className={i===0 ? "firstPlace" : (i===1 ? "secondPlace" : (i===2 ? "thirdPlace" : null))}>
+                    {i + 1}</p></Td>
                     <Td><img src={images.length !== 0 ? images[getRank(user.points)] : null}
                         alt="Player Rank" /></Td>
                     <Td cl="profilelink-lb" to={'/profilelookup/' + user.uid}>{user.name}</Td>
