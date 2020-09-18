@@ -14,6 +14,9 @@ body{
 .loss-box {
     background-color: #cd5c5c !important;
 }
+.rank-box {
+    background-color: white !important;
+}
 .stats-desc {
     color: white;
 }
@@ -125,6 +128,8 @@ img {
 .profile-pic {
     width:400px;
     height:250px;
+    margin-top: 30px;
+    margin-bottom: 30px;
 }
 
 
@@ -262,7 +267,7 @@ a.text-lightred:hover {
 .user-name {
     font-size: 35px;
     text-align: center;
-    margin-bottom: 1.8rem;
+    margin-bottom: 32px;
 }
 
 /* New css for stats cards */

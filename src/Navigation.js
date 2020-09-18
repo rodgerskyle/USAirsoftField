@@ -24,7 +24,9 @@ const NavigationAuth = ({ authUser }) => (
             <Container fluid>
                 <Row className="header-row">
                     <Col className="align-self-start">
-                        <img src={logo} alt="US Airsoft logo" className="img-fluid logo" />
+                        <Link to="/">
+                            <img src={logo} alt="US Airsoft logo" className="img-fluid logo" />
+                        </Link>
                     </Col>
                     <Col className="align-self-end">
                             <NavItem className="logout">
@@ -41,7 +43,7 @@ const NavigationAuth = ({ authUser }) => (
             </div>
         </div>
         <div>
-            <Navbar collapseOnSelect expand="lg" bg="nav" variant="dark" className="navbar-all">
+            <Navbar collapseOnSelect expand="sm" bg="nav" variant="dark" className="navbar-all">
                 <Nav className="mr-auto">
                     <NavItem>
                         <Link className="nav-link" to="/">Home</Link>
@@ -59,11 +61,11 @@ const NavigationAuth = ({ authUser }) => (
                         <NavItem>
                             <NavDropdown title="Account" id="nav-dropdown">
                                 <LinkContainer to="/account">
-                                    <NavDropdown.Item eventKey={4.1}>My Profile</NavDropdown.Item>
+                                    <NavDropdown.Item eventKey={1.1}>My Profile</NavDropdown.Item>
                                 </LinkContainer>
                                 <NavDropdown.Divider />
                                 <LinkContainer to="/profilesettings">
-                                    <NavDropdown.Item eventKey={4.2}>Settings</NavDropdown.Item>
+                                    <NavDropdown.Item eventKey={1.2}>Settings</NavDropdown.Item>
                                 </LinkContainer>
                             </NavDropdown>
                         </NavItem>
@@ -71,28 +73,28 @@ const NavigationAuth = ({ authUser }) => (
                         {!!authUser.roles[ROLES.ADMIN] && (
                             <NavDropdown title="Admin" id="nav-dropdown">
                                 <LinkContainer to="/enterwins">
-                                    <NavDropdown.Item eventKey={4.1}>Update Wins</NavDropdown.Item>
+                                    <NavDropdown.Item eventKey={2.1}>Update Wins</NavDropdown.Item>
                                 </LinkContainer>
                                 <LinkContainer to="/enterlosses">
-                                    <NavDropdown.Item eventKey={4.2}>Update Losses</NavDropdown.Item>
+                                    <NavDropdown.Item eventKey={2.2}>Update Losses</NavDropdown.Item>
                                 </LinkContainer>
                                 <LinkContainer to="/signup">
-                                    <NavDropdown.Item eventKey={4.3}>Register</NavDropdown.Item>
+                                    <NavDropdown.Item eventKey={2.3}>Register</NavDropdown.Item>
                                 </LinkContainer>
                                 <NavDropdown.Divider />
                                 <LinkContainer to="/admin">
-                                    <NavDropdown.Item eventKey={4.4}>Testing</NavDropdown.Item>
+                                    <NavDropdown.Item eventKey={2.4}>Testing</NavDropdown.Item>
                                 </LinkContainer>
                             </NavDropdown>
                         )}
                         <NavItem>
                             <NavDropdown title="Media" id="nav-dropdown">
                                 <LinkContainer to="/pictures">
-                                    <NavDropdown.Item eventKey={4.1}>Pictures</NavDropdown.Item>
+                                    <NavDropdown.Item eventKey={3.1}>Pictures</NavDropdown.Item>
                                 </LinkContainer>
                                 <NavDropdown.Divider />
                                 <LinkContainer to="/videos">
-                                    <NavDropdown.Item eventKey={4.2}>Videos</NavDropdown.Item>
+                                    <NavDropdown.Item eventKey={3.2}>Videos</NavDropdown.Item>
                                 </LinkContainer>
                             </NavDropdown>
                         </NavItem>
@@ -135,7 +137,9 @@ const NavigationNonAuth = () => (
             <Container fluid>
                 <Row className="header-row">
                     <Col className="align-self-start">
-                        <img src={logo} alt="US Airsoft logo" className="img-fluid logo" />
+                        <Link to="/">
+                            <img src={logo} alt="US Airsoft logo" className="img-fluid logo" />
+                        </Link>
                     </Col>
                     <Col className="align-self-end">
                         <div className="login">
@@ -150,7 +154,7 @@ const NavigationNonAuth = () => (
             </Container>
         </div>
         <div>
-            <Navbar collapseOnSelect expand="lg" bg="nav" variant="dark" className="navbar-all">
+            <Navbar collapseOnSelect expand="sm" bg="nav" variant="dark" className="navbar-all">
                 <Nav className="mr-auto">
                     <NavItem>
                         <Link className="nav-link" to="/">Home</Link>
@@ -168,10 +172,10 @@ const NavigationNonAuth = () => (
                         <NavItem>
                             <NavDropdown title="Media" id="nav-dropdown">
                                 <LinkContainer to="/pictures">
-                                    <NavDropdown.Item eventKey={4.1}>Pictures</NavDropdown.Item>
+                                    <NavDropdown.Item eventKey={1.1}>Pictures</NavDropdown.Item>
                                 </LinkContainer>
                                 <LinkContainer to="/videos">
-                                    <NavDropdown.Item eventKey={4.2}>Videos</NavDropdown.Item>
+                                    <NavDropdown.Item eventKey={1.2}>Videos</NavDropdown.Item>
                                 </LinkContainer>
                             </NavDropdown>
                         </NavItem>
@@ -184,20 +188,20 @@ const NavigationNonAuth = () => (
                         <NavItem>
                             <NavDropdown title="Information" id="nav-dropdown">
                                 <LinkContainer to="/rules">
-                                    <NavDropdown.Item eventKey={4.1}>Rules</NavDropdown.Item>
+                                    <NavDropdown.Item eventKey={2.1}>Rules</NavDropdown.Item>
                                 </LinkContainer>
                                 <LinkContainer to="/gametypes">
-                                    <NavDropdown.Item eventKey={4.2}>Gametypes</NavDropdown.Item>
+                                    <NavDropdown.Item eventKey={2.2}>Gametypes</NavDropdown.Item>
                                 </LinkContainer>
                                 <LinkContainer to="/membership">
-                                    <NavDropdown.Item eventKey={4.3}>Membership</NavDropdown.Item>
+                                    <NavDropdown.Item eventKey={2.3}>Membership</NavDropdown.Item>
                                 </LinkContainer>
                                 <LinkContainer to="/pricing">
-                                    <NavDropdown.Item eventKey={4.4}>Pricing</NavDropdown.Item>
+                                    <NavDropdown.Item eventKey={2.4}>Pricing</NavDropdown.Item>
                                 </LinkContainer>
                                 <NavDropdown.Divider />
                                 <LinkContainer to="/contact">
-                                    <NavDropdown.Item eventKey={4.4}>Contact Us</NavDropdown.Item>
+                                    <NavDropdown.Item eventKey={2.5}>Contact Us</NavDropdown.Item>
                                 </LinkContainer>
                             </NavDropdown>
                         </NavItem>

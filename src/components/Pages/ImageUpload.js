@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 
 import { AuthUserContext, withAuthorization } from '../session';
 
-import { Container, Row, Col, Form, Button } from 'react-bootstrap/';
+import { Container, Button } from 'react-bootstrap/';
 
 import { withFirebase } from '../Firebase';
 
@@ -19,7 +19,7 @@ class ImageUpload extends Component {
         };
     }
 
-    componentWillMount() {
+    componentDidMount() {
         this.authSubscription = this.props.firebase.auth.onAuthStateChanged((user) => {
             this.getProfile(`${user.uid}/profilepic`);
         });
@@ -81,11 +81,14 @@ class ImageUpload extends Component {
                 {authUser => (
                     <Container>
                         <img
-                            src={this.state.url || "https://via.placeholder.com/400x250"}
+                            src={this.state.url || "https://via.placeholder.com/350x250"}
                             alt="Uploaded Images"
                             height="250"
-                            width="400"
+                            width="350"
+                            className="profile-img-settings"
                         />
+                        <p className="notice-text-settings"><b>NOTE: </b>Images can only be MAX 5mb </p>
+                        <p className="notice-text-settings">and display on your profile like above.</p>
                         <div className="file-field input-field">
                             <div className="btn">
                                 <span className="imgUpload-text">File</span>

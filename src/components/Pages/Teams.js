@@ -6,6 +6,8 @@ import { Container, Row, Col } from 'react-bootstrap/';
 import './Profile.css';
 import Td from '../constants/td';
 
+import { Link } from 'react-router-dom';
+
 import { withFirebase } from '../Firebase';
 
 class Teams extends Component {
@@ -27,7 +29,7 @@ class Teams extends Component {
             this.setState({ teamicon: temp })
         }).catch((error) => {
             // Handle any errors NOT DONE
-            this.setState({ })
+            this.setState({})
         })
     }
 
@@ -50,7 +52,7 @@ class Teams extends Component {
                 teams: teamsList,
                 loading: false,
             }, () => {
-                for (var i=0; i<this.state.teams.length; i++) {
+                for (var i = 0; i < this.state.teams.length; i++) {
                     this.getPicture(this.state.teams[i].teamname);
                 }
             });
@@ -64,28 +66,28 @@ class Teams extends Component {
                 <Container>
                     <Row>
                         <Col>
-                        <Td to="/createteam">
-                        <Button variant="outline-success">
-                        <p className="team-rows">Create Team</p>
-                                <i className="fa fa-plus-square fa-2x text-white team-rows-icons"></i>
-                        </Button>
-                        </Td>
+                            <Link to="/createteam">
+                                <Button variant="outline-success" className="button-create-teams">
+                                    <p className="team-rows">Create Team</p>
+                                    <i className="fa fa-plus-square fa-2x text-white team-rows-icons"></i>
+                                </Button>
+                            </Link>
+                        </Col>
+                        <Col className="text-center">
+                            <Link to="/jointeam">
+                                <Button variant="outline-info">
+                                    <p className="team-rows">Join Team</p>
+                                    <i className="fa fa-users fa-2x text-white team-rows-icons"></i>
+                                </Button>
+                            </Link>
                         </Col>
                         <Col>
-                        <Td to="/jointeam">
-                        <Button variant="outline-info">
-                        <p className="team-rows">Join Team</p>
-                                <i className="fa fa-users fa-2x text-white team-rows-icons"></i>
-                        </Button>
-                        </Td>
-                        </Col>
-                        <Col>
-                        <Td to="/manageteam">
-                        <Button variant="outline-danger">
-                        <p className="team-rows">Manage Team</p>
-                                <i className="fa fa-exclamation-circle fa-2x text-white team-rows-icons"></i>
-                        </Button>
-                        </Td>
+                            <Link to="/manageteam">
+                                <Button variant="outline-danger" className="button-manage-teams">
+                                    <p className="team-rows">Manage Team</p>
+                                    <i className="fa fa-exclamation-circle fa-2x text-white team-rows-icons"></i>
+                                </Button>
+                            </Link>
                         </Col>
                     </Row>
                     <br></br>
@@ -100,20 +102,20 @@ class Teams extends Component {
 
 
 const TeamList = ({ teams, teamicon }) => (
-<Table className="table table-striped table-dark">
-    <tbody>
-        {teams.map((team, i) => (
-        <tr key={team.teamname}>
-            <Td to={"/teams/"+team.teamname}>
-                <img className="team-pictures" 
-                src={teamicon.length === 0 ? teamicon[team.teamname]: null} alt={"Team " + team.teamname}></img>
-            </Td>
-            <Td cl="team-name" to={"/teams/"+team.teamname}>
-                <strong>{(team.teamname).toUpperCase()}</strong>
-            </Td>
-        </tr>
-        ))}
-    </tbody>
+    <Table className="table table-striped table-dark">
+        <tbody>
+            {teams.map((team, i) => (
+                <tr key={team.teamname}>
+                    <Td to={"/teams/" + team.teamname}>
+                        <img className="team-pictures"
+                            src={teamicon.length === 0 ? teamicon[team.teamname] : null} alt={"Team " + team.teamname}></img>
+                    </Td>
+                    <Td cl="team-name" to={"/teams/" + team.teamname}>
+                        <strong>{(team.teamname).toUpperCase()}</strong>
+                    </Td>
+                </tr>
+            ))}
+        </tbody>
     </Table>
 );
 
