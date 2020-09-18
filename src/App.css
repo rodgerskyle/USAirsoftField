@@ -18,8 +18,8 @@
 
 .banner {
   padding-top: 20px;
-  margin-left: 2%;
-  margin-right: 2%;
+  margin-left: 5%;
+  margin-right: 5%;
   margin-bottom: 20px;
   position: relative;
 }
@@ -28,17 +28,15 @@
   position: absolute;
   bottom: 0px;
   padding: 5px;
-  background-color: black;
   opacity: .75;
-  border: 2px solid gray;
   width: 100%;
   height: 12%;
 }
 
 .overlayText {
   position: absolute;
-  bottom: 2%;
-  left: 10px;
+  bottom: 4%;
+  left: 20px;
   padding: 5px;
   font-family: Roboto-Black;
   font-size: 1.5vw;
@@ -217,13 +215,16 @@
 }
 
 .team-icon-individual {
-  margin-top: 8px;
+  margin-top: 30px;
+  margin-bottom: 30px;
   width: 654px;
   height: 192px;
+  border: 1px solid grey;
 }
 
 .team-members-box {
   margin-bottom: 30px;
+  padding: 5px;
 }
 
 .team-manage-text {
@@ -381,4 +382,39 @@ body {
   background-color: rgb(4, 4, 4) !important;
 }
 
+.profile-img-settings {
+  width: 350px;
+  height: 250px;
+}
 
+.button-create-teams {
+  float: left;
+}
+
+.button-manage-teams {
+  float: right;
+}
+
+a.dropdown-item:hover {
+  color: black;
+  background-color: darkgray;
+}
+
+.dropdown-item.active {
+  color: white !important;
+  background-color: grey !important;
+}
+
+.dropdown-item:active {
+  color: rgb(4,4,4) !important;
+  background-color: grey !important;
+}
+
+.notice-text-settings {
+  color: white;
+  margin-bottom: 0;
+}
+
+.col-settings {
+  min-width: initial !important;
+}

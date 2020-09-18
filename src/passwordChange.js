@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 
-import { Container, Row, Col } from 'react-bootstrap/';
+import { Button, Row, Col } from 'react-bootstrap/';
  
 import { withFirebase } from './components/Firebase';
  
@@ -72,9 +72,10 @@ class PasswordChangeForm extends Component {
             />
           </Col>
         </Row>
-        <button disabled={isInvalid} type="submit">
+        <Button disabled={isInvalid} type="submit"
+        variant="outline-success">
           Reset My Password
-        </button>
+        </Button>
  
         {error && <p>{error.message}</p>}
       </form>
