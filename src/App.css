@@ -475,3 +475,7 @@ a.dropdown-item:hover {
   width: 10%;
   margin: 0;
 }
+
+.login-button-nav {
+  margin-bottom: 10px;
+}

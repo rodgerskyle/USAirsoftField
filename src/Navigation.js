@@ -143,7 +143,7 @@ const NavigationNonAuth = () => (
                     </Col>
                     <Col className="align-self-end">
                         <div className="login">
-                            <Button variant="outline-secondary">
+                            <Button variant="outline-secondary" className="login-button-nav">
                                 <LinkContainer to="/login">
                                     <NavItem>Login</NavItem>
                                 </LinkContainer>
