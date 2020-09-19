@@ -175,6 +175,7 @@ class TeamManage extends Component {
     // For quitting the team assuming team has no players
     QuitTeam = (e) => {
         e.preventDefault();
+        this.setState({memberLoading: true})
         var quitTeam = this.props.firebase.quitTeam();
         quitTeam({user: this.state.authUser
         }).then( (result) => {
@@ -183,6 +184,7 @@ class TeamManage extends Component {
                 var tempUser = this.state.authUser;
                 tempUser.team = "";
                 localStorage.setItem('authUser', JSON.stringify(tempUser));
+                window.location.href = "/teams";
             }
         }).catch( (error) => {
             console.log("error: " +error)
@@ -226,6 +228,7 @@ class TeamManage extends Component {
                     var tempUser = this.state.authUser;
                     tempUser.team = "";
                     localStorage.setItem('authUser', JSON.stringify(tempUser));
+                    window.location.href = "/teams";
                 }
             }).catch( (error) => {
                 console.log("error: " +error)
@@ -252,6 +255,7 @@ class TeamManage extends Component {
                         {authUser.team === "" ?
                             <p className="team-manage-blank">You do not have a team</p>
                             :
+                            this.state.teamObject.leader === authUser.uid ?
                             <Container>
                                 <div className="team-single-img">
                                     <img className="team-icon-individual" src={this.state.teamicon} alt="" />
@@ -281,13 +285,24 @@ class TeamManage extends Component {
                                 type="button" onClick={(e) => this.DisbandTeam(e)}>
                                     Disband team
                                 </Button>
+                                {this.state.deleting ? <Progress type="spin" color="white"/> : ""}
                                 <Form.Group controlId="formBasicCheckbox">
                                     <Form.Check checked={this.state.checkBox} 
                                     onChange={this.onChangeCheck}
                                     type="checkbox" className="team-manage-text"
                                     label="By checking this box, you confirm to disband your team" />
                                 </Form.Group>
-                            </Container>
+                            </Container> 
+                            :
+                            <Container>
+                                <div className="team-single-img">
+                                    <img className="team-icon-individual" src={this.state.teamicon} alt="" />
+                                </div>
+                                <Button className="team-manage-button-2" variant="outline-danger" type="submit" onClick={(e) => this.QuitTeam(e)}>
+                                    Quit Team
+                                </Button>
+                                {this.state.requestLoading ? <Progress type="spin" color="white"/> : ""}
+                            </Container> 
                         }
                     </div>
                 )

@@ -106,7 +106,7 @@ class EnterLosses extends Component {
                         <Form.Text id="userName" className="text-muted">
                             {this.state.results}
                         </Form.Text>
-                        <Button type="submit" id="register" variant="primary">
+                        <Button type="submit" id="register" variant="outline-success">
                             Submit
                         </Button>
                     </Form.Group>

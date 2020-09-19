@@ -1,10 +1,11 @@
-.staticBG {
+.staticBGold {
   background-image: linear-gradient(rgb(27, 26, 26), black);
   height: auto;
 }
 
-.staticBGold {
-  background-color: rgb(27, 26, 26);
+.staticBG {
+  background: url("assets/topbar.png") center no-repeat;
+  height: auto;
 }
 
 .Homepage {
@@ -17,28 +18,23 @@
 }
 
 .banner {
-  padding-top: 20px;
-  margin-left: 2%;
-  margin-right: 2%;
-  margin-bottom: 20px;
   position: relative;
+  border: 0 !important;
 }
 
 .overlay {
   position: absolute;
   bottom: 0px;
   padding: 5px;
-  background-color: black;
   opacity: .75;
-  border: 2px solid gray;
   width: 100%;
   height: 12%;
 }
 
 .overlayText {
   position: absolute;
-  bottom: 2%;
-  left: 10px;
+  bottom: 4%;
+  left: 20px;
   padding: 5px;
   font-family: Roboto-Black;
   font-size: 1.5vw;
@@ -54,6 +50,7 @@
 
 .navbar-all {
   width: 100%;
+  border: 0 !important;
 }
 
 .bg-nav {
@@ -217,13 +214,16 @@
 }
 
 .team-icon-individual {
-  margin-top: 8px;
+  margin-top: 30px;
+  margin-bottom: 30px;
   width: 654px;
   height: 192px;
+  border: 1px solid grey;
 }
 
 .team-members-box {
   margin-bottom: 30px;
+  padding: 5px;
 }
 
 .team-manage-text {
@@ -315,11 +315,27 @@
 }
 
 .profilelink-lb:link {
-  color: white
+  color: white;
 }
 
 .profilelink-lb:visited {
-  color: white
+  color: white;
+}
+
+.profilelink-tm:link {
+  color: black;
+}
+
+.profilelink-tm:visited {
+  color: black;
+}
+
+.team-link:hover {
+  color: black;
+}
+
+.team-link:visited {
+  color: black;
 }
 
 .table-lb {
@@ -378,7 +394,88 @@
 }
 
 body {
-  background-color: rgb(4, 4, 4) !important;
+  background-color: rgb(1, 1, 1) !important;
 }
 
+.profile-img-settings {
+  width: 350px;
+  height: 250px;
+}
 
+.button-create-teams {
+  float: left;
+}
+
+.button-manage-teams {
+  float: right;
+}
+
+a.dropdown-item:hover {
+  color: black;
+  background-color: darkgray;
+}
+
+.dropdown-item.active {
+  color: white !important;
+  background-color: grey !important;
+}
+
+.dropdown-item:active {
+  color: rgb(4,4,4) !important;
+  background-color: grey !important;
+}
+
+.notice-text-settings {
+  color: white;
+  margin-bottom: 0;
+}
+
+.col-settings {
+  min-width: initial !important;
+  margin-bottom: 20px;
+}
+
+.about-us {
+    text-align: justify;
+    padding-left: 10px;
+    padding-right: 10px;
+    font-size: 18px;
+}
+
+.video-box-home {
+  padding-bottom: 18px !important;
+}
+
+.hours-home {
+  width: 100%;
+}
+
+.hours-row-home {
+  margin-left: 0px !important;
+  margin-right: 0px !important;
+}
+
+.boxes-home {
+  background-color: rgb(255, 255, 255, .2) !important;
+  color: white;
+}
+
+.boxes-home-nopadbot {
+  padding-bottom: 0 !important;
+}
+
+.small-logo-home {
+  height: auto;
+  width: 19%;
+  margin: 0;
+}
+
+.small-logo-home2 {
+  height: auto;
+  width: 10%;
+  margin: 0;
+}
+
+.login-button-nav {
+  margin-bottom: 10px;
+}

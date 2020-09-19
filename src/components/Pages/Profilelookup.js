@@ -151,9 +151,9 @@ class ProfileLookup extends Component {
 
     //Get image function for profile image = uid
     getProfile(uid) {
-        this.props.firebase.pictures(`${uid}.png`).getDownloadURL().then((url) => {
+        return this.props.firebase.pictures(`${uid}.png`).getDownloadURL().then((url) => {
             this.setState({ profileicon: url })
-        }).catch((error) => {
+        }).catch(error => {
             // Handle any errors
             this.setState({ profileicon: default_profile })
         })
@@ -170,17 +170,24 @@ class ProfileLookup extends Component {
                                     <div className="team-single-img">
                                         <img className="profile-pic" src={this.state.profileicon} alt="" />
                                     </div>
-                                    <div className="bg-light-gray padding-30px-all md-padding-25px-all sm-padding-20px-all text-center description">
-                                        <h4 className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600">{this.state.authUser.username}</h4>
-                                        <img className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600" src={this.state.images.length !== 0 ? this.state.images[this.state.rankindex] : null}
-                                            alt="Players rank" />
-                                        <p className="sm-width-95 sm-margin-auto rank-title">Rank: {this.state.rank}</p>
-                                    </div>
-                                    <div className="bg-light-gray padding-30px-all md-padding-25px-all sm-padding-20px-all text-center description extra-box">
-                                        <h2 className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600">Leaderboard Placement:</h2>
-                                        <h5 className="timer count-title count-number" data-to="1700" data-speed="1500">Top: {this.state.authUser.points}</h5>
-                                        <h5 className="timer count-title count-number" data-to="1700" data-speed="1500">Monthly: {this.state.authUser.points}</h5>
-                                    </div>
+                                    <Row className="text-center stat-box">
+                                        <Col>
+                                            <div className="rank-box counter">
+                                                <h4 className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600">{this.state.authUser.username}</h4>
+                                                <img className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600" src={this.state.images.length !== 0 ? this.state.images[this.state.rankindex] : null}
+                                                    alt="Players rank" />
+                                                <p className="sm-width-95 sm-margin-auto rank-title">Rank: {this.state.rank}</p>
+                                            </div>
+                                        </Col>
+                                    </Row>
+                                    <Row className="text-center stat-box">
+                                        <Col>
+                                            <div className="rank-box counter">
+                                                <h2 className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600">Subscription:</h2>
+                                                <h5 className="timer count-title count-number" data-to="1700" data-speed="1500">Renew Date: {this.state.authUser.renewal}</h5>
+                                            </div>
+                                        </Col>
+                                    </Row>
                                 </div>
 
                                 <div className="col-lg-8 col-md-7 stats-desc">

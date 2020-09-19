@@ -13,10 +13,10 @@ const ProfileSettings = () => (
         <h1 className="pagePlaceholder">Account Settings</h1>
         <Container>
           <Row>
-            <Col>
+            <Col className="col-settings">
               <ImageUpload />
             </Col>
-            <Col>
+            <Col className="col-settings">
               <PasswordChangeForm />
             </Col>
           </Row>
