@@ -1,10 +1,11 @@
-.staticBG {
+.staticBGold {
   background-image: linear-gradient(rgb(27, 26, 26), black);
   height: auto;
 }
 
-.staticBGold {
-  background-color: rgb(27, 26, 26);
+.staticBG {
+  background: url("assets/topbar.png") center no-repeat;
+  height: auto;
 }
 
 .Homepage {
@@ -17,11 +18,8 @@
 }
 
 .banner {
-  padding-top: 20px;
-  margin-left: 5%;
-  margin-right: 5%;
-  margin-bottom: 20px;
   position: relative;
+  border: 0 !important;
 }
 
 .overlay {
@@ -52,6 +50,7 @@
 
 .navbar-all {
   width: 100%;
+  border: 0 !important;
 }
 
 .bg-nav {
@@ -316,11 +315,27 @@
 }
 
 .profilelink-lb:link {
-  color: white
+  color: white;
 }
 
 .profilelink-lb:visited {
-  color: white
+  color: white;
+}
+
+.profilelink-tm:link {
+  color: black;
+}
+
+.profilelink-tm:visited {
+  color: black;
+}
+
+.team-link:hover {
+  color: black;
+}
+
+.team-link:visited {
+  color: black;
 }
 
 .table-lb {
@@ -379,7 +394,7 @@
 }
 
 body {
-  background-color: rgb(4, 4, 4) !important;
+  background-color: rgb(1, 1, 1) !important;
 }
 
 .profile-img-settings {
@@ -417,4 +432,46 @@ a.dropdown-item:hover {
 
 .col-settings {
   min-width: initial !important;
+  margin-bottom: 20px;
+}
+
+.about-us {
+    text-align: justify;
+    padding-left: 10px;
+    padding-right: 10px;
+    font-size: 18px;
+}
+
+.video-box-home {
+  padding-bottom: 18px !important;
+}
+
+.hours-home {
+  width: 100%;
+}
+
+.hours-row-home {
+  margin-left: 0px !important;
+  margin-right: 0px !important;
+}
+
+.boxes-home {
+  background-color: rgb(255, 255, 255, .2) !important;
+  color: white;
+}
+
+.boxes-home-nopadbot {
+  padding-bottom: 0 !important;
+}
+
+.small-logo-home {
+  height: auto;
+  width: 19%;
+  margin: 0;
+}
+
+.small-logo-home2 {
+  height: auto;
+  width: 10%;
+  margin: 0;
 }
