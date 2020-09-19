@@ -174,6 +174,7 @@ const NavigationNonAuth = () => (
                                 <LinkContainer to="/pictures">
                                     <NavDropdown.Item eventKey={1.1}>Pictures</NavDropdown.Item>
                                 </LinkContainer>
+                                <NavDropdown.Divider />
                                 <LinkContainer to="/videos">
                                     <NavDropdown.Item eventKey={1.2}>Videos</NavDropdown.Item>
                                 </LinkContainer>
