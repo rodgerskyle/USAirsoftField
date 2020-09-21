@@ -10,7 +10,7 @@ const ProfileSettings = () => (
   <AuthUserContext.Consumer>
     {authUser => (
       <div className="background-static-all">
-        <h1 className="pagePlaceholder">Account Settings</h1>
+        <h2 className="page-header">Account Settings</h2>
         <Container>
           <Row>
             <Col className="col-settings">
