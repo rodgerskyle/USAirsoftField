@@ -211,7 +211,9 @@ class Teampage extends Component {
                                 <Row className="description-row-teamspage stat-box">
                                     <div className="counter description-teamspage">
                                         <i className="fa fa-info-circle fa-2x text-black"></i>
-                                        <h2 className="timer count-title count-number" data-to="100" data-speed="1500">{this.state.teamObject.description}</h2>
+                                        <h2 className="timer count-title count-number" data-to="100" data-speed="1500">{
+                                        typeof this.state.teamObject.description !== 'undefined' ? this.state.teamObject.description : "N/A"
+                                        }</h2>
                                         <p className="count-text ">Team Description</p>
                                     </div>
                                 </Row>
