@@ -166,7 +166,7 @@ class ProfileLookup extends Component {
                     <Container>
                         <div className="team-single">
                             <Row>
-                                <div className="col-lg-4 col-md-5 xs-margin-30px-bottom">
+                                <div className="col-lg-4 col-md-5 xs-margin-30px-bottom left-column-profile">
                                     <div className="team-single-img">
                                         <img className="profile-pic" src={this.state.profileicon} alt="" />
                                     </div>
@@ -190,10 +190,9 @@ class ProfileLookup extends Component {
                                     </Row>
                                 </div>
 
-                                <div className="col-lg-8 col-md-7 stats-desc">
+                                <div className="col-lg-8 col-md-7">
                                     <div className="team-single-text padding-50px-left sm-no-padding-left">
-                                        <p className="no-margin-bottom user-name">{this.state.authUser.name}</p>
-
+                                        <p className="no-margin-bottom user-name header-profile">{this.state.authUser.name}</p>
                                         <Row className="text-center stat-box">
                                             <Col>
                                                 <div className="counter">
