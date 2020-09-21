@@ -33,11 +33,10 @@ class TeamCreate extends Component {
             previous: '',
             page: true,
             error: '',
+            imgError: true,
         };
     }
-
-    componentDidMount() {
-    }
+    imgRef = React.createRef();
 
     componentWillUnmount() {
         if (this.state.complete === false) {
@@ -59,7 +58,7 @@ class TeamCreate extends Component {
             this.props.firebase.team(this.state.teamname.toString().toLowerCase()).ref.once("value", (data) => {
                 //Check for existance
                 if (data.val() === null) {
-                    this.setState({ page: !page })
+                    this.setState({ page: !page, error: "" })
                 }
                 else {
                     this.setState({ error: "Team name already exists! Please enter another name." })
@@ -73,7 +72,7 @@ class TeamCreate extends Component {
 
     previousPage(e) {
         e.preventDefault();
-        this.setState({ page: !this.state.page })
+        this.setState({ page: !this.state.page, error: "" })
     }
 
 
@@ -81,9 +80,9 @@ class TeamCreate extends Component {
     createTeam(e) {
         e.preventDefault();
 
-        const { image, uploaded, previous, teamname } = this.state;
+        const { image, uploaded, previous, teamname, imgError } = this.state;
 
-        if (image !== null) {
+        if (image !== null && imgError === false) {
 
             var t_name = teamname.toString().toLowerCase();
 
@@ -153,6 +152,23 @@ class TeamCreate extends Component {
         }
     }
 
+    // Checks dimensions of uploaded image
+    checkDimensions = () => {
+        // Width needs to be 654, height needs to be 192
+        var height = this.imgRef.current.naturalHeight
+        var width = this.imgRef.current.naturalWidth
+        if (width === 654 && height === 192) {
+            // Good to go
+            this.setState({imgError: false, error: ""})
+        }
+        else {
+            // Image is wrong
+            this.setState({
+                error: "Wrong dimensions on image, please upload 654x192."
+            })
+        }
+    }
+
     onChange = event => {
         this.setState({ teamname: event.target.value });
     };
@@ -173,6 +189,7 @@ class TeamCreate extends Component {
                             <p className="team-manage-blank">You already have a team, you must quit your team first.</p>
                             : (page ?
                                 <Container>
+                                    <h2 className="header-teamc">Create your team!</h2>
                                     <Form className="team-manage-text" onSubmit={(e) => this.nextPage(e)}>
                                         <Form.Group controlId="exampleForm.ControlInput1">
                                             <Form.Label>Team Name:</Form.Label>
@@ -211,11 +228,15 @@ class TeamCreate extends Component {
                                 <Container>
                                     <p className="team-upload-text">Team Image Upload:</p>
                                     <div className="team-single-img">
-                                        <img className="team-icon-individual" src={this.state.url || alticon} alt="" />
+                                        <img className="team-icon-individual" ref={this.imgRef}
+                                        src={this.state.url || alticon} alt="" 
+                                        onLoad={() => this.checkDimensions()}/>
                                     </div>
                                     <Row>
                                         <Col md={6}>
-                                            <div className="file-field input-field">
+                                            <p className="notice-text-settings"><b>NOTE: </b>Images can only be MAX 5mb </p>
+                                            <p className="notice-text-settings">and need to be width 654px by height 192px.</p>
+                                            <div className="file-field input-field img-input-teamc">
                                                 <div className="btn team-upload">
                                                     <span>File</span>
                                                     <input type="file" onChange={this.handleChange} />
@@ -242,7 +263,7 @@ class TeamCreate extends Component {
                                             </Button>
                                         </Col>
                                     </Row>
-                                    <Row>{this.state.error}</Row>
+                                    <p className="error-team-create">{this.state.error}</p>
                                 </Container>
                             )
                         }

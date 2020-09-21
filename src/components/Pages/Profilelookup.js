@@ -173,7 +173,7 @@ class ProfileLookup extends Component {
                                     <Row className="text-center stat-box">
                                         <Col>
                                             <div className="rank-box counter">
-                                                <h4 className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600">{this.state.authUser.username}</h4>
+                                                <h4 className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600 text-profile">{this.state.authUser.username}</h4>
                                                 <img className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600" src={this.state.images.length !== 0 ? this.state.images[this.state.rankindex] : null}
                                                     alt="Players rank" />
                                                 <p className="sm-width-95 sm-margin-auto rank-title">Rank: {this.state.rank}</p>
@@ -183,7 +183,7 @@ class ProfileLookup extends Component {
                                     <Row className="text-center stat-box">
                                         <Col>
                                             <div className="rank-box counter">
-                                                <h2 className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600">Subscription:</h2>
+                                                <h2 className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600 text-profile">Subscription:</h2>
                                                 <h5 className="timer count-title count-number" data-to="1700" data-speed="1500">Renew Date: {this.state.authUser.renewal}</h5>
                                             </div>
                                         </Col>

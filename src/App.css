@@ -214,9 +214,7 @@
 }
 
 .team-icon-individual {
-  margin-top: 30px;
-  margin-bottom: 30px;
-  width: 654px;
+  width: auto;
   height: 192px;
   border: 1px solid grey;
 }
@@ -286,7 +284,8 @@
 
 .team-upload-text {
   color:white !important;
-  margin-bottom: 0rem !important;
+  margin-bottom: 10px !important;
+  margin-top: 10px !important;
 }
 
 .next-button {
@@ -478,4 +477,18 @@ a.dropdown-item:hover {
 
 .login-button-nav {
   margin-bottom: 10px;
+}
+
+.text-profile {
+  color: black;
+}
+
+.img-input-teamc {
+  margin-top: 10px;
+}
+
+.header-teamc {
+  color: white;
+  text-align: center;
+  margin-top: 10px;
 }
