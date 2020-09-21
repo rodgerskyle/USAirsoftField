@@ -219,6 +219,35 @@
   border: 1px solid grey;
 }
 
+.team-icon-teamspage {
+  margin-top: 30px;
+  margin-bottom: 30px;
+  border: 1px solid grey;
+}
+
+.description-teamspage {
+  text-align: center;
+  width: 100%;
+}
+
+.description-row-teamspage {
+  margin-right: 0px !important;
+  margin-left: 0px !important;
+}
+
+.members-row-teamspage {
+  margin-right: 0px !important;
+  margin-left: 0px !important;
+  border-radius: 5px;
+  background-color: #f5f5f5;
+}
+
+.members-textbox-teamspage {
+  text-align: center;
+  color: black;
+  width: 100%;
+}
+
 .team-members-box {
   margin-bottom: 30px;
   padding: 5px;

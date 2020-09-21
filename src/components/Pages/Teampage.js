@@ -188,7 +188,7 @@ class Teampage extends Component {
                         <Row className="team-info">
                             <div>
                                 <div className="team-single-img">
-                                    <img className="team-icon-individual" src={this.state.teamicon} alt="" />
+                                    <img className="team-icon-teamspage" src={this.state.teamicon} alt="" />
                                 </div>
                                 <Row className="text-center stat-box">
                                     <Col>
@@ -208,9 +208,20 @@ class Teampage extends Component {
                                         </div>
                                     </Col>
                                 </Row>
-                                <div className="bg-light-gray md-padding-25px-all sm-padding-20px-all text-center description extra-box team-members-box">
-                                    <h2 className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600">Members:</h2>
-                                </div>
+                                <Row className="description-row-teamspage stat-box">
+                                    <div className="counter description-teamspage">
+                                        <i className="fa fa-info-circle fa-2x text-black"></i>
+                                        <h2 className="timer count-title count-number" data-to="100" data-speed="1500">{this.state.teamObject.description}</h2>
+                                        <p className="count-text ">Team Description</p>
+                                    </div>
+                                </Row>
+                                <Row className="members-row-teamspage">
+                                    <div className="members-textbox-teamspage">
+                                        <h2>
+                                            Members:
+                                        </h2>
+                                    </div>
+                                </Row>
                                 { this.state.members !== '' ?
                                     <TeamUserlist users={this.state.members}/> : ""
                                 }
