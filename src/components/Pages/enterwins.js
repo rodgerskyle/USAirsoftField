@@ -100,7 +100,7 @@ class EnterWins extends Component {
     render() {
         return (
             <div className="background-static-all">
-                <h1 className="pagePlaceholder">Admin - Enter Wins</h1>
+                <h2 className="page-header">Admin - Enter Wins</h2>
                 {!this.state.loading ?
                 <Container>
                     <Row>
