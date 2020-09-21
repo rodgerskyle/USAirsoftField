@@ -248,6 +248,14 @@
   width: 100%;
 }
 
+.header-profile {
+  color: white;
+}
+
+.left-column-profile {
+  margin-top: 18px;
+}
+
 .team-members-box {
   margin-bottom: 30px;
   padding: 5px;
