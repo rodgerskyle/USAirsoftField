@@ -28,7 +28,7 @@ class Map extends Component {
         return (
             <div className="background-static-all">
                 <div className="mapStyle">
-                    <h2>Map</h2>
+                    <h2 className="page-header">Map</h2>
                     <Container>
                         <Row>
                             <Col>

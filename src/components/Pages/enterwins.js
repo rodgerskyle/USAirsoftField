@@ -5,25 +5,23 @@ import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
 import { compose } from 'recompose';
 
-import { Button, Form } from 'react-bootstrap/';
+import { Button, Form, Container, Card, Row, Col } from 'react-bootstrap/';
 
 import * as ROLES from '../constants/roles';
-
-require('dotenv').config();
 
 class EnterWins extends Component {
     constructor(props) {
         super(props);
 
         this.state = {
-            results: "Here is where results will appear",
             value: '',
             loading: false,
             users: [],
+            statusBox: [],
         };
         this.handleChange = this.handleChange.bind(this);
     }
-
+      
     handleChange(event) {
         this.setState({ value: event.target.value });
     }
@@ -85,10 +83,14 @@ class EnterWins extends Component {
             this.props.firebase.user(uid).update({
                 points, wins, freegames, currentmonth
             });
-            this.setState({results: "User " + this.state.value + " was updated successfully."});
+            var temp = this.state.statusBox;
+            temp.push("User " + this.state.value + " was updated successfully.")
+            this.setState({statusBox: temp})
         }
         else {
-            this.setState({results: "User " + this.state.value + " was not found."});
+            var temp = this.state.statusBox;
+            temp.push("User " + this.state.value + " was not found.");
+            this.setState({statusBox: temp})
         }
         //End API call
         document.getElementById("usernameBox").focus();
@@ -100,26 +102,55 @@ class EnterWins extends Component {
             <div className="background-static-all">
                 <h1 className="pagePlaceholder">Admin - Enter Wins</h1>
                 {!this.state.loading ?
-                    <div className="form-box">
-                        <Form id="formBox" onSubmit={this.updateUser}>
-                            <Form.Group controlId="usernameBox">
-                                <Form.Label>Username</Form.Label>
-                                <Form.Control onChange={this.handleChange}
-                                    value={this.state.value}
-                                    placeholder="Enter username to add points to" />
-                                <Form.Text id="userName" className="text-muted">
-                                    {this.state.results}
-                                </Form.Text>
-                                <Button type="submit" id="register" variant="outline-success">
-                                    Submit
-                        </Button>
-                            </Form.Group>
-                        </Form>
-                    </div> : <h2 className="pagePlaceholder">Loading...</h2>}
+                <Container>
+                    <Row>
+                        <Col>
+                            <div className="form-box">
+                                <Form id="formBox" onSubmit={this.updateUser}>
+                                    <Form.Group controlId="usernameBox">
+                                        <Form.Label>Username</Form.Label>
+                                        <Form.Control onChange={this.handleChange}
+                                            value={this.state.value}
+                                            className="form-input-admin"
+                                            placeholder="Enter username to add points to" />
+                                        <Button className="button-submit-admin" type="submit" id="register" variant="outline-success">
+                                            Submit
+                                        </Button>
+                                    </Form.Group>
+                                </Form>
+                            </div>
+                        </Col>
+                    </Row>
+                    <Row>
+                        <Col>
+                            <Card className="status-card-admin">
+                                <Card.Header>Status Box</Card.Header>
+                                <StatusBox updates={this.state.statusBox}/>
+                            </Card>
+                        </Col>
+                    </Row>
+                    </Container>
+                : <h2 className="pagePlaceholder">Loading...</h2>}
             </div>
         );
     }
 }
+
+const StatusBox = ({updates}) => (
+    <Card.Body className="status-card-body-admin">
+        {updates.map((item, i) => (
+            i % 2 ? 
+            <Card.Text key={i}>
+                {"(" + i + ") " + item}
+            </Card.Text>
+                : 
+            <Card.Text className="status-card-offrow-admin" key={i}>
+                {"(" + i + ") " + item}
+            </Card.Text>
+            
+        ))}
+    </Card.Body>
+);
 
 const condition = authUser =>
     authUser && !!authUser.roles[ROLES.ADMIN];
