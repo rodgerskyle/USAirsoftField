@@ -39,7 +39,7 @@ render() {
     return (
         <div className="background-static-all">
             <div className="pdfStyle">
-                <h2>Gametypes</h2>
+                <h2 className="page-header">Gametypes</h2>
                 <Container fluid>
                     <Row className="align-items-center">
                         <Col>

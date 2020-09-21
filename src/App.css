@@ -284,6 +284,8 @@
 .page-header {
   color:white;
   text-align: center;
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 
 .team-link {
@@ -528,4 +530,27 @@ a.dropdown-item:hover {
   color: white;
   text-align: center;
   margin-top: 10px;
+}
+
+.status-card-body-admin {
+  overflow-y: scroll;
+  max-height: 35vh;
+}
+
+.status-card-offrow-admin {
+  background-color: darkgray;
+  margin-left: -10px;
+  padding: 10px;
+}
+
+.button-submit-admin {
+  margin-top: 1rem;
+}
+
+.form-input-admin {
+  width: 20rem !important;
+}
+
+.status-card-admin {
+  margin: 0 10rem;
 }
