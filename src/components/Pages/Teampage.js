@@ -201,7 +201,7 @@ class Teampage extends Component {
                                     <Col>
                                         <div className="counter">
                                             <i className="fa fa-user-circle fa-2x"></i>
-                                            <Link className="profile-link" to={"/profilelookup/" + this.state.teamObject.leader}>
+                                            <Link className="profilelink-tm" to={"/profilelookup/" + this.state.teamObject.leader}>
                                                 <h2 className="timer count-title count-number" data-to="1700" data-speed="1500">{this.state.leader}</h2>
                                             </Link>
                                             <p className="count-text ">Team Leader</p>
