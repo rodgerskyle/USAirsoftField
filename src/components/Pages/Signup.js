@@ -25,10 +25,8 @@ const config = {
  
 const SignUpPage = () => (
   <div className="background-static-all">
-    <div className="pagePlaceholder">
-      <h1>SignUp</h1>
-      <SignUpForm />
-    </div>
+    <h2 className="page-header">SignUp</h2>
+    <SignUpForm />
   </div>
 );
 

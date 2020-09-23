@@ -22,9 +22,7 @@ class Pictures extends Component {
     render() {
         return (
             <div className="background-static-all">
-                <div className="pagePlaceholder">
-                    <h2>Pictures</h2>
-                </div>
+                <h2 className="page-header">Pictures</h2>
             </div>
         );
     }

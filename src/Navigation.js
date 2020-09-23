@@ -1,7 +1,7 @@
 import React from 'react';
 import logo from './assets/us-airsoft-logo.png';
 import { Navbar, Nav, Button, NavItem, NavDropdown } from 'react-bootstrap/';
-import { Container, Row, Col } from 'react-bootstrap/';
+import { Row } from 'react-bootstrap/';
 import { Link } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import SignOutButton from './Signout';
@@ -19,39 +19,21 @@ const Navigation = ({ authUser }) => (
 );
 
 const NavigationAuth = ({ authUser }) => (
-    <div className="staticBG">
-        <div className="App-header">
-            <Container fluid>
-                <Row className="header-row">
-                    <Col className="align-self-start">
-                        <Link to="/">
-                            <img src={logo} alt="US Airsoft logo" className="img-fluid logo" />
-                        </Link>
-                    </Col>
-                    <Col className="align-self-end">
-                            <NavItem className="logout">
-                                <SignOutButton />
-                            </NavItem>
-                            <p className="welcome">
-                                Welcome {authUser.username}!</p>
-                    </Col>
-                </Row>
-            </Container>
-            <div className="logobox">
-            </div>
-            <div className="login">
-            </div>
-        </div>
         <div>
             <Navbar collapseOnSelect expand="sm" bg="nav" variant="dark" className="navbar-all">
                 <Nav className="mr-auto">
                     <NavItem>
-                        <Link className="nav-link" to="/">Home</Link>
+                        <Link to="/">
+                            <img src={logo} alt="US Airsoft logo" className="img-fluid logo" />
+                        </Link>
                     </NavItem>
                 </Nav>
                 <Navbar.Toggle aria-controls="responsive-navbar-nav" />
                 <Navbar.Collapse id="responsive-navbar-nav">
                     <Nav className="mr-auto">
+                        <NavItem>
+                            <Link className="nav-link" to="/">Home</Link>
+                        </NavItem>
                         <NavItem>
                             <Link className="nav-link" to="/leaderboard">Leaderboard</Link>
                         </NavItem>
@@ -125,44 +107,39 @@ const NavigationAuth = ({ authUser }) => (
                             </NavDropdown>
                         </NavItem>
                     </Nav>
+                    <Nav className="ml-auto">
+                        <NavItem className="logout">
+                            <Row>
+                                <p className="welcome">
+                                    Welcome {authUser.username}!
+                                </p>
+                            </Row>
+                            <Row>
+                                <SignOutButton />
+                            </Row>
+                        </NavItem>
+                    </Nav>
                 </Navbar.Collapse>
             </Navbar>
         </div>
-    </div>
 );
 
 const NavigationNonAuth = () => (
-    <div className="staticBG">
-        <div className="App-header">
-            <Container fluid>
-                <Row className="header-row">
-                    <Col className="align-self-start">
-                        <Link to="/">
-                            <img src={logo} alt="US Airsoft logo" className="img-fluid logo" />
-                        </Link>
-                    </Col>
-                    <Col className="align-self-end">
-                        <div className="login">
-                            <Button variant="outline-secondary" className="login-button-nav">
-                                <LinkContainer to="/login">
-                                    <NavItem>Login</NavItem>
-                                </LinkContainer>
-                            </Button>
-                        </div>
-                    </Col>
-                </Row>
-            </Container>
-        </div>
         <div>
             <Navbar collapseOnSelect expand="sm" bg="nav" variant="dark" className="navbar-all">
                 <Nav className="mr-auto">
                     <NavItem>
-                        <Link className="nav-link" to="/">Home</Link>
+                        <Link to="/">
+                            <img src={logo} alt="US Airsoft logo" className="img-fluid logo" />
+                        </Link>
                     </NavItem>
                 </Nav>
                 <Navbar.Toggle aria-controls="responsive-navbar-nav" />
                 <Navbar.Collapse id="responsive-navbar-nav">
                     <Nav className="mr-auto">
+                        <NavItem>
+                            <Link className="nav-link" to="/">Home</Link>
+                        </NavItem>
                         <NavItem>
                             <Link className="nav-link" to="/leaderboard">Leaderboard</Link>
                         </NavItem>
@@ -207,10 +184,16 @@ const NavigationNonAuth = () => (
                             </NavDropdown>
                         </NavItem>
                     </Nav>
+                    <Nav className="ml-auto">
+                        <Button variant="outline-secondary" className="login-button-nav">
+                            <NavItem>
+                                <Link className="nav-link" to="/login">Login</Link>
+                            </NavItem>
+                        </Button>
+                    </Nav>
                 </Navbar.Collapse>
             </Navbar>
         </div>
-    </div>
 );
 
 export default Navigation;

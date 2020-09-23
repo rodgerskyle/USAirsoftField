@@ -21,9 +21,7 @@ class Membership extends Component {
     render() {
         return (
             <div className="background-static-all">
-                <div className="pagePlaceholder">
-                    <h2>Membership</h2>
-                </div>
+                <h2 className="page-header">Membership</h2>
             </div>
         );
     }

@@ -31,7 +31,6 @@ import Teamjoin from './components/Pages/Teamjoin'
 
 const App = () => (
       <Router>
-        <div className="staticBG">
           <Navigation />
           <Switch>
             <Route path="/map">
@@ -118,7 +117,6 @@ const App = () => (
               <Home />
             </Route>
           </Switch>
-        </div>
       </Router>
 );
 

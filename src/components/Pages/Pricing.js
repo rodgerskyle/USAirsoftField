@@ -21,9 +21,7 @@ class Pricing extends Component {
     render() {
         return (
             <div className="background-static-all">
-                <div className="pagePlaceholder">
-                    <h2>Pricing</h2>
-                </div>
+                <h2 className="page-header">Pricing</h2>
             </div>
         );
     }

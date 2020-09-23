@@ -158,6 +158,7 @@ class Leaderboards extends Component {
 
         return (
             <div className="background-static-lb">
+                <h2 className="page-header">Leaderboards</h2>
                 <Container className="leaderboard-page">
                     <Row>
                         <Col className="button-left-lb">
@@ -172,9 +173,6 @@ class Leaderboards extends Component {
                                     this.setState({ currentMonth: !this.state.currentMonth})
                                 }}
                             /> : null}
-                        </Col>
-                        <Col>
-                            <h1>Leaderboards</h1>
                         </Col>
                         <Col className="button-right-lb">
                             <BootstrapSwitchButton

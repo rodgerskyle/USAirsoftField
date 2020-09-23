@@ -49,6 +49,8 @@
 }
 
 .navbar-all {
+  padding: .55rem 1rem !important;
+  z-index: 1;
   width: 100%;
   border: 0 !important;
 }
@@ -152,7 +154,7 @@
   color: white;
 }
 .logout {
-  float:right;
+  justify-content: center;
 }
 
 .login {
@@ -163,6 +165,7 @@
   color:white;
   float: right;
   padding-right: 10px;
+  margin-bottom: 4px;
 }
 
 .pdfFile {
@@ -214,11 +217,46 @@
 }
 
 .team-icon-individual {
-  margin-top: 30px;
-  margin-bottom: 30px;
-  width: 654px;
+  width: auto;
   height: 192px;
   border: 1px solid grey;
+}
+
+.team-icon-teamspage {
+  margin-top: 30px;
+  margin-bottom: 30px;
+  border: 1px solid grey;
+}
+
+.description-teamspage {
+  text-align: center;
+  width: 100%;
+}
+
+.description-row-teamspage {
+  margin-right: 0px !important;
+  margin-left: 0px !important;
+}
+
+.members-row-teamspage {
+  margin-right: 0px !important;
+  margin-left: 0px !important;
+  border-radius: 5px;
+  background-color: #f5f5f5;
+}
+
+.members-textbox-teamspage {
+  text-align: center;
+  color: black;
+  width: 100%;
+}
+
+.header-profile {
+  color: white;
+}
+
+.left-column-profile {
+  margin-top: 18px;
 }
 
 .team-members-box {
@@ -249,6 +287,8 @@
 .page-header {
   color:white;
   text-align: center;
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 
 .team-link {
@@ -259,6 +299,7 @@
 
 .team-member-list {
   text-align: center;
+  margin-top: 30px;
 }
 
 .team-upload {
@@ -286,7 +327,8 @@
 
 .team-upload-text {
   color:white !important;
-  margin-bottom: 0rem !important;
+  margin-bottom: 10px !important;
+  margin-top: 10px !important;
 }
 
 .next-button {
@@ -477,5 +519,42 @@ a.dropdown-item:hover {
 }
 
 .login-button-nav {
-  margin-bottom: 10px;
+  padding: 2px !important;
+}
+
+.text-profile {
+  color: black;
+}
+
+.img-input-teamc {
+  margin-top: 10px;
+}
+
+.header-teamc {
+  color: white;
+  text-align: center;
+  margin-top: 10px;
+}
+
+.status-card-body-admin {
+  overflow-y: scroll;
+  max-height: 35vh;
+}
+
+.status-card-offrow-admin {
+  background-color: darkgray;
+  margin-left: -10px;
+  padding: 10px;
+}
+
+.button-submit-admin {
+  margin-top: 1rem;
+}
+
+.form-input-admin {
+  width: 20rem !important;
+}
+
+.status-card-admin {
+  margin: 0 10rem;
 }
