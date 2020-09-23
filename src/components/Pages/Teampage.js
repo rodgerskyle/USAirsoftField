@@ -237,17 +237,19 @@ class Teampage extends Component {
 }
 
     const TeamUserlist = ({ users }) => (
-        <Col>
+        <Row>
             {users.map(user => (
-            <div className="counter team-member-list" key={user[0]}>
-                <i className="fa fa-users fa-2x text-black"></i>
-                <Link className="profilelink-tm" to={"/profilelookup/" + user[1]}>
-                    <h2 className="timer count-title count-number" data-to="100" data-speed="1500">{user[0]}</h2>
-                </Link>
-                <p className="count-text ">Member</p>
-            </div>
+                <Col>
+                    <div className="counter team-member-list" key={user[0]}>
+                        <i className="fa fa-users fa-2x text-black"></i>
+                        <Link className="profilelink-tm" to={"/profilelookup/" + user[1]}>
+                            <h2 className="timer count-title count-number" data-to="100" data-speed="1500">{user[0]}</h2>
+                        </Link>
+                        <p className="count-text ">Member</p>
+                    </div>
+                </Col>
             ))}
-        </Col>
+        </Row>
     );
 
 export default withFirebase(Teampage);
