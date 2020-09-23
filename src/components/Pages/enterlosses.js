@@ -61,6 +61,7 @@ class EnterLosses extends Component {
         event.preventDefault()
         //Make API CALL HERE
         var index = -1;
+        var temp;
         for (var i=0; i < this.state.users.length; i++) {
             if (this.state.users[i].username === this.state.value) {
                 index = i;
@@ -82,12 +83,12 @@ class EnterLosses extends Component {
             this.props.firebase.user(uid).update({
                 points, losses, freegames, currentmonth
             });
-            var temp = this.state.statusBox;
+            temp = this.state.statusBox;
             temp.push("User " + this.state.value + " was updated successfully.")
             this.setState({statusBox: temp})
         }
         else {
-            var temp = this.state.statusBox;
+            temp = this.state.statusBox;
             temp.push("User " + this.state.value + " was not found.");
             this.setState({statusBox: temp})
         }

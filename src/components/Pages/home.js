@@ -3,9 +3,11 @@ import banner from '../../assets/banner.png';
 import logo from '../../assets/logo.png';
 import { Carousel } from 'react-bootstrap/';
 import { Container, Row, Col } from 'react-bootstrap/';
+import BackgroundVideo from '../constants/backgroundvideo';
 
 const Home = () => (
   <div>
+  <BackgroundVideo/>
     <div className="banner">
       <Carousel>
         <Carousel.Item>
@@ -28,7 +30,7 @@ const Home = () => (
         </Col>
         <Col className="col-settings">
           <div className="counter video-box-home boxes-home">
-            <iframe src="https://player.vimeo.com/video/84006688" width="340" height="233.83" frameBorder="0" allow="autoplay; fullscreen" allowFullScreen></iframe>
+            <iframe title="Video" src="https://player.vimeo.com/video/84006688" width="340" height="233.83" frameBorder="0" allow="autoplay; fullscreen" allowFullScreen></iframe>
           </div>
         </Col>
       </Row>
