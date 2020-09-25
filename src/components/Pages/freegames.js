@@ -18,7 +18,7 @@ class FreeGames extends Component {
             users: [],
             queriedlist: [],
             search: "",
-            searching: "false",
+            UpdateUserState: this.updateUser,
         };
     }
 
@@ -44,15 +44,17 @@ class FreeGames extends Component {
         });
     }
 
-    updateUser = (event) => {
-        event.preventDefault()
+    // Updates User's free game
+    updateUser = (user) => {
+        this.props.firebase.user(user).once("value", object => {
+            var freegames = object.val().freegames;
+            freegames--;
+            this.props.firebase.user(user).update({freegames})
+        })
     }
 
     onChange = event => {
-        if (event.target.value !== "")
-            this.setState({ search: event.target.value, searching: true });
-        else 
-            this.setState({ search: event.target.value, searching: false });
+            this.setState({ search: event.target.value });
     };
 
     render() {
@@ -79,7 +81,8 @@ class FreeGames extends Component {
                                             </Form.Group>
                                         </Form>
                                     </Card.Header>
-                                    <UserBox users={this.state.users} index={0} search={this.state.search}/>
+                                    <UserBox users={this.state.users} index={0} 
+                                    search={this.state.search} update={this.state.UpdateUserState}/>
                                 </Card>
                             </Col>
                         </Row>
@@ -90,64 +93,96 @@ class FreeGames extends Component {
     }
 }
 
-const UserBox = ({users, index, search}) => (
+const UserBox = ({users, index, search, update}) => (
     <Card.Body className="status-card-body-admin">
         {users.map((user, i) => (
             search !== "" ? // Search query case
-                user.freegames > 0 && user.name.includes(search) ? 
+                user.freegames > 0 && user.name.toLowerCase().includes(search.toLowerCase()) ? 
                         index++ % 2 === 0 ? 
-                        <Row className="row-fg">
+                        <Row className="row-fg" key={index}>
                             <Col className="col-name-fg">
-                                <Card.Text key={index}>
+                                <Card.Text>
                                     {"(" + index + ") " + user.name}
                                 </Card.Text>
                             </Col>
                             <Col>
-                                <Button className="button-submit-admin2" type="submit" id="update" variant="outline-success">
-                                    Use 
-                                </Button>
+                                <Row>
+                                    <Col className="col-name-fg">
+                                        {user.freegames + " Free Game(s)"}
+                                    </Col>
+                                    <Col>
+                                        <Button className="button-submit-admin2" onClick={() => update(user.uid)}
+                                        type="submit" id="update" variant="outline-success">
+                                            Use 1 
+                                        </Button>
+                                    </Col>
+                                </Row>
                             </Col>
                         </Row>
                             : 
-                        <Row className="status-card-offrow-admin-fg">
+                        <Row className="status-card-offrow-admin-fg" key={index}>
                             <Col className="col-name-fg">
-                                <Card.Text key={index}>
+                                <Card.Text>
                                         {"(" + index + ") " + user.name}
                                 </Card.Text>
                             </Col>
                             <Col>
-                                <Button className="button-submit-admin2" type="submit" id="update" variant="success">
-                                    Use 
-                                </Button>
+                                <Row>
+                                    <Col className="col-name-fg">
+                                        {user.freegames + " Free Game(s)"}
+                                    </Col>
+                                    <Col>
+                                        <Button className="button-submit-admin2" onClick={() => update(user.uid)}
+                                        type="submit" id="update" variant="success">
+                                            Use 1 
+                                        </Button>
+                                    </Col>
+                                </Row>
                             </Col>
                         </Row>
                 : ""
             :
                 user.freegames > 0 ? 
                         index++ % 2 === 0 ? 
-                        <Row className="row-fg">
+                        <Row className="row-fg" key={index}>
                             <Col className="col-name-fg">
-                                <Card.Text key={index}>
+                                <Card.Text>
                                     {"(" + index + ") " + user.name}
                                 </Card.Text>
                             </Col>
                             <Col>
-                                <Button className="button-submit-admin2" type="submit" id="update" variant="outline-success">
-                                    Use 
-                                </Button>
+                                <Row>
+                                    <Col className="col-name-fg">
+                                        {user.freegames + " Free Game(s)"}
+                                    </Col>
+                                    <Col>
+                                        <Button className="button-submit-admin2" onClick={() => update(user.uid)}
+                                        type="submit" id="update" variant="outline-success">
+                                            Use 1 
+                                        </Button>
+                                    </Col>
+                                </Row>
                             </Col>
                         </Row>
                             : 
-                        <Row className="status-card-offrow-admin-fg">
+                        <Row className="status-card-offrow-admin-fg" key={index}>
                             <Col className="col-name-fg">
-                                <Card.Text key={index}>
+                                <Card.Text>
                                         {"(" + index + ") " + user.name}
                                 </Card.Text>
                             </Col>
                             <Col>
-                                <Button className="button-submit-admin2" type="submit" id="update" variant="success">
-                                    Use 
-                                </Button>
+                                <Row>
+                                    <Col className="col-name-fg">
+                                        {user.freegames + " Free Game(s)"}
+                                    </Col>
+                                    <Col>
+                                        <Button className="button-submit-admin2" onClick={() => update(user.uid)}
+                                        type="submit" id="update" variant="success">
+                                            Use 1 
+                                        </Button>
+                                    </Col>
+                                </Row>
                             </Col>
                         </Row>
                 : ""
