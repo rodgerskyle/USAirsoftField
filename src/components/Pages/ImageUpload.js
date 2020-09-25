@@ -93,7 +93,7 @@ class ImageUpload extends Component {
                             <div className="btn">
                                 <span className="imgUpload-text">File</span>
                                 <input type="file" onChange={this.handleChange} 
-                                className="imgUpload-input"
+                                className="imgUpload-input" accept="image/*"
                                 />
                             </div>
                         </div>
