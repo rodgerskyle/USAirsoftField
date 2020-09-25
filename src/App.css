@@ -155,17 +155,18 @@
 }
 .logout {
   justify-content: center;
+  margin-right: 0 !important;
+  margin-left: 0 !important;
 }
 
 .login {
-  float:right;
+  justify-content: center;
 }
 
 .welcome {
   color:white;
-  float: right;
-  padding-right: 10px;
   margin-bottom: 4px;
+  text-align: center;
 }
 
 .pdfFile {
@@ -478,7 +479,7 @@ a.dropdown-item:hover {
 }
 
 .about-us {
-    text-align: justify;
+    text-align: center;
     padding-left: 10px;
     padding-right: 10px;
     font-size: 18px;
@@ -486,6 +487,7 @@ a.dropdown-item:hover {
 
 .video-box-home {
   padding-bottom: 18px !important;
+  overflow: hidden;
 }
 
 .hours-home {
@@ -508,7 +510,7 @@ a.dropdown-item:hover {
 
 .small-logo-home {
   height: auto;
-  width: 19%;
+  width: 10%;
   margin: 0;
 }
 
@@ -519,6 +521,10 @@ a.dropdown-item:hover {
 }
 
 .login-button-nav {
+  padding: 2px !important;
+}
+
+.logout-button-nav {
   padding: 2px !important;
 }
 
@@ -547,8 +553,28 @@ a.dropdown-item:hover {
   padding: 10px;
 }
 
+.status-card-offrow-admin-fg {
+  background-color: darkgray;
+  padding-bottom: 10px;
+  padding-top: 10px;
+  margin-bottom: 10px;
+}
+
+.row-fg {
+  margin-bottom: 10px;
+}
+
+.col-name-fg {
+  display: flex;
+  align-items: center;
+}
+
 .button-submit-admin {
   margin-top: 1rem;
+}
+
+.button-submit-admin2 {
+  float: right;
 }
 
 .form-input-admin {
@@ -557,4 +583,22 @@ a.dropdown-item:hover {
 
 .status-card-admin {
   margin: 0 10rem;
+}
+
+.center-navbar-nav {
+  margin-right: 45px !important;
+}
+
+.iframe-home {
+  display:block;
+  width:100%;
+}
+
+.search-label-admin {
+  color: black;
+}
+
+.col-admin-mg {
+  display: flex;
+  justify-content: center;
 }

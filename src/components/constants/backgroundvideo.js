@@ -9,7 +9,7 @@ const BackgroundVideo = () => {
                 <source src={Drone_video} type="video/mp4" />
                 Your browser does not support the video tag.
             </video>
-      h </div>
+        </div>
     )
 }
 

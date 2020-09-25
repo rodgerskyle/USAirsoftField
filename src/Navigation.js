@@ -30,7 +30,7 @@ const NavigationAuth = ({ authUser }) => (
                 </Nav>
                 <Navbar.Toggle aria-controls="responsive-navbar-nav" />
                 <Navbar.Collapse id="responsive-navbar-nav">
-                    <Nav className="mr-auto">
+                    <Nav className="mr-auto center-navbar-nav">
                         <NavItem>
                             <Link className="nav-link" to="/">Home</Link>
                         </NavItem>
@@ -60,12 +60,18 @@ const NavigationAuth = ({ authUser }) => (
                                 <LinkContainer to="/enterlosses">
                                     <NavDropdown.Item eventKey={2.2}>Update Losses</NavDropdown.Item>
                                 </LinkContainer>
+                                <LinkContainer to="/freegames">
+                                    <NavDropdown.Item eventKey={2.3}>Free Games</NavDropdown.Item>
+                                </LinkContainer>
                                 <LinkContainer to="/signup">
-                                    <NavDropdown.Item eventKey={2.3}>Register</NavDropdown.Item>
+                                    <NavDropdown.Item eventKey={2.4}>Register</NavDropdown.Item>
+                                </LinkContainer>
+                                <LinkContainer to="/migration">
+                                    <NavDropdown.Item eventKey={2.5}>Migrate</NavDropdown.Item>
                                 </LinkContainer>
                                 <NavDropdown.Divider />
                                 <LinkContainer to="/admin">
-                                    <NavDropdown.Item eventKey={2.4}>Testing</NavDropdown.Item>
+                                    <NavDropdown.Item eventKey={2.6}>Testing</NavDropdown.Item>
                                 </LinkContainer>
                             </NavDropdown>
                         )}
@@ -108,13 +114,13 @@ const NavigationAuth = ({ authUser }) => (
                         </NavItem>
                     </Nav>
                     <Nav className="ml-auto">
-                        <NavItem className="logout">
-                            <Row>
+                        <NavItem> 
+                            <Row className="logout">
                                 <p className="welcome">
                                     Welcome {authUser.username}!
                                 </p>
                             </Row>
-                            <Row>
+                            <Row className="logout">
                                 <SignOutButton />
                             </Row>
                         </NavItem>
@@ -136,7 +142,7 @@ const NavigationNonAuth = () => (
                 </Nav>
                 <Navbar.Toggle aria-controls="responsive-navbar-nav" />
                 <Navbar.Collapse id="responsive-navbar-nav">
-                    <Nav className="mr-auto">
+                    <Nav className="mr-auto center-navbar-nav">
                         <NavItem>
                             <Link className="nav-link" to="/">Home</Link>
                         </NavItem>

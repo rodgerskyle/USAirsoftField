@@ -28,11 +28,6 @@ const Home = () => (
             <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>
           </div>
         </Col>
-        <Col className="col-settings">
-          <div className="counter video-box-home boxes-home">
-            <iframe title="Video" src="https://player.vimeo.com/video/84006688" width="340" height="233.83" frameBorder="0" allow="autoplay; fullscreen" allowFullScreen></iframe>
-          </div>
-        </Col>
       </Row>
       <Row className="text-center stat-box hours-row-home">
         <div className="counter hours-home boxes-home boxes-home-nopadbot">
