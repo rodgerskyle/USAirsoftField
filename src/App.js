@@ -12,6 +12,7 @@ import Admin from './components/Pages/Admin'
 import SignUpForm from './components/Pages/Signup'
 import EnterWins from './components/Pages/enterwins';
 import EnterLosses from './components/Pages/enterlosses';
+import FreeGames from './components/Pages/freegames';
 import Leaderboard from './components/Pages/leaderboard';
 import ProfileLookup from './components/Pages/Profilelookup';
 import Pricing from './components/Pages/Pricing';
@@ -91,6 +92,9 @@ const App = () => (
             </Route>
             <Route path="/enterlosses">
               <EnterLosses />
+            </Route>
+            <Route path="/freegames">
+              <FreeGames />
             </Route>
             <Route path="/register">
               <SignUpForm />
