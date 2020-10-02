@@ -34,7 +34,7 @@ class Map extends Component {
                             <Col>
                                 <SideBySideMagnifier 
                                     imageSrc={lowmap}
-                                    imageAlt="Example"
+                                    imageAlt="Field Map"
                                     largeImageSrc={map}
                                     alwaysInPlace={true}
                                 />
