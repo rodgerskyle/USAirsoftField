@@ -545,6 +545,7 @@ a.dropdown-item:hover {
 .status-card-body-admin {
   overflow-y: scroll;
   max-height: 35vh;
+  color: black;
 }
 
 .status-card-offrow-admin {
@@ -601,4 +602,62 @@ a.dropdown-item:hover {
 .col-admin-mg {
   display: flex;
   justify-content: center;
+}
+
+.header-rp {
+  align-items: center;
+  justify-content: center;
+}
+
+.form-rp {
+  color: white;
+}
+
+.row-rp {
+  justify-content: center;
+}
+
+.button-row-rp {
+  float: right;
+}
+
+.card-rp {
+  max-width: 50% !important;
+}
+
+.nav-row-rp {
+  margin-top: 10px;
+}
+
+.next-button-rp {
+  margin-left: 5px;
+}
+
+.prev-button-rp {
+  margin-right: 5px;
+}
+
+.card-row-rp {
+  position: relative;
+}
+
+.text-block-card-rp {
+  position: absolute;
+  color: white;
+  top: 245px;
+  max-width: 236.5px;
+  min-width: 236.5px;
+  background-color: darkgray;
+  justify-content: center;
+  padding: 5px;
+}
+.text-block-empty-rp {
+  position: absolute;
+  color: white;
+  top: 245px;
+  max-width: 236.5px;
+  min-width: 236.5px;
+  background-color: darkgray;
+  justify-content: center;
+  padding: 0px;
 }

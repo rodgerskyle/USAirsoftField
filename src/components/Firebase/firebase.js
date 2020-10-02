@@ -80,6 +80,8 @@ class Firebase {
 
     requestTeam = () => this.func.httpsCallable('requestTeam');
 
+    mergeUsers = () => this.func.httpsCallable('mergeUsers');
+
     // Database API
 
     storage = img => this.st.ref().child(`ranks/${img}`);
