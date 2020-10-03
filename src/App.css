@@ -613,6 +613,11 @@ a.dropdown-item:hover {
   color: white;
 }
 
+.waiver-form-rp {
+  color: white;
+  min-width: 67%;
+}
+
 .row-rp {
   justify-content: center;
 }
@@ -625,6 +630,22 @@ a.dropdown-item:hover {
   max-width: 50% !important;
 }
 
+.waiver-rp {
+  justify-content: center;
+  transition: display 1s, opacity 0.5s linear;
+  opacity: 1;
+}
+
+.waiver-hidden-rp {
+  transition: display 1s, opacity 0.5s linear;
+  opacity: 0;
+  display: none
+}
+
+.waiver-input-rp {
+  margin-top: 50px;
+}
+
 .nav-row-rp {
   margin-top: 10px;
 }
@@ -635,6 +656,23 @@ a.dropdown-item:hover {
 
 .prev-button-rp {
   margin-right: 5px;
+}
+
+.waiver-row-rp {
+  position: relative;
+}
+
+
+.waiver-header-rp {
+  justify-content: center;
+  color: white;
+}
+
+.text-block-waiver-rp {
+  position: absolute;
+  color: white;
+  max-width: 766px;
+  min-width: 766px;
 }
 
 .card-row-rp {
@@ -660,4 +698,42 @@ a.dropdown-item:hover {
   background-color: darkgray;
   justify-content: center;
   padding: 0px;
+}
+
+.participant-sig-rp {
+  background-color: white;
+}
+
+.sig-row-rp {
+  width: auto;
+}
+
+.pg-sig-rp {
+  background-color: white;
+}
+
+.header-sig-rp {
+  text-align: center
+}
+
+.signBox-image-rt {
+  background-color: white;
+}
+
+.clear-button-rp {
+  margin-right: 5px;
+}
+
+.save-button-rp {
+  margin-left: 5px;
+}
+
+.divider-row-rp {
+  content: '';
+  display: block;
+  margin: -25px auto 0;
+  width: 100%;
+  height: 25px;
+  border-radius: 125px/12px;
+  box-shadow: 0 0 8px black;
 }
