@@ -66,10 +66,13 @@ const INITIAL_STATE = {
     pageIndex: 0,
     hideWaiver: false,
     agecheck: true,
+    age: "",
     participantImg: null,
+    pgImg: null,
   };
 
   let sigRef = {};
+  let sigRef2 = {};
   //sigRef = React.createRef();
  
 class SignUpFormBase extends Component {
@@ -149,10 +152,10 @@ class SignUpFormBase extends Component {
       if (month < 0 || (month === 0 && today.getDate() < ageInput.getDate()))
         age--;
       if (age < 18) {
-        this.setState({agecheck: false})
+        this.setState({agecheck: false, age})
       }
       else {
-        this.setState({agecheck: true})
+        this.setState({agecheck: true, age})
       }
     });
   };
@@ -178,6 +181,7 @@ class SignUpFormBase extends Component {
       status,
       hideWaiver,
       agecheck,
+      age,
     } = this.state;
 
     const isInvalid =
@@ -402,15 +406,38 @@ class SignUpFormBase extends Component {
                 </Col>
               </Row>
               <Row className="row-rp sig-row-rp">
-                  <SignatureCanvas penColor='black' 
-                  canvasProps={{width: 750, height: 150, className: 'pg-sig-rp'}} />
+                {!this.state.pgImg? 
+                  <SignatureCanvas penColor='black' ref={(ref) => {this.sigRef2 = ref}}
+                  canvasProps={{width: 750, height: 150, className: 'participant-sig-rp'}} />
+                  : <img className="signBox-image-rt" src={this.state.pgImg} alt="signature" />
+                }
+              </Row>
+              <Row className="row-rp">
+                <Button variant="secondary" type="button" className="clear-button-rp"
+                onClick={() => {
+                  this.setState({pgImg: null})
+                  if (this.sigRef2)
+                    this.sigRef2.clear();
+                }}>
+                    Clear
+                </Button>
+                <Button variant="secondary" type="button" className="save-button-rp"
+                onClick={() => {
+                    if (!this.sigRef2.isEmpty()) {
+                    this.setState({
+                      pgImg: this.sigRef2.getTrimmedCanvas().toDataURL("image/png")
+                    })
+                  }
+                }}>
+                    Save
+                </Button>
               </Row>
               </Col>
               : ""}
               </Form>
               </Row>
-              <Row>
-                {errorWaiver && <p>{errorWaiver.message}</p>}
+              <Row className="row-rp">
+                {errorWaiver && <p className="error-text-rp">{errorWaiver}</p>}
               </Row>
           </Col>
           :
@@ -526,7 +553,6 @@ class SignUpFormBase extends Component {
           </Form>
           }
           </Row>
-
           <Row className="row-rp nav-row-rp">
             <Button className="prev-button-rp" variant="info" type="button" disabled={this.state.pageIndex===0}
             onClick={() => {
@@ -537,7 +563,17 @@ class SignUpFormBase extends Component {
             </Button>
             <Button className="next-button-rp" variant="info" type="button" disabled={this.state.pageIndex===1}
             onClick={() => {
-              if (this.state.pageIndex!==1)
+              if (address === "" || fname === "" || lname === "" || email === "" || address === "" ||
+              city === "" || state === "" || zipcode === "" || phone === "" || dob === "") {
+                this.setState({errorWaiver: "Please fill out all boxes with your information."})
+              }
+              else if ((pgname === "" || pgphone === "") && age < 18) {
+                this.setState({errorWaiver: "Please fill out all boxes with your information."})
+              }
+              else if (this.state.participantImg === null || (this.state.pgImg === null && age < 18)) {
+                this.setState({errorWaiver: "Please sign and save the waiver in the box."})
+              }
+              else if (this.state.pageIndex!==1)
                 this.setState({pageIndex: this.state.pageIndex+1})
             }}>
                 Next
