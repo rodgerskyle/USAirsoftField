@@ -2,9 +2,11 @@ import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import logo from '../../assets/logo.png';
 import { Container, Row, Col, Form, Button } from 'react-bootstrap/';
+import SignatureCanvas from 'react-signature-canvas';
 import '../../App.css';
 
 import cardimages from '../constants/cardimgs';
+import waiver from '../../assets/Waiver-cutoff.png'
 
 import { withAuthorization } from '../session';
 import { compose } from 'recompose';
@@ -34,9 +36,7 @@ const SignUpPage = () => (
         <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>
         <h2 className="page-header">Membership Form</h2>
       </Row>
-      <Row className="row-rp">
         <SignUpForm />
-      </Row>
     </Container>
   </div>
 );
@@ -46,15 +46,31 @@ const INITIAL_STATE = {
     fname: '',
     lname: '',
     email: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    zipcode: '',
+    dob: '',
     passwordOne: '',
     passwordTwo: '',
     roles: [],
+    pgname: '',
+    pgphone: '',
     //isAdmin: false,
     error: null,
+    errorWaiver: null,
     secondaryApp: app.initializeApp(config, "Secondary"),
     cards: cardimages,
     index: 0,
+    pageIndex: 0,
+    hideWaiver: false,
+    agecheck: true,
+    participantImg: null,
   };
+
+  let sigRef = {};
+  //sigRef = React.createRef();
  
 class SignUpFormBase extends Component {
   constructor(props) {
@@ -63,9 +79,9 @@ class SignUpFormBase extends Component {
     this.state = { ...INITIAL_STATE, status: "", };
   }
 
-    onChangeCheckbox = event => {
-        this.setState({ [event.target.name]: event.target.checked });
-    };
+  onChangeCheckbox = event => {
+      this.setState({ [event.target.name]: event.target.checked });
+  };
  
   onSubmit = event => {
     event.preventDefault();
@@ -123,17 +139,45 @@ class SignUpFormBase extends Component {
   onChange = event => {
     this.setState({ [event.target.name]: event.target.value });
   };
+
+  checkDOB = event => {
+    this.setState({ [event.target.name]: event.target.value }, function() {
+      var today = new Date();
+      var ageInput = new Date(this.state.dob);
+      var age = today.getFullYear() - ageInput.getFullYear();
+      var month = today.getMonth() - ageInput.getMonth();
+      if (month < 0 || (month === 0 && today.getDate() < ageInput.getDate()))
+        age--;
+      if (age < 18) {
+        this.setState({agecheck: false})
+      }
+      else {
+        this.setState({agecheck: true})
+      }
+    });
+  };
  
   render() {
     const {
       fname,
       lname,
       email,
+      address,
+      city,
+      state,
+      zipcode,
+      phone,
+      dob,
+      pgname,
+      pgphone,
       passwordOne,
       passwordTwo,
       //isAdmin,
       error,
+      errorWaiver,
       status,
+      hideWaiver,
+      agecheck,
     } = this.state;
 
     const isInvalid =
@@ -145,117 +189,361 @@ class SignUpFormBase extends Component {
 
  
     return (
-      <Form className="form-rp" onSubmit={this.onSubmit}>
-        <Row>
+      <div>
+        <Row className="row-rp">
+          { this.state.pageIndex === 0 ? 
           <Col>
-            <Row className="row-rp">
-              <h5>Card Preview:</h5>
-            </Row>
-            <Row className="row-rp card-row-rp">
-              <img src={this.state.cards[this.state.index]} alt="US Airsoft cards" className="card-rp"/>
-              <Row className={this.state.fname === "" && this.state.lname === "" ? "text-block-empty-rp" : "text-block-card-rp"}>
-                  {this.state.fname + " " + this.state.lname}
+            <Row className="row-rp waiver-row-rp">
+              <img src={waiver} alt="US Airsoft waiver" className={!hideWaiver ? "waiver-rp" : "waiver-hidden-rp"}/>
+              <Row className="text-block-waiver-rp">
+                <Button variant="outline-secondary" type="button" 
+                onClick={() => {
+                  this.setState({hideWaiver: !hideWaiver})
+                }}>
+                    {hideWaiver ? "Show Agreement" : "Hide Agreement"}
+                </Button>
               </Row>
             </Row>
-            <Row className="row-rp nav-row-rp">
-            <Button className="prev-button-rp" variant="info" type="button" disabled={this.state.index===0}
+            <Row className={!hideWaiver ? "row-rp" : "row-rp waiver-input-rp"}>
+              <h2 className="waiver-header-rp">
+                Participant Information: 
+              </h2>
+            </Row>
+            <Row className="row-rp">
+            <Form className="waiver-form-rp">
+              <Row>
+              <Col>
+                <Form.Group>
+                  <Form.Label>First Name:</Form.Label>
+                  <Form.Control
+                    name="fname"
+                    value={fname}
+                    onChange={this.onChange}
+                    type="text"
+                    placeholder="First Name"
+                  />
+                </Form.Group>
+              </Col>
+              <Col>
+                <Form.Group>
+                  <Form.Label>Last Name:</Form.Label>
+                  <Form.Control
+                    name="lname"
+                    value={lname}
+                    onChange={this.onChange}
+                    type="text"
+                    placeholder="Last Name"
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+            <Row>
+              <Col>
+                <Form.Group>
+                  <Form.Label>Email:</Form.Label>
+                  <Form.Control
+                    name="email"
+                    value={email}
+                    onChange={this.onChange}
+                    type="text"
+                    placeholder="Email Address"
+                  />
+                </Form.Group>
+              </Col>
+              <Col>
+                <Form.Group>
+                  <Form.Label>Phone Number:</Form.Label>
+                  <Form.Control
+                    name="phone"
+                    value={phone}
+                    onChange={this.onChange}
+                    type="phone"
+                    placeholder="Phone #"
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+            <Row>
+              <Col>
+                <Form.Group>
+                  <Form.Label>Address:</Form.Label>
+                  <Form.Control
+                    name="address"
+                    value={address}
+                    onChange={this.onChange}
+                    type="text"
+                    placeholder="Address"
+                  />
+                </Form.Group>
+              </Col>
+              <Col>
+                <Form.Group>
+                  <Form.Label>City:</Form.Label>
+                  <Form.Control
+                    name="city"
+                    value={city}
+                    onChange={this.onChange}
+                    type="text"
+                    placeholder="City"
+                  />
+                </Form.Group>
+              </Col>
+              <Col>
+                <Form.Group>
+                  <Form.Label>State:</Form.Label>
+                  <Form.Control
+                    name="state"
+                    value={state}
+                    onChange={this.onChange}
+                    type="text"
+                    placeholder="State"
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+              <Row>
+                <Col>
+                  <Form.Group>
+                    <Form.Label>Date Of Birth:</Form.Label>
+                    <Form.Control
+                      name="dob"
+                      value={dob}
+                      onChange={this.checkDOB}
+                      type="date"
+                      placeholder="Ex: 03-24-1999"
+                    />
+                  </Form.Group>
+                </Col>
+                <Col>
+                  <Form.Group>
+                    <Form.Label>Zipcode:</Form.Label>
+                    <Form.Control
+                      name="zipcode"
+                      value={zipcode}
+                      onChange={this.onChange}
+                      type="text"
+                      placeholder="Zipcode"
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+              <Row>
+                <Col>
+                  <p className="header-sig-rp">
+                    Participant Signature:
+                  </p>
+                </Col>
+              </Row>
+              <Row className="row-rp sig-row-rp">
+                {!this.state.participantImg ? 
+                  <SignatureCanvas penColor='black' ref={(ref) => {this.sigRef = ref}}
+                  canvasProps={{width: 750, height: 150, className: 'participant-sig-rp'}} />
+                  : <img className="signBox-image-rt" src={this.state.participantImg} alt="signature" />
+                }
+              </Row>
+              <Row className="row-rp">
+                <Button variant="secondary" type="button" className="clear-button-rp"
+                onClick={() => {
+                  this.setState({participantImg: null})
+                  if (this.sigRef)
+                    this.sigRef.clear();
+                }}>
+                    Clear
+                </Button>
+                <Button variant="secondary" type="button" className="save-button-rp"
+                onClick={() => {
+                    if (!this.sigRef.isEmpty()) {
+                    this.setState({
+                      participantImg: this.sigRef.getTrimmedCanvas().toDataURL("image/png")
+                    })
+                  }
+                }}>
+                    Save
+                </Button>
+              </Row>
+              {!agecheck ? 
+              <Col>
+              <Row className="row-rp">
+                <h2 className="waiver-header-rp">
+                  {"Guardian/Parent Information:"}
+                </h2>
+              </Row>
+              <Row>
+                <Col>
+                  <Form.Group>
+                    <Form.Label>Parent/Guardian Full Name:</Form.Label>
+                    <Form.Control
+                      name="pgname"
+                      value={pgname}
+                      onChange={this.checkDOB}
+                      type="text"
+                      placeholder="Full Name"
+                    />
+                  </Form.Group>
+                </Col>
+                <Col>
+                  <Form.Group>
+                    <Form.Label>Emergency Number:</Form.Label>
+                    <Form.Control
+                      name="pgphone"
+                      value={pgphone}
+                      onChange={this.onChange}
+                      type="phone"
+                      placeholder="Phone"
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+              <Row>
+                <Col>
+                  <p className="header-sig-rp">
+                    Parent/Guardian Signature:
+                  </p>
+                </Col>
+              </Row>
+              <Row className="row-rp sig-row-rp">
+                  <SignatureCanvas penColor='black' 
+                  canvasProps={{width: 750, height: 150, className: 'pg-sig-rp'}} />
+              </Row>
+              </Col>
+              : ""}
+              </Form>
+              </Row>
+              <Row>
+                {errorWaiver && <p>{errorWaiver.message}</p>}
+              </Row>
+          </Col>
+          :
+          <Form className="form-rp" onSubmit={this.onSubmit}>
+            <Row>
+              <Col>
+                <Row className="row-rp">
+                  <h5>Card Preview:</h5>
+                </Row>
+                <Row className="row-rp card-row-rp">
+                  <img src={this.state.cards[this.state.index]} alt="US Airsoft cards" className="card-rp"/>
+                  <Row className={this.state.fname === "" && this.state.lname === "" ? "text-block-empty-rp" : "text-block-card-rp"}>
+                      {this.state.fname + " " + this.state.lname}
+                  </Row>
+                </Row>
+                <Row className="row-rp nav-row-rp">
+                <Button className="prev-button-rp" variant="info" type="button" disabled={this.state.index===0}
+                onClick={() => {
+                  if (this.state.index!==0)
+                    this.setState({index: this.state.index-1,})
+                }}>
+                    Previous
+                </Button>
+                <Button className="next-button-rp" variant="info" type="button" disabled={this.state.index===12}
+                onClick={() => {
+                  if (this.state.index!==12)
+                    this.setState({index: this.state.index+1})
+                }}>
+                    Next
+                </Button>
+                </Row>
+              </Col>
+              <Col>
+            <Row>
+              <Col>
+                <Form.Group>
+                  <Form.Label>First Name:</Form.Label>
+                  <Form.Control
+                    name="fname"
+                    value={fname}
+                    onChange={this.onChange}
+                    type="text"
+                    placeholder="First Name"
+                  />
+                </Form.Group>
+              </Col>
+              <Col>
+                <Form.Group>
+                  <Form.Label>Last Name:</Form.Label>
+                  <Form.Control
+                    name="lname"
+                    value={lname}
+                    onChange={this.onChange}
+                    type="text"
+                    placeholder="Last Name"
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+            <Row>
+              <Col>
+                <Form.Group>
+                  <Form.Label>Email:</Form.Label>
+                  <Form.Control
+                    name="email"
+                    value={email}
+                    onChange={this.onChange}
+                    type="text"
+                    placeholder="Email Address"
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+              <Row>
+                <Col>
+                  <Form.Group>
+                    <Form.Label>Password:</Form.Label>
+                    <Form.Control
+                      name="passwordOne"
+                      value={passwordOne}
+                      onChange={this.onChange}
+                      type="password"
+                      placeholder="Password"
+                    />
+                  </Form.Group>
+                </Col>
+                <Col>
+                  <Form.Group>
+                    <Form.Label>Confirm Password:</Form.Label>
+                    <Form.Control
+                      name="passwordTwo"
+                      value={passwordTwo}
+                      onChange={this.onChange}
+                      type="password"
+                      placeholder="Confirm Password"
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+              <Row className="button-row-rp">
+                <Col>
+                  <Button variant={isInvalid ? "danger" : "success"} disabled={isInvalid} type="submit"
+                  className="button-signup-rp">
+                      Sign Up
+                  </Button> </Col>
+                             </Row>
+              <Row>
+                {status && <p>{status}</p>}
+                {error && <p>{error.message}</p>}
+              </Row>
+              </Col>
+            </Row>
+          </Form>
+          }
+          </Row>
+
+          <Row className="row-rp nav-row-rp">
+            <Button className="prev-button-rp" variant="info" type="button" disabled={this.state.pageIndex===0}
             onClick={() => {
-              if (this.state.index!==0)
-                this.setState({index: this.state.index-1,})
+              if (this.state.pageIndex!==0)
+                this.setState({pageIndex: this.state.pageIndex-1,})
             }}>
                 Previous
             </Button>
-            <Button className="next-button-rp" variant="info" type="button" disabled={this.state.index===12}
+            <Button className="next-button-rp" variant="info" type="button" disabled={this.state.pageIndex===1}
             onClick={() => {
-              if (this.state.index!==12)
-                this.setState({index: this.state.index+1})
+              if (this.state.pageIndex!==1)
+                this.setState({pageIndex: this.state.pageIndex+1})
             }}>
                 Next
             </Button>
-            </Row>
-          </Col>
-          <Col>
-        <Row>
-          <Col>
-            <Form.Group>
-              <Form.Label>First Name:</Form.Label>
-              <Form.Control
-                name="fname"
-                value={fname}
-                onChange={this.onChange}
-                type="text"
-                placeholder="First Name"
-              />
-            </Form.Group>
-          </Col>
-          <Col>
-            <Form.Group>
-              <Form.Label>Last Name:</Form.Label>
-              <Form.Control
-                name="lname"
-                value={lname}
-                onChange={this.onChange}
-                type="text"
-                placeholder="Last Name"
-              />
-            </Form.Group>
-          </Col>
-        </Row>
-        <Row>
-          <Col>
-            <Form.Group>
-              <Form.Label>Email:</Form.Label>
-              <Form.Control
-                name="email"
-                value={email}
-                onChange={this.onChange}
-                type="text"
-                placeholder="Email Address"
-              />
-            </Form.Group>
-          </Col>
-        </Row>
-          <Row>
-            <Col>
-              <Form.Group>
-                <Form.Label>Password:</Form.Label>
-                <Form.Control
-                  name="passwordOne"
-                  value={passwordOne}
-                  onChange={this.onChange}
-                  type="password"
-                  placeholder="Password"
-                />
-              </Form.Group>
-            </Col>
-            <Col>
-              <Form.Group>
-                <Form.Label>Confirm Password:</Form.Label>
-                <Form.Control
-                  name="passwordTwo"
-                  value={passwordTwo}
-                  onChange={this.onChange}
-                  type="password"
-                  placeholder="Confirm Password"
-                />
-              </Form.Group>
-            </Col>
           </Row>
-          <Row className="button-row-rp">
-            <Col>
-              <Button variant={isInvalid ? "danger" : "success"} disabled={isInvalid} type="submit"
-              className="button-signup-rp">
-                  Sign Up
-              </Button>
-            </Col>
-          </Row>
-          <Row>
-            {status && <p>{status}</p>}
-            {error && <p>{error.message}</p>}
-          </Row>
-          </Col>
-        </Row>
-      </Form>
+      </div>
     );
   }
 }
