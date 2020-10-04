@@ -5,7 +5,7 @@ import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
 import { compose } from 'recompose';
 
-import { Button, Form, Container, Card, Row, Col } from 'react-bootstrap/';
+import { Container, Row, Col } from 'react-bootstrap/';
 
 import * as ROLES from '../constants/roles';
 

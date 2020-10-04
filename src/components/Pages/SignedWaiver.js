@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Page, Text, Font, Document, StyleSheet, Image, PDFDownloadLink, PDFViewer, pdf, BlobProvider } from '@react-pdf/renderer';
+import { Page, Text, Font, Document, StyleSheet, Image, BlobProvider } from '@react-pdf/renderer';
 import { withFirebase } from '../Firebase';
 
 class SignedWaiver extends Component {
@@ -13,7 +13,7 @@ class SignedWaiver extends Component {
 
     render() {
 
-    const { fname, lname, participantImg, address, city, state, zipcode, age, dob, phone, email, pgname, pgImg, pgphone, uid } = this.props;
+    const { fname, lname, participantImg, address, city, state, zipcode, age, dob, phone, email, pgname, pgImg, pgphone } = this.props;
 
     // Document Rendering with state objects
     const WaiverRelease = () => (
