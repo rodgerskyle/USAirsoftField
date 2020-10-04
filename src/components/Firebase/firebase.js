@@ -84,6 +84,10 @@ class Firebase {
 
     // Database API
 
+    membersWaivers = pdf => this.st.ref().child(`waivers/members/${pdf}`);
+
+    nonmembersWaivers = pdf => this.st.ref().child(`waivers/non-members/${pdf}`);
+
     storage = img => this.st.ref().child(`ranks/${img}`);
 
     pictures = img => this.st.ref().child(`images/${img}`);

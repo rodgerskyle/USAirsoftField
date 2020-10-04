@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import logo from '../../assets/logo.png';
 import { Container, Row, Col, Form, Button } from 'react-bootstrap/';
 import SignatureCanvas from 'react-signature-canvas';
+import SignedWaiver from './SignedWaiver';
 import '../../App.css';
 
 import cardimages from '../constants/cardimgs';
@@ -69,6 +70,10 @@ const INITIAL_STATE = {
     age: "",
     participantImg: null,
     pgImg: null,
+    pdfBlob: null,
+    submitted: false,
+    member: true,
+    uid: null,
   };
 
   let sigRef = {};
@@ -79,13 +84,15 @@ class SignUpFormBase extends Component {
   constructor(props) {
     super(props);
 
+    this.completeWaiver = this.completeWaiver.bind(this);
     this.state = { ...INITIAL_STATE, status: "", };
   }
+
 
   onChangeCheckbox = event => {
       this.setState({ [event.target.name]: event.target.checked });
   };
- 
+
   onSubmit = event => {
     event.preventDefault();
     const { email, passwordOne, fname, lname } = this.state;
@@ -108,6 +115,7 @@ class SignUpFormBase extends Component {
     //}
     this.state.secondaryApp.auth().createUserWithEmailAndPassword(email, passwordOne).then(authUser => {
         // Create a user in your Firebase realtime database
+        this.setState({uid: authUser.user.uid})
         return this.props.firebase
           .user(authUser.user.uid)
           .set({
@@ -128,7 +136,8 @@ class SignUpFormBase extends Component {
           });
       })
       .then(authUser => {
-        this.setState({ ...INITIAL_STATE, status: "Completed" });
+        //this.setState({ ...INITIAL_STATE, status: "Completed" });
+        this.setState({submitted: true})
         //window.location.href="/signup";
         //this.props.history.push("/");
       })
@@ -159,6 +168,15 @@ class SignUpFormBase extends Component {
       }
     });
   };
+
+  // Prop to pass to waiver to call when complete
+  completeWaiver = (blob) => {
+    this.props.firebase.membersWaivers(`${this.state.uid}.pdf`).put(blob).then(() => {
+      this.setState({submitted: false,}, function() {
+        this.setState({ ...INITIAL_STATE, status: "Completed"});
+      }) 
+    })
+  }
  
   render() {
     const {
@@ -173,6 +191,8 @@ class SignUpFormBase extends Component {
       dob,
       pgname,
       pgphone,
+      participantImg,
+      pgImg,
       passwordOne,
       passwordTwo,
       //isAdmin,
@@ -182,7 +202,12 @@ class SignUpFormBase extends Component {
       hideWaiver,
       agecheck,
       age,
+      member,
+      uid,
+      submitted,
     } = this.state;
+
+    const myProps = {fname, lname, email, address, city, state, zipcode, phone, dob, pgname, pgphone, participantImg, pgImg, age, member, uid, }
 
     const isInvalid =
       passwordOne !== passwordTwo ||
@@ -542,12 +567,16 @@ class SignUpFormBase extends Component {
                   <Button variant={isInvalid ? "danger" : "success"} disabled={isInvalid} type="submit"
                   className="button-signup-rp">
                       Sign Up
-                  </Button> </Col>
-                             </Row>
+                  </Button> 
+                </Col>
+              </Row>
               <Row>
                 {status && <p>{status}</p>}
                 {error && <p>{error.message}</p>}
               </Row>
+              {submitted ? 
+                <SignedWaiver {...myProps} completeWaiver={this.completeWaiver}/> : ""
+              }
               </Col>
             </Row>
           </Form>
@@ -581,7 +610,7 @@ class SignUpFormBase extends Component {
           </Row>
       </div>
     );
-  }
+  };
 }
  
 const SignUpLink = () => (
