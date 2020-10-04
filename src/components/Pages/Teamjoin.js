@@ -1,7 +1,7 @@
 
 import React, { Component } from 'react';
 
-import { Container, Row, Col, Form, Button } from 'react-bootstrap/';
+import { Container, Button } from 'react-bootstrap/';
 
 import { Typeahead } from 'react-bootstrap-typeahead';
 
@@ -91,7 +91,6 @@ class TeamJoin extends Component {
 
 
     render() {
-        const {joinbox} = this.state
         return (
             <AuthUserContext.Consumer>
                 {authUser => (

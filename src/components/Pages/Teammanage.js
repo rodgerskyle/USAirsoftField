@@ -1,8 +1,6 @@
 import React, { Component } from 'react';
 
-import { Container, Row, Col, Form, Button } from 'react-bootstrap/';
-
-import { Typeahead } from 'react-bootstrap-typeahead';
+import { Container, Form, Button } from 'react-bootstrap/';
 
 import { AuthUserContext, withAuthorization } from '../session';
 
@@ -246,8 +244,6 @@ class TeamManage extends Component {
     }
 
     render() {
-        const { addbox, removebox, description, members } = this.state;
-
         return (
             <AuthUserContext.Consumer>
                 {authUser => (
