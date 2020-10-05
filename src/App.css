@@ -722,6 +722,7 @@ a.dropdown-item:hover {
 
 .signBox-image-rt {
   background-color: white;
+  padding: 20px;
 }
 
 .clear-button-rp {
@@ -745,4 +746,8 @@ a.dropdown-item:hover {
 
 .error-text-rp {
   color:red;
+}
+
+.text-fow {
+  color: white;
 }

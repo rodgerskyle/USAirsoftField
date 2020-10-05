@@ -10,9 +10,10 @@ class SignedWaiver extends Component {
         }
     }
 
+    done = false;
 
     render() {
-
+    
     const { fname, lname, participantImg, address, city, state, zipcode, age, dob, phone, email, pgname, pgImg, pgphone } = this.props;
 
     // Document Rendering with state objects
@@ -107,6 +108,8 @@ class SignedWaiver extends Component {
         fontSize: 11,
         fontFamily: "calibri",
         fontWeight: 'bold',
+        paddingLeft: 40,
+        borderBottom: '1px solid black'
       },
       title: {
         fontSize: 16,
@@ -142,7 +145,8 @@ class SignedWaiver extends Component {
                 <BlobProvider document={<WaiverRelease />}>
                     {({ blob, url, loading, error }) => {
                         // Do whatever you need with blob here
-                        if (!loading) {
+                        if (!loading && !this.done) {
+                            this.done = true;
                             this.props.completeWaiver(blob);
                             return <div>Waiver created.</div>;
                         }

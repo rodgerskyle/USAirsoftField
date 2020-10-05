@@ -66,12 +66,15 @@ const NavigationAuth = ({ authUser }) => (
                                 <LinkContainer to="/signup">
                                     <NavDropdown.Item eventKey={2.4}>Register</NavDropdown.Item>
                                 </LinkContainer>
+                                <LinkContainer to="/waiverform">
+                                    <NavDropdown.Item eventKey={2.5}>Sign Waiver</NavDropdown.Item>
+                                </LinkContainer>
                                 <LinkContainer to="/migration">
-                                    <NavDropdown.Item eventKey={2.5}>Migrate</NavDropdown.Item>
+                                    <NavDropdown.Item eventKey={2.6}>Migrate</NavDropdown.Item>
                                 </LinkContainer>
                                 <NavDropdown.Divider />
                                 <LinkContainer to="/admin">
-                                    <NavDropdown.Item eventKey={2.6}>Testing</NavDropdown.Item>
+                                    <NavDropdown.Item eventKey={2.7}>Testing</NavDropdown.Item>
                                 </LinkContainer>
                             </NavDropdown>
                         )}
