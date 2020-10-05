@@ -1,12 +1,10 @@
 import React, { Component } from 'react';
-import { Link } from 'react-router-dom';
 import logo from '../../assets/logo.png';
 import { Container, Row, Col, Form, Button } from 'react-bootstrap/';
 import SignatureCanvas from 'react-signature-canvas';
 import SignedWaiver from './SignedWaiver';
 import '../../App.css';
 
-import cardimages from '../constants/cardimgs';
 import waiver from '../../assets/Waiver-cutoff.png'
 
 import { withAuthorization } from '../session';
@@ -14,30 +12,14 @@ import { compose } from 'recompose';
 import { withFirebase } from '../Firebase';
 import * as ROLES from '../constants/roles';
 
-
-//For creating a second reference to Firebase
-import app from 'firebase/app';
-require('dotenv').config();
-const config = {
-    apiKey: process.env.REACT_APP_API_KEY,
-    authDomain: process.env.REACT_APP_AUTH_DOMAIN,
-    databaseURL: process.env.REACT_APP_DATABASE_URL,
-    projectId: process.env.REACT_APP_PROJECT_ID,
-    storageBucket: process.env.REACT_APP_STORAGE_BUCKET,
-    messagingSenderId: process.env.REACT_APP_MESSAGING_SENDER_ID,
-    appId: process.env.REACT_APP_APP_ID,
-    measurementId: process.env.REACT_APP_MEASUREMENT_ID
-};
-
- 
-const SignUpPage = () => (
+const WaiverPage = () => (
   <div className="background-static-all">
     <Container>
       <Row className="header-rp">
         <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>
-        <h2 className="page-header">Membership Form</h2>
+        <h2 className="page-header">Waiver Form</h2>
       </Row>
-        <SignUpForm />
+        <WaiverForm />
     </Container>
   </div>
 );
@@ -53,19 +35,9 @@ const INITIAL_STATE = {
     state: '',
     zipcode: '',
     dob: '',
-    passwordOne: '',
-    passwordTwo: '',
-    roles: [],
     pgname: '',
     pgphone: '',
-    //isAdmin: false,
-    error: null,
     errorWaiver: null,
-    secondaryApp: app.initializeApp(config, "Secondary"),
-    cards: cardimages,
-    index: 0,
-    pageIndex: 0,
-    hideWaiver: false,
     agecheck: true,
     age: "",
     participantImg: null,
@@ -82,12 +54,12 @@ const INITIAL_STATE = {
   let sigRef2 = {};
   //sigRef = React.createRef();
  
-class SignUpFormBase extends Component {
+class WaiverPageFormBase extends Component {
   constructor(props) {
     super(props);
 
     this.completeWaiver = this.completeWaiver.bind(this);
-    this.state = { ...INITIAL_STATE, status: "", };
+    this.state = { ...INITIAL_STATE};
   }
 
 
@@ -96,58 +68,6 @@ class SignUpFormBase extends Component {
   };
 
   onSubmit = event => {
-    event.preventDefault();
-    const { email, passwordOne, fname, lname } = this.state;
-    const points = 50;
-    const wins = 0;
-    const losses = 0;
-    const cmwins = 0;
-    const cmlosses = 0;
-    const pmwins = 0;
-    const pmlosses = 0;
-    const renewal = (new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear()+1);
-    const username = (fname+lname).replace(/\s/, "").toLowerCase();
-    const name = fname + " " + lname;
-    //We need to check if username exists
-    const freegames = 0;
-    const team = '';
-    const roles = [];
-    //if (isAdmin) {
-    //roles.push(ROLES.ADMIN);
-    //}
-    this.state.secondaryApp.auth().createUserWithEmailAndPassword(email, passwordOne).then(authUser => {
-        // Create a user in your Firebase realtime database
-        this.setState({uid: authUser.user.uid})
-        return this.props.firebase
-          .user(authUser.user.uid)
-          .set({
-            name,
-            email,
-            roles,
-            points,
-            wins,
-            losses,
-            freegames,
-            username,
-            team,
-            cmwins,
-            cmlosses,
-            pmwins,
-            pmlosses,
-            renewal
-          });
-      })
-      .then(authUser => {
-        //this.setState({ ...INITIAL_STATE, status: "Completed" });
-        this.setState({submitted: true})
-        //window.location.href="/signup";
-        //this.props.history.push("/");
-      })
-      .catch(error => {
-        this.setState({ error });
-      });
-  this.state.secondaryApp.auth().signOut();
-  event.preventDefault();
   }
  
   onChange = event => {
@@ -173,10 +93,12 @@ class SignUpFormBase extends Component {
 
   // Prop to pass to waiver to call when complete
   completeWaiver = (blob) => {
-    this.props.firebase.membersWaivers(`${this.state.uid}.pdf`).put(blob).then(() => {
-      this.setState({submitted: false,}, function() {
-        this.setState({ ...INITIAL_STATE, status: "Completed"});
-      }) 
+    const {fname, lname} = this.state;
+    var date = (new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear()) + ":" + 
+    (new Date().getHours()) + ":" + (new Date().getMinutes()) + ":" + (new Date().getSeconds()) + ":" + (new Date().getMilliseconds());
+    this.props.firebase.nonmembersWaivers(`(${date})${fname}${lname}.pdf`).put(blob).then(() => {
+      this.setState({submitted: false,})
+      this.setState({ ...INITIAL_STATE, status: "Completed"});
     })
   }
  
@@ -195,36 +117,20 @@ class SignUpFormBase extends Component {
       pgphone,
       participantImg,
       pgImg,
-      passwordOne,
-      passwordTwo,
-      //isAdmin,
-      error,
       errorWaiver,
-      status,
       hideWaiver,
       agecheck,
       age,
-      member,
-      uid,
       submitted,
       saveButton,
       saveButton2,
     } = this.state;
 
-    const myProps = {fname, lname, email, address, city, state, zipcode, phone, dob, pgname, pgphone, participantImg, pgImg, age, member, uid, }
-
-    const isInvalid =
-      passwordOne !== passwordTwo ||
-      passwordOne === '' ||
-      email === '' ||
-      fname === '' ||
-      lname === '';
-
+    const myProps = {fname, lname, email, address, city, state, zipcode, phone, dob, pgname, pgphone, participantImg, pgImg, age }
  
     return (
       <div>
         <Row className="row-rp">
-          { this.state.pageIndex === 0 ? 
           <Col>
             <Row className="row-rp waiver-row-rp">
               <img src={waiver} alt="US Airsoft waiver" className={!hideWaiver ? "waiver-rp" : "waiver-hidden-rp"}/>
@@ -388,7 +294,7 @@ class SignUpFormBase extends Component {
                 onClick={() => {
                     if (!this.sigRef.isEmpty()) {
                     this.setState({
-                      participantImg: this.sigRef.getTrimmedCanvas().toDataURL("image/png"), saveButton: false
+                      participantImg: this.sigRef.getTrimmedCanvas().toDataURL("image/png"), saveButton: false,
                     })
                   }
                 }}>
@@ -448,7 +354,7 @@ class SignUpFormBase extends Component {
                   this.setState({pgImg: null})
                   if (this.sigRef2)
                     this.sigRef2.clear();
-                  this.setState({saveButton2: true})
+                    this.setState({saveButton2: true})
                 }}>
                     Clear
                 </Button>
@@ -470,132 +376,14 @@ class SignUpFormBase extends Component {
               <Row className="row-rp">
                 {errorWaiver && <p className="error-text-rp">{errorWaiver}</p>}
               </Row>
-          </Col>
-          :
-          <Form className="form-rp" onSubmit={this.onSubmit}>
-            <Row>
-              <Col>
-                <Row className="row-rp">
-                  <h5>Card Preview:</h5>
-                </Row>
-                <Row className="row-rp card-row-rp">
-                  <img src={this.state.cards[this.state.index]} alt="US Airsoft cards" className="card-rp"/>
-                  <Row className={this.state.fname === "" && this.state.lname === "" ? "text-block-empty-rp" : "text-block-card-rp"}>
-                      {this.state.fname + " " + this.state.lname}
-                  </Row>
-                </Row>
-                <Row className="row-rp nav-row-rp">
-                <Button className="prev-button-rp" variant="info" type="button" disabled={this.state.index===0}
-                onClick={() => {
-                  if (this.state.index!==0)
-                    this.setState({index: this.state.index-1,})
-                }}>
-                    Previous
-                </Button>
-                <Button className="next-button-rp" variant="info" type="button" disabled={this.state.index===12}
-                onClick={() => {
-                  if (this.state.index!==12)
-                    this.setState({index: this.state.index+1})
-                }}>
-                    Next
-                </Button>
-                </Row>
-              </Col>
-              <Col>
-            <Row>
-              <Col>
-                <Form.Group>
-                  <Form.Label>First Name:</Form.Label>
-                  <Form.Control
-                    name="fname"
-                    value={fname}
-                    onChange={this.onChange}
-                    type="text"
-                    placeholder="First Name"
-                  />
-                </Form.Group>
-              </Col>
-              <Col>
-                <Form.Group>
-                  <Form.Label>Last Name:</Form.Label>
-                  <Form.Control
-                    name="lname"
-                    value={lname}
-                    onChange={this.onChange}
-                    type="text"
-                    placeholder="Last Name"
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-            <Row>
-              <Col>
-                <Form.Group>
-                  <Form.Label>Email:</Form.Label>
-                  <Form.Control
-                    name="email"
-                    value={email}
-                    onChange={this.onChange}
-                    type="text"
-                    placeholder="Email Address"
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-              <Row>
-                <Col>
-                  <Form.Group>
-                    <Form.Label>Password:</Form.Label>
-                    <Form.Control
-                      name="passwordOne"
-                      value={passwordOne}
-                      onChange={this.onChange}
-                      type="password"
-                      placeholder="Password"
-                    />
-                  </Form.Group>
-                </Col>
-                <Col>
-                  <Form.Group>
-                    <Form.Label>Confirm Password:</Form.Label>
-                    <Form.Control
-                      name="passwordTwo"
-                      value={passwordTwo}
-                      onChange={this.onChange}
-                      type="password"
-                      placeholder="Confirm Password"
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-              <Row className="button-row-rp">
-                <Col>
-                  <Button variant={isInvalid ? "danger" : "success"} disabled={isInvalid} type="submit"
-                  className="button-signup-rp">
-                      Sign Up
-                  </Button> 
-                </Col>
-              </Row>
-              <Row>
-                {status && <p>{status}</p>}
-                {error && <p>{error.message}</p>}
-              </Row>
+              <Row className="row-rp text-fow">
               {submitted ? 
                 <SignedWaiver {...myProps} completeWaiver={this.completeWaiver}/> : ""
               }
-              </Col>
-            </Row>
-          </Form>
-          }
+              </Row>
+          </Col>
           </Row>
           <Row className="row-rp nav-row-rp">
-            <Button className="prev-button-rp" variant="info" type="button" disabled={this.state.pageIndex===0}
-            onClick={() => {
-              if (this.state.pageIndex!==0)
-                this.setState({pageIndex: this.state.pageIndex-1,})
-            }}>
-                Previous
-            </Button>
             <Button className="next-button-rp" variant="info" type="button" disabled={this.state.pageIndex===1}
             onClick={() => {
               if (address === "" || fname === "" || lname === "" || email === "" || address === "" ||
@@ -609,9 +397,9 @@ class SignUpFormBase extends Component {
                 this.setState({errorWaiver: "Please sign and save the waiver in the box."})
               }
               else if (this.state.pageIndex!==1)
-                this.setState({pageIndex: this.state.pageIndex+1})
+                this.setState({submitted: true})
             }}>
-                Next
+                Submit
             </Button>
           </Row>
       </div>
@@ -619,12 +407,6 @@ class SignUpFormBase extends Component {
   };
 }
  
-const SignUpLink = () => (
-  <p>
-    Don't have an account? <Link to={"/register"}>Sign Up</Link>
-  </p>
-);
-
 /* 
   <label>
       Admin:
@@ -640,11 +422,11 @@ const SignUpLink = () => (
 const condition = authUser =>
 authUser && !!authUser.roles[ROLES.ADMIN];
 
-const SignUpForm = compose(
+const WaiverForm = compose(
     withAuthorization(condition),
     withFirebase,
-    )(SignUpFormBase);
+    )(WaiverPageFormBase);
 
-export default SignUpPage;
+export default WaiverPage;
  
-export { SignUpForm, SignUpLink };
+export { WaiverForm };
