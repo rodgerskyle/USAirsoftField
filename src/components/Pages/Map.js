@@ -4,15 +4,8 @@ import '../../App.css';
 import map from '../../assets/MapHigherRes.jpg';
 import lowmap from '../../assets/MapLowerRes.jpg'
 
-import { SideBySideMagnifier, MagnifierContainer, MagnifierZoom, MagnifierPreview } from "react-image-magnifiers";
+import { SideBySideMagnifier } from "react-image-magnifiers";
 
-import {
-    Magnifier,
-    GlassMagnifier,
-    PictureInPictureMagnifier,
-    MOUSE_ACTIVATION,
-    TOUCH_ACTIVATION
-} from "react-image-magnifiers";
 
 import { Container, Row, Col } from 'react-bootstrap/';
 
