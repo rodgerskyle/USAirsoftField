@@ -76,6 +76,7 @@ const INITIAL_STATE = {
     uid: null,
     saveButton: true,
     saveButton2: true,
+    showLander: false,
   };
  
 class SignUpFormBase extends Component {
@@ -170,9 +171,7 @@ class SignUpFormBase extends Component {
   // Prop to pass to waiver to call when complete
   completeWaiver = (blob) => {
     this.props.firebase.membersWaivers(`${this.state.uid}.pdf`).put(blob).then(() => {
-      this.setState({submitted: false,}, function() {
-        this.setState({ ...INITIAL_STATE, status: "Completed"});
-      }) 
+      this.setState({submitted: false, showLander: true})
     })
   }
  
@@ -205,6 +204,7 @@ class SignUpFormBase extends Component {
       submitted,
       saveButton,
       saveButton2,
+      showLander,
     } = this.state;
 
     const myProps = {fname, lname, email, address, city, state, zipcode, phone, dob, pgname, pgphone, participantImg, pgImg, age, member, uid, }
@@ -218,404 +218,421 @@ class SignUpFormBase extends Component {
 
  
     return (
-      <div>
-        <Row className="row-rp">
-          { this.state.pageIndex === 0 ? 
-          <Col>
-            <Row className="row-rp waiver-row-rp">
-              <img src={waiver} alt="US Airsoft waiver" className={!hideWaiver ? "waiver-rp" : "waiver-hidden-rp"}/>
-              <Row className="text-block-waiver-rp">
-                <Button variant="outline-secondary" type="button" 
-                onClick={() => {
-                  this.setState({hideWaiver: !hideWaiver})
-                }}>
-                    {hideWaiver ? "Show Agreement" : "Hide Agreement"}
-                </Button>
+      <div> {!showLander ?
+        <div>
+          <Row className="row-rp">
+            { this.state.pageIndex === 0 ? 
+            <Col>
+              <Row className="row-rp waiver-row-rp">
+                <img src={waiver} alt="US Airsoft waiver" className={!hideWaiver ? "waiver-rp" : "waiver-hidden-rp"}/>
+                <Row className="text-block-waiver-rp">
+                  <Button variant="outline-secondary" type="button" 
+                  onClick={() => {
+                    this.setState({hideWaiver: !hideWaiver})
+                  }}>
+                      {hideWaiver ? "Show Agreement" : "Hide Agreement"}
+                  </Button>
+                </Row>
               </Row>
-            </Row>
-            <Row className={!hideWaiver ? "row-rp" : "row-rp waiver-input-rp"}>
-              <h2 className="waiver-header-rp">
-                Participant Information: 
-              </h2>
-            </Row>
-            <Row className="row-rp">
-            <Form className="waiver-form-rp">
-              <Row>
-              <Col>
-                <Form.Group>
-                  <Form.Label>First Name:</Form.Label>
-                  <Form.Control
-                    name="fname"
-                    value={fname}
-                    onChange={this.onChange}
-                    type="text"
-                    placeholder="First Name"
-                  />
-                </Form.Group>
-              </Col>
-              <Col>
-                <Form.Group>
-                  <Form.Label>Last Name:</Form.Label>
-                  <Form.Control
-                    name="lname"
-                    value={lname}
-                    onChange={this.onChange}
-                    type="text"
-                    placeholder="Last Name"
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-            <Row>
-              <Col>
-                <Form.Group>
-                  <Form.Label>Email:</Form.Label>
-                  <Form.Control
-                    name="email"
-                    value={email}
-                    onChange={this.onChange}
-                    type="text"
-                    placeholder="Email Address"
-                  />
-                </Form.Group>
-              </Col>
-              <Col>
-                <Form.Group>
-                  <Form.Label>Phone Number:</Form.Label>
-                  <Form.Control
-                    name="phone"
-                    value={phone}
-                    onChange={this.onChange}
-                    type="phone"
-                    placeholder="Phone #"
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-            <Row>
-              <Col>
-                <Form.Group>
-                  <Form.Label>Address:</Form.Label>
-                  <Form.Control
-                    name="address"
-                    value={address}
-                    onChange={this.onChange}
-                    type="text"
-                    placeholder="Address"
-                  />
-                </Form.Group>
-              </Col>
-              <Col>
-                <Form.Group>
-                  <Form.Label>City:</Form.Label>
-                  <Form.Control
-                    name="city"
-                    value={city}
-                    onChange={this.onChange}
-                    type="text"
-                    placeholder="City"
-                  />
-                </Form.Group>
-              </Col>
-              <Col>
-                <Form.Group>
-                  <Form.Label>State:</Form.Label>
-                  <Form.Control
-                    name="state"
-                    value={state}
-                    onChange={this.onChange}
-                    type="text"
-                    placeholder="State"
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-              <Row>
-                <Col>
-                  <Form.Group>
-                    <Form.Label>Date Of Birth:</Form.Label>
-                    <Form.Control
-                      name="dob"
-                      value={dob}
-                      onChange={this.checkDOB}
-                      type="date"
-                      placeholder="Ex: 03-24-1999"
-                    />
-                  </Form.Group>
-                </Col>
-                <Col>
-                  <Form.Group>
-                    <Form.Label>Zipcode:</Form.Label>
-                    <Form.Control
-                      name="zipcode"
-                      value={zipcode}
-                      onChange={this.onChange}
-                      type="text"
-                      placeholder="Zipcode"
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-              <Row>
-                <Col>
-                  <p className="header-sig-rp">
-                    Participant Signature:
-                  </p>
-                </Col>
-              </Row>
-              <Row className="row-rp sig-row-rp">
-                {!this.state.participantImg ? 
-                  <SignatureCanvas penColor='black' ref={(ref) => {this.sigRef = ref}}
-                  canvasProps={{width: 750, height: 150, className: 'participant-sig-rp'}} />
-                  : <img className="signBox-image-rt" src={this.state.participantImg} alt="signature" />
-                }
-              </Row>
-              <Row className="row-rp">
-                <Button variant="secondary" type="button" className="clear-button-rp"
-                onClick={() => {
-                  this.setState({participantImg: null})
-                  if (this.sigRef)
-                    this.sigRef.clear();
-                    this.setState({saveButton: true})
-                }}>
-                    Clear
-                </Button>
-                <Button variant="secondary" type="button" className="save-button-rp" disabled={!saveButton}
-                onClick={() => {
-                    if (!this.sigRef.isEmpty()) {
-                    this.setState({
-                      participantImg: this.sigRef.getTrimmedCanvas().toDataURL("image/png"), saveButton: false
-                    })
-                  }
-                }}>
-                    Save
-                </Button>
-              </Row>
-              {!agecheck ? 
-              <Col>
-              <Row className="row-rp">
+              <Row className={!hideWaiver ? "row-rp" : "row-rp waiver-input-rp"}>
                 <h2 className="waiver-header-rp">
-                  {"Guardian/Parent Information:"}
+                  Participant Information: 
                 </h2>
               </Row>
-              <Row>
+              <Row className="row-rp">
+              <Form className="waiver-form-rp">
+                <Row>
                 <Col>
                   <Form.Group>
-                    <Form.Label>Parent/Guardian Full Name:</Form.Label>
+                    <Form.Label>First Name:</Form.Label>
                     <Form.Control
-                      name="pgname"
-                      value={pgname}
-                      onChange={this.checkDOB}
+                      name="fname"
+                      value={fname}
+                      onChange={this.onChange}
                       type="text"
-                      placeholder="Full Name"
+                      placeholder="First Name"
                     />
                   </Form.Group>
                 </Col>
                 <Col>
                   <Form.Group>
-                    <Form.Label>Emergency Number:</Form.Label>
+                    <Form.Label>Last Name:</Form.Label>
                     <Form.Control
-                      name="pgphone"
-                      value={pgphone}
+                      name="lname"
+                      value={lname}
+                      onChange={this.onChange}
+                      type="text"
+                      placeholder="Last Name"
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+              <Row>
+                <Col>
+                  <Form.Group>
+                    <Form.Label>Email:</Form.Label>
+                    <Form.Control
+                      name="email"
+                      value={email}
+                      onChange={this.onChange}
+                      type="text"
+                      placeholder="Email Address"
+                    />
+                  </Form.Group>
+                </Col>
+                <Col>
+                  <Form.Group>
+                    <Form.Label>Phone Number:</Form.Label>
+                    <Form.Control
+                      name="phone"
+                      value={phone}
                       onChange={this.onChange}
                       type="phone"
-                      placeholder="Phone"
+                      placeholder="Phone #"
                     />
                   </Form.Group>
                 </Col>
               </Row>
               <Row>
                 <Col>
-                  <p className="header-sig-rp">
-                    Parent/Guardian Signature:
-                  </p>
+                  <Form.Group>
+                    <Form.Label>Address:</Form.Label>
+                    <Form.Control
+                      name="address"
+                      value={address}
+                      onChange={this.onChange}
+                      type="text"
+                      placeholder="Address"
+                    />
+                  </Form.Group>
+                </Col>
+                <Col>
+                  <Form.Group>
+                    <Form.Label>City:</Form.Label>
+                    <Form.Control
+                      name="city"
+                      value={city}
+                      onChange={this.onChange}
+                      type="text"
+                      placeholder="City"
+                    />
+                  </Form.Group>
+                </Col>
+                <Col>
+                  <Form.Group>
+                    <Form.Label>State:</Form.Label>
+                    <Form.Control
+                      name="state"
+                      value={state}
+                      onChange={this.onChange}
+                      type="text"
+                      placeholder="State"
+                    />
+                  </Form.Group>
                 </Col>
               </Row>
-              <Row className="row-rp sig-row-rp">
-                {!this.state.pgImg? 
-                  <SignatureCanvas penColor='black' ref={(ref) => {this.sigRef2 = ref}}
-                  canvasProps={{width: 750, height: 150, className: 'participant-sig-rp'}} />
-                  : <img className="signBox-image-rt" src={this.state.pgImg} alt="signature" />
-                }
-              </Row>
-              <Row className="row-rp">
-                <Button variant="secondary" type="button" className="clear-button-rp"
-                onClick={() => {
-                  this.setState({pgImg: null})
-                  if (this.sigRef2)
-                    this.sigRef2.clear();
-                  this.setState({saveButton2: true})
-                }}>
-                    Clear
-                </Button>
-                <Button variant="secondary" type="button" className="save-button-rp" disabled={!saveButton2}
-                onClick={() => {
-                    if (!this.sigRef2.isEmpty()) {
-                    this.setState({
-                      pgImg: this.sigRef2.getTrimmedCanvas().toDataURL("image/png"), saveButton2: false,
-                    })
+                <Row>
+                  <Col>
+                    <Form.Group>
+                      <Form.Label>Date Of Birth:</Form.Label>
+                      <Form.Control
+                        name="dob"
+                        value={dob}
+                        onChange={this.checkDOB}
+                        type="date"
+                        placeholder="Ex: 03-24-1999"
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col>
+                    <Form.Group>
+                      <Form.Label>Zipcode:</Form.Label>
+                      <Form.Control
+                        name="zipcode"
+                        value={zipcode}
+                        onChange={this.onChange}
+                        type="text"
+                        placeholder="Zipcode"
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+                <Row>
+                  <Col>
+                    <p className="header-sig-rp">
+                      Participant Signature:
+                    </p>
+                  </Col>
+                </Row>
+                <Row className="row-rp sig-row-rp">
+                  {!this.state.participantImg ? 
+                    <SignatureCanvas penColor='black' ref={(ref) => {this.sigRef = ref}}
+                    canvasProps={{width: 750, height: 150, className: 'participant-sig-rp'}} />
+                    : <img className="signBox-image-rt" src={this.state.participantImg} alt="signature" />
                   }
-                }}>
-                    Save
-                </Button>
-              </Row>
-              </Col>
-              : ""}
-              </Form>
-              </Row>
-              <Row className="row-rp">
-                {errorWaiver && <p className="error-text-rp">{errorWaiver}</p>}
-              </Row>
-          </Col>
-          :
-          <Form className="form-rp" onSubmit={this.onSubmit}>
-            <Row>
-              <Col>
+                </Row>
                 <Row className="row-rp">
-                  <h5>Card Preview:</h5>
+                  <Button variant="secondary" type="button" className="clear-button-rp"
+                  onClick={() => {
+                    this.setState({participantImg: null})
+                    if (this.sigRef)
+                      this.sigRef.clear();
+                      this.setState({saveButton: true})
+                  }}>
+                      Clear
+                  </Button>
+                  <Button variant="secondary" type="button" className="save-button-rp" disabled={!saveButton}
+                  onClick={() => {
+                      if (!this.sigRef.isEmpty()) {
+                      this.setState({
+                        participantImg: this.sigRef.getTrimmedCanvas().toDataURL("image/png"), saveButton: false
+                      })
+                    }
+                  }}>
+                      Save
+                  </Button>
                 </Row>
-                <Row className="row-rp card-row-rp">
-                  <img src={this.state.cards[this.state.index]} alt="US Airsoft cards" className="card-rp"/>
-                  <Row className={this.state.fname === "" && this.state.lname === "" ? "text-block-empty-rp" : "text-block-card-rp"}>
-                      {this.state.fname + " " + this.state.lname}
+                {!agecheck ? 
+                <Col>
+                <Row className="row-rp">
+                  <h2 className="waiver-header-rp">
+                    {"Guardian/Parent Information:"}
+                  </h2>
+                </Row>
+                <Row>
+                  <Col>
+                    <Form.Group>
+                      <Form.Label>Parent/Guardian Full Name:</Form.Label>
+                      <Form.Control
+                        name="pgname"
+                        value={pgname}
+                        onChange={this.checkDOB}
+                        type="text"
+                        placeholder="Full Name"
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col>
+                    <Form.Group>
+                      <Form.Label>Emergency Number:</Form.Label>
+                      <Form.Control
+                        name="pgphone"
+                        value={pgphone}
+                        onChange={this.onChange}
+                        type="phone"
+                        placeholder="Phone"
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+                <Row>
+                  <Col>
+                    <p className="header-sig-rp">
+                      Parent/Guardian Signature:
+                    </p>
+                  </Col>
+                </Row>
+                <Row className="row-rp sig-row-rp">
+                  {!this.state.pgImg? 
+                    <SignatureCanvas penColor='black' ref={(ref) => {this.sigRef2 = ref}}
+                    canvasProps={{width: 750, height: 150, className: 'participant-sig-rp'}} />
+                    : <img className="signBox-image-rt" src={this.state.pgImg} alt="signature" />
+                  }
+                </Row>
+                <Row className="row-rp">
+                  <Button variant="secondary" type="button" className="clear-button-rp"
+                  onClick={() => {
+                    this.setState({pgImg: null})
+                    if (this.sigRef2)
+                      this.sigRef2.clear();
+                    this.setState({saveButton2: true})
+                  }}>
+                      Clear
+                  </Button>
+                  <Button variant="secondary" type="button" className="save-button-rp" disabled={!saveButton2}
+                  onClick={() => {
+                      if (!this.sigRef2.isEmpty()) {
+                      this.setState({
+                        pgImg: this.sigRef2.getTrimmedCanvas().toDataURL("image/png"), saveButton2: false,
+                      })
+                    }
+                  }}>
+                      Save
+                  </Button>
+                </Row>
+                </Col>
+                : ""}
+                </Form>
+                </Row>
+                <Row className="row-rp">
+                  {errorWaiver && <p className="error-text-rp">{errorWaiver}</p>}
+                </Row>
+            </Col>
+            :
+            <Form className="form-rp" onSubmit={this.onSubmit}>
+              <Row>
+                <Col>
+                  <Row className="row-rp">
+                    <h5>Card Preview:</h5>
                   </Row>
-                </Row>
-                <Row className="row-rp nav-row-rp">
-                <Button className="prev-button-rp" variant="info" type="button" disabled={this.state.index===0}
-                onClick={() => {
-                  if (this.state.index!==0)
-                    this.setState({index: this.state.index-1,})
-                }}>
-                    Previous
-                </Button>
-                <Button className="next-button-rp" variant="info" type="button" disabled={this.state.index===12}
-                onClick={() => {
-                  if (this.state.index!==12)
-                    this.setState({index: this.state.index+1})
-                }}>
-                    Next
-                </Button>
-                </Row>
-              </Col>
-              <Col>
-            <Row>
-              <Col>
-                <Form.Group>
-                  <Form.Label>First Name:</Form.Label>
-                  <Form.Control
-                    name="fname"
-                    value={fname}
-                    onChange={this.onChange}
-                    type="text"
-                    placeholder="First Name"
-                  />
-                </Form.Group>
-              </Col>
-              <Col>
-                <Form.Group>
-                  <Form.Label>Last Name:</Form.Label>
-                  <Form.Control
-                    name="lname"
-                    value={lname}
-                    onChange={this.onChange}
-                    type="text"
-                    placeholder="Last Name"
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-            <Row>
-              <Col>
-                <Form.Group>
-                  <Form.Label>Email:</Form.Label>
-                  <Form.Control
-                    name="email"
-                    value={email}
-                    onChange={this.onChange}
-                    type="text"
-                    placeholder="Email Address"
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
+                  <Row className="row-rp card-row-rp">
+                    <img src={this.state.cards[this.state.index]} alt="US Airsoft cards" className="card-rp"/>
+                    <Row className={this.state.fname === "" && this.state.lname === "" ? "text-block-empty-rp" : "text-block-card-rp"}>
+                        {this.state.fname + " " + this.state.lname}
+                    </Row>
+                  </Row>
+                  <Row className="row-rp nav-row-rp">
+                  <Button className="prev-button-rp" variant="info" type="button" disabled={this.state.index===0}
+                  onClick={() => {
+                    if (this.state.index!==0)
+                      this.setState({index: this.state.index-1,})
+                  }}>
+                      Previous
+                  </Button>
+                  <Button className="next-button-rp" variant="info" type="button" disabled={this.state.index===12}
+                  onClick={() => {
+                    if (this.state.index!==12)
+                      this.setState({index: this.state.index+1})
+                  }}>
+                      Next
+                  </Button>
+                  </Row>
+                </Col>
+                <Col>
               <Row>
                 <Col>
                   <Form.Group>
-                    <Form.Label>Password:</Form.Label>
+                    <Form.Label>First Name:</Form.Label>
                     <Form.Control
-                      name="passwordOne"
-                      value={passwordOne}
+                      name="fname"
+                      value={fname}
                       onChange={this.onChange}
-                      type="password"
-                      placeholder="Password"
+                      type="text"
+                      placeholder="First Name"
                     />
                   </Form.Group>
                 </Col>
                 <Col>
                   <Form.Group>
-                    <Form.Label>Confirm Password:</Form.Label>
+                    <Form.Label>Last Name:</Form.Label>
                     <Form.Control
-                      name="passwordTwo"
-                      value={passwordTwo}
+                      name="lname"
+                      value={lname}
                       onChange={this.onChange}
-                      type="password"
-                      placeholder="Confirm Password"
+                      type="text"
+                      placeholder="Last Name"
                     />
                   </Form.Group>
                 </Col>
               </Row>
-              <Row className="button-row-rp">
+              <Row>
                 <Col>
-                  <Button variant={isInvalid ? "danger" : "success"} disabled={isInvalid} type="submit"
-                  className="button-signup-rp">
-                      Sign Up
-                  </Button> 
+                  <Form.Group>
+                    <Form.Label>Email:</Form.Label>
+                    <Form.Control
+                      name="email"
+                      value={email}
+                      onChange={this.onChange}
+                      type="text"
+                      placeholder="Email Address"
+                    />
+                  </Form.Group>
                 </Col>
               </Row>
-              <Row>
-                {status && <p>{status}</p>}
-                {error && <p>{error.message}</p>}
+                <Row>
+                  <Col>
+                    <Form.Group>
+                      <Form.Label>Password:</Form.Label>
+                      <Form.Control
+                        name="passwordOne"
+                        value={passwordOne}
+                        onChange={this.onChange}
+                        type="password"
+                        placeholder="Password"
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col>
+                    <Form.Group>
+                      <Form.Label>Confirm Password:</Form.Label>
+                      <Form.Control
+                        name="passwordTwo"
+                        value={passwordTwo}
+                        onChange={this.onChange}
+                        type="password"
+                        placeholder="Confirm Password"
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+                <Row className="button-row-rp">
+                  <Col>
+                    <Button variant={isInvalid ? "danger" : "success"} disabled={isInvalid} type="submit"
+                    className="button-signup-rp">
+                        Sign Up
+                    </Button> 
+                  </Col>
+                </Row>
+                <Row>
+                  {status && <p>{status}</p>}
+                  {error && <p>{error.message}</p>}
+                </Row>
+                {submitted ? 
+                  <SignedWaiver {...myProps} completeWaiver={this.completeWaiver}/> : ""
+                }
+                </Col>
               </Row>
-              {submitted ? 
-                <SignedWaiver {...myProps} completeWaiver={this.completeWaiver}/> : ""
-              }
-              </Col>
+            </Form>
+            }
             </Row>
-          </Form>
-          }
+            <Row className="row-rp nav-row-rp">
+              <Button className="prev-button-rp" variant="info" type="button" disabled={this.state.pageIndex===0}
+              onClick={() => {
+                if (this.state.pageIndex!==0)
+                  this.setState({pageIndex: this.state.pageIndex-1,})
+              }}>
+                  Previous
+              </Button>
+              <Button className="next-button-rp" variant="info" type="button" disabled={this.state.pageIndex===1}
+              onClick={() => {
+                if (address === "" || fname === "" || lname === "" || email === "" || address === "" ||
+                city === "" || state === "" || zipcode === "" || phone === "" || dob === "") {
+                  this.setState({errorWaiver: "Please fill out all boxes with your information."})
+                }
+                else if ((pgname === "" || pgphone === "") && age < 18) {
+                  this.setState({errorWaiver: "Please fill out all boxes with your information."})
+                }
+                else if (this.state.participantImg === null || (this.state.pgImg === null && age < 18)) {
+                  this.setState({errorWaiver: "Please sign and save the waiver in the box."})
+                }
+                else if (age < 8) {
+                  this.setState({errorWaiver: "Participant must be older than 8 years."})
+                }
+                else if (age > 85) {
+                  this.setState({errorWaiver: "Participant must be younger than 85 years."})
+                }
+                else if (this.state.pageIndex!==1)
+                  this.setState({pageIndex: this.state.pageIndex+1})
+              }}>
+                  Next
+              </Button>
+            </Row>
+        </div> :
+        <Container>
+          <Row className="row-rp">
+            <Col className="col-rp">
+              <h2 className="page-header">Successful Member Registration.</h2>
+              <p className="page-header">Please let your U.S. Airsoft employee know that you have finished.</p>
+            </Col>
           </Row>
-          <Row className="row-rp nav-row-rp">
-            <Button className="prev-button-rp" variant="info" type="button" disabled={this.state.pageIndex===0}
-            onClick={() => {
-              if (this.state.pageIndex!==0)
-                this.setState({pageIndex: this.state.pageIndex-1,})
-            }}>
-                Previous
-            </Button>
-            <Button className="next-button-rp" variant="info" type="button" disabled={this.state.pageIndex===1}
-            onClick={() => {
-              if (address === "" || fname === "" || lname === "" || email === "" || address === "" ||
-              city === "" || state === "" || zipcode === "" || phone === "" || dob === "") {
-                this.setState({errorWaiver: "Please fill out all boxes with your information."})
-              }
-              else if ((pgname === "" || pgphone === "") && age < 18) {
-                this.setState({errorWaiver: "Please fill out all boxes with your information."})
-              }
-              else if (this.state.participantImg === null || (this.state.pgImg === null && age < 18)) {
-                this.setState({errorWaiver: "Please sign and save the waiver in the box."})
-              }
-              else if (age < 8) {
-                this.setState({errorWaiver: "Participant must be older than 8 years."})
-              }
-              else if (age > 85) {
-                this.setState({errorWaiver: "Participant must be younger than 85 years."})
-              }
-              else if (this.state.pageIndex!==1)
-                this.setState({pageIndex: this.state.pageIndex+1})
-            }}>
-                Next
-            </Button>
+          <Row className="row-rp">
+              <Button className="next-button-rp" variant="info" type="button" 
+              onClick={() => {
+                this.setState({showLander: false})
+                this.setState({ ...INITIAL_STATE, status: "Completed"});
+              }}>Return</Button>
           </Row>
+        </Container> }
       </div>
     );
   };

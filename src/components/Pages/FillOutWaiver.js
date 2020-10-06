@@ -37,6 +37,7 @@ const INITIAL_STATE = {
     dob: '',
     pgname: '',
     pgphone: '',
+    hideWaiver: false,
     errorWaiver: null,
     agecheck: true,
     age: "",
@@ -48,6 +49,7 @@ const INITIAL_STATE = {
     uid: null,
     saveButton: true,
     saveButton2: true,
+    showLander: false,
   };
 
 class WaiverPageFormBase extends Component {
@@ -63,9 +65,6 @@ class WaiverPageFormBase extends Component {
       this.setState({ [event.target.name]: event.target.checked });
   };
 
-  onSubmit = event => {
-  }
- 
   onChange = event => {
     this.setState({ [event.target.name]: event.target.value });
   };
@@ -93,8 +92,8 @@ class WaiverPageFormBase extends Component {
     var date = (new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear()) + ":" + 
     (new Date().getHours()) + ":" + (new Date().getMinutes()) + ":" + (new Date().getSeconds()) + ":" + (new Date().getMilliseconds());
     this.props.firebase.nonmembersWaivers(`${fname}${lname}(${date}).pdf`).put(blob).then(() => {
-      this.setState({submitted: false,})
-      this.setState({ ...INITIAL_STATE, status: "Completed"});
+      this.setState({submitted: false, showLander: true})
+      //this.setState({ ...INITIAL_STATE, status: "Completed"});
     })
   }
  
@@ -120,11 +119,14 @@ class WaiverPageFormBase extends Component {
       submitted,
       saveButton,
       saveButton2,
+      showLander
     } = this.state;
 
     const myProps = {fname, lname, email, address, city, state, zipcode, phone, dob, pgname, pgphone, participantImg, pgImg, age }
  
     return (
+      <div>
+      { !showLander ?
       <div>
         <Row className="row-rp">
           <Col>
@@ -403,7 +405,25 @@ class WaiverPageFormBase extends Component {
             }}>
                 Submit
             </Button>
-          </Row>
+          </Row> 
+      </div>
+      : 
+      <Container>
+        <Row className="row-rp">
+          <Col className="col-rp">
+            <h2 className="page-header">Successful Waiver Registration.</h2>
+            <p className="page-header">Please let your U.S. Airsoft employee know that you have finished.</p>
+          </Col>
+        </Row>
+        <Row className="row-rp">
+            <Button className="next-button-rp" variant="info" type="button" 
+            onClick={() => {
+              this.setState({showLander: false})
+              this.setState({ ...INITIAL_STATE, status: "Completed"});
+            }}>Sign Another</Button>
+        </Row>
+      </Container>
+      }
       </div>
     );
   };

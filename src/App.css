@@ -755,3 +755,7 @@ a.dropdown-item:hover {
 .img-map img {
   max-width: none !important;
 }
+
+.col-rp {
+  align-items: center;
+}
