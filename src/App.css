@@ -752,6 +752,6 @@ a.dropdown-item:hover {
   color: white;
 }
 
-.img-map, img {
+.img-map img {
   max-width: none !important;
 }
