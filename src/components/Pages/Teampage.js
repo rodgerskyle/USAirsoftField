@@ -44,14 +44,6 @@ class Teampage extends Component {
     componentWillUnmount() {
         this.props.firebase.team(this.props.match.params.id).off();
         this.props.firebase.user(this.state.teamObject.leader).off();
-        //For loop for team members
-        var error = false;
-        try { const temp = this.state.teamObject.members.length;} catch(e) {error = true;}
-        if (error === false) {
-            for (var i = 0; i < this.state.teamObject.members.length; i++) {
-                this.props.firebase.user(this.state.teamObject.members[i]).off()
-            }
-        }
     }
 
 
@@ -239,8 +231,8 @@ class Teampage extends Component {
     const TeamUserlist = ({ users }) => (
         <Row>
             {users.map(user => (
-                <Col>
-                    <div className="counter team-member-list" key={user[0]}>
+                <Col key={user[0]}>
+                    <div className="counter team-member-list">
                         <i className="fa fa-users fa-2x text-black"></i>
                         <Link className="profilelink-tm" to={"/profilelookup/" + user[1]}>
                             <h2 className="timer count-title count-number" data-to="100" data-speed="1500">{user[0]}</h2>

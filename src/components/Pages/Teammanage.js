@@ -253,6 +253,7 @@ class TeamManage extends Component {
                             :
                             this.state.teamObject.leader === authUser.uid ?
                             <Container>
+                                <h2 className="page-header">Manage Team</h2>
                                 <div className="team-single-img">
                                     <img className="team-icon-individual" src={this.state.teamicon} alt="" />
                                 </div>
@@ -277,7 +278,7 @@ class TeamManage extends Component {
                                         </Button>
                                     </Form.Group>
                                 </Form>
-                                <Button variant="outline-danger" size="md" block 
+                                <Button variant="outline-danger" size="md" block disabled={!this.state.checkBox}
                                 type="button" onClick={(e) => this.DisbandTeam(e)}>
                                     Disband team
                                 </Button>
@@ -291,6 +292,7 @@ class TeamManage extends Component {
                             </Container> 
                             :
                             <Container>
+                                <h2 className="page-header">Manage Team</h2>
                                 <div className="team-single-img">
                                     <img className="team-icon-individual" src={this.state.teamicon} alt="" />
                                 </div>

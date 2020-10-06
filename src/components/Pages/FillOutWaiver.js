@@ -50,10 +50,6 @@ const INITIAL_STATE = {
     saveButton2: true,
   };
 
-  let sigRef = {};
-  let sigRef2 = {};
-  //sigRef = React.createRef();
- 
 class WaiverPageFormBase extends Component {
   constructor(props) {
     super(props);
@@ -96,7 +92,7 @@ class WaiverPageFormBase extends Component {
     const {fname, lname} = this.state;
     var date = (new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear()) + ":" + 
     (new Date().getHours()) + ":" + (new Date().getMinutes()) + ":" + (new Date().getSeconds()) + ":" + (new Date().getMilliseconds());
-    this.props.firebase.nonmembersWaivers(`(${date})${fname}${lname}.pdf`).put(blob).then(() => {
+    this.props.firebase.nonmembersWaivers(`${fname}${lname}(${date}).pdf`).put(blob).then(() => {
       this.setState({submitted: false,})
       this.setState({ ...INITIAL_STATE, status: "Completed"});
     })
@@ -395,6 +391,12 @@ class WaiverPageFormBase extends Component {
               }
               else if (this.state.participantImg === null || (this.state.pgImg === null && age < 18)) {
                 this.setState({errorWaiver: "Please sign and save the waiver in the box."})
+              }
+              else if (age < 8) {
+                this.setState({errorWaiver: "Participant must be older than 8 years."})
+              }
+              else if (age > 85) {
+                this.setState({errorWaiver: "Participant must be younger than 85 years."})
               }
               else if (this.state.pageIndex!==1)
                 this.setState({submitted: true})

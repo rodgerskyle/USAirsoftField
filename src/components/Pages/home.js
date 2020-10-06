@@ -4,6 +4,7 @@ import logo from '../../assets/logo.png';
 import { Carousel } from 'react-bootstrap/';
 import { Container, Row, Col } from 'react-bootstrap/';
 import BackgroundVideo from '../constants/backgroundvideo';
+import CookieConsent from "react-cookie-consent";
 
 const Home = () => (
   <div>
@@ -75,6 +76,7 @@ const Home = () => (
       </Row>
       </Container>
     </div>
+    <CookieConsent overlay>This website uses cookies to enhance the user experience.</CookieConsent>
   </div>
 );
 
