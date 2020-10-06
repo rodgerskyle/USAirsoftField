@@ -31,6 +31,7 @@ import Teampage from './components/Pages/Teampage'
 import Teammanage from './components/Pages/Teammanage'
 import Teamcreate from './components/Pages/Teamcreate'
 import Teamjoin from './components/Pages/Teamjoin'
+import WaiverLookup from './components/Pages/waiverlookup'
 
 const App = () => (
       <Router>
@@ -91,6 +92,9 @@ const App = () => (
             </Route>
             <Route path="/waiverform">
               <WaiverForm />
+            </Route>
+            <Route path="/waiverlookup">
+              <WaiverLookup />
             </Route>
             <Route path="/enterwins">
               <EnterWins />

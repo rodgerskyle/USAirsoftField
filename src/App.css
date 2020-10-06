@@ -759,3 +759,12 @@ a.dropdown-item:hover {
 .col-rp {
   align-items: center;
 }
+
+.card-header-wl {
+  border-bottom: 1px solid black;
+}
+
+.row-1-wl {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}

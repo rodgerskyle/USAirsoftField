@@ -88,7 +88,7 @@ class Firebase {
 
     nonmembersWaivers = pdf => this.st.ref().child(`waivers/non-members/${pdf}`);
 
-    storage = img => this.st.ref().child(`ranks/${img}`);
+    waiversList = () => this.st.ref().child(`waivers/non-members`);
 
     pictures = img => this.st.ref().child(`images/${img}`);
 
