@@ -49,8 +49,8 @@ class SignedWaiver extends Component {
             THE FOLLOWING NAMED PERSONS OR ENTITIES, HEREIN REFERRED TO AS RELEASES:     US Airsoft World, Inc., officers, employees, agents, stockholders, owners, representatives, and 
             volunteers, from liability and responsibility whatsoever and for any claims or causes of action that I, my estate, heirs, survivors, executors, or assigns may have for personal 
             injury, property damage, or wrongful death arising from the above activities weather caused by active or passive negligence of the release or otherwise. By executing this document, 
-            I agree to hold the releases as listed above harmless and indemnify there in conjunction with any injury, disability, death, or loss or damage to person or property that may occur 
-            as result of engaging in the above activity known as Airsoft Game Play.
+            I agree to hold the releases as listed above harmless and identify there in conjunction with any injury, disability, death, or loss or damage to person or property that may occur 
+            as a result of engaging in the above activity known as Airsoft Game Play.
           </Text>
           <Text style={styles.text}>
             This release shall be binding to the fullest extent permitted by law. If any provision of this release is found to be unenforceable, the remaining terms and release shall be enforced.
@@ -61,25 +61,32 @@ class SignedWaiver extends Component {
             By signing below, I agree to be bound by this agreement:
           </Text>
           <Text style={styles.text}>
-            Print Full Name: <Text style={styles.signed}>{fname + " " + lname}</Text> Participant Signature: {participantImg ? 
-            <Image style={styles.image} src={participantImg}/> : <Text></Text> }
+            Print Full Name: <Text style={styles.signed}>{fname + " " + lname}</Text><Text style={styles.spacing}>{"________"}</Text>Participant Signature: {participantImg ? 
+            <Image style={styles.image} src={participantImg}/> : <Text></Text> }<Text style={styles.spacing}>{"________"}</Text>
             Date: <Text style={styles.signed}>{(new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear())}</Text>
           </Text>
           <Text style={styles.text}>
-            Address: <Text style={styles.signed}>{address}</Text> City: <Text style={styles.signed}>{city}</Text> State: <Text style={styles.signed}>{state + " "}</Text>
-             Zip: <Text style={styles.signed}>{zipcode}</Text> 
+            Address: <Text style={styles.signed}>{address}</Text><Text style={styles.spacing}>{"________"}</Text>
+            City: <Text style={styles.signed}>{city}</Text><Text style={styles.spacing}>{"________"}</Text>
+            State: <Text style={styles.signed}>{state + " "}</Text><Text style={styles.spacing}>{"________"}</Text>
+            Zip: <Text style={styles.signed}>{zipcode}</Text> 
           </Text>
           <Text style={styles.text}>
-            Age: <Text style={styles.signed}>{age}</Text> Date of Birth: <Text style={styles.signed}>{dob}</Text> Phone Number: <Text style={styles.signed}>{phone + " "}</Text>
-             E-Mail: <Text style={styles.signed}>{email}</Text> 
+            Age: <Text style={styles.signed}>{age}</Text><Text style={styles.spacing}>{"________"}</Text>
+            Date of Birth: <Text style={styles.signed}>{dob}</Text><Text style={styles.spacing}>{"________"}</Text>
+            Phone Number: <Text style={styles.signed}>{phone + " "}</Text><Text style={styles.spacing}>{"________"}</Text>
+            E-Mail: <Text style={styles.signed}>{email}</Text> 
           </Text>
           <Text style={styles.text}>
             PLAYERS AGES 8-17 MUST HAVE PARENT OR GUARDIAN SIGN BELOW AND CONSENT TO THE RELEASE OF LIABILITY, WAIVER OF CLAIM, EXPRESS ASSUMPTION OF RISK AND INDEMNITY AS OUTLINED ABOVE.
           </Text>
           <Text style={styles.text}>
-            Print Parent or Guardian Name: <Text style={styles.signed}>{pgname}</Text> Signature: {pgImg ? <Image style={styles.image} src={pgImg}/> : <Text></Text> }
-            Emergency Phone Number: <Text style={styles.text}>{pgphone + " "}</Text>
-             Date: <Text style={styles.signed}>{(new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear())}</Text>
+            Print Parent or Guardian Name: <Text style={styles.signed}>{pgname}</Text><Text style={styles.spacing}>{"________"}</Text>
+            Signature: {pgImg ? <Image style={styles.image} src={pgImg}/> : <Text></Text> } 
+          </Text>
+          <Text style={styles.text}>
+            Emergency Phone Number: <Text style={styles.text}>{pgphone + " "}</Text><Text style={styles.spacing}>{"________"}</Text>
+            Date: <Text style={styles.signed}>{(new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear())}</Text>
           </Text>
         </Page>
       </Document>
@@ -108,15 +115,21 @@ class SignedWaiver extends Component {
         fontSize: 11,
         fontFamily: "calibri",
         fontWeight: 'bold',
-        paddingLeft: 40,
-        borderBottom: '1px solid black'
+        borderBottomColor: 'black',
+        borderBottomStyle: 'solid',
+        borderBottomWidth: 1,
+      },
+      spacing: {
+        fontSize: 11,
+        fontFamily: "calibri",
+        color: 'white',
       },
       title: {
         fontSize: 16,
         fontFamily: 'calibri',
         fontWeight: 'bold',
         textAlign: 'center',
-        marginBottom: 30,
+        marginBottom: 20,
       },
       header: {
         fontSize: 16,
@@ -129,6 +142,10 @@ class SignedWaiver extends Component {
         fontWeight: 'bold',
         color: 'red',
         textAlign: 'center',
+        borderBottomColor: 'red',
+        borderBottomStyle: 'solid',
+        borderBottomWidth: 1,
+        marginHorizontal: 40,
       },
       image: {
           marginVertical: 15,

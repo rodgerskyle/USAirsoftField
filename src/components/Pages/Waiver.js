@@ -14,27 +14,17 @@ class Waiver extends Component {
         super(props);
 
         this.state = {
-            numPages: null,
             pageNumber: 1
         };
     }
-
-    onDocumentLoadSuccess = ({ numPages }) => {
-        this.setState({ numPages });
-    };
 
     handlePrint = (event) => {
         event.preventDefault();
         window.open(waiver, "PRINT", "height=400,width=600");
       };
 
-    goToPrevPage = () =>
-        this.setState(state => ({ pageNumber: state.pageNumber - 1 }));
-    goToNextPage = () =>
-        this.setState(state => ({ pageNumber: state.pageNumber + 1 }));
-
     render() {
-        const { pageNumber, numPages } = this.state;
+        const { pageNumber } = this.state;
         return (
             <div className="background-static-all">
                 <div className="pdfStyle">
@@ -42,14 +32,6 @@ class Waiver extends Component {
                     <Container fluid>
                         <Row className="align-items-center">
                             <Col>
-                                <nav>
-                                    <button onClick={this.goToPrevPage} 
-                                    disabled={this.state.pageNumber-1 >= 0 ? true : false}>
-                                        Prev</button>
-                                    <button onClick={this.goToNextPage} 
-                                    disabled={this.state.pageNumber+1 <= this.state.numPages ? false : true}>
-                                        Next</button>
-                                </nav>
                             <a href={waiver} target='_blank' rel="noopener noreferrer">
                                 <i className="fa fa-print fa-2x text-white"></i>
                             </a>
@@ -65,14 +47,6 @@ class Waiver extends Component {
                                         <Page pageNumber={pageNumber} width={600} />
                                     </Document>
                                 </div>
-                            </Col>
-                        </Row>
-                        <Row className="align-items-center col-md-auto">
-                            <Col>
-                                <p>
-                                    Page {pageNumber} of {numPages}
-                                </p>
-
                             </Col>
                         </Row>
                     </Container>

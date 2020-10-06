@@ -32,7 +32,7 @@ class Map extends Component {
                     <Container>
                         <Row>
                             <Col>
-                                <SideBySideMagnifier 
+                                <GlassMagnifier 
                                     imageSrc={lowmap}
                                     imageAlt="Field Map"
                                     largeImageSrc={map}

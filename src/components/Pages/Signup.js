@@ -77,10 +77,6 @@ const INITIAL_STATE = {
     saveButton: true,
     saveButton2: true,
   };
-
-  let sigRef = {};
-  let sigRef2 = {};
-  //sigRef = React.createRef();
  
 class SignUpFormBase extends Component {
   constructor(props) {
@@ -607,6 +603,12 @@ class SignUpFormBase extends Component {
               }
               else if (this.state.participantImg === null || (this.state.pgImg === null && age < 18)) {
                 this.setState({errorWaiver: "Please sign and save the waiver in the box."})
+              }
+              else if (age < 8) {
+                this.setState({errorWaiver: "Participant must be older than 8 years."})
+              }
+              else if (age > 85) {
+                this.setState({errorWaiver: "Participant must be younger than 85 years."})
               }
               else if (this.state.pageIndex!==1)
                 this.setState({pageIndex: this.state.pageIndex+1})
