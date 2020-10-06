@@ -32,11 +32,13 @@ class Map extends Component {
                     <Container>
                         <Row>
                             <Col>
-                                <GlassMagnifier 
+                                <SideBySideMagnifier 
                                     imageSrc={lowmap}
+                                    className="img-map"
                                     imageAlt="Field Map"
                                     largeImageSrc={map}
                                     alwaysInPlace={true}
+                                    fillAvailableSpace={true}
                                 />
                             </Col>
                         </Row>

@@ -751,3 +751,7 @@ a.dropdown-item:hover {
 .text-fow {
   color: white;
 }
+
+.img-map, img {
+  max-width: none !important;
+}
