@@ -768,3 +768,40 @@ a.dropdown-item:hover {
   margin-top: 10px;
   margin-bottom: 10px;
 }
+
+.admin-header {
+  color:white;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.admin-cards {
+  color: white;
+}
+
+.admin-card-icon {
+  text-align:right;
+}
+
+.admin-card-icon2 {
+  text-align: left;
+}
+
+.admin-card-footer:hover {
+  text-decoration-line: underline !important;
+  text-decoration-color: white !important;
+}
+
+.admin-card-footer {
+  padding-left: 0px !important;
+  padding-right: 0px !important;
+  box-sizing: content-box;
+}
+
+.admin-cards-link:hover {
+  text-decoration: none;
+}
+
+.admin-row-email {
+  margin-top: 20px;
+}
