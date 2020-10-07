@@ -5,7 +5,9 @@ import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
 import { compose } from 'recompose';
 
-import { Button, Form, Container, Card, Row, Col } from 'react-bootstrap/';
+import { Button, Form, Container, Card, Row, Col, Breadcrumb } from 'react-bootstrap/';
+
+import { LinkContainer } from 'react-router-bootstrap';
 
 import * as ROLES from '../constants/roles';
 
@@ -51,9 +53,15 @@ class WaiverLookup extends Component {
     render() {
         return (
             <div className="background-static-all">
-                <h2 className="page-header">Admin - Waiver Lookup</h2>
                 {!this.state.loading ?
                     <Container>
+                        <h2 className="admin-header">Admin - Waiver Lookup</h2>
+                        <Breadcrumb>
+                            <LinkContainer to="/admin">
+                                <Breadcrumb.Item>Admin</Breadcrumb.Item>
+                            </LinkContainer>
+                            <Breadcrumb.Item active>Waiver Lookup</Breadcrumb.Item>
+                        </Breadcrumb>
                         <Row>
                             <Col>
                                 <Card>

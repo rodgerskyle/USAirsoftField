@@ -5,7 +5,9 @@ import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
 import { compose } from 'recompose';
 
-import { Button, Form, Container, Card } from 'react-bootstrap/';
+import { Button, Form, Container, Card, Breadcrumb } from 'react-bootstrap/';
+
+import { LinkContainer } from 'react-router-bootstrap';
 
 import * as ROLES from '../constants/roles';
  
@@ -84,12 +86,12 @@ class EnterLosses extends Component {
                 points, losses, freegames, cmlosses
             });
             temp = this.state.statusBox;
-            temp.push("User " + this.state.value + " was updated successfully.")
+            temp.unshift("User " + this.state.value + " was updated successfully.")
             this.setState({statusBox: temp})
         }
         else {
             temp = this.state.statusBox;
-            temp.push("User " + this.state.value + " was not found.");
+            temp.unshift("User " + this.state.value + " was not found.");
             this.setState({statusBox: temp})
         }
         //End API call
@@ -100,9 +102,15 @@ class EnterLosses extends Component {
     render() {
         return (
             <div className="background-static-all">
-                <h2 className="page-header">Admin - Enter Losses</h2>
                 {!this.state.loading ?
                 <Container>
+                    <h2 className="admin-header">Admin - Enter Losses</h2>
+                    <Breadcrumb>
+                        <LinkContainer to="/admin">
+                            <Breadcrumb.Item>Admin</Breadcrumb.Item>
+                        </LinkContainer>
+                        <Breadcrumb.Item active>Enter Losses</Breadcrumb.Item>
+                    </Breadcrumb>
                     <div className="form-box">
                         <Form id="formBox" onSubmit={this.updateUser}>
                             <Form.Group controlId="usernameBox">

@@ -805,3 +805,20 @@ a.dropdown-item:hover {
 .admin-row-email {
   margin-top: 20px;
 }
+
+ .admin-col-cards {
+   min-height: 100%;
+ }
+
+ .admin-button-email1 {
+   margin-right: 5px;
+ }
+
+ .admin-button-email2 {
+   margin-left: 5px;
+   margin-right: 5px;
+ }
+
+ .admin-button-email3 {
+   margin-left: 5px;
+ }
