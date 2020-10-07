@@ -5,9 +5,10 @@ import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
 import { compose } from 'recompose';
 
-import { Button, Form, Container, Card, Row, Col } from 'react-bootstrap/';
+import { Button, Form, Container, Card, Row, Col, Breadcrumb } from 'react-bootstrap/';
 
 import * as ROLES from '../constants/roles';
+import { LinkContainer } from 'react-router-bootstrap';
 
 class EnterWins extends Component {
     constructor(props) {
@@ -85,12 +86,12 @@ class EnterWins extends Component {
                 points, wins, freegames, cmwins
             });
             temp = this.state.statusBox;
-            temp.push("User " + this.state.value + " was updated successfully.")
+            temp.unshift("User " + this.state.value + " was updated successfully.")
             this.setState({statusBox: temp})
         }
         else {
             temp = this.state.statusBox;
-            temp.push("User " + this.state.value + " was not found.");
+            temp.unshift("User " + this.state.value + " was not found.");
             this.setState({statusBox: temp})
         }
         //End API call
@@ -101,9 +102,15 @@ class EnterWins extends Component {
     render() {
         return (
             <div className="background-static-all">
-                <h2 className="page-header">Admin - Enter Wins</h2>
                 {!this.state.loading ?
                 <Container>
+                    <h2 className="admin-header">Admin - Enter Wins</h2>
+                    <Breadcrumb>
+                        <LinkContainer to="/admin">
+                            <Breadcrumb.Item>Admin</Breadcrumb.Item>
+                        </LinkContainer>
+                        <Breadcrumb.Item active>Enter Wins</Breadcrumb.Item>
+                    </Breadcrumb>
                     <Row>
                         <Col>
                             <div className="form-box">

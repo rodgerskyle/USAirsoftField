@@ -82,6 +82,8 @@ class Firebase {
 
     mergeUsers = () => this.func.httpsCallable('mergeUsers');
 
+    sendMail = () => this.func.httpsCallable('sendMail');
+
     // Database API
 
     membersWaivers = pdf => this.st.ref().child(`waivers/members/${pdf}`);

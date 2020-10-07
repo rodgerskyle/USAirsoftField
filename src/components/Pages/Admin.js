@@ -34,6 +34,21 @@ class AdminPage extends Component {
         this.setState({ emailSubject: event.target.value });
     };
 
+    emailAll = () => {
+        // Add verification check before emailing
+        // Grab users from users api call
+        // Verify legal requirements when it comes to emailing
+        // Add in opt out feature in backend
+        var sendMail = this.props.firebase.sendMail();
+        const {emailBox, emailSubject} = this.state;
+        sendMail({email: "kyle77r@gmail.com", body: emailBox, subject: emailSubject, img: null}).then((result) => {
+          if (result.data) console.log(result.data.status)
+        }).catch((error) => {
+          console.log(error)
+        })
+        // Add loading to show completion
+    }
+
     render() {
         const { loading } = this.state;
      
@@ -45,14 +60,14 @@ class AdminPage extends Component {
                   <Breadcrumb.Item active>Admin</Breadcrumb.Item>
                 </Breadcrumb>
                 <Row>
-                  <Col>
+                  <Col className="admin-col-cards">
                     <Link to={"/enterwins"} className="admin-cards-link">
                       <Card bg="secondary" className="admin-cards">
                         <Card.Body className="admin-card-header-link">Enter Wins</Card.Body>
                         <Card.Footer>
                           <Row>
                             <Col xs="auto">
-                              <Card.Text className="admin-card-footer">View Page</Card.Text>
+                              <Card.Text className="admin-card-footer">View</Card.Text>
                             </Col>
                             <Col>
                               <Card.Text className="admin-card-icon">
@@ -64,14 +79,14 @@ class AdminPage extends Component {
                       </Card>
                     </Link>
                   </Col>
-                  <Col>
+                  <Col className="admin-col-cards">
                     <Link to={"/enterlosses"} className="admin-cards-link">
                       <Card bg="secondary" className="admin-cards">
                         <Card.Body className="admin-card-header-link">Enter Losses</Card.Body>
                         <Card.Footer>
                           <Row>
                             <Col xs="auto">
-                              <Card.Text className="admin-card-footer">View Page</Card.Text>
+                              <Card.Text className="admin-card-footer">View</Card.Text>
                             </Col>
                             <Col>
                               <Card.Text className="admin-card-icon">
@@ -83,14 +98,14 @@ class AdminPage extends Component {
                       </Card>
                     </Link>
                   </Col>
-                  <Col>
+                  <Col className="admin-col-cards">
                     <Link to={"/freegames"} className="admin-cards-link">
                       <Card bg="secondary" className="admin-cards">
                         <Card.Body className="admin-card-header-link">Check Free Games</Card.Body>
                         <Card.Footer>
                           <Row>
                           <Col xs="auto">
-                              <Card.Text className="admin-card-footer">View Page</Card.Text>
+                              <Card.Text className="admin-card-footer">View</Card.Text>
                             </Col>
                             <Col>
                               <Card.Text className="admin-card-icon">
@@ -142,13 +157,20 @@ class AdminPage extends Component {
                                     }}
                                 />
                             </Form.Group>
-                                <Button className="next-button" variant="outline-info" type="button"
+                                <Button className="admin-button-email1" variant="outline-info" type="button"
+                                onClick={() => {
+                                  this.emailAll();
+                                }}
                                 >
                                     Email All
                                 </Button>
-                                <Button className="next-button" variant="outline-info" type="button"
+                                <Button className="admin-button-email2" variant="outline-info" type="button"
                                 >
                                     Email Members
+                                </Button>
+                                <Button className="admin-button-email3" variant="outline-info" type="button"
+                                >
+                                    Email Non-Members
                                 </Button>
                         </Form>
                       </Card.Body>
@@ -156,14 +178,14 @@ class AdminPage extends Component {
                   </Col>
                 </Row>
                 <Row className="admin-row-email">
-                  <Col>
+                  <Col className="admin-col-cards">
                     <Link to={"/signup"} className="admin-cards-link">
                       <Card bg="secondary" className="admin-cards">
                         <Card.Body className="admin-card-header-link">Membership Registration</Card.Body>
                         <Card.Footer>
                           <Row>
                             <Col xs="auto">
-                              <Card.Text className="admin-card-footer">View Page</Card.Text>
+                              <Card.Text className="admin-card-footer">View</Card.Text>
                             </Col>
                             <Col>
                               <Card.Text className="admin-card-icon">
@@ -175,14 +197,14 @@ class AdminPage extends Component {
                       </Card>
                     </Link>
                   </Col>
-                  <Col>
+                  <Col className="admin-col-cards">
                     <Link to={"/waiverform"} className="admin-cards-link">
                       <Card bg="secondary" className="admin-cards">
                         <Card.Body className="admin-card-header-link">Sign Waiver</Card.Body>
                         <Card.Footer>
                           <Row>
                             <Col xs="auto">
-                              <Card.Text className="admin-card-footer">View Page</Card.Text>
+                              <Card.Text className="admin-card-footer">View</Card.Text>
                             </Col>
                             <Col>
                               <Card.Text className="admin-card-icon">
@@ -194,14 +216,14 @@ class AdminPage extends Component {
                       </Card>
                     </Link>
                   </Col>
-                  <Col>
+                  <Col className="admin-col-cards">
                     <Link to={"/waiverlookup"} className="admin-cards-link">
                       <Card bg="secondary" className="admin-cards">
                         <Card.Body className="admin-card-header-link">Waiver Search</Card.Body>
                         <Card.Footer>
                           <Row>
                             <Col xs="auto">
-                              <Card.Text className="admin-card-footer">View Page</Card.Text>
+                              <Card.Text className="admin-card-footer">View</Card.Text>
                             </Col>
                             <Col>
                               <Card.Text className="admin-card-icon">
@@ -213,14 +235,14 @@ class AdminPage extends Component {
                       </Card>
                     </Link>
                   </Col>
-                  <Col>
+                  <Col className="admin-col-cards">
                     <Link to={"/migration"} className="admin-cards-link">
                       <Card bg="secondary" className="admin-cards">
                         <Card.Body className="admin-card-header-link">Migration Page</Card.Body>
                         <Card.Footer>
                           <Row>
                             <Col xs="auto">
-                              <Card.Text className="admin-card-footer">View Page</Card.Text>
+                              <Card.Text className="admin-card-footer">View</Card.Text>
                             </Col>
                             <Col>
                               <Card.Text className="admin-card-icon">

@@ -5,7 +5,9 @@ import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
 import { compose } from 'recompose';
 
-import { Container, Row, Col } from 'react-bootstrap/';
+import { Container, Row, Col, Breadcrumb } from 'react-bootstrap/';
+
+import { LinkContainer } from 'react-router-bootstrap';
 
 import * as ROLES from '../constants/roles';
 
@@ -72,8 +74,14 @@ class Migration extends Component {
     render() {
         return (
             <div className="background-static-all">
-                <h2 className="page-header">Admin - Migration Page</h2>
                     <Container>
+                        <h2 className="admin-header">Admin - Migration Page</h2>
+                        <Breadcrumb>
+                            <LinkContainer to="/admin">
+                                <Breadcrumb.Item>Admin</Breadcrumb.Item>
+                            </LinkContainer>
+                            <Breadcrumb.Item active>Migration</Breadcrumb.Item>
+                        </Breadcrumb>
                         <Row>
                             <Col className="col-admin-mg">
                                 <div className="btn">
