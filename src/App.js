@@ -10,6 +10,7 @@ import ProfileSettings from './components/Pages/Profilesettings';
 import Home from './components/Pages/home'
 import Admin from './components/Pages/Admin'
 import SignUpForm from './components/Pages/Signup'
+import WaiverForm from './components/Pages/FillOutWaiver'
 import EnterWins from './components/Pages/enterwins';
 import EnterLosses from './components/Pages/enterlosses';
 import FreeGames from './components/Pages/freegames';
@@ -30,6 +31,7 @@ import Teampage from './components/Pages/Teampage'
 import Teammanage from './components/Pages/Teammanage'
 import Teamcreate from './components/Pages/Teamcreate'
 import Teamjoin from './components/Pages/Teamjoin'
+import WaiverLookup from './components/Pages/waiverlookup'
 
 const App = () => (
       <Router>
@@ -87,6 +89,12 @@ const App = () => (
             </Route>
             <Route path="/signup">
               <SignUpForm />
+            </Route>
+            <Route path="/waiverform">
+              <WaiverForm />
+            </Route>
+            <Route path="/waiverlookup">
+              <WaiverLookup />
             </Route>
             <Route path="/enterwins">
               <EnterWins />

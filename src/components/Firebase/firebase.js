@@ -80,9 +80,17 @@ class Firebase {
 
     requestTeam = () => this.func.httpsCallable('requestTeam');
 
+    mergeUsers = () => this.func.httpsCallable('mergeUsers');
+
+    sendMail = () => this.func.httpsCallable('sendMail');
+
     // Database API
 
-    storage = img => this.st.ref().child(`ranks/${img}`);
+    membersWaivers = pdf => this.st.ref().child(`waivers/members/${pdf}`);
+
+    nonmembersWaivers = pdf => this.st.ref().child(`waivers/non-members/${pdf}`);
+
+    waiversList = () => this.st.ref().child(`waivers/non-members`);
 
     pictures = img => this.st.ref().child(`images/${img}`);
 

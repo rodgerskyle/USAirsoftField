@@ -5,7 +5,9 @@ import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
 import { compose } from 'recompose';
 
-import { Button, Form, Container, Card, Row, Col } from 'react-bootstrap/';
+import { Container, Row, Col, Breadcrumb } from 'react-bootstrap/';
+
+import { LinkContainer } from 'react-router-bootstrap';
 
 import * as ROLES from '../constants/roles';
 
@@ -13,8 +15,10 @@ class Migration extends Component {
     constructor(props) {
         super(props);
 
+        this.fileReadingFinished= this.fileReadingFinished.bind(this);
+
         this.state = {
-        };
+        }
     }
 
     handleFiles = (files) => {
@@ -37,17 +41,22 @@ class Migration extends Component {
     fileReadingFinished(event) {
         var csv = event.target.result;
         //this.processData(csv);
-        var allTextLines = csv.split(/\r\n|\n/);
-        var lines = allTextLines.map(data => data.split(';'))
-
-        console.log(lines)
-    }
-
-    processData(csv) {
-        var allTextLines = csv.split(/\r\n|\n/);
-        var lines = allTextLines.map(data => data.split(';'))
-
-        console.log(lines)
+        var lines = csv.split(/\r\n|\n/);
+        var mergeUsers = this.props.firebase.mergeUsers();
+        for (let i=0; i<lines.length; i++) {
+            let usr = String(lines[i]).split(',')
+            mergeUsers({
+                user: usr, 
+            }).then((result) => {
+                // Read result of the Cloud Function.
+                if (result.data && result.data.user !== null) {
+                    console.log(result.data.user)
+                    this.props.firebase.doPasswordReset(result.data.user).then(() => {
+                        console.log("Successful")
+                    })
+                }
+            });
+        }
     }
 
     errorHandler(event) {
@@ -65,8 +74,14 @@ class Migration extends Component {
     render() {
         return (
             <div className="background-static-all">
-                <h2 className="page-header">Admin - Migration Page</h2>
                     <Container>
+                        <h2 className="admin-header">Admin - Migration Page</h2>
+                        <Breadcrumb>
+                            <LinkContainer to="/admin">
+                                <Breadcrumb.Item>Admin</Breadcrumb.Item>
+                            </LinkContainer>
+                            <Breadcrumb.Item active>Migration</Breadcrumb.Item>
+                        </Breadcrumb>
                         <Row>
                             <Col className="col-admin-mg">
                                 <div className="btn">

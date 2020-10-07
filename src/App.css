@@ -545,6 +545,7 @@ a.dropdown-item:hover {
 .status-card-body-admin {
   overflow-y: scroll;
   max-height: 35vh;
+  color: black;
 }
 
 .status-card-offrow-admin {
@@ -602,3 +603,222 @@ a.dropdown-item:hover {
   display: flex;
   justify-content: center;
 }
+
+.header-rp {
+  align-items: center;
+  justify-content: center;
+}
+
+.form-rp {
+  color: white;
+}
+
+.waiver-form-rp {
+  color: white;
+  min-width: 67%;
+}
+
+.row-rp {
+  justify-content: center;
+}
+
+.button-row-rp {
+  float: right;
+}
+
+.card-rp {
+  max-width: 50% !important;
+}
+
+.waiver-rp {
+  justify-content: center;
+  transition: display 1s, opacity 0.5s linear;
+  opacity: 1;
+}
+
+.waiver-hidden-rp {
+  transition: display 1s, opacity 0.5s linear;
+  opacity: 0;
+  display: none
+}
+
+.waiver-input-rp {
+  margin-top: 50px;
+}
+
+.nav-row-rp {
+  margin-top: 10px;
+}
+
+.nav-row-rp1 {
+  margin-top: 100px;
+}
+
+.next-button-rp {
+  margin-left: 5px;
+}
+
+.prev-button-rp {
+  margin-right: 5px;
+}
+
+.waiver-row-rp {
+  position: relative;
+}
+
+
+.waiver-header-rp {
+  justify-content: center;
+  color: white;
+}
+
+.text-block-waiver-rp {
+  position: absolute;
+  color: white;
+  max-width: 766px;
+  min-width: 766px;
+}
+
+.card-row-rp {
+  position: relative;
+}
+
+.text-block-card-rp {
+  position: absolute;
+  color: white;
+  top: 245px;
+  max-width: 236.5px;
+  min-width: 236.5px;
+  background-color: darkgray;
+  justify-content: center;
+  padding: 5px;
+}
+.text-block-empty-rp {
+  position: absolute;
+  color: white;
+  top: 245px;
+  max-width: 236.5px;
+  min-width: 236.5px;
+  background-color: darkgray;
+  justify-content: center;
+  padding: 0px;
+}
+
+.participant-sig-rp {
+  background-color: white;
+}
+
+.sig-row-rp {
+  width: 100%;
+}
+
+.pg-sig-rp {
+  background-color: white;
+}
+
+.header-sig-rp {
+  text-align: center
+}
+
+.signBox-image-rt {
+  background-color: white;
+  padding: 20px;
+}
+
+.clear-button-rp {
+  margin-right: 5px;
+}
+
+.save-button-rp {
+  margin-left: 5px;
+}
+
+.divider-row-rp {
+  justify-content: center;
+  content: '';
+  display: block;
+  width: 70%;
+  height: 5px;
+  border-radius: 5px;
+  background-color: darkgrey;
+  margin: auto;
+}
+
+.error-text-rp {
+  color:red;
+}
+
+.text-fow {
+  color: white;
+}
+
+.img-map img {
+  max-width: none !important;
+}
+
+.col-rp {
+  align-items: center;
+}
+
+.card-header-wl {
+  border-bottom: 1px solid black;
+}
+
+.row-1-wl {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.admin-header {
+  color:white;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.admin-cards {
+  color: white;
+}
+
+.admin-card-icon {
+  text-align:right;
+}
+
+.admin-card-icon2 {
+  text-align: left;
+}
+
+.admin-card-footer:hover {
+  text-decoration-line: underline !important;
+  text-decoration-color: white !important;
+}
+
+.admin-card-footer {
+  padding-left: 0px !important;
+  padding-right: 0px !important;
+  box-sizing: content-box;
+}
+
+.admin-cards-link:hover {
+  text-decoration: none;
+}
+
+.admin-row-email {
+  margin-top: 20px;
+}
+
+ .admin-col-cards {
+   min-height: 100%;
+ }
+
+ .admin-button-email1 {
+   margin-right: 5px;
+ }
+
+ .admin-button-email2 {
+   margin-left: 5px;
+   margin-right: 5px;
+ }
+
+ .admin-button-email3 {
+   margin-left: 5px;
+ }

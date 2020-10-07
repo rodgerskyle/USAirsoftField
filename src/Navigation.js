@@ -20,7 +20,7 @@ const Navigation = ({ authUser }) => (
 
 const NavigationAuth = ({ authUser }) => (
         <div>
-            <Navbar collapseOnSelect expand="sm" bg="nav" variant="dark" className="navbar-all">
+            <Navbar collapseOnSelect expand="xl" bg="nav" variant="dark" className="navbar-all">
                 <Nav className="mr-auto">
                     <NavItem>
                         <Link to="/">
@@ -53,27 +53,9 @@ const NavigationAuth = ({ authUser }) => (
                         </NavItem>
 
                         {!!authUser.roles[ROLES.ADMIN] && (
-                            <NavDropdown title="Admin" id="nav-dropdown">
-                                <LinkContainer to="/enterwins">
-                                    <NavDropdown.Item eventKey={2.1}>Update Wins</NavDropdown.Item>
-                                </LinkContainer>
-                                <LinkContainer to="/enterlosses">
-                                    <NavDropdown.Item eventKey={2.2}>Update Losses</NavDropdown.Item>
-                                </LinkContainer>
-                                <LinkContainer to="/freegames">
-                                    <NavDropdown.Item eventKey={2.3}>Free Games</NavDropdown.Item>
-                                </LinkContainer>
-                                <LinkContainer to="/signup">
-                                    <NavDropdown.Item eventKey={2.4}>Register</NavDropdown.Item>
-                                </LinkContainer>
-                                <LinkContainer to="/migration">
-                                    <NavDropdown.Item eventKey={2.5}>Migrate</NavDropdown.Item>
-                                </LinkContainer>
-                                <NavDropdown.Divider />
-                                <LinkContainer to="/admin">
-                                    <NavDropdown.Item eventKey={2.6}>Testing</NavDropdown.Item>
-                                </LinkContainer>
-                            </NavDropdown>
+                        <NavItem>
+                            <Link className="nav-link" to="/admin">Admin</Link>
+                        </NavItem>
                         )}
                         <NavItem>
                             <NavDropdown title="Media" id="nav-dropdown">
@@ -132,7 +114,7 @@ const NavigationAuth = ({ authUser }) => (
 
 const NavigationNonAuth = () => (
         <div>
-            <Navbar collapseOnSelect expand="sm" bg="nav" variant="dark" className="navbar-all">
+            <Navbar collapseOnSelect expand="xl" bg="nav" variant="dark" className="navbar-all">
                 <Nav className="mr-auto">
                     <NavItem>
                         <Link to="/">

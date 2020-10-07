@@ -215,8 +215,8 @@ const UserList = ({ users, images, getRank, monthly, currentMonth }) => (
         </thead>
         <tbody>
             {users.sort((a, b) => 
-            monthly ? (currentMonth ? (a.currentmonth < b.currentmonth ? 1 : -1) :
-             (a.previousmonth < b.previousmonth ? 1 : -1)) :
+            monthly ? (currentMonth ? (a.cmwins*10 + a.cmlosses*3 < b.cmwins*10 + b.cmlosses*3 ? 1 : -1) :
+             (a.pmwins*10 + a.pmlosses*3 < b.pmwins*10 + b.pmlosses*3 ? 1 : -1)) :
             (a.points < b.points ? 1 : -1))
             .map((user, i) => (
                 <tr key={user.uid}>
@@ -225,10 +225,14 @@ const UserList = ({ users, images, getRank, monthly, currentMonth }) => (
                     <Td><img src={images.length !== 0 ? images[getRank(user.points)] : null}
                         alt="Player Rank" /></Td>
                     <Td cl="profilelink-lb" to={'/profilelookup/' + user.uid}>{user.name}</Td>
-                    <Td cl="wins-lb">{user.wins}</Td>
-                    <Td cl="losses-lb">{user.losses}</Td>
+                    <Td cl="wins-lb">
+                        {monthly ? (currentMonth ? (user.cmwins) : (user.pmwins)) : user.wins}
+                    </Td>
+                    <Td cl="losses-lb">
+                        {monthly ? (currentMonth ? (user.cmlosses) : (user.pmlosses)) : user.losses}
+                    </Td>
                     <Td>
-                        {monthly ? (currentMonth ? (user.currentmonth) : (user.previousmonth)) : user.points}
+                        {monthly ? (currentMonth ? (user.cmwins*10 + user.cmlosses*3) : (user.pmwins*10 + user.pmlosses*3)) : user.points}
                     </Td>
                 </tr>
             ))}

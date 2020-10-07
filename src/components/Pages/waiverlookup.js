@@ -11,47 +11,38 @@ import { LinkContainer } from 'react-router-bootstrap';
 
 import * as ROLES from '../constants/roles';
 
-class FreeGames extends Component {
+class WaiverLookup extends Component {
     constructor(props) {
         super(props);
 
         this.state = {
             loading: false,
-            users: [],
+            waivers: [],
             queriedlist: [],
             search: "",
-            UpdateUserState: this.updateUser,
+            OpenWaiverState: this.openWaiver,
         };
     }
 
     componentWillUnmount() {
-        this.props.firebase.users().off();
+        //this.props.firebase.waiversList().off();
     }
 
     componentDidMount() {
         this.setState({ loading: true });
 
-        this.props.firebase.users().on('value', snapshot => {
-            const usersObject = snapshot.val();
-
-            const usersList = Object.keys(usersObject).map(key => ({
-                ...usersObject[key],
-                uid: key,
-            }));
-
-            this.setState({
-                users: usersList,
-                loading: false,
+        this.props.firebase.waiversList().listAll().then((res) => {
+            this.setState({waivers: res.items, loading: false})
+            }).catch(function(error) {
+              // Uh-oh, an error occurred!
+              console.log(error)
             });
-        });
     }
 
     // Updates User's free game
-    updateUser = (user) => {
-        this.props.firebase.user(user).once("value", object => {
-            var freegames = object.val().freegames;
-            freegames--;
-            this.props.firebase.user(user).update({freegames})
+    openWaiver = (ref) => {
+        ref.getDownloadURL().then(url => {
+            window.open(url)
         })
     }
 
@@ -64,20 +55,20 @@ class FreeGames extends Component {
             <div className="background-static-all">
                 {!this.state.loading ?
                     <Container>
-                        <h2 className="admin-header">Admin - Redeem Free Game</h2>
+                        <h2 className="admin-header">Admin - Waiver Lookup</h2>
                         <Breadcrumb>
                             <LinkContainer to="/admin">
                                 <Breadcrumb.Item>Admin</Breadcrumb.Item>
                             </LinkContainer>
-                            <Breadcrumb.Item active>Free Games</Breadcrumb.Item>
+                            <Breadcrumb.Item active>Waiver Lookup</Breadcrumb.Item>
                         </Breadcrumb>
                         <Row>
                             <Col>
                                 <Card>
                                     <Card.Header>
-                                        <Form className="team-manage-text" onSubmit={(e) => this.nextPage(e)}>
+                                        <Form className="team-manage-text">
                                             <Form.Group controlId="input1">
-                                                <Form.Label className="search-label-admin">Search by Username:</Form.Label>
+                                                <Form.Label className="search-label-admin">Search by Name:</Form.Label>
                                                 <Form.Control
                                                     type="name"
                                                     placeholder="ex: JohnDoe"
@@ -89,8 +80,8 @@ class FreeGames extends Component {
                                             </Form.Group>
                                         </Form>
                                     </Card.Header>
-                                    <UserBox users={this.state.users} index={0} 
-                                    search={this.state.search} update={this.state.UpdateUserState}/>
+                                    <WaiverBox waivers={this.state.waivers} index={0}
+                                        search={this.state.search} open={this.state.OpenWaiverState} />
                                 </Card>
                             </Col>
                         </Row>
@@ -101,27 +92,43 @@ class FreeGames extends Component {
     }
 }
 
-const UserBox = ({users, index, search, update}) => (
+
+const WaiverBox = ({waivers, index, search, open}) => (
     <Card.Body className="status-card-body-admin">
-        {users.map((user, i) => (
+        <Row className="card-header-wl">
+            <Col>
+                <Card.Text>
+                    Name:
+                </Card.Text>
+            </Col>
+            <Col>
+                <Card.Text>
+                    Date Created:
+                </Card.Text>
+            </Col>
+        </Row>
+        {waivers.sort((a, b) => 
+        (a.name.substr(a.name.lastIndexOf('(') + 1).split(')')[0] < 
+        b.name.substr(b.name.lastIndexOf('(') + 1).split(')')[0] ? 1 : -1))
+        .map((waiver, i) => (
             search !== "" ? // Search query case
-                user.freegames > 0 && user.name.toLowerCase().includes(search.toLowerCase()) ? 
+                waiver.name.toLowerCase().includes(search.toLowerCase()) ? 
                         index++ % 2 === 0 ? 
-                        <Row className="row-fg" key={index}>
+                        <Row className={index === 1 ? "row-1-wl" : "row-fg"} key={index}>
                             <Col className="col-name-fg">
                                 <Card.Text>
-                                    {"(" + index + ") " + user.name}
+                                    {"(" + index + ") " + waiver.name.substr(0, waiver.name.lastIndexOf('('))}
                                 </Card.Text>
                             </Col>
                             <Col>
                                 <Row>
                                     <Col className="col-name-fg">
-                                        {user.freegames + " Free Game(s)"}
+                                        {waiver.name.substr(waiver.name.lastIndexOf('(') + 1).split(')')[0]}
                                     </Col>
                                     <Col>
-                                        <Button className="button-submit-admin2" onClick={() => update(user.uid)}
+                                        <Button className="button-submit-admin2" onClick={() => open(waiver)}
                                         type="submit" id="update" variant="outline-success">
-                                            Use 1 
+                                            Open
                                         </Button>
                                     </Col>
                                 </Row>
@@ -131,18 +138,18 @@ const UserBox = ({users, index, search, update}) => (
                         <Row className="status-card-offrow-admin-fg" key={index}>
                             <Col className="col-name-fg">
                                 <Card.Text>
-                                        {"(" + index + ") " + user.name}
+                                    {"(" + index + ") " + waiver.name.substr(0, waiver.name.lastIndexOf('('))}
                                 </Card.Text>
                             </Col>
                             <Col>
                                 <Row>
                                     <Col className="col-name-fg">
-                                        {user.freegames + " Free Game(s)"}
+                                        {waiver.name.substr(waiver.name.lastIndexOf('(') + 1).split(')')[0]}
                                     </Col>
                                     <Col>
-                                        <Button className="button-submit-admin2" onClick={() => update(user.uid)}
+                                        <Button className="button-submit-admin2" onClick={() => open(waiver)}
                                         type="submit" id="update" variant="success">
-                                            Use 1 
+                                            Open
                                         </Button>
                                     </Col>
                                 </Row>
@@ -150,23 +157,22 @@ const UserBox = ({users, index, search, update}) => (
                         </Row>
                 : ""
             :
-                user.freegames > 0 ? 
                         index++ % 2 === 0 ? 
-                        <Row className="row-fg" key={index}>
+                        <Row className={index === 1 ? "row-1-wl" : "row-fg"} key={index}>
                             <Col className="col-name-fg">
                                 <Card.Text>
-                                    {"(" + index + ") " + user.name}
+                                    {"(" + index + ") " + waiver.name.substr(0, waiver.name.lastIndexOf('('))}
                                 </Card.Text>
                             </Col>
                             <Col>
                                 <Row>
                                     <Col className="col-name-fg">
-                                        {user.freegames + " Free Game(s)"}
+                                        {waiver.name.substr(waiver.name.lastIndexOf('(') + 1).split(')')[0]}
                                     </Col>
                                     <Col>
-                                        <Button className="button-submit-admin2" onClick={() => update(user.uid)}
+                                        <Button className="button-submit-admin2" onClick={() => open(waiver)}
                                         type="submit" id="update" variant="outline-success">
-                                            Use 1 
+                                            Open 
                                         </Button>
                                     </Col>
                                 </Row>
@@ -176,24 +182,23 @@ const UserBox = ({users, index, search, update}) => (
                         <Row className="status-card-offrow-admin-fg" key={index}>
                             <Col className="col-name-fg">
                                 <Card.Text>
-                                        {"(" + index + ") " + user.name}
+                                    {"(" + index + ") " + waiver.name.substr(0, waiver.name.lastIndexOf('('))}
                                 </Card.Text>
                             </Col>
                             <Col>
                                 <Row>
                                     <Col className="col-name-fg">
-                                        {user.freegames + " Free Game(s)"}
+                                        {waiver.name.substr(waiver.name.lastIndexOf('(') + 1).split(')')[0]}
                                     </Col>
                                     <Col>
-                                        <Button className="button-submit-admin2" onClick={() => update(user.uid)}
+                                        <Button className="button-submit-admin2" onClick={() => open(waiver)}
                                         type="submit" id="update" variant="success">
-                                            Use 1 
+                                            Open 
                                         </Button>
                                     </Col>
                                 </Row>
                             </Col>
                         </Row>
-                : ""
         ))}
     </Card.Body>
 );
@@ -204,4 +209,4 @@ const condition = authUser =>
 export default compose(
     withAuthorization(condition),
     withFirebase,
-)(FreeGames);
+)(WaiverLookup);
