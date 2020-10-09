@@ -56,13 +56,13 @@ class AdminPage extends Component {
           <div className="background-static-all">
             <Container>
                 <h1 className="admin-header">Admin Dashboard</h1>
-                <Breadcrumb>
+                <Breadcrumb className="admin-breadcrumb">
                   <Breadcrumb.Item active>Admin</Breadcrumb.Item>
                 </Breadcrumb>
                 <Row>
                   <Col className="admin-col-cards">
                     <Link to={"/enterwins"} className="admin-cards-link">
-                      <Card bg="secondary" className="admin-cards">
+                      <Card className="admin-cards">
                         <Card.Body className="admin-card-header-link">Enter Wins</Card.Body>
                         <Card.Footer>
                           <Row>
@@ -81,7 +81,7 @@ class AdminPage extends Component {
                   </Col>
                   <Col className="admin-col-cards">
                     <Link to={"/enterlosses"} className="admin-cards-link">
-                      <Card bg="secondary" className="admin-cards">
+                      <Card className="admin-cards">
                         <Card.Body className="admin-card-header-link">Enter Losses</Card.Body>
                         <Card.Footer>
                           <Row>
@@ -100,7 +100,7 @@ class AdminPage extends Component {
                   </Col>
                   <Col className="admin-col-cards">
                     <Link to={"/freegames"} className="admin-cards-link">
-                      <Card bg="secondary" className="admin-cards">
+                      <Card className="admin-cards">
                         <Card.Body className="admin-card-header-link">Check Free Games</Card.Body>
                         <Card.Footer>
                           <Row>
@@ -120,7 +120,7 @@ class AdminPage extends Component {
                 </Row>
                 <Row className="admin-row-email">
                   <Col>
-                    <Card bg="secondary" className="admin-cards">
+                    <Card className="admin-cards">
                       <Card.Header>
                         <Row>
                           <Col xs="auto">
@@ -157,18 +157,18 @@ class AdminPage extends Component {
                                     }}
                                 />
                             </Form.Group>
-                                <Button className="admin-button-email1" variant="outline-info" type="button"
+                                <Button className="admin-button-email1" variant="info" type="button"
                                 onClick={() => {
                                   this.emailAll();
                                 }}
                                 >
                                     Email All
                                 </Button>
-                                <Button className="admin-button-email2" variant="outline-info" type="button"
+                                <Button className="admin-button-email2" variant="info" type="button"
                                 >
                                     Email Members
                                 </Button>
-                                <Button className="admin-button-email3" variant="outline-info" type="button"
+                                <Button className="admin-button-email3" variant="info" type="button"
                                 >
                                     Email Non-Members
                                 </Button>
@@ -180,7 +180,7 @@ class AdminPage extends Component {
                 <Row className="admin-row-email">
                   <Col className="admin-col-cards">
                     <Link to={"/signup"} className="admin-cards-link">
-                      <Card bg="secondary" className="admin-cards">
+                      <Card className="admin-cards">
                         <Card.Body className="admin-card-header-link">Membership Registration</Card.Body>
                         <Card.Footer>
                           <Row>
@@ -199,7 +199,7 @@ class AdminPage extends Component {
                   </Col>
                   <Col className="admin-col-cards">
                     <Link to={"/waiverform"} className="admin-cards-link">
-                      <Card bg="secondary" className="admin-cards">
+                      <Card className="admin-cards">
                         <Card.Body className="admin-card-header-link">Sign Waiver</Card.Body>
                         <Card.Footer>
                           <Row>
@@ -218,7 +218,7 @@ class AdminPage extends Component {
                   </Col>
                   <Col className="admin-col-cards">
                     <Link to={"/waiverlookup"} className="admin-cards-link">
-                      <Card bg="secondary" className="admin-cards">
+                      <Card className="admin-cards">
                         <Card.Body className="admin-card-header-link">Waiver Search</Card.Body>
                         <Card.Footer>
                           <Row>
@@ -237,7 +237,7 @@ class AdminPage extends Component {
                   </Col>
                   <Col className="admin-col-cards">
                     <Link to={"/migration"} className="admin-cards-link">
-                      <Card bg="secondary" className="admin-cards">
+                      <Card className="admin-cards">
                         <Card.Body className="admin-card-header-link">Migration Page</Card.Body>
                         <Card.Footer>
                           <Row>

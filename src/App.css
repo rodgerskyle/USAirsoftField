@@ -53,6 +53,7 @@
   z-index: 1;
   width: 100%;
   border: 0 !important;
+  border-bottom: 1px solid black;
 }
 
 .bg-nav {
@@ -101,6 +102,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  background-color: grey;
+  border-radius: 5px;
 }
 
 .test {
@@ -257,7 +260,7 @@
 }
 
 .left-column-profile {
-  margin-top: 18px;
+  margin-top: 0px;
 }
 
 .team-members-box {
@@ -545,13 +548,18 @@ a.dropdown-item:hover {
 .status-card-body-admin {
   overflow-y: scroll;
   max-height: 35vh;
-  color: black;
+  color: white;
 }
 
 .status-card-offrow-admin {
   background-color: darkgray;
   margin-left: -10px;
   padding: 10px;
+  color: white;
+}
+
+.status-card-row-admin {
+  color: white;
 }
 
 .status-card-offrow-admin-fg {
@@ -583,7 +591,7 @@ a.dropdown-item:hover {
 }
 
 .status-card-admin {
-  margin: 0 10rem;
+  margin-top: 15px;
 }
 
 .center-navbar-nav {
@@ -596,7 +604,7 @@ a.dropdown-item:hover {
 }
 
 .search-label-admin {
-  color: black;
+  color: white;
 }
 
 .col-admin-mg {
@@ -607,6 +615,11 @@ a.dropdown-item:hover {
 .header-rp {
   align-items: center;
   justify-content: center;
+}
+
+.button-row-rp2 {
+  justify-content: center;
+  background-color: transparent !important;
 }
 
 .form-rp {
@@ -620,6 +633,7 @@ a.dropdown-item:hover {
 
 .row-rp {
   justify-content: center;
+  background-color: rgb(108, 117, 125, 0.75)
 }
 
 .button-row-rp {
@@ -639,15 +653,22 @@ a.dropdown-item:hover {
 .waiver-hidden-rp {
   transition: display 1s, opacity 0.5s linear;
   opacity: 0;
-  display: none
+  display: none;
 }
 
 .waiver-input-rp {
-  margin-top: 50px;
+  margin-top: 50px !important;
+  color: white;
+}
+
+.button-hidden-rp {
+  color: white !important;
 }
 
 .nav-row-rp {
   margin-top: 10px;
+  justify-content: center;
+  margin-bottom: 10px;
 }
 
 .nav-row-rp1 {
@@ -677,6 +698,8 @@ a.dropdown-item:hover {
   color: white;
   max-width: 766px;
   min-width: 766px;
+  margin-top: 5px;
+  margin-left: 5px !important;
 }
 
 .card-row-rp {
@@ -710,6 +733,8 @@ a.dropdown-item:hover {
 
 .sig-row-rp {
   width: 100%;
+  justify-content: center;
+  background-color: transparent !important;
 }
 
 .pg-sig-rp {
@@ -777,6 +802,7 @@ a.dropdown-item:hover {
 
 .admin-cards {
   color: white;
+  background-color: rgb(108, 117, 125, 0.75) !important;
 }
 
 .admin-card-icon {
@@ -821,4 +847,37 @@ a.dropdown-item:hover {
 
  .admin-button-email3 {
    margin-left: 5px;
+ }
+
+ .admin-row-points {
+  background-color: rgb(108, 117, 125, 0.75);
+  margin-right: 0 !important;
+  margin-left: 0 !important;
+  border-radius: 5px;
+  padding: 5px;
+  color: white;
+ }
+
+ .admin-col-button-points {
+   align-items: center;
+   display: flex;
+ }
+
+ .admin-breadcrumb ol {
+   background-color: transparent !important;
+   color: white !important;
+ }
+
+ .admin-breadcrumb li {
+   color: white !important;
+ }
+
+ .admin-breadcrumb a {
+   color: white !important;
+   text-decoration: underline;
+ }
+
+ .admin-breadcrumb a:link:hover {
+   color: lightgray !important;
+   text-decoration: none;
  }

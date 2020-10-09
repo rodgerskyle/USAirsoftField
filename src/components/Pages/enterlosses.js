@@ -5,7 +5,7 @@ import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
 import { compose } from 'recompose';
 
-import { Button, Form, Container, Card, Breadcrumb } from 'react-bootstrap/';
+import { Button, Form, Container, Card, Row, Col, Breadcrumb } from 'react-bootstrap/';
 
 import { LinkContainer } from 'react-router-bootstrap';
 
@@ -105,27 +105,34 @@ class EnterLosses extends Component {
                 {!this.state.loading ?
                 <Container>
                     <h2 className="admin-header">Admin - Enter Losses</h2>
-                    <Breadcrumb>
+                    <Breadcrumb className="admin-breadcrumb">
                         <LinkContainer to="/admin">
                             <Breadcrumb.Item>Admin</Breadcrumb.Item>
                         </LinkContainer>
                         <Breadcrumb.Item active>Enter Losses</Breadcrumb.Item>
                     </Breadcrumb>
-                    <div className="form-box">
-                        <Form id="formBox" onSubmit={this.updateUser}>
-                            <Form.Group controlId="usernameBox">
-                                <Form.Label>Username</Form.Label>
-                                <Form.Control onChange={this.handleChange}
-                                    value={this.state.value}
-                                    className="form-input-admin"
-                                    placeholder="Enter username to add points to" />
-                                <Button className="button-submit-admin" type="submit" id="register" variant="outline-success">
+                    <Row className="admin-row-points">
+                        <Form id="formBox">
+                            <Col>
+                                <Form.Group controlId="usernameBox">
+                                    <Form.Label>Username</Form.Label>
+                                    <Form.Control onChange={this.handleChange}
+                                        value={this.state.value}
+                                        className="form-input-admin"
+                                        placeholder="Enter username to add points to" />
+                                    </Form.Group>
+                                </Col>
+                            </Form>
+                            <Col className="admin-col-button-points">
+                                <Button className="button-submit-admin" type="button" id="register" variant="outline-success" 
+                                onClick={(e) => {
+                                    this.updateUser(e);
+                                }}>
                                     Submit
                                 </Button>
-                            </Form.Group>
-                        </Form>
-                    </div>
-                        <Card className="status-card-admin">
+                            </Col>
+                        </Row>
+                        <Card className="status-card-admin admin-cards">
                             <Card.Header>Status Box</Card.Header>
                             <StatusBox updates={this.state.statusBox}/>
                         </Card>
@@ -140,7 +147,7 @@ const StatusBox = ({updates}) => (
     <Card.Body className="status-card-body-admin">
         {updates.map((item, i) => (
             i % 2 ? 
-            <Card.Text key={i}>
+            <Card.Text className="status-card-row-admin" key={i}>
                 {"(" + i + ") " + item}
             </Card.Text>
                 : 

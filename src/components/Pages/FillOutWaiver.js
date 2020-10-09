@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import logo from '../../assets/logo.png';
-import { Container, Row, Col, Form, Button } from 'react-bootstrap/';
+import { Container, Row, Col, Form, Button, Breadcrumb } from 'react-bootstrap/';
+import { LinkContainer } from 'react-router-bootstrap';
 import SignatureCanvas from 'react-signature-canvas';
 import SignedWaiver from './SignedWaiver';
 import '../../App.css';
@@ -19,6 +20,12 @@ const WaiverPage = () => (
         <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>
         <h2 className="page-header">Waiver Form</h2>
       </Row>
+        <Breadcrumb className="admin-breadcrumb">
+            <LinkContainer to="/admin">
+                <Breadcrumb.Item>Admin</Breadcrumb.Item>
+            </LinkContainer>
+            <Breadcrumb.Item active>Fill Out Waiver</Breadcrumb.Item>
+        </Breadcrumb>
         <WaiverForm />
     </Container>
   </div>
@@ -133,7 +140,7 @@ class WaiverPageFormBase extends Component {
             <Row className="row-rp waiver-row-rp">
               <img src={waiver} alt="US Airsoft waiver" className={!hideWaiver ? "waiver-rp" : "waiver-hidden-rp"}/>
               <Row className="text-block-waiver-rp">
-                <Button variant="outline-secondary" type="button" 
+                <Button variant="outline-secondary" type="button" className={hideWaiver ? "button-hidden-rp" : ""} 
                 onClick={() => {
                   this.setState({hideWaiver: !hideWaiver})
                 }}>
@@ -271,14 +278,14 @@ class WaiverPageFormBase extends Component {
                   </p>
                 </Col>
               </Row>
-              <Row className="row-rp sig-row-rp">
+              <Row className="sig-row-rp">
                 {!this.state.participantImg ? 
                   <SignatureCanvas penColor='black' ref={(ref) => {this.sigRef = ref}}
                   canvasProps={{width: 750, height: 150, className: 'participant-sig-rp'}} />
                   : <img className="signBox-image-rt" src={this.state.participantImg} alt="signature" />
                 }
               </Row>
-              <Row className="row-rp">
+              <Row className="button-row-rp2">
                 <Button variant="secondary" type="button" className="clear-button-rp"
                 onClick={() => {
                   this.setState({participantImg: null})
@@ -381,7 +388,7 @@ class WaiverPageFormBase extends Component {
               </Row>
           </Col>
           </Row>
-          <Row className="row-rp nav-row-rp">
+          <Row className="nav-row-rp">
             <Button className="next-button-rp" variant="info" type="button" disabled={this.state.pageIndex===1}
             onClick={() => {
               if (address === "" || fname === "" || lname === "" || email === "" || address === "" ||

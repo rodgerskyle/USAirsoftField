@@ -6,7 +6,6 @@ import { withAuthorization } from '../session';
 import { compose } from 'recompose';
 
 import { Button, Form, Container, Card, Row, Col, Breadcrumb } from 'react-bootstrap/';
-
 import { LinkContainer } from 'react-router-bootstrap';
 
 import * as ROLES from '../constants/roles';
@@ -56,7 +55,7 @@ class WaiverLookup extends Component {
                 {!this.state.loading ?
                     <Container>
                         <h2 className="admin-header">Admin - Waiver Lookup</h2>
-                        <Breadcrumb>
+                        <Breadcrumb className="admin-breadcrumb">
                             <LinkContainer to="/admin">
                                 <Breadcrumb.Item>Admin</Breadcrumb.Item>
                             </LinkContainer>
@@ -64,7 +63,7 @@ class WaiverLookup extends Component {
                         </Breadcrumb>
                         <Row>
                             <Col>
-                                <Card>
+                                <Card className="admin-cards">
                                     <Card.Header>
                                         <Form className="team-manage-text">
                                             <Form.Group controlId="input1">

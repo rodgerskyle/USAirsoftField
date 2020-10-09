@@ -151,9 +151,9 @@ class ProfileLookup extends Component {
 
     //Get image function for profile image = uid
     getProfile(uid) {
-        return this.props.firebase.pictures(`${uid}.png`).getDownloadURL().then((url) => {
+        this.props.firebase.pictures(`${uid}.png`).getDownloadURL().then((url) => {
             this.setState({ profileicon: url })
-        }).catch(error => {
+        }).catch((error) => {
             // Handle any errors
             this.setState({ profileicon: default_profile })
         })
