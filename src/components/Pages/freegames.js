@@ -65,7 +65,7 @@ class FreeGames extends Component {
                 {!this.state.loading ?
                     <Container>
                         <h2 className="admin-header">Admin - Redeem Free Game</h2>
-                        <Breadcrumb>
+                        <Breadcrumb className="admin-breadcrumb">
                             <LinkContainer to="/admin">
                                 <Breadcrumb.Item>Admin</Breadcrumb.Item>
                             </LinkContainer>
@@ -73,7 +73,7 @@ class FreeGames extends Component {
                         </Breadcrumb>
                         <Row>
                             <Col>
-                                <Card>
+                                <Card className="admin-cards">
                                     <Card.Header>
                                         <Form className="team-manage-text" onSubmit={(e) => this.nextPage(e)}>
                                             <Form.Group controlId="input1">

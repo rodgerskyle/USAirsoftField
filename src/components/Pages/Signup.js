@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import logo from '../../assets/logo.png';
-import { Container, Row, Col, Form, Button } from 'react-bootstrap/';
+import { Button, Form, Container, Row, Col, Breadcrumb } from 'react-bootstrap/';
+import { LinkContainer } from 'react-router-bootstrap';
 import SignatureCanvas from 'react-signature-canvas';
 import SignedWaiver from './SignedWaiver';
 import '../../App.css';
@@ -37,6 +38,12 @@ const SignUpPage = () => (
         <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>
         <h2 className="page-header">Membership Form</h2>
       </Row>
+      <Breadcrumb className="admin-breadcrumb">
+          <LinkContainer to="/admin">
+              <Breadcrumb.Item>Admin</Breadcrumb.Item>
+          </LinkContainer>
+          <Breadcrumb.Item active>Registration</Breadcrumb.Item>
+      </Breadcrumb>
         <SignUpForm />
     </Container>
   </div>
@@ -226,7 +233,7 @@ class SignUpFormBase extends Component {
               <Row className="row-rp waiver-row-rp">
                 <img src={waiver} alt="US Airsoft waiver" className={!hideWaiver ? "waiver-rp" : "waiver-hidden-rp"}/>
                 <Row className="text-block-waiver-rp">
-                  <Button variant="outline-secondary" type="button" 
+                  <Button variant="outline-secondary" type="button" className={hideWaiver ? "button-hidden-rp" : ""} 
                   onClick={() => {
                     this.setState({hideWaiver: !hideWaiver})
                   }}>
@@ -364,14 +371,14 @@ class SignUpFormBase extends Component {
                     </p>
                   </Col>
                 </Row>
-                <Row className="row-rp sig-row-rp">
+                <Row className="sig-row-rp">
                   {!this.state.participantImg ? 
                     <SignatureCanvas penColor='black' ref={(ref) => {this.sigRef = ref}}
                     canvasProps={{width: 750, height: 150, className: 'participant-sig-rp'}} />
                     : <img className="signBox-image-rt" src={this.state.participantImg} alt="signature" />
                   }
                 </Row>
-                <Row className="row-rp">
+                <Row className="button-row-rp2">
                   <Button variant="secondary" type="button" className="clear-button-rp"
                   onClick={() => {
                     this.setState({participantImg: null})
@@ -439,7 +446,7 @@ class SignUpFormBase extends Component {
                     : <img className="signBox-image-rt" src={this.state.pgImg} alt="signature" />
                   }
                 </Row>
-                <Row className="row-rp">
+                <Row className="button-row-rp2">
                   <Button variant="secondary" type="button" className="clear-button-rp"
                   onClick={() => {
                     this.setState({pgImg: null})
@@ -481,7 +488,7 @@ class SignUpFormBase extends Component {
                         {this.state.fname + " " + this.state.lname}
                     </Row>
                   </Row>
-                  <Row className="row-rp nav-row-rp">
+                  <Row className="nav-row-rp">
                   <Button className="prev-button-rp" variant="info" type="button" disabled={this.state.index===0}
                   onClick={() => {
                     if (this.state.index!==0)
@@ -585,7 +592,7 @@ class SignUpFormBase extends Component {
             </Form>
             }
             </Row>
-            <Row className="row-rp nav-row-rp">
+            <Row className="nav-row-rp">
               <Button className="prev-button-rp" variant="info" type="button" disabled={this.state.pageIndex===0}
               onClick={() => {
                 if (this.state.pageIndex!==0)
