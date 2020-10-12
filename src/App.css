@@ -201,7 +201,6 @@
 
 .team-rows-icons {
   font-size: 1.4em !important;
-  padding-left: 10px;
   display: inline-block;
 }
 
@@ -319,8 +318,7 @@
 }
 
 .team-pictures {
-  width: 654px;
-  height: 192px;
+  border: 1px solid black;
 }
 
 .team-upload-warning {
@@ -545,6 +543,13 @@ a.dropdown-item:hover {
   margin-top: 10px;
 }
 
+.status-card-body-fg-admin {
+  overflow-y: scroll;
+  max-height: 35vh;
+  color: white;
+  padding-bottom: 0 !important;
+}
+
 .status-card-body-admin {
   overflow-y: scroll;
   max-height: 35vh;
@@ -634,6 +639,14 @@ a.dropdown-item:hover {
 .row-rp {
   justify-content: center;
   background-color: rgb(108, 117, 125, 0.75)
+}
+
+.row-success-rp {
+  justify-content: center;
+}
+
+.cardpreview-row-rp {
+  justify-content: center;
 }
 
 .button-row-rp {
@@ -803,6 +816,7 @@ a.dropdown-item:hover {
 .admin-cards {
   color: white;
   background-color: rgb(108, 117, 125, 0.75) !important;
+  min-height: 100%;
 }
 
 .admin-card-icon {
@@ -881,3 +895,54 @@ a.dropdown-item:hover {
    color: lightgray !important;
    text-decoration: none;
  }
+
+ .confirm-buttons-admin {
+   margin: 0 !important;
+ }
+
+ .col-options-button-admin {
+  justify-content: left;
+  display: flex;
+  margin-bottom: 5px;
+ }
+
+ #options-buttons-admin:hover * {
+   transition:0.3s ease all;
+   background-image: linear-gradient(90deg, black, transparent);
+   background-color: transparent !important;
+ }
+
+ .options-buttons-row-admin {
+   background: none !important;
+ }
+
+.user-card-offrow-admin-fg {
+  margin-bottom: 10px;
+  border-radius: 5px;
+  background-color:darkgray;
+  margin-left: -10px;
+  padding-left: 10px;
+}
+
+.row-options-admin {
+  margin-top: -10px;
+  margin-bottom: 5px;
+  padding: 5px 5px;
+}
+
+.button-options-style-admin {
+  padding: .25rem !important;
+  float: right;
+  white-space: nowrap;
+}
+
+.col-name-ul {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  min-width: 100%;
+}
+
+.button-options-col-admin {
+  padding: 0 2px !important;
+}

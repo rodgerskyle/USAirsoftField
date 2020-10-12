@@ -84,6 +84,8 @@ class Firebase {
 
     sendMail = () => this.func.httpsCallable('sendMail');
 
+    createPrivilegedUser = () => this.func.httpsCallable('createPrivilegedUser');
+
     // Database API
 
     membersWaivers = pdf => this.st.ref().child(`waivers/members/${pdf}`);

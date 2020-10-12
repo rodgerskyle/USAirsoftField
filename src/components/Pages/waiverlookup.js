@@ -93,7 +93,7 @@ class WaiverLookup extends Component {
 
 
 const WaiverBox = ({waivers, index, search, open}) => (
-    <Card.Body className="status-card-body-admin">
+    <Card.Body className="status-card-body-fg-admin">
         <Row className="card-header-wl">
             <Col>
                 <Card.Text>
@@ -126,7 +126,7 @@ const WaiverBox = ({waivers, index, search, open}) => (
                                     </Col>
                                     <Col>
                                         <Button className="button-submit-admin2" onClick={() => open(waiver)}
-                                        type="submit" id="update" variant="outline-success">
+                                        type="submit" id="update" variant="success">
                                             Open
                                         </Button>
                                     </Col>
@@ -170,7 +170,7 @@ const WaiverBox = ({waivers, index, search, open}) => (
                                     </Col>
                                     <Col>
                                         <Button className="button-submit-admin2" onClick={() => open(waiver)}
-                                        type="submit" id="update" variant="outline-success">
+                                        type="submit" id="update" variant="success">
                                             Open 
                                         </Button>
                                     </Col>

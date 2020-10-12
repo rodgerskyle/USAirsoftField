@@ -416,13 +416,13 @@ class WaiverPageFormBase extends Component {
       </div>
       : 
       <Container>
-        <Row className="row-rp">
+        <Row className="row-success-rp">
           <Col className="col-rp">
             <h2 className="page-header">Successful Waiver Registration.</h2>
             <p className="page-header">Please let your U.S. Airsoft employee know that you have finished.</p>
           </Col>
         </Row>
-        <Row className="row-rp">
+        <Row className="row-success-rp">
             <Button className="next-button-rp" variant="info" type="button" 
             onClick={() => {
               this.setState({showLander: false})
