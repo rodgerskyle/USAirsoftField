@@ -479,10 +479,10 @@ class SignUpFormBase extends Component {
             <Form className="form-rp" onSubmit={this.onSubmit}>
               <Row>
                 <Col>
-                  <Row className="row-rp">
+                  <Row className="cardpreview-row-rp">
                     <h5>Card Preview:</h5>
                   </Row>
-                  <Row className="row-rp card-row-rp">
+                  <Row className="cardpreview-row-rp card-row-rp">
                     <img src={this.state.cards[this.state.index]} alt="US Airsoft cards" className="card-rp"/>
                     <Row className={this.state.fname === "" && this.state.lname === "" ? "text-block-empty-rp" : "text-block-card-rp"}>
                         {this.state.fname + " " + this.state.lname}
@@ -626,13 +626,13 @@ class SignUpFormBase extends Component {
             </Row>
         </div> :
         <Container>
-          <Row className="row-rp">
+          <Row className="row-success-rp">
             <Col className="col-rp">
               <h2 className="page-header">Successful Member Registration.</h2>
               <p className="page-header">Please let your U.S. Airsoft employee know that you have finished.</p>
             </Col>
           </Row>
-          <Row className="row-rp">
+          <Row className="row-success-rp">
               <Button className="next-button-rp" variant="info" type="button" 
               onClick={() => {
                 this.setState({showLander: false})

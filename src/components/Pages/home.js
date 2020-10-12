@@ -76,7 +76,7 @@ const Home = () => (
       </Row>
       </Container>
     </div>
-    <CookieConsent overlay>This website uses cookies to enhance the user experience.</CookieConsent>
+    <CookieConsent>This website uses cookies to enhance the user experience.</CookieConsent>
   </div>
 );
 

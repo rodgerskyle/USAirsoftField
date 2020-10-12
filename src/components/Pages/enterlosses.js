@@ -55,7 +55,6 @@ class EnterLosses extends Component {
 
     handleKeypress(event) {
         if (event.keyCode === 13) {
-            document.getElementById("usernameBox").focus();
             this.updateUser(event)
         }
     }
