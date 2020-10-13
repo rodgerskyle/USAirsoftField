@@ -142,10 +142,13 @@ class SignUpFormBase extends Component {
           });
       })
       .then(authUser => {
-        //this.setState({ ...INITIAL_STATE, status: "Completed" });
+        // Add to mailing list
+
+        // Use below to generate random uid for signing up and filling out waivers
+        var secret = Date.now().toString(36) + Math.random().toString(36).substr(2, 5).toUpperCase();
+        this.props.firebase.emailListMembers(secret).set({email})
+        // Look for duplicate email
         this.setState({submitted: true})
-        //window.location.href="/signup";
-        //this.props.history.push("/");
       })
       .catch(error => {
         this.setState({ error });
