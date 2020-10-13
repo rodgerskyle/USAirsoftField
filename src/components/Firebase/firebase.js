@@ -86,6 +86,8 @@ class Firebase {
 
     createPrivilegedUser = () => this.func.httpsCallable('createPrivilegedUser');
 
+    emailOptOut = () => this.func.httpsCallable('emailOptOut');
+
     // Storage Database API
 
     membersWaivers = pdf => this.st.ref().child(`waivers/members/${pdf}`);

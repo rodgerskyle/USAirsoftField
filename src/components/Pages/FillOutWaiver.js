@@ -96,8 +96,8 @@ class WaiverPageFormBase extends Component {
   }
 
   componentWillUnmount() {
-    this.props.firebase.grabEmailListNM.off();
-    this.props.firebase.grabEmailListM.off();
+    this.props.firebase.grabEmailListNM().off();
+    this.props.firebase.grabEmailListM().off();
   }
 
   // Will Check duplicates in list
@@ -153,11 +153,12 @@ class WaiverPageFormBase extends Component {
 
   // Complete email sign up to email list 
   emailSignUp = () => {
-    const { email } = this.state;
+    var { email } = this.state;
+    email = email.toLowerCase();
     // Check for duplicate email
     if (!this.checkDuplicates(email)) {
       // Use below to generate random uid for signing up and filling out waivers
-      var secret = Date.now().toString(36) + Math.random().toString(36).substr(2, 5).toUpperCase();
+      var secret = 'n' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5).toUpperCase();
       this.props.firebase.emailListNonMembers(secret).set({email})
     }
     this.setState({emailAdded: true})
@@ -498,7 +499,7 @@ class WaiverPageFormBase extends Component {
             <Button className="next-button-rp" variant="info" type="button" 
             disabled={!emailAdded} onClick={() => {
               this.setState({showLander: false})
-              this.setState({ ...INITIAL_STATE, status: "Completed"});
+              this.setState({ ...INITIAL_STATE});
             }}>Sign Another</Button>
         </Row>
       </Container>
