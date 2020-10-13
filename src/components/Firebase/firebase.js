@@ -86,7 +86,7 @@ class Firebase {
 
     createPrivilegedUser = () => this.func.httpsCallable('createPrivilegedUser');
 
-    // Database API
+    // Storage Database API
 
     membersWaivers = pdf => this.st.ref().child(`waivers/members/${pdf}`);
 
@@ -97,6 +97,8 @@ class Firebase {
     pictures = img => this.st.ref().child(`images/${img}`);
 
     teamsPictures = img => this.st.ref().child(`teams/${img}`);
+
+    emailAttachment = () => this.st.ref().child('email/emailattachment.png');
 
     // User API
 

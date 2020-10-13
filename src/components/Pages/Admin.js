@@ -5,7 +5,7 @@ import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
 import { compose } from 'recompose';
 
-import { Container, Row, Col, Form, Button, Breadcrumb, Card } from 'react-bootstrap/';
+import { Container, Row, Col, Form, Button, Breadcrumb, Card, ProgressBar } from 'react-bootstrap/';
 
 import { Link } from 'react-router-dom';
 
@@ -19,11 +19,18 @@ class AdminPage extends Component {
         loading: false,
         emailBox: '',
         emailSubject: '',
+        emailImg: null,
         users: [],
         search: "",
+        ul_status: null,
+        ul_error: null,
+        email_status: null,
+        email_loading: null,
+        rows: 8,
         UpdateUserState: this.updateUser,
       };
     }
+    imgRef = React.createRef();
 
     componentDidMount() {
         this.setState({ loading: true });
@@ -50,14 +57,29 @@ class AdminPage extends Component {
     // Updates User's privilege level
     updateUser = (user, choice) => {
       if (choice === "admin" || choice === "waiver" || choice === "clear" || choice === "check") {
+        this.setState({status: null, error: null})
+
+        // Update token for the firebase uid
         const upgrade = this.props.firebase.createPrivilegedUser();
         upgrade({uid: user, privilege: choice
         }).then((result) => {
             //If complete finish loading
-            if (result) console.log(result.data.status)
+            if (result) this.setState({ul_status: result.data.status})
         }).catch((error) =>{
-            console.log("error: " + error)
+            this.setState({ul_error: "Error: " + error})
         });
+
+        if (choice !== "check") {
+          // Update user database role for admin/waiver/clearing
+          this.props.firebase.user(user).once("value", object => {
+              const roles = {};
+              if (choice === "waiver")
+                roles[ROLES.WAIVER] = ROLES.WAIVER;
+              else if (choice === "admin")
+                roles[ROLES.ADMIN] = ROLES.ADMIN;
+              this.props.firebase.user(user).update({roles})
+          })
+        }
       }
     }
 
@@ -74,18 +96,71 @@ class AdminPage extends Component {
         // Grab users from users api call
         // Verify legal requirements when it comes to emailing
         // Add in opt out feature in backend
+        this.setState({email_loading: 0, email_status: null})
         var sendMail = this.props.firebase.sendMail();
-        const {emailBox, emailSubject} = this.state;
-        sendMail({email: "kyle77r@gmail.com", body: emailBox, subject: emailSubject, img: null}).then((result) => {
+        const {emailBox, emailSubject, emailImg} = this.state;
+       /* for (let i=0; i<length; i++) {
+          this.setState({email_loading: i/length})
+        } */
+        //After for loop update status
+        sendMail({email: "kyle77r@gmail.com", body: emailBox, subject: emailSubject, img: emailImg}).then((result) => {
           if (result.data) console.log(result.data.status)
         }).catch((error) => {
           console.log(error)
         })
         // Add loading to show completion
+        this.setState({
+          email_loading: null, 
+          email_status: "Completed email.",
+          emailBox: "",
+          emailSubject: "",
+          emailImg: null,
+          rows: 8,
+        }, function() {
+          setTimeout(() => {
+            this.setState({email_status: ""});
+          }, 5000)
+        })
     }
 
     onChange = event => {
             this.setState({ search: event.target.value });
+    };
+
+    // Checks dimensions of uploaded image
+    checkDimensions = () => {
+        var height = this.imgRef.current.height;
+        this.setState({rows: Math.ceil(height/17.6)})
+    }
+
+    handleUpload = e => {
+        if (e.target.files[0]) {
+            const image = e.target.files[0];
+            const uploadTask = this.props.firebase.emailAttachment().put(image);
+            uploadTask.on(
+                "state_changed",
+                snapshot => {
+                    // progress function ...
+                    const progress = Math.round(
+                        (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+                    );
+                    this.setState({ progress });
+                },
+                error => {
+                    // Error function ...
+                    console.log(error);
+                },
+                () => {
+                    // complete function ...
+                    this.props.firebase
+                        .emailAttachment()
+                        .getDownloadURL()
+                        .then(url => {
+                            this.setState({ emailImg: url });
+                        });
+                }
+            );
+        }
     };
 
     render() {
@@ -160,7 +235,7 @@ class AdminPage extends Component {
                 <Row className="admin-row-email">
                   <Col sm={8}>
                     <Card className="admin-cards">
-                      <Card.Header>
+                      <Card.Header className="admin-card-header-link">
                         <Row>
                           <Col xs="auto">
                             <Card.Text className="admin-card-icon2">
@@ -174,7 +249,7 @@ class AdminPage extends Component {
                       </Card.Header>
                       <Card.Body>
                         <Form>
-                          <Form.Group controlId="exampleForm.ControlTextarea1">
+                          <Form.Group controlId="email-subject-form">
                             <Form.Label>Add Subject Here:</Form.Label>
                                 <Form.Control
                                     as="textarea" rows="1"
@@ -185,16 +260,18 @@ class AdminPage extends Component {
                                     }}
                                 />
                             </Form.Group>
-                          <Form.Group controlId="exampleForm.ControlTextarea1">
+                          <Form.Group controlId="email-body-form">
                             <Form.Label>Add Body Here:</Form.Label>
                                 <Form.Control
-                                    as="textarea" rows="8"
+                                    as="textarea" rows={this.state.rows}
                                     placeholder="Email body"
                                     value={this.state.emailBox}
                                     onChange={(e) => {
                                         this.changeEmailBox(e);
                                     }}
                                 />
+                                {this.state.emailImg ? <img className="email-img-admin" src={this.state.emailImg} alt="email attachment"
+                                onLoad={() => this.checkDimensions()} ref={this.imgRef}/> : ""}
                             </Form.Group>
                                 <Button className="admin-button-email1" variant="info" type="button"
                                 onClick={() => {
@@ -211,13 +288,19 @@ class AdminPage extends Component {
                                 >
                                     Email Non-Members
                                 </Button>
+                                <Form.Group>
+                                  <Form.File id="email-image-input" onChange={this.handleUpload}
+                                  label="Attach Image" accept="image/*" />
+                                </Form.Group>
                         </Form>
+                        {this.state.email_status ? <p className="status-email-admin">{this.state.email_status}</p> : ""}
+                        {this.state.email_loading ? <ProgressBar animated now={this.state.email_loading} /> : ""}
                       </Card.Body>
                     </Card>
                   </Col>
                   <Col sm={4}>
                     <Card className="admin-cards">
-                      <Card.Header>
+                      <Card.Header className="admin-card-header-link">
                         <Row>
                           <Col xs="auto">
                             <Card.Text className="admin-card-icon2">
@@ -233,7 +316,7 @@ class AdminPage extends Component {
                         <Row>
                           <Col>
                             <Form className="team-manage-text">
-                                <Form.Group controlId="input1">
+                                <Form.Group controlId="user-search">
                                     <Form.Label className="search-label-admin">Search by Username:</Form.Label>
                                     <Form.Control
                                         type="name"
@@ -247,8 +330,10 @@ class AdminPage extends Component {
                             </Form>
                           </Col>
                         </Row>
+                        {this.state.ul_status ? <p className="status-ul-admin">{this.state.ul_status}</p> : ""}
+                        {this.state.ul_error ? <p className="error-ul-admin">{this.state.ul_error}</p> : ""}
                         <Row>
-                          {loading ? <p>Loading</p> : 
+                          {loading ? <p className="loading-text-ul-admin">Loading</p> : 
                             <UserBox users={this.state.users} index={0} length={this.state.users.length}
                             search={this.state.search} update={this.state.UpdateUserState} />
                           }
@@ -335,8 +420,6 @@ class AdminPage extends Component {
                     </Link>
                   </Col>
                 </Row>
-        
-                {loading && <div>Loading ...</div>}
             </Container>
           </div>
         );
@@ -374,7 +457,7 @@ function UserBox({users, index, search, update, length}) {
                                     <Row className="row-options-admin">
                                       <Col md="auto" className="button-options-col-admin">
                                           <Button className="button-options-style-admin"
-                                          type="button" id="update" variant="info" onClick={() => {
+                                          type="button" id="update" variant="primary" onClick={() => {
                                             update(user.uid, "admin")
                                           }}>
                                               Admin 
@@ -384,7 +467,7 @@ function UserBox({users, index, search, update, length}) {
                                           <Button className="button-options-style-admin" onClick={() => {
                                             update(user.uid, "waiver")
                                           }}
-                                          type="button" id="update" variant="info">
+                                          type="button" id="update" variant="warning">
                                               Waiver 
                                           </Button>
                                       </Col>
@@ -396,6 +479,14 @@ function UserBox({users, index, search, update, length}) {
                                               Clear
                                           </Button>
                                       </Col>
+                                      <Col md="auto" className="button-options-col-admin">
+                                          <Button className="button-options-style-admin" onClick={() => {
+                                            update(user.uid, "check")
+                                          }}
+                                          type="button" id="update" variant="info">
+                                            <i className="fa fa-question fa-1x text-white"></i>
+                                          </Button>
+                                      </Col>
                                       <Col>
                                         <Button className="button-options-style-admin" onClick={() => {
                                             let tempArray = [...ButtonArray];
@@ -403,7 +494,7 @@ function UserBox({users, index, search, update, length}) {
                                             setButtonArray(tempArray)
                                         }}
                                         type="button" id="update" variant="danger">
-                                            Cancel <i className="fa fa-times fa-1x text-white"></i>
+                                            <i className="fa fa-times fa-1x text-white"></i>
                                         </Button>
                                       </Col>
                                     </Row>
@@ -434,7 +525,7 @@ function UserBox({users, index, search, update, length}) {
                                     <Row className="row-options-admin">
                                       <Col md="auto" className="button-options-col-admin">
                                           <Button className="button-options-style-admin"
-                                          type="button" id="update" variant="info" onClick={() => {
+                                          type="button" id="update" variant="primary" onClick={() => {
                                             update(user.uid, "admin")
                                           }}>
                                               Admin 
@@ -444,7 +535,7 @@ function UserBox({users, index, search, update, length}) {
                                           <Button className="button-options-style-admin" onClick={() => {
                                             update(user.uid, "waiver")
                                           }}
-                                          type="button" id="update" variant="info">
+                                          type="button" id="update" variant="warning">
                                               Waiver 
                                           </Button>
                                       </Col>
@@ -456,6 +547,14 @@ function UserBox({users, index, search, update, length}) {
                                               Clear
                                           </Button>
                                       </Col>
+                                      <Col md="auto" className="button-options-col-admin">
+                                          <Button className="button-options-style-admin" onClick={() => {
+                                            update(user.uid, "check")
+                                          }}
+                                          type="button" id="update" variant="info">
+                                            <i className="fa fa-question fa-1x text-white"></i>
+                                          </Button>
+                                      </Col>
                                       <Col>
                                         <Button className="button-options-style-admin" onClick={() => {
                                             let tempArray = [...ButtonArray];
@@ -463,7 +562,7 @@ function UserBox({users, index, search, update, length}) {
                                             setButtonArray(tempArray)
                                         }}
                                         type="button" id="update" variant="danger">
-                                            Cancel <i className="fa fa-times fa-1x text-white"></i>
+                                            <i className="fa fa-times fa-1x text-white"></i>
                                         </Button>
                                       </Col>
                                     </Row>
@@ -494,7 +593,7 @@ function UserBox({users, index, search, update, length}) {
                                     <Row className="row-options-admin">
                                       <Col md="auto" className="button-options-col-admin">
                                           <Button className="button-options-style-admin"
-                                          type="button" id="update" variant="info" onClick={() => {
+                                          type="button" id="update" variant="primary" onClick={() => {
                                             update(user.uid, "admin")
                                           }}>
                                               Admin 
@@ -504,7 +603,7 @@ function UserBox({users, index, search, update, length}) {
                                           <Button className="button-options-style-admin" onClick={() => {
                                             update(user.uid, "waiver")
                                           }}
-                                          type="button" id="update" variant="info">
+                                          type="button" id="update" variant="warning">
                                               Waiver 
                                           </Button>
                                       </Col>
@@ -516,6 +615,14 @@ function UserBox({users, index, search, update, length}) {
                                               Clear
                                           </Button>
                                       </Col>
+                                      <Col md="auto" className="button-options-col-admin">
+                                          <Button className="button-options-style-admin" onClick={() => {
+                                            update(user.uid, "check")
+                                          }}
+                                          type="button" id="update" variant="info">
+                                            <i className="fa fa-question fa-1x text-white"></i>
+                                          </Button>
+                                      </Col>
                                       <Col>
                                         <Button className="button-options-style-admin" onClick={() => {
                                             let tempArray = [...ButtonArray];
@@ -523,7 +630,7 @@ function UserBox({users, index, search, update, length}) {
                                             setButtonArray(tempArray)
                                         }}
                                         type="button" id="update" variant="danger">
-                                            Cancel <i className="fa fa-times fa-1x text-white"></i>
+                                            <i className="fa fa-times fa-1x text-white"></i>
                                         </Button>
                                       </Col>
                                     </Row>
@@ -554,7 +661,7 @@ function UserBox({users, index, search, update, length}) {
                                     <Row className="row-options-admin">
                                       <Col md="auto" className="button-options-col-admin">
                                           <Button className="button-options-style-admin"
-                                          type="button" id="update" variant="info" onClick={() => {
+                                          type="button" id="update" variant="primary" onClick={() => {
                                             update(user.uid, "admin")
                                           }}>
                                               Admin 
@@ -564,7 +671,7 @@ function UserBox({users, index, search, update, length}) {
                                           <Button className="button-options-style-admin" onClick={() => {
                                             update(user.uid, "waiver")
                                           }}
-                                          type="button" id="update" variant="info">
+                                          type="button" id="update" variant="warning">
                                               Waiver 
                                           </Button>
                                       </Col>
@@ -576,6 +683,14 @@ function UserBox({users, index, search, update, length}) {
                                               Clear
                                           </Button>
                                       </Col>
+                                      <Col md="auto" className="button-options-col-admin">
+                                          <Button className="button-options-style-admin" onClick={() => {
+                                            update(user.uid, "check")
+                                          }}
+                                          type="button" id="update" variant="info">
+                                            <i className="fa fa-question fa-1x text-white"></i>
+                                          </Button>
+                                      </Col>
                                       <Col>
                                         <Button className="button-options-style-admin" onClick={() => {
                                             let tempArray = [...ButtonArray];
@@ -583,7 +698,7 @@ function UserBox({users, index, search, update, length}) {
                                             setButtonArray(tempArray)
                                         }}
                                         type="button" id="update" variant="danger">
-                                            Cancel <i className="fa fa-times fa-1x text-white"></i>
+                                            <i className="fa fa-times fa-1x text-white"></i>
                                         </Button>
                                       </Col>
                                     </Row>
