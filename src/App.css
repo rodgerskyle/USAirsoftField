@@ -548,6 +548,8 @@ a.dropdown-item:hover {
   max-height: 35vh;
   color: white;
   padding-bottom: 0 !important;
+  padding-top: 5px !important;
+  border: 1px solid lightgray;
 }
 
 .status-card-body-admin {
@@ -817,6 +819,7 @@ a.dropdown-item:hover {
   color: white;
   background-color: rgb(108, 117, 125, 0.75) !important;
   min-height: 100%;
+  border: none !important;
 }
 
 .admin-card-icon {
@@ -830,6 +833,10 @@ a.dropdown-item:hover {
 .admin-card-footer:hover {
   text-decoration-line: underline !important;
   text-decoration-color: white !important;
+}
+
+.admin-card-header-link {
+  background-color: rgb(4, 4, 4, .4) !important;
 }
 
 .admin-card-footer {
@@ -945,4 +952,34 @@ a.dropdown-item:hover {
 
 .button-options-col-admin {
   padding: 0 2px !important;
+}
+
+.loading-text-ul-admin {
+  justify-content: center;
+}
+
+.status-ul-admin {
+  color: lightgreen;
+  text-align: center;
+  margin-top: -15px;
+}
+
+.error-ul-admin {
+  color: red;
+  text-align: center;
+  margin-top: -15px;
+}
+
+.status-email-admin {
+  color: lightgreen;
+  text-align: left;
+  padding-top: 5px;
+}
+
+.email-img-admin {
+  position: absolute;
+  top: 30%;
+  left: 5%;
+  max-width: 90%;
+  height: auto;
 }

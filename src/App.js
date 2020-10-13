@@ -129,7 +129,7 @@ const App = () => (
             <Route path="/pricing">
               <Pricing />
             </Route>
-            <Route path="/">
+            <Route exact path="/">
               <Home />
             </Route>
           </Switch>
