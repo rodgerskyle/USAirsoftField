@@ -983,3 +983,7 @@ a.dropdown-item:hover {
   max-width: 90%;
   height: auto;
 }
+
+.email-body-form-admin {
+  text-align: center;
+}

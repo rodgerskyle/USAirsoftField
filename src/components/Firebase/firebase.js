@@ -106,6 +106,17 @@ class Firebase {
 
     users = () => this.db.ref('users');
 
+    // Email List API
+
+    emailListMembers = (secret) => this.db.ref(`emaillist/members/${secret}`);
+
+    emailListNonMembers = (secret) => this.db.ref(`emaillist/non-members/${secret}`);
+
+    grabEmailListM = () => this.db.ref(`emaillist/members`);
+
+    grabEmailListNM = () => this.db.ref(`emaillist/non-members`);
+
+
     // Team API
 
     team = name => this.db.ref(`teams/${name}`);

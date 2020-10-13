@@ -32,33 +32,39 @@ import Teammanage from './components/Pages/Teammanage'
 import Teamcreate from './components/Pages/Teamcreate'
 import Teamjoin from './components/Pages/Teamjoin'
 import WaiverLookup from './components/Pages/waiverlookup'
+import EmailOptOut from './components/Pages/emailOptOut'
 
 const App = () => (
       <Router>
           <Navigation />
           <Switch>
-            <Route path="/map">
+            <Route exact path="/emailoptout/:secret"
+            render={(props) => (
+              <EmailOptOut {...props} />
+            )}
+            ></Route>
+            <Route exact path="/map">
               <Map />
             </Route>
-            <Route path="/waiver">
+            <Route exact path="/waiver">
               <Waiver />
             </Route>
-            <Route path="/membership">
+            <Route exact path="/membership">
               <Membership />
             </Route>
-            <Route path="/contact">
+            <Route exact path="/contact">
               <Contact />
             </Route>
-            <Route path="/gametypes">
+            <Route exact path="/gametypes">
               <Gametypes/>
             </Route>
-            <Route path="/rules">
+            <Route exact path="/rules">
               <Rules />
             </Route>
-            <Route path="/videos">
+            <Route exact path="/videos">
               <Videos />
             </Route>
-            <Route path="/pictures">
+            <Route exact path="/pictures">
               <Pictures />
             </Route>
             <Route exact path="/teams">
@@ -84,49 +90,49 @@ const App = () => (
             )}
             >
             </Route>
-            <Route path="/profilesettings">
+            <Route exact path="/profilesettings">
               <ProfileSettings />
             </Route>
-            <Route path="/signup">
+            <Route exact path="/signup">
               <SignUpForm />
             </Route>
-            <Route path="/waiverform">
+            <Route exact path="/waiverform">
               <WaiverForm />
             </Route>
-            <Route path="/waiverlookup">
+            <Route exact path="/waiverlookup">
               <WaiverLookup />
             </Route>
-            <Route path="/enterwins">
+            <Route exact path="/enterwins">
               <EnterWins />
             </Route>
-            <Route path="/enterlosses">
+            <Route exact path="/enterlosses">
               <EnterLosses />
             </Route>
-            <Route path="/freegames">
+            <Route exact path="/freegames">
               <FreeGames />
             </Route>
-            <Route path="/migration">
+            <Route exact path="/migration">
               <Migration />
             </Route>
-            <Route path="/register">
+            <Route exact path="/register">
               <SignUpForm />
             </Route>
-            <Route path="/admin">
+            <Route exact path="/admin">
               <Admin />
             </Route>
-            <Route path="/account">
+            <Route exact path="/account">
               <AccountPage />
             </Route>
-            <Route path="/forgotpassword">
+            <Route exact path="/forgotpassword">
               <PasswordForgetForm />
             </Route>
-            <Route path="/login">
+            <Route exact path="/login">
               <LoginRoute />
             </Route>
-            <Route path="/leaderboard">
+            <Route exact path="/leaderboard">
               <Leaderboard />
             </Route>
-            <Route path="/pricing">
+            <Route exact path="/pricing">
               <Pricing />
             </Route>
             <Route exact path="/">

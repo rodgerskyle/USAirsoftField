@@ -103,7 +103,7 @@ class AdminPage extends Component {
           this.setState({email_loading: i/length})
         } */
         //After for loop update status
-        sendMail({email: "kyle77r@gmail.com", body: emailBox, subject: emailSubject, img: emailImg}).then((result) => {
+        sendMail({email: "kyle77r@gmail.com", body: emailBox, subject: emailSubject, img: emailImg, secret: "empty"}).then((result) => {
           if (result.data) console.log(result.data.status)
         }).catch((error) => {
           console.log(error)
@@ -264,6 +264,7 @@ class AdminPage extends Component {
                             <Form.Label>Add Body Here:</Form.Label>
                                 <Form.Control
                                     as="textarea" rows={this.state.rows}
+                                    className="email-body-form-admin"
                                     placeholder="Email body"
                                     value={this.state.emailBox}
                                     onChange={(e) => {
