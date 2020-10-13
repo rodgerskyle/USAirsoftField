@@ -91,7 +91,69 @@ class SignUpFormBase extends Component {
     super(props);
 
     this.completeWaiver = this.completeWaiver.bind(this);
-    this.state = { ...INITIAL_STATE, status: "", };
+    this.state = { ...INITIAL_STATE, emailListNM: null, emailListM: null};
+  }
+
+  componentDidMount() {
+      this.props.firebase.grabEmailListNM().on('value', snapshot => {
+          const emailsObjectNM = snapshot.val();
+
+          const emailListNM = Object.keys(emailsObjectNM).map(key => ({
+              ...emailsObjectNM[key],
+              secret: key,
+          }))
+
+          this.setState({
+            emailListNM
+          });
+      });
+      this.props.firebase.grabEmailListM().on('value', snapshot => {
+          const emailsObjectM = snapshot.val();
+
+          const emailListM = Object.keys(emailsObjectM).map(key => ({
+              ...emailsObjectM[key],
+              secret: key,
+          }))
+
+          this.setState({
+            emailListM
+          });
+      });
+  }
+
+  componentWillUnmount() {
+    this.props.firebase.grabEmailListNM().off();
+    this.props.firebase.grabEmailListM().off();
+  }
+
+  // Will Check duplicates in list
+  checkDuplicates(email) {
+    const {emailListNM } = this.state;
+    let lengthNM = emailListNM.length;
+    let y = 0;
+    // Now go through both at the same time
+    while (y < lengthNM) {
+      if (y < lengthNM) {
+        if (emailListNM[y].email === email) {
+          return true;
+        }
+        y++
+      }
+    } 
+    return false;
+  }
+
+  // Complete email sign up to email list 
+  emailSignUp = () => {
+    var { email } = this.state;
+    email = email.toLowerCase();
+    // Check for duplicate email
+    if (!this.checkDuplicates(email)) {
+      // Use below to generate random uid for signing up and filling out waivers
+      var secret = 'm' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5).toUpperCase();
+      this.props.firebase.emailListMembers(secret).set({email})
+    }
+    this.setState({emailAdded: true})
   }
 
 
@@ -142,13 +204,8 @@ class SignUpFormBase extends Component {
           });
       })
       .then(authUser => {
-        // Add to mailing list
-
-        // Use below to generate random uid for signing up and filling out waivers
-        var secret = Date.now().toString(36) + Math.random().toString(36).substr(2, 5).toUpperCase();
-        this.props.firebase.emailListMembers(secret).set({email})
-        // Look for duplicate email
         this.setState({submitted: true})
+        this.emailSignUp();
       })
       .catch(error => {
         this.setState({ error });

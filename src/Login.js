@@ -36,6 +36,7 @@ class SignInFormBase extends Component {
 
   //Recaptcha stuff
   handleCaptchaResponseChange(response) {
+    console.log(response)
     this.setState({
       robot: false,
     });
