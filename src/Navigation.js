@@ -30,16 +30,10 @@ const NavigationAuth = ({ authUser }) => (
                 </Nav>
                 <Navbar.Toggle aria-controls="responsive-navbar-nav" />
                 <Navbar.Collapse id="responsive-navbar-nav">
-                    <Nav className="mr-auto center-navbar-nav">
-                        <NavItem>
-                            <Link className="nav-link" to="/">Home</Link>
-                        </NavItem>
-                        <NavItem>
-                            <Link className="nav-link" to="/leaderboard">Leaderboard</Link>
-                        </NavItem>
-                        <NavItem>
-                            <Link className="nav-link" to="/teams">Teams</Link>
-                        </NavItem>
+                    <Nav className="mr-auto center-navbar-nav" defaultActiveKey={1}>
+                        <Nav.Link as={Link} className="nav-link" to="/" eventKey={1}>Home</Nav.Link>
+                        <Nav.Link as={Link} className="nav-link" to="/leaderboard" eventKey={2}>Leaderboard</Nav.Link>
+                        <Nav.Link as={Link} className="nav-link" to="/teams" eventKey={3}>Teams</Nav.Link>
                         <NavItem>
                             <NavDropdown title="Account" id="nav-dropdown">
                                 <LinkContainer to="/account">
@@ -53,9 +47,7 @@ const NavigationAuth = ({ authUser }) => (
                         </NavItem>
 
                         {!!authUser.roles[ROLES.ADMIN] && (
-                        <NavItem>
-                            <Link className="nav-link" to="/admin">Admin</Link>
-                        </NavItem>
+                        <Nav.Link as={Link} className="nav-link" to="/admin" eventKey={4}>Admin</Nav.Link>
                         )}
                         <NavItem>
                             <NavDropdown title="Media" id="nav-dropdown">
@@ -68,12 +60,8 @@ const NavigationAuth = ({ authUser }) => (
                                 </LinkContainer>
                             </NavDropdown>
                         </NavItem>
-                        <NavItem>
-                            <Link className="nav-link" to="/waiver">Waiver</Link>
-                        </NavItem>
-                        <NavItem>
-                            <Link className="nav-link" to="/map">Map</Link>
-                        </NavItem>
+                        <Nav.Link as={Link} className="nav-link" to="/waiver" eventKey={5}>Waiver</Nav.Link>
+                        <Nav.Link as={Link} className="nav-link" to="/map" eventKey={6}>Map</Nav.Link>
                         <NavItem>
                             <NavDropdown title="Information" id="nav-dropdown">
                                 <LinkContainer to="/rules">
@@ -124,16 +112,10 @@ const NavigationNonAuth = () => (
                 </Nav>
                 <Navbar.Toggle aria-controls="responsive-navbar-nav" />
                 <Navbar.Collapse id="responsive-navbar-nav">
-                    <Nav className="mr-auto center-navbar-nav">
-                        <NavItem>
-                            <Link className="nav-link" to="/">Home</Link>
-                        </NavItem>
-                        <NavItem>
-                            <Link className="nav-link" to="/leaderboard">Leaderboard</Link>
-                        </NavItem>
-                        <NavItem>
-                            <Link className="nav-link" to="/teams">Teams</Link>
-                        </NavItem>
+                    <Nav className="mr-auto center-navbar-nav" defaultActiveKey={1}>
+                        <Nav.Link as={Link} className="nav-link" to="/" eventKey={1}>Home</Nav.Link>
+                        <Nav.Link as={Link} className="nav-link" to="/leaderboard" eventKey={2}>Leaderboard</Nav.Link>
+                        <Nav.Link as={Link} className="nav-link" to="/teams" eventKey={3}>Teams</Nav.Link>
                         <NavItem>
                             <NavDropdown title="Media" id="nav-dropdown">
                                 <LinkContainer to="/pictures">
@@ -145,12 +127,8 @@ const NavigationNonAuth = () => (
                                 </LinkContainer>
                             </NavDropdown>
                         </NavItem>
-                        <NavItem>
-                            <Link className="nav-link" to="/waiver">Waiver</Link>
-                        </NavItem>
-                        <NavItem>
-                            <Link className="nav-link" to="/map">Map</Link>
-                        </NavItem>
+                        <Nav.Link as={Link} className="nav-link" to="/waiver" eventKey={5}>Waiver</Nav.Link>
+                        <Nav.Link as={Link} className="nav-link" to="/map" eventKey={6}>Map</Nav.Link>
                         <NavItem>
                             <NavDropdown title="Information" id="nav-dropdown">
                                 <LinkContainer to="/rules">
