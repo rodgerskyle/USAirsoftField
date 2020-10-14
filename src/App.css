@@ -351,11 +351,11 @@
 }
 
 .wins-lb {
-  color: rgb(0, 180, 0);
+  color: rgb(118, 251, 0);
 }
 
 .losses-lb {
-  color: red;
+  color: #fb6060;
 }
 
 .profilelink-lb:link {

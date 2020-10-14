@@ -189,7 +189,6 @@ class Leaderboards extends Component {
                     </Row>
                     <Row>
                         {loading && <div>Loading ...</div>}
-
                         <UserList users={users} images={this.state.images} getRank={getRankState} 
                             monthly={this.state.monthly} currentMonth={this.state.currentMonth} 
                         />
