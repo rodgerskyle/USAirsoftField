@@ -32,7 +32,7 @@ class TeamCreate extends Component {
             complete: false,
             previous: '',
             page: true,
-            error: '',
+            error: null,
             imgError: true,
         };
     }
@@ -80,9 +80,9 @@ class TeamCreate extends Component {
     createTeam(e) {
         e.preventDefault();
 
-        const { image, uploaded, previous, teamname, imgError } = this.state;
+        const { image, uploaded, previous, teamname, imgError, error } = this.state;
 
-        if (image !== null && imgError === false) {
+        if (image !== null && imgError === false && error !== null) {
 
             var t_name = teamname.toString().toLowerCase();
 
@@ -159,7 +159,7 @@ class TeamCreate extends Component {
         var width = this.imgRef.current.naturalWidth
         if (width === 654 && height === 192) {
             // Good to go
-            this.setState({imgError: false, error: ""})
+            this.setState({imgError: false, error: null})
         }
         else {
             // Image is wrong
@@ -178,7 +178,7 @@ class TeamCreate extends Component {
     };
 
     render() {
-        const { description, page, teamname } = this.state;
+        const { description, page, teamname, error } = this.state;
 
 
         return (
@@ -258,7 +258,7 @@ class TeamCreate extends Component {
                                         </Col>
                                         <Col>
                                             <Button className="submit-button" variant="outline-success" onClick={((e) => this.createTeam(e))}
-                                            >
+                                            disabled={!error}>
                                                 Submit
                                             </Button>
                                         </Col>

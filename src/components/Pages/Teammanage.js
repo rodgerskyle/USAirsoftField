@@ -240,7 +240,7 @@ class TeamManage extends Component {
         e.preventDefault();
         //update description 
         let description = this.state.description
-        this.props.firebase.team(this.state.authUser.team.toLowerCase()).update(description)
+        this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({description})
     }
 
     render() {
