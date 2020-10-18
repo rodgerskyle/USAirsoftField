@@ -545,7 +545,15 @@ a.dropdown-item:hover {
 
 .status-card-body-fg-admin {
   overflow-y: scroll;
-  max-height: 35vh;
+  max-height: 40vh;
+  color: white;
+  padding-bottom: 0 !important;
+  padding-top: 5px !important;
+}
+
+.status-card-body-main-admin {
+  overflow-y: scroll;
+  max-height: 40vh;
   color: white;
   padding-bottom: 0 !important;
   padding-top: 5px !important;
@@ -554,8 +562,16 @@ a.dropdown-item:hover {
 
 .status-card-body-admin {
   overflow-y: scroll;
-  max-height: 35vh;
+  max-height: 40vh;
   color: white;
+}
+
+.status-card-body-renew-admin {
+  overflow-y: scroll;
+  max-height: 40vh;
+  color: white;
+  padding-bottom: 0 !important;
+  padding-top: 5px !important;
 }
 
 .status-card-offrow-admin {
@@ -641,6 +657,10 @@ a.dropdown-item:hover {
 .row-rp {
   justify-content: center;
   background-color: rgb(108, 117, 125, 0.75)
+}
+
+.row-renew {
+  justify-content: center;
 }
 
 .row-success-rp {
@@ -801,7 +821,7 @@ a.dropdown-item:hover {
 }
 
 .card-header-wl {
-  border-bottom: 1px solid black;
+  border-bottom: 1px solid lightgray;
 }
 
 .row-1-wl {

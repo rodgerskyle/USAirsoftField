@@ -18,7 +18,6 @@ class FreeGames extends Component {
         this.state = {
             loading: false,
             users: [],
-            queriedlist: [],
             search: "",
             UpdateUserState: this.updateUser,
         };

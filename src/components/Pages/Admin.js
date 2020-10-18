@@ -231,6 +231,25 @@ class AdminPage extends Component {
                       </Card>
                     </Link>
                   </Col>
+                  <Col className="admin-col-cards">
+                    <Link to={"/renewal"} className="admin-cards-link">
+                      <Card className="admin-cards">
+                        <Card.Body className="admin-card-header-link">Membership Renewal</Card.Body>
+                        <Card.Footer>
+                          <Row>
+                            <Col xs="auto">
+                              <Card.Text className="admin-card-footer">View</Card.Text>
+                            </Col>
+                            <Col>
+                              <Card.Text className="admin-card-icon">
+                                <i className="fa fa-angle-double-right fa-1x text-white"></i>
+                              </Card.Text>
+                            </Col>
+                          </Row>
+                        </Card.Footer>
+                      </Card>
+                    </Link>
+                  </Col>
                 </Row>
                 <Row className="admin-row-email">
                   <Col sm={8}>
@@ -432,7 +451,7 @@ function UserBox({users, index, search, update, length}) {
     const [ButtonArray, setButtonArray] = useState( new Array(length).fill(false));
 
     return (
-        <Card.Body className="status-card-body-fg-admin">
+        <Card.Body className="status-card-body-main-admin">
             {users.map((user, i) => (
                 search !== "" ? // Search query case
                     user.name.toLowerCase().includes(search.toLowerCase()) ? 
