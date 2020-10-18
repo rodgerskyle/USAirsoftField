@@ -33,6 +33,7 @@ import Teamcreate from './components/Pages/Teamcreate'
 import Teamjoin from './components/Pages/Teamjoin'
 import WaiverLookup from './components/Pages/waiverlookup'
 import EmailOptOut from './components/Pages/emailOptOut'
+import RenewSubscription from './components/Pages/Renew'
 
 const App = () => (
       <Router>
@@ -101,6 +102,9 @@ const App = () => (
             </Route>
             <Route exact path="/waiverlookup">
               <WaiverLookup />
+            </Route>
+            <Route exact path="/renewal">
+              <RenewSubscription />
             </Route>
             <Route exact path="/enterwins">
               <EnterWins />
