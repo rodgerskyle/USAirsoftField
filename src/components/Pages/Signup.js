@@ -174,6 +174,7 @@ class SignUpFormBase extends Component {
     const renewal = (new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear()+1);
     const username = (fname+lname).replace(/\s/, "").toLowerCase();
     const name = fname + " " + lname;
+    const profilepic = false;
     //We need to check if username exists
     const freegames = 0;
     const team = '';
@@ -200,7 +201,8 @@ class SignUpFormBase extends Component {
             cmlosses,
             pmwins,
             pmlosses,
-            renewal
+            renewal,
+            profilepic
           });
       })
       .then(authUser => {

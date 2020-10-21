@@ -70,6 +70,8 @@ class ImageUpload extends Component {
                     .getDownloadURL()
                     .then(url => {
                         this.setState({ url });
+                        var manage = this.props.firebase.manageProfile();
+                        manage({choice: "profilepic"})
                     });
             }
         );

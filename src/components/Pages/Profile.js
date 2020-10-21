@@ -33,7 +33,10 @@ class Profile extends Component {
         this.authSubscription = this.props.firebase.auth.onAuthStateChanged((user) => {
             // grab points and profile
             this.getRank();
-            this.getProfile(`${user.uid}/profilepic`);
+            if (this.state.authUser.profilepic)
+                this.getProfile(`${user.uid}/profilepic`);
+            else 
+                this.setState({ profileicon: default_profile })
         });
     }
 
