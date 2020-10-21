@@ -37,7 +37,10 @@ class ProfileLookup extends Component {
             }, function () {
                 //After setstate, then grab points and profile
                 this.getRank();
-                this.getProfile(`${this.props.match.params.id}/profilepic`);
+                if (userObject.profilepic)
+                    this.getProfile(`${this.props.match.params.id}/profilepic`);
+                else 
+                    this.setState({ profileicon: default_profile })
             });
         });
     }

@@ -88,6 +88,8 @@ class Firebase {
 
     emailOptOut = () => this.func.httpsCallable('emailOptOut');
 
+    manageProfile = () => this.func.httpsCallable('manageProfile');
+
     // Storage Database API
 
     membersWaivers = pdf => this.st.ref().child(`waivers/members/${pdf}`);
