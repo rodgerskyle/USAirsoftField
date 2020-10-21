@@ -34,6 +34,7 @@ import Teamjoin from './components/Pages/Teamjoin'
 import WaiverLookup from './components/Pages/waiverlookup'
 import EmailOptOut from './components/Pages/emailOptOut'
 import RenewSubscription from './components/Pages/Renew'
+import WaiverDashboard from './components/Pages/Dashboard'
 
 const App = () => (
       <Router>
@@ -120,6 +121,9 @@ const App = () => (
             </Route>
             <Route exact path="/register">
               <SignUpForm />
+            </Route>
+            <Route exact path="/dashboard">
+              <WaiverDashboard />
             </Route>
             <Route exact path="/admin">
               <Admin />

@@ -104,7 +104,7 @@ class EnterLosses extends Component {
             <div className="background-static-all">
                 {!this.state.loading ?
                 <Container>
-                    <h2 className="admin-header">Admin - Enter Losses</h2>
+                    <h2 className="admin-header">Enter Losses</h2>
                     <Breadcrumb className="admin-breadcrumb">
                         <LinkContainer to="/admin">
                             <Breadcrumb.Item>Admin</Breadcrumb.Item>

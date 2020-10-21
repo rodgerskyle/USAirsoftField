@@ -10,7 +10,7 @@ import '../../App.css';
 import cardimages from '../constants/cardimgs';
 import waiver from '../../assets/Waiver-cutoff.png'
 
-import { withAuthorization } from '../session';
+import { AuthUserContext, withAuthorization } from '../session';
 import { compose } from 'recompose';
 import { withFirebase } from '../Firebase';
 import * as ROLES from '../constants/roles';
@@ -32,21 +32,31 @@ const config = {
 
  
 const SignUpPage = () => (
-  <div className="background-static-all">
-    <Container>
-      <Row className="header-rp">
-        <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>
-        <h2 className="page-header">Membership Form</h2>
-      </Row>
-      <Breadcrumb className="admin-breadcrumb">
-          <LinkContainer to="/admin">
-              <Breadcrumb.Item>Admin</Breadcrumb.Item>
-          </LinkContainer>
-          <Breadcrumb.Item active>Registration</Breadcrumb.Item>
-      </Breadcrumb>
-        <SignUpForm />
-    </Container>
-  </div>
+  <AuthUserContext.Consumer>
+      {authUser => (
+      <div className="background-static-all">
+        <Container>
+          <Row className="header-rp">
+            <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>
+            <h2 className="page-header">Membership Form</h2>
+          </Row>
+          <Breadcrumb className="admin-breadcrumb">
+              {authUser && !!authUser.roles[ROLES.ADMIN] ? 
+              <LinkContainer to="/admin">
+                  <Breadcrumb.Item>Admin</Breadcrumb.Item>
+              </LinkContainer>
+              :
+              <LinkContainer to="/dashboard">
+                  <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
+              </LinkContainer> 
+              }
+              <Breadcrumb.Item active>Registration</Breadcrumb.Item>
+          </Breadcrumb>
+            <SignUpForm />
+        </Container>
+      </div>
+      )}
+  </AuthUserContext.Consumer>
 );
 
 
@@ -287,7 +297,8 @@ class SignUpFormBase extends Component {
 
  
     return (
-      <div> {!showLander ?
+      <div> 
+        {!showLander ?
         <div>
           <Row className="row-rp">
             { this.state.pageIndex === 0 ? 
@@ -726,7 +737,7 @@ const SignUpLink = () => (
 */
 
 const condition = authUser =>
-authUser && !!authUser.roles[ROLES.ADMIN];
+  authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]);
 
 const SignUpForm = compose(
     withAuthorization(condition),

@@ -1029,3 +1029,7 @@ a.dropdown-item:hover {
   text-align: center;
   margin-left: 5px;
 }
+
+.navitem-img {
+  max-width: 320px;
+}

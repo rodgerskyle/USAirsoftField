@@ -8,27 +8,37 @@ import '../../App.css';
 
 import waiver from '../../assets/Waiver-cutoff.png'
 
-import { withAuthorization } from '../session';
+import { AuthUserContext, withAuthorization } from '../session';
 import { compose } from 'recompose';
 import { withFirebase } from '../Firebase';
 import * as ROLES from '../constants/roles';
 
 const WaiverPage = () => (
-  <div className="background-static-all">
-    <Container>
-      <Row className="header-rp">
-        <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>
-        <h2 className="page-header">Waiver Form</h2>
-      </Row>
-        <Breadcrumb className="admin-breadcrumb">
-            <LinkContainer to="/admin">
-                <Breadcrumb.Item>Admin</Breadcrumb.Item>
-            </LinkContainer>
-            <Breadcrumb.Item active>Fill Out Waiver</Breadcrumb.Item>
-        </Breadcrumb>
-        <WaiverForm />
-    </Container>
-  </div>
+  <AuthUserContext.Consumer>
+      {authUser => (
+      <div className="background-static-all">
+        <Container>
+          <Row className="header-rp">
+            <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>
+            <h2 className="page-header">Waiver Form</h2>
+          </Row>
+            <Breadcrumb className="admin-breadcrumb">
+                {authUser && !!authUser.roles[ROLES.ADMIN] ? 
+                  <LinkContainer to="/admin">
+                      <Breadcrumb.Item>Admin</Breadcrumb.Item>
+                  </LinkContainer>
+                  :
+                  <LinkContainer to="/dashboard">
+                      <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
+                  </LinkContainer> 
+                  }
+                <Breadcrumb.Item active>Fill Out Waiver</Breadcrumb.Item>
+            </Breadcrumb>
+            <WaiverForm />
+        </Container>
+      </div>
+      )}
+  </AuthUserContext.Consumer>
 );
 
 
@@ -522,7 +532,7 @@ class WaiverPageFormBase extends Component {
 */
 
 const condition = authUser =>
-authUser && !!authUser.roles[ROLES.ADMIN];
+  authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]);
 
 const WaiverForm = compose(
     withAuthorization(condition),

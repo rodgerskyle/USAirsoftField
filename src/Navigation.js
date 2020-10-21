@@ -12,17 +12,52 @@ const Navigation = ({ authUser }) => (
     <div>
         <AuthUserContext.Consumer>
             {authUser =>
-                authUser ? <NavigationAuth authUser={authUser} /> : <NavigationNonAuth />
+                authUser ? !!authUser.roles[ROLES.WAIVER] ? <NavigationWaiver authUser={authUser}/> 
+                : <NavigationAuth authUser={authUser} /> : <NavigationNonAuth />
             }
         </AuthUserContext.Consumer>
     </div>
 );
 
+const NavigationWaiver = ({ authUser }) => (
+        <div>
+            <Navbar collapseOnSelect expand="xl" bg="nav" variant="dark" className="navbar-all">
+                 <Nav className="mr-auto">
+                    <NavItem className="navitem-img">
+                        <Link to="/dashboard">
+                            <img src={logo} alt="US Airsoft logo" className="img-fluid logo" />
+                        </Link>
+                    </NavItem>
+                </Nav>
+                <Navbar.Toggle aria-controls="responsive-navbar-nav" />
+                <Navbar.Collapse className="justify-content-end" id="responsive-navbar-nav">
+                    <Nav className="mr-auto" defaultActiveKey={1}>
+                        <Row>
+                            <Nav.Link as={Link} className="nav-link" to="/dashboard" eventKey={1}>Dashboard</Nav.Link>
+                        </Row>
+                    </Nav>
+                    <Nav className="ml-auto">
+                        <NavItem> 
+                            <Row className="logout">
+                                <p className="welcome">
+                                    Welcome {authUser.username}!
+                                </p>
+                            </Row>
+                            <Row className="logout">
+                                <SignOutButton />
+                            </Row>
+                        </NavItem>
+                    </Nav>
+                </Navbar.Collapse>
+            </Navbar>
+        </div>
+)
+
 const NavigationAuth = ({ authUser }) => (
         <div>
             <Navbar collapseOnSelect expand="xl" bg="nav" variant="dark" className="navbar-all">
                 <Nav className="mr-auto">
-                    <NavItem>
+                    <NavItem className="navitem-img">
                         <Link to="/">
                             <img src={logo} alt="US Airsoft logo" className="img-fluid logo" />
                         </Link>
@@ -103,8 +138,8 @@ const NavigationAuth = ({ authUser }) => (
 const NavigationNonAuth = () => (
         <div>
             <Navbar collapseOnSelect expand="xl" bg="nav" variant="dark" className="navbar-all">
-                <Nav className="mr-auto">
-                    <NavItem>
+                 <Nav className="mr-auto">
+                    <NavItem className="navitem-img">
                         <Link to="/">
                             <img src={logo} alt="US Airsoft logo" className="img-fluid logo" />
                         </Link>
