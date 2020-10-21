@@ -65,7 +65,7 @@ class FreeGames extends Component {
             <div className="background-static-all">
                 {!this.state.loading ?
                     <Container>
-                        <h2 className="admin-header">Admin - Redeem Free Game</h2>
+                        <h2 className="admin-header">Redeem Free Game</h2>
                         <Breadcrumb className="admin-breadcrumb">
                             <LinkContainer to="/admin">
                                 <Breadcrumb.Item>Admin</Breadcrumb.Item>

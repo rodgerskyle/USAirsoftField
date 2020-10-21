@@ -75,7 +75,7 @@ class Migration extends Component {
         return (
             <div className="background-static-all">
                     <Container>
-                        <h2 className="admin-header">Admin - Migration Page</h2>
+                        <h2 className="admin-header">Migration Page</h2>
                         <Breadcrumb className="admin-breadcrumb">
                             <LinkContainer to="/admin">
                                 <Breadcrumb.Item>Admin</Breadcrumb.Item>

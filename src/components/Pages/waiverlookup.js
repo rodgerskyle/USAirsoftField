@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import '../../App.css';
 
 import { withFirebase } from '../Firebase';
-import { withAuthorization } from '../session';
+import { AuthUserContext, withAuthorization } from '../session';
 import { compose } from 'recompose';
 
 import { Button, Form, Container, Card, Row, Col, Breadcrumb } from 'react-bootstrap/';
@@ -53,40 +53,50 @@ class WaiverLookup extends Component {
 
     render() {
         return (
-            <div className="background-static-all">
-                    <Container>
-                        <h2 className="admin-header">Admin - Waiver Lookup</h2>
-                        <Breadcrumb className="admin-breadcrumb">
-                            <LinkContainer to="/admin">
-                                <Breadcrumb.Item>Admin</Breadcrumb.Item>
-                            </LinkContainer>
-                            <Breadcrumb.Item active>Waiver Lookup</Breadcrumb.Item>
-                        </Breadcrumb>
-                        <Row>
-                            <Col>
-                                <Card className="admin-cards">
-                                    <Card.Header>
-                                        <Form className="team-manage-text">
-                                            <Form.Group controlId="input1">
-                                                <Form.Label className="search-label-admin">Search by Name:</Form.Label>
-                                                <Form.Control
-                                                    type="name"
-                                                    placeholder="ex: JohnDoe"
-                                                    value={this.state.search}
-                                                    onChange={(e) => {
-                                                        this.onChange(e);
-                                                    }}
-                                                />
-                                            </Form.Group>
-                                        </Form>
-                                    </Card.Header>
-                                    <WaiverBox waivers={this.state.waivers} index={0}
-                                        search={this.state.search} open={this.state.OpenWaiverState} />
-                                </Card>
-                            </Col>
-                        </Row>
-                    </Container>
-            </div>
+            <AuthUserContext.Consumer>
+                {authUser => (
+                    <div className="background-static-all">
+                            <Container>
+                                <h2 className="admin-header">Waiver Lookup</h2>
+                                <Breadcrumb className="admin-breadcrumb">
+                                    {authUser && !!authUser.roles[ROLES.ADMIN] ? 
+                                    <LinkContainer to="/admin">
+                                        <Breadcrumb.Item>Admin</Breadcrumb.Item>
+                                    </LinkContainer>
+                                    :
+                                    <LinkContainer to="/dashboard">
+                                        <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
+                                    </LinkContainer> 
+                                    }
+                                    <Breadcrumb.Item active>Waiver Lookup</Breadcrumb.Item>
+                                </Breadcrumb>
+                                <Row>
+                                    <Col>
+                                        <Card className="admin-cards">
+                                            <Card.Header>
+                                                <Form className="team-manage-text">
+                                                    <Form.Group controlId="input1">
+                                                        <Form.Label className="search-label-admin">Search by Name:</Form.Label>
+                                                        <Form.Control
+                                                            type="name"
+                                                            placeholder="ex: JohnDoe"
+                                                            value={this.state.search}
+                                                            onChange={(e) => {
+                                                                this.onChange(e);
+                                                            }}
+                                                        />
+                                                    </Form.Group>
+                                                </Form>
+                                            </Card.Header>
+                                            <WaiverBox waivers={this.state.waivers} index={0}
+                                                search={this.state.search} open={this.state.OpenWaiverState} />
+                                        </Card>
+                                    </Col>
+                                </Row>
+                            </Container>
+                    </div>
+                )}
+            </AuthUserContext.Consumer>
         );
     }
 }
@@ -223,7 +233,7 @@ function WaiverBox ({waivers, index, search, open, loading}) {
 };
 
 const condition = authUser =>
-    authUser && !!authUser.roles[ROLES.ADMIN];
+    authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]);
 
 export default compose(
     withAuthorization(condition),
