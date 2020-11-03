@@ -2,10 +2,10 @@ import React, { Component } from 'react';
 import '../../App.css';
 
 import { withFirebase } from '../Firebase';
-import { withAuthorization } from '../session';
+import { withAuthorization, AuthUserContext } from '../session';
 import { compose } from 'recompose';
 
-import { Button, Form, Container, Card, Row, Col, Breadcrumb } from 'react-bootstrap/';
+import { Button, Form, Container, Row, Col, Breadcrumb } from 'react-bootstrap/';
 
 import default_profile from '../../assets/default.png';
 
@@ -28,6 +28,8 @@ class UserOptions extends Component {
             freegames: 0,
             profilepic: false,
             removeImg: false,
+            super_status: null,
+            status: null,
         };
         this.handleChange = this.handleChange.bind(this);
     }
@@ -86,7 +88,7 @@ class UserOptions extends Component {
         upgrade({uid: user, privilege: choice
         }).then((result) => {
             //If complete finish loading
-            if (result) this.setState({ul_status: result.data.status})
+            if (result) this.setState({super_status: result.data.status})
         }).catch((error) =>{
             this.setState({ul_error: "Error: " + error})
         });
@@ -136,6 +138,7 @@ class UserOptions extends Component {
         this.props.firebase.user(uid).update({
             username, name, team, wins, losses, points, profilepic, freegames
         });
+        this.setState({status: "Successfully updated " + this.state.name })
     }
 
     // Form box on change event
@@ -145,158 +148,168 @@ class UserOptions extends Component {
 
     render() {
         return (
-            <div className="background-static-all">
-                {!this.state.loading ?
-                <Container>
-                    <h2 className="admin-header">User Options</h2>
-                    <Breadcrumb className="admin-breadcrumb">
-                        <LinkContainer to="/admin">
-                            <Breadcrumb.Item>Admin</Breadcrumb.Item>
-                        </LinkContainer>
-                        <Breadcrumb.Item active>User Options</Breadcrumb.Item>
-                    </Breadcrumb>
-                    <Row className="row-uo">
-                        <Col md={4}>
-                            <div className="team-single-img">
-                                <img className="profile-pic" src={this.state.profileicon} alt="" />
-                            </div>
-                            <Button variant="outline-danger" onClick={() => {
-                                this.setState({ profileicon: default_profile, profilepic: false })
-                            }} disabled={!this.state.profilepic}>
-                                Remove
+            <AuthUserContext.Consumer>
+            {authUser =>
+                <div className="background-static-all">
+                    {!this.state.loading ?
+                    <Container>
+                        <h2 className="admin-header">User Options</h2>
+                        <Breadcrumb className="admin-breadcrumb">
+                            <LinkContainer to="/admin">
+                                <Breadcrumb.Item>Admin</Breadcrumb.Item>
+                            </LinkContainer>
+                            <Breadcrumb.Item active>User Options</Breadcrumb.Item>
+                        </Breadcrumb>
+                        <Row className="row-uo">
+                            <Col md={4}>
+                                <div className="team-single-img">
+                                    <img className="profile-pic" src={this.state.profileicon} alt="" />
+                                </div>
+                                <Button variant="outline-danger" onClick={() => {
+                                    this.setState({ profileicon: default_profile, profilepic: false })
+                                }} disabled={!this.state.profilepic}>
+                                    Remove
+                                </Button>
+                            </Col>
+                            <Col>
+                                <Row>
+                                    <Col>
+                                        <Form>
+                                            <Form.Group controlId="form.name">
+                                                <Form.Label>Name:</Form.Label>
+                                                <Form.Control
+                                                    type="name"
+                                                    name="name"
+                                                    value={this.state.name}
+                                                    onChange={this.onChange}
+                                                />
+                                            </Form.Group>
+                                        </Form>
+                                    </Col>
+                                    <Col>
+                                        <Form>
+                                            <Form.Group controlId="form.username">
+                                                <Form.Label>Username:</Form.Label>
+                                                <Form.Control
+                                                    type="name"
+                                                    name="username"
+                                                    value={this.state.username}
+                                                    onChange={this.onChange}
+                                                />
+                                            </Form.Group>
+                                        </Form>
+                                    </Col>
+                                    <Col>
+                                        <Form>
+                                            <Form.Group controlId="form.freegames">
+                                                <Form.Label>Free Games:</Form.Label>
+                                                <Form.Control
+                                                    type="text"
+                                                    name="freegames"
+                                                    value={this.state.freegames}
+                                                    onChange={this.onChange}
+                                                />
+                                            </Form.Group>
+                                        </Form>
+                                    </Col>
+                                </Row>
+                                <Row>
+                                    <Col>
+                                        <Form>
+                                            <Form.Group controlId="form.wins">
+                                                <Form.Label>Wins:</Form.Label>
+                                                <Form.Control
+                                                    type="text"
+                                                    name="wins"
+                                                    value={this.state.wins}
+                                                    onChange={this.onChange}
+                                                />
+                                            </Form.Group>
+                                        </Form>
+                                    </Col>
+                                    <Col>
+                                        <Form>
+                                            <Form.Group controlId="form.losses">
+                                                <Form.Label>Losses:</Form.Label>
+                                                <Form.Control
+                                                    type="text"
+                                                    name="losses"
+                                                    value={this.state.losses}
+                                                    onChange={this.onChange}
+                                                />
+                                            </Form.Group>
+                                        </Form>
+                                    </Col>
+                                    <Col>
+                                        <Form>
+                                            <Form.Group controlId="form.points">
+                                                <Form.Label>Points:</Form.Label>
+                                                <Form.Control
+                                                    type="text"
+                                                    name="points"
+                                                    value={this.state.wins*10 + this.state.losses*3 + 50}
+                                                    disabled={true}
+                                                />
+                                            </Form.Group>
+                                        </Form>
+                                    </Col>
+                                </Row>
+                            </Col>
+                        </Row>
+                        <Row className="row-buttons-uo">
+                            <Button variant="outline-primary" onClick={() => this.resetOptions()}>
+                                Reset 
                             </Button>
-                        </Col>
-                        <Col>
-                            <Row>
-                                <Col>
-                                    <Form>
-                                        <Form.Group controlId="form.name">
-                                            <Form.Label>Name:</Form.Label>
-                                            <Form.Control
-                                                type="name"
-                                                name="name"
-                                                value={this.state.name}
-                                                onChange={this.onChange}
-                                            />
-                                        </Form.Group>
-                                    </Form>
-                                </Col>
-                                <Col>
-                                    <Form>
-                                        <Form.Group controlId="form.username">
-                                            <Form.Label>Username:</Form.Label>
-                                            <Form.Control
-                                                type="name"
-                                                name="username"
-                                                value={this.state.username}
-                                                onChange={this.onChange}
-                                            />
-                                        </Form.Group>
-                                    </Form>
-                                </Col>
-                                <Col>
-                                    <Form>
-                                        <Form.Group controlId="form.freegames">
-                                            <Form.Label>Free Games:</Form.Label>
-                                            <Form.Control
-                                                type="text"
-                                                name="freegames"
-                                                value={this.state.freegames}
-                                                onChange={this.onChange}
-                                            />
-                                        </Form.Group>
-                                    </Form>
-                                </Col>
-                            </Row>
-                            <Row>
-                                <Col>
-                                    <Form>
-                                        <Form.Group controlId="form.wins">
-                                            <Form.Label>Wins:</Form.Label>
-                                            <Form.Control
-                                                type="text"
-                                                name="wins"
-                                                value={this.state.wins}
-                                                onChange={this.onChange}
-                                            />
-                                        </Form.Group>
-                                    </Form>
-                                </Col>
-                                <Col>
-                                    <Form>
-                                        <Form.Group controlId="form.losses">
-                                            <Form.Label>Losses:</Form.Label>
-                                            <Form.Control
-                                                type="text"
-                                                name="losses"
-                                                value={this.state.losses}
-                                                onChange={this.onChange}
-                                            />
-                                        </Form.Group>
-                                    </Form>
-                                </Col>
-                                <Col>
-                                    <Form>
-                                        <Form.Group controlId="form.points">
-                                            <Form.Label>Points:</Form.Label>
-                                            <Form.Control
-                                                type="text"
-                                                name="points"
-                                                value={this.state.wins*10 + this.state.losses*3 + 50}
-                                                disabled={true}
-                                            />
-                                        </Form.Group>
-                                    </Form>
-                                </Col>
-                            </Row>
-                        </Col>
-                    </Row>
-                    <Row className="row-buttons-uo">
-                        <Button variant="outline-primary" onClick={() => this.resetOptions()}>
-                            Reset 
-                        </Button>
-                        <Button variant="outline-info" className="button-update-uo"
-                        onClick={() => this.updateUser()}>
-                            Update
-                        </Button>
-                    </Row>
-                    <Row className="row-priv-buttons-uo">
-                        <Col md="auto">
-                            <Button className="button-options-style-admin"
-                            type="button" id="update" variant="primary" onClick={() => {
-                            this.updatePrivilege("admin")
-                            }}>
-                                Upgrade to Admin 
+                            <Button variant="outline-info" className="button-update-uo"
+                            onClick={() => this.updateUser()}>
+                                Update
                             </Button>
-                        </Col>
-                        <Col md="auto">
-                            <Button className="button-options-style-admin" onClick={() => {
-                            this.updatePrivilege("waiver")
-                            }}
-                            type="button" id="update" variant="warning">
-                                Upgrade to Waiver 
-                            </Button>
-                        </Col>
-                        <Col md="auto">
-                            <Button className="button-options-style-admin" onClick={() => {
-                            this.updatePrivilege("clear")
-                            }}
-                            type="button" id="update" variant="danger">
-                                Clear Privilege
-                            </Button>
-                        </Col>
-                        <Col md="auto">
-                            <Button className="button-options-style-admin" onClick={() => {
-                            this.updatePrivilege("check")
-                            }}
-                            type="button" id="update" variant="info">
-                            <i className="fa fa-question fa-1x text-white"></i>
-                            </Button>
-                        </Col>
-                    </Row>
-                </Container>
-                : <h2 className="pagePlaceholder">Loading...</h2>}
-            </div>
+                            {this.state.status ? 
+                                <p className="status-uo-admin">{this.state.status}</p>
+                            : null}
+                        </Row>
+                        {authUser && !!authUser.roles[ROLES.SUPER] ? <Row className="row-priv-buttons-uo">
+                            <Col md="auto">
+                                <Button className="button-options-style-admin"
+                                type="button" id="update" variant="primary" onClick={() => {
+                                this.updatePrivilege("admin")
+                                }}>
+                                    Upgrade to Admin 
+                                </Button>
+                            </Col>
+                            <Col md="auto">
+                                <Button className="button-options-style-admin" onClick={() => {
+                                this.updatePrivilege("waiver")
+                                }}
+                                type="button" id="update" variant="warning">
+                                    Upgrade to Waiver 
+                                </Button>
+                            </Col>
+                            <Col md="auto">
+                                <Button className="button-options-style-admin" onClick={() => {
+                                this.updatePrivilege("clear")
+                                }}
+                                type="button" id="update" variant="danger">
+                                    Clear Privilege
+                                </Button>
+                            </Col>
+                            <Col md="auto">
+                                <Button className="button-options-style-admin" onClick={() => {
+                                this.updatePrivilege("check")
+                                }}
+                                type="button" id="update" variant="info">
+                                <i className="fa fa-question fa-1x text-white"></i>
+                                </Button>
+                            </Col>
+                            {this.state.super_status ? <Col className="status-col-uo">
+                                <p className="super-status-uo-admin">{this.state.super_status}</p>
+                            </Col> : null}
+                        </Row> : null}
+                    </Container>
+                    : <h2 className="pagePlaceholder">Loading...</h2>}
+                </div>
+            }
+            </AuthUserContext.Consumer>
         );
     }
 }
