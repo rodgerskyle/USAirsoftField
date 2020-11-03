@@ -35,6 +35,7 @@ import WaiverLookup from './components/Pages/waiverlookup'
 import EmailOptOut from './components/Pages/emailOptOut'
 import RenewSubscription from './components/Pages/Renew'
 import WaiverDashboard from './components/Pages/Dashboard'
+import UserOptions from './components/Pages/UserOptions';
 
 const App = () => (
       <Router>
@@ -124,6 +125,12 @@ const App = () => (
             </Route>
             <Route exact path="/dashboard">
               <WaiverDashboard />
+            </Route>
+            <Route exact path="/admin/useroptions/:id"
+            render={(props) => (
+              <UserOptions {...props} />
+            )}
+            >
             </Route>
             <Route exact path="/admin">
               <Admin />

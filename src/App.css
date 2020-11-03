@@ -1033,3 +1033,21 @@ a.dropdown-item:hover {
 .navitem-img {
   max-width: 320px;
 }
+
+.row-uo {
+  color: white;
+}
+
+.row-buttons-uo {
+  direction: rtl;
+  padding: 15px;
+}
+
+.button-update-uo {
+  margin-right:15px;
+}
+
+.row-priv-buttons-uo {
+  background-color: gray;
+  padding: 15px;
+}
