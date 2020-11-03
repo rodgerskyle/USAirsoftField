@@ -1050,4 +1050,26 @@ a.dropdown-item:hover {
 .row-priv-buttons-uo {
   background-color: gray;
   padding: 15px;
+  border-radius: 5px;
+}
+
+.super-status-uo-admin {
+  color: lightgreen;
+  margin-bottom: 0 !important;
+  margin-top: 0 !important;
+}
+
+.status-uo-admin {
+  color: lightgreen;
+  margin-bottom: 0 !important;
+  margin-top: 0 !important;
+  margin-right: 10px;
+  align-items: center;
+  display: flex;
+}
+
+.status-col-uo {
+  align-content: center;
+  display: grid;
+  justify-content: end;
 }
