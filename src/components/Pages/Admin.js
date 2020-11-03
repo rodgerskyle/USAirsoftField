@@ -27,7 +27,6 @@ class AdminPage extends Component {
         email_status: null,
         email_loading: null,
         rows: 8,
-        UpdateUserState: this.updateUser,
       };
     }
     imgRef = React.createRef();
@@ -355,7 +354,7 @@ class AdminPage extends Component {
                         <Row>
                           {loading ? <p className="loading-text-ul-admin">Loading</p> : 
                             <UserBox users={this.state.users} index={0} length={this.state.users.length}
-                            search={this.state.search} update={this.state.UpdateUserState} />
+                            search={this.state.search} />
                           }
                         </Row>
                       </Card.Body>
@@ -447,7 +446,7 @@ class AdminPage extends Component {
     }
     
 
-function UserBox({users, index, search, update, length}) {
+function UserBox({users, index, search, options, length}) {
     const [ButtonArray, setButtonArray] = useState( new Array(length).fill(false));
 
     return (
@@ -476,36 +475,12 @@ function UserBox({users, index, search, update, length}) {
                                   {ButtonArray[i] === true ? 
                                     <Row className="row-options-admin">
                                       <Col md="auto" className="button-options-col-admin">
-                                          <Button className="button-options-style-admin"
-                                          type="button" id="update" variant="primary" onClick={() => {
-                                            update(user.uid, "admin")
-                                          }}>
-                                              Admin 
-                                          </Button>
-                                      </Col>
-                                      <Col md="auto" className="button-options-col-admin">
-                                          <Button className="button-options-style-admin" onClick={() => {
-                                            update(user.uid, "waiver")
-                                          }}
-                                          type="button" id="update" variant="warning">
-                                              Waiver 
-                                          </Button>
-                                      </Col>
-                                      <Col md="auto" className="button-options-col-admin">
-                                          <Button className="button-options-style-admin" onClick={() => {
-                                            update(user.uid, "clear")
-                                          }}
-                                          type="button" id="update" variant="danger">
-                                              Clear
-                                          </Button>
-                                      </Col>
-                                      <Col md="auto" className="button-options-col-admin">
-                                          <Button className="button-options-style-admin" onClick={() => {
-                                            update(user.uid, "check")
-                                          }}
-                                          type="button" id="update" variant="info">
-                                            <i className="fa fa-question fa-1x text-white"></i>
-                                          </Button>
+                                          <Link to={"admin/useroptions/" + user.uid}>
+                                            <Button className="button-options-style-admin"
+                                            type="button" id="update" variant="info">
+                                              Options
+                                            </Button>
+                                          </Link>
                                       </Col>
                                       <Col>
                                         <Button className="button-options-style-admin" onClick={() => {
@@ -544,36 +519,12 @@ function UserBox({users, index, search, update, length}) {
                                   {ButtonArray[i] === true ? 
                                     <Row className="row-options-admin">
                                       <Col md="auto" className="button-options-col-admin">
-                                          <Button className="button-options-style-admin"
-                                          type="button" id="update" variant="primary" onClick={() => {
-                                            update(user.uid, "admin")
-                                          }}>
-                                              Admin 
-                                          </Button>
-                                      </Col>
-                                      <Col md="auto" className="button-options-col-admin">
-                                          <Button className="button-options-style-admin" onClick={() => {
-                                            update(user.uid, "waiver")
-                                          }}
-                                          type="button" id="update" variant="warning">
-                                              Waiver 
-                                          </Button>
-                                      </Col>
-                                      <Col md="auto" className="button-options-col-admin">
-                                          <Button className="button-options-style-admin" onClick={() => {
-                                            update(user.uid, "clear")
-                                          }}
-                                          type="button" id="update" variant="danger">
-                                              Clear
-                                          </Button>
-                                      </Col>
-                                      <Col md="auto" className="button-options-col-admin">
-                                          <Button className="button-options-style-admin" onClick={() => {
-                                            update(user.uid, "check")
-                                          }}
-                                          type="button" id="update" variant="info">
-                                            <i className="fa fa-question fa-1x text-white"></i>
-                                          </Button>
+                                          <Link to={"admin/useroptions/" + user.uid}>
+                                            <Button className="button-options-style-admin"
+                                            type="button" id="update" variant="info">
+                                              Options
+                                            </Button>
+                                          </Link>
                                       </Col>
                                       <Col>
                                         <Button className="button-options-style-admin" onClick={() => {
@@ -612,36 +563,12 @@ function UserBox({users, index, search, update, length}) {
                                   {ButtonArray[i] === true ? 
                                     <Row className="row-options-admin">
                                       <Col md="auto" className="button-options-col-admin">
-                                          <Button className="button-options-style-admin"
-                                          type="button" id="update" variant="primary" onClick={() => {
-                                            update(user.uid, "admin")
-                                          }}>
-                                              Admin 
-                                          </Button>
-                                      </Col>
-                                      <Col md="auto" className="button-options-col-admin">
-                                          <Button className="button-options-style-admin" onClick={() => {
-                                            update(user.uid, "waiver")
-                                          }}
-                                          type="button" id="update" variant="warning">
-                                              Waiver 
-                                          </Button>
-                                      </Col>
-                                      <Col md="auto" className="button-options-col-admin">
-                                          <Button className="button-options-style-admin" onClick={() => {
-                                            update(user.uid, "clear")
-                                          }}
-                                          type="button" id="update" variant="danger">
-                                              Clear
-                                          </Button>
-                                      </Col>
-                                      <Col md="auto" className="button-options-col-admin">
-                                          <Button className="button-options-style-admin" onClick={() => {
-                                            update(user.uid, "check")
-                                          }}
-                                          type="button" id="update" variant="info">
-                                            <i className="fa fa-question fa-1x text-white"></i>
-                                          </Button>
+                                          <Link to={"admin/useroptions/" + user.uid}>
+                                            <Button className="button-options-style-admin"
+                                            type="button" id="update" variant="info">
+                                              Options
+                                            </Button>
+                                          </Link>
                                       </Col>
                                       <Col>
                                         <Button className="button-options-style-admin" onClick={() => {
@@ -680,36 +607,12 @@ function UserBox({users, index, search, update, length}) {
                                   {ButtonArray[i] === true ? 
                                     <Row className="row-options-admin">
                                       <Col md="auto" className="button-options-col-admin">
-                                          <Button className="button-options-style-admin"
-                                          type="button" id="update" variant="primary" onClick={() => {
-                                            update(user.uid, "admin")
-                                          }}>
-                                              Admin 
-                                          </Button>
-                                      </Col>
-                                      <Col md="auto" className="button-options-col-admin">
-                                          <Button className="button-options-style-admin" onClick={() => {
-                                            update(user.uid, "waiver")
-                                          }}
-                                          type="button" id="update" variant="warning">
-                                              Waiver 
-                                          </Button>
-                                      </Col>
-                                      <Col md="auto" className="button-options-col-admin">
-                                          <Button className="button-options-style-admin" onClick={() => {
-                                            update(user.uid, "clear")
-                                          }}
-                                          type="button" id="update" variant="danger">
-                                              Clear
-                                          </Button>
-                                      </Col>
-                                      <Col md="auto" className="button-options-col-admin">
-                                          <Button className="button-options-style-admin" onClick={() => {
-                                            update(user.uid, "check")
-                                          }}
-                                          type="button" id="update" variant="info">
-                                            <i className="fa fa-question fa-1x text-white"></i>
-                                          </Button>
+                                          <Link to={"admin/useroptions/" + user.uid}>
+                                            <Button className="button-options-style-admin"
+                                            type="button" id="update" variant="info">
+                                              Options
+                                            </Button>
+                                          </Link>
                                       </Col>
                                       <Col>
                                         <Button className="button-options-style-admin" onClick={() => {

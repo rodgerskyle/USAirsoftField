@@ -51,9 +51,10 @@ class Migration extends Component {
                 // Read result of the Cloud Function.
                 if (result.data && result.data.user !== null) {
                     console.log(result.data.user)
-                    this.props.firebase.doPasswordReset(result.data.user).then(() => {
-                        console.log("Successful")
-                    })
+                    //this.props.firebase.doPasswordReset(result.data.user).then(() => {
+                    //    console.log("Successful")
+                    //})
+                    //Add email call to our backend instead of reset
                 }
             });
         }
