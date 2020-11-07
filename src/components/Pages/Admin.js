@@ -102,7 +102,7 @@ class AdminPage extends Component {
           this.setState({email_loading: i/length})
         } */
         //After for loop update status
-        sendMail({email: "kyle77r@gmail.com", body: emailBox, subject: emailSubject, img: emailImg, secret: "empty"}).then((result) => {
+        sendMail({email: "kyle77r@gmail.com", body: emailBox, subject: emailSubject, img: emailImg, secret: "empty", migrate: false}).then((result) => {
           if (result.data) console.log(result.data.status)
         }).catch((error) => {
           console.log(error)
