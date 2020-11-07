@@ -42,6 +42,7 @@ class Migration extends Component {
         var csv = event.target.result;
         //this.processData(csv);
         var lines = csv.split(/\r\n|\n/);
+        var sendMail = this.props.firebase.sendMail();
         var mergeUsers = this.props.firebase.mergeUsers();
         for (let i=0; i<lines.length; i++) {
             let usr = String(lines[i]).split(',')
@@ -50,10 +51,15 @@ class Migration extends Component {
             }).then((result) => {
                 // Read result of the Cloud Function.
                 if (result.data && result.data.user !== null) {
-                    console.log(result.data.user)
-                    //this.props.firebase.doPasswordReset(result.data.user).then(() => {
-                    //    console.log("Successful")
-                    //})
+                    var secret = 'm' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5).toUpperCase();
+                    let email = result.data.user
+                    this.props.firebase.emailListMembers(secret).set({email})
+                    // Send email from our end
+                    sendMail({email, body: null, subject: "US Airsoft Migration Notice", img: null, secret: "empty", migrate: true}).then((result) => {
+                    if (result.data) console.log(result.data.status)
+                    }).catch((error) => {
+                    console.log(error)
+                    })
                     //Add email call to our backend instead of reset
                 }
             });
