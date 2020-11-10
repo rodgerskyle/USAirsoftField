@@ -26,6 +26,7 @@ class Leaderboards extends Component {
             lastMonth: "",
             curPage: 1,
             numPages: 0,
+            usersPerPage: 12,
         };
         this.handleClick = this.handleClick.bind(this);
         this.handleLastClick = this.handleLastClick.bind(this);
@@ -171,7 +172,7 @@ class Leaderboards extends Component {
             this.setState({
                 users: usersList.sort((a,b) => (a.points < b.points ? 1 : -1)),
                 loading: false,
-                numPages: Math.ceil(usersList.length/5)
+                numPages: Math.ceil(usersList.length/this.state.usersPerPage)
             });
         });
     }
@@ -181,80 +182,84 @@ class Leaderboards extends Component {
     }
 
     render() {
-        const { users, loading, getRankState, numPages, curPage, currentMonth } = this.state;
+        const { users, loading, getRankState, numPages, curPage, currentMonth, usersPerPage } = this.state;
 
         return (
             <div className="background-static-lb">
-                <h2 className="page-header">Leaderboards</h2>
                 <Container className="leaderboard-page">
-                    <Row>
-                        <Col className="button-left-lb">
+                    <Row className="row-header-lb">
+                        <Col xs="auto" className="col-header-lb vertical-divider-col-lb">
+                            <h2>Leaderboards</h2>
+                        </Col>
+                        <Col>
+                            <Row className="button-right-lb">
+                                <BootstrapSwitchButton
+                                    checked={!this.state.monthly}
+                                    onstyle="dark"
+                                    width={120}
+                                    onlabel='All Time'
+                                    offlabel='Monthly'
+                                    onChange={() => {
+                                        if (this.state.monthly) {
+                                            this.setState({ 
+                                                monthly: !this.state.monthly, 
+                                                users: users.sort((a,b) => (a.points < b.points ? 1 : -1))
+                                            })
+                                        }
+                                        else
+                                            this.setState({ 
+                                                monthly: !this.state.monthly,
+                                                currentMonth: true,
+                                                users: users.sort((a,b) => (a.cmwins*10 + a.cmlosses*3 < b.cmwins*10 + b.cmlosses*3 ? 1 : -1))
+                                            })
+                                    }}
+                                />
+                            </Row>
                             {this.state.monthly === true ?
-                            <BootstrapSwitchButton
-                                checked={this.state.currentMonth}
-                                onstyle="dark"
-                                width={120}
-                                onlabel={this.state.thisMonth}
-                                offlabel={this.state.lastMonth}
-                                onChange={() => {
-                                    if (currentMonth) {
-                                        this.setState({ 
-                                            currentMonth: !currentMonth,
-                                            users: users.sort((a,b) => (a.pmwins*10 + a.pmlosses*3 < b.pmwins*10 + b.pmlosses*3 ? 1 : -1)),                                        
-                                        })
-                                    }
-                                    else {
-                                        this.setState({ 
-                                            currentMonth: !currentMonth,
-                                            users: users.sort((a,b) => (a.cmwins*10 + a.cmlosses*3 < b.cmwins*10 + b.cmlosses*3 ? 1 : -1))
-                                        })
-                                    }
-                                }}
-                            /> : null}
+                            <Row className="button-left-lb">
+                                <BootstrapSwitchButton
+                                    checked={this.state.currentMonth}
+                                    onstyle="dark"
+                                    width={120}
+                                    onlabel={this.state.thisMonth}
+                                    offlabel={this.state.lastMonth}
+                                    onChange={() => {
+                                        if (currentMonth) {
+                                            this.setState({ 
+                                                currentMonth: !currentMonth,
+                                                users: users.sort((a,b) => (a.pmwins*10 + a.pmlosses*3 < b.pmwins*10 + b.pmlosses*3 ? 1 : -1)),                                        
+                                            })
+                                        }
+                                        else {
+                                            this.setState({ 
+                                                currentMonth: !currentMonth,
+                                                users: users.sort((a,b) => (a.cmwins*10 + a.cmlosses*3 < b.cmwins*10 + b.cmlosses*3 ? 1 : -1))
+                                            })
+                                        }
+                                    }}
+                                /> 
+                            </Row> : null}
                         </Col>
-                        <Col className="button-right-lb">
-                            <BootstrapSwitchButton
-                                checked={!this.state.monthly}
-                                onstyle="dark"
-                                width={120}
-                                onlabel='All Time'
-                                offlabel='Monthly'
-                                onChange={() => {
-                                    if (this.state.monthly) {
-                                        this.setState({ 
-                                            monthly: !this.state.monthly, 
-                                            users: users.sort((a,b) => (a.points < b.points ? 1 : -1))
-                                        })
-                                    }
-                                    else
-                                        this.setState({ 
-                                            monthly: !this.state.monthly,
-                                            currentMonth: true,
-                                            users: users.sort((a,b) => (a.cmwins*10 + a.cmlosses*3 < b.cmwins*10 + b.cmlosses*3 ? 1 : -1))
-                                        })
-                                }}
-                            />
+                        <Col className="col-header-lb pagination-col-lb">
+                            <Pagination>
+                                <Pagination.First onClick={this.handleFirstClick}/>
+                                <Pagination.Prev onClick={() => {this.handleClick(curPage-1)}} disabled={curPage === 1}/>
+                                {curPage-1 >= 1 ? 
+                                <Pagination.Item onClick={() => {this.handleClick(curPage-1)}}>{curPage-1}</Pagination.Item> 
+                                : null}
+                                <Pagination.Item active>{curPage}</Pagination.Item>
+                                {curPage+1 <= numPages ? 
+                                <Pagination.Item onClick={() => {this.handleClick(curPage+1)}}>{curPage+1}</Pagination.Item> 
+                                : null}
+                                <Pagination.Next onClick={() => {this.handleClick(curPage+1)}} disabled={curPage === numPages}/>
+                                <Pagination.Last onClick={this.handleLastClick}/>
+                            </Pagination>
                         </Col>
-                    </Row>
-                    <Row>
-                        <Pagination>
-                            <Pagination.First onClick={this.handleFirstClick}/>
-                            <Pagination.Prev onClick={() => {this.handleClick(curPage-1)}} disabled={curPage === 1}/>
-                            {curPage-1 >= 1 ? 
-                            <Pagination.Item onClick={() => {this.handleClick(curPage-1)}}>{curPage-1}</Pagination.Item> 
-                            : null}
-                            <Pagination.Item active>{curPage}</Pagination.Item>
-                            {curPage+1 <= numPages ? 
-                            <Pagination.Item onClick={() => {this.handleClick(curPage+1)}}>{curPage+1}</Pagination.Item> 
-                            : null}
-                            <Pagination.Next onClick={() => {this.handleClick(curPage+1)}} disabled={curPage === numPages}/>
-                            <Pagination.Last onClick={this.handleLastClick}/>
-                        </Pagination>
                     </Row>
                     <Row>
                         {loading && <div>Loading ...</div>}
-                        <UserList users={users.slice((curPage-1) * 5, ((curPage-1) * 5) + 5 )} images={this.state.images} getRank={getRankState} 
-                            monthly={this.state.monthly} currentMonth={this.state.currentMonth} start={5 * (curPage-1)} 
+                        <UserList users={users.slice((curPage-1) * usersPerPage, ((curPage-1) * usersPerPage) + usersPerPage )} images={this.state.images} getRank={getRankState} 
+                            monthly={this.state.monthly} currentMonth={this.state.currentMonth} start={usersPerPage * (curPage-1)} 
                         />
                     </Row>
                 </Container>

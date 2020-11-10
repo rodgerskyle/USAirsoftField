@@ -397,15 +397,11 @@
 }
 
 .button-left-lb {
-  text-align: left;
-  padding-top: 20px;
-  padding-bottom: 20px;
+  padding: 10px 15px;
 }
 
 .button-right-lb {
-  text-align: right;
-  padding-top: 20px;
-  padding-bottom: 20px;
+  padding: 10px 15px; 
 }
 
 .title-lb {
@@ -1072,4 +1068,24 @@ a.dropdown-item:hover {
   align-content: center;
   display: grid;
   justify-content: end;
+}
+
+.row-header-lb {
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+.col-header-lb {
+  align-items: center;
+  display: flex;
+}
+
+.vertical-divider-col-lb {
+  border-right: 1px solid white;
+}
+
+.pagination-col-lb {
+  justify-content: flex-end;
+  align-items: flex-end;
+  margin-bottom: -8px;
 }
