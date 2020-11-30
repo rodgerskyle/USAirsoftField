@@ -93,6 +93,8 @@ class Firebase {
 
     manageProfile = () => this.func.httpsCallable('manageProfile');
 
+    testRenewal = () => this.func.httpsCallable('testRenewal');
+
     // Storage Database API
 
     membersWaivers = pdf => this.st.ref().child(`waivers/members/${pdf}`);

@@ -122,8 +122,14 @@ class AdminPage extends Component {
         })
     }
 
+    // Email members
+    emailMembers = () => {
+      var testRenewal = this.props.firebase.testRenewal();
+      testRenewal();
+    }
+
     onChange = event => {
-            this.setState({ search: event.target.value });
+      this.setState({ search: event.target.value });
     };
 
     // Checks dimensions of uploaded image
@@ -300,6 +306,9 @@ class AdminPage extends Component {
                                     Email All
                                 </Button>
                                 <Button className="admin-button-email2" variant="info" type="button"
+                                onClick={() => {
+                                  this.emailMembers();
+                                }}
                                 >
                                     Email Members
                                 </Button>
