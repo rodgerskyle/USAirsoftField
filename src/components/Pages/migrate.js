@@ -55,7 +55,7 @@ class Migration extends Component {
                     let email = result.data.user
                     this.props.firebase.emailListMembers(secret).set({email})
                     // Send email from our end
-                    sendMail({email, body: null, subject: "US Airsoft Migration Notice", img: null, secret: "empty", migrate: true}).then((result) => {
+                    sendMail({email, body: null, subject: "US Airsoft Migration Notice", img: null, secret: "empty", migrate: true, addressee: usr[0]}).then((result) => {
                     if (result.data) console.log(result.data.status)
                     }).catch((error) => {
                     console.log(error)

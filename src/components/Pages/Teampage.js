@@ -27,12 +27,12 @@ class Teampage extends Component {
 
     componentDidMount() {
         //Figure out rank logic here
-        this.props.firebase.team(this.props.match.params.id).on('value', snapshot => {
-            const Object = snapshot.val();
+        this.props.firebase.team(this.props.match.params.id.toLowerCase()).on('value', snapshot => {
+            const t_Object = snapshot.val();
 
             this.setState({
-                teamObject: Object,
-                members: typeof Object.members !== 'undefined' ? Object.members : '',
+                teamObject: t_Object,
+                members: typeof t_Object.members !== 'undefined' ? t_Object.members : '',
             }, function () {
                 //After setstate, then grab points and profile
                 this.getPicture(this.props.match.params.id);
@@ -151,7 +151,7 @@ class Teampage extends Component {
 
     //Get image function for team image = teamname
     getPicture(teamname) {
-        this.props.firebase.teamsPictures(`${teamname}.png`).getDownloadURL().then((url) => {
+        this.props.firebase.teamsPictures(`${teamname.toLowerCase()}.png`).getDownloadURL().then((url) => {
             this.setState({ teamicon: url })
         }).catch((error) => {
             // Handle any errors NOT DONE
