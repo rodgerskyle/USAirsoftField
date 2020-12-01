@@ -3,6 +3,7 @@ import './App.css';
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import Login from "./Login"
 import Navigation from "./Navigation"
+import Footer from "./components/Pages/Footer";
 import { withAuthentication } from './components/session';
 import { PasswordForgetForm } from './passwordForgot';
 import AccountPage from './components/Pages/Account';
@@ -154,6 +155,7 @@ const App = () => (
               <Home />
             </Route>
           </Switch>
+          <Footer />
       </Router>
 );
 

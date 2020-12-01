@@ -1116,3 +1116,59 @@ a.dropdown-item:hover {
 .text-row-contact {
   padding: 10px;
 }
+
+.topdiv-footer {
+  background-color: rgb(73 80 87 / .6);
+  border-top: 1px solid darkgray;
+  padding: 20px;
+  margin-top: 15px;
+}
+
+.divider-footer {
+  justify-content: center;
+  content: '';
+  display: block;
+  width: 75%;
+  height: 2px;
+  border-radius: 5px;
+  background-color: darkgrey;
+  margin: auto;
+  margin-top: 10px;
+}
+
+.about-col-left-footer {
+  color: white;
+  font-size: 14px;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.about-col-right-footer {
+  color: white;
+  font-size: 14px;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.header-footer {
+  color: white;
+  margin-bottom: 0 !important;
+}
+
+.myaccount-col-footer {
+  color: white;
+  font-size: 14px;
+}
+
+.all-cols-footer {
+  justify-content: center;
+  display: grid;
+}
+
+.socials-icons-footer {
+  padding: 5px;
+}
+
+.profile-row-footer {
+  justify-content: center;
+}
