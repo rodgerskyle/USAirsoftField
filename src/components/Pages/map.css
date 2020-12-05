@@ -20,6 +20,7 @@
     align-items: center;
     width: 180px;
     color: var(--main-blue);
+    transform: translate(-6.42%, -75%);
   }
   
   .pin-icon {
@@ -27,7 +28,7 @@
   }
   
   .pin-text {
-    font-size: 1.3em;
+    font-size: .6rem;
   }
   
   @media screen and (min-width: 799px) {
@@ -45,6 +46,6 @@
     }
   
     .pin-icon {
-      font-size: 10vw;
+      font-size: 6vw;
     }
   }
