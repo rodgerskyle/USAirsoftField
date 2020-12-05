@@ -37,9 +37,12 @@ import EmailOptOut from './components/Pages/emailOptOut'
 import RenewSubscription from './components/Pages/Renew'
 import WaiverDashboard from './components/Pages/Dashboard'
 import UserOptions from './components/Pages/UserOptions';
+import ScrollToTop from './components/constants/scrolltotop';
+import CookieConsent from "react-cookie-consent";
 
 const App = () => (
       <Router>
+          <ScrollToTop />
           <Navigation />
           <Switch>
             <Route exact path="/emailoptout/:secret"
@@ -156,6 +159,7 @@ const App = () => (
             </Route>
           </Switch>
           <Footer />
+          <CookieConsent>This website uses cookies to enhance the user experience.</CookieConsent>
       </Router>
 );
 
