@@ -1,19 +1,32 @@
-import React from 'react';
-import { Container, Row, Col } from 'react-bootstrap/';
+import React, { Component, useState } from 'react';
+import { Container, Row, Col, InputGroup, FormControl, Button } from 'react-bootstrap/';
 import { Link } from "react-router-dom";
 import { AuthUserContext } from '../session';
+import { withFirebase } from '../Firebase';
 import fblogo from '../../assets/SocialMedia/facebook.png';
 import twlogo from '../../assets/SocialMedia/twitter.png';
 import iglogo from '../../assets/SocialMedia/instagram.png';
 import ytlogo from '../../assets/SocialMedia/youtube.png';
 
-const Footer = () => (
-    <AuthUserContext.Consumer>
-        {authUser =>
-            authUser ? <FooterAuth authUser={authUser} /> : <FooterNonAuth />
-        }
-    </AuthUserContext.Consumer>
-);
+
+class Footer extends Component {
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            
+        };
+    }
+    render() {
+        return (
+        <AuthUserContext.Consumer>
+            {authUser =>
+                authUser ? <FooterAuth authUser={authUser} /> : <FooterNonAuth emailMenu={this.props.firebase.emailOptMenu()}/>
+            }
+        </AuthUserContext.Consumer>
+        );
+    }
+}
 
 const FooterAuth = () => (
         <div className="topdiv-footer">
@@ -85,7 +98,29 @@ const FooterAuth = () => (
         </div>
 );
 
-const FooterNonAuth = () => (
+function subscribe(event, passed_email, emailMenu, setStatus) {
+    event.preventDefault()
+    if (passed_email !== "") {
+        emailMenu({secret: null, email: passed_email, choice: "in"}).then((result) => {
+            if (result) {
+                setStatus(result.data.status);
+                setTimeout(function(){
+                    setStatus("");
+               }, 10000);
+            }
+        }).catch(error => {
+            console.log(error)
+        })
+    }
+    else {
+        setStatus("Please enter an email!")
+    }
+}
+
+function FooterNonAuth ({emailMenu}) {
+    const [Status, setStatus] = useState( null );
+    const [Value, setValue] = useState( "" );
+    return (
     <div className="topdiv-footer">
         <Container>
             <Row className="row-header-footer">
@@ -122,6 +157,25 @@ const FooterNonAuth = () => (
             <Row>
                 <div className="divider-footer"/>
             </Row>
+            <Row className="row-header-footer">
+                <InputGroup className="mb-1 input-group-footer">
+                    <FormControl
+                    placeholder="Subscribe to our mailing list!"
+                    aria-label="Subscribe to our mailing list!"
+                    value={Value}
+                    onChange={(e) => setValue(e.target.value)}
+                    />
+                    <InputGroup.Append>
+                        <Button variant="outline-primary" onClick={(e) => {
+                                subscribe(e, Value, emailMenu, setStatus)
+                                setValue("");
+                            }
+                        }
+                        >Subscribe</Button>
+                    </InputGroup.Append>
+                </InputGroup>
+            </Row>
+            {Status ? <Row className="status-row-footer">{Status}</Row> : null}
             <Row className="all-cols-footer">
                 <a href="https://www.facebook.com/USAirsoftworld/">
                     <img src={fblogo} alt="Facebook Logo" className="socials-icons-footer"/>
@@ -138,8 +192,9 @@ const FooterNonAuth = () => (
             </Row>
         </Container>
     </div>
-);
+    )
+   };
 
 
 
-export default Footer;
+export default withFirebase(Footer);

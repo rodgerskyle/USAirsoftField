@@ -1188,3 +1188,13 @@ a.dropdown-item:hover {
 .col-nonauth-footer {
   display: contents;
 }
+
+.input-group-footer {
+  margin-top: .5rem;
+  width: 40% !important;
+}
+
+.status-row-footer {
+  color: lightgreen;
+  justify-content: center;
+}

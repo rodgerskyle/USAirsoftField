@@ -89,7 +89,7 @@ class Firebase {
 
     createPrivilegedUser = () => this.func.httpsCallable('createPrivilegedUser');
 
-    emailOptOut = () => this.func.httpsCallable('emailOptOut');
+    emailOptMenu = () => this.func.httpsCallable('emailOptMenu');
 
     manageProfile = () => this.func.httpsCallable('manageProfile');
 

@@ -23,8 +23,8 @@ class emailOptOut extends Component {
 
     updateUser = (event) => {
         event.preventDefault()
-        const optout = this.props.firebase.emailOptOut();
-        optout({secret: this.props.match.params.secret, email: this.state.value}).then((result) => {
+        const optmenu = this.props.firebase.emailOptMenu();
+        optmenu({secret: this.props.match.params.secret, email: this.state.value, choice: "out"}).then((result) => {
             if (result) this.setState({status: result.data.status})
         }).catch(error => {
             this.setState({error: 'failed-condition: Email does not match the token or it is an improper token.' })
