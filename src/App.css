@@ -128,6 +128,19 @@
 
 .imgUpload-input {
   background-color: grey;
+  text-align: left;
+}
+
+.img-upload-col-button {
+  max-width: 380px !important;
+  justify-content: flex-end;
+  display: flex;
+}
+
+.notice-col-settings {
+  max-width: 380px !important;
+  justify-content: center;
+  display: flex;
 }
 
 .firstPlace {
@@ -182,15 +195,23 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-left: 15px !important;
+    margin-left: 30px !important;
+    padding-bottom: 30px;
 }
 
 .forgotP {
   color: white;
+  text-align: center;
+  padding-bottom: 10px;
+}
+
+.input-group-forgot-pass {
+  padding-bottom: 10px;
 }
 
 .forgotPass {
   padding-top: 10px;
+  text-align: end;
 }
 
 .team-rows {
@@ -1217,4 +1238,60 @@ a.dropdown-item:hover {
 
 .notice-text {
   color:red;
+}
+
+.form-label-login {
+  float: left;
+}
+
+.login-container {
+  margin-top: 20px;
+  max-width: 565px !important;
+}
+
+.login-col {
+  background-color: rgb(73 80 87 / .6);
+  border-radius: 5px;
+}
+
+
+@media (min-width: 1200px) {
+  .login-form {
+    margin-left: 20%;
+    margin-right: 20%;
+  }
+}
+
+.small-logo-login {
+  height: auto;
+  width: 35%;
+  margin: 0;
+}
+
+.italic-forgot-text {
+  color: gray;
+}
+
+.file-input-admin {
+  width: 50% !important;
+  margin-top: 1rem;
+}
+
+.row-settings {
+  justify-content: center;
+}
+
+.password-forgot-button {
+  float: right;
+}
+
+.password-change-form {
+  color: white;
+}
+
+@media (min-width: 1200px) {
+  .password-change-form {
+    margin-left: 35%;
+    margin-right: 35%;
+  }
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import '../../App.css';
 
-import { Container, Row, Col } from 'react-bootstrap/';
+import { Container, Row } from 'react-bootstrap/';
 import PasswordChangeForm from '../../passwordChange';
 import { AuthUserContext, withAuthorization } from '../session';
 import ImageUpload from './ImageUpload';
@@ -12,13 +12,11 @@ const ProfileSettings = () => (
       <div className="background-static-all">
         <h2 className="page-header">Account Settings</h2>
         <Container>
-          <Row>
-            <Col className="col-settings">
+          <Row className="row-settings">
               <ImageUpload />
-            </Col>
-            <Col className="col-settings">
+          </Row>
+          <Row className="row-settings">
               <PasswordChangeForm />
-            </Col>
           </Row>
         </Container>
       </div>

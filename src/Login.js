@@ -1,20 +1,26 @@
 import React, { Component } from 'react';
 import { withRouter } from 'react-router-dom';
 import { compose } from 'recompose';
+import logo from './assets/logo.png';
 
 import { withFirebase } from './components/Firebase';
 import { PasswordForgetLink } from './passwordForgot';
 import ReCAPTCHA from 'react-google-recaptcha';
-import { Container, Row, Col } from 'react-bootstrap/';
+import { Container, Row, Col, Form, Button } from 'react-bootstrap/';
 
 //import { SignUpLink } from './components/Pages/Signup';
 //    <SignUpLink /> 
 
 const SignInPage = () => (
-  <div className="test">
-    <h1>SignIn</h1>
-    <SignInForm />
-    <PasswordForgetLink />
+  <div className="background-static-all">
+    <Container className="login-container">
+      <Col className="login-col">
+        <Row className="header-rp">
+          <img src={logo} alt="US Airsoft logo" className="small-logo-login"/>
+        </Row>
+        <SignInForm />
+      </Col>
+    </Container>
   </div>
 );
 
@@ -70,29 +76,36 @@ class SignInFormBase extends Component {
 
     return (
       <div>
-        <form onSubmit={this.onSubmit}>
-          <input
-            name="email"
-            value={email}
-            onChange={this.onChange}
-            type="text"
-            placeholder="Email Address"
-          />
-          <input
-            name="password"
-            value={password}
-            onChange={this.onChange}
-            type="password"
-            placeholder="Password"
-          />
-          <button disabled={isInvalid} type="submit">
+        <Form className="login-form" onSubmit={this.onSubmit}>
+          <Form.Group>
+            <Form.Label className="form-label-login">Email:</Form.Label>
+            <Form.Control
+              name="email"
+              value={email}
+              onChange={this.onChange}
+              type="text"
+              placeholder="Email Address"
+            />
+          </Form.Group>
+          <Form.Group>
+            <Form.Label className="form-label-login">Password:</Form.Label>
+            <Form.Control
+              name="password"
+              value={password}
+              onChange={this.onChange}
+              type="password"
+              placeholder="Enter Password"
+            />
+          </Form.Group>
+          <Button disabled={isInvalid} type="submit" block>
             Sign In
-        </button>
+        </Button>
+        <PasswordForgetLink />
           {error && <p>{error.message}</p>}
           <p>{this.state.error}</p>
-        </form>
+        </Form>
         <Container>
-          <Row className="align-items-center col-md-auto">
+          <Row className="align-items-center col-md-auto justify-content-center">
             <Col className="recap">
               <ReCAPTCHA
                 ref={(el) => { this.recaptcha = el; }}
