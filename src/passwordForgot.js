@@ -1,14 +1,9 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
+import logo from './assets/logo.png';
  
 import { withFirebase } from './components/Firebase';
- 
-const PasswordForgetPage = () => (
-  <div>
-    <h1>PasswordForget</h1>
-    <PasswordForgetForm />
-  </div>
-);
+import { Container, Row, Col, Form, Button, InputGroup, FormControl } from 'react-bootstrap/';
  
 const INITIAL_STATE = {
   email: '',
@@ -28,10 +23,16 @@ class PasswordForgetFormBase extends Component {
     this.props.firebase
       .doPasswordReset(email)
       .then(() => {
-        this.setState({ ...INITIAL_STATE });
+        this.setState({ 
+          email: '',
+          error: "Please check your inbox for further instructions." 
+         });
       })
       .catch(error_p => {
-        this.setState({ error: "If this is an email, there will be an password forgot link in your inbox." });
+        this.setState({ 
+          email: '', 
+          error: "Please check your inbox for further instructions." 
+        });
       });
  
     event.preventDefault();
@@ -47,30 +48,42 @@ class PasswordForgetFormBase extends Component {
     const isInvalid = email === '';
  
     return (
-      <form onSubmit={this.onSubmit} className="recap">
-        <input
-          name="email"
-          value={this.state.email}
-          onChange={this.onChange}
-          type="text"
-          placeholder="Email Address"
-        />
-        <button disabled={isInvalid} type="submit">
-          Reset My Password
-        </button>
-        <p className="forgotP">{error}</p>
-      </form>
+    <div className="background-static-all">
+      <Container className="login-container">
+        <Col className="login-col">
+          <Row className="header-rp">
+            <img src={logo} alt="US Airsoft logo" className="small-logo-login"/>
+          </Row>
+          <Form onSubmit={this.onSubmit}>
+            <InputGroup className="mb-1 input-group-forgot-pass">
+                <FormControl
+                name="email"
+                placeholder="Email Address"
+                aria-label="Email Address"
+                value={this.state.email}
+                onChange={this.onChange}
+                />
+                <InputGroup.Append>
+                    <Button variant="primary" type="submit"
+                    disabled={isInvalid}
+                    >Reset My Password</Button>
+                </InputGroup.Append>
+            </InputGroup>
+            <p className="forgotP">{error}</p>
+          </Form>
+        </Col>
+      </Container>
+    </div>
     );
   }
 }
  
 const PasswordForgetLink = () => (
   <p className="forgotPass">
-    <Link to="/forgotpassword">Forgot Password?</Link>
+    <i className="italic-forgot-text">Forgot </i>
+    <Link to="/forgotpassword">Password?</Link>
   </p>
 );
- 
-export default PasswordForgetPage;
  
 const PasswordForgetForm = withFirebase(PasswordForgetFormBase);
  

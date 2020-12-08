@@ -318,7 +318,8 @@ class AdminPage extends Component {
                                 </Button>
                                 <Form.Group>
                                   <Form.File id="email-image-input" onChange={this.handleUpload}
-                                  label="Attach Image" accept="image/*" />
+                                  label="Attach Image" accept="image/*" custom data-browse="Upload"
+                                  className="file-input-admin"/>
                                 </Form.Group>
                         </Form>
                         {this.state.email_status ? <p className="status-email-admin">{this.state.email_status}</p> : ""}

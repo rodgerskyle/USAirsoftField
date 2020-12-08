@@ -692,7 +692,10 @@ class SignUpFormBase extends Component {
                   this.setState({errorWaiver: "Participant must be younger than 85 years."})
                 }
                 else if (this.state.pageIndex!==1)
-                  this.setState({pageIndex: this.state.pageIndex+1})
+                  this.setState({
+                    pageIndex: this.state.pageIndex+1,
+                    errorWaiver: ""
+                  })
               }}>
                   Next
               </Button>
