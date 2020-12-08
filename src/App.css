@@ -1198,3 +1198,23 @@ a.dropdown-item:hover {
   color: lightgreen;
   justify-content: center;
 }
+
+.about-div-home {
+  margin-top: 35px;
+}
+
+.notice-text-container {
+  background-color: rgb(73 80 87 / .6);
+  border-radius: 5px;
+  padding-top: 5px;
+  padding-bottom: 20px;
+  margin-top: 20px;
+}
+
+.row-notice {
+  justify-content: center;
+}
+
+.notice-text {
+  color:red;
+}

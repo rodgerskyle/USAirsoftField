@@ -4,6 +4,8 @@ import { Container, Row, Col, Form, Button } from 'react-bootstrap/';
 
 import { AuthUserContext, withAuthorization } from '../session';
 
+import logo from '../../assets/logo.png';
+
 import { withFirebase } from '../Firebase';
 
 import alticon from '../../assets/team-img-placeholder.png';
@@ -183,7 +185,21 @@ class TeamCreate extends Component {
                 {authUser => (
                     <div className="background-static-all">
                         {authUser.team !== '' ?
-                            <p className="team-manage-blank">You already have a team, you must quit your team first.</p>
+                            <Container className="notice-text-container">
+                                <Row className="row-success-rp">
+                                    <Col className="col-rp">
+                                        <Row className="row-notice">
+                                            <h2 className="page-header">Team Create Error:</h2>
+                                        </Row>
+                                        <Row className="row-notice">
+                                            <p className="notice-text">You already have a team, you must quit your team first.</p>
+                                        </Row>
+                                        <Row className="row-notice">
+                                            <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>
+                                        </Row>
+                                    </Col>
+                                </Row>
+                            </Container> 
                             : (page ?
                                 <Container>
                                     <h2 className="header-teamc">Create your team!</h2>

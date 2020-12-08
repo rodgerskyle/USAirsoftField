@@ -1,10 +1,12 @@
 import React, { Component } from 'react';
 
-import { Container, Form, Button } from 'react-bootstrap/';
+import { Container, Form, Button, Row, Col } from 'react-bootstrap/';
 
 import { AuthUserContext, withAuthorization } from '../session';
 
 import { withFirebase } from '../Firebase';
+
+import logo from '../../assets/logo.png';
 
 import './Profile.css';
 import 'react-bootstrap-typeahead/css/Typeahead.css';
@@ -249,7 +251,21 @@ class TeamManage extends Component {
                 {authUser => (
                     <div className="background-static-all">
                         {authUser.team === "" ?
-                            <p className="team-manage-blank">You do not have a team</p>
+                            <Container className="notice-text-container">
+                                <Row className="row-success-rp">
+                                    <Col className="col-rp">
+                                        <Row className="row-notice">
+                                            <h2 className="page-header">Team Manage Error:</h2>
+                                        </Row>
+                                        <Row className="row-notice">
+                                            <p className="notice-text">You do not have a team to manage at this time.</p>
+                                        </Row>
+                                        <Row className="row-notice">
+                                            <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>
+                                        </Row>
+                                    </Col>
+                                </Row>
+                            </Container> 
                             :
                             this.state.teamObject.leader === authUser.uid ?
                             <Container>

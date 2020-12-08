@@ -498,7 +498,7 @@ class WaiverPageFormBase extends Component {
           </Row> 
       </div>
       : 
-      <Container>
+      <Container className="notice-text-container">
         <Row className="row-success-rp">
           <Col className="col-rp">
             <h2 className="page-header">Successful Waiver Registration.</h2>

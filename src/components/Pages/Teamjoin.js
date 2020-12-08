@@ -1,9 +1,11 @@
 
 import React, { Component } from 'react';
 
-import { Container, Button } from 'react-bootstrap/';
+import { Container, Button, Row, Col } from 'react-bootstrap/';
 
 import { Typeahead } from 'react-bootstrap-typeahead';
+
+import logo from '../../assets/logo.png';
 
 import { AuthUserContext, withAuthorization } from '../session';
 
@@ -96,7 +98,21 @@ class TeamJoin extends Component {
                 {authUser => (
                     <div className="background-static-all">
                         {authUser.team !== "" ?
-                            <p className="team-manage-blank">You already have a team</p>
+                            <Container className="notice-text-container">
+                                <Row className="row-success-rp">
+                                    <Col className="col-rp">
+                                        <Row className="row-notice">
+                                            <h2 className="page-header">Team Join Error:</h2>
+                                        </Row>
+                                        <Row className="row-notice">
+                                            <p className="notice-text">You already have a team, please leave your team to join another.</p>
+                                        </Row>
+                                        <Row className="row-notice">
+                                            <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>
+                                        </Row>
+                                    </Col>
+                                </Row>
+                            </Container> 
                             :
                             <Container>
                                 <h2 className="page-header">Join Team</h2>
