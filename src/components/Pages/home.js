@@ -1,25 +1,16 @@
 import React from 'react';
-import banner from '../../assets/banner.png';
 import logo from '../../assets/logo.png';
-import { Carousel } from 'react-bootstrap/';
 import { Container, Row, Col } from 'react-bootstrap/';
 import BackgroundVideo from '../constants/backgroundvideo';
 
 const Home = () => (
   <div>
   <BackgroundVideo/>
-    <div className="banner">
-      <Carousel>
-        <Carousel.Item>
-          <img src={banner} alt="US Airsoft logo with player" className="bannerimg" />
-        </Carousel.Item>
-      </Carousel>
-    </div>
   <div className="background-static-all">
     <Container fluid={true}>
       <Row className="text-center stat-box">
         <Col className="col-settings">
-          <div className="counter boxes-home boxes-home-nopadbot">
+          <div className="counter boxes-home boxes-home-nopadbot about-div-home">
             <h2>About Us:</h2>
             <h5 className="about-us" data-to="1700" data-speed="1500">
               U.S. AIRSOFT WORLD is the premier airsoft arena in the U.S. We are located in Anderson, CA - Just outside of Redding.

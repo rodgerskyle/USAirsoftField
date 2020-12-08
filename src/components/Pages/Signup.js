@@ -698,7 +698,7 @@ class SignUpFormBase extends Component {
               </Button>
             </Row>
         </div> :
-        <Container>
+        <Container className="notice-text-container">
           <Row className="row-success-rp">
             <Col className="col-rp">
               <h2 className="page-header">Successful Member Registration.</h2>
