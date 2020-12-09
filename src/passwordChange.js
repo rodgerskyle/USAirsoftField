@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 
-import { Button, Row, Col } from 'react-bootstrap/';
+import { Button, Form, Container } from 'react-bootstrap/';
  
 import { withFirebase } from './components/Firebase';
  
@@ -43,42 +43,35 @@ class PasswordChangeForm extends Component {
       passwordOne !== passwordTwo || passwordOne === '';
  
     return (
-      <form onSubmit={this.onSubmit}>
-        <Row>
-          <Col>
-            <p className="password-text">Password :</p>
-          </Col>
-          <Col>
-            <input
+      <Container>
+      <Form className="password-change-form" onSubmit={this.onSubmit}>
+          <Form.Group>
+            <Form.Label>Password:</Form.Label>
+            <Form.Control
               name="passwordOne"
               value={passwordOne}
               onChange={this.onChange}
               type="password"
               placeholder="New Password"
             />
-          </Col>
-        </Row>
-        <Row>
-          <Col>
-            <p className="password-text">Confirm Password :</p>
-          </Col>
-          <Col>
-            <input
+          </Form.Group>
+          <Form.Group>
+            <Form.Label>Password:</Form.Label>
+            <Form.Control
               name="passwordTwo"
               value={passwordTwo}
               onChange={this.onChange}
               type="password"
               placeholder="Confirm New Password"
             />
-          </Col>
-        </Row>
-        <Button disabled={isInvalid} type="submit"
-        variant="outline-success">
-          Reset My Password
-        </Button>
- 
+          </Form.Group>
+          <Button disabled={isInvalid} type="submit"
+            variant="outline-success" className="password-forgot-button">
+            Reset
+          </Button>
         {error && <p>{error.message}</p>}
-      </form>
+      </Form>
+      </Container>
     );
   }
 }

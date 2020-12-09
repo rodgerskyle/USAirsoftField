@@ -38,6 +38,9 @@ class Firebase {
 
     doPasswordUpdate = password =>
         this.auth.currentUser.updatePassword(password);
+    
+    doEmailUpdate = email => 
+        this.auth.currentUser.updateEmail(email)
 
     // *** Merge Auth and DB User API *** //
     onAuthUserListener = (next, fallback) =>
@@ -84,7 +87,15 @@ class Firebase {
 
     sendMail = () => this.func.httpsCallable('sendMail');
 
-    // Database API
+    createPrivilegedUser = () => this.func.httpsCallable('createPrivilegedUser');
+
+    emailOptMenu = () => this.func.httpsCallable('emailOptMenu');
+
+    manageProfile = () => this.func.httpsCallable('manageProfile');
+
+    testRenewal = () => this.func.httpsCallable('testRenewal');
+
+    // Storage Database API
 
     membersWaivers = pdf => this.st.ref().child(`waivers/members/${pdf}`);
 
@@ -96,11 +107,24 @@ class Firebase {
 
     teamsPictures = img => this.st.ref().child(`teams/${img}`);
 
+    emailAttachment = () => this.st.ref().child('email/emailattachment.png');
+
     // User API
 
     user = uid => this.db.ref(`users/${uid}`);
 
     users = () => this.db.ref('users');
+
+    // Email List API
+
+    emailListMembers = (secret) => this.db.ref(`emaillist/members/${secret}`);
+
+    emailListNonMembers = (secret) => this.db.ref(`emaillist/non-members/${secret}`);
+
+    grabEmailListM = () => this.db.ref(`emaillist/members`);
+
+    grabEmailListNM = () => this.db.ref(`emaillist/non-members`);
+
 
     // Team API
 

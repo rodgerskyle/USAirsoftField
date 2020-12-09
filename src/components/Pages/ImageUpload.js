@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 
 import { AuthUserContext, withAuthorization } from '../session';
 
-import { Container, Button } from 'react-bootstrap/';
+import { Button, Form, Row, Col } from 'react-bootstrap/';
 
 import { withFirebase } from '../Firebase';
 
@@ -21,7 +21,10 @@ class ImageUpload extends Component {
 
     componentDidMount() {
         this.authSubscription = this.props.firebase.auth.onAuthStateChanged((user) => {
-            this.getProfile(`${user.uid}/profilepic`);
+            if (this.state.authUser.profilepic)
+                this.getProfile(`${user.uid}/profilepic`);
+            else
+                this.setState({ url: ""})
         });
     }
 
@@ -70,6 +73,8 @@ class ImageUpload extends Component {
                     .getDownloadURL()
                     .then(url => {
                         this.setState({ url });
+                        var manage = this.props.firebase.manageProfile();
+                        manage({choice: "profilepic"})
                     });
             }
         );
@@ -79,7 +84,7 @@ class ImageUpload extends Component {
         return (
             <AuthUserContext.Consumer>
                 {authUser => (
-                    <Container>
+                    <div>
                         <img
                             src={this.state.url || "https://via.placeholder.com/350x250"}
                             alt="Uploaded Images"
@@ -87,26 +92,37 @@ class ImageUpload extends Component {
                             width="350"
                             className="profile-img-settings"
                         />
-                        <p className="notice-text-settings"><b>NOTE: </b>Images can only be MAX 5mb </p>
-                        <p className="notice-text-settings">and display on your profile like above.</p>
+                        <Row>
+                            <Col className="notice-col-settings">
+                                <p className="notice-text-settings"><b>NOTE: </b>Images can only be MAX 5mb </p>
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Col className="notice-col-settings">
+                                <p className="notice-text-settings">and display on your profile like above.</p>
+                            </Col>
+                        </Row>
                         <div className="file-field input-field">
                             <div className="btn">
-                                <span className="imgUpload-text">File</span>
-                                <input type="file" onChange={this.handleChange} 
-                                className="imgUpload-input" accept="image/*"
-                                />
+                                <Form.File onChange={this.handleChange}
+                                label="Change Picture" accept="image/*" custom data-browse="Upload"
+                                className="imgUpload-input"/>
                             </div>
                         </div>
-                        <Button
-                            onClick={(() => this.handleUpload(authUser.uid))}
-                            variant="outline-success"
-                            className="imgUpload-submit"
-                            disabled={isInvalid}
-                        >
-                            Submit
-                        </Button>
-                    </Container>
 
+                        <Row>
+                            <Col className="img-upload-col-button">
+                                <Button
+                                    onClick={(() => this.handleUpload(authUser.uid))}
+                                    variant="outline-success"
+                                    className="imgUpload-submit"
+                                    disabled={isInvalid}
+                                >
+                                    Submit
+                                </Button>
+                            </Col>
+                        </Row>
+                    </div>
                 )}
             </AuthUserContext.Consumer>
         );

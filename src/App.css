@@ -128,6 +128,19 @@
 
 .imgUpload-input {
   background-color: grey;
+  text-align: left;
+}
+
+.img-upload-col-button {
+  max-width: 380px !important;
+  justify-content: flex-end;
+  display: flex;
+}
+
+.notice-col-settings {
+  max-width: 380px !important;
+  justify-content: center;
+  display: flex;
 }
 
 .firstPlace {
@@ -182,15 +195,23 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-left: 15px !important;
+    margin-left: 30px !important;
+    padding-bottom: 30px;
 }
 
 .forgotP {
   color: white;
+  text-align: center;
+  padding-bottom: 10px;
+}
+
+.input-group-forgot-pass {
+  padding-bottom: 10px;
 }
 
 .forgotPass {
   padding-top: 10px;
+  text-align: end;
 }
 
 .team-rows {
@@ -201,7 +222,6 @@
 
 .team-rows-icons {
   font-size: 1.4em !important;
-  padding-left: 10px;
   display: inline-block;
 }
 
@@ -319,8 +339,7 @@
 }
 
 .team-pictures {
-  width: 654px;
-  height: 192px;
+  border: 1px solid black;
 }
 
 .team-upload-warning {
@@ -353,11 +372,11 @@
 }
 
 .wins-lb {
-  color: rgb(0, 180, 0);
+  color: rgb(118, 251, 0);
 }
 
 .losses-lb {
-  color: red;
+  color: #fb6060;
 }
 
 .profilelink-lb:link {
@@ -399,15 +418,11 @@
 }
 
 .button-left-lb {
-  text-align: left;
-  padding-top: 20px;
-  padding-bottom: 20px;
+  padding: 10px 15px;
 }
 
 .button-right-lb {
-  text-align: right;
-  padding-top: 20px;
-  padding-bottom: 20px;
+  padding: 10px 15px; 
 }
 
 .title-lb {
@@ -422,7 +437,7 @@
   background: url("assets/background-lb.jpeg") center no-repeat;
   background-size: 100% 100%;
   color: white;
-  height: 110vh;
+  min-height: 100vh;
 }
 
 .background-static-all::before {
@@ -432,7 +447,7 @@
 .background-static-all {
   background: url("assets/background-all.jpeg") center no-repeat;
   background-size: 100% 100%;
-  height: 110vh;
+  min-height: 100vh;
 }
 
 .password-text {
@@ -545,10 +560,35 @@ a.dropdown-item:hover {
   margin-top: 10px;
 }
 
+.status-card-body-fg-admin {
+  overflow-y: scroll;
+  max-height: 40vh;
+  color: white;
+  padding-bottom: 0 !important;
+  padding-top: 5px !important;
+}
+
+.status-card-body-main-admin {
+  overflow-y: scroll;
+  max-height: 40vh;
+  color: white;
+  padding-bottom: 0 !important;
+  padding-top: 5px !important;
+  border: 1px solid lightgray;
+}
+
 .status-card-body-admin {
   overflow-y: scroll;
-  max-height: 35vh;
+  max-height: 40vh;
   color: white;
+}
+
+.status-card-body-renew-admin {
+  overflow-y: scroll;
+  max-height: 40vh;
+  color: white;
+  padding-bottom: 0 !important;
+  padding-top: 5px !important;
 }
 
 .status-card-offrow-admin {
@@ -634,6 +674,18 @@ a.dropdown-item:hover {
 .row-rp {
   justify-content: center;
   background-color: rgb(108, 117, 125, 0.75)
+}
+
+.row-renew {
+  justify-content: center;
+}
+
+.row-success-rp {
+  justify-content: center;
+}
+
+.cardpreview-row-rp {
+  justify-content: center;
 }
 
 .button-row-rp {
@@ -786,7 +838,7 @@ a.dropdown-item:hover {
 }
 
 .card-header-wl {
-  border-bottom: 1px solid black;
+  border-bottom: 1px solid lightgray;
 }
 
 .row-1-wl {
@@ -803,6 +855,8 @@ a.dropdown-item:hover {
 .admin-cards {
   color: white;
   background-color: rgb(108, 117, 125, 0.75) !important;
+  min-height: 100%;
+  border: none !important;
 }
 
 .admin-card-icon {
@@ -816,6 +870,10 @@ a.dropdown-item:hover {
 .admin-card-footer:hover {
   text-decoration-line: underline !important;
   text-decoration-color: white !important;
+}
+
+.admin-card-header-link {
+  background-color: rgb(4, 4, 4, .4) !important;
 }
 
 .admin-card-footer {
@@ -881,3 +939,367 @@ a.dropdown-item:hover {
    color: lightgray !important;
    text-decoration: none;
  }
+
+ .confirm-buttons-admin {
+   margin: 0 !important;
+ }
+
+ .col-options-button-admin {
+  justify-content: left;
+  display: flex;
+  margin-bottom: 5px;
+ }
+
+ #options-buttons-admin:hover * {
+   transition:0.3s ease all;
+   background-image: linear-gradient(90deg, black, transparent);
+   background-color: transparent !important;
+ }
+
+ .options-buttons-row-admin {
+   background: none !important;
+ }
+
+.user-card-offrow-admin-fg {
+  margin-bottom: 10px;
+  border-radius: 5px;
+  background-color:darkgray;
+  margin-left: -10px;
+  padding-left: 10px;
+}
+
+.row-options-admin {
+  margin-top: -10px;
+  margin-bottom: 5px;
+  padding: 5px 5px;
+}
+
+.button-options-style-admin {
+  padding: .25rem !important;
+  float: right;
+  white-space: nowrap;
+}
+
+.col-name-ul {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  min-width: 100%;
+}
+
+.button-options-col-admin {
+  padding: 0 2px !important;
+}
+
+.loading-text-ul-admin {
+  justify-content: center;
+}
+
+.status-ul-admin {
+  color: lightgreen;
+  text-align: center;
+  margin-top: -15px;
+}
+
+.error-ul-admin {
+  color: red;
+  text-align: center;
+  margin-top: -15px;
+}
+
+.status-email-admin {
+  color: lightgreen;
+  text-align: left;
+  padding-top: 5px;
+}
+
+.email-img-admin {
+  position: absolute;
+  top: 30%;
+  left: 5%;
+  max-width: 90%;
+  height: auto;
+}
+
+.email-body-form-admin {
+  text-align: center;
+}
+
+ .admin-row-emailoptout {
+  background-color: rgb(108, 117, 125, 0.75);
+  margin-right: 0 !important;
+  margin-left: 0 !important;
+  border-radius: 5px;
+  padding: 5px;
+  color: white;
+  margin-top: 15px;
+ }
+
+.status-oo-admin {
+  color: lightgreen;
+  text-align: center;
+  margin-left: 5px;
+}
+
+.error-oo-admin {
+  color: red;
+  text-align: center;
+  margin-left: 5px;
+}
+
+.navitem-img {
+  max-width: 320px;
+}
+
+.row-uo {
+  color: white;
+}
+
+.row-buttons-uo {
+  direction: rtl;
+  padding: 15px;
+}
+
+.button-update-uo {
+  margin-right:15px;
+}
+
+.row-priv-buttons-uo {
+  background-color: gray;
+  padding: 15px;
+  border-radius: 5px;
+}
+
+.super-status-uo-admin {
+  color: lightgreen;
+  margin-bottom: 0 !important;
+  margin-top: 0 !important;
+}
+
+.status-uo-admin {
+  color: lightgreen;
+  margin-bottom: 0 !important;
+  margin-top: 0 !important;
+  margin-right: 10px;
+  align-items: center;
+  display: flex;
+}
+
+.status-col-uo {
+  align-content: center;
+  display: grid;
+  justify-content: end;
+}
+
+.row-header-lb {
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+.col-header-lb {
+  align-items: center;
+  display: flex;
+}
+
+.vertical-divider-col-lb {
+  border-right: 1px solid white;
+}
+
+.pagination-col-lb {
+  justify-content: flex-end;
+  align-items: flex-end;
+  margin-bottom: -8px;
+}
+
+.img-row-contact {
+  justify-content: center;
+  padding: 10px;
+}
+
+.img-contact {
+  border-radius: 5px;
+}
+
+.text-col-contact {
+  justify-content: center;
+  display: flex;
+  align-items: center;
+  color: white;
+  background-color: rgb(73 80 87 / .6);
+  margin: 10px;
+  border-radius: 5px; 
+}
+
+.row-contact {
+  justify-content: center;
+}
+
+.text-row-contact {
+  padding: 10px;
+}
+
+.topdiv-footer {
+  background-color: rgb(73 80 87 / .6);
+  border-top: 1px solid darkgray;
+  padding: 20px;
+  margin-top: 15px;
+}
+
+.divider-footer {
+  justify-content: center;
+  content: '';
+  display: block;
+  width: 75%;
+  height: 2px;
+  border-radius: 5px;
+  background-color: darkgrey;
+  margin: auto;
+  margin-top: 10px;
+}
+
+.about-col-left-footer {
+  color: white;
+  font-size: 14px;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.about-col-right-footer {
+  color: white;
+  font-size: 14px;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.header-footer {
+  color: white;
+  margin-bottom: 0 !important;
+}
+
+.myaccount-col-footer {
+  color: white;
+  font-size: 14px;
+}
+
+.all-cols-footer {
+  justify-content: center;
+  display: grid;
+}
+
+.socials-icons-footer {
+  padding: 5px;
+}
+
+.profile-row-footer {
+  justify-content: center;
+}
+
+.link-footer:link {
+  color: white;
+}
+
+.link-footer:visited {
+  color: white;
+}
+
+.row-header-footer {
+  justify-content: center;
+}
+
+.col-nonauth-footer {
+  display: contents;
+}
+
+.input-group-footer {
+  margin-top: .5rem;
+  width: 40% !important;
+}
+
+.status-row-footer {
+  color: lightgreen;
+  justify-content: center;
+}
+
+.about-div-home {
+  margin-top: 35px;
+}
+
+.notice-text-container {
+  background-color: rgb(73 80 87 / .6);
+  border-radius: 5px;
+  padding-top: 5px;
+  padding-bottom: 20px;
+  margin-top: 20px;
+}
+
+.row-notice {
+  justify-content: center;
+}
+
+.notice-text {
+  color:red;
+}
+
+.form-label-login {
+  float: left;
+}
+
+.login-container {
+  margin-top: 20px;
+  max-width: 565px !important;
+}
+
+.login-col {
+  background-color: rgb(73 80 87 / .6);
+  border-radius: 5px;
+}
+
+.login-form {
+  color: white;
+}
+
+
+@media (min-width: 1200px) {
+  .login-form {
+    margin-left: 20%;
+    margin-right: 20%;
+  }
+}
+
+.small-logo-login {
+  height: auto;
+  width: 35%;
+  margin: 0;
+}
+
+.italic-forgot-text {
+  color: gray;
+}
+
+.file-input-admin {
+  width: 50% !important;
+  margin-top: 1rem;
+}
+
+.row-settings {
+  justify-content: center;
+}
+
+.password-forgot-button {
+  float: right;
+}
+
+.password-change-form {
+  color: white;
+}
+
+@media (min-width: 1200px) {
+  .password-change-form {
+    margin-left: 35%;
+    margin-right: 35%;
+  }
+}
+
+.tooltip {
+  transition: opacity 0.15s linear;
+}

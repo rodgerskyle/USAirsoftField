@@ -10,7 +10,7 @@ import '../../App.css';
 import cardimages from '../constants/cardimgs';
 import waiver from '../../assets/Waiver-cutoff.png'
 
-import { withAuthorization } from '../session';
+import { AuthUserContext, withAuthorization } from '../session';
 import { compose } from 'recompose';
 import { withFirebase } from '../Firebase';
 import * as ROLES from '../constants/roles';
@@ -32,21 +32,31 @@ const config = {
 
  
 const SignUpPage = () => (
-  <div className="background-static-all">
-    <Container>
-      <Row className="header-rp">
-        <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>
-        <h2 className="page-header">Membership Form</h2>
-      </Row>
-      <Breadcrumb className="admin-breadcrumb">
-          <LinkContainer to="/admin">
-              <Breadcrumb.Item>Admin</Breadcrumb.Item>
-          </LinkContainer>
-          <Breadcrumb.Item active>Registration</Breadcrumb.Item>
-      </Breadcrumb>
-        <SignUpForm />
-    </Container>
-  </div>
+  <AuthUserContext.Consumer>
+      {authUser => (
+      <div className="background-static-all">
+        <Container>
+          <Row className="header-rp">
+            <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>
+            <h2 className="page-header">Membership Form</h2>
+          </Row>
+          <Breadcrumb className="admin-breadcrumb">
+              {authUser && !!authUser.roles[ROLES.ADMIN] ? 
+              <LinkContainer to="/admin">
+                  <Breadcrumb.Item>Admin</Breadcrumb.Item>
+              </LinkContainer>
+              :
+              <LinkContainer to="/dashboard">
+                  <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
+              </LinkContainer> 
+              }
+              <Breadcrumb.Item active>Registration</Breadcrumb.Item>
+          </Breadcrumb>
+            <SignUpForm />
+        </Container>
+      </div>
+      )}
+  </AuthUserContext.Consumer>
 );
 
 
@@ -91,7 +101,69 @@ class SignUpFormBase extends Component {
     super(props);
 
     this.completeWaiver = this.completeWaiver.bind(this);
-    this.state = { ...INITIAL_STATE, status: "", };
+    this.state = { ...INITIAL_STATE, emailListNM: null, emailListM: null};
+  }
+
+  componentDidMount() {
+      this.props.firebase.grabEmailListNM().on('value', snapshot => {
+          const emailsObjectNM = snapshot.val();
+
+          const emailListNM = Object.keys(emailsObjectNM).map(key => ({
+              ...emailsObjectNM[key],
+              secret: key,
+          }))
+
+          this.setState({
+            emailListNM
+          });
+      });
+      this.props.firebase.grabEmailListM().on('value', snapshot => {
+          const emailsObjectM = snapshot.val();
+
+          const emailListM = Object.keys(emailsObjectM).map(key => ({
+              ...emailsObjectM[key],
+              secret: key,
+          }))
+
+          this.setState({
+            emailListM
+          });
+      });
+  }
+
+  componentWillUnmount() {
+    this.props.firebase.grabEmailListNM().off();
+    this.props.firebase.grabEmailListM().off();
+  }
+
+  // Will Check duplicates in list
+  checkDuplicates(email) {
+    const {emailListNM } = this.state;
+    let lengthNM = emailListNM.length;
+    let y = 0;
+    // Now go through both at the same time
+    while (y < lengthNM) {
+      if (y < lengthNM) {
+        if (emailListNM[y].email === email) {
+          return true;
+        }
+        y++
+      }
+    } 
+    return false;
+  }
+
+  // Complete email sign up to email list 
+  emailSignUp = () => {
+    var { email } = this.state;
+    email = email.toLowerCase();
+    // Check for duplicate email
+    if (!this.checkDuplicates(email)) {
+      // Use below to generate random uid for signing up and filling out waivers
+      var secret = 'm' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5).toUpperCase();
+      this.props.firebase.emailListMembers(secret).set({email})
+    }
+    this.setState({emailAdded: true})
   }
 
 
@@ -112,6 +184,7 @@ class SignUpFormBase extends Component {
     const renewal = (new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear()+1);
     const username = (fname+lname).replace(/\s/, "").toLowerCase();
     const name = fname + " " + lname;
+    const profilepic = false;
     //We need to check if username exists
     const freegames = 0;
     const team = '';
@@ -138,14 +211,13 @@ class SignUpFormBase extends Component {
             cmlosses,
             pmwins,
             pmlosses,
-            renewal
+            renewal,
+            profilepic
           });
       })
       .then(authUser => {
-        //this.setState({ ...INITIAL_STATE, status: "Completed" });
         this.setState({submitted: true})
-        //window.location.href="/signup";
-        //this.props.history.push("/");
+        this.emailSignUp();
       })
       .catch(error => {
         this.setState({ error });
@@ -225,7 +297,8 @@ class SignUpFormBase extends Component {
 
  
     return (
-      <div> {!showLander ?
+      <div> 
+        {!showLander ?
         <div>
           <Row className="row-rp">
             { this.state.pageIndex === 0 ? 
@@ -479,10 +552,10 @@ class SignUpFormBase extends Component {
             <Form className="form-rp" onSubmit={this.onSubmit}>
               <Row>
                 <Col>
-                  <Row className="row-rp">
+                  <Row className="cardpreview-row-rp">
                     <h5>Card Preview:</h5>
                   </Row>
-                  <Row className="row-rp card-row-rp">
+                  <Row className="cardpreview-row-rp card-row-rp">
                     <img src={this.state.cards[this.state.index]} alt="US Airsoft cards" className="card-rp"/>
                     <Row className={this.state.fname === "" && this.state.lname === "" ? "text-block-empty-rp" : "text-block-card-rp"}>
                         {this.state.fname + " " + this.state.lname}
@@ -619,20 +692,23 @@ class SignUpFormBase extends Component {
                   this.setState({errorWaiver: "Participant must be younger than 85 years."})
                 }
                 else if (this.state.pageIndex!==1)
-                  this.setState({pageIndex: this.state.pageIndex+1})
+                  this.setState({
+                    pageIndex: this.state.pageIndex+1,
+                    errorWaiver: ""
+                  })
               }}>
                   Next
               </Button>
             </Row>
         </div> :
-        <Container>
-          <Row className="row-rp">
+        <Container className="notice-text-container">
+          <Row className="row-success-rp">
             <Col className="col-rp">
               <h2 className="page-header">Successful Member Registration.</h2>
               <p className="page-header">Please let your U.S. Airsoft employee know that you have finished.</p>
             </Col>
           </Row>
-          <Row className="row-rp">
+          <Row className="row-success-rp">
               <Button className="next-button-rp" variant="info" type="button" 
               onClick={() => {
                 this.setState({showLander: false})
@@ -664,7 +740,7 @@ const SignUpLink = () => (
 */
 
 const condition = authUser =>
-authUser && !!authUser.roles[ROLES.ADMIN];
+  authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]);
 
 const SignUpForm = compose(
     withAuthorization(condition),

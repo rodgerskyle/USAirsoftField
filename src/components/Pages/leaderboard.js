@@ -2,28 +2,35 @@ import React, { Component } from 'react';
 import { Table } from 'react-bootstrap/';
 import '../../App.css';
 
-import { Container, Row, Col } from 'react-bootstrap/';
+import { Container, Row, Col, Pagination, OverlayTrigger, Tooltip } from 'react-bootstrap/';
 import BootstrapSwitchButton from 'bootstrap-switch-button-react';
 
+import ranks from '../constants/ranks';
 import rankimages from '../constants/smallrankimgs';
 import Td from '../constants/td';
 
 import { withFirebase } from '../Firebase';
 
-class Leaderboards extends Component {
+class Leaderboards extends Component {DAWKDAWDKWA
     constructor(props) {
         super(props);
 
         this.state = {
-            images: rankimages,
             loading: false,
             users: [],
+            displayUsers: [],
             getRankState: this.getRank,
             monthly: false,
             currentMonth: true,
             thisMonth: "",
             lastMonth: "",
+            curPage: 1,
+            numPages: 0,
+            usersPerPage: 12,
         };
+        this.handleClick = this.handleClick.bind(this);
+        this.handleLastClick = this.handleLastClick.bind(this);
+        this.handleFirstClick = this.handleFirstClick.bind(this);
     }
 
     //Figuring out rank logic
@@ -130,6 +137,26 @@ class Leaderboards extends Component {
             this.setState({thisMonth: "December", lastMonth: "November"})
     }
 
+    //Pagination Logic
+    handleClick(val) {
+        this.setState({
+            curPage: val
+        });
+    }
+
+    handleLastClick(event) {
+        event.preventDefault();
+        this.setState({
+            curPage: this.state.numPages
+        });
+    }
+    handleFirstClick(event) {
+        event.preventDefault();
+        this.setState({
+            curPage:1
+        });
+    }
+
     componentDidMount() {
         this.setState({ loading: true });
         this.getMonths(parseInt(new Date().getMonth().toLocaleString()) + 1)
@@ -143,8 +170,9 @@ class Leaderboards extends Component {
             }));
 
             this.setState({
-                users: usersList,
+                users: usersList.sort((a,b) => (a.points < b.points ? 1 : -1)),
                 loading: false,
+                numPages: Math.ceil(usersList.length/this.state.usersPerPage)
             });
         });
     }
@@ -154,44 +182,84 @@ class Leaderboards extends Component {
     }
 
     render() {
-        const { users, loading, getRankState } = this.state;
+        const { users, loading, getRankState, numPages, curPage, currentMonth, usersPerPage } = this.state;
 
         return (
             <div className="background-static-lb">
-                <h2 className="page-header">Leaderboards</h2>
                 <Container className="leaderboard-page">
-                    <Row>
-                        <Col className="button-left-lb">
-                            {this.state.monthly === true ?
-                            <BootstrapSwitchButton
-                                checked={this.state.currentMonth}
-                                onstyle="dark"
-                                width={120}
-                                onlabel={this.state.thisMonth}
-                                offlabel={this.state.lastMonth}
-                                onChange={() => {
-                                    this.setState({ currentMonth: !this.state.currentMonth})
-                                }}
-                            /> : null}
+                    <Row className="row-header-lb">
+                        <Col xs="auto" className="col-header-lb vertical-divider-col-lb">
+                            <h2>Leaderboards</h2>
                         </Col>
-                        <Col className="button-right-lb">
-                            <BootstrapSwitchButton
-                                checked={!this.state.monthly}
-                                onstyle="dark"
-                                width={120}
-                                onlabel='All Time'
-                                offlabel='Monthly'
-                                onChange={() => {
-                                    this.setState({ monthly: !this.state.monthly})
-                                }}
-                            />
+                        <Col>
+                            <Row className="button-right-lb">
+                                <BootstrapSwitchButton
+                                    checked={!this.state.monthly}
+                                    onstyle="dark"
+                                    width={120}
+                                    onlabel='All Time'
+                                    offlabel='Monthly'
+                                    onChange={() => {
+                                        if (this.state.monthly) {
+                                            this.setState({ 
+                                                monthly: !this.state.monthly, 
+                                                users: users.sort((a,b) => (a.points < b.points ? 1 : -1))
+                                            })
+                                        }
+                                        else
+                                            this.setState({ 
+                                                monthly: !this.state.monthly,
+                                                currentMonth: true,
+                                                users: users.sort((a,b) => (a.cmwins*10 + a.cmlosses*3 < b.cmwins*10 + b.cmlosses*3 ? 1 : -1))
+                                            })
+                                    }}
+                                />
+                            </Row>
+                            {this.state.monthly === true ?
+                            <Row className="button-left-lb">
+                                <BootstrapSwitchButton
+                                    checked={this.state.currentMonth}
+                                    onstyle="dark"
+                                    width={120}
+                                    onlabel={this.state.thisMonth}
+                                    offlabel={this.state.lastMonth}
+                                    onChange={() => {
+                                        if (currentMonth) {
+                                            this.setState({ 
+                                                currentMonth: !currentMonth,
+                                                users: users.sort((a,b) => (a.pmwins*10 + a.pmlosses*3 < b.pmwins*10 + b.pmlosses*3 ? 1 : -1)),                                        
+                                            })
+                                        }
+                                        else {
+                                            this.setState({ 
+                                                currentMonth: !currentMonth,
+                                                users: users.sort((a,b) => (a.cmwins*10 + a.cmlosses*3 < b.cmwins*10 + b.cmlosses*3 ? 1 : -1))
+                                            })
+                                        }
+                                    }}
+                                /> 
+                            </Row> : null}
+                        </Col>
+                        <Col className="col-header-lb pagination-col-lb">
+                            <Pagination>
+                                <Pagination.First onClick={this.handleFirstClick}/>
+                                <Pagination.Prev onClick={() => {this.handleClick(curPage-1)}} disabled={curPage === 1}/>
+                                {curPage-1 >= 1 ? 
+                                <Pagination.Item onClick={() => {this.handleClick(curPage-1)}}>{curPage-1}</Pagination.Item> 
+                                : null}
+                                <Pagination.Item active>{curPage}</Pagination.Item>
+                                {curPage+1 <= numPages ? 
+                                <Pagination.Item onClick={() => {this.handleClick(curPage+1)}}>{curPage+1}</Pagination.Item> 
+                                : null}
+                                <Pagination.Next onClick={() => {this.handleClick(curPage+1)}} disabled={curPage === numPages}/>
+                                <Pagination.Last onClick={this.handleLastClick}/>
+                            </Pagination>
                         </Col>
                     </Row>
                     <Row>
                         {loading && <div>Loading ...</div>}
-
-                        <UserList users={users} images={this.state.images} getRank={getRankState} 
-                            monthly={this.state.monthly} currentMonth={this.state.currentMonth} 
+                        <UserList users={users.slice((curPage-1) * usersPerPage, ((curPage-1) * usersPerPage) + usersPerPage )} getRank={getRankState} 
+                            monthly={this.state.monthly} currentMonth={this.state.currentMonth} start={usersPerPage * (curPage-1)} 
                         />
                     </Row>
                 </Container>
@@ -201,43 +269,55 @@ class Leaderboards extends Component {
 }
 
 
-const UserList = ({ users, images, getRank, monthly, currentMonth }) => (
-    <Table className="table table-striped table-dark table-lb">
-        <thead className="header-lb">
-            <tr>
-                <th scope="col" className="header-th-lb">#</th>
-                <th scope="col" className="header-th-lb">Rank</th>
-                <th scope="col" className="header-th-lb">Name</th>
-                <th scope="col" className="header-th-lb">Wins</th>
-                <th scope="col" className="header-th-lb">Losses</th>
-                <th scope="col" className="header-th-lb">Points</th>
-            </tr>
-        </thead>
-        <tbody>
-            {users.sort((a, b) => 
-            monthly ? (currentMonth ? (a.cmwins*10 + a.cmlosses*3 < b.cmwins*10 + b.cmlosses*3 ? 1 : -1) :
-             (a.pmwins*10 + a.pmlosses*3 < b.pmwins*10 + b.pmlosses*3 ? 1 : -1)) :
-            (a.points < b.points ? 1 : -1))
-            .map((user, i) => (
-                <tr key={user.uid}>
-                    <Td scope="row"><p className={i===0 ? "firstPlace" : (i===1 ? "secondPlace" : (i===2 ? "thirdPlace" : null))}>
-                    {i + 1}</p></Td>
-                    <Td><img src={images.length !== 0 ? images[getRank(user.points)] : null}
-                        alt="Player Rank" /></Td>
-                    <Td cl="profilelink-lb" to={'/profilelookup/' + user.uid}>{user.name}</Td>
-                    <Td cl="wins-lb">
-                        {monthly ? (currentMonth ? (user.cmwins) : (user.pmwins)) : user.wins}
-                    </Td>
-                    <Td cl="losses-lb">
-                        {monthly ? (currentMonth ? (user.cmlosses) : (user.pmlosses)) : user.losses}
-                    </Td>
-                    <Td>
-                        {monthly ? (currentMonth ? (user.cmwins*10 + user.cmlosses*3) : (user.pmwins*10 + user.pmlosses*3)) : user.points}
-                    </Td>
+function UserList ({users, getRank, monthly, currentMonth, start }) {
+    return (
+        <Table className="table table-striped table-dark table-lb">
+            <thead className="header-lb">
+                <tr>
+                    <th scope="col" className="header-th-lb">#</th>
+                    <th scope="col" className="header-th-lb">Rank</th>
+                    <th scope="col" className="header-th-lb">Name</th>
+                    <th scope="col" className="header-th-lb">Wins</th>
+                    <th scope="col" className="header-th-lb">Losses</th>
+                    <th scope="col" className="header-th-lb">Points</th>
                 </tr>
-            ))}
-        </tbody>
-    </Table>
-);
+            </thead>
+            <tbody>
+                {users
+                .map((user, i) => (
+                    <tr key={user.uid}>
+                        <Td scope="row"><p className={i + start ===0 ? "firstPlace" : (i + start ===1 ? "secondPlace" : (i + start ===2 ? "thirdPlace" : null))}>
+                        {i + start + 1}</p></Td>
+                        <Td>
+                            <OverlayTrigger
+                            transition={false}
+                            key='top'
+                            placement='top'
+                            overlay={
+                                <Tooltip id={`tooltip-top`}>
+                                    {ranks[getRank(user.points)]}
+                                </Tooltip>
+                            }
+                            >
+                                <img src={rankimages.length !== 0 ? rankimages[getRank(user.points)] : null}
+                                alt="Player Rank" />
+                            </OverlayTrigger>
+                        </Td>
+                        <Td cl="profilelink-lb" to={'/profilelookup/' + user.uid}>{user.name}</Td>
+                        <Td cl="wins-lb">
+                            {monthly ? (currentMonth ? (user.cmwins) : (user.pmwins)) : user.wins}
+                        </Td>
+                        <Td cl="losses-lb">
+                            {monthly ? (currentMonth ? (user.cmlosses) : (user.pmlosses)) : user.losses}
+                        </Td>
+                        <Td>
+                            {monthly ? (currentMonth ? (user.cmwins*10 + user.cmlosses*3) : (user.pmwins*10 + user.pmlosses*3)) : user.points}
+                        </Td>
+                    </tr>
+                ))}
+            </tbody>
+        </Table>
+    )
+}
 
 export default withFirebase(Leaderboards);

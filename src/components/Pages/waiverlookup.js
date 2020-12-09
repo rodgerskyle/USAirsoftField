@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import '../../App.css';
 
 import { withFirebase } from '../Firebase';
-import { withAuthorization } from '../session';
+import { AuthUserContext, withAuthorization } from '../session';
 import { compose } from 'recompose';
 
 import { Button, Form, Container, Card, Row, Col, Breadcrumb } from 'react-bootstrap/';
@@ -15,7 +15,7 @@ class WaiverLookup extends Component {
         super(props);
 
         this.state = {
-            loading: false,
+            loading: true,
             waivers: [],
             queriedlist: [],
             search: "",
@@ -31,7 +31,9 @@ class WaiverLookup extends Component {
         this.setState({ loading: true });
 
         this.props.firebase.waiversList().listAll().then((res) => {
-            this.setState({waivers: res.items, loading: false})
+            this.setState({waivers: res.items}, function() {
+                this.setState({loading: false})
+            })
             }).catch(function(error) {
               // Uh-oh, an error occurred!
               console.log(error)
@@ -51,49 +53,74 @@ class WaiverLookup extends Component {
 
     render() {
         return (
-            <div className="background-static-all">
-                {!this.state.loading ?
-                    <Container>
-                        <h2 className="admin-header">Admin - Waiver Lookup</h2>
-                        <Breadcrumb className="admin-breadcrumb">
-                            <LinkContainer to="/admin">
-                                <Breadcrumb.Item>Admin</Breadcrumb.Item>
-                            </LinkContainer>
-                            <Breadcrumb.Item active>Waiver Lookup</Breadcrumb.Item>
-                        </Breadcrumb>
-                        <Row>
-                            <Col>
-                                <Card className="admin-cards">
-                                    <Card.Header>
-                                        <Form className="team-manage-text">
-                                            <Form.Group controlId="input1">
-                                                <Form.Label className="search-label-admin">Search by Name:</Form.Label>
-                                                <Form.Control
-                                                    type="name"
-                                                    placeholder="ex: JohnDoe"
-                                                    value={this.state.search}
-                                                    onChange={(e) => {
-                                                        this.onChange(e);
-                                                    }}
-                                                />
-                                            </Form.Group>
-                                        </Form>
-                                    </Card.Header>
-                                    <WaiverBox waivers={this.state.waivers} index={0}
-                                        search={this.state.search} open={this.state.OpenWaiverState} />
-                                </Card>
-                            </Col>
-                        </Row>
-                    </Container>
-                    : <h2 className="pagePlaceholder">Loading...</h2>}
-            </div>
+            <AuthUserContext.Consumer>
+                {authUser => (
+                    <div className="background-static-all">
+                            <Container>
+                                <h2 className="admin-header">Waiver Lookup</h2>
+                                <Breadcrumb className="admin-breadcrumb">
+                                    {authUser && !!authUser.roles[ROLES.ADMIN] ? 
+                                    <LinkContainer to="/admin">
+                                        <Breadcrumb.Item>Admin</Breadcrumb.Item>
+                                    </LinkContainer>
+                                    :
+                                    <LinkContainer to="/dashboard">
+                                        <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
+                                    </LinkContainer> 
+                                    }
+                                    <Breadcrumb.Item active>Waiver Lookup</Breadcrumb.Item>
+                                </Breadcrumb>
+                                <Row>
+                                    <Col>
+                                        <Card className="admin-cards">
+                                            <Card.Header>
+                                                <Form className="team-manage-text">
+                                                    <Form.Group controlId="input1">
+                                                        <Form.Label className="search-label-admin">Search by Name:</Form.Label>
+                                                        <Form.Control
+                                                            type="name"
+                                                            placeholder="ex: JohnDoe"
+                                                            value={this.state.search}
+                                                            onChange={(e) => {
+                                                                this.onChange(e);
+                                                            }}
+                                                        />
+                                                    </Form.Group>
+                                                </Form>
+                                            </Card.Header>
+                                            <WaiverBox waivers={this.state.waivers} index={0}
+                                                search={this.state.search} open={this.state.OpenWaiverState} />
+                                        </Card>
+                                    </Col>
+                                </Row>
+                            </Container>
+                    </div>
+                )}
+            </AuthUserContext.Consumer>
         );
     }
 }
 
+function convertDate(date) {
+    // Making date variables in correct format
+    date = date.split('-');
+    let temp = date[2].split(':')
+    date.splice(2, 1)
+    date = date.concat(temp)
 
-const WaiverBox = ({waivers, index, search, open}) => (
-    <Card.Body className="status-card-body-admin">
+    // Now to changing them to date objects
+    return new Date(date[2], date[0]-1, date[1], date[3], date[4], date[5], date[6])
+}
+
+function WaiverBox ({waivers, index, search, open, loading}) {
+    var tempWaivers = [];
+    for (let i=0; i<waivers.length; i++) {
+        let waiver_obj = waivers[i].name
+        tempWaivers.push(convertDate(waiver_obj.substr(waiver_obj.lastIndexOf('(') + 1).split(')')[0]))
+    }
+    return (
+    <Card.Body className="status-card-body-fg-admin">
+        {!loading ? 
         <Row className="card-header-wl">
             <Col>
                 <Card.Text>
@@ -106,27 +133,28 @@ const WaiverBox = ({waivers, index, search, open}) => (
                 </Card.Text>
             </Col>
         </Row>
-        {waivers.sort((a, b) => 
-        (a.name.substr(a.name.lastIndexOf('(') + 1).split(')')[0] < 
-        b.name.substr(b.name.lastIndexOf('(') + 1).split(')')[0] ? 1 : -1))
+        : null}
+        {!loading ?
+        tempWaivers.sort((a, b) => 
+        (b - a))
         .map((waiver, i) => (
             search !== "" ? // Search query case
-                waiver.name.toLowerCase().includes(search.toLowerCase()) ? 
+                waivers[i].name.toLowerCase().includes(search.toLowerCase()) ? 
                         index++ % 2 === 0 ? 
                         <Row className={index === 1 ? "row-1-wl" : "row-fg"} key={index}>
                             <Col className="col-name-fg">
                                 <Card.Text>
-                                    {"(" + index + ") " + waiver.name.substr(0, waiver.name.lastIndexOf('('))}
+                                    {"(" + index + ") " + waivers[i].name.substr(0, waivers[i].name.lastIndexOf('('))}
                                 </Card.Text>
                             </Col>
                             <Col>
                                 <Row>
                                     <Col className="col-name-fg">
-                                        {waiver.name.substr(waiver.name.lastIndexOf('(') + 1).split(')')[0]}
+                                        {waiver.toUTCString().slice(0, -4)}
                                     </Col>
                                     <Col>
-                                        <Button className="button-submit-admin2" onClick={() => open(waiver)}
-                                        type="submit" id="update" variant="outline-success">
+                                        <Button className="button-submit-admin2" onClick={() => open(waivers[i])}
+                                        type="submit" id="update" variant="success">
                                             Open
                                         </Button>
                                     </Col>
@@ -137,16 +165,16 @@ const WaiverBox = ({waivers, index, search, open}) => (
                         <Row className="status-card-offrow-admin-fg" key={index}>
                             <Col className="col-name-fg">
                                 <Card.Text>
-                                    {"(" + index + ") " + waiver.name.substr(0, waiver.name.lastIndexOf('('))}
+                                    {"(" + index + ") " + waivers[i].name.substr(0, waivers[i].name.lastIndexOf('('))}
                                 </Card.Text>
                             </Col>
                             <Col>
                                 <Row>
                                     <Col className="col-name-fg">
-                                        {waiver.name.substr(waiver.name.lastIndexOf('(') + 1).split(')')[0]}
+                                        {waiver.toUTCString().slice(0, -4)}
                                     </Col>
                                     <Col>
-                                        <Button className="button-submit-admin2" onClick={() => open(waiver)}
+                                        <Button className="button-submit-admin2" onClick={() => open(waivers[i])}
                                         type="submit" id="update" variant="success">
                                             Open
                                         </Button>
@@ -160,17 +188,17 @@ const WaiverBox = ({waivers, index, search, open}) => (
                         <Row className={index === 1 ? "row-1-wl" : "row-fg"} key={index}>
                             <Col className="col-name-fg">
                                 <Card.Text>
-                                    {"(" + index + ") " + waiver.name.substr(0, waiver.name.lastIndexOf('('))}
+                                    {"(" + index + ") " + waivers[i].name.substr(0, waivers[i].name.lastIndexOf('('))}
                                 </Card.Text>
                             </Col>
                             <Col>
                                 <Row>
                                     <Col className="col-name-fg">
-                                        {waiver.name.substr(waiver.name.lastIndexOf('(') + 1).split(')')[0]}
+                                        {waiver.toUTCString().slice(0, -4)}
                                     </Col>
                                     <Col>
-                                        <Button className="button-submit-admin2" onClick={() => open(waiver)}
-                                        type="submit" id="update" variant="outline-success">
+                                        <Button className="button-submit-admin2" onClick={() => open(waivers[i])}
+                                        type="submit" id="update" variant="success">
                                             Open 
                                         </Button>
                                     </Col>
@@ -181,16 +209,16 @@ const WaiverBox = ({waivers, index, search, open}) => (
                         <Row className="status-card-offrow-admin-fg" key={index}>
                             <Col className="col-name-fg">
                                 <Card.Text>
-                                    {"(" + index + ") " + waiver.name.substr(0, waiver.name.lastIndexOf('('))}
+                                    {"(" + index + ") " + waivers[i].name.substr(0, waivers[i].name.lastIndexOf('('))}
                                 </Card.Text>
                             </Col>
                             <Col>
                                 <Row>
                                     <Col className="col-name-fg">
-                                        {waiver.name.substr(waiver.name.lastIndexOf('(') + 1).split(')')[0]}
+                                        {waiver.toUTCString().slice(0, -4)}
                                     </Col>
                                     <Col>
-                                        <Button className="button-submit-admin2" onClick={() => open(waiver)}
+                                        <Button className="button-submit-admin2" onClick={() => open(waivers[i])}
                                         type="submit" id="update" variant="success">
                                             Open 
                                         </Button>
@@ -198,12 +226,14 @@ const WaiverBox = ({waivers, index, search, open}) => (
                                 </Row>
                             </Col>
                         </Row>
-        ))}
+        ))
+        : <h2 className="pagePlaceholder">Loading...</h2> }
     </Card.Body>
-);
+    )
+};
 
 const condition = authUser =>
-    authUser && !!authUser.roles[ROLES.ADMIN];
+    authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]);
 
 export default compose(
     withAuthorization(condition),

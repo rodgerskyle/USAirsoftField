@@ -54,7 +54,7 @@ class EnterWins extends Component {
 
     handleKeypress(event) {
         if (event.keyCode === 13) {
-            document.getElementById("usernameBox").focus();
+            this.updateUser(event)
         }
     }
 
@@ -104,7 +104,7 @@ class EnterWins extends Component {
             <div className="background-static-all">
                 {!this.state.loading ?
                 <Container>
-                    <h2 className="admin-header">Admin - Enter Wins</h2>
+                    <h2 className="admin-header">Enter Wins</h2>
                     <Breadcrumb className="admin-breadcrumb">
                         <LinkContainer to="/admin">
                             <Breadcrumb.Item>Admin</Breadcrumb.Item>

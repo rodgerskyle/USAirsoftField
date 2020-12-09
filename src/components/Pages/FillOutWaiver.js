@@ -8,27 +8,37 @@ import '../../App.css';
 
 import waiver from '../../assets/Waiver-cutoff.png'
 
-import { withAuthorization } from '../session';
+import { AuthUserContext, withAuthorization } from '../session';
 import { compose } from 'recompose';
 import { withFirebase } from '../Firebase';
 import * as ROLES from '../constants/roles';
 
 const WaiverPage = () => (
-  <div className="background-static-all">
-    <Container>
-      <Row className="header-rp">
-        <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>
-        <h2 className="page-header">Waiver Form</h2>
-      </Row>
-        <Breadcrumb className="admin-breadcrumb">
-            <LinkContainer to="/admin">
-                <Breadcrumb.Item>Admin</Breadcrumb.Item>
-            </LinkContainer>
-            <Breadcrumb.Item active>Fill Out Waiver</Breadcrumb.Item>
-        </Breadcrumb>
-        <WaiverForm />
-    </Container>
-  </div>
+  <AuthUserContext.Consumer>
+      {authUser => (
+      <div className="background-static-all">
+        <Container>
+          <Row className="header-rp">
+            <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>
+            <h2 className="page-header">Waiver Form</h2>
+          </Row>
+            <Breadcrumb className="admin-breadcrumb">
+                {authUser && !!authUser.roles[ROLES.ADMIN] ? 
+                  <LinkContainer to="/admin">
+                      <Breadcrumb.Item>Admin</Breadcrumb.Item>
+                  </LinkContainer>
+                  :
+                  <LinkContainer to="/dashboard">
+                      <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
+                  </LinkContainer> 
+                  }
+                <Breadcrumb.Item active>Fill Out Waiver</Breadcrumb.Item>
+            </Breadcrumb>
+            <WaiverForm />
+        </Container>
+      </div>
+      )}
+  </AuthUserContext.Consumer>
 );
 
 
@@ -57,6 +67,7 @@ const INITIAL_STATE = {
     saveButton: true,
     saveButton2: true,
     showLander: false,
+    emailAdded: false,
   };
 
 class WaiverPageFormBase extends Component {
@@ -64,7 +75,64 @@ class WaiverPageFormBase extends Component {
     super(props);
 
     this.completeWaiver = this.completeWaiver.bind(this);
-    this.state = { ...INITIAL_STATE};
+    this.state = { ...INITIAL_STATE, emailListNM: null, emailListM: null};
+  }
+
+  componentDidMount() {
+      this.props.firebase.grabEmailListNM().on('value', snapshot => {
+          const emailsObjectNM = snapshot.val();
+
+          const emailListNM = Object.keys(emailsObjectNM).map(key => ({
+              ...emailsObjectNM[key],
+              secret: key,
+          }))
+
+          this.setState({
+            emailListNM
+          });
+      });
+      this.props.firebase.grabEmailListM().on('value', snapshot => {
+          const emailsObjectM = snapshot.val();
+
+          const emailListM = Object.keys(emailsObjectM).map(key => ({
+              ...emailsObjectM[key],
+              secret: key,
+          }))
+
+          this.setState({
+            emailListM
+          });
+      });
+  }
+
+  componentWillUnmount() {
+    this.props.firebase.grabEmailListNM().off();
+    this.props.firebase.grabEmailListM().off();
+  }
+
+  // Will Check duplicates in list
+  checkDuplicates(email) {
+    const {emailListM, emailListNM } = this.state;
+    let lengthM = emailListM.length;
+    let lengthNM = emailListNM.length;
+    let x = 0;
+    let y = 0;
+    // Now go through both at the same time
+    while (x < lengthM || y < lengthNM) {
+      if (x < lengthM) {
+        if (emailListM[x].email === email) {
+          return true;
+        }
+        x++
+      }
+      if (y < lengthNM) {
+        if (emailListNM[y].email === email) {
+          return true;
+        }
+        y++
+      }
+    } 
+    return false;
   }
 
 
@@ -93,14 +161,26 @@ class WaiverPageFormBase extends Component {
     });
   };
 
+  // Complete email sign up to email list 
+  emailSignUp = () => {
+    var { email } = this.state;
+    email = email.toLowerCase();
+    // Check for duplicate email
+    if (!this.checkDuplicates(email)) {
+      // Use below to generate random uid for signing up and filling out waivers
+      var secret = 'n' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5).toUpperCase();
+      this.props.firebase.emailListNonMembers(secret).set({email})
+    }
+    this.setState({emailAdded: true})
+  }
+
   // Prop to pass to waiver to call when complete
   completeWaiver = (blob) => {
-    const {fname, lname} = this.state;
+    const {fname, lname } = this.state;
     var date = (new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear()) + ":" + 
     (new Date().getHours()) + ":" + (new Date().getMinutes()) + ":" + (new Date().getSeconds()) + ":" + (new Date().getMilliseconds());
     this.props.firebase.nonmembersWaivers(`${fname}${lname}(${date}).pdf`).put(blob).then(() => {
-      this.setState({submitted: false, showLander: true})
-      //this.setState({ ...INITIAL_STATE, status: "Completed"});
+      this.setState({submitted: false, showLander: true});
     })
   }
  
@@ -126,7 +206,8 @@ class WaiverPageFormBase extends Component {
       submitted,
       saveButton,
       saveButton2,
-      showLander
+      showLander,
+      emailAdded,
     } = this.state;
 
     const myProps = {fname, lname, email, address, city, state, zipcode, phone, dob, pgname, pgphone, participantImg, pgImg, age }
@@ -407,26 +488,28 @@ class WaiverPageFormBase extends Component {
               else if (age > 85) {
                 this.setState({errorWaiver: "Participant must be younger than 85 years."})
               }
-              else if (this.state.pageIndex!==1)
+              else if (this.state.pageIndex!==1) {
                 this.setState({submitted: true})
+                this.emailSignUp();
+              }
             }}>
                 Submit
             </Button>
           </Row> 
       </div>
       : 
-      <Container>
-        <Row className="row-rp">
+      <Container className="notice-text-container">
+        <Row className="row-success-rp">
           <Col className="col-rp">
             <h2 className="page-header">Successful Waiver Registration.</h2>
             <p className="page-header">Please let your U.S. Airsoft employee know that you have finished.</p>
           </Col>
         </Row>
-        <Row className="row-rp">
+        <Row className="row-success-rp">
             <Button className="next-button-rp" variant="info" type="button" 
-            onClick={() => {
+            disabled={!emailAdded} onClick={() => {
               this.setState({showLander: false})
-              this.setState({ ...INITIAL_STATE, status: "Completed"});
+              this.setState({ ...INITIAL_STATE});
             }}>Sign Another</Button>
         </Row>
       </Container>
@@ -449,7 +532,7 @@ class WaiverPageFormBase extends Component {
 */
 
 const condition = authUser =>
-authUser && !!authUser.roles[ROLES.ADMIN];
+  authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]);
 
 const WaiverForm = compose(
     withAuthorization(condition),

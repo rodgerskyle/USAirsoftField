@@ -4,6 +4,8 @@ import { Container, Row, Col, Form, Button } from 'react-bootstrap/';
 
 import { AuthUserContext, withAuthorization } from '../session';
 
+import logo from '../../assets/logo.png';
+
 import { withFirebase } from '../Firebase';
 
 import alticon from '../../assets/team-img-placeholder.png';
@@ -32,7 +34,7 @@ class TeamCreate extends Component {
             complete: false,
             previous: '',
             page: true,
-            error: '',
+            error: null,
             imgError: true,
         };
     }
@@ -80,9 +82,9 @@ class TeamCreate extends Component {
     createTeam(e) {
         e.preventDefault();
 
-        const { image, uploaded, previous, teamname, imgError } = this.state;
+        const { image, uploaded, previous, teamname, imgError, error } = this.state;
 
-        if (image !== null && imgError === false) {
+        if (image !== null && imgError === false && error !== null) {
 
             var t_name = teamname.toString().toLowerCase();
 
@@ -94,50 +96,47 @@ class TeamCreate extends Component {
                     // Uh-oh, an error occurred!
                 });
             }
-
-            const uploadTask = this.props.firebase.teamsPictures(`${t_name}.png`).put(image);
-            uploadTask.on(
-                "state_changed",
-                snapshot => {
-                    // progress function ...
-                    const progress = Math.round(
-                        (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-                    );
-                    this.setState({ progress });
-                },
-                error => {
-                    // Error function ...
-                    console.log(error);
-                },
-                () => {
-                    // complete function ...
-                    this.props.firebase
-                        .teamsPictures(`${t_name}.png`)
-                        .getDownloadURL()
-                        .then(url => {
-                            this.setState({ url });
-                        });
-                    this.setState({
-                        uploaded: true,
-                        previous: t_name
-                    }, function () {
-                        //Create message to show they were removed and reset input box
-                        var createTeam = this.props.firebase.createTeam();
-                        createTeam({
-                            teamname: this.state.teamname, description: this.state.description
-                        }).then((result) => {
-                            // Read result of the Cloud Function.
-                            var update = result.data.message;
-                            if (update === "Complete") {
-                                //If team was created without issue set completion to true
-                                this.setState({ complete: true }, () => {
-                                    window.location.href = "/teams";
-                                })
-                            }
-                        });
-                    })
+            //Create message to show they were removed and reset input box
+            var createTeam = this.props.firebase.createTeam();
+            createTeam({
+                teamname: this.state.teamname, description: this.state.description
+            }).then((result) => {
+                // Read result of the Cloud Function.
+                var update = result.data.message;
+                if (update === "Complete") {
+                    //If team was created without issue set completion to true
+                    const uploadTask = this.props.firebase.teamsPictures(`${t_name}.png`).put(image);
+                    uploadTask.on(
+                        "state_changed",
+                        snapshot => {
+                            // progress function ...
+                            const progress = Math.round(
+                                (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+                            );
+                            this.setState({ progress });
+                        },
+                        error => {
+                            // Error function ...
+                            console.log(error);
+                        },
+                        () => {
+                            // complete function ...
+                            this.props.firebase
+                                .teamsPictures(`${t_name}.png`)
+                                .getDownloadURL()
+                                .then(url => {
+                                    this.setState({ url });
+                                });
+                            this.setState({
+                                uploaded: true,
+                                previous: t_name,
+                                complete: true
+                            }, function () {
+                                window.location.href = "/teams";
+                            })
+                        })
                 }
-            );
+            })
         }
         else {
             this.setState({ error: "You must upload an image first." })
@@ -148,7 +147,7 @@ class TeamCreate extends Component {
         if (e.target.files[0]) {
             const image = e.target.files[0];
             const url = URL.createObjectURL(e.target.files[0])
-            this.setState({image, url })
+            this.setState({ image, url })
         }
     }
 
@@ -159,7 +158,7 @@ class TeamCreate extends Component {
         var width = this.imgRef.current.naturalWidth
         if (width === 654 && height === 192) {
             // Good to go
-            this.setState({imgError: false, error: ""})
+            this.setState({ imgError: false, error: null })
         }
         else {
             // Image is wrong
@@ -178,7 +177,7 @@ class TeamCreate extends Component {
     };
 
     render() {
-        const { description, page, teamname } = this.state;
+        const { description, page, teamname, error } = this.state;
 
 
         return (
@@ -186,7 +185,21 @@ class TeamCreate extends Component {
                 {authUser => (
                     <div className="background-static-all">
                         {authUser.team !== '' ?
-                            <p className="team-manage-blank">You already have a team, you must quit your team first.</p>
+                            <Container className="notice-text-container">
+                                <Row className="row-success-rp">
+                                    <Col className="col-rp">
+                                        <Row className="row-notice">
+                                            <h2 className="page-header">Team Create Error:</h2>
+                                        </Row>
+                                        <Row className="row-notice">
+                                            <p className="notice-text">You already have a team, you must quit your team first.</p>
+                                        </Row>
+                                        <Row className="row-notice">
+                                            <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>
+                                        </Row>
+                                    </Col>
+                                </Row>
+                            </Container> 
                             : (page ?
                                 <Container>
                                     <h2 className="header-teamc">Create your team!</h2>
@@ -229,8 +242,8 @@ class TeamCreate extends Component {
                                     <p className="team-upload-text">Team Image Upload:</p>
                                     <div className="team-single-img">
                                         <img className="team-icon-individual" ref={this.imgRef}
-                                        src={this.state.url || alticon} alt="" 
-                                        onLoad={() => this.checkDimensions()}/>
+                                            src={this.state.url || alticon} alt=""
+                                            onLoad={() => this.checkDimensions()} />
                                     </div>
                                     <Row>
                                         <Col md={6}>
@@ -258,7 +271,7 @@ class TeamCreate extends Component {
                                         </Col>
                                         <Col>
                                             <Button className="submit-button" variant="outline-success" onClick={((e) => this.createTeam(e))}
-                                            >
+                                                disabled={!error}>
                                                 Submit
                                             </Button>
                                         </Col>
