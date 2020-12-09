@@ -164,6 +164,6 @@ const App = () => (
 );
 
 function LoginRoute() {
-  return <div className="pagePlaceholder"><Login /></div>
+  return <div><Login /></div>
 }
 export default withAuthentication(App);

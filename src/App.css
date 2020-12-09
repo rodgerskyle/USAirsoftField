@@ -1254,6 +1254,10 @@ a.dropdown-item:hover {
   border-radius: 5px;
 }
 
+.login-form {
+  color: white;
+}
+
 
 @media (min-width: 1200px) {
   .login-form {
@@ -1294,4 +1298,8 @@ a.dropdown-item:hover {
     margin-left: 35%;
     margin-right: 35%;
   }
+}
+
+.tooltip {
+  transition: opacity 0.15s linear;
 }
