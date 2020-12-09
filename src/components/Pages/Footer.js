@@ -80,7 +80,7 @@ const FooterAuth = () => (
                 <Row>
                     <div className="divider-footer"/>
                 </Row>
-                <Row className="all-cols-footer">
+                <Row className="socials-icons-row"> 
                     <a href="https://www.facebook.com/USAirsoftworld/">
                         <img src={fblogo} alt="Facebook Logo" className="socials-icons-footer"/>
                     </a>
@@ -176,7 +176,7 @@ function FooterNonAuth ({emailMenu}) {
                 </InputGroup>
             </Row>
             {Status ? <Row className="status-row-footer">{Status}</Row> : null}
-            <Row className="all-cols-footer">
+            <Row className="socials-icons-row"> 
                 <a href="https://www.facebook.com/USAirsoftworld/">
                     <img src={fblogo} alt="Facebook Logo" className="socials-icons-footer"/>
                 </a>

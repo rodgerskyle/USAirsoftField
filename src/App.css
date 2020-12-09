@@ -1190,6 +1190,10 @@ a.dropdown-item:hover {
   padding: 5px;
 }
 
+.socials-icons-row {
+  justify-content: center;
+}
+
 .profile-row-footer {
   justify-content: center;
 }
@@ -1302,4 +1306,9 @@ a.dropdown-item:hover {
 
 .tooltip {
   transition: opacity 0.15s linear;
+}
+
+.file-field {
+  display: flex;
+  justify-content: center;
 }
