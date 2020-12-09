@@ -456,7 +456,7 @@ class AdminPage extends Component {
     }
     
 
-function UserBox({users, index, search, options, length}) {
+function UserBox({users, index, search, length}) {
     const [ButtonArray, setButtonArray] = useState( new Array(length).fill(false));
 
     return (

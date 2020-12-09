@@ -2,20 +2,20 @@ import React, { Component } from 'react';
 import { Table } from 'react-bootstrap/';
 import '../../App.css';
 
-import { Container, Row, Col, Pagination } from 'react-bootstrap/';
+import { Container, Row, Col, Pagination, OverlayTrigger, Tooltip } from 'react-bootstrap/';
 import BootstrapSwitchButton from 'bootstrap-switch-button-react';
 
+import ranks from '../constants/ranks';
 import rankimages from '../constants/smallrankimgs';
 import Td from '../constants/td';
 
 import { withFirebase } from '../Firebase';
 
-class Leaderboards extends Component {
+class Leaderboards extends Component {DAWKDAWDKWA
     constructor(props) {
         super(props);
 
         this.state = {
-            images: rankimages,
             loading: false,
             users: [],
             displayUsers: [],
@@ -258,7 +258,7 @@ class Leaderboards extends Component {
                     </Row>
                     <Row>
                         {loading && <div>Loading ...</div>}
-                        <UserList users={users.slice((curPage-1) * usersPerPage, ((curPage-1) * usersPerPage) + usersPerPage )} images={this.state.images} getRank={getRankState} 
+                        <UserList users={users.slice((curPage-1) * usersPerPage, ((curPage-1) * usersPerPage) + usersPerPage )} getRank={getRankState} 
                             monthly={this.state.monthly} currentMonth={this.state.currentMonth} start={usersPerPage * (curPage-1)} 
                         />
                     </Row>
@@ -269,40 +269,55 @@ class Leaderboards extends Component {
 }
 
 
-const UserList = ({ users, images, getRank, monthly, currentMonth, start }) => (
-    <Table className="table table-striped table-dark table-lb">
-        <thead className="header-lb">
-            <tr>
-                <th scope="col" className="header-th-lb">#</th>
-                <th scope="col" className="header-th-lb">Rank</th>
-                <th scope="col" className="header-th-lb">Name</th>
-                <th scope="col" className="header-th-lb">Wins</th>
-                <th scope="col" className="header-th-lb">Losses</th>
-                <th scope="col" className="header-th-lb">Points</th>
-            </tr>
-        </thead>
-        <tbody>
-            {users
-            .map((user, i) => (
-                <tr key={user.uid}>
-                    <Td scope="row"><p className={i + start ===0 ? "firstPlace" : (i + start ===1 ? "secondPlace" : (i + start ===2 ? "thirdPlace" : null))}>
-                    {i + start + 1}</p></Td>
-                    <Td><img src={images.length !== 0 ? images[getRank(user.points)] : null}
-                        alt="Player Rank" /></Td>
-                    <Td cl="profilelink-lb" to={'/profilelookup/' + user.uid}>{user.name}</Td>
-                    <Td cl="wins-lb">
-                        {monthly ? (currentMonth ? (user.cmwins) : (user.pmwins)) : user.wins}
-                    </Td>
-                    <Td cl="losses-lb">
-                        {monthly ? (currentMonth ? (user.cmlosses) : (user.pmlosses)) : user.losses}
-                    </Td>
-                    <Td>
-                        {monthly ? (currentMonth ? (user.cmwins*10 + user.cmlosses*3) : (user.pmwins*10 + user.pmlosses*3)) : user.points}
-                    </Td>
+function UserList ({users, getRank, monthly, currentMonth, start }) {
+    return (
+        <Table className="table table-striped table-dark table-lb">
+            <thead className="header-lb">
+                <tr>
+                    <th scope="col" className="header-th-lb">#</th>
+                    <th scope="col" className="header-th-lb">Rank</th>
+                    <th scope="col" className="header-th-lb">Name</th>
+                    <th scope="col" className="header-th-lb">Wins</th>
+                    <th scope="col" className="header-th-lb">Losses</th>
+                    <th scope="col" className="header-th-lb">Points</th>
                 </tr>
-            ))}
-        </tbody>
-    </Table>
-);
+            </thead>
+            <tbody>
+                {users
+                .map((user, i) => (
+                    <tr key={user.uid}>
+                        <Td scope="row"><p className={i + start ===0 ? "firstPlace" : (i + start ===1 ? "secondPlace" : (i + start ===2 ? "thirdPlace" : null))}>
+                        {i + start + 1}</p></Td>
+                        <Td>
+                            <OverlayTrigger
+                            transition={false}
+                            key='top'
+                            placement='top'
+                            overlay={
+                                <Tooltip id={`tooltip-top`}>
+                                    {ranks[getRank(user.points)]}
+                                </Tooltip>
+                            }
+                            >
+                                <img src={rankimages.length !== 0 ? rankimages[getRank(user.points)] : null}
+                                alt="Player Rank" />
+                            </OverlayTrigger>
+                        </Td>
+                        <Td cl="profilelink-lb" to={'/profilelookup/' + user.uid}>{user.name}</Td>
+                        <Td cl="wins-lb">
+                            {monthly ? (currentMonth ? (user.cmwins) : (user.pmwins)) : user.wins}
+                        </Td>
+                        <Td cl="losses-lb">
+                            {monthly ? (currentMonth ? (user.cmlosses) : (user.pmlosses)) : user.losses}
+                        </Td>
+                        <Td>
+                            {monthly ? (currentMonth ? (user.cmwins*10 + user.cmlosses*3) : (user.pmwins*10 + user.pmlosses*3)) : user.points}
+                        </Td>
+                    </tr>
+                ))}
+            </tbody>
+        </Table>
+    )
+}
 
 export default withFirebase(Leaderboards);
