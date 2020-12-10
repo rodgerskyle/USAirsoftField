@@ -19,8 +19,8 @@
     display: flex;
     align-items: center;
     width: 180px;
-    color: var(--main-blue);
-    transform: translate(-6.42%, -75%);
+    transform: translate(-10.42%, -75%);
+    color: black;
   }
   
   .pin-icon {
@@ -29,6 +29,7 @@
   
   .pin-text {
     font-size: .6rem;
+    color: black;
   }
   
   @media screen and (min-width: 799px) {
