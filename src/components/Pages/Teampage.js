@@ -182,16 +182,16 @@ class Teampage extends Component {
                                 <div className="team-single-img">
                                     <img className="team-icon-teamspage" src={this.state.teamicon} alt="" />
                                 </div>
-                                <Row className="text-center stat-box">
-                                    <Col>
-                                        <div className="counter">
+                                <Row className="text-center">
+                                    <Col md={6} className="col-teampage">
+                                        <div className="counter set-width-100">
                                             <i className="fa fa-users fa-2x text-black"></i>
                                             <h2 className="timer count-title count-number" data-to="100" data-speed="1500">{(this.props.match.params.id).toUpperCase()}</h2>
                                             <p className="count-text ">Team Name</p>
                                         </div>
                                     </Col>
-                                    <Col>
-                                        <div className="counter">
+                                    <Col md={6} className="col-teampage">
+                                        <div className="counter set-width-100">
                                             <i className="fa fa-user-circle fa-2x"></i>
                                             <Link className="profilelink-tm" to={"/profilelookup/" + this.state.teamObject.leader}>
                                                 <h2 className="timer count-title count-number" data-to="1700" data-speed="1500">{this.state.leader}</h2>
@@ -229,9 +229,9 @@ class Teampage extends Component {
 }
 
     const TeamUserlist = ({ users }) => (
-        <Row>
+        <Row className="stat-box">
             {users.map(user => (
-                <Col key={user[0]}>
+                <Col key={user[0]} className="col-team-user">
                     <div className="counter team-member-list">
                         <i className="fa fa-users fa-2x text-black"></i>
                         <Link className="profilelink-tm" to={"/profilelookup/" + user[1]}>

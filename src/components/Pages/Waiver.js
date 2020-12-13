@@ -1,20 +1,17 @@
 import React, { Component } from 'react';
-import { Document, Page, pdfjs } from "react-pdf";
 
-//temp
+import waiver_full from '../../assets/waiver-full.png';
+
 import waiver from './waiver.pdf';
 import '../../App.css';
 
 import { Container, Row, Col } from 'react-bootstrap/';
-
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
 class Waiver extends Component {
     constructor(props) {
         super(props);
 
         this.state = {
-            pageNumber: 1
         };
     }
 
@@ -24,7 +21,6 @@ class Waiver extends Component {
       };
 
     render() {
-        const { pageNumber } = this.state;
         return (
             <div className="background-static-all">
                 <div className="pdfStyle">
@@ -39,14 +35,7 @@ class Waiver extends Component {
                         </Row>
                         <Row className="align-items-center">
                             <Col className="pdfFile">
-                                <div style={{ width: 600 }}>
-                                    <Document
-                                        file={waiver}
-                                        onLoadSuccess={this.onDocumentLoadSuccess}
-                                    >
-                                        <Page pageNumber={pageNumber} width={600} />
-                                    </Document>
-                                </div>
+                                <img src={waiver_full} alt="Waiver for US Airsoft" />
                             </Col>
                         </Row>
                     </Container>

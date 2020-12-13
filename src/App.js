@@ -39,6 +39,7 @@ import WaiverDashboard from './components/Pages/Dashboard'
 import UserOptions from './components/Pages/UserOptions';
 import ScrollToTop from './components/constants/scrolltotop';
 import CookieConsent from "react-cookie-consent";
+import PageNotFound from './components/Pages/PageNotFound';
 
 const App = () => (
       <Router>
@@ -154,9 +155,13 @@ const App = () => (
             <Route exact path="/pricing">
               <Pricing />
             </Route>
+            <Route exact path="/home">
+              <Home />
+            </Route>
             <Route exact path="/">
               <Home />
             </Route>
+            <Route component={PageNotFound} />
           </Switch>
           <Footer />
           <CookieConsent>This website uses cookies to enhance the user experience.</CookieConsent>
