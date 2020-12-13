@@ -102,7 +102,7 @@ class Teams extends Component {
 
 
 const TeamList = ({ teams, teamicon }) => (
-    <Table className="table table-striped table-dark">
+    <Table className="table table-striped table-dark table-teams">
         <tbody>
             {teams.map((team, i) => (
                 <tr key={team.teamname}>

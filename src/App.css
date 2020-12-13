@@ -143,24 +143,6 @@
   display: flex;
 }
 
-.firstPlace {
-  font-family: sans-serif;
-  color: gold;
-  margin-bottom: 0;
-  font-size: x-large;
-}
-.secondPlace {
-  font-family: sans-serif;
-  color: silver;
-  margin-bottom: 0;
-  font-size: larger;
-}
-.thirdPlace {
-  font-family: sans-serif;
-  color: #CD7F32	;
-  margin-bottom: 0;
-  font-size: large;
-}
 .pdfStyle {
   text-align: center;
   color: white;
@@ -229,6 +211,7 @@
   vertical-align: middle !important;
   color: white !important;
   font-size: 1.2em;
+  text-align: center;
 }
 
 .team-info {
@@ -254,25 +237,29 @@
 
 .description-teamspage {
   text-align: center;
-  width: 100%;
+  width: 80%;
 }
 
 .description-row-teamspage {
   margin-right: 0px !important;
   margin-left: 0px !important;
+  justify-content: center;
 }
 
 .members-row-teamspage {
   margin-right: 0px !important;
   margin-left: 0px !important;
   border-radius: 5px;
-  background-color: #f5f5f5;
+  justify-content: center;
+  margin-bottom: 30px;
 }
 
 .members-textbox-teamspage {
   text-align: center;
   color: black;
-  width: 100%;
+  border-radius: 5px;
+  background-color: white;
+  width: 80%;
 }
 
 .header-profile {
@@ -309,6 +296,7 @@
 }
 
 .page-header {
+  font-size: 1.5rem;
   color:white;
   text-align: center;
   padding-top: 10px;
@@ -323,7 +311,7 @@
 
 .team-member-list {
   text-align: center;
-  margin-top: 30px;
+  width: 80%;
 }
 
 .team-upload {
@@ -433,21 +421,8 @@
   background-color: black;
 }
 
-.background-static-lb{
-  background: url("assets/background-lb.jpeg") center no-repeat;
-  background-size: 100% 100%;
-  color: white;
-  min-height: 100vh;
-}
-
 .background-static-all::before {
   background-color: rgb(4, 4 ,4);
-}
-
-.background-static-all {
-  background: url("assets/background-all.jpeg") center no-repeat;
-  background-size: 100% 100%;
-  min-height: 100vh;
 }
 
 .password-text {
@@ -520,6 +495,7 @@ a.dropdown-item:hover {
 .boxes-home {
   background-color: rgb(255, 255, 255, .2) !important;
   color: white;
+  margin-bottom: 15px;
 }
 
 .boxes-home-nopadbot {
@@ -528,13 +504,13 @@ a.dropdown-item:hover {
 
 .small-logo-home {
   height: auto;
-  width: 10%;
+  width: 25%;
   margin: 0;
 }
 
 .small-logo-home2 {
   height: auto;
-  width: 10%;
+  width: 25%;
   margin: 0;
 }
 
@@ -682,6 +658,9 @@ a.dropdown-item:hover {
 
 .row-success-rp {
   justify-content: center;
+  background-color: rgb(73 80 87 / .6);
+  border-radius: 5px;
+  width: 80%;
 }
 
 .cardpreview-row-rp {
@@ -1138,25 +1117,6 @@ a.dropdown-item:hover {
   padding: 10px;
 }
 
-.topdiv-footer {
-  background-color: rgb(73 80 87 / .6);
-  border-top: 1px solid darkgray;
-  padding: 20px;
-  margin-top: 15px;
-}
-
-.divider-footer {
-  justify-content: center;
-  content: '';
-  display: block;
-  width: 75%;
-  height: 2px;
-  border-radius: 5px;
-  background-color: darkgrey;
-  margin: auto;
-  margin-top: 10px;
-}
-
 .about-col-left-footer {
   color: white;
   font-size: 14px;
@@ -1169,11 +1129,6 @@ a.dropdown-item:hover {
   font-size: 14px;
   margin-left: 10px;
   margin-right: 10px;
-}
-
-.header-footer {
-  color: white;
-  margin-bottom: 0 !important;
 }
 
 .myaccount-col-footer {
@@ -1214,11 +1169,6 @@ a.dropdown-item:hover {
   display: contents;
 }
 
-.input-group-footer {
-  margin-top: .5rem;
-  width: 40% !important;
-}
-
 .status-row-footer {
   color: lightgreen;
   justify-content: center;
@@ -1229,11 +1179,10 @@ a.dropdown-item:hover {
 }
 
 .notice-text-container {
-  background-color: rgb(73 80 87 / .6);
-  border-radius: 5px;
-  padding-top: 5px;
+  padding-top: 20px;
   padding-bottom: 20px;
-  margin-top: 20px;
+  display: flex;
+  justify-content: center;
 }
 
 .row-notice {
@@ -1242,6 +1191,7 @@ a.dropdown-item:hover {
 
 .notice-text {
   color:red;
+  text-align:center;
 }
 
 .form-label-login {
@@ -1249,7 +1199,7 @@ a.dropdown-item:hover {
 }
 
 .login-container {
-  margin-top: 20px;
+  padding-top: 20px;
   max-width: 565px !important;
 }
 
@@ -1312,3 +1262,272 @@ a.dropdown-item:hover {
   display: flex;
   justify-content: center;
 }
+
+.col-teampage {
+  display: flex;
+  justify-content: center;
+}
+
+.set-width-100 {
+  min-width: 80%;
+  margin-bottom: 30px;
+}
+
+
+.table-lb {
+  font-size: 11px;
+}
+
+.page-header-lb {
+  font-size: 1rem;
+}
+
+.rank-image-lb {
+  max-width: 70%;
+}
+
+.firstPlace {
+  font-family: sans-serif;
+  color: gold;
+  margin-bottom: 0;
+  font-size: 17px;
+}
+.secondPlace {
+  font-family: sans-serif;
+  color: silver;
+  margin-bottom: 0;
+  font-size: 15px;
+}
+.thirdPlace {
+  font-family: sans-serif;
+  color: #CD7F32	;
+  margin-bottom: 0;
+  font-size: 13px;
+}
+
+.background-static-lb{
+  background: url("assets/background-mobile.jpg") center no-repeat;
+  background-size: cover;
+  background-position: 50% 50%;
+  object-fit: cover;
+  color: white;
+  min-height: 100vh;
+}
+
+.background-static-all {
+  background: url("assets/background-mobile.jpg") center no-repeat;
+  background-size: cover;
+  background-position: 50% 50%;
+  object-fit: cover;
+  min-height: 100vh;
+}
+
+.topdiv-footer {
+  background-color: rgb(73 80 87 / .6);
+  border-top: 1px solid darkgray;
+  padding: 20px;
+}
+
+.input-group-footer {
+  margin-top: .5rem;
+  width: 100% !important;
+}
+
+.navbar-toggler {
+  margin-top: 10px;
+}
+
+.divider-footer {
+  justify-content: center;
+  content: '';
+  display: block;
+  width: 100%;
+  height: 2px;
+  border-radius: 5px;
+  background-color: darkgrey;
+  margin: auto;
+  margin-top: 10px;
+}
+
+.about-col-left-footer {
+  color: white;
+  font-size: 9px;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.about-col-right-footer {
+  color: white;
+  font-size: 9px;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.header-footer {
+  color: white;
+  margin-bottom: 0 !important;
+  font-size: 1.2rem;
+}
+
+.table-teams {
+  margin-bottom: 0 !important;
+}
+
+.row-loading-imgup {
+  justify-content: center;
+  padding: 5px;
+}
+
+.p-status-imgup {
+  color: green;
+}
+
+.row-loading-passch {
+  justify-content: center;
+  padding: 5px;
+}
+
+.p-status-passch {
+  color: green;
+}
+
+.passch-row-button {
+  justify-content: flex-end;
+  padding-right: 15px;
+}
+
+.justify-content-row {
+  justify-content: center;
+}
+
+.col-team-user {
+  display: flex;
+  justify-content: center;
+}
+
+/*Put default normal screen values in here*/
+@media screen and (min-width: 768px) {
+  .table-lb {
+    font-size: 16px;
+  }
+
+  .page-header-lb {
+    font-size: 2rem;
+  }
+
+  .rank-image-lb {
+    max-width: 100%;
+  }
+
+  .firstPlace {
+    font-family: sans-serif;
+    color: gold;
+    margin-bottom: 0;
+    font-size: x-large;
+  }
+  .secondPlace {
+    font-family: sans-serif;
+    color: silver;
+    margin-bottom: 0;
+    font-size: larger;
+  }
+  .thirdPlace {
+    font-family: sans-serif;
+    color: #CD7F32	;
+    margin-bottom: 0;
+    font-size: large;
+  }
+  .background-static-lb{
+    background: url("assets/background-lb.jpeg") center no-repeat;
+    background-size: 100% 100%;
+    color: white;
+    min-height: 100vh;
+  }
+  .background-static-all {
+    background: url("assets/background-all.jpeg") center no-repeat;
+    background-size: 100% 100%;
+    min-height: 100vh;
+  }
+
+  .topdiv-footer {
+    background-color: rgb(73 80 87 / .6);
+    border-top: 1px solid darkgray;
+    padding: 20px;
+    margin-top: 15px;
+  }
+
+  .input-group-footer {
+    margin-top: .5rem;
+    width: 40% !important;
+  }
+
+  .divider-footer {
+    justify-content: center;
+    content: '';
+    display: block;
+    width: 75%;
+    height: 2px;
+    border-radius: 5px;
+    background-color: darkgrey;
+    margin: auto;
+    margin-top: 10px;
+  }
+  .about-col-left-footer {
+    color: white;
+    font-size: 14px;
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+
+  .about-col-right-footer {
+    color: white;
+    font-size: 14px;
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+
+  .header-footer {
+    color: white;
+    margin-bottom: 0 !important;
+    font-size: 1.75rem;
+  }
+
+  .small-logo-home {
+    height: auto;
+    width: 10%;
+    margin: 0;
+  }
+
+  .small-logo-home2 {
+    height: auto;
+    width: 10%;
+    margin: 0;
+  }
+
+  .set-width-100 {
+    min-width: 100%;
+    margin-bottom: 30px;
+  }
+
+  .description-teamspage {
+    text-align: center;
+    width: 100%;
+  }
+
+  .members-textbox-teamspage {
+    text-align: center;
+    color: black;
+    width: 100%;
+  }
+
+  .team-member-list {
+    width: 100%;
+    text-align: center;
+  }
+
+  .row-success-rp {
+    width: 100%;
+  }
+}
+
+

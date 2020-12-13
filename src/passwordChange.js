@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 
-import { Button, Form, Container } from 'react-bootstrap/';
+import { Button, Form, Container, Row } from 'react-bootstrap/';
  
 import { withFirebase } from './components/Firebase';
  
@@ -8,6 +8,7 @@ const INITIAL_STATE = {
   passwordOne: '',
   passwordTwo: '',
   error: null,
+  status: null,
 };
  
 class PasswordChangeForm extends Component {
@@ -23,7 +24,11 @@ class PasswordChangeForm extends Component {
     this.props.firebase
       .doPasswordUpdate(passwordOne)
       .then(() => {
-        this.setState({ ...INITIAL_STATE });
+        this.setState({ status: "Successfully Updated.", error: null }, () => {
+          setTimeout(() => {
+              this.setState({ ...INITIAL_STATE})
+          }, 5000)
+        });
       })
       .catch(error => {
         this.setState({ error });
@@ -37,7 +42,7 @@ class PasswordChangeForm extends Component {
   };
  
   render() {
-    const { passwordOne, passwordTwo, error } = this.state;
+    const { passwordOne, passwordTwo, error, status } = this.state;
  
     const isInvalid =
       passwordOne !== passwordTwo || passwordOne === '';
@@ -65,11 +70,17 @@ class PasswordChangeForm extends Component {
               placeholder="Confirm New Password"
             />
           </Form.Group>
-          <Button disabled={isInvalid} type="submit"
-            variant="outline-success" className="password-forgot-button">
-            Reset
-          </Button>
+          <Row className="passch-row-button">
+            <Button disabled={isInvalid} type="submit"
+              variant="outline-success" className="password-forgot-button">
+              Reset
+            </Button>
+          </Row>
         {error && <p>{error.message}</p>}
+        {status &&
+          <Row className="row-loading-passch">
+              <p className="p-status-passch">{status}</p>
+          </Row>}
       </Form>
       </Container>
     );

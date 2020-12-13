@@ -8,7 +8,7 @@ const Home = () => (
   <BackgroundVideo/>
   <div className="background-static-all">
     <Container fluid={true}>
-      <Row className="text-center stat-box">
+      <Row className="text-center">
         <Col className="col-settings">
           <div className="counter boxes-home boxes-home-nopadbot about-div-home">
             <h2>About Us:</h2>
@@ -20,7 +20,7 @@ const Home = () => (
           </div>
         </Col>
       </Row>
-      <Row className="text-center stat-box hours-row-home">
+      <Row className="text-center hours-row-home">
         <div className="counter hours-home boxes-home boxes-home-nopadbot">
           <h2>Hours of Operation:</h2>
           <Row>

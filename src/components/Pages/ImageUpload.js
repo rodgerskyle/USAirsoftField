@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 
 import { AuthUserContext, withAuthorization } from '../session';
 
-import { Button, Form, Row, Col } from 'react-bootstrap/';
+import { Button, Form, Row, Col, ProgressBar } from 'react-bootstrap/';
 
 import { withFirebase } from '../Firebase';
 
@@ -16,6 +16,8 @@ class ImageUpload extends Component {
             authUser: JSON.parse(localStorage.getItem('authUser')),
             loading: true,
             user: "",
+            progress: null,
+            img_status: null,
         };
     }
 
@@ -72,9 +74,18 @@ class ImageUpload extends Component {
                     .pictures(`/${uid}/profilepic.png`)
                     .getDownloadURL()
                     .then(url => {
-                        this.setState({ url });
                         var manage = this.props.firebase.manageProfile();
                         manage({choice: "profilepic"})
+                        this.setState({ url }, function() {
+                            setTimeout( () => {
+                                this.setState({progress: null,
+                                img_status: "Successfully Updated."}, () => {
+                                    setTimeout(() => {
+                                        this.setState({img_status: null})
+                                    }, 5000)
+                                })
+                            }, 2000);
+                        })
                     });
             }
         );
@@ -92,6 +103,10 @@ class ImageUpload extends Component {
                             width="350"
                             className="profile-img-settings"
                         />
+                        {this.state.progress ? 
+                        <Row className="row-loading-imgup">
+                            <ProgressBar animated striped now={this.state.progress} label={`${this.state.progress}%`} />
+                        </Row> : null}
                         <Row>
                             <Col className="notice-col-settings">
                                 <p className="notice-text-settings"><b>NOTE: </b>Images can only be MAX 5mb </p>
@@ -122,6 +137,10 @@ class ImageUpload extends Component {
                                 </Button>
                             </Col>
                         </Row>
+                        {this.state.img_status ? 
+                        <Row className="row-loading-imgup">
+                            <p className="p-status-imgup">{this.state.img_status}</p>
+                        </Row> : null}
                     </div>
                 )}
             </AuthUserContext.Consumer>
