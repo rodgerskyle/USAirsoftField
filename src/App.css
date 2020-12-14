@@ -422,7 +422,7 @@
 }
 
 .background-static-all::before {
-  background-color: rgb(4, 4 ,4);
+  background-color: rgb(0, 0 ,0);
 }
 
 .password-text {
@@ -1405,6 +1405,28 @@ a.dropdown-item:hover {
   justify-content: center;
 }
 
+.row-update-rules {
+  justify-content: flex-end;
+  padding-right: 30px;
+  color: white;
+  font-style: italic;
+}
+
+.ol-rules {
+  color: white;
+}
+
+.tab-content {
+  background-color: rgb(73 80 87 / .6);
+  padding: 0 5px;
+  padding-top: 15px;
+  border-radius: 5px;
+}
+
+.li-content-rules {
+  padding-bottom: 15px;
+}
+
 /*Put default normal screen values in here*/
 @media screen and (min-width: 768px) {
   .table-lb {
@@ -1445,8 +1467,10 @@ a.dropdown-item:hover {
   }
   .background-static-all {
     background: url("assets/background-all.jpeg") center no-repeat;
-    background-size: 100% 100%;
+    background-size: 100% auto;
+    background-position: top center;
     min-height: 100vh;
+    background-color: rgb(0, 0 ,0);
   }
 
   .topdiv-footer {
