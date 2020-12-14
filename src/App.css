@@ -224,9 +224,11 @@
 }
 
 .team-icon-individual {
-  width: auto;
-  height: 192px;
   border: 1px solid grey;
+}
+
+.team-single-img {
+  justify-content: center;
 }
 
 .team-icon-teamspage {
@@ -650,6 +652,10 @@ a.dropdown-item:hover {
 .row-rp {
   justify-content: center;
   background-color: rgb(108, 117, 125, 0.75)
+}
+
+.spinner-row-rp {
+  padding: 5px;
 }
 
 .row-renew {
@@ -1194,6 +1200,11 @@ a.dropdown-item:hover {
   text-align:center;
 }
 
+.notice-text-g {
+  color:green;
+  text-align:center;
+}
+
 .form-label-login {
   float: left;
 }
@@ -1425,6 +1436,10 @@ a.dropdown-item:hover {
 
 .li-content-rules {
   padding-bottom: 15px;
+}
+
+.status-text-teammanage {
+  color: green;
 }
 
 /*Put default normal screen values in here*/
