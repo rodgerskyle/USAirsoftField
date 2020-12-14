@@ -5,7 +5,7 @@ import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
 import { compose } from 'recompose';
 
-import { Container, Row, Col, Form, Button, Breadcrumb, Card, ProgressBar } from 'react-bootstrap/';
+import { Container, Row, Col, Form, Button, Breadcrumb, Card, ProgressBar, Spinner } from 'react-bootstrap/';
 
 import { Link } from 'react-router-dom';
 
@@ -361,8 +361,8 @@ class AdminPage extends Component {
                         </Row>
                         {this.state.ul_status ? <p className="status-ul-admin">{this.state.ul_status}</p> : ""}
                         {this.state.ul_error ? <p className="error-ul-admin">{this.state.ul_error}</p> : ""}
-                        <Row>
-                          {loading ? <p className="loading-text-ul-admin">Loading</p> : 
+                        <Row className={loading ? "justify-content-row" : ""}>
+                          {loading ? <Spinner animation="border" /> : 
                             <UserBox users={this.state.users} index={0} length={this.state.users.length}
                             search={this.state.search} />
                           }

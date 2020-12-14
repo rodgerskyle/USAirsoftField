@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import logo from '../../assets/logo.png';
-import { Button, Form, Container, Row, Col, Breadcrumb } from 'react-bootstrap/';
+import { Button, Form, Container, Row, Col, Breadcrumb, Spinner } from 'react-bootstrap/';
 import { LinkContainer } from 'react-router-bootstrap';
 import SignatureCanvas from 'react-signature-canvas';
 import SignedWaiver from './SignedWaiver';
@@ -94,6 +94,9 @@ const INITIAL_STATE = {
     saveButton: true,
     saveButton2: true,
     showLander: false,
+    emailAdded: false,
+    loading: false,
+    status: null,
   };
  
 class SignUpFormBase extends Component {
@@ -216,13 +219,13 @@ class SignUpFormBase extends Component {
           });
       })
       .then(authUser => {
-        this.setState({submitted: true})
         this.emailSignUp();
+        this.state.secondaryApp.auth().signOut();
+        this.setState({submitted: true})
       })
       .catch(error => {
         this.setState({ error });
       });
-  this.state.secondaryApp.auth().signOut();
   event.preventDefault();
   }
  
@@ -250,7 +253,11 @@ class SignUpFormBase extends Component {
   // Prop to pass to waiver to call when complete
   completeWaiver = (blob) => {
     this.props.firebase.membersWaivers(`${this.state.uid}.pdf`).put(blob).then(() => {
-      this.setState({submitted: false, showLander: true})
+      this.setState({loading: true}, function() {
+        setTimeout( () => {
+            this.setState({submitted: false, showLander: true, loading: false})
+        }, 5000);
+      })
     })
   }
  
@@ -284,6 +291,8 @@ class SignUpFormBase extends Component {
       saveButton,
       saveButton2,
       showLander,
+      loading,
+      emailAdded,
     } = this.state;
 
     const myProps = {fname, lname, email, address, city, state, zipcode, phone, dob, pgname, pgphone, participantImg, pgImg, age, member, uid, }
@@ -653,9 +662,10 @@ class SignUpFormBase extends Component {
                     </Button> 
                   </Col>
                 </Row>
-                <Row>
+                <Row className="justify-content-row">
                   {status && <p>{status}</p>}
                   {error && <p>{error.message}</p>}
+                  {loading ? <Spinner animation="border" /> : null}
                 </Row>
                 {submitted ? 
                   <SignedWaiver {...myProps} completeWaiver={this.completeWaiver}/> : ""
@@ -701,21 +711,29 @@ class SignUpFormBase extends Component {
               </Button>
             </Row>
         </div> :
-        <Container className="notice-text-container">
-          <Row className="row-success-rp">
-            <Col className="col-rp">
-              <h2 className="page-header">Successful Member Registration.</h2>
-              <p className="page-header">Please let your U.S. Airsoft employee know that you have finished.</p>
-            </Col>
-          </Row>
-          <Row className="row-success-rp">
-              <Button className="next-button-rp" variant="info" type="button" 
-              onClick={() => {
-                this.setState({showLander: false})
-                this.setState({ ...INITIAL_STATE, status: "Completed"});
-              }}>Return</Button>
-          </Row>
-        </Container> }
+          <Container className="notice-text-container">
+              <Row className="row-success-rp">
+                  <Col className="col-rp">
+                      <Row className="row-notice">
+                          <h2 className="page-header">Successful Member Registration.</h2>
+                      </Row>
+                      <Row className="row-notice">
+                          <p className="notice-text-g">Please let your U.S. Airsoft employee know that you have finished.</p>
+                      </Row>
+                      <Row className="justify-content-row">
+                          <Button className="next-button-rp" variant="info" type="button" 
+                          disabled={!emailAdded} onClick={() => {
+                            this.setState({showLander: false})
+                            this.setState({ ...INITIAL_STATE, status: "Completed"});
+                          }}>Return</Button>
+                      </Row>
+                      <Row className="row-notice">
+                          <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>
+                      </Row>
+                  </Col>
+              </Row>
+          </Container>
+            }
       </div>
     );
   };
