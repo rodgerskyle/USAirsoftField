@@ -79,12 +79,12 @@ class TeamCreate extends Component {
 
 
     //create team
-    createTeam(e) {
+    createTeam(e, team) {
         e.preventDefault();
 
-        const { image, uploaded, previous, teamname, imgError, error } = this.state;
+        const { image, uploaded, previous, imgError, error, teamname } = this.state;
 
-        if (image !== null && imgError === false && error === null) {
+        if (image !== null && imgError === false && error === null && team === "" ) {
 
             var t_name = teamname.toString().toLowerCase();
 
@@ -99,7 +99,7 @@ class TeamCreate extends Component {
             //Create message to show they were removed and reset input box
             var createTeam = this.props.firebase.createTeam();
             createTeam({
-                teamname: this.state.teamname, description: this.state.description
+                teamname: this.state.teamname, description: this.state.description, user_team: team
             }).then((result) => {
                 // Read result of the Cloud Function.
                 var update = result.data.message;
@@ -117,7 +117,7 @@ class TeamCreate extends Component {
                         },
                         error => {
                             // Error function ...
-                            console.log(error);
+                            this.setState({error})
                         },
                         () => {
                             // complete function ...
@@ -136,6 +136,8 @@ class TeamCreate extends Component {
                             })
                         })
                 }
+            }).catch(function(error) {
+                this.setState({error})
             })
         }
         else {
@@ -271,7 +273,7 @@ class TeamCreate extends Component {
                                             </Button>
                                         </Col>
                                         <Col>
-                                            <Button className="submit-button" variant="outline-success" onClick={((e) => this.createTeam(e))}
+                                            <Button className="submit-button" variant="outline-success" onClick={((e) => this.createTeam(e, authUser.team))}
                                                 disabled={imgError && !error}>
                                                 Submit
                                             </Button>
