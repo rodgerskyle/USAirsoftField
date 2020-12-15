@@ -90,7 +90,7 @@ class TeamCreate extends Component {
 
             //Handling the case if a user had previously uploaded an image
             if (uploaded === true) {
-                this.props.firebase.teamsPictures(`team ${previous}.png`).delete().then(function () {
+                this.props.firebase.teamsPictures(`${previous}.png`).delete().then(function () {
                     // File deleted successfully
                 }).catch(function (error) {
                     // Uh-oh, an error occurred!
@@ -105,7 +105,7 @@ class TeamCreate extends Component {
                 var update = result.data.message;
                 if (update === "Complete") {
                     //If team was created without issue set completion to true
-                    const uploadTask = this.props.firebase.teamsPictures(`team ${t_name}.png`).put(image);
+                    const uploadTask = this.props.firebase.teamsPictures(`${t_name}.png`).put(image);
                     uploadTask.on(
                         "state_changed",
                         snapshot => {
@@ -122,7 +122,7 @@ class TeamCreate extends Component {
                         () => {
                             // complete function ...
                             this.props.firebase
-                                .teamsPictures(`team ${t_name}.png`)
+                                .teamsPictures(`${t_name}.png`)
                                 .getDownloadURL()
                                 .then(url => {
                                     this.setState({ url });
