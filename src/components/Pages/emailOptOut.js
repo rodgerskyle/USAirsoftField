@@ -3,6 +3,8 @@ import '../../App.css';
 
 import { Container, Row, Col, Form, Button } from 'react-bootstrap/';
 
+import { encode } from 'firebase-encode';
+
 import { withFirebase } from '../Firebase';
 
 class emailOptOut extends Component {
@@ -24,7 +26,7 @@ class emailOptOut extends Component {
     updateUser = (event) => {
         event.preventDefault()
         const optmenu = this.props.firebase.emailOptMenu();
-        optmenu({secret: this.props.match.params.secret, email: this.state.value, choice: "out"}).then((result) => {
+        optmenu({secret: this.props.match.params.secret, email: encode(this.state.value.toLowerCase()), choice: "out"}).then((result) => {
             if (result) this.setState({status: result.data.status})
         }).catch(error => {
             this.setState({error: 'failed-condition: Email does not match the token or it is an improper token.' })

@@ -7,6 +7,7 @@ import fblogo from '../../assets/SocialMedia/facebook.png';
 import twlogo from '../../assets/SocialMedia/twitter.png';
 import iglogo from '../../assets/SocialMedia/instagram.png';
 import ytlogo from '../../assets/SocialMedia/youtube.png';
+import { encode } from 'firebase-encode';
 
 
 class Footer extends Component {
@@ -101,7 +102,7 @@ const FooterAuth = () => (
 function subscribe(event, passed_email, emailMenu, setStatus) {
     event.preventDefault()
     if (passed_email !== "") {
-        emailMenu({secret: null, email: passed_email, choice: "in"}).then((result) => {
+        emailMenu({secret: null, email: encode(passed_email.toLowerCase()), choice: "in"}).then((result) => {
             if (result) {
                 setStatus(result.data.status);
                 setTimeout(function(){

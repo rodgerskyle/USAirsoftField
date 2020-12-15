@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import logo from '../../assets/logo.png';
-import { Button, Form, Container, Row, Col, Breadcrumb } from 'react-bootstrap/';
+import { Button, Form, Container, Row, Col, Breadcrumb, Spinner } from 'react-bootstrap/';
 import { LinkContainer } from 'react-router-bootstrap';
 import SignatureCanvas from 'react-signature-canvas';
 import SignedWaiver from './SignedWaiver';
 import '../../App.css';
+import { encode } from 'firebase-encode';
 
 import cardimages from '../constants/cardimgs';
 import waiver from '../../assets/Waiver-cutoff.png'
@@ -94,6 +95,9 @@ const INITIAL_STATE = {
     saveButton: true,
     saveButton2: true,
     showLander: false,
+    emailAdded: false,
+    loading: false,
+    status: null,
   };
  
 class SignUpFormBase extends Component {
@@ -104,53 +108,14 @@ class SignUpFormBase extends Component {
     this.state = { ...INITIAL_STATE, emailListNM: null, emailListM: null};
   }
 
-  componentDidMount() {
-      this.props.firebase.grabEmailListNM().on('value', snapshot => {
-          const emailsObjectNM = snapshot.val();
-
-          const emailListNM = Object.keys(emailsObjectNM).map(key => ({
-              ...emailsObjectNM[key],
-              secret: key,
-          }))
-
-          this.setState({
-            emailListNM
-          });
-      });
-      this.props.firebase.grabEmailListM().on('value', snapshot => {
-          const emailsObjectM = snapshot.val();
-
-          const emailListM = Object.keys(emailsObjectM).map(key => ({
-              ...emailsObjectM[key],
-              secret: key,
-          }))
-
-          this.setState({
-            emailListM
-          });
-      });
-  }
-
-  componentWillUnmount() {
-    this.props.firebase.grabEmailListNM().off();
-    this.props.firebase.grabEmailListM().off();
-  }
-
   // Will Check duplicates in list
   checkDuplicates(email) {
-    const {emailListNM } = this.state;
-    let lengthNM = emailListNM.length;
-    let y = 0;
-    // Now go through both at the same time
-    while (y < lengthNM) {
-      if (y < lengthNM) {
-        if (emailListNM[y].email === email) {
+      this.props.firebase.emailList(encode(email.toLowerCase())).once("value", object => {
+        if (object.val() !== null) {
           return true;
         }
-        y++
-      }
-    } 
-    return false;
+        return false;
+      })
   }
 
   // Complete email sign up to email list 
@@ -161,7 +126,7 @@ class SignUpFormBase extends Component {
     if (!this.checkDuplicates(email)) {
       // Use below to generate random uid for signing up and filling out waivers
       var secret = 'm' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5).toUpperCase();
-      this.props.firebase.emailListMembers(secret).set({email})
+      this.props.firebase.emailList(encode(email)).set({secret})
     }
     this.setState({emailAdded: true})
   }
@@ -216,13 +181,13 @@ class SignUpFormBase extends Component {
           });
       })
       .then(authUser => {
-        this.setState({submitted: true})
         this.emailSignUp();
+        this.state.secondaryApp.auth().signOut();
+        this.setState({submitted: true})
       })
       .catch(error => {
         this.setState({ error });
       });
-  this.state.secondaryApp.auth().signOut();
   event.preventDefault();
   }
  
@@ -250,7 +215,11 @@ class SignUpFormBase extends Component {
   // Prop to pass to waiver to call when complete
   completeWaiver = (blob) => {
     this.props.firebase.membersWaivers(`${this.state.uid}.pdf`).put(blob).then(() => {
-      this.setState({submitted: false, showLander: true})
+      this.setState({loading: true}, function() {
+        setTimeout( () => {
+            this.setState({submitted: false, showLander: true, loading: false})
+        }, 5000);
+      })
     })
   }
  
@@ -284,6 +253,8 @@ class SignUpFormBase extends Component {
       saveButton,
       saveButton2,
       showLander,
+      loading,
+      emailAdded,
     } = this.state;
 
     const myProps = {fname, lname, email, address, city, state, zipcode, phone, dob, pgname, pgphone, participantImg, pgImg, age, member, uid, }
@@ -645,6 +616,7 @@ class SignUpFormBase extends Component {
                     </Form.Group>
                   </Col>
                 </Row>
+                {!loading ? 
                 <Row className="button-row-rp">
                   <Col>
                     <Button variant={isInvalid ? "danger" : "success"} disabled={isInvalid} type="submit"
@@ -653,9 +625,11 @@ class SignUpFormBase extends Component {
                     </Button> 
                   </Col>
                 </Row>
-                <Row>
+                : null}
+                <Row className="justify-content-row">
                   {status && <p>{status}</p>}
                   {error && <p>{error.message}</p>}
+                  {loading ? <Spinner animation="border" /> : null}
                 </Row>
                 {submitted ? 
                   <SignedWaiver {...myProps} completeWaiver={this.completeWaiver}/> : ""
@@ -701,21 +675,29 @@ class SignUpFormBase extends Component {
               </Button>
             </Row>
         </div> :
-        <Container className="notice-text-container">
-          <Row className="row-success-rp">
-            <Col className="col-rp">
-              <h2 className="page-header">Successful Member Registration.</h2>
-              <p className="page-header">Please let your U.S. Airsoft employee know that you have finished.</p>
-            </Col>
-          </Row>
-          <Row className="row-success-rp">
-              <Button className="next-button-rp" variant="info" type="button" 
-              onClick={() => {
-                this.setState({showLander: false})
-                this.setState({ ...INITIAL_STATE, status: "Completed"});
-              }}>Return</Button>
-          </Row>
-        </Container> }
+          <Container className="notice-text-container">
+              <Row className="row-success-rp">
+                  <Col className="col-rp">
+                      <Row className="row-notice">
+                          <h2 className="page-header">Successful Member Registration.</h2>
+                      </Row>
+                      <Row className="row-notice">
+                          <p className="notice-text-g">Please let your U.S. Airsoft employee know that you have finished.</p>
+                      </Row>
+                      <Row className="justify-content-row">
+                          <Button className="next-button-rp" variant="info" type="button" 
+                          disabled={!emailAdded} onClick={() => {
+                            this.setState({showLander: false})
+                            this.setState({ ...INITIAL_STATE, status: "Completed"});
+                          }}>Return</Button>
+                      </Row>
+                      <Row className="row-notice">
+                          <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>
+                      </Row>
+                  </Col>
+              </Row>
+          </Container>
+            }
       </div>
     );
   };

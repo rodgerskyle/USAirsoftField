@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Table } from 'react-bootstrap/';
 import '../../App.css';
 
-import { Container, Row, Col, Pagination, OverlayTrigger, Tooltip } from 'react-bootstrap/';
+import { Container, Row, Col, Pagination, OverlayTrigger, Tooltip, Spinner } from 'react-bootstrap/';
 import BootstrapSwitchButton from 'bootstrap-switch-button-react';
 
 import ranks from '../constants/ranks';
@@ -189,7 +189,7 @@ class Leaderboards extends Component {DAWKDAWDKWA
                 <Container className="leaderboard-page">
                     <Row className="row-header-lb">
                         <Col xs="auto" className="col-header-lb vertical-divider-col-lb">
-                            <h2>Leaderboards</h2>
+                            <h2 className="page-header-lb">Leaderboards</h2>
                         </Col>
                         <Col>
                             <Row className="button-right-lb">
@@ -256,12 +256,15 @@ class Leaderboards extends Component {DAWKDAWDKWA
                             </Pagination>
                         </Col>
                     </Row>
-                    <Row>
-                        {loading && <div>Loading ...</div>}
-                        <UserList users={users.slice((curPage-1) * usersPerPage, ((curPage-1) * usersPerPage) + usersPerPage )} getRank={getRankState} 
-                            monthly={this.state.monthly} currentMonth={this.state.currentMonth} start={usersPerPage * (curPage-1)} 
-                        />
-                    </Row>
+                        {loading ? 
+                        <Row className="justify-content-row">
+                            <Spinner animation="border" />
+                        </Row>  :
+                        <Row>
+                            <UserList users={users.slice((curPage-1) * usersPerPage, ((curPage-1) * usersPerPage) + usersPerPage )} getRank={getRankState} 
+                            monthly={this.state.monthly} currentMonth={this.state.currentMonth} start={usersPerPage * (curPage-1)} /> 
+                        </Row> 
+                        }
                 </Container>
             </div>
         );
@@ -300,7 +303,7 @@ function UserList ({users, getRank, monthly, currentMonth, start }) {
                             }
                             >
                                 <img src={rankimages.length !== 0 ? rankimages[getRank(user.points)] : null}
-                                alt="Player Rank" />
+                                alt="Player Rank" className="rank-image-lb"/>
                             </OverlayTrigger>
                         </Td>
                         <Td cl="profilelink-lb" to={'/profilelookup/' + user.uid}>{user.name}</Td>

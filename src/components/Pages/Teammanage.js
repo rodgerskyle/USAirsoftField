@@ -30,12 +30,14 @@ class TeamManage extends Component {
             members: '',
             requests: '',
             requestSelected: [],
-            requestError: '',
+            requestError: null,
             memberSelected: [],
-            memberError: '',
+            memberError: null,
+            descriptionError: null,
             checkBox: false,
             requestLoading: false,
             membersLoading: false,
+            descriptionLoading: false,
             deleting: false,
             AcceptRequestState: this.AcceptRequest,
             DeclineRequestState: this.DeclineRequest,
@@ -115,12 +117,16 @@ class TeamManage extends Component {
 
             // Get rid of person off the request list and add them to members
             var acceptRequest = this.props.firebase.acceptRequest();
-            acceptRequest({user: uid, teamname: this.state.authUser.team,
+            acceptRequest({user: uid, teamname: this.state.authUser.team.toLowerCase(),
                  new_member: member, member_index: index, team: this.state.teamObject
                 }).then( (result) => {
                 //If team was updated without issue, continue with change
                 if (result.data.message === "Complete")
-                    this.setState({requestError: "Request Accepted.", requestLoading: false})
+                    this.setState({ requestError: "Request Accepted.", requestLoading: false}, function() {
+                        setTimeout( () => {
+                            this.setState({requestError: null })
+                        }, 5000);
+                    })
             }).catch( (error) => {
                 console.log(error)
                 this.setState({requestError: "Error: " + error.message})
@@ -141,7 +147,11 @@ class TeamManage extends Component {
             // Get rid of person off the request list
             requests.splice(index, 1)
             this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({ requests }).then(() => {
-                this.setState({requestError: "Request Declined.", requestLoading: false})
+                this.setState({ requestError: "Request Declined.", requestLoading: false}, function() {
+                    setTimeout( () => {
+                        this.setState({requestError: null })
+                    }, 5000);
+                })
             })
         }
     }
@@ -164,7 +174,11 @@ class TeamManage extends Component {
                 // Read result of the Cloud Function.
                 //console.log(result.data)
                 if (result.data.message === "Complete") {
-                    this.setState({memberError: "Kick was successful.", memberLoading: false})
+                    this.setState({ memberError: "Kick was successful.", memberLoading: false}, function() {
+                        setTimeout( () => {
+                            this.setState({memberError: null })
+                        }, 5000);
+                    })
                 }
             }).catch( (error) => {
                 this.setState({memberError: "Error: " + error, memberLoading: false,})
@@ -207,7 +221,9 @@ class TeamManage extends Component {
             members.splice(index, 1);
             members.push(member)
             this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({ members, leader }).then(() => {
-                this.setState({memberError: "Promotion successful.", memberLoading: false})
+                this.setState({memberError: "Promotion successful.", memberLoading: false}, function() {
+                    window.location.href = "/teams";
+                })
             })
         }
     }
@@ -240,9 +256,18 @@ class TeamManage extends Component {
     // Updating the team description
     UpdateDescription = (e) => {
         e.preventDefault();
+        this.setState({descriptionLoading: true})
         //update description 
         let description = this.state.description
-        this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({description})
+        this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({description}).then(() => {
+            this.setState({ descriptionError: "Successful update.", descriptionLoading: false}, function() {
+                setTimeout( () => {
+                    this.setState({descriptionError: null })
+                }, 5000);
+            })
+        }).catch((error) => {
+
+        })
     }
 
     render() {
@@ -277,12 +302,12 @@ class TeamManage extends Component {
                                     promote={this.state.PromoteToLeaderState} onChange={this.state.onChangeSelectionMemState}
                                     quit={this.state.QuitTeamState} errortext={this.state.memberError}
                                     />
-                                    {this.state.memberLoading ? <Progress type="spin" color="white"/> : ""}
+                                    {this.state.memberLoading ? <Progress type="spin" color="white"/> : null}
                                     <RequestList requests={this.state.requests} decline={this.state.DeclineRequestState} 
                                     accept={this.state.AcceptRequestState} onChange={this.state.onChangeSelectionReqState}
                                     errortext={this.state.requestError}
                                     />
-                                    {this.state.requestLoading ? <Progress type="spin" color="white"/> : ""}
+                                    {this.state.requestLoading ? <Progress type="spin" color="white"/> : null}
                                 <Form className="team-manage-text">
                                     <Form.Group controlId="exampleForm.ControlTextarea1">
                                         <Form.Label>Add Description Here:</Form.Label>
@@ -294,11 +319,13 @@ class TeamManage extends Component {
                                         </Button>
                                     </Form.Group>
                                 </Form>
+                                {this.state.descriptionError ? <p className="status-text-teammanage">{this.state.descriptionError}</p> : null}
+                                {this.state.descriptionLoading ? <Progress type="spin" color="white"/> : null}
                                 <Button variant="outline-danger" size="md" block disabled={!this.state.checkBox}
                                 type="button" onClick={(e) => this.DisbandTeam(e)}>
                                     Disband team
                                 </Button>
-                                {this.state.deleting ? <Progress type="spin" color="white"/> : ""}
+                                {this.state.deleting ? <Progress type="spin" color="white"/> : null}
                                 <Form.Group controlId="formBasicCheckbox">
                                     <Form.Check checked={this.state.checkBox} 
                                     onChange={this.onChangeCheck}
@@ -309,13 +336,15 @@ class TeamManage extends Component {
                             :
                             <Container>
                                 <h2 className="page-header">Manage Team</h2>
-                                <div className="team-single-img">
+                                <Row className="team-single-img">
                                     <img className="team-icon-individual" src={this.state.teamicon} alt="" />
-                                </div>
-                                <Button className="team-manage-button-2" variant="outline-danger" type="submit" onClick={(e) => this.QuitTeam(e)}>
-                                    Quit Team
-                                </Button>
-                                {this.state.requestLoading ? <Progress type="spin" color="white"/> : ""}
+                                </Row>
+                                <Row className="justify-content-row">
+                                    <Button className="team-manage-button-2" variant="outline-danger" type="submit" onClick={(e) => this.QuitTeam(e)}>
+                                        Quit Team
+                                    </Button>
+                                    {this.state.requestLoading ? <Progress type="spin" color="white"/> : null}
+                                </Row>
                             </Container> 
                         }
                     </div>
@@ -347,7 +376,7 @@ const MembersList = ({ members, promote, kick, onChange, quit, errortext }) => (
                 Quit Team
             </Button>
         </Form.Group>
-        <p>{errortext}</p>
+        {errortext ? <p className="status-text-teammanage">{errortext}</p> : null}
     </Form>
 );
 
@@ -370,7 +399,7 @@ const RequestList = ({ requests, accept, decline, onChange, errortext }) => (
                 Decline Request
             </Button>
         </Form.Group>
-        <p>{errortext}</p>
+        {errortext ? <p className="status-text-teammanage">{errortext}</p> : null}
     </Form>
 );
 
