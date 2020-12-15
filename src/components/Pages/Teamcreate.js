@@ -122,7 +122,7 @@ class TeamCreate extends Component {
                         () => {
                             // complete function ...
                             this.props.firebase
-                                .teamsPictures(`${t_name}.png`)
+                                .teamsPictures(`team ${t_name}.png`)
                                 .getDownloadURL()
                                 .then(url => {
                                     this.setState({ url });
@@ -137,7 +137,7 @@ class TeamCreate extends Component {
                         })
                 }
             }).catch(function(error) {
-                this.setState({error})
+                this.setState({error})//error here
             })
         }
         else {

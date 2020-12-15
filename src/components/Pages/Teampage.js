@@ -151,7 +151,7 @@ class Teampage extends Component {
 
     //Get image function for team image = teamname
     getPicture(teamname) {
-        this.props.firebase.teamsPictures(`${teamname.toLowerCase()}.png`).getDownloadURL().then((url) => {
+        this.props.firebase.teamsPictures(`team ${teamname.toLowerCase()}.png`).getDownloadURL().then((url) => {
             this.setState({ teamicon: url })
         }).catch((error) => {
             // Handle any errors NOT DONE
