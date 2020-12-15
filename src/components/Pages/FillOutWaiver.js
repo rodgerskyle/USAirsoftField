@@ -5,6 +5,7 @@ import { LinkContainer } from 'react-router-bootstrap';
 import SignatureCanvas from 'react-signature-canvas';
 import SignedWaiver from './SignedWaiver';
 import '../../App.css';
+import { encode } from 'firebase-encode';
 
 import waiver from '../../assets/Waiver-cutoff.png'
 
@@ -79,61 +80,14 @@ class WaiverPageFormBase extends Component {
     this.state = { ...INITIAL_STATE, emailListNM: null, emailListM: null};
   }
 
-  componentDidMount() {
-      this.props.firebase.grabEmailListNM().on('value', snapshot => {
-          const emailsObjectNM = snapshot.val();
-
-          const emailListNM = Object.keys(emailsObjectNM).map(key => ({
-              ...emailsObjectNM[key],
-              secret: key,
-          }))
-
-          this.setState({
-            emailListNM
-          });
-      });
-      this.props.firebase.grabEmailListM().on('value', snapshot => {
-          const emailsObjectM = snapshot.val();
-
-          const emailListM = Object.keys(emailsObjectM).map(key => ({
-              ...emailsObjectM[key],
-              secret: key,
-          }))
-
-          this.setState({
-            emailListM
-          });
-      });
-  }
-
-  componentWillUnmount() {
-    this.props.firebase.grabEmailListNM().off();
-    this.props.firebase.grabEmailListM().off();
-  }
-
   // Will Check duplicates in list
   checkDuplicates(email) {
-    const {emailListM, emailListNM } = this.state;
-    let lengthM = emailListM.length;
-    let lengthNM = emailListNM.length;
-    let x = 0;
-    let y = 0;
-    // Now go through both at the same time
-    while (x < lengthM || y < lengthNM) {
-      if (x < lengthM) {
-        if (emailListM[x].email === email) {
+      this.props.firebase.emailList(encode(email)).once("value", object => {
+        if (object.val() !== null) {
           return true;
         }
-        x++
-      }
-      if (y < lengthNM) {
-        if (emailListNM[y].email === email) {
-          return true;
-        }
-        y++
-      }
-    } 
-    return false;
+        return false;
+      })
   }
 
 
@@ -170,7 +124,7 @@ class WaiverPageFormBase extends Component {
     if (!this.checkDuplicates(email)) {
       // Use below to generate random uid for signing up and filling out waivers
       var secret = 'n' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5).toUpperCase();
-      this.props.firebase.emailListNonMembers(secret).set({email})
+      this.props.firebase.emailList(encode(email.toLowerCase())).set({secret})
     }
     this.setState({emailAdded: true})
   }
@@ -478,6 +432,7 @@ class WaiverPageFormBase extends Component {
               </Row>
           </Col>
           </Row>
+          {!loading ? 
           <Row className="nav-row-rp">
             <Button className="next-button-rp" variant="info" type="button" disabled={this.state.pageIndex===1}
             onClick={() => {
@@ -505,6 +460,7 @@ class WaiverPageFormBase extends Component {
                 Submit
             </Button>
           </Row> 
+          : null}
       </div>
       : 
           <Container className="notice-text-container">
