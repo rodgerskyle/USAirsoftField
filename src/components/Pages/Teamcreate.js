@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 
-import { Container, Row, Col, Form, Button } from 'react-bootstrap/';
+import { Container, Row, Col, Form, Button, ProgressBar } from 'react-bootstrap/';
 
 import { AuthUserContext, withAuthorization } from '../session';
 
@@ -228,7 +228,7 @@ class TeamCreate extends Component {
                                                     this.onChangeDesc(e);
                                                 }}
                                             />
-                                            <Button className="next-button" variant="outline-secondary" type="submit"
+                                            <Button className="next-button" variant="primary" type="submit"
                                             >
                                                 Next
                                         </Button>
@@ -243,7 +243,7 @@ class TeamCreate extends Component {
                                 :
                                 <Container>
                                     <p className="team-upload-text">Team Image Upload:</p>
-                                    <div className="team-single-img">
+                                    <div>
                                         <img className="team-icon-individual" ref={this.imgRef}
                                             src={this.state.url || alticon} alt=""
                                             onLoad={() => this.checkDimensions()} />
@@ -252,32 +252,30 @@ class TeamCreate extends Component {
                                         <Col md={6}>
                                             <p className="notice-text-settings"><b>NOTE: </b>Images can only be MAX 5mb </p>
                                             <p className="notice-text-settings">and need to be width 654px by height 192px.</p>
-                                            <div className="file-field input-field img-input-teamc">
-                                                <div className="btn team-upload">
-                                                    <span>File</span>
-                                                    <input type="file" onChange={this.handleChange} />
-                                                </div>
+                                            <div className="input-field img-input-teamc">
+                                                <Form.Group>
+                                                    <Form.File id="team-image-input" onChange={this.handleChange}
+                                                    label="Attach Image" accept="image/*" custom data-browse="Upload"/>
+                                                </Form.Group>
                                             </div>
                                         </Col>
                                     </Row>
+                                    {this.state.progress !== 0 ? 
                                     <Row>
                                         <Col md={3}>
-                                            <progress value={this.state.progress} max="100" className="progress" />
+                                            <ProgressBar animated striped now={this.state.progress} label={`${this.state.progress}%`} />
                                         </Col>
                                     </Row>
-                                    <Row >
-                                        <Col md={1}>
-                                            <Button className="previous-button" variant="outline-secondary" onClick={((e) => this.previousPage(e))}
-                                            >
-                                                Previous
-                                            </Button>
-                                        </Col>
-                                        <Col>
-                                            <Button className="submit-button" variant="outline-success" onClick={((e) => this.createTeam(e, authUser.team))}
-                                                disabled={imgError && !error}>
-                                                Submit
-                                            </Button>
-                                        </Col>
+                                    : null}
+                                    <Row className="row-buttons-teamc">
+                                        <Button className="previous-button" variant="primary" onClick={((e) => this.previousPage(e))}
+                                        >
+                                            Previous
+                                        </Button>
+                                        <Button className="submit-button" variant="success" onClick={((e) => this.createTeam(e, authUser.team))}
+                                            disabled={imgError && !error}>
+                                            Submit
+                                        </Button>
                                     </Row>
                                     <p className="error-team-create">{this.state.error}</p>
                                 </Container>
