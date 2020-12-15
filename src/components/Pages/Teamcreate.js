@@ -84,7 +84,7 @@ class TeamCreate extends Component {
 
         const { image, uploaded, previous, teamname, imgError, error } = this.state;
 
-        if (image !== null && imgError === false && error !== null) {
+        if (image !== null && imgError === false && error === null) {
 
             var t_name = teamname.toString().toLowerCase();
 
@@ -163,7 +163,8 @@ class TeamCreate extends Component {
         else {
             // Image is wrong
             this.setState({
-                error: "Wrong dimensions on image, please upload 654x192."
+                error: "Wrong dimensions on image, please upload 654x192.",
+                imgError: true,
             })
         }
     }
@@ -177,7 +178,7 @@ class TeamCreate extends Component {
     };
 
     render() {
-        const { description, page, teamname, error } = this.state;
+        const { description, page, teamname, error, imgError } = this.state;
 
 
         return (
@@ -271,7 +272,7 @@ class TeamCreate extends Component {
                                         </Col>
                                         <Col>
                                             <Button className="submit-button" variant="outline-success" onClick={((e) => this.createTeam(e))}
-                                                disabled={!error}>
+                                                disabled={imgError && !error}>
                                                 Submit
                                             </Button>
                                         </Col>

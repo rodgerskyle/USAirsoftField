@@ -6,6 +6,7 @@ import { LinkContainer } from 'react-router-bootstrap';
 import SignatureCanvas from 'react-signature-canvas';
 import SignedWaiver from './SignedWaiver';
 import '../../App.css';
+import { encode } from 'firebase-encode';
 
 import cardimages from '../constants/cardimgs';
 import waiver from '../../assets/Waiver-cutoff.png'
@@ -107,53 +108,14 @@ class SignUpFormBase extends Component {
     this.state = { ...INITIAL_STATE, emailListNM: null, emailListM: null};
   }
 
-  componentDidMount() {
-      this.props.firebase.grabEmailListNM().on('value', snapshot => {
-          const emailsObjectNM = snapshot.val();
-
-          const emailListNM = Object.keys(emailsObjectNM).map(key => ({
-              ...emailsObjectNM[key],
-              secret: key,
-          }))
-
-          this.setState({
-            emailListNM
-          });
-      });
-      this.props.firebase.grabEmailListM().on('value', snapshot => {
-          const emailsObjectM = snapshot.val();
-
-          const emailListM = Object.keys(emailsObjectM).map(key => ({
-              ...emailsObjectM[key],
-              secret: key,
-          }))
-
-          this.setState({
-            emailListM
-          });
-      });
-  }
-
-  componentWillUnmount() {
-    this.props.firebase.grabEmailListNM().off();
-    this.props.firebase.grabEmailListM().off();
-  }
-
   // Will Check duplicates in list
   checkDuplicates(email) {
-    const {emailListNM } = this.state;
-    let lengthNM = emailListNM.length;
-    let y = 0;
-    // Now go through both at the same time
-    while (y < lengthNM) {
-      if (y < lengthNM) {
-        if (emailListNM[y].email === email) {
+      this.props.firebase.emailList(encode(email.toLowerCase())).once("value", object => {
+        if (object.val() !== null) {
           return true;
         }
-        y++
-      }
-    } 
-    return false;
+        return false;
+      })
   }
 
   // Complete email sign up to email list 
@@ -164,7 +126,7 @@ class SignUpFormBase extends Component {
     if (!this.checkDuplicates(email)) {
       // Use below to generate random uid for signing up and filling out waivers
       var secret = 'm' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5).toUpperCase();
-      this.props.firebase.emailListMembers(secret).set({email})
+      this.props.firebase.emailList(encode(email)).set({secret})
     }
     this.setState({emailAdded: true})
   }
@@ -654,6 +616,7 @@ class SignUpFormBase extends Component {
                     </Form.Group>
                   </Col>
                 </Row>
+                {!loading ? 
                 <Row className="button-row-rp">
                   <Col>
                     <Button variant={isInvalid ? "danger" : "success"} disabled={isInvalid} type="submit"
@@ -662,6 +625,7 @@ class SignUpFormBase extends Component {
                     </Button> 
                   </Col>
                 </Row>
+                : null}
                 <Row className="justify-content-row">
                   {status && <p>{status}</p>}
                   {error && <p>{error.message}</p>}
