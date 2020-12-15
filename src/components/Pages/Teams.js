@@ -23,7 +23,7 @@ class Teams extends Component {
 
     //Get image function for team image = teamname
     getPicture(teamname) {
-        this.props.firebase.teamsPictures(`${teamname}.png`).getDownloadURL().then((url) => {
+        this.props.firebase.teamsPictures(`team ${teamname}.png`).getDownloadURL().then((url) => {
             var temp = this.state.teamicon;
             temp[teamname] = url;
             this.setState({ teamicon: temp })
@@ -106,7 +106,7 @@ const TeamList = ({ teams, teamicon }) => (
         <tbody>
             {teams.map((team, i) => (
                 <tr key={team.teamname}>
-                    <Td to={"/teams/" + team.teamname}>
+                    <Td to={"/teams/" + team.teamname.toString()}>
                         <img className="team-pictures"
                             src={teamicon.length === 0 ? teamicon[team.teamname] : null} alt={"Team " + team.teamname}></img>
                     </Td>
