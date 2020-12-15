@@ -11,7 +11,7 @@ const Home = () => (
       <Row className="text-center">
         <Col className="col-settings">
           <div className="counter boxes-home boxes-home-nopadbot about-div-home">
-            <h2>About Us:</h2>
+            <h2 className="header-about-us">About Us:</h2>
             <h5 className="about-us" data-to="1700" data-speed="1500">
               U.S. AIRSOFT WORLD is the premier airsoft arena in the U.S. We are located in Anderson, CA - Just outside of Redding.
               We have over 10 acres dedicated to Airsoft. We pride ourselves on being the first arena to provide stat tracking and leaderboards.
@@ -22,44 +22,70 @@ const Home = () => (
       </Row>
       <Row className="text-center hours-row-home">
         <div className="counter hours-home boxes-home boxes-home-nopadbot">
-          <h2>Hours of Operation:</h2>
+          <h2 className="header-about-us">Hours of Operation:</h2>
           <Row>
-            <Col>
-              <h5 data-to="1700" data-speed="1500">
+            <Col className="col-hours-header">
+              <h5 className="h5-hours-subheader">
                 <b>Arena / Field:<br/></b>
               </h5>
-                <br/>
-                Summer - (June through October)
-                <dl>
-                  <dt>Friday- 6pm to 11pm</dt>
-                  <dt>Saturday- 8am to 2pm</dt>
-                  <dt>Sunday- 8am to 2pm</dt>
-                </dl>
-                  Winter - (November through May)
-                  <dl>
-                    <dt>Friday- Closed</dt>
-                    <dt>Saturday- 9am to 3pm</dt>
-                    <dt>Sunday- 9am to 3pm</dt>
-                  </dl>
             </Col>
-            <Col>
-              <h5 data-to="1700" data-speed="1500">
-                <b>Tactical Store:<br/></b>
-              </h5>
-                <br/>
-                Summer - (June through October)
-                <dl>
+            <Col className="col-hours">
+                <p className="p-hours-season">Summer</p>
+                <dl className="dl-hours-info">
                   <dt>Friday- 6pm to 11pm</dt>
                   <dt>Saturday- 8am to 2pm</dt>
                   <dt>Sunday- 8am to 2pm</dt>
                 </dl>
-                Winter - (November through May)
-                <dl>
+            </Col>
+            <Col className="col-hours">
+                <p className="p-hours-season">Winter</p>
+                <dl className="dl-hours-info">
                   <dt>Friday- Closed</dt>
                   <dt>Saturday- 9am to 3pm</dt>
                   <dt>Sunday- 9am to 3pm</dt>
                 </dl>
-              </Col>
+            </Col>
+          </Row>
+          <Row>
+            <Col className="col-hours-header">
+              <h5 className="h5-hours-subheader">
+                <b>Tactical Store:<br/></b>
+              </h5>
+            </Col>
+            <Col className="col-hours">
+                <p className="p-hours-season">Summer</p>
+                <dl className="dl-hours-info">
+                  <dt>Monday- Closed</dt>
+                  <dt>Tuesday- 10am to 5pm</dt>
+                  <dt>Wednesday- 10am to 5pm</dt>
+                  <dt>Thursday- 10am to 5pm</dt>
+                  <dt>Friday- 10am to 11pm</dt>
+                  <dt>Saturday- 8am to 4pm</dt>
+                  <dt>Sunday- 8am to 4pm</dt>
+                </dl>
+            </Col>
+            <Col className="col-hours">
+                <p className="p-hours-season">Winter</p>
+                <dl className="dl-hours-info">
+                  <dt>Monday- Closed</dt>
+                  <dt>Tuesday- 10am to 5pm</dt>
+                  <dt>Wednesday- 10am to 5pm</dt>
+                  <dt>Thursday- 10am to 5pm</dt>
+                  <dt>Friday- 10am to 5pm</dt>
+                  <dt>Saturday- 9am to 5pm</dt>
+                  <dt>Sunday- 9am to 5pm</dt>
+                </dl>
+            </Col>
+          </Row>
+          <Row>
+            <Col>
+            </Col>
+            <Col className="col-hours">
+              <p className="p-hours-season-month">*Summer is June - October.</p>
+            </Col>
+            <Col className="col-hours">
+              <p className="p-hours-season-month">*Winter is November - May.</p>
+            </Col>
           </Row>
           <img src={logo} alt="US Airsoft logo" className="small-logo-home2"/>
         </div>

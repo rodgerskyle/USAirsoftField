@@ -322,7 +322,7 @@
 }
 
 .progress {
-  width: 250px;
+  width: 100%;
 }
 
 .upload-button {
@@ -342,7 +342,7 @@
 .team-upload-text {
   color:white !important;
   margin-bottom: 10px !important;
-  margin-top: 10px !important;
+  padding-top: 10px !important;
 }
 
 .next-button {
@@ -475,10 +475,48 @@ a.dropdown-item:hover {
 }
 
 .about-us {
-    text-align: center;
-    padding-left: 10px;
-    padding-right: 10px;
-    font-size: 18px;
+    text-align: justify;
+    padding-left: 20px;
+    padding-right: 20px;
+    font-size: 12px;
+}
+
+.header-about-us {
+  font-size: 1.5rem;
+  margin-bottom: .5rem;
+}
+
+.h5-hours-subheader {
+  font-size: .9rem;
+  padding-bottom: 0px;
+}
+
+.dl-hours-info {
+  font-size: 12px;
+  font-weight: unset !important;
+}
+
+.p-hours-season {
+  color: white !important;
+  font-style: normal !important;
+  font-weight: bold;
+}
+
+.col-hours-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.col-hours {
+  text-align: left;
+}
+
+.p-hours-season-month {
+  color: white !important;
+  font-style: normal !important;
+  font-weight: bold;
+  font-size: 10px;
 }
 
 .video-box-home {
@@ -536,7 +574,11 @@ a.dropdown-item:hover {
 .header-teamc {
   color: white;
   text-align: center;
-  margin-top: 10px;
+  padding-top: 10px;
+}
+
+.row-buttons-teamc {
+  margin-left: 0 !important;
 }
 
 .status-card-body-fg-admin {
@@ -1567,6 +1609,25 @@ a.dropdown-item:hover {
 
   .row-success-rp {
     width: 100%;
+  }
+  .about-us {
+    font-size: 18px;
+  }
+  .header-about-us {
+    font-size: 2rem;
+    margin-bottom: 3rem;
+  }
+
+  .h5-hours-subheader {
+    font-size: 1.25rem;
+  }
+  
+  .dl-hours-info {
+    font-size: 16px;
+  }
+
+  .p-hours-season-month {
+    font-size: 16px;
   }
 }
 

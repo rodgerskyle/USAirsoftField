@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import '../../App.css';
-import {encode, decode } from 'firebase-encode';
 
 class Pictures extends Component {
     constructor(props) {
@@ -9,15 +8,6 @@ class Pictures extends Component {
         this.state = {
         };
     }
-
-    componentDidMount() {
-        var x = "jimmy@gmail.com"
-        console.log(x)
-        x = encode(x);
-        console.log(x)
-        console.log(decode(x))
-    }
-
 
     render() {
         return (
