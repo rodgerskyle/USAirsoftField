@@ -146,6 +146,14 @@ class UserOptions extends Component {
         this.setState({ [event.target.name]: event.target.value });
     };
 
+    openWaiver() {
+        this.props.firebase.membersWaivers(`${this.props.match.params.id}.pdf`).getDownloadURL().then((url) => {
+            window.open(url)
+        }).catch((error) => {
+            // Handle any errors
+        })
+    }
+
     render() {
         return (
             <AuthUserContext.Consumer>
@@ -252,6 +260,13 @@ class UserOptions extends Component {
                                                 />
                                             </Form.Group>
                                         </Form>
+                                    </Col>
+                                </Row>
+                                <Row>
+                                    <Col>
+                                        <Button variant="primary" onClick={() => this.openWaiver()}>
+                                            Open Waiver
+                                        </Button>
                                     </Col>
                                 </Row>
                             </Col>

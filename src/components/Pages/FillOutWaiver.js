@@ -134,7 +134,7 @@ class WaiverPageFormBase extends Component {
     const {fname, lname } = this.state;
     var date = (new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear()) + ":" + 
     (new Date().getHours()) + ":" + (new Date().getMinutes()) + ":" + (new Date().getSeconds()) + ":" + (new Date().getMilliseconds());
-    this.props.firebase.nonmembersWaivers(`${fname}${lname}(${date}).pdf`).put(blob).then(() => {
+    this.props.firebase.nonmembersWaivers(`${fname} ${lname}(${date}).pdf`).put(blob).then(() => {
       this.setState({loading: true}, function() {
         setTimeout( () => {
             this.setState({submitted: false, showLander: true, loading: false})

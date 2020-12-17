@@ -492,8 +492,11 @@ a.dropdown-item:hover {
 }
 
 .dl-hours-info {
-  font-size: 12px;
-  font-weight: unset !important;
+  font-size: 9px;
+}
+
+.dl-hours-info dt {
+  font-weight: normal !important;
 }
 
 .p-hours-season {
@@ -1054,14 +1057,21 @@ a.dropdown-item:hover {
 }
 
  .admin-row-emailoptout {
-  background-color: rgb(108, 117, 125, 0.75);
+  background-color: rgb(73 80 87 / .6);
   margin-right: 0 !important;
   margin-left: 0 !important;
   border-radius: 5px;
-  padding: 5px;
+  padding: 10px;
   color: white;
-  margin-top: 15px;
  }
+
+.container-emailoptout {
+  padding-top: 20px;
+}
+
+.form-input-emailoptout {
+  width: 18rem !important;
+}
 
 .status-oo-admin {
   color: lightgreen;
@@ -1072,7 +1082,7 @@ a.dropdown-item:hover {
 .error-oo-admin {
   color: red;
   text-align: center;
-  margin-left: 5px;
+  margin-top: 1rem;
 }
 
 .navitem-img {
@@ -1301,6 +1311,11 @@ a.dropdown-item:hover {
   color: white;
 }
 
+.dropdown-waiverlookup {
+  max-height: 30vh;
+  overflow-y: scroll;
+}
+
 @media (min-width: 1200px) {
   .password-change-form {
     margin-left: 35%;
@@ -1485,6 +1500,11 @@ a.dropdown-item:hover {
   color: green;
 }
 
+.row-nomargin {
+  margin-right: 0px !important;
+  margin-left: 0px !important;
+}
+
 /*Put default normal screen values in here*/
 @media screen and (min-width: 768px) {
   .table-lb {
@@ -1628,6 +1648,10 @@ a.dropdown-item:hover {
 
   .p-hours-season-month {
     font-size: 16px;
+  }
+
+  .form-input-emailoptout {
+    width: 20rem !important;
   }
 }
 
