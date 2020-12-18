@@ -56,10 +56,10 @@ const Home = () => (
                 <p className="p-hours-season">Summer</p>
                 <dl className="dl-hours-info">
                   <dt>Monday- Closed</dt>
-                  <dt>Tuesday- 10am to 5pm</dt>
-                  <dt>Wednesday- 10am to 5pm</dt>
-                  <dt>Thursday- 10am to 5pm</dt>
-                  <dt>Friday- 10am to 11pm</dt>
+                  <dt>Tuesday- 9am to 5pm</dt>
+                  <dt>Wednesday- 9am to 5pm</dt>
+                  <dt>Thursday- 9am to 5pm</dt>
+                  <dt>Friday- 9am to 11pm</dt>
                   <dt>Saturday- 8am to 4pm</dt>
                   <dt>Sunday- 8am to 4pm</dt>
                 </dl>
@@ -68,10 +68,10 @@ const Home = () => (
                 <p className="p-hours-season">Winter</p>
                 <dl className="dl-hours-info">
                   <dt>Monday- Closed</dt>
-                  <dt>Tuesday- 10am to 5pm</dt>
-                  <dt>Wednesday- 10am to 5pm</dt>
-                  <dt>Thursday- 10am to 5pm</dt>
-                  <dt>Friday- 10am to 5pm</dt>
+                  <dt>Tuesday- 9am to 5pm</dt>
+                  <dt>Wednesday- 9am to 5pm</dt>
+                  <dt>Thursday- 9am to 5pm</dt>
+                  <dt>Friday- 9am to 5pm</dt>
                   <dt>Saturday- 9am to 5pm</dt>
                   <dt>Sunday- 9am to 5pm</dt>
                 </dl>
