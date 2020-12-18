@@ -63,7 +63,18 @@ class WaiverLookup extends Component {
         this.setState({months})
 
         this.props.firebase.waiversList().listAll().then((res) => {
-            this.setState({waivers: res.items}, function() {
+            var tempWaivers = [];
+            for (let i=0; i<res.items.length; i++) {
+                let waiverName = res.items[i].name
+                let dateObj = (convertDate(waiverName.substr(waiverName.lastIndexOf('(') + 1).split(')')[0]))
+                let waiver_obj = {
+                    name: waiverName, 
+                    date: dateObj,
+                    ref: res.items[i]
+                }
+                tempWaivers.push(waiver_obj)
+            }
+            this.setState({waivers: tempWaivers}, function() {
                     this.setState({loading: false})
                 })
             }).catch(function(error) {
@@ -186,7 +197,7 @@ class WaiverLookup extends Component {
                                             <WaiverBox waivers={this.state.waivers} index={0}
                                                 search={this.state.search} open={this.state.OpenWaiverState} 
                                                 month={this.state.activeMonth} day={this.state.activeDay}
-                                                year={this.state.activeYear}/>
+                                                year={this.state.activeYear} loading={this.state.loading}/>
                                         </Card>
                                     </Col>
                                 </Row>
@@ -229,7 +240,9 @@ function compareDate(month, day, year, date2) {
 }
 
 function returnDay(day) {
-    if (day === 1)
+    if (day === 0)
+        return "Sun"
+    else if (day === 1)
         return "Mon"
     else if (day === 2)
         return "Tue"
@@ -241,8 +254,6 @@ function returnDay(day) {
         return "Fri"
     else if (day === 6)
         return "Sat"
-    else if (day === 7)
-        return "Sun"
 }
 
 function returnMonth(month) {
@@ -273,19 +284,8 @@ function returnMonth(month) {
 }
 
 function WaiverBox ({waivers, index, search, open, loading, month, day, year}) {
-    var tempWaivers = [];
-    for (let i=0; i<waivers.length; i++) {
-        let waiverName = waivers[i].name
-        let dateObj = (convertDate(waiverName.substr(waiverName.lastIndexOf('(') + 1).split(')')[0]))
-        let waiver_obj = {
-            name: waiverName, 
-            date: dateObj,
-            ref: waivers[i]
-        }
-        tempWaivers.push(waiver_obj)
-    }
     return (
-    <Card.Body className="status-card-body-fg-admin">
+    <Card.Body className="status-card-body-wl-admin">
         {!loading ? 
         <Row className="card-header-wl">
             <Col>
@@ -300,14 +300,15 @@ function WaiverBox ({waivers, index, search, open, loading, month, day, year}) {
             </Col>
         </Row>
         : null}
+        <div className="row-allwaivers-wl">
         {!loading ?
-        tempWaivers.sort((a, b) => 
+        waivers.sort((a, b) => 
         (b.date - a.date))
         .map((waiver, i) => (
             search !== "" ? // Search query case
                 waiver.name.toLowerCase().includes(search.toLowerCase()) ? 
                         index++ % 2 === 0 ? 
-                        <Row className={index === 1 ? "row-1-wl" : "row-fg"} key={index}>
+                        <Row className="row-wl" key={index}>
                             <Col className="col-name-fg">
                                 <Card.Text>
                                     {"(" + index + ") " + waiver.name.substr(0, waiver.name.lastIndexOf('('))}
@@ -330,7 +331,7 @@ function WaiverBox ({waivers, index, search, open, loading, month, day, year}) {
                             </Col>
                         </Row>
                             : 
-                        <Row className="status-card-offrow-admin-fg" key={index}>
+                        <Row className="status-card-offrow-admin-wl" key={index}>
                             <Col className="col-name-fg">
                                 <Card.Text>
                                     {"(" + index + ") " + waiver.name.substr(0, waiver.name.lastIndexOf('('))}
@@ -356,7 +357,7 @@ function WaiverBox ({waivers, index, search, open, loading, month, day, year}) {
             :
                 compareDate(month, day, year, waiver.date ) ?
                         index++ % 2 === 0 ? 
-                        <Row className={index === 1 ? "row-1-wl" : "row-fg"} key={index}>
+                        <Row className="row-wl" key={index}>
                             <Col className="col-name-fg">
                                 <Card.Text>
                                     {"(" + index + ") " + waiver.name.substr(0, waiver.name.lastIndexOf('('))}
@@ -379,7 +380,7 @@ function WaiverBox ({waivers, index, search, open, loading, month, day, year}) {
                             </Col>
                         </Row>
                             : 
-                        <Row className="status-card-offrow-admin-fg" key={index}>
+                        <Row className="status-card-offrow-admin-wl" key={index}>
                             <Col className="col-name-fg">
                                 <Card.Text>
                                     {"(" + index + ") " + waiver.name.substr(0, waiver.name.lastIndexOf('('))}
@@ -404,7 +405,10 @@ function WaiverBox ({waivers, index, search, open, loading, month, day, year}) {
                     : null
         ))
         : 
-        <Spinner animation="border" />}
+        <Row className="spinner-standard">
+            <Spinner animation="border"/>
+        </Row>}
+        </div>
     </Card.Body>
     )
 };

@@ -67,7 +67,7 @@ class Teams extends Component {
                     <Row>
                         <Col>
                             <Link to="/createteam">
-                                <Button variant="outline-success" className="button-create-teams">
+                                <Button variant="success" className="button-create-teams">
                                     <p className="team-rows">Create Team</p>
                                     <i className="fa fa-plus-square fa-2x text-white team-rows-icons"></i>
                                 </Button>
@@ -75,7 +75,7 @@ class Teams extends Component {
                         </Col>
                         <Col className="text-center">
                             <Link to="/jointeam">
-                                <Button variant="outline-info">
+                                <Button variant="info">
                                     <p className="team-rows">Join Team</p>
                                     <i className="fa fa-users fa-2x text-white team-rows-icons"></i>
                                 </Button>
@@ -83,7 +83,7 @@ class Teams extends Component {
                         </Col>
                         <Col>
                             <Link to="/manageteam">
-                                <Button variant="outline-danger" className="button-manage-teams">
+                                <Button variant="danger" className="button-manage-teams">
                                     <p className="team-rows">Manage Team</p>
                                     <i className="fa fa-exclamation-circle fa-2x text-white team-rows-icons"></i>
                                 </Button>
