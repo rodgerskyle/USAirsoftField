@@ -60,7 +60,7 @@ const NavigationAuth = ({ authUser }) => {
             <Navbar expanded={expanded} onToggle={() => setExpanded(!expanded)} expand="xl" bg="nav" variant="dark" className="navbar-all">
                 <Nav className="mr-auto">
                     <NavItem className="navitem-img">
-                        <Link to="/" onClick={() => setTimeout(() => {setExpanded(!expanded)}, 150)}>
+                        <Link to="/" onClick={() => setTimeout(() => {setExpanded(false)}, 150)}>
                             <img src={logo} alt="US Airsoft logo" className="img-fluid logo" />
                         </Link>
                     </NavItem>

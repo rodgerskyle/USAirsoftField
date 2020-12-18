@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import '../../App.css';
 
-import { Container, Row, Col, Form, Button } from 'react-bootstrap/';
+import { Container, Row, Form, Button, Spinner } from 'react-bootstrap/';
 
 import { encode } from 'firebase-encode';
 
@@ -27,41 +27,44 @@ class emailOptOut extends Component {
         event.preventDefault()
         const optmenu = this.props.firebase.emailOptMenu();
         optmenu({secret: this.props.match.params.secret, email: encode(this.state.value.toLowerCase()), choice: "out"}).then((result) => {
-            if (result) this.setState({status: result.data.status})
+            if (result) this.setState({status: result.data.status, error: null, loading: false})
         }).catch(error => {
-            this.setState({error: 'failed-condition: Email does not match the token or it is an improper token.' })
+            this.setState({error: 'failed-condition: Email does not match the token or it is an improper token.', loading: false, status: null, })
         })
     }
 
     render() {
         return (
             <div className="background-static-all">
-                <Container>
-                    <Row className="admin-row-emailoptout">
-                        <Form id="formBox">
-                            <Col>
+                <Container className="container-emailoptout">
+                    <div className="admin-row-emailoptout">
+                        <Row className="row-nomargin justify-content-row">
+                            <Form id="formBox">
                                 <Form.Group controlId="usernameBox">
-                                    <Form.Label>Enter your email:</Form.Label>
-                                    <Form.Control onChange={this.handleChange}
-                                        value={this.state.value}
-                                        className="form-input-admin"
-                                        placeholder="email" />
-                                    </Form.Group>
-                                </Col>
+                                <Form.Label>Enter your email:</Form.Label>
+                                <Form.Control onChange={this.handleChange}
+                                    value={this.state.value}
+                                    className="form-input-emailoptout"
+                                    placeholder="email" />
+                                </Form.Group>
                             </Form>
-                            <Col className="admin-col-button-points">
-                                <Button className="button-submit-admin" type="button" id="register" variant="outline-success" 
-                                disabled={this.state.value === ""} onClick={(e) => {
+                        </Row>
+                        <Row className="row-nomargin justify-content-row">
+                            <Button type="button" id="register" variant="success" 
+                            disabled={this.state.value === ""} onClick={(e) => {
+                                this.setState({loading: true, error: null, status: null}, function() {
                                     this.updateUser(e);
-                                }}>
-                                    Submit
-                                </Button>
-                            </Col>
-                    </Row>
-                    <Row>
-                        {this.state.status ? <p className="status-oo-admin">{this.state.status}</p> : null}
-                        {this.state.error ? <p className="error-oo-admin">{this.state.error}</p> : null}
-                    </Row>
+                                })
+                            }}>
+                                Submit
+                            </Button>
+                        </Row>
+                        <Row className="row-nomargin justify-content-row">
+                            {this.state.loading ? <Spinner animation="border" /> : null}
+                            {this.state.status ? <p className="status-oo-admin">{this.state.status}</p> : null}
+                            {this.state.error ? <p className="error-oo-admin">{this.state.error}</p> : null}
+                        </Row>
+                    </div>
                 </Container>
             </div>
         );

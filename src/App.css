@@ -322,7 +322,7 @@
 }
 
 .progress {
-  width: 250px;
+  width: 100%;
 }
 
 .upload-button {
@@ -342,7 +342,7 @@
 .team-upload-text {
   color:white !important;
   margin-bottom: 10px !important;
-  margin-top: 10px !important;
+  padding-top: 10px !important;
 }
 
 .next-button {
@@ -475,10 +475,51 @@ a.dropdown-item:hover {
 }
 
 .about-us {
-    text-align: center;
-    padding-left: 10px;
-    padding-right: 10px;
-    font-size: 18px;
+    text-align: justify;
+    padding-left: 20px;
+    padding-right: 20px;
+    font-size: 12px;
+}
+
+.header-about-us {
+  font-size: 1.5rem;
+  margin-bottom: .5rem;
+}
+
+.h5-hours-subheader {
+  font-size: .9rem;
+  padding-bottom: 0px;
+}
+
+.dl-hours-info {
+  font-size: 9px;
+}
+
+.dl-hours-info dt {
+  font-weight: normal !important;
+}
+
+.p-hours-season {
+  color: white !important;
+  font-style: normal !important;
+  font-weight: bold;
+}
+
+.col-hours-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.col-hours {
+  text-align: left;
+}
+
+.p-hours-season-month {
+  color: white !important;
+  font-style: normal !important;
+  font-weight: bold;
+  font-size: 10px;
 }
 
 .video-box-home {
@@ -536,7 +577,18 @@ a.dropdown-item:hover {
 .header-teamc {
   color: white;
   text-align: center;
-  margin-top: 10px;
+  padding-top: 10px;
+}
+
+.row-buttons-teamc {
+  margin-left: 0 !important;
+}
+
+.status-card-body-wl-admin {
+  color: white;
+  padding-bottom: 0 !important;
+  padding-top: 5px !important;
+  background-color: rgb(36, 36, 36);
 }
 
 .status-card-body-fg-admin {
@@ -586,6 +638,12 @@ a.dropdown-item:hover {
   padding-bottom: 10px;
   padding-top: 10px;
   margin-bottom: 10px;
+}
+
+.status-card-offrow-admin-wl {
+  background-color: darkgray;
+  padding-bottom: 10px;
+  padding-top: 10px;
 }
 
 .row-fg {
@@ -823,13 +881,24 @@ a.dropdown-item:hover {
   align-items: center;
 }
 
-.card-header-wl {
-  border-bottom: 1px solid lightgray;
+.row-allwaivers-wl {
+  overflow-y: scroll;
+  max-height: 40vh;
+  margin-left: -15px;
+  margin-right: -15px;
+  padding: 5px;
 }
 
-.row-1-wl {
-  margin-top: 10px;
-  margin-bottom: 10px;
+.card-header-wl {
+  padding: 5px;
+  border-bottom: 2px solid rgb(255, 217, 0, .5);
+  font-weight: bold;
+}
+
+.row-wl {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  background-color: rgb(108, 117, 125, 0.75);
 }
 
 .admin-header {
@@ -1012,14 +1081,21 @@ a.dropdown-item:hover {
 }
 
  .admin-row-emailoptout {
-  background-color: rgb(108, 117, 125, 0.75);
+  background-color: rgb(73 80 87 / .6);
   margin-right: 0 !important;
   margin-left: 0 !important;
   border-radius: 5px;
-  padding: 5px;
+  padding: 10px;
   color: white;
-  margin-top: 15px;
  }
+
+.container-emailoptout {
+  padding-top: 20px;
+}
+
+.form-input-emailoptout {
+  width: 18rem !important;
+}
 
 .status-oo-admin {
   color: lightgreen;
@@ -1030,7 +1106,7 @@ a.dropdown-item:hover {
 .error-oo-admin {
   color: red;
   text-align: center;
-  margin-left: 5px;
+  margin-top: 1rem;
 }
 
 .navitem-img {
@@ -1259,6 +1335,11 @@ a.dropdown-item:hover {
   color: white;
 }
 
+.dropdown-waiverlookup {
+  max-height: 30vh;
+  overflow-y: scroll;
+}
+
 @media (min-width: 1200px) {
   .password-change-form {
     margin-left: 35%;
@@ -1375,12 +1456,6 @@ a.dropdown-item:hover {
   margin-right: 10px;
 }
 
-.header-footer {
-  color: white;
-  margin-bottom: 0 !important;
-  font-size: 1.2rem;
-}
-
 .table-teams {
   margin-bottom: 0 !important;
 }
@@ -1441,6 +1516,23 @@ a.dropdown-item:hover {
 
 .status-text-teammanage {
   color: green;
+}
+
+.row-nomargin {
+  margin-right: 0px !important;
+  margin-left: 0px !important;
+}
+
+.header-footer {
+  color: white;
+  margin-bottom: 0 !important;
+  font-size: 1rem;
+}
+
+.spinner-standard {
+  justify-content: center;
+  display: flex;
+  padding: 10px;
 }
 
 /*Put default normal screen values in here*/
@@ -1529,7 +1621,7 @@ a.dropdown-item:hover {
   .header-footer {
     color: white;
     margin-bottom: 0 !important;
-    font-size: 1.75rem;
+    font-size: 1.2rem;
   }
 
   .small-logo-home {
@@ -1567,6 +1659,29 @@ a.dropdown-item:hover {
 
   .row-success-rp {
     width: 100%;
+  }
+  .about-us {
+    font-size: 18px;
+  }
+  .header-about-us {
+    font-size: 2rem;
+    margin-bottom: 3rem;
+  }
+
+  .h5-hours-subheader {
+    font-size: 1.25rem;
+  }
+  
+  .dl-hours-info {
+    font-size: 16px;
+  }
+
+  .p-hours-season-month {
+    font-size: 16px;
+  }
+
+  .form-input-emailoptout {
+    width: 20rem !important;
   }
 }
 

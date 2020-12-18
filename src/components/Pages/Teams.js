@@ -23,9 +23,9 @@ class Teams extends Component {
 
     //Get image function for team image = teamname
     getPicture(teamname) {
-        this.props.firebase.teamsPictures(`team ${teamname}.png`).getDownloadURL().then((url) => {
-            var temp = this.state.teamicon;
-            temp[teamname] = url;
+        this.props.firebase.teamsPictures(`${teamname}.png`).getDownloadURL().then((url) => {
+            let temp = this.state.teamicon;
+            temp[teamname.toString()] = url
             this.setState({ teamicon: temp })
         }).catch((error) => {
             // Handle any errors NOT DONE
@@ -67,7 +67,7 @@ class Teams extends Component {
                     <Row>
                         <Col>
                             <Link to="/createteam">
-                                <Button variant="outline-success" className="button-create-teams">
+                                <Button variant="success" className="button-create-teams">
                                     <p className="team-rows">Create Team</p>
                                     <i className="fa fa-plus-square fa-2x text-white team-rows-icons"></i>
                                 </Button>
@@ -75,7 +75,7 @@ class Teams extends Component {
                         </Col>
                         <Col className="text-center">
                             <Link to="/jointeam">
-                                <Button variant="outline-info">
+                                <Button variant="info">
                                     <p className="team-rows">Join Team</p>
                                     <i className="fa fa-users fa-2x text-white team-rows-icons"></i>
                                 </Button>
@@ -83,7 +83,7 @@ class Teams extends Component {
                         </Col>
                         <Col>
                             <Link to="/manageteam">
-                                <Button variant="outline-danger" className="button-manage-teams">
+                                <Button variant="danger" className="button-manage-teams">
                                     <p className="team-rows">Manage Team</p>
                                     <i className="fa fa-exclamation-circle fa-2x text-white team-rows-icons"></i>
                                 </Button>
@@ -108,7 +108,7 @@ const TeamList = ({ teams, teamicon }) => (
                 <tr key={team.teamname}>
                     <Td to={"/teams/" + team.teamname.toString()}>
                         <img className="team-pictures"
-                            src={teamicon.length === 0 ? teamicon[team.teamname] : null} alt={"Team " + team.teamname}></img>
+                            src={teamicon[team.teamname.toString()]} alt={"Team " + team.teamname}></img>
                     </Td>
                     <Td cl="team-name" to={"/teams/" + team.teamname}>
                         <strong>{(team.teamname).toUpperCase()}</strong>

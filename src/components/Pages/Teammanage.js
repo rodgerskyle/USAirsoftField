@@ -298,16 +298,22 @@ class TeamManage extends Component {
                                 <div className="team-single-img">
                                     <img className="team-icon-individual" src={this.state.teamicon} alt="" />
                                 </div>
-                                    <MembersList members={this.state.members} kick={this.state.KickMemberState}
-                                    promote={this.state.PromoteToLeaderState} onChange={this.state.onChangeSelectionMemState}
-                                    quit={this.state.QuitTeamState} errortext={this.state.memberError}
-                                    />
-                                    {this.state.memberLoading ? <Progress type="spin" color="white"/> : null}
-                                    <RequestList requests={this.state.requests} decline={this.state.DeclineRequestState} 
-                                    accept={this.state.AcceptRequestState} onChange={this.state.onChangeSelectionReqState}
-                                    errortext={this.state.requestError}
-                                    />
-                                    {this.state.requestLoading ? <Progress type="spin" color="white"/> : null}
+                                {!this.state.deleting ?
+                                <MembersList members={this.state.members} kick={this.state.KickMemberState}
+                                promote={this.state.PromoteToLeaderState} onChange={this.state.onChangeSelectionMemState}
+                                quit={this.state.QuitTeamState} errortext={this.state.memberError}
+                                />
+                                : null }
+                                {this.state.memberLoading ? <Progress type="spin" color="white"/> : null}
+                                {!this.state.deleting ?
+                                <RequestList requests={this.state.requests} decline={this.state.DeclineRequestState} 
+                                accept={this.state.AcceptRequestState} onChange={this.state.onChangeSelectionReqState}
+                                errortext={this.state.requestError}
+                                />
+                                : null}
+                                {this.state.requestLoading ? <Progress type="spin" color="white"/> : null}
+
+                                {!this.state.deleting ?
                                 <Form className="team-manage-text">
                                     <Form.Group controlId="exampleForm.ControlTextarea1">
                                         <Form.Label>Add Description Here:</Form.Label>
@@ -318,7 +324,7 @@ class TeamManage extends Component {
                                             Update
                                         </Button>
                                     </Form.Group>
-                                </Form>
+                                </Form> : null }
                                 {this.state.descriptionError ? <p className="status-text-teammanage">{this.state.descriptionError}</p> : null}
                                 {this.state.descriptionLoading ? <Progress type="spin" color="white"/> : null}
                                 <Button variant="outline-danger" size="md" block disabled={!this.state.checkBox}
