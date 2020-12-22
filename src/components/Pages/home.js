@@ -23,7 +23,7 @@ const Home = () => (
       <Row className="text-center hours-row-home">
         <div className="counter hours-home boxes-home boxes-home-nopadbot">
           <h2 className="header-about-us">Hours of Operation:</h2>
-          <Row>
+          <Row className="left-row-hours">
             <Col className="col-hours-header">
               <h5 className="h5-hours-subheader">
                 <b>Arena / Field:<br/></b>
@@ -37,7 +37,7 @@ const Home = () => (
                   <dt>Sunday- 8am to 2pm</dt>
                 </dl>
             </Col>
-            <Col className="col-hours">
+            <Col className="col-hours winter-hours-col">
                 <p className="p-hours-season">Winter</p>
                 <dl className="dl-hours-info">
                   <dt>Friday- Closed</dt>
@@ -46,7 +46,7 @@ const Home = () => (
                 </dl>
             </Col>
           </Row>
-          <Row>
+          <Row className="right-row-hours">
             <Col className="col-hours-header">
               <h5 className="h5-hours-subheader">
                 <b>Tactical Store:<br/></b>
@@ -77,7 +77,7 @@ const Home = () => (
                 </dl>
             </Col>
           </Row>
-          <Row>
+          <Row className="last-row-hours">
             <Col>
             </Col>
             <Col className="col-hours">

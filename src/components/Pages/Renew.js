@@ -9,7 +9,7 @@ import SignedWaiver from './SignedWaiver';
 import SignatureCanvas from 'react-signature-canvas';
 import waiver from '../../assets/Waiver-cutoff.png'
 
-import { Button, Form, Container, Card, Row, Col, Breadcrumb } from 'react-bootstrap/';
+import { Button, Form, Container, Card, Row, Col, Breadcrumb, Spinner } from 'react-bootstrap/';
 
 import * as ROLES from '../constants/roles';
 import { LinkContainer } from 'react-router-bootstrap';
@@ -626,7 +626,7 @@ function UserBox({users, index, search, update, loading}) {
                             </Col>
                         </Row>
             ))
-            : <h2 className="pagePlaceholder">Loading...</h2>}
+            : <Row className="justify-content-row padding-5px"><Spinner animation="border" /></Row>}
         </Card.Body>
     )
 };

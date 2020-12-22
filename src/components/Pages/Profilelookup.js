@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 
-import { Container, Row, Col } from 'react-bootstrap/';
+import { Container, Row, Col, Spinner } from 'react-bootstrap/';
 
 import { Link } from 'react-router-dom';
 
@@ -23,6 +23,7 @@ class ProfileLookup extends Component {
             profileicon: '',
             authUser: '',
             team: '',
+            loading: true,
         };
     }
 
@@ -40,7 +41,7 @@ class ProfileLookup extends Component {
                 if (userObject.profilepic)
                     this.getProfile(`${this.props.match.params.id}/profilepic`);
                 else 
-                    this.setState({ profileicon: default_profile })
+                    this.setState({ profileicon: default_profile, loading: false })
             });
         });
     }
@@ -155,7 +156,7 @@ class ProfileLookup extends Component {
     //Get image function for profile image = uid
     getProfile(uid) {
         this.props.firebase.pictures(`${uid}.png`).getDownloadURL().then((url) => {
-            this.setState({ profileicon: url })
+            this.setState({ profileicon: url, loading: false })
         }).catch((error) => {
             // Handle any errors
             this.setState({ profileicon: default_profile })
@@ -171,7 +172,9 @@ class ProfileLookup extends Component {
                             <Row>
                                 <div className="col-lg-4 col-md-5 xs-margin-30px-bottom left-column-profile">
                                     <div className="team-single-img">
+                                        {!this.state.loading ? 
                                         <img className="profile-pic" src={this.state.profileicon} alt="" />
+                                        : <div className="profile-pic div-loading-profile"><Spinner animation="border" /></div>}
                                     </div>
                                     <Row className="text-center stat-box">
                                         <Col>

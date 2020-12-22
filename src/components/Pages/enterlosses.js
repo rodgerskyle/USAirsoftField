@@ -5,7 +5,7 @@ import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
 import { compose } from 'recompose';
 
-import { Button, Form, Container, Card, Row, Col, Breadcrumb } from 'react-bootstrap/';
+import { Button, Form, Container, Card, Row, Col, Breadcrumb, Spinner } from 'react-bootstrap/';
 
 import { LinkContainer } from 'react-router-bootstrap';
 
@@ -95,7 +95,6 @@ class EnterLosses extends Component {
             this.setState({statusBox: temp})
         }
         //End API call
-        document.getElementById("usernameBox").focus();
         this.setState({value: ""})
     }
 
@@ -137,7 +136,7 @@ class EnterLosses extends Component {
                             <StatusBox updates={this.state.statusBox}/>
                         </Card>
                     </Container>
-                : <h2 className="pagePlaceholder">Loading...</h2>}
+                : <Row className="justify-content-row padding-5px"><Spinner animation="border" /></Row>}
             </div>
         );
     }

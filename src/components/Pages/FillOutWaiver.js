@@ -77,7 +77,7 @@ class WaiverPageFormBase extends Component {
     super(props);
 
     this.completeWaiver = this.completeWaiver.bind(this);
-    this.state = { ...INITIAL_STATE, emailListNM: null, emailListM: null};
+    this.state = { ...INITIAL_STATE, emailListNM: null, emailListM: null, num_waivers: null};
   }
 
   // Will Check duplicates in list
@@ -90,6 +90,16 @@ class WaiverPageFormBase extends Component {
       })
   }
 
+  componentDidMount() {
+    this.props.firebase.numWaivers().on('value', snapshot => {
+      let num_waivers = snapshot.val().total_num;
+      this.setState({num_waivers})
+    })
+  }
+
+  componentWillUnmount() {
+      this.props.firebase.numWaivers().off();
+  }
 
   onChangeCheckbox = event => {
       this.setState({ [event.target.name]: event.target.checked });
@@ -135,12 +145,10 @@ class WaiverPageFormBase extends Component {
     var date = (new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear()) + ":" + 
     (new Date().getHours()) + ":" + (new Date().getMinutes()) + ":" + (new Date().getSeconds()) + ":" + (new Date().getMilliseconds());
     this.props.firebase.nonmembersWaivers(`${fname} ${lname}(${date}).pdf`).put(blob).then(() => {
-      this.setState({loading: true}, function() {
-        setTimeout( () => {
-            this.setState({submitted: false, showLander: true, loading: false})
-        }, 5000);
+      this.setState({submitted: false, showLander: true, loading: false})
+      let total_num = this.state.num_waivers+1
+      this.props.firebase.numWaivers().update({total_num})
       })
-    })
   }
  
   render() {
@@ -349,7 +357,7 @@ class WaiverPageFormBase extends Component {
               </Row>
               {!agecheck ? 
               <Col>
-              <Row className="row-rp">
+              <Row className="justify-content-row">
                 <h2 className="waiver-header-rp">
                   {"Guardian/Parent Information:"}
                 </h2>
@@ -394,7 +402,7 @@ class WaiverPageFormBase extends Component {
                   : <img className="signBox-image-rt" src={this.state.pgImg} alt="signature" />
                 }
               </Row>
-              <Row className="row-rp">
+              <Row className="button-row-rp2">
                 <Button variant="secondary" type="button" className="clear-button-rp"
                 onClick={() => {
                   this.setState({pgImg: null})
@@ -419,9 +427,11 @@ class WaiverPageFormBase extends Component {
               : ""}
               </Form>
               </Row>
+              {loading ?
               <Row className="row-rp spinner-row-rp">
-                  {loading ? <Spinner animation="border" /> : null}
-              </Row>
+                   <Spinner animation="border" /> 
+              </Row> 
+              : null}
               <Row className="row-rp">
                 {errorWaiver && <p className="error-text-rp">{errorWaiver}</p>}
               </Row>

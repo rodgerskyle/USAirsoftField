@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 
-import { Container, Row, Col } from 'react-bootstrap/';
+import { Container, Row, Col, Spinner } from 'react-bootstrap/';
 
 import { Link } from 'react-router-dom';
 
@@ -167,7 +167,9 @@ class Profile extends Component {
                                 <Row>
                                     <div className="col-lg-4 col-md-5 xs-margin-30px-bottom left-column-profile">
                                         <div className="team-single-img">
-                                            <img className="profile-pic" src={this.state.profileicon} alt="" />
+                                        {!this.state.loading ? 
+                                        <img className="profile-pic" src={this.state.profileicon} alt="" />
+                                        : <div className="profile-pic div-loading-profile"><Spinner animation="border" /></div>}
                                         </div>
                                         <Row className="text-center stat-box">
                                             <Col>

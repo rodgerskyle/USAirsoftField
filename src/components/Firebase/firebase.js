@@ -138,6 +138,10 @@ class Firebase {
 
     uid = () => this.auth.currentUser.uid;
 
+    // Waivers Amount API
+
+    numWaivers = () => this.db.ref('waivers');
+
 }
 
 export default Firebase;

@@ -487,7 +487,7 @@ a.dropdown-item:hover {
 }
 
 .h5-hours-subheader {
-  font-size: .9rem;
+  font-size: .8rem;
   padding-bottom: 0px;
 }
 
@@ -503,12 +503,13 @@ a.dropdown-item:hover {
   color: white !important;
   font-style: normal !important;
   font-weight: bold;
+  font-size: 10px;
 }
 
 .col-hours-header {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: initial;
 }
 
 .col-hours {
@@ -606,6 +607,7 @@ a.dropdown-item:hover {
   padding-bottom: 0 !important;
   padding-top: 5px !important;
   border: 1px solid lightgray;
+  border-radius: 5px;
 }
 
 .status-card-body-admin {
@@ -697,6 +699,8 @@ a.dropdown-item:hover {
 .button-row-rp2 {
   justify-content: center;
   background-color: transparent !important;
+  margin-top: 5px;
+  margin-bottom: 5px;
 }
 
 .form-rp {
@@ -828,7 +832,6 @@ a.dropdown-item:hover {
 }
 
 .sig-row-rp {
-  width: 100%;
   justify-content: center;
   background-color: transparent !important;
 }
@@ -848,10 +851,12 @@ a.dropdown-item:hover {
 
 .clear-button-rp {
   margin-right: 5px;
+  border: 1px solid black !important;
 }
 
 .save-button-rp {
   margin-left: 5px;
+  border: 1px solid black !important;
 }
 
 .divider-row-rp {
@@ -1005,12 +1010,6 @@ a.dropdown-item:hover {
   margin-bottom: 5px;
  }
 
- #options-buttons-admin:hover * {
-   transition:0.3s ease all;
-   background-image: linear-gradient(90deg, black, transparent);
-   background-color: transparent !important;
- }
-
  .options-buttons-row-admin {
    background: none !important;
  }
@@ -1023,10 +1022,48 @@ a.dropdown-item:hover {
   padding-left: 10px;
 }
 
+.row-users-card-offrow-admin {
+  margin-bottom: 10px;
+  border-radius: 5px;
+  background-color:lightslategray;
+}
+
+.row-users-card-offrow-active-admin {
+  margin-bottom: 10px;
+  border-radius: 5px;
+  background-color: black;
+}
+
+.row-users-card-offrow-admin:hover {
+  transition: background-color 1.2s ease;
+  background-color: black;
+  border-radius: 5px;
+}
+
+.row-users-card-admin {
+  margin-bottom: 10px;
+}
+
+.row-users-card-active-admin {
+  margin-bottom: 10px;
+  background-color: black;
+  border-radius: 5px;
+}
+
+.row-users-card-admin:hover {
+  transition: background-color 1.2s ease;
+  background-color:black;
+  border-radius: 5px;
+}
+
 .row-options-admin {
-  margin-top: -10px;
+  margin-top: -12px;
   margin-bottom: 5px;
   padding: 5px 5px;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  border: 2px solid black;
+  border-radius: 5px;
 }
 
 .button-options-style-admin {
@@ -1318,11 +1355,6 @@ a.dropdown-item:hover {
   color: gray;
 }
 
-.file-input-admin {
-  width: 50% !important;
-  margin-top: 1rem;
-}
-
 .row-settings {
   justify-content: center;
 }
@@ -1487,6 +1519,18 @@ a.dropdown-item:hover {
   justify-content: center;
 }
 
+.padding-5px {
+  padding: 5px;
+  color: white;
+}
+
+.div-loading-profile {
+  justify-content: center;
+  display: flex;
+  align-items: center;
+  color: white;
+}
+
 .col-team-user {
   display: flex;
   justify-content: center;
@@ -1533,6 +1577,23 @@ a.dropdown-item:hover {
   justify-content: center;
   display: flex;
   padding: 10px;
+}
+
+.winter-hours-col {
+  margin-top: 70px;
+}
+
+.left-row-hours {
+  display: table-cell !important;
+  padding-left: 30px;
+}
+
+.right-row-hours {
+  display: table-cell !important;
+}
+
+.last-row-hours {
+  display: inline-block !important;
 }
 
 /*Put default normal screen values in here*/
@@ -1682,6 +1743,37 @@ a.dropdown-item:hover {
 
   .form-input-emailoptout {
     width: 20rem !important;
+  }
+
+  .team-rows {
+    margin-right: 5px;
+  }
+
+  .p-hours-season {
+    font-size: 16px;
+  }
+
+  .winter-hours-col {
+    margin-top: 0px;
+  }
+
+  .left-row-hours {
+    display: flex !important;
+    padding-left: 0px;
+  }
+
+  .right-row-hours {
+    display: flex !important;
+  }
+
+  .last-row-hours {
+    display: flex !important;
+  }
+
+  .col-hours-header {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
   }
 }
 
