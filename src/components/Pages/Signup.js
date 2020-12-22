@@ -215,11 +215,7 @@ class SignUpFormBase extends Component {
   // Prop to pass to waiver to call when complete
   completeWaiver = (blob) => {
     this.props.firebase.membersWaivers(`${this.state.uid}.pdf`).put(blob).then(() => {
-      this.setState({loading: true}, function() {
-        setTimeout( () => {
-            this.setState({submitted: false, showLander: true, loading: false})
-        }, 5000);
-      })
+      this.setState({submitted: false, showLander: true, loading: false})
     })
   }
  
@@ -445,7 +441,7 @@ class SignUpFormBase extends Component {
                 </Row>
                 {!agecheck ? 
                 <Col>
-                <Row className="row-rp">
+                <Row className="justify-content-row">
                   <h2 className="waiver-header-rp">
                     {"Guardian/Parent Information:"}
                   </h2>

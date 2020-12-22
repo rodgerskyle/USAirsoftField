@@ -5,7 +5,7 @@ import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
 import { compose } from 'recompose';
 
-import { Button, Form, Container, Card, Row, Col, Breadcrumb } from 'react-bootstrap/';
+import { Button, Form, Container, Card, Row, Col, Breadcrumb, Spinner } from 'react-bootstrap/';
 
 import { LinkContainer } from 'react-router-bootstrap';
 
@@ -63,7 +63,6 @@ class FreeGames extends Component {
     render() {
         return (
             <div className="background-static-all">
-                {!this.state.loading ?
                     <Container>
                         <h2 className="admin-header">Redeem Free Game</h2>
                         <Breadcrumb className="admin-breadcrumb">
@@ -90,13 +89,14 @@ class FreeGames extends Component {
                                             </Form.Group>
                                         </Form>
                                     </Card.Header>
+                                    {!this.state.loading ?
                                     <UserBox users={this.state.users} index={0} length={this.state.users.length}
                                     search={this.state.search} update={this.state.UpdateUserState} />
+                                    : <Row className="justify-content-row padding-5px"><Spinner animation="border" /></Row>}
                                 </Card>
                             </Col>
                         </Row>
                     </Container>
-                    : <h2 className="pagePlaceholder">Loading...</h2>}
             </div>
         );
     }
@@ -137,7 +137,12 @@ function UserBox({users, index, search, update, length}) {
                                         :
                                             <Row className="confirm-buttons-admin">
                                                 <Col>
-                                                    <Button className="button-submit-admin2" onClick={() => update(user.uid)}
+                                                    <Button className="button-submit-admin2" onClick={function(){
+                                                        update(user.uid)
+                                                        let tempArray = [...ButtonArray];
+                                                        tempArray[i] = false
+                                                        setButtonArray(tempArray)
+                                                    }}
                                                     type="submit" id="update" variant="success">
                                                         Confirm 
                                                     </Button>
@@ -184,7 +189,12 @@ function UserBox({users, index, search, update, length}) {
                                         :
                                             <Row className="confirm-buttons-admin">
                                                 <Col>
-                                                    <Button className="button-submit-admin2" onClick={() => update(user.uid)}
+                                                    <Button className="button-submit-admin2" onClick={function(){
+                                                        update(user.uid)
+                                                        let tempArray = [...ButtonArray];
+                                                        tempArray[i] = false
+                                                        setButtonArray(tempArray)
+                                                    }}
                                                     type="submit" id="update" variant="success">
                                                         Confirm 
                                                     </Button>
@@ -233,7 +243,12 @@ function UserBox({users, index, search, update, length}) {
                                     :
                                         <Row className="confirm-buttons-admin">
                                             <Col>
-                                                <Button className="button-submit-admin2" onClick={() => update(user.uid)}
+                                                <Button className="button-submit-admin2" onClick={function(){
+                                                    update(user.uid)
+                                                    let tempArray = [...ButtonArray];
+                                                    tempArray[i] = false
+                                                    setButtonArray(tempArray)
+                                                }}
                                                 type="submit" id="update" variant="success">
                                                     Confirm 
                                                 </Button>
@@ -280,7 +295,12 @@ function UserBox({users, index, search, update, length}) {
                                     :
                                         <Row className="confirm-buttons-admin">
                                             <Col>
-                                                <Button className="button-submit-admin2" onClick={() => update(user.uid)}
+                                                <Button className="button-submit-admin2" onClick={function(){
+                                                    update(user.uid)
+                                                    let tempArray = [...ButtonArray];
+                                                    tempArray[i] = false
+                                                    setButtonArray(tempArray)
+                                                }}
                                                 type="submit" id="update" variant="success">
                                                     Confirm 
                                                 </Button>

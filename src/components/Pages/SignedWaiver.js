@@ -165,9 +165,11 @@ class SignedWaiver extends Component {
                         if (!loading && !this.done) {
                             this.done = true;
                             this.props.completeWaiver(blob);
-                            return <div>Waiver created.</div>;
+                            //return <div>Waiver created.</div>;
+                            return null;
                         }
-                        return <div>Creating Waiver...</div>
+                        //return <div>Creating Waiver...</div>
+                        return null;
                     }}
                 </BlobProvider>
             </div>

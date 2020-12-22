@@ -16,6 +16,7 @@
     "firebase": "^7.24.0",
     "firebase-encode": "0.0.5",
     "google-map-react": "^2.1.9",
+    "mdbreact": "^5.0.1",
     "prop-types": "^15.7.2",
     "react": "^16.14.0",
     "react-bootstrap": "^1.4.0",

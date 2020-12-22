@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Table, Button } from 'react-bootstrap/';
 import '../../App.css';
 
-import { Container, Row, Col } from 'react-bootstrap/';
+import { Container, Row, Col, Spinner } from 'react-bootstrap/';
 import './Profile.css';
 import Td from '../constants/td';
 
@@ -50,11 +50,11 @@ class Teams extends Component {
 
             this.setState({
                 teams: teamsList,
-                loading: false,
             }, () => {
                 for (var i = 0; i < this.state.teams.length; i++) {
                     this.getPicture(this.state.teams[i].teamname);
                 }
+                this.setState({loading: false})
             });
         });
     }
@@ -91,8 +91,9 @@ class Teams extends Component {
                         </Col>
                     </Row>
                     <br></br>
-                    {this.state.loading && <div>Loading ...</div>}
-                    <TeamList teams={this.state.teams} teamicon={this.state.teamicon} />
+                    {this.state.loading ? 
+                    <Row className="justify-content-row padding-5px"><Spinner animation="border" /></Row> : 
+                    <TeamList teams={this.state.teams} teamicon={this.state.teamicon} /> }
                 </Container>
             </div>
         );

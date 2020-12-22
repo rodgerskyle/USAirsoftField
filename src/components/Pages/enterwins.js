@@ -5,7 +5,7 @@ import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
 import { compose } from 'recompose';
 
-import { Button, Form, Container, Card, Row, Col, Breadcrumb } from 'react-bootstrap/';
+import { Button, Form, Container, Card, Row, Col, Breadcrumb, Spinner } from 'react-bootstrap/';
 
 import * as ROLES from '../constants/roles';
 import { LinkContainer } from 'react-router-bootstrap';
@@ -141,7 +141,7 @@ class EnterWins extends Component {
                         </Col>
                     </Row>
                     </Container>
-                : <h2 className="pagePlaceholder">Loading...</h2>}
+                : <Row className="justify-content-row padding-5px"><Spinner animation="border" /></Row>}
             </div>
         );
     }

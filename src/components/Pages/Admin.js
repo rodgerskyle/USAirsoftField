@@ -5,7 +5,7 @@ import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
 import { compose } from 'recompose';
 
-import { Container, Row, Col, Form, Button, Breadcrumb, Card, ProgressBar, Spinner } from 'react-bootstrap/';
+import { Container, Row, Col, Form, Button, Breadcrumb, Card, ProgressBar, Spinner, Collapse } from 'react-bootstrap/';
 
 import { Link } from 'react-router-dom';
 
@@ -298,6 +298,10 @@ class AdminPage extends Component {
                                 {this.state.emailImg ? <img className="email-img-admin" src={this.state.emailImg} alt="email attachment"
                                 onLoad={() => this.checkDimensions()} ref={this.imgRef}/> : ""}
                             </Form.Group>
+                                <Form.Group>
+                                  <Form.File id="email-image-input" onChange={this.handleUpload}
+                                  label="Attach Image" accept="image/*" custom data-browse="Upload"/>
+                                </Form.Group>
                                 <Button className="admin-button-email1" variant="info" type="button"
                                 onClick={() => {
                                   this.emailAll();
@@ -316,11 +320,6 @@ class AdminPage extends Component {
                                 >
                                     Email Non-Members
                                 </Button>
-                                <Form.Group>
-                                  <Form.File id="email-image-input" onChange={this.handleUpload}
-                                  label="Attach Image" accept="image/*" custom data-browse="Upload"
-                                  className="file-input-admin"/>
-                                </Form.Group>
                         </Form>
                         {this.state.email_status ? <p className="status-email-admin">{this.state.email_status}</p> : ""}
                         {this.state.email_loading ? <ProgressBar animated now={this.state.email_loading} /> : ""}
@@ -466,14 +465,15 @@ function UserBox({users, index, search, length}) {
                     user.name.toLowerCase().includes(search.toLowerCase()) ? 
                         index++ % 2 === 0 ? 
                             <div key={i}>
-                              <div className="row-fg" id="options-buttons-admin" onClick={() => {
+                              <div id="options-buttons-admin" onClick={() => {
                                 let tempArray = [...ButtonArray];
                                 if (tempArray[i] !== true)
                                   tempArray.fill(false)
                                 tempArray[i] = !tempArray[i]
                                 setButtonArray(tempArray)
                               }}>
-                                  <Row>
+                                  <Row className={ButtonArray[i] ? "row-users-card-active-admin" :
+                                    "row-users-card-admin"}>
                                     <Col className="col-name-ul">
                                             {"(" + index + ") " + user.name}
                                     </Col>
@@ -482,7 +482,7 @@ function UserBox({users, index, search, length}) {
                                     </Col>
                                   </Row>
                                 </div>
-                                  {ButtonArray[i] === true ? 
+                                  <Collapse in={ButtonArray[i]}>
                                     <Row className="row-options-admin">
                                       <Col md="auto" className="button-options-col-admin">
                                           <Link to={"admin/useroptions/" + user.uid}>
@@ -503,30 +503,28 @@ function UserBox({users, index, search, length}) {
                                         </Button>
                                       </Col>
                                     </Row>
-                                  : ""
-                                  }
+                                  </Collapse>
                             </div>
                                 : 
                             <div key={i}>
-                              <div className="user-card-offrow-admin-fg" id="options-buttons-admin" onClick={() => {
+                              <div id="options-buttons-admin" onClick={() => {
                                 let tempArray = [...ButtonArray];
                                 if (tempArray[i] !== true)
                                   tempArray.fill(false)
                                 tempArray[i] = !tempArray[i]
                                 setButtonArray(tempArray)
                               }}>
-                                    <Row>
+                                    <Row className={ButtonArray[i] ? 
+                                      "row-users-card-offrow-active-admin" : "row-users-card-offrow-admin"}>
                                       <Col className="col-name-ul">
                                               {"(" + index + ") " + user.name}
                                       </Col>
-                                    </Row>
-                                    <Row>
                                       <Col className="col-name-ul">
                                           {user.email}
                                       </Col>
                                   </Row>
                                 </div>
-                                  {ButtonArray[i] === true ? 
+                                  <Collapse in={ButtonArray[i]}>
                                     <Row className="row-options-admin">
                                       <Col md="auto" className="button-options-col-admin">
                                           <Link to={"admin/useroptions/" + user.uid}>
@@ -547,21 +545,21 @@ function UserBox({users, index, search, length}) {
                                         </Button>
                                       </Col>
                                     </Row>
-                                  : ""
-                                  }
+                                  </Collapse>
                             </div>
                     : ""
                 :
                         index++ % 2 === 0 ? 
                             <div key={i}>
-                              <div className="row-fg" id="options-buttons-admin" onClick={() => {
+                              <div id="options-buttons-admin" onClick={() => {
                                 let tempArray = [...ButtonArray];
                                 if (tempArray[i] !== true)
                                   tempArray.fill(false)
                                 tempArray[i] = !tempArray[i]
                                 setButtonArray(tempArray)
                               }}>
-                                  <Row>
+                                  <Row className={ButtonArray[i] ? "row-users-card-active-admin" :
+                                    "row-users-card-admin"}>
                                     <Col className="col-name-ul">
                                             {"(" + index + ") " + user.name}
                                     </Col>
@@ -570,7 +568,7 @@ function UserBox({users, index, search, length}) {
                                     </Col>
                                   </Row>
                                 </div>
-                                  {ButtonArray[i] === true ? 
+                                  <Collapse in={ButtonArray[i]}>
                                     <Row className="row-options-admin">
                                       <Col md="auto" className="button-options-col-admin">
                                           <Link to={"admin/useroptions/" + user.uid}>
@@ -591,30 +589,28 @@ function UserBox({users, index, search, length}) {
                                         </Button>
                                       </Col>
                                     </Row>
-                                  : ""
-                                  }
+                                  </Collapse>
                             </div>
                             : 
                             <div key={i}>
-                              <div className="user-card-offrow-admin-fg" id="options-buttons-admin" onClick={() => {
+                              <div id="options-buttons-admin" onClick={() => {
                                 let tempArray = [...ButtonArray];
                                 if (tempArray[i] !== true)
                                   tempArray.fill(false)
                                 tempArray[i] = !tempArray[i]
                                 setButtonArray(tempArray)
                               }}>
-                                    <Row>
+                                    <Row className={ButtonArray[i] ? 
+                                      "row-users-card-offrow-active-admin" : "row-users-card-offrow-admin"}>
                                       <Col className="col-name-ul">
                                               {"(" + index + ") " + user.name}
                                       </Col>
-                                    </Row>
-                                    <Row>
                                       <Col className="col-name-ul">
                                           {user.email}
                                       </Col>
                                   </Row>
                                 </div>
-                                  {ButtonArray[i] === true ? 
+                                  <Collapse in={ButtonArray[i]}>
                                     <Row className="row-options-admin">
                                       <Col md="auto" className="button-options-col-admin">
                                           <Link to={"admin/useroptions/" + user.uid}>
@@ -635,8 +631,7 @@ function UserBox({users, index, search, length}) {
                                         </Button>
                                       </Col>
                                     </Row>
-                                  : ""
-                                  }
+                                  </Collapse>
                             </div>
             ))}
         </Card.Body>
