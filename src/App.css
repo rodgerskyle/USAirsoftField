@@ -22,6 +22,11 @@
   border: 0 !important;
 }
 
+body {
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji" !important;
+  -webkit-font-smoothing: antialiased;
+}
+
 .overlay {
   position: absolute;
   bottom: 0px;
@@ -59,7 +64,6 @@
 .bg-nav {
   background-color: #343a40!important;
   border-bottom: 3px solid black;
-  border-top: 3px solid black;
 }
 
 .logobox {
@@ -401,6 +405,29 @@
 .header-lb {
   border-bottom: 1px solid rgb(255, 217, 0, .5);
   background-color: rgb(36, 36, 36);
+  font-weight: 400;
+}
+
+.tbody-lb {
+  font-weight: 300;
+}
+
+.td-lb {
+  vertical-align: middle !important;
+}
+
+.page-link {
+  background-color: rgb(172,172,172,) !important;
+  border: none !important;
+  color: black !important;
+}
+
+.page-item.active .page-link {
+  background-color: rgb(0, 123, 255, .9) !important;
+}
+
+.Ripple.is-reppling {
+  animation: none !important;
 }
 
 .header-th-lb {
@@ -449,19 +476,13 @@ body {
   float: right;
 }
 
-a.dropdown-item:hover {
-  color: black;
-  background-color: darkgray;
-}
-
 .dropdown-item.active {
   color: white !important;
-  background-color: grey !important;
+  background-color: rgb(4, 4, 4, .4) !important;
 }
 
 .dropdown-item:active {
-  color: rgb(4,4,4) !important;
-  background-color: grey !important;
+  background-color: rgb(4, 4, 4, .4) !important;
 }
 
 .notice-text-settings {
@@ -947,11 +968,12 @@ a.dropdown-item:hover {
 }
 
 .admin-row-email {
-  margin-top: 20px;
+  margin-top: 0px;
 }
 
  .admin-col-cards {
    min-height: 100%;
+   margin-bottom: 20px;
  }
 
  .admin-button-email1 {
@@ -1372,13 +1394,6 @@ a.dropdown-item:hover {
   overflow-y: scroll;
 }
 
-@media (min-width: 1200px) {
-  .password-change-form {
-    margin-left: 35%;
-    margin-right: 35%;
-  }
-}
-
 .tooltip {
   transition: opacity 0.15s linear;
 }
@@ -1596,10 +1611,60 @@ a.dropdown-item:hover {
   display: inline-block !important;
 }
 
+*:focus {
+  outline: none !important;
+}
+
+.text-align-center {
+  text-align: center;
+}
+
+.dd-text-pricing {
+  margin-right: 5px;
+}
+
+.MuiButton-label {
+  text-shadow: black 0.1em 0.1em 0.2em;
+  font-weight: bold;
+}
+
+.text-red {
+  color: red;
+}
+
+.col-pricing {
+  margin-bottom: 15px;
+}
+
+.card-pricing {
+  min-height: 100%;
+}
+
+.row-fade-pricing {
+  position: absolute
+}
+
+.buttons-pricing {
+  margin: 0 5px;
+}
+
+.no-margin-bottom {
+  margin-bottom: 0 !important;
+}
+
+.row-buttons-pricing {
+  margin-bottom: 10px;
+}
+
+.card-body-other-pricing {
+  display: grid;
+  justify-content: center;
+}
+
 /*Put default normal screen values in here*/
 @media screen and (min-width: 768px) {
   .table-lb {
-    font-size: 16px;
+    font-size: .9rem;
   }
 
   .page-header-lb {
