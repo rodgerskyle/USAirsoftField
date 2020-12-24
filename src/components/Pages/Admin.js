@@ -179,7 +179,7 @@ class AdminPage extends Component {
                   <Breadcrumb.Item active>Admin</Breadcrumb.Item>
                 </Breadcrumb>
                 <Row>
-                  <Col className="admin-col-cards">
+                  <Col sm={3} className="admin-col-cards">
                     <Link to={"/enterwins"} className="admin-cards-link">
                       <Card className="admin-cards">
                         <Card.Body className="admin-card-header-link">Enter Wins</Card.Body>
@@ -198,7 +198,7 @@ class AdminPage extends Component {
                       </Card>
                     </Link>
                   </Col>
-                  <Col className="admin-col-cards">
+                  <Col sm={3} className="admin-col-cards">
                     <Link to={"/enterlosses"} className="admin-cards-link">
                       <Card className="admin-cards">
                         <Card.Body className="admin-card-header-link">Enter Losses</Card.Body>
@@ -217,7 +217,7 @@ class AdminPage extends Component {
                       </Card>
                     </Link>
                   </Col>
-                  <Col className="admin-col-cards">
+                  <Col sm={3} className="admin-col-cards">
                     <Link to={"/freegames"} className="admin-cards-link">
                       <Card className="admin-cards">
                         <Card.Body className="admin-card-header-link">Check Free Games</Card.Body>
@@ -236,7 +236,7 @@ class AdminPage extends Component {
                       </Card>
                     </Link>
                   </Col>
-                  <Col className="admin-col-cards">
+                  <Col sm={3} className="admin-col-cards">
                     <Link to={"/renewal"} className="admin-cards-link">
                       <Card className="admin-cards">
                         <Card.Body className="admin-card-header-link">Membership Renewal</Card.Body>
@@ -257,7 +257,7 @@ class AdminPage extends Component {
                   </Col>
                 </Row>
                 <Row className="admin-row-email">
-                  <Col sm={8}>
+                  <Col sm={8} className="admin-col-cards">
                     <Card className="admin-cards">
                       <Card.Header className="admin-card-header-link">
                         <Row>
@@ -326,7 +326,7 @@ class AdminPage extends Component {
                       </Card.Body>
                     </Card>
                   </Col>
-                  <Col sm={4}>
+                  <Col sm={4} className="admin-col-cards">
                     <Card className="admin-cards">
                       <Card.Header className="admin-card-header-link">
                         <Row>

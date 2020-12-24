@@ -8,6 +8,7 @@ import BootstrapSwitchButton from 'bootstrap-switch-button-react';
 import ranks from '../constants/ranks';
 import rankimages from '../constants/smallrankimgs';
 import Td from '../constants/td';
+import * as ROLES from '../constants/roles';
 
 import { withFirebase } from '../Firebase';
 
@@ -164,10 +165,11 @@ class Leaderboards extends Component {DAWKDAWDKWA
         this.props.firebase.users().on('value', snapshot => {
             const usersObject = snapshot.val();
 
-            const usersList = Object.keys(usersObject).map(key => ({
+            let usersList = Object.keys(usersObject).map(key => ({
                 ...usersObject[key],
                 uid: key,
             }));
+            usersList = usersList.filter(obj => typeof(obj.roles) === 'undefined' || !obj.roles[ROLES.WAIVER])
 
             this.setState({
                 users: usersList.sort((a,b) => (a.points < b.points ? 1 : -1)),
@@ -285,13 +287,13 @@ function UserList ({users, getRank, monthly, currentMonth, start }) {
                     <th scope="col" className="header-th-lb">Points</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody className="tbody-lb">
                 {users
                 .map((user, i) => (
                     <tr key={user.uid}>
-                        <Td scope="row"><p className={i + start ===0 ? "firstPlace" : (i + start ===1 ? "secondPlace" : (i + start ===2 ? "thirdPlace" : null))}>
+                        <Td scope="row"><p className={i + start ===0 ? "firstPlace td-lb" : (i + start ===1 ? "secondPlace td-lb" : (i + start ===2 ? "thirdPlace td-lb" : null))}>
                         {i + start + 1}</p></Td>
-                        <Td>
+                        <Td className="td-lb">
                             <OverlayTrigger
                             transition={false}
                             key='top'
@@ -306,14 +308,14 @@ function UserList ({users, getRank, monthly, currentMonth, start }) {
                                 alt="Player Rank" className="rank-image-lb"/>
                             </OverlayTrigger>
                         </Td>
-                        <Td cl="profilelink-lb" to={'/profilelookup/' + user.uid}>{user.name}</Td>
-                        <Td cl="wins-lb">
+                        <Td cl="profilelink-lb td-lb" to={'/profilelookup/' + user.uid}>{user.name}</Td>
+                        <Td cl="wins-lb td-lb">
                             {monthly ? (currentMonth ? (user.cmwins) : (user.pmwins)) : user.wins}
                         </Td>
-                        <Td cl="losses-lb">
+                        <Td cl="losses-lb td-lb">
                             {monthly ? (currentMonth ? (user.cmlosses) : (user.pmlosses)) : user.losses}
                         </Td>
-                        <Td>
+                        <Td cl="td-lb">
                             {monthly ? (currentMonth ? (user.cmwins*10 + user.cmlosses*3) : (user.pmwins*10 + user.pmlosses*3)) : user.points}
                         </Td>
                     </tr>
