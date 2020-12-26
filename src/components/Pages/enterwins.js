@@ -46,10 +46,18 @@ class EnterWins extends Component {
             }));
 
             this.setState({
-                users: usersList,
+                users: this.remapArray(usersList),
                 loading: false,
             });
         });
+    }
+
+    remapArray(userArray) {
+        let array = [];
+        for (let i=0; i<userArray.length; i++) {
+            array[userArray[i].username] = userArray[i];
+        }
+        return array;
     }
 
     handleKeypress(event) {
@@ -60,40 +68,36 @@ class EnterWins extends Component {
 
     updateUser = (event) => {
         event.preventDefault()
-        //Make API CALL HERE
-        //Find user by username
-        var index = -1;
-        var temp;
-        for (var i=0; i < this.state.users.length; i++) {
-            if (this.state.users[i].username === this.state.value) {
-                index = i;
-                break;
-            }
-        }
-        if (index !== -1) {
-            var uid = this.state.users[index].uid;
-            var points = this.state.users[index].points;
-            var wins = this.state.users[index].wins;
-            var freegames = this.state.users[index].freegames;
-            var cmwins = this.state.users[index].cmwins;
-            if (((points+10) % 450) < (points % 450)) {
-                freegames++;
-            }
-            points+=10;
-            cmwins+=1;
-            wins+=1;
-            this.props.firebase.user(uid).update({
-                points, wins, freegames, cmwins
-            });
+        const {value} = this.state;
+        const lc_value = value.toLocaleLowerCase()
+
+        let temp;
+
+        if (typeof this.state.users[lc_value] === "undefined") {
             temp = this.state.statusBox;
-            temp.unshift("User " + this.state.value + " was updated successfully.")
-            this.setState({statusBox: temp})
+            temp.unshift("User " + lc_value + " was not found.");
+            this.setState({statusBox: temp, value: ""})
+            return;
         }
-        else {
-            temp = this.state.statusBox;
-            temp.unshift("User " + this.state.value + " was not found.");
-            this.setState({statusBox: temp})
+
+        var uid = this.state.users[lc_value].uid;
+        var points = this.state.users[lc_value].points;
+        var wins = this.state.users[lc_value].wins;
+        var freegames = this.state.users[lc_value].freegames;
+        var cmwins = this.state.users[lc_value].cmwins;
+        if (((points+10) % 450) < (points % 450)) {
+            freegames++;
         }
+        points+=10;
+        cmwins+=1;
+        wins+=1;
+        this.props.firebase.user(uid).update({
+            points, wins, freegames, cmwins
+        });
+        temp = this.state.statusBox;
+        temp.unshift("User " + lc_value + " was updated successfully.")
+        this.setState({statusBox: temp})
+
         //End API call
         document.getElementById("usernameBox").focus();
         this.setState({ value: "" })

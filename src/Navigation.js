@@ -70,7 +70,7 @@ const NavigationAuth = ({ authUser }) => {
             <MDBNavbar dark expand={"xl"} className="bg-nav">
                 <MDBNavbarNav left>
                     <MDBNavbarBrand className="navitem-img">
-                        <Link to="/" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
+                        <Link to="/home" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
                             <img src={logo} alt="US Airsoft logo" className="img-fluid logo" />
                         </Link>
                     </MDBNavbarBrand>
@@ -79,7 +79,7 @@ const NavigationAuth = ({ authUser }) => {
                 <MDBCollapse isOpen={expanded} navbar>
                     <MDBNavbarNav left >
                         <MDBNavItem>
-                            <MDBNavLink as={Link} className="nav-link" to="/" 
+                            <MDBNavLink as={Link} className="nav-link" to="/home" 
                             onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
                                 Home
                             </MDBNavLink>
@@ -182,7 +182,7 @@ const NavigationNonAuth = () => {
             <MDBNavbar dark expand={"xl"} className="bg-nav">
                 <MDBNavbarNav left>
                     <MDBNavbarBrand className="navitem-img">
-                        <Link to="/" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
+                        <Link to="/home" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
                             <img src={logo} alt="US Airsoft logo" className="img-fluid logo" />
                         </Link>
                     </MDBNavbarBrand>
@@ -191,7 +191,7 @@ const NavigationNonAuth = () => {
                 <MDBCollapse isOpen={expanded} navbar>
                     <MDBNavbarNav left >
                         <MDBNavItem>
-                            <MDBNavLink as={Link} className="nav-link" to="/" 
+                            <MDBNavLink as={Link} className="nav-link" to="/home" 
                             onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
                                 Home
                             </MDBNavLink>

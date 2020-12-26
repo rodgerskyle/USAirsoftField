@@ -133,6 +133,7 @@ body {
 .imgUpload-input {
   background-color: grey;
   text-align: left;
+  border-radius: 5px;
 }
 
 .img-upload-col-button {
@@ -181,7 +182,6 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-left: 30px !important;
     padding-bottom: 30px;
 }
 
@@ -416,8 +416,13 @@ body {
   vertical-align: middle !important;
 }
 
+.justify-content-flex-end-row {
+  justify-content: flex-end;
+  padding-right: 15px;
+}
+
 .page-link {
-  background-color: rgb(172,172,172,) !important;
+  background-color: rgb(172,172,172, .7) !important;
   border: none !important;
   color: black !important;
 }
@@ -650,6 +655,7 @@ body {
   margin-left: -10px;
   padding: 10px;
   color: white;
+  border-radius: 5px;
 }
 
 .status-card-row-admin {

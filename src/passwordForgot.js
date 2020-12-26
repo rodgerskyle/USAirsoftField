@@ -4,17 +4,49 @@ import logo from './assets/logo.png';
  
 import { withFirebase } from './components/Firebase';
 import { Container, Row, Col, Form, Button, InputGroup, FormControl } from 'react-bootstrap/';
+
+import ReCAPTCHA from 'react-google-recaptcha';
  
 const INITIAL_STATE = {
   email: '',
   error: null,
+  robot: true,
 };
  
 class PasswordForgetFormBase extends Component {
   constructor(props) {
     super(props);
  
+    this.handleCaptchaResponseChange = this.handleCaptchaResponseChange.bind(this);
     this.state = { ...INITIAL_STATE };
+  }
+
+//Recaptcha stuff
+  handleCaptchaResponseChange(response) {
+    let checkRecaptcha = this.props.firebase.checkRecaptcha();
+    checkRecaptcha({response}).then((result) => {
+      if (result.data && result.data.status === "success.") {
+        this.setState({
+          robot: false, error: null
+        });
+      }
+      else {
+        this.recaptcha.reset();
+        this.setState({ error: "Please retry the ReCAPTCHA." })
+      }
+    })
+    .catch((error) => {
+    // Getting the Error details.
+    var code = error.code;
+    var message = error.message;
+    console.log (code + " " + message)
+    // ...
+    })
+  }
+
+  //Recaptcha Expired
+  expireCaptcha = () => {
+    this.setState({ robot: true })
   }
  
   onSubmit = event => {
@@ -43,9 +75,9 @@ class PasswordForgetFormBase extends Component {
   };
  
   render() {
-    const { email, error } = this.state;
+    const { email, error, robot } = this.state;
  
-    const isInvalid = email === '';
+    const isInvalid = email === '' || robot === true;
  
     return (
     <div className="background-static-all">
@@ -71,6 +103,16 @@ class PasswordForgetFormBase extends Component {
             </InputGroup>
             <p className="forgotP">{error}</p>
           </Form>
+          <Row className="align-items-center justify-content-center">
+            <Col className="recap">
+              <ReCAPTCHA
+                ref={(el) => { this.recaptcha = el; }}
+                sitekey="6Lc0JPsUAAAAAGfLV1lzptnyO2V1dTU7GfR5_5h5"
+                theme={'dark'}
+                onChange={this.handleCaptchaResponseChange} 
+                onExpired={this.expireCaptcha} />
+            </Col>
+          </Row>
         </Col>
       </Container>
     </div>

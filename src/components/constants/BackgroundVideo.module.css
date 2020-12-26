@@ -3,7 +3,7 @@
     max-height: 90vh;
     overflow: hidden;
     margin-bottom: -2vh;
-    top: -1vh;
+    top: 0;
 }
 
 /* Style the video: 100% width and height to cover the entire window */
