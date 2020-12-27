@@ -291,7 +291,7 @@ function UserList ({users, getRank, monthly, currentMonth, start }) {
                 {users
                 .map((user, i) => (
                     <tr key={user.uid}>
-                        <Td cl="td-lb" scope="row"><p className={i + start ===0 ? "firstPlace" : (i + start ===1 ? "secondPlace" : (i + start ===2 ? "thirdPlace" : null))}>
+                        <Td cl="td-lb" scope="row"><p className={i + start ===0 ? "firstPlace" : (i + start ===1 ? "secondPlace" : (i + start ===2 ? "thirdPlace" : "p-rank-leaderboard"))}>
                         {i + start + 1}</p></Td>
                         <Td cl="td-lb">
                             <OverlayTrigger

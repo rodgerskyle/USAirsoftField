@@ -20,7 +20,7 @@ import Leaderboard from './components/Pages/leaderboard';
 import ProfileLookup from './components/Pages/Profilelookup';
 import Pricing from './components/Pages/Pricing';
 import Teams from './components/Pages/Teams';
-import Pictures from './components/Pages/Pictures';
+import Instagram from './components/Pages/Instagram';
 import Videos from './components/Pages/Videos';
 import Rules from './components/Pages/Rules';
 import Gametypes from './components/Pages/Gametypes';
@@ -72,8 +72,8 @@ const App = () => (
             <Route exact path="/videos">
               <Videos />
             </Route>
-            <Route exact path="/pictures">
-              <Pictures />
+            <Route exact path="/instagram">
+              <Instagram />
             </Route>
             <Route exact path="/teams">
               <Teams />
