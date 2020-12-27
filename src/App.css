@@ -421,6 +421,11 @@ body {
   padding-right: 15px;
 }
 
+.justify-content-flex-end-col {
+  justify-content: flex-end;
+  display: flex;
+}
+
 .page-link {
   background-color: rgb(172,172,172, .7) !important;
   border: none !important;
@@ -484,10 +489,24 @@ body {
 .dropdown-item.active {
   color: white !important;
   background-color: rgb(4, 4, 4, .4) !important;
+  border-radius: 5px;
+  box-shadow: 0 5px 11px 0 rgba(0,0,0,0.18), 0 4px 15px 0 rgba(0,0,0,0.15);
+  position: relative;
 }
 
 .dropdown-item:active {
   background-color: rgb(4, 4, 4, .4) !important;
+  border-radius: 5px;
+  box-shadow: 0 5px 11px 0 rgba(0,0,0,0.18), 0 4px 15px 0 rgba(0,0,0,0.15);
+}
+
+.dropdown-item:hover {
+  color: white !important;
+  background-color: rgb(4, 4, 4, .4) !important;
+  border-radius: 5px;
+  box-shadow: 0 5px 11px 0 rgba(0,0,0,0.18), 0 4px 15px 0 rgba(0,0,0,0.15);
+  transition: all .1s linear;
+  position: relative;
 }
 
 .notice-text-settings {
@@ -1158,10 +1177,6 @@ body {
   padding-top: 20px;
 }
 
-.form-input-emailoptout {
-  width: 18rem !important;
-}
-
 .status-oo-admin {
   color: lightgreen;
   text-align: center;
@@ -1577,6 +1592,7 @@ body {
 
 .li-content-rules {
   padding-bottom: 15px;
+  margin-right: 5px;
 }
 
 .status-text-teammanage {
@@ -1667,10 +1683,128 @@ body {
   justify-content: center;
 }
 
+.list-gametypes {
+  height: 60vh;
+  overflow-y: scroll;
+}
+
+.tab-content>.active {
+    overflow: auto;
+    height: 70vh;
+}
+
+.dropdown-menu.show {
+  padding: .5rem;
+  visibility: visible;
+  opacity: 1;
+}
+
+.dropdown-menu {
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0s, opacity .2s linear;
+  display: block !important;
+}
+
+.dropdown-item {
+  padding-left: .55rem !important;
+  border-radius: 5px;
+}
+
+.p-rank-leaderboard {
+  margin-left: 2px;
+  margin-bottom: 0;
+}
+
+.img-instagram {
+  margin-bottom: 30px;
+}
+
+.row-instagram {
+  justify-content: center;
+  position: absolute;
+  bottom: 30px;
+  color: white;
+  margin-left: 0px !important;
+  margin-right: 15px !important;
+  width: 100%;
+}
+
+.col-photo-instagram .p-caption-instagram{
+  opacity: 0;
+  -webkit-transition: all 0.4s ease-in-out 0s;
+  -moz-transition: all 0.4s ease-in-out 0s;
+  transition: all 0.4s ease-in-out 0s;
+}
+
+.col-photo-instagram:hover .p-caption-instagram{
+  opacity: 1;
+  background-color: rgb(4,4,4, .5);
+}
+
+.p-caption-instagram {
+  margin-right: 30px;
+  padding: 5px;
+  width: 100%;
+  text-align: center;
+}
+
+.instagram-logo {
+  padding: 5px;
+  padding-top: 0px;
+}
+
+.youtube-logo {
+  padding: 5px;
+  padding-top: 0px;
+}
+
+.div-iframe-youtube {
+  position: relative;
+  padding-top: 56.25%;
+}
+
+.iframe-youtube {
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%
+}
+
+.div-video-item-youtube:hover {
+  cursor: pointer;
+}
+
+.container-youtube {
+  background-color: rgb(73 80 87 / .6);
+  color: white;
+  border-radius: 5px;
+  padding: 15px;
+}
+
+.video-player-title-youtube {
+  margin-top: 15px;
+}
+
+.video-thumbnail-title-youtube {
+  margin-bottom: 15px;
+}
+
+.col-videolist-youtube {
+  height: 80vh;
+  overflow-y: scroll;
+}
+
+.img-selected-video-youtube:active {
+  box-shadow: 0 5px 11px 0 rgba(0,0,0,0.18), 0 4px 15px 0 rgba(0,0,0,0.15);
+  border: 1px solid white;
+}
+
 /*Put default normal screen values in here*/
 @media screen and (min-width: 768px) {
   .table-lb {
-    font-size: .9rem;
+    font-size: 1rem;
   }
 
   .page-header-lb {
@@ -1812,8 +1946,8 @@ body {
     font-size: 16px;
   }
 
-  .form-input-emailoptout {
-    width: 20rem !important;
+  .row-margin15-top {
+    margin-top: 15px;
   }
 
   .team-rows {

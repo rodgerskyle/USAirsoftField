@@ -95,7 +95,7 @@ class Firebase {
 
     testRenewal = () => this.func.httpsCallable('testRenewal');
 
-    checkRecaptcha = () => this.func.httpsCallable('checkRecaptcha')
+    checkRecaptcha = () => this.func.httpsCallable('checkRecaptcha');
 
     // Storage Database API
 

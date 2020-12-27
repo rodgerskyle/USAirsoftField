@@ -19,7 +19,7 @@ class Gametypes extends Component {
                     <Tab.Container id="rules-list-group-tabs" defaultActiveKey="#link1">
                         <Row>
                             <Col sm={4}>
-                                <ListGroup>
+                                <ListGroup className="list-gametypes">
                                     <ListGroup.Item action href="#link1">
                                         The Enemy within
                                 </ListGroup.Item>
@@ -273,7 +273,6 @@ const EnemyWithin = () => (
         </li>
     </ol>
 )
-
 const Medic = () => (
     <ol start={2} className="ol-rules">
         <li className="li-content-rules">
