@@ -1,6 +1,5 @@
 import React, { Component, useState } from 'react';
 import '../../App.css';
-import youtube from '../constants/youtubeapi';
 import { Container, Row, Col, Spinner } from 'react-bootstrap';
 
 import ytlogo from '../../assets/SocialMedia/youtube.png';
@@ -18,20 +17,21 @@ class Videos extends Component {
         this.handleVideoSelect = this.handleVideoSelect.bind(this)
     }
 
-    async componentDidMount() {
-        const response = await youtube.get('/search', {
-            params: {
-                q: "",
-                channelId: 'UCrSwLQaT3U9DXzyYGoyOuGA',
-                order: 'date',
-            }
-        })
-        this.setState({
-            videos: response.data.items
-        }, () => {
-            this.setState({selectedVideo: this.state.videos[0]})
-        })
-    }
+    // async componentDidMount() {
+    //     const response = await youtube.get("/search", {
+    //         params: {
+    //             q: "",
+    //             channelId: 'UCrSwLQaT3U9DXzyYGoyOuGA',
+    //             order: 'date',
+    //         }
+    //     })
+    //     console.log(response)
+    //     this.setState({
+    //         videos: response.data.items
+    //     }, () => {
+    //         this.setState({selectedVideo: this.state.videos[0]})
+    //     })
+    // }
 
     // handleSubmit = async (e, termFromSearchBar) => {
     //     e.preventDefault()
@@ -74,8 +74,8 @@ class Videos extends Component {
 
 // List of the videos
 const VideoList = ({videos , handleVideoSelect}) => {
-    const renderedVideos =  videos.map((video, index) => {
-        return <VideoItem key={video.id.videoId} video={video} handleVideoSelect={handleVideoSelect} index={index}/>
+    const renderedVideos =  videos.map((video, i) => {
+        return <VideoItem key={video.id.videoId} video={video} handleVideoSelect={handleVideoSelect} index={i}/>
     });
 
     return <div>{renderedVideos}</div>;
@@ -92,7 +92,7 @@ const VideoItem = ({video , handleVideoSelect, index}) => {
             {video !== null ?
             <div>
                 <img src={video.snippet.thumbnails.medium.url} alt={video.snippet.description}
-                active={selected===index} className="img-selected-video-youtube"/>
+                className={selected === index ? "img-selected-video-youtube": null}/>
                 <div >
                     <div className="video-thumbnail-title-youtube">{video.snippet.title}</div>
                 </div>
