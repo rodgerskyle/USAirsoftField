@@ -105,7 +105,7 @@ class SignUpFormBase extends Component {
     super(props);
 
     this.completeWaiver = this.completeWaiver.bind(this);
-    this.state = { ...INITIAL_STATE, emailListNM: null, emailListM: null};
+    this.state = { ...INITIAL_STATE, users: []};
   }
 
   // Will Check duplicates in list
@@ -147,7 +147,7 @@ class SignUpFormBase extends Component {
     const pmwins = 0;
     const pmlosses = 0;
     const renewal = (new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear()+1);
-    const username = (fname+lname).replace(/\s/, "").toLowerCase();
+    const username = this.createUsername((fname+lname).replace(/\s/, "").toLowerCase());
     const name = fname + " " + lname;
     const profilepic = false;
     //We need to check if username exists
@@ -157,6 +157,7 @@ class SignUpFormBase extends Component {
     //if (isAdmin) {
     //roles.push(ROLES.ADMIN);
     //}
+
     this.state.secondaryApp.auth().createUserWithEmailAndPassword(email, passwordOne).then(authUser => {
         // Create a user in your Firebase realtime database
         this.setState({uid: authUser.user.uid})
@@ -217,6 +218,52 @@ class SignUpFormBase extends Component {
     this.props.firebase.membersWaivers(`${this.state.uid}.pdf`).put(blob).then(() => {
       this.setState({submitted: false, showLander: true, loading: false})
     })
+  }
+
+  componentDidMount() {
+    this.props.firebase.users().on('value', snapshot => {
+        const usersObject = snapshot.val();
+
+        const usersList = Object.keys(usersObject).map(key => ({
+            ...usersObject[key],
+            uid: key,
+        }));
+
+        this.setState({
+            users: this.remapArray(usersList),
+            loading: false,
+        });
+    });
+  }
+
+  componentWillUnmount() {
+    this.props.firebase.users().off()
+  }
+
+  // Remaps user array to map to usernames rather than key
+  remapArray(userArray) {
+      let array = [];
+      for (let i=0; i<userArray.length; i++) {
+          array[userArray[i].username] = userArray[i];
+      }
+      return array;
+  }
+
+  // Create username and update it if there are duplicates
+  createUsername(user) {
+    const { users } = this.state
+    if (typeof users[user] === 'undefined'){
+      return user;
+    }
+    else {
+      let newUser = user + "1"
+
+      while (typeof users[newUser] !== 'undefined') {
+        let num = parseInt(newUser.split("").reverse().join("")) + 1;
+        newUser = user + num;
+      }
+      return newUser
+    }
   }
  
   render() {

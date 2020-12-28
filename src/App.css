@@ -1793,12 +1793,29 @@ body {
 
 .col-videolist-youtube {
   height: 80vh;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 
-.img-selected-video-youtube:active {
+.img-selected-video-youtube {
   box-shadow: 0 5px 11px 0 rgba(0,0,0,0.18), 0 4px 15px 0 rgba(0,0,0,0.15);
   border: 1px solid white;
+}
+
+.footer-text {
+  font-size: 11px !important;
+}
+
+.MuiSwitch-colorPrimary.Mui-checked {
+  color: #90caf9 !important;
+}
+
+.MuiSwitch-colorPrimary.Mui-checked + .MuiSwitch-track {
+  background-color: #90caf9 !important;
+}
+
+.switch-button-col-admin {
+  margin-top: -5px;
+  margin-bottom: -20px;
 }
 
 /*Put default normal screen values in here*/
@@ -1979,6 +1996,10 @@ body {
     display: flex !important;
     align-items: center;
     justify-content: center;
+  }
+  
+  .footer-text {
+    font-size: 16px !important;
   }
 }
 

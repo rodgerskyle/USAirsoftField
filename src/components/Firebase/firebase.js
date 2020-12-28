@@ -129,6 +129,9 @@ class Firebase {
 
     grabEmailListNM = () => this.db.ref(`emaillist/non-members`);
 
+    // Videos API
+
+    videos = () => this.db.ref('videos/')
 
     // Team API
 

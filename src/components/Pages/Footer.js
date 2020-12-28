@@ -163,11 +163,13 @@ function FooterNonAuth ({emailMenu}) {
                     <FormControl
                     placeholder="Subscribe to our mailing list!"
                     aria-label="Subscribe to our mailing list!"
+                    className="footer-text"
                     value={Value}
                     onChange={(e) => setValue(e.target.value)}
                     />
                     <InputGroup.Append>
-                        <Button variant="outline-primary" onClick={(e) => {
+                        <Button variant="outline-primary" className="footer-text"
+                        onClick={(e) => {
                                 subscribe(e, Value, emailMenu, setStatus)
                                 setValue("");
                             }

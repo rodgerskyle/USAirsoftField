@@ -7,9 +7,12 @@ import { compose } from 'recompose';
 
 import { Container, Row, Col, Form, Button, Breadcrumb, Card, ProgressBar, Spinner, Collapse } from 'react-bootstrap/';
 
+import Switch from '@material-ui/core/Switch'
+
 import { Link } from 'react-router-dom';
 
 import * as ROLES from '../constants/roles';
+import { FormControlLabel, FormGroup } from '@material-ui/core';
  
 class AdminPage extends Component {
   constructor(props) {
@@ -27,6 +30,7 @@ class AdminPage extends Component {
         email_status: null,
         email_loading: null,
         rows: 8,
+        email_ready: false,
       };
     }
     imgRef = React.createRef();
@@ -269,6 +273,20 @@ class AdminPage extends Component {
                           <Col>
                             Email Users
                           </Col>
+                          <Col className="justify-content-flex-end-col switch-button-col-admin">
+                            <FormGroup>
+                              <FormControlLabel 
+                                control={
+                                  <Switch 
+                                    checked={this.state.email_ready}
+                                    onChange={() => {this.setState({email_ready: !this.state.email_ready})}}
+                                    color="primary"
+                                  />
+                                }
+                                label="Ready"
+                              />
+                            </FormGroup>
+                          </Col>
                         </Row>
                       </Card.Header>
                       <Card.Body>
@@ -303,20 +321,23 @@ class AdminPage extends Component {
                                   label="Attach Image" accept="image/*" custom data-browse="Upload"/>
                                 </Form.Group>
                                 <Button className="admin-button-email1" variant="info" type="button"
-                                onClick={() => {
+                                disabled={!this.state.email_ready} onClick={() => {
                                   this.emailAll();
                                 }}
                                 >
                                     Email All
                                 </Button>
                                 <Button className="admin-button-email2" variant="info" type="button"
-                                onClick={() => {
+                                disabled={!this.state.email_ready} onClick={() => {
                                   this.emailMembers();
                                 }}
                                 >
                                     Email Members
                                 </Button>
                                 <Button className="admin-button-email3" variant="info" type="button"
+                                disabled={!this.state.email_ready} onClick={() => {
+                                  //this.emailMembers();
+                                }}
                                 >
                                     Email Non-Members
                                 </Button>

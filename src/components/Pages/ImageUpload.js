@@ -95,7 +95,7 @@ class ImageUpload extends Component {
         return (
             <AuthUserContext.Consumer>
                 {authUser => (
-                    <Col sm={5}>
+                    <Col sm={4}>
                         <Row className="justify-content-row">
                             <img
                                 src={this.state.url || "https://via.placeholder.com/350x250"}

@@ -1,8 +1,10 @@
-import React, { Component, useState } from 'react';
+import React, { Component } from 'react';
 import '../../App.css';
 import { Container, Row, Col, Spinner } from 'react-bootstrap';
 
 import ytlogo from '../../assets/SocialMedia/youtube.png';
+
+import { withFirebase } from '../Firebase';
 
 class Videos extends Component {
     constructor(props) {
@@ -10,45 +12,23 @@ class Videos extends Component {
 
         this.state = {
             videos: [],
-            selectedVideo: null
+            selectedVideo: null,
+            selectedIndex: 0,
         };
 
-        //this.handleSubmit = this.handleSubmit.bind(this)
         this.handleVideoSelect = this.handleVideoSelect.bind(this)
     }
 
-    // async componentDidMount() {
-    //     const response = await youtube.get("/search", {
-    //         params: {
-    //             q: "",
-    //             channelId: 'UCrSwLQaT3U9DXzyYGoyOuGA',
-    //             order: 'date',
-    //         }
-    //     })
-    //     console.log(response)
-    //     this.setState({
-    //         videos: response.data.items
-    //     }, () => {
-    //         this.setState({selectedVideo: this.state.videos[0]})
-    //     })
-    // }
+    componentDidMount() {
+        this.props.firebase.videos().on('value', snapshot => {
+            const videosObject = snapshot.val();
 
-    // handleSubmit = async (e, termFromSearchBar) => {
-    //     e.preventDefault()
-    //     const response = await youtube.get('/search', {
-    //         params: {
-    //             q: termFromSearchBar,
-    //             channelId: 'UCrSwLQaT3U9DXzyYGoyOuGA',
-    //             order: 'date',
-    //         }
-    //     })
-    //     this.setState({
-    //         videos: response.data.items
-    //     })
-    // };
+            this.setState({videos: videosObject, selectedVideo: videosObject[0]})
+        })
+    }
 
-    handleVideoSelect = (video) => {
-        this.setState({selectedVideo: video})
+    handleVideoSelect = (video, index) => {
+        this.setState({selectedVideo: video, selectedIndex: index})
     }
 
     render() {
@@ -63,7 +43,8 @@ class Videos extends Component {
                         </Col>
                         <Col md={4} className="col-videolist-youtube">
                             <h4>Newest Videos:</h4>
-                            <VideoList videos={videos} handleVideoSelect={this.handleVideoSelect} />
+                            <VideoList videos={videos} handleVideoSelect={this.handleVideoSelect} 
+                            selected={this.state.selectedIndex}/>
                         </Col>
                     </Row>
                 </Container>
@@ -73,28 +54,26 @@ class Videos extends Component {
 }
 
 // List of the videos
-const VideoList = ({videos , handleVideoSelect}) => {
+const VideoList = ({videos , handleVideoSelect, selected}) => {
     const renderedVideos =  videos.map((video, i) => {
-        return <VideoItem key={video.id.videoId} video={video} handleVideoSelect={handleVideoSelect} index={i}/>
+        return <VideoItem key={video.id} video={video} handleVideoSelect={handleVideoSelect} index={i} selected={selected}/>
     });
 
     return <div>{renderedVideos}</div>;
 }
 
 // Description of the video
-const VideoItem = ({video , handleVideoSelect, index}) => {
-    const [selected, setSelected] = useState(0)
+const VideoItem = ({video, handleVideoSelect, index, selected}) => {
     return (
         <div onClick={ () => {
-            handleVideoSelect(video);
-            setSelected(index)
+            handleVideoSelect(video, index);
         }} className="div-video-item-youtube">
             {video !== null ?
             <div>
-                <img src={video.snippet.thumbnails.medium.url} alt={video.snippet.description}
-                className={selected === index ? "img-selected-video-youtube": null}/>
+                <img src={video.thumbnail} alt={video.desc}
+                className={ selected === index ? "img-selected-video-youtube": null}/>
                 <div >
-                    <div className="video-thumbnail-title-youtube">{video.snippet.title}</div>
+                    <div className="video-thumbnail-title-youtube">{video.title}</div>
                 </div>
             </div>
             : null}
@@ -110,7 +89,7 @@ function VideoDetail({video}) {
         </Row>;
     }
 
-    const videoSrc = `https://www.youtube.com/embed/${video.id.videoId}`;
+    const videoSrc = `https://www.youtube.com/embed/${video.id}`;
     return (
         <div>
             <div className="div-iframe-youtube">
@@ -118,25 +97,11 @@ function VideoDetail({video}) {
                 className="iframe-youtube"/>
             </div>
             <div>
-                <h4 className="video-player-title-youtube">{video.snippet.title}</h4>
-                <p>{video.snippet.description}</p>
+                <h4 className="video-player-title-youtube">{video.title}</h4>
+                <p>{video.desc}</p>
             </div>
         </div>
     )
 }
 
-// // Ability to search for a youtube video
-// function SearchBar({ submit }) {
-//     const [searchTerm, setSearchTerm] = useState("");
-
-//     return (
-//         <Col md={8}>
-//             <Form onSubmit={(e) => submit(e, searchTerm)}>
-//                 <Form.Label htmlFor="video-search">Video Search</Form.Label>
-//                 <Form.Control onChange={e => setSearchTerm(e.target.value)} name='video-search' type="text" value={searchTerm}/>
-//             </Form>
-//         </Col>
-//     )
-// }
-
-export default Videos;
+export default withFirebase(Videos);
