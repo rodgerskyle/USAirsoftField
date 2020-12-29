@@ -82,12 +82,10 @@ class WaiverPageFormBase extends Component {
 
   // Will Check duplicates in list
   checkDuplicates(email) {
-      this.props.firebase.emailList(encode(email)).once("value", object => {
-        if (object.val() !== null) {
-          return true;
-        }
-        return false;
-      })
+    return this.props.firebase.emailList(encode(email)).once("value", object => {
+    }).then((object) => {
+      return object.val() === null ? false : true
+    })    
   }
 
   componentDidMount() {
@@ -131,12 +129,14 @@ class WaiverPageFormBase extends Component {
     var { email } = this.state;
     email = email.toLowerCase();
     // Check for duplicate email
-    if (!this.checkDuplicates(email)) {
-      // Use below to generate random uid for signing up and filling out waivers
-      var secret = 'n' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5).toUpperCase();
-      this.props.firebase.emailList(encode(email.toLowerCase())).set({secret})
-    }
-    this.setState({emailAdded: true})
+    this.checkDuplicates(email).then((response) => {
+      if (response === false) {
+        // Use below to generate random uid for signing up and filling out waivers
+        var secret = 'n' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5).toUpperCase();
+        this.props.firebase.emailList(encode(email.toLowerCase())).set({secret})
+      }
+      this.setState({emailAdded: true})
+    })
   }
 
   // Prop to pass to waiver to call when complete
@@ -150,6 +150,12 @@ class WaiverPageFormBase extends Component {
       this.props.firebase.numWaivers().update({total_num})
       })
   }
+
+  // Function to test email input with regex
+  validateEmail(email) {
+    const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(String(email).toLowerCase());
+}
  
   render() {
     const {
@@ -461,6 +467,9 @@ class WaiverPageFormBase extends Component {
               }
               else if (age > 85) {
                 this.setState({errorWaiver: "Participant must be younger than 85 years."})
+              }
+              else if (!this.validateEmail(email)) {
+                this.setState({errorWaiver: "Email must be a valid email."})
               }
               else if (this.state.pageIndex!==1) {
                 this.setState({submitted: true})

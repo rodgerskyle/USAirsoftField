@@ -99,9 +99,28 @@ const FooterAuth = () => (
         </div>
 );
 
+// Function to test email input with regex
+function validateEmail(email) {
+    const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(String(email).toLowerCase());
+}
+
 function subscribe(event, passed_email, emailMenu, setStatus) {
     event.preventDefault()
-    if (passed_email !== "") {
+
+    if (passed_email === "") {
+        setStatus("Please enter an email!")
+        setTimeout(function(){
+            setStatus("");
+        }, 10000);
+    }
+    else if (!validateEmail(passed_email)) {
+        setStatus("Email is not properly formatted.")
+        setTimeout(function(){
+            setStatus("");
+        }, 10000);
+    }
+    else {
         emailMenu({secret: null, email: encode(passed_email.toLowerCase()), choice: "in"}).then((result) => {
             if (result) {
                 setStatus(result.data.status);
@@ -112,9 +131,6 @@ function subscribe(event, passed_email, emailMenu, setStatus) {
         }).catch(error => {
             console.log(error)
         })
-    }
-    else {
-        setStatus("Please enter an email!")
     }
 }
 

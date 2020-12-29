@@ -121,14 +121,6 @@ class Firebase {
 
     emailList = (email) => this.db.ref(`emaillist/${email}`)
 
-    emailListMembers = (secret) => this.db.ref(`emaillist/members/${secret}`);
-
-    emailListNonMembers = (secret) => this.db.ref(`emaillist/non-members/${secret}`);
-
-    grabEmailListM = () => this.db.ref(`emaillist/members`);
-
-    grabEmailListNM = () => this.db.ref(`emaillist/non-members`);
-
     // Videos API
 
     videos = () => this.db.ref('videos/')

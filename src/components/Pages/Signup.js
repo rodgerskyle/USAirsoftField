@@ -157,38 +157,43 @@ class SignUpFormBase extends Component {
     //if (isAdmin) {
     //roles.push(ROLES.ADMIN);
     //}
+    if (!this.validateEmail(email)) {
+      this.setState({error: "Email is not properly formatted."})
+    }
 
-    this.state.secondaryApp.auth().createUserWithEmailAndPassword(email, passwordOne).then(authUser => {
-        // Create a user in your Firebase realtime database
-        this.setState({uid: authUser.user.uid})
-        return this.props.firebase
-          .user(authUser.user.uid)
-          .set({
-            name,
-            email,
-            roles,
-            points,
-            wins,
-            losses,
-            freegames,
-            username,
-            team,
-            cmwins,
-            cmlosses,
-            pmwins,
-            pmlosses,
-            renewal,
-            profilepic
-          });
-      })
-      .then(authUser => {
-        this.emailSignUp();
-        this.state.secondaryApp.auth().signOut();
-        this.setState({submitted: true})
-      })
-      .catch(error => {
-        this.setState({ error });
-      });
+    else {
+      this.state.secondaryApp.auth().createUserWithEmailAndPassword(email, passwordOne).then(authUser => {
+          // Create a user in your Firebase realtime database
+          this.setState({uid: authUser.user.uid})
+          return this.props.firebase
+            .user(authUser.user.uid)
+            .set({
+              name,
+              email,
+              roles,
+              points,
+              wins,
+              losses,
+              freegames,
+              username,
+              team,
+              cmwins,
+              cmlosses,
+              pmwins,
+              pmlosses,
+              renewal,
+              profilepic
+            });
+          })
+          .then(authUser => {
+            this.emailSignUp();
+            this.state.secondaryApp.auth().signOut();
+            this.setState({submitted: true})
+          })
+        .catch(error => {
+          this.setState({ error });
+        });
+    }
   event.preventDefault();
   }
  
@@ -212,6 +217,12 @@ class SignUpFormBase extends Component {
       }
     });
   };
+
+  // Function to test email input with regex
+  validateEmail(email) {
+      const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+      return re.test(String(email).toLowerCase());
+  }
 
   // Prop to pass to waiver to call when complete
   completeWaiver = (blob) => {
