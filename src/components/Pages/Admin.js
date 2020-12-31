@@ -450,9 +450,9 @@ class AdminPage extends Component {
                     </Link>
                   </Col>
                   <Col className="admin-col-cards">
-                    <Link to={"/migration"} className="admin-cards-link">
+                    <Link to={"/rentalform"} className="admin-cards-link">
                       <Card className="admin-cards">
-                        <Card.Body className="admin-card-header-link">Migration Page</Card.Body>
+                        <Card.Body className="admin-card-header-link">Rental Form</Card.Body>
                         <Card.Footer>
                           <Row>
                             <Col xs="auto">

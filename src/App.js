@@ -40,12 +40,16 @@ import UserOptions from './components/Pages/UserOptions';
 import ScrollToTop from './components/constants/scrolltotop';
 import CookieConsent from "react-cookie-consent";
 import PageNotFound from './components/Pages/PageNotFound';
+import RentalForm from './components/Pages/RentalForm';
 
 const App = () => (
       <Router>
           <ScrollToTop />
           <Navigation />
           <Switch>
+            <Route exact path="/rentalform">
+              <RentalForm />
+            </Route>
             <Route exact path="/emailoptout/:secret"
             render={(props) => (
               <EmailOptOut {...props} />

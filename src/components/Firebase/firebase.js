@@ -125,6 +125,12 @@ class Firebase {
 
     videos = () => this.db.ref('videos/')
 
+    // Rental Forms API
+
+    rentals = () => this.db.ref('rentals/')
+
+    rental = (i) => this.db.ref('rentals/' + i)
+
     // Team API
 
     team = name => this.db.ref(`teams/${name}`);
