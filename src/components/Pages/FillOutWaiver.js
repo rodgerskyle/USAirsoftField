@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import logo from '../../assets/logo.png';
 import { Container, Row, Col, Form, Button, Breadcrumb, Spinner } from 'react-bootstrap/';
+import { pdf } from '@react-pdf/renderer';
 import { LinkContainer } from 'react-router-bootstrap';
 import SignatureCanvas from 'react-signature-canvas';
 import SignedWaiver from './SignedWaiver';
@@ -62,7 +63,6 @@ const INITIAL_STATE = {
     participantImg: null,
     pgImg: null,
     pdfBlob: null,
-    submitted: false,
     member: true,
     uid: null,
     saveButton: true,
@@ -76,8 +76,22 @@ class WaiverPageFormBase extends Component {
   constructor(props) {
     super(props);
 
-    this.completeWaiver = this.completeWaiver.bind(this);
+    //this.completeWaiver = this.completeWaiver.bind(this);
     this.state = { ...INITIAL_STATE, emailListNM: null, emailListM: null, num_waivers: null};
+  }
+
+  async completeWaiver(myProps) {
+    const {fname, lname } = this.state;
+    const blob = await pdf((
+      <SignedWaiver {...myProps}/>
+      )).toBlob();
+    var date = (new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear()) + ":" + 
+    (new Date().getHours()) + ":" + (new Date().getMinutes()) + ":" + (new Date().getSeconds()) + ":" + (new Date().getMilliseconds());
+    this.props.firebase.nonmembersWaivers(`${fname} ${lname}(${date}).pdf`).put(blob).then(() => {
+      this.setState({showLander: true, loading: false})
+      let total_num = this.state.num_waivers+1
+      this.props.firebase.numWaivers().update({total_num})
+      })
   }
 
   // Will Check duplicates in list
@@ -139,6 +153,7 @@ class WaiverPageFormBase extends Component {
     })
   }
 
+  /* Old way to complete waiver
   // Prop to pass to waiver to call when complete
   completeWaiver = (blob) => {
     const {fname, lname } = this.state;
@@ -149,7 +164,7 @@ class WaiverPageFormBase extends Component {
       let total_num = this.state.num_waivers+1
       this.props.firebase.numWaivers().update({total_num})
       })
-  }
+  } */
 
   // Function to test email input with regex
   validateEmail(email) {
@@ -176,7 +191,6 @@ class WaiverPageFormBase extends Component {
       hideWaiver,
       agecheck,
       age,
-      submitted,
       saveButton,
       saveButton2,
       showLander,
@@ -441,11 +455,6 @@ class WaiverPageFormBase extends Component {
               <Row className="row-rp">
                 {errorWaiver && <p className="error-text-rp">{errorWaiver}</p>}
               </Row>
-              <Row className="row-rp text-fow">
-              {submitted ? 
-                <SignedWaiver {...myProps} completeWaiver={this.completeWaiver}/> : ""
-              }
-              </Row>
           </Col>
           </Row>
           {!loading ? 
@@ -474,6 +483,7 @@ class WaiverPageFormBase extends Component {
               else if (this.state.pageIndex!==1) {
                 this.setState({submitted: true})
                 this.emailSignUp();
+                this.completeWaiver(myProps)
               }
             }}>
                 Submit

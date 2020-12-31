@@ -7,6 +7,7 @@ import SignatureCanvas from 'react-signature-canvas';
 import SignedWaiver from './SignedWaiver';
 import '../../App.css';
 import { encode } from 'firebase-encode';
+import { pdf } from '@react-pdf/renderer';
 
 import cardimages from '../constants/cardimgs';
 import waiver from '../../assets/Waiver-cutoff.png'
@@ -89,7 +90,6 @@ const INITIAL_STATE = {
     participantImg: null,
     pgImg: null,
     pdfBlob: null,
-    submitted: false,
     member: true,
     uid: null,
     saveButton: true,
@@ -104,7 +104,7 @@ class SignUpFormBase extends Component {
   constructor(props) {
     super(props);
 
-    this.completeWaiver = this.completeWaiver.bind(this);
+    //this.completeWaiver = this.completeWaiver.bind(this);
     this.state = { ...INITIAL_STATE, users: []};
   }
 
@@ -136,7 +136,7 @@ class SignUpFormBase extends Component {
       this.setState({ [event.target.name]: event.target.checked });
   };
 
-  onSubmit = event => {
+  onSubmit = (event, myProps) => {
     event.preventDefault();
     const { email, passwordOne, fname, lname } = this.state;
     const points = 50;
@@ -188,7 +188,7 @@ class SignUpFormBase extends Component {
           .then(authUser => {
             this.emailSignUp();
             this.state.secondaryApp.auth().signOut();
-            this.setState({submitted: true})
+            this.completeWaiver(myProps)
           })
         .catch(error => {
           this.setState({ error });
@@ -224,8 +224,18 @@ class SignUpFormBase extends Component {
       return re.test(String(email).toLowerCase());
   }
 
+  /* OLD WAY
   // Prop to pass to waiver to call when complete
   completeWaiver = (blob) => {
+    this.props.firebase.membersWaivers(`${this.state.uid}.pdf`).put(blob).then(() => {
+      this.setState({submitted: false, showLander: true, loading: false})
+    })
+  } */
+
+  async completeWaiver(myProps) {
+    const blob = await pdf((
+      <SignedWaiver {...myProps}/>
+      )).toBlob();
     this.props.firebase.membersWaivers(`${this.state.uid}.pdf`).put(blob).then(() => {
       this.setState({submitted: false, showLander: true, loading: false})
     })
@@ -303,7 +313,6 @@ class SignUpFormBase extends Component {
       age,
       member,
       uid,
-      submitted,
       saveButton,
       saveButton2,
       showLander,
@@ -574,7 +583,7 @@ class SignUpFormBase extends Component {
                 </Row>
             </Col>
             :
-            <Form className="form-rp" onSubmit={this.onSubmit}>
+            <Form className="form-rp" onSubmit={(e) => this.onSubmit(e, myProps)}>
               <Row>
                 <Col>
                   <Row className="cardpreview-row-rp">
@@ -685,9 +694,6 @@ class SignUpFormBase extends Component {
                   {error && <p>{error.message}</p>}
                   {loading ? <Spinner animation="border" /> : null}
                 </Row>
-                {submitted ? 
-                  <SignedWaiver {...myProps} completeWaiver={this.completeWaiver}/> : ""
-                }
                 </Col>
               </Row>
             </Form>

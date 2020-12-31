@@ -9,6 +9,8 @@ import SignedWaiver from './SignedWaiver';
 import SignatureCanvas from 'react-signature-canvas';
 import waiver from '../../assets/Waiver-cutoff.png'
 
+import { pdf } from '@react-pdf/renderer';
+
 import { Button, Form, Container, Card, Row, Col, Breadcrumb, Spinner } from 'react-bootstrap/';
 
 import * as ROLES from '../constants/roles';
@@ -40,7 +42,6 @@ const INITIAL_STATE = {
     participantImg: null,
     pgImg: null,
     pdfBlob: null,
-    submitted: false,
     uid: null,
     saveButton: true,
     saveButton2: true,
@@ -107,6 +108,21 @@ class RenewSubscription extends Component {
         });
     }
 
+
+  async completeWaiver(myProps) {
+    const blob = await pdf((
+      <SignedWaiver {...myProps}/>
+      )).toBlob();
+    this.props.firebase.membersWaivers(`${this.state.uid}.pdf`).put(blob).then(() => {
+        this.setState({showLander: true})
+        const renewal = (new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear() + 1);
+        this.props.firebase.user(this.state.uid).update({
+            renewal
+        });
+    })
+  }
+
+  /*
     // Prop to pass to waiver to call when complete
     completeWaiver = (blob) => {
         this.props.firebase.membersWaivers(`${this.state.uid}.pdf`).put(blob).then(() => {
@@ -116,7 +132,7 @@ class RenewSubscription extends Component {
                 renewal
             });
         })
-    }
+    }*/
 
     checkDOB = event => {
         this.setState({ [event.target.name]: event.target.value }, function() {
@@ -163,7 +179,6 @@ class RenewSubscription extends Component {
             hideWaiver,
             agecheck,
             age,
-            submitted,
             saveButton,
             saveButton2,
             showLander,
@@ -462,11 +477,6 @@ class RenewSubscription extends Component {
                                                     <Row className="row-renew">
                                                         {errorWaiver && <p className="error-text-rp">{errorWaiver}</p>}
                                                     </Row>
-                                                    <Row className="row-renew text-fow">
-                                                    {submitted ? 
-                                                        <SignedWaiver {...myProps} completeWaiver={this.completeWaiver}/> : ""
-                                                    }
-                                                    </Row>
                                                 </Col>
                                                 </Row>
                                                 <Row className="nav-row-rp">
@@ -489,7 +499,7 @@ class RenewSubscription extends Component {
                                                         this.setState({errorWaiver: "Participant must be younger than 85 years."})
                                                     }
                                                     else if (this.state.pageIndex!==1) {
-                                                        this.setState({submitted: true})
+                                                        this.completeWaiver(myProps)
                                                     }
                                                     }}>
                                                         Submit
