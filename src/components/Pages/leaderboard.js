@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Table } from 'react-bootstrap/';
 import '../../App.css';
 
-import { Container, Row, Col, Pagination, OverlayTrigger, Tooltip, Spinner } from 'react-bootstrap/';
+import { Container, Row, Col, Pagination, OverlayTrigger, Tooltip, Spinner, Dropdown } from 'react-bootstrap/';
 import BootstrapSwitchButton from 'bootstrap-switch-button-react';
 
 import ranks from '../constants/ranks';
@@ -10,9 +10,12 @@ import rankimages from '../constants/smallrankimgs';
 import Td from '../constants/td';
 import * as ROLES from '../constants/roles';
 
+import CustomToggle from '../constants/customtoggle'
+import CustomMenu from '../constants/custommenu'
+
 import { withFirebase } from '../Firebase';
 
-class Leaderboards extends Component {DAWKDAWDKWA
+class Leaderboards extends Component {
     constructor(props) {
         super(props);
 
@@ -22,12 +25,14 @@ class Leaderboards extends Component {DAWKDAWDKWA
             displayUsers: [],
             getRankState: this.getRank,
             monthly: false,
-            currentMonth: true,
+            currentMonth: new Date().getMonth(),
+            currentYear: new Date().getFullYear(),
             thisMonth: "",
             lastMonth: "",
             curPage: 1,
             numPages: 0,
             usersPerPage: 12,
+            months: null,
         };
         this.handleClick = this.handleClick.bind(this);
         this.handleLastClick = this.handleLastClick.bind(this);
@@ -161,6 +166,28 @@ class Leaderboards extends Component {DAWKDAWDKWA
     componentDidMount() {
         this.setState({ loading: true });
         this.getMonths(parseInt(new Date().getMonth().toLocaleString()) + 1)
+        let date = new Date();
+
+        let months = [];
+        months.push("January")
+        months.push("February")
+        months.push("March")
+        months.push("April")
+        months.push("May")
+        months.push("June")
+        months.push("July")
+        months.push("August")
+        months.push("September")
+        months.push("October")
+        months.push("November")
+        months.push("December")
+        this.setState({months})
+
+        let years = [];
+        for(let i=2020; i<date.getFullYear()+1; i++) {
+            years.push(i)
+        }
+        this.setState({years, currentYear: date.getFullYear()})
 
         this.props.firebase.users().on('value', snapshot => {
             const usersObject = snapshot.val();
@@ -183,8 +210,32 @@ class Leaderboards extends Component {DAWKDAWDKWA
         this.props.firebase.users().off();
     }
 
+    // Current month sorting
+    sortArray(a, b, month, year) {
+        let a_points = 0;
+        let b_points = 0;
+        if (typeof a.games !== 'undefined') {
+            Object.keys(a.games).forEach((date) => {
+                let l_date = date.split('-')
+                if (parseInt(l_date[1]) === month && parseInt(l_date[0]) === year) {
+                    a_points += a.games[date].wins*10 + a.games[date].losses*3
+                }
+            })
+        }
+        if (typeof b.games !== 'undefined') {
+            Object.keys(b.games).forEach((date) => {
+                let l_date = date.split('-')
+                if (parseInt(l_date[1]) === month && parseInt(l_date[0]) === year) {
+                    b_points += b.games[date].wins*10 + b.games[date].losses*3
+                }
+            })
+        }
+        return a_points > b_points ? -1 : 1
+    }
+
+
     render() {
-        const { users, loading, getRankState, numPages, curPage, currentMonth, usersPerPage } = this.state;
+        const { users, loading, getRankState, numPages, curPage, currentMonth, usersPerPage, currentYear, months, years } = this.state;
 
         return (
             <div className="background-static-lb">
@@ -211,38 +262,15 @@ class Leaderboards extends Component {DAWKDAWDKWA
                                         else
                                             this.setState({ 
                                                 monthly: !this.state.monthly,
-                                                currentMonth: true,
-                                                users: users.sort((a,b) => (a.cmwins*10 + a.cmlosses*3 < b.cmwins*10 + b.cmlosses*3 ? 1 : -1))
+                                                currentMonth: new Date().getMonth(),
+                                                //users: users.sort((a,b) => (a.cmwins*10 + a.cmlosses*3 < b.cmwins*10 + b.cmlosses*3 ? 1 : -1))
+                                                users: users.sort((a,b) => this.sortArray(a,b, currentMonth, currentYear))
                                             })
                                     }}
                                 />
                             </Row>
-                            {this.state.monthly === true ?
-                            <Row className="button-left-lb">
-                                <BootstrapSwitchButton
-                                    checked={this.state.currentMonth}
-                                    onstyle="dark"
-                                    width={120}
-                                    onlabel={this.state.thisMonth}
-                                    offlabel={this.state.lastMonth}
-                                    onChange={() => {
-                                        if (currentMonth) {
-                                            this.setState({ 
-                                                currentMonth: !currentMonth,
-                                                users: users.sort((a,b) => (a.pmwins*10 + a.pmlosses*3 < b.pmwins*10 + b.pmlosses*3 ? 1 : -1)),                                        
-                                            })
-                                        }
-                                        else {
-                                            this.setState({ 
-                                                currentMonth: !currentMonth,
-                                                users: users.sort((a,b) => (a.cmwins*10 + a.cmlosses*3 < b.cmwins*10 + b.cmlosses*3 ? 1 : -1))
-                                            })
-                                        }
-                                    }}
-                                /> 
-                            </Row> : null}
                         </Col>
-                        <Col className="col-header-lb pagination-col-lb">
+                        <Col className="pagination-col-lb">
                             <Pagination>
                                 <Pagination.First onClick={this.handleFirstClick}/>
                                 <Pagination.Prev onClick={() => {this.handleClick(curPage-1)}} disabled={curPage === 1}/>
@@ -258,15 +286,48 @@ class Leaderboards extends Component {DAWKDAWDKWA
                             </Pagination>
                         </Col>
                     </Row>
-                        {loading ? 
-                        <Row className="justify-content-row">
-                            <Spinner animation="border" />
-                        </Row>  :
-                        <Row>
-                            <UserList users={users.slice((curPage-1) * usersPerPage, ((curPage-1) * usersPerPage) + usersPerPage )} getRank={getRankState} 
-                            monthly={this.state.monthly} currentMonth={this.state.currentMonth} start={usersPerPage * (curPage-1)} /> 
-                        </Row> 
-                        }
+                    {this.state.monthly === true ?
+                    <Row className="row-dropdown-months-lb">
+                        <Col xs={"auto"}>
+                            <Dropdown className="dropdown-lb">
+                                <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components">
+                                Month: {months[currentMonth]}
+                                </Dropdown.Toggle>
+                                <Dropdown.Menu as={CustomMenu} className="dropdown-waiverlookup">
+                                    {months.map((month, i) => (
+                                        <Dropdown.Item key={i} eventKey={i} active={i===currentMonth}
+                                        onClick={() => this.setState({currentMonth: i})}>
+                                            {month}
+                                        </Dropdown.Item>
+                                    ))}
+                                </Dropdown.Menu>
+                            </Dropdown>
+                        </Col>
+                        <Col xs={"auto"}>
+                            <Dropdown className="dropdown-lb">
+                                <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components">
+                                Year: {currentYear}
+                                </Dropdown.Toggle>
+                                <Dropdown.Menu as={CustomMenu} className="dropdown-waiverlookup">
+                                    {years.map((year, i) => (
+                                        <Dropdown.Item eventKey={i} key={i} active={year===currentYear}
+                                        onClick={() => this.setState({currentYear: year})}>
+                                            {year}
+                                        </Dropdown.Item>
+                                    ))}
+                                </Dropdown.Menu>
+                            </Dropdown>
+                        </Col>
+                    </Row> : null}
+                    {loading ? 
+                    <Row className="justify-content-row">
+                        <Spinner animation="border" />
+                    </Row>  :
+                    <Row>
+                        <UserList users={users.slice((curPage-1) * usersPerPage, ((curPage-1) * usersPerPage) + usersPerPage )} getRank={getRankState} 
+                        monthly={this.state.monthly} currentMonth={currentMonth} currentYear={currentYear} start={usersPerPage * (curPage-1)} /> 
+                    </Row> 
+                    }
                 </Container>
             </div>
         );
@@ -274,7 +335,7 @@ class Leaderboards extends Component {DAWKDAWDKWA
 }
 
 
-function UserList ({users, getRank, monthly, currentMonth, start }) {
+function UserList ({users, getRank, monthly, currentMonth, currentYear, start }) {
     return (
         <Table className="table table-striped table-dark table-lb">
             <thead className="header-lb">
@@ -310,19 +371,62 @@ function UserList ({users, getRank, monthly, currentMonth, start }) {
                         </Td>
                         <Td cl="profilelink-lb td-lb" to={'/profilelookup/' + user.uid}>{user.name}</Td>
                         <Td cl="wins-lb td-lb">
-                            {monthly ? (currentMonth ? (user.cmwins) : (user.pmwins)) : user.wins}
+                            {monthly ? (countWins(user, currentMonth, currentYear)) : user.wins}
                         </Td>
                         <Td cl="losses-lb td-lb">
-                            {monthly ? (currentMonth ? (user.cmlosses) : (user.pmlosses)) : user.losses}
+                            {monthly ? (countLosses(user, currentMonth, currentYear)) : user.losses}
                         </Td>
                         <Td cl="td-lb">
-                            {monthly ? (currentMonth ? (user.cmwins*10 + user.cmlosses*3) : (user.pmwins*10 + user.pmlosses*3)) : user.points}
+                            {monthly ? (countPoints(user, currentMonth, currentYear)) : user.points}
                         </Td>
                     </tr>
                 ))}
             </tbody>
         </Table>
     )
+}
+
+
+// Count points given object, for match history
+function countPoints(obj, month, year) {
+    let points = 0;
+    if (typeof obj.games !== 'undefined') {
+        Object.keys(obj.games).forEach((date) => {
+            let l_date = date.split('-')
+            if (parseInt(l_date[1]) === month && parseInt(l_date[0]) === year) {
+                points += obj.games[date].wins*10 + obj.games[date].losses*3
+            }
+        })
+    }
+    return points
+}
+
+// Count wins given object, for match history
+function countWins(obj, month, year) {
+    let wins = 0;
+    if (typeof obj.games !== 'undefined') {
+        Object.keys(obj.games).forEach((date) => {
+            let l_date = date.split('-')
+            if (parseInt(l_date[1]) === month && parseInt(l_date[0]) === year) {
+                wins += obj.games[date].wins
+            }
+        })
+    }
+    return wins
+}
+
+// Count losses given object, for match history
+function countLosses(obj, month, year) {
+    let losses = 0;
+    if (typeof obj.games !== 'undefined') {
+        Object.keys(obj.games).forEach((date) => {
+            let l_date = date.split('-')
+            if (parseInt(l_date[1]) === month && parseInt(l_date[0]) === year) {
+                losses += obj.games[date].losses
+            }
+        })
+    }
+    return losses
 }
 
 export default withFirebase(Leaderboards);

@@ -71,6 +71,7 @@ class EnterLosses extends Component {
         event.preventDefault()
         const {value} = this.state;
         const lc_value = value.toLocaleLowerCase()
+        let uid = this.state.users[lc_value].uid;
 
         let temp;
 
@@ -81,19 +82,33 @@ class EnterLosses extends Component {
             return;
         }
 
-        var uid = this.state.users[lc_value].uid;
+        // Match history portion
+        const date = new Date().getFullYear() + "-" + new Date().getMonth() + "-" + new Date().getDate()
+        let games = this.state.users[lc_value].games
+        if (typeof games === 'object') {
+            if (typeof games[date] === 'undefined')
+                {
+                    games[date] = {}
+                    games[date] = {wins: 0, losses: 1}
+                }
+            else
+                games[date].losses += 1;
+        }
+        else {
+            games = {}
+            games[date] = {wins: 0, losses: 1}
+        }
+
         var points = this.state.users[lc_value].points;
         var losses = this.state.users[lc_value].losses;
         var freegames = this.state.users[lc_value].freegames;
-        var cmlosses = this.state.users[lc_value].cmlosses;
         if (((points+3) % 450) < (points % 450)) {
             freegames++;
         }
         points+=3;
-        cmlosses+=1;
         losses+=1;
         this.props.firebase.user(uid).update({
-            points, losses, freegames, cmlosses
+            points, losses, freegames, games
         });
         temp = this.state.statusBox;
         temp.unshift("User " + lc_value + " was updated successfully.")
