@@ -192,18 +192,14 @@ class RenewSubscription extends Component {
                         {!showLander ?
                         <Container>
                             <h2 className="admin-header">Subscription Renewal</h2>
+                            {authUser && !!authUser.roles[ROLES.ADMIN] ? 
                             <Breadcrumb className="admin-breadcrumb">
-                                {authUser && !!authUser.roles[ROLES.ADMIN] ? 
                                 <LinkContainer to="/admin">
                                     <Breadcrumb.Item>Admin</Breadcrumb.Item>
                                 </LinkContainer>
-                                :
-                                <LinkContainer to="/dashboard">
-                                    <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
-                                </LinkContainer> 
-                                }
                                 <Breadcrumb.Item active>Subscription Renewal</Breadcrumb.Item>
                             </Breadcrumb>
+                                : null }
                             <Row>
                                 <Col>
                                     <Card className="admin-cards">

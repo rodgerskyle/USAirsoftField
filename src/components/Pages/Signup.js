@@ -42,18 +42,14 @@ const SignUpPage = () => (
             <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>
             <h2 className="page-header">Membership Form</h2>
           </Row>
+          {authUser && !!authUser.roles[ROLES.ADMIN] ? 
           <Breadcrumb className="admin-breadcrumb">
-              {authUser && !!authUser.roles[ROLES.ADMIN] ? 
               <LinkContainer to="/admin">
                   <Breadcrumb.Item>Admin</Breadcrumb.Item>
               </LinkContainer>
-              :
-              <LinkContainer to="/dashboard">
-                  <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
-              </LinkContainer> 
-              }
               <Breadcrumb.Item active>Registration</Breadcrumb.Item>
           </Breadcrumb>
+              : null }
             <SignUpForm />
         </Container>
       </div>
