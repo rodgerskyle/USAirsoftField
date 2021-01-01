@@ -50,7 +50,7 @@ class Instagram extends Component {
         return (
             <div className="background-static-all">
                 <h2 className="page-header"> <img src={iglogo} alt="Instagram Logo" className="instagram-logo"/>Instagram Media</h2>
-                <Container>
+                <Container className="container-instagram">
                     <Row>
                         {data.length !== 0 ? data.map(photo => (
                             <Col md={4} key={photo.id} className="col-photo-instagram">
