@@ -23,13 +23,13 @@ const Home = () => (
       <Row className="text-center hours-row-home">
         <div className="counter hours-home boxes-home boxes-home-nopadbot">
           <h2 className="header-about-us">Hours of Operation:</h2>
-          <Row>
-            <Col className="col-hours-header">
+          <Row className="left-row-hours">
+            <Col sm={4} className="col-hours-header">
               <h5 className="h5-hours-subheader">
                 <b>Arena / Field:<br/></b>
               </h5>
             </Col>
-            <Col className="col-hours">
+            <Col sm={4} className="col-hours">
                 <p className="p-hours-season">Summer</p>
                 <dl className="dl-hours-info">
                   <dt>Friday- 6pm to 11pm</dt>
@@ -37,7 +37,7 @@ const Home = () => (
                   <dt>Sunday- 8am to 2pm</dt>
                 </dl>
             </Col>
-            <Col className="col-hours">
+            <Col sm={4} className="col-hours winter-hours-col">
                 <p className="p-hours-season">Winter</p>
                 <dl className="dl-hours-info">
                   <dt>Friday- Closed</dt>
@@ -46,13 +46,13 @@ const Home = () => (
                 </dl>
             </Col>
           </Row>
-          <Row>
-            <Col className="col-hours-header">
+          <Row className="right-row-hours">
+            <Col sm={4} className="col-hours-header">
               <h5 className="h5-hours-subheader">
                 <b>Tactical Store:<br/></b>
               </h5>
             </Col>
-            <Col className="col-hours">
+            <Col sm={4} className="col-hours">
                 <p className="p-hours-season">Summer</p>
                 <dl className="dl-hours-info">
                   <dt>Monday- Closed</dt>
@@ -64,7 +64,7 @@ const Home = () => (
                   <dt>Sunday- 8am to 4pm</dt>
                 </dl>
             </Col>
-            <Col className="col-hours">
+            <Col sm={4} className="col-hours">
                 <p className="p-hours-season">Winter</p>
                 <dl className="dl-hours-info">
                   <dt>Monday- Closed</dt>
@@ -77,7 +77,7 @@ const Home = () => (
                 </dl>
             </Col>
           </Row>
-          <Row>
+          <Row className="last-row-hours">
             <Col>
             </Col>
             <Col className="col-hours">

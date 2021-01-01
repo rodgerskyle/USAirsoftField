@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Page, Text, Font, Document, StyleSheet, Image, BlobProvider } from '@react-pdf/renderer';
+import { Page, Text, Font, Document, StyleSheet, Image } from '@react-pdf/renderer';
 import { withFirebase } from '../Firebase';
 
 class SignedWaiver extends Component {
@@ -7,10 +7,9 @@ class SignedWaiver extends Component {
         super(props);
 
         this.state = {
+          done: false,
         }
     }
-
-    done = false;
 
     render() {
     
@@ -158,19 +157,20 @@ class SignedWaiver extends Component {
     // END DOCUMENT ADDITION
 
         return(
-            <div>
-                <BlobProvider document={<WaiverRelease />}>
-                    {({ blob, url, loading, error }) => {
-                        // Do whatever you need with blob here
-                        if (!loading && !this.done) {
-                            this.done = true;
-                            this.props.completeWaiver(blob);
-                            return <div>Waiver created.</div>;
-                        }
-                        return <div>Creating Waiver...</div>
-                    }}
-                </BlobProvider>
-            </div>
+                // <BlobProvider document={<WaiverRelease />}>
+                //     {({ blob, url, loading, error }) => {
+                //         // Do whatever you need with blob here
+                //         if (!loading && !this.state.done) {
+                //             this.setStates({done: true})
+                //             //this.props.completeWaiver(blob);
+                //             //return <div>Waiver created.</div>;
+                //             return null;
+                //         }
+                //         //return <div>Creating Waiver...</div>
+                //         return null;
+                //     }}
+                // </BlobProvider>
+                <WaiverRelease />
         )
     }
 }

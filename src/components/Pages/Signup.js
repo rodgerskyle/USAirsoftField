@@ -7,6 +7,7 @@ import SignatureCanvas from 'react-signature-canvas';
 import SignedWaiver from './SignedWaiver';
 import '../../App.css';
 import { encode } from 'firebase-encode';
+import { pdf } from '@react-pdf/renderer';
 
 import cardimages from '../constants/cardimgs';
 import waiver from '../../assets/Waiver-cutoff.png'
@@ -41,18 +42,14 @@ const SignUpPage = () => (
             <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>
             <h2 className="page-header">Membership Form</h2>
           </Row>
+          {authUser && !!authUser.roles[ROLES.ADMIN] ? 
           <Breadcrumb className="admin-breadcrumb">
-              {authUser && !!authUser.roles[ROLES.ADMIN] ? 
               <LinkContainer to="/admin">
                   <Breadcrumb.Item>Admin</Breadcrumb.Item>
               </LinkContainer>
-              :
-              <LinkContainer to="/dashboard">
-                  <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
-              </LinkContainer> 
-              }
               <Breadcrumb.Item active>Registration</Breadcrumb.Item>
           </Breadcrumb>
+              : null }
             <SignUpForm />
         </Container>
       </div>
@@ -89,7 +86,6 @@ const INITIAL_STATE = {
     participantImg: null,
     pgImg: null,
     pdfBlob: null,
-    submitted: false,
     member: true,
     uid: null,
     saveButton: true,
@@ -104,8 +100,8 @@ class SignUpFormBase extends Component {
   constructor(props) {
     super(props);
 
-    this.completeWaiver = this.completeWaiver.bind(this);
-    this.state = { ...INITIAL_STATE, emailListNM: null, emailListM: null};
+    //this.completeWaiver = this.completeWaiver.bind(this);
+    this.state = { ...INITIAL_STATE, users: []};
   }
 
   // Will Check duplicates in list
@@ -136,7 +132,7 @@ class SignUpFormBase extends Component {
       this.setState({ [event.target.name]: event.target.checked });
   };
 
-  onSubmit = event => {
+  onSubmit = (event, myProps) => {
     event.preventDefault();
     const { email, passwordOne, fname, lname } = this.state;
     const points = 50;
@@ -147,7 +143,7 @@ class SignUpFormBase extends Component {
     const pmwins = 0;
     const pmlosses = 0;
     const renewal = (new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear()+1);
-    const username = (fname+lname).replace(/\s/, "").toLowerCase();
+    const username = this.createUsername((fname+lname).replace(/\s/, "").toLowerCase());
     const name = fname + " " + lname;
     const profilepic = false;
     //We need to check if username exists
@@ -157,37 +153,43 @@ class SignUpFormBase extends Component {
     //if (isAdmin) {
     //roles.push(ROLES.ADMIN);
     //}
-    this.state.secondaryApp.auth().createUserWithEmailAndPassword(email, passwordOne).then(authUser => {
-        // Create a user in your Firebase realtime database
-        this.setState({uid: authUser.user.uid})
-        return this.props.firebase
-          .user(authUser.user.uid)
-          .set({
-            name,
-            email,
-            roles,
-            points,
-            wins,
-            losses,
-            freegames,
-            username,
-            team,
-            cmwins,
-            cmlosses,
-            pmwins,
-            pmlosses,
-            renewal,
-            profilepic
-          });
-      })
-      .then(authUser => {
-        this.emailSignUp();
-        this.state.secondaryApp.auth().signOut();
-        this.setState({submitted: true})
-      })
-      .catch(error => {
-        this.setState({ error });
-      });
+    if (!this.validateEmail(email)) {
+      this.setState({error: "Email is not properly formatted."})
+    }
+
+    else {
+      this.state.secondaryApp.auth().createUserWithEmailAndPassword(email, passwordOne).then(authUser => {
+          // Create a user in your Firebase realtime database
+          this.setState({uid: authUser.user.uid})
+          return this.props.firebase
+            .user(authUser.user.uid)
+            .set({
+              name,
+              email,
+              roles,
+              points,
+              wins,
+              losses,
+              freegames,
+              username,
+              team,
+              cmwins,
+              cmlosses,
+              pmwins,
+              pmlosses,
+              renewal,
+              profilepic
+            });
+          })
+          .then(authUser => {
+            this.emailSignUp();
+            this.state.secondaryApp.auth().signOut();
+            this.completeWaiver(myProps)
+          })
+        .catch(error => {
+          this.setState({ error });
+        });
+    }
   event.preventDefault();
   }
  
@@ -212,15 +214,73 @@ class SignUpFormBase extends Component {
     });
   };
 
+  // Function to test email input with regex
+  validateEmail(email) {
+      const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+      return re.test(String(email).toLowerCase());
+  }
+
+  /* OLD WAY
   // Prop to pass to waiver to call when complete
   completeWaiver = (blob) => {
     this.props.firebase.membersWaivers(`${this.state.uid}.pdf`).put(blob).then(() => {
-      this.setState({loading: true}, function() {
-        setTimeout( () => {
-            this.setState({submitted: false, showLander: true, loading: false})
-        }, 5000);
-      })
+      this.setState({submitted: false, showLander: true, loading: false})
     })
+  } */
+
+  async completeWaiver(myProps) {
+    const blob = await pdf((
+      <SignedWaiver {...myProps}/>
+      )).toBlob();
+    this.props.firebase.membersWaivers(`${this.state.uid}.pdf`).put(blob).then(() => {
+      this.setState({submitted: false, showLander: true, loading: false})
+    })
+  }
+
+  componentDidMount() {
+    this.props.firebase.users().on('value', snapshot => {
+        const usersObject = snapshot.val();
+
+        const usersList = Object.keys(usersObject).map(key => ({
+            ...usersObject[key],
+            uid: key,
+        }));
+
+        this.setState({
+            users: this.remapArray(usersList),
+            loading: false,
+        });
+    });
+  }
+
+  componentWillUnmount() {
+    this.props.firebase.users().off()
+  }
+
+  // Remaps user array to map to usernames rather than key
+  remapArray(userArray) {
+      let array = [];
+      for (let i=0; i<userArray.length; i++) {
+          array[userArray[i].username] = userArray[i];
+      }
+      return array;
+  }
+
+  // Create username and update it if there are duplicates
+  createUsername(user) {
+    const { users } = this.state
+    if (typeof users[user] === 'undefined'){
+      return user;
+    }
+    else {
+      let newUser = user + "1"
+
+      while (typeof users[newUser] !== 'undefined') {
+        let num = parseInt(newUser.split("").reverse().join("")) + 1;
+        newUser = user + num;
+      }
+      return newUser
+    }
   }
  
   render() {
@@ -249,7 +309,6 @@ class SignUpFormBase extends Component {
       age,
       member,
       uid,
-      submitted,
       saveButton,
       saveButton2,
       showLander,
@@ -445,7 +504,7 @@ class SignUpFormBase extends Component {
                 </Row>
                 {!agecheck ? 
                 <Col>
-                <Row className="row-rp">
+                <Row className="justify-content-row">
                   <h2 className="waiver-header-rp">
                     {"Guardian/Parent Information:"}
                   </h2>
@@ -520,7 +579,7 @@ class SignUpFormBase extends Component {
                 </Row>
             </Col>
             :
-            <Form className="form-rp" onSubmit={this.onSubmit}>
+            <Form className="form-rp" onSubmit={(e) => this.onSubmit(e, myProps)}>
               <Row>
                 <Col>
                   <Row className="cardpreview-row-rp">
@@ -631,9 +690,6 @@ class SignUpFormBase extends Component {
                   {error && <p>{error.message}</p>}
                   {loading ? <Spinner animation="border" /> : null}
                 </Row>
-                {submitted ? 
-                  <SignedWaiver {...myProps} completeWaiver={this.completeWaiver}/> : ""
-                }
                 </Col>
               </Row>
             </Form>

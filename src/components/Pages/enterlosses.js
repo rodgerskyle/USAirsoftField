@@ -5,7 +5,7 @@ import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
 import { compose } from 'recompose';
 
-import { Button, Form, Container, Card, Row, Col, Breadcrumb } from 'react-bootstrap/';
+import { Button, Form, Container, Card, Row, Col, Breadcrumb, Spinner } from 'react-bootstrap/';
 
 import { LinkContainer } from 'react-router-bootstrap';
 
@@ -47,11 +47,20 @@ class EnterLosses extends Component {
             }));
 
             this.setState({
-                users: usersList,
+                users: this.remapArray(usersList),
                 loading: false,
             });
         });
       }
+
+    remapArray(userArray) {
+        let array = [];
+        for (let i=0; i<userArray.length; i++) {
+            let username = userArray[i].username.toLocaleLowerCase()
+            array[username] = userArray[i];
+        }
+        return array;
+    }
 
     handleKeypress(event) {
         if (event.keyCode === 13) {
@@ -61,42 +70,56 @@ class EnterLosses extends Component {
 
     updateUser = (event) => {
         event.preventDefault()
-        //Make API CALL HERE
-        var index = -1;
-        var temp;
-        for (var i=0; i < this.state.users.length; i++) {
-            if (this.state.users[i].username === this.state.value) {
-                index = i;
-                break;
-            }
-        }
-        if (index !== -1) {
-            var uid = this.state.users[index].uid;
-            var points = this.state.users[index].points;
-            var losses = this.state.users[index].losses;
-            var freegames = this.state.users[index].freegames;
-            var cmlosses = this.state.users[index].cmlosses;
-            if (((points+3) % 450) < (points % 450)) {
-                freegames++;
-            }
-            points+=3;
-            cmlosses+=1;
-            losses+=1;
-            this.props.firebase.user(uid).update({
-                points, losses, freegames, cmlosses
-            });
+        const {value, loading} = this.state;
+        if (loading)
+            return
+        const lc_value = value.toLocaleLowerCase()
+
+        let temp;
+
+        if (typeof this.state.users[lc_value] === "undefined") {
             temp = this.state.statusBox;
-            temp.unshift("User " + this.state.value + " was updated successfully.")
-            this.setState({statusBox: temp})
+            temp.unshift("User " + lc_value + " was not found.");
+            this.setState({statusBox: temp, value: ""})
+            return;
+        }
+
+        let uid = this.state.users[lc_value].uid;
+        // Match history portion
+        const date = new Date().getFullYear() + "-" + new Date().getMonth() + "-" + new Date().getDate()
+        let games = this.state.users[lc_value].games
+        if (typeof games === 'object') {
+            if (typeof games[date] === 'undefined')
+                {
+                    games[date] = {}
+                    games[date] = {wins: 0, losses: 1}
+                }
+            else
+                games[date].losses += 1;
         }
         else {
-            temp = this.state.statusBox;
-            temp.unshift("User " + this.state.value + " was not found.");
-            this.setState({statusBox: temp})
+            games = {}
+            games[date] = {wins: 0, losses: 1}
         }
+
+        var points = this.state.users[lc_value].points;
+        var losses = this.state.users[lc_value].losses;
+        var freegames = this.state.users[lc_value].freegames;
+        if (((points+3) % 450) < (points % 450)) {
+            freegames++;
+        }
+        points+=3;
+        losses+=1;
+        this.props.firebase.user(uid).update({
+            points, losses, freegames, games
+        });
+        temp = this.state.statusBox;
+        temp.unshift("User " + lc_value + " was updated successfully.")
+        this.setState({statusBox: temp})
+
         //End API call
         document.getElementById("usernameBox").focus();
-        this.setState({value: ""})
+        this.setState({ value: "" })
     }
 
     render() {
@@ -137,7 +160,7 @@ class EnterLosses extends Component {
                             <StatusBox updates={this.state.statusBox}/>
                         </Card>
                     </Container>
-                : <h2 className="pagePlaceholder">Loading...</h2>}
+                : <Row className="justify-content-row padding-5px"><Spinner animation="border" /></Row>}
             </div>
         );
     }

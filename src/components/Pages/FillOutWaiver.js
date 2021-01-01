@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import logo from '../../assets/logo.png';
 import { Container, Row, Col, Form, Button, Breadcrumb, Spinner } from 'react-bootstrap/';
+import { pdf } from '@react-pdf/renderer';
 import { LinkContainer } from 'react-router-bootstrap';
 import SignatureCanvas from 'react-signature-canvas';
 import SignedWaiver from './SignedWaiver';
@@ -23,18 +24,14 @@ const WaiverPage = () => (
             <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>
             <h2 className="page-header">Waiver Form</h2>
           </Row>
+            {authUser && !!authUser.roles[ROLES.ADMIN] ? 
             <Breadcrumb className="admin-breadcrumb">
-                {authUser && !!authUser.roles[ROLES.ADMIN] ? 
                   <LinkContainer to="/admin">
                       <Breadcrumb.Item>Admin</Breadcrumb.Item>
                   </LinkContainer>
-                  :
-                  <LinkContainer to="/dashboard">
-                      <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
-                  </LinkContainer> 
-                  }
                 <Breadcrumb.Item active>Fill Out Waiver</Breadcrumb.Item>
             </Breadcrumb>
+            : null }
             <WaiverForm />
         </Container>
       </div>
@@ -62,7 +59,6 @@ const INITIAL_STATE = {
     participantImg: null,
     pgImg: null,
     pdfBlob: null,
-    submitted: false,
     member: true,
     uid: null,
     saveButton: true,
@@ -76,20 +72,42 @@ class WaiverPageFormBase extends Component {
   constructor(props) {
     super(props);
 
-    this.completeWaiver = this.completeWaiver.bind(this);
-    this.state = { ...INITIAL_STATE, emailListNM: null, emailListM: null};
+    //this.completeWaiver = this.completeWaiver.bind(this);
+    this.state = { ...INITIAL_STATE, emailListNM: null, emailListM: null, num_waivers: null};
+  }
+
+  async completeWaiver(myProps) {
+    const {fname, lname } = this.state;
+    const blob = await pdf((
+      <SignedWaiver {...myProps}/>
+      )).toBlob();
+    var date = (new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear()) + ":" + 
+    (new Date().getHours()) + ":" + (new Date().getMinutes()) + ":" + (new Date().getSeconds()) + ":" + (new Date().getMilliseconds());
+    this.props.firebase.nonmembersWaivers(`${fname} ${lname}(${date}).pdf`).put(blob).then(() => {
+      this.setState({showLander: true, loading: false})
+      let total_num = this.state.num_waivers+1
+      this.props.firebase.numWaivers().update({total_num})
+      })
   }
 
   // Will Check duplicates in list
   checkDuplicates(email) {
-      this.props.firebase.emailList(encode(email)).once("value", object => {
-        if (object.val() !== null) {
-          return true;
-        }
-        return false;
-      })
+    return this.props.firebase.emailList(encode(email)).once("value", object => {
+    }).then((object) => {
+      return object.val() === null ? false : true
+    })    
   }
 
+  componentDidMount() {
+    this.props.firebase.numWaivers().on('value', snapshot => {
+      let num_waivers = snapshot.val().total_num;
+      this.setState({num_waivers})
+    })
+  }
+
+  componentWillUnmount() {
+      this.props.firebase.numWaivers().off();
+  }
 
   onChangeCheckbox = event => {
       this.setState({ [event.target.name]: event.target.checked });
@@ -121,27 +139,34 @@ class WaiverPageFormBase extends Component {
     var { email } = this.state;
     email = email.toLowerCase();
     // Check for duplicate email
-    if (!this.checkDuplicates(email)) {
-      // Use below to generate random uid for signing up and filling out waivers
-      var secret = 'n' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5).toUpperCase();
-      this.props.firebase.emailList(encode(email.toLowerCase())).set({secret})
-    }
-    this.setState({emailAdded: true})
+    this.checkDuplicates(email).then((response) => {
+      if (response === false) {
+        // Use below to generate random uid for signing up and filling out waivers
+        var secret = 'n' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5).toUpperCase();
+        this.props.firebase.emailList(encode(email.toLowerCase())).set({secret})
+      }
+      this.setState({emailAdded: true})
+    })
   }
 
+  /* Old way to complete waiver
   // Prop to pass to waiver to call when complete
   completeWaiver = (blob) => {
     const {fname, lname } = this.state;
     var date = (new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear()) + ":" + 
     (new Date().getHours()) + ":" + (new Date().getMinutes()) + ":" + (new Date().getSeconds()) + ":" + (new Date().getMilliseconds());
     this.props.firebase.nonmembersWaivers(`${fname} ${lname}(${date}).pdf`).put(blob).then(() => {
-      this.setState({loading: true}, function() {
-        setTimeout( () => {
-            this.setState({submitted: false, showLander: true, loading: false})
-        }, 5000);
+      this.setState({submitted: false, showLander: true, loading: false})
+      let total_num = this.state.num_waivers+1
+      this.props.firebase.numWaivers().update({total_num})
       })
-    })
-  }
+  } */
+
+  // Function to test email input with regex
+  validateEmail(email) {
+    const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(String(email).toLowerCase());
+}
  
   render() {
     const {
@@ -162,7 +187,6 @@ class WaiverPageFormBase extends Component {
       hideWaiver,
       agecheck,
       age,
-      submitted,
       saveButton,
       saveButton2,
       showLander,
@@ -349,7 +373,7 @@ class WaiverPageFormBase extends Component {
               </Row>
               {!agecheck ? 
               <Col>
-              <Row className="row-rp">
+              <Row className="justify-content-row">
                 <h2 className="waiver-header-rp">
                   {"Guardian/Parent Information:"}
                 </h2>
@@ -394,7 +418,7 @@ class WaiverPageFormBase extends Component {
                   : <img className="signBox-image-rt" src={this.state.pgImg} alt="signature" />
                 }
               </Row>
-              <Row className="row-rp">
+              <Row className="button-row-rp2">
                 <Button variant="secondary" type="button" className="clear-button-rp"
                 onClick={() => {
                   this.setState({pgImg: null})
@@ -419,16 +443,13 @@ class WaiverPageFormBase extends Component {
               : ""}
               </Form>
               </Row>
+              {loading ?
               <Row className="row-rp spinner-row-rp">
-                  {loading ? <Spinner animation="border" /> : null}
-              </Row>
+                   <Spinner animation="border" /> 
+              </Row> 
+              : null}
               <Row className="row-rp">
                 {errorWaiver && <p className="error-text-rp">{errorWaiver}</p>}
-              </Row>
-              <Row className="row-rp text-fow">
-              {submitted ? 
-                <SignedWaiver {...myProps} completeWaiver={this.completeWaiver}/> : ""
-              }
               </Row>
           </Col>
           </Row>
@@ -452,9 +473,13 @@ class WaiverPageFormBase extends Component {
               else if (age > 85) {
                 this.setState({errorWaiver: "Participant must be younger than 85 years."})
               }
+              else if (!this.validateEmail(email)) {
+                this.setState({errorWaiver: "Email must be a valid email."})
+              }
               else if (this.state.pageIndex!==1) {
                 this.setState({submitted: true})
                 this.emailSignUp();
+                this.completeWaiver(myProps)
               }
             }}>
                 Submit

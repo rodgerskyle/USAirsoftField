@@ -95,53 +95,47 @@ class ImageUpload extends Component {
         return (
             <AuthUserContext.Consumer>
                 {authUser => (
-                    <div>
-                        <img
-                            src={this.state.url || "https://via.placeholder.com/350x250"}
-                            alt="Uploaded Images"
-                            height="250"
-                            width="350"
-                            className="profile-img-settings"
-                        />
+                    <Col sm={4}>
+                        <Row className="justify-content-row">
+                            <img
+                                src={this.state.url || "https://via.placeholder.com/350x250"}
+                                alt="Uploaded Images"
+                                height="250"
+                                width="350"
+                                className="profile-img-settings"
+                            />
+                        </Row>
                         {this.state.progress ? 
                         <Row className="row-loading-imgup">
                             <ProgressBar animated striped now={this.state.progress} label={`${this.state.progress}%`} />
                         </Row> : null}
-                        <Row>
-                            <Col className="notice-col-settings">
-                                <p className="notice-text-settings"><b>NOTE: </b>Images can only be MAX 5mb </p>
-                            </Col>
+                        <Row className="justify-content-row">
+                            <p className="notice-text-settings text-align-center"><b>NOTE: </b>Images can only be MAX 5mb </p>
                         </Row>
-                        <Row>
-                            <Col className="notice-col-settings">
-                                <p className="notice-text-settings">and display on your profile like above.</p>
-                            </Col>
+                        <Row className="justify-content-row">
+                            <p className="notice-text-settings text-align-center">and display on your profile like above.</p>
                         </Row>
                         <div className="file-field input-field">
-                            <div className="btn">
                                 <Form.File onChange={this.handleChange}
                                 label="Change Picture" accept="image/*" custom data-browse="Upload"
                                 className="imgUpload-input"/>
-                            </div>
                         </div>
 
-                        <Row>
-                            <Col className="img-upload-col-button">
-                                <Button
-                                    onClick={(() => this.handleUpload(authUser.uid))}
-                                    variant="outline-success"
-                                    className="imgUpload-submit"
-                                    disabled={isInvalid}
-                                >
-                                    Submit
-                                </Button>
-                            </Col>
+                        <Row className="justify-content-flex-end-row">
+                            <Button
+                                onClick={(() => this.handleUpload(authUser.uid))}
+                                variant="outline-success"
+                                className="imgUpload-submit"
+                                disabled={isInvalid}
+                            >
+                                Submit
+                            </Button>
                         </Row>
                         {this.state.img_status ? 
                         <Row className="row-loading-imgup">
                             <p className="p-status-imgup">{this.state.img_status}</p>
                         </Row> : null}
-                    </div>
+                    </Col>
                 )}
             </AuthUserContext.Consumer>
         );

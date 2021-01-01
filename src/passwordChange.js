@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 
-import { Button, Form, Container, Row } from 'react-bootstrap/';
+import { Button, Form, Row, Col } from 'react-bootstrap/';
  
 import { withFirebase } from './components/Firebase';
  
@@ -48,41 +48,43 @@ class PasswordChangeForm extends Component {
       passwordOne !== passwordTwo || passwordOne === '';
  
     return (
-      <Container>
-      <Form className="password-change-form" onSubmit={this.onSubmit}>
-          <Form.Group>
-            <Form.Label>Password:</Form.Label>
-            <Form.Control
-              name="passwordOne"
-              value={passwordOne}
-              onChange={this.onChange}
-              type="password"
-              placeholder="New Password"
-            />
-          </Form.Group>
-          <Form.Group>
-            <Form.Label>Password:</Form.Label>
-            <Form.Control
-              name="passwordTwo"
-              value={passwordTwo}
-              onChange={this.onChange}
-              type="password"
-              placeholder="Confirm New Password"
-            />
-          </Form.Group>
-          <Row className="passch-row-button">
-            <Button disabled={isInvalid} type="submit"
-              variant="outline-success" className="password-forgot-button">
-              Reset
-            </Button>
-          </Row>
-        {error && <p>{error.message}</p>}
-        {status &&
-          <Row className="row-loading-passch">
-              <p className="p-status-passch">{status}</p>
-          </Row>}
-      </Form>
-      </Container>
+        <Row className="justify-content-row">
+          <Col sm={4}>
+            <Form className="password-change-form" onSubmit={this.onSubmit}>
+                <Form.Group>
+                  <Form.Label>Password:</Form.Label>
+                  <Form.Control
+                    name="passwordOne"
+                    value={passwordOne}
+                    onChange={this.onChange}
+                    type="password"
+                    placeholder="New Password"
+                  />
+                </Form.Group>
+                <Form.Group>
+                  <Form.Label>Password:</Form.Label>
+                  <Form.Control
+                    name="passwordTwo"
+                    value={passwordTwo}
+                    onChange={this.onChange}
+                    type="password"
+                    placeholder="Confirm New Password"
+                  />
+                </Form.Group>
+                <Row className="passch-row-button">
+                  <Button disabled={isInvalid} type="submit"
+                    variant="outline-success" className="password-forgot-button">
+                    Reset
+                  </Button>
+                </Row>
+              {error && <p>{error.message}</p>}
+              {status &&
+                <Row className="row-loading-passch">
+                    <p className="p-status-passch">{status}</p>
+                </Row>}
+            </Form>
+          </Col>
+        </Row>
     );
   }
 }

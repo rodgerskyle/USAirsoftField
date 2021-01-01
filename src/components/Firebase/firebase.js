@@ -95,6 +95,8 @@ class Firebase {
 
     testRenewal = () => this.func.httpsCallable('testRenewal');
 
+    checkRecaptcha = () => this.func.httpsCallable('checkRecaptcha');
+
     // Storage Database API
 
     membersWaivers = pdf => this.st.ref().child(`waivers/members/${pdf}`);
@@ -119,14 +121,15 @@ class Firebase {
 
     emailList = (email) => this.db.ref(`emaillist/${email}`)
 
-    emailListMembers = (secret) => this.db.ref(`emaillist/members/${secret}`);
+    // Videos API
 
-    emailListNonMembers = (secret) => this.db.ref(`emaillist/non-members/${secret}`);
+    videos = () => this.db.ref('videos/')
 
-    grabEmailListM = () => this.db.ref(`emaillist/members`);
+    // Rental Forms API
 
-    grabEmailListNM = () => this.db.ref(`emaillist/non-members`);
+    rentals = () => this.db.ref('rentals/')
 
+    rental = (i) => this.db.ref('rentals/' + i)
 
     // Team API
 
@@ -137,6 +140,10 @@ class Firebase {
     // UID API
 
     uid = () => this.auth.currentUser.uid;
+
+    // Waivers Amount API
+
+    numWaivers = () => this.db.ref('waivers');
 
 }
 

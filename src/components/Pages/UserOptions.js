@@ -97,11 +97,14 @@ class UserOptions extends Component {
           // Update user database role for admin/waiver/clearing
           this.props.firebase.user(user).once("value", object => {
               const roles = {};
-              if (choice === "waiver")
+              let pin;
+              if (choice === "waiver") {
                 roles[ROLES.WAIVER] = ROLES.WAIVER;
+                pin = "";
+              }
               else if (choice === "admin")
                 roles[ROLES.ADMIN] = ROLES.ADMIN;
-              this.props.firebase.user(user).update({roles})
+              this.props.firebase.user(user).update({roles, pin})
           })
         }
       }
@@ -262,20 +265,17 @@ class UserOptions extends Component {
                                         </Form>
                                     </Col>
                                 </Row>
-                                <Row>
-                                    <Col>
-                                        <Button variant="primary" onClick={() => this.openWaiver()}>
-                                            Open Waiver
-                                        </Button>
-                                    </Col>
-                                </Row>
                             </Col>
                         </Row>
                         <Row className="row-buttons-uo">
-                            <Button variant="outline-primary" onClick={() => this.resetOptions()}>
+                            <Button variant="outline-info" onClick={() => this.openWaiver()}>
+                                Open Waiver
+                            </Button>
+                            <Button variant="outline-primary" className="button-update-uo"
+                            onClick={() => this.resetOptions()}>
                                 Reset 
                             </Button>
-                            <Button variant="outline-info" className="button-update-uo"
+                            <Button variant="outline-primary" className="button-update-uo"
                             onClick={() => this.updateUser()}>
                                 Update
                             </Button>

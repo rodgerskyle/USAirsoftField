@@ -8,6 +8,8 @@ import { PasswordForgetLink } from './passwordForgot';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { Container, Row, Col, Form, Button } from 'react-bootstrap/';
 
+import * as ROLES from './components/constants/roles';
+
 //import { SignUpLink } from './components/Pages/Signup';
 //    <SignUpLink /> 
 
@@ -42,27 +44,56 @@ class SignInFormBase extends Component {
 
   //Recaptcha stuff
   handleCaptchaResponseChange(response) {
-    console.log(response)
-    this.setState({
-      robot: false,
-    });
+    let checkRecaptcha = this.props.firebase.checkRecaptcha();
+    checkRecaptcha({response}).then((result) => {
+      if (result.data && result.data.status === "success.") {
+        this.setState({
+          robot: false, error: null
+        });
+      }
+      else {
+        this.recaptcha.reset();
+        this.setState({ error: "Please retry the ReCAPTCHA." })
+      }
+    })
+    .catch((error) => {
+    // Getting the Error details.
+    var code = error.code;
+    var message = error.message;
+    console.log (code + " " + message)
+    // ...
+    })
+  }
+
+  //Recaptcha Expired
+  expireCaptcha = () => {
+    this.setState({ robot: true })
   }
 
   onSubmit = event => {
-    const { email, password } = this.state;
-    this.recaptcha.reset();
-
-    this.props.firebase
-      .doSignInWithEmailAndPassword(email, password)
-      .then(() => {
-        this.setState({ ...INITIAL_STATE });
-        this.props.history.push("/");
-      })
-      .catch(error_p => {
-        this.setState({ error: "The Email or Password is incorrect" });
-      });
-
     event.preventDefault();
+    if (!this.state.robot) {
+      const { email, password } = this.state;
+      this.recaptcha.reset();
+
+      this.props.firebase
+        .doSignInWithEmailAndPassword(email, password)
+        .then(() => {
+          this.setState({ ...INITIAL_STATE });
+          this.props.firebase.user(this.props.firebase.uid()).once('value', snapshot => {
+              const userObject = snapshot.val();
+              if (!!userObject.roles[ROLES.WAIVER]) {
+                this.props.history.push("/dashboard");
+              }
+              else {
+                this.props.history.push("/home");
+              }
+          })
+        })
+        .catch(error_p => {
+          this.setState({ error: "The Email or Password is incorrect", robot: true });
+        });
+      }
   };
 
   onChange = event => {
@@ -102,15 +133,17 @@ class SignInFormBase extends Component {
         </Button>
         <PasswordForgetLink />
           {error && <p>{error.message}</p>}
-          <p>{this.state.error}</p>
+          <p className="text-align-center">{this.state.error}</p>
         </Form>
         <Container>
-          <Row className="align-items-center col-md-auto justify-content-center">
+          <Row className="align-items-center justify-content-center">
             <Col className="recap">
               <ReCAPTCHA
                 ref={(el) => { this.recaptcha = el; }}
                 sitekey="6Lc0JPsUAAAAAGfLV1lzptnyO2V1dTU7GfR5_5h5"
-                onChange={this.handleCaptchaResponseChange} />
+                theme={'dark'}
+                onChange={this.handleCaptchaResponseChange} 
+                onExpired={this.expireCaptcha} />
             </Col>
           </Row>
         </Container>

@@ -1,12 +1,15 @@
-import React, { Component, useState } from 'react';
+import React, { Component } from 'react';
 import '../../App.css';
 
 import { withFirebase } from '../Firebase';
 import { AuthUserContext, withAuthorization } from '../session';
 import { compose } from 'recompose';
 
-import { Button, Form, Container, Card, Row, Col, Breadcrumb, Spinner, Dropdown, FormControl, Collapse } from 'react-bootstrap/';
+import { Button, Form, Container, Card, Row, Col, Breadcrumb, Spinner, Dropdown, Collapse } from 'react-bootstrap/';
 import { LinkContainer } from 'react-router-bootstrap';
+
+import CustomToggle from '../constants/customtoggle'
+import CustomMenu from '../constants/custommenu'
 
 import * as ROLES from '../constants/roles';
 
@@ -26,11 +29,14 @@ class WaiverLookup extends Component {
             days: [...Array(31).keys()].map(String),
             years: [],
             months: [],
+            num_waivers_prev: null,
+            num_waivers_cur: null,
         };
     }
 
     componentWillUnmount() {
         //this.props.firebase.waiversList().off();
+        this.props.firebase.numWaivers().off();
     }
 
     componentDidMount() {
@@ -81,9 +87,46 @@ class WaiverLookup extends Component {
               // Uh-oh, an error occurred!
               console.log(error)
             });
+
+        this.props.firebase.numWaivers().on('value', snapshot => {
+            let num_waivers = snapshot.val().total_num;
+            this.setState({num_waivers_cur: num_waivers})
+        })
+        this.props.firebase.numWaivers().once('value', snapshot => {
+            let prev = snapshot.val().total_num;
+            this.setState({num_waivers_prev: prev})
+        })
     }
 
-    // Updates User's free game
+    componentDidUpdate() {
+        if (this.state.num_waivers_prev !== this.state.num_waivers_cur) {
+        this.props.firebase.waiversList().listAll().then((res) => {
+            var tempWaivers = [];
+            for (let i=0; i<res.items.length; i++) {
+                let waiverName = res.items[i].name
+                let dateObj = (convertDate(waiverName.substr(waiverName.lastIndexOf('(') + 1).split(')')[0]))
+                let waiver_obj = {
+                    name: waiverName, 
+                    date: dateObj,
+                    ref: res.items[i]
+                }
+                tempWaivers.push(waiver_obj)
+            }
+            this.setState({waivers: tempWaivers}, function() {
+                    this.setState({loading: false})
+                })
+            }).catch(function(error) {
+              // Uh-oh, an error occurred!
+              console.log(error)
+            });
+            this.props.firebase.numWaivers().once('value', snapshot => {
+                let prev = snapshot.val().total_num;
+                this.setState({num_waivers_prev: prev})
+            })
+        }
+    }
+
+    // Opens User's waiver
     openWaiver = (ref) => {
         ref.getDownloadURL().then(url => {
             window.open(url)
@@ -117,7 +160,7 @@ class WaiverLookup extends Component {
                                     <Col>
                                         <Card className="admin-cards">
                                             <Card.Header>
-                                                <Form className="team-manage-text">
+                                                <Form>
                                                     <Form.Group controlId="input1">
                                                         <Form.Label className="search-label-admin">Search by Name:</Form.Label>
                                                         <Form.Control
@@ -143,7 +186,7 @@ class WaiverLookup extends Component {
                                                                         {"None"}
                                                                     </Dropdown.Item>
                                                                     {this.state.months.map((month, i) => (
-                                                                        <Dropdown.Item key={i} eventKey={i} active={i===this.state.activeMonth}
+                                                                        <Dropdown.Item key={i} eventKey={i} active={i===this.state.activeMonth-1}
                                                                         onClick={() => this.setState({activeMonth: i+1})}>
                                                                             {i+1}
                                                                         </Dropdown.Item>
@@ -412,54 +455,6 @@ function WaiverBox ({waivers, index, search, open, loading, month, day, year}) {
     </Card.Body>
     )
 };
-
-// The forwardRef is important!!
-// Dropdown needs access to the DOM node in order to position the Menu
-const CustomToggle = React.forwardRef(({ children, onClick }, ref) => (
-    <Button
-      ref={ref}
-      onClick={(e) => {
-        e.preventDefault();
-        onClick(e);
-      }}
-    >
-      {children}
-      &#x25bc;
-    </Button>
-  ));
-  
-  // forwardRef again here!
-  // Dropdown needs access to the DOM of the Menu to measure it
-  const CustomMenu = React.forwardRef(
-    ({ children, style, className, 'aria-labelledby': labeledBy }, ref) => {
-      const [value, setValue] = useState('');
-  
-      return (
-        <div
-          ref={ref}
-          style={style}
-          className={className}
-          aria-labelledby={labeledBy}
-        >
-          <FormControl
-            autoFocus
-            className="mx-3 my-2 w-auto"
-            placeholder="Type to filter..."
-            onChange={(e) => 
-                setValue(e.target.value)
-            }
-            value={value}
-          />
-          <ul className="list-unstyled">
-            {React.Children.toArray(children).filter(
-              (child) =>
-                !value || child.props.children.toString().toLowerCase().startsWith(value),
-            )}
-          </ul>
-        </div>
-      );
-    },
-  );
 
 const condition = authUser =>
     authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]);

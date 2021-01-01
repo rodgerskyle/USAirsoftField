@@ -629,8 +629,15 @@ const USAirsoftOfficials = () => (
 const ArenaPlayDays = () => (
     <ol className="ol-rules">
         <li className="li-content-rules">
-            The arena is open Friday night, Saturday and Sunday to all players (Novice, Intermediate, and Professional) Ages 8 and up. 
-            Gates open Saturday and Sunday at 9:00 am and close at 4:00 pm (Games start at 10:00am sharp and end at 4:00pm Saturday and Sunday)
+            The arena is open Friday night(Summer), Saturday and Sunday to all players (Novice, Intermediate, and Professional) Ages 8 and up. 
+        </li>
+        <li className="li-content-rules">
+            Gates open Saturday and Sunday at 8:00 am and close at 2:00 pm for our Summer hours(Games start at 9:00am sharp and end at 2:00pm Saturday and Sunday).
+            For our Friday night games, gates open at 6pm and close at 11pm(Games start at 7:00pm sharp). Friday night games are only during Summer.
+        </li>
+        <li className="li-content-rules">
+            Gates open Saturday and Sunday at 9:00 am and close at 3:00 pm for our Winter hours(Games start at 10:00am sharp and end at 3:00pm Saturday and Sunday).
+            For our Friday night games, we are closed during Winter.
         </li>
         <li className="li-content-rules">
             The birthday parties are welcome, a special birthday package can be purchased. Private parties can be arranged during weekdays. 
