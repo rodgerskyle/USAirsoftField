@@ -20,76 +20,74 @@ const Home = () => (
           </div>
         </Col>
       </Row>
-      <Row className="text-center hours-row-home">
+      <Row className="justify-content-row">
         <div className="counter hours-home boxes-home boxes-home-nopadbot">
-          <h2 className="header-about-us">Hours of Operation:</h2>
-          <Row className="left-row-hours">
-            <Col sm={4} className="col-hours-header">
-              <h5 className="h5-hours-subheader">
-                <b>Arena / Field:<br/></b>
-              </h5>
-            </Col>
-            <Col sm={4} className="col-hours">
-                <p className="p-hours-season">Summer</p>
-                <dl className="dl-hours-info">
-                  <dt>Friday- 6pm to 11pm</dt>
-                  <dt>Saturday- 8am to 2pm</dt>
-                  <dt>Sunday- 8am to 2pm</dt>
-                </dl>
-            </Col>
-            <Col sm={4} className="col-hours winter-hours-col">
-                <p className="p-hours-season">Winter</p>
-                <dl className="dl-hours-info">
-                  <dt>Friday- Closed</dt>
-                  <dt>Saturday- 9am to 3pm</dt>
-                  <dt>Sunday- 9am to 3pm</dt>
-                </dl>
-            </Col>
+          <Row className="justify-content-row">
+            <h2 className="header-about-us">Hours of Operation:</h2>
           </Row>
-          <Row className="right-row-hours">
-            <Col sm={4} className="col-hours-header">
-              <h5 className="h5-hours-subheader">
-                <b>Tactical Store:<br/></b>
-              </h5>
-            </Col>
-            <Col sm={4} className="col-hours">
-                <p className="p-hours-season">Summer</p>
-                <dl className="dl-hours-info">
-                  <dt>Monday- Closed</dt>
-                  <dt>Tuesday- 9am to 5pm</dt>
-                  <dt>Wednesday- 9am to 5pm</dt>
-                  <dt>Thursday- 9am to 5pm</dt>
-                  <dt>Friday- 9am to 11pm</dt>
-                  <dt>Saturday- 8am to 4pm</dt>
-                  <dt>Sunday- 8am to 4pm</dt>
-                </dl>
-            </Col>
-            <Col sm={4} className="col-hours">
-                <p className="p-hours-season">Winter</p>
-                <dl className="dl-hours-info">
-                  <dt>Monday- Closed</dt>
-                  <dt>Tuesday- 9am to 5pm</dt>
-                  <dt>Wednesday- 9am to 5pm</dt>
-                  <dt>Thursday- 9am to 5pm</dt>
-                  <dt>Friday- 9am to 5pm</dt>
-                  <dt>Saturday- 9am to 5pm</dt>
-                  <dt>Sunday- 9am to 5pm</dt>
-                </dl>
-            </Col>
-          </Row>
-          <Row className="last-row-hours">
-            <Col>
-            </Col>
-            <Col className="col-hours">
-              <p className="p-hours-season-month">*Summer is June - October.</p>
-            </Col>
-            <Col className="col-hours">
-              <p className="p-hours-season-month">*Winter is November - May.</p>
-            </Col>
-          </Row>
-          <img src={logo} alt="US Airsoft logo" className="small-logo-home2"/>
-        </div>
-      </Row>
+            <Row>
+              <Col lg={4} className="col-hours-header">
+                <h5 className="h5-hours-subheader">
+                  <b>Arena / Field:<br/></b>
+                </h5>
+              </Col>
+              <Col lg={4} className="col-hours">
+                  <dl className="dl-hours-info">
+                    <dt className="p-hours-season">Summer</dt>
+                    <dt className="dt-hours-info">Friday- 6pm to 11pm</dt>
+                    <dt className="dt-hours-info">Saturday- 8am to 2pm</dt>
+                    <dt className="dt-hours-info">Sunday- 8am to 2pm</dt>
+                  </dl>
+              </Col>
+              <Col lg={4} className="col-hours">
+                  <dl className="dl-hours-info">
+                    <dt className="p-hours-season">Winter</dt>
+                    <dt className="dt-hours-info">Friday- Closed</dt>
+                    <dt className="dt-hours-info">Saturday- 9am to 3pm</dt>
+                    <dt className="dt-hours-info">Sunday- 9am to 3pm</dt>
+                  </dl>
+              </Col>
+              <Col lg={4} className="col-hours-header">
+                <h5 className="h5-hours-subheader">
+                  <b>Tactical Store:<br/></b>
+                </h5>
+              </Col>
+              <Col lg={4} className="col-hours">
+                  <dl>
+                    <dt className="p-hours-season">Summer</dt>
+                    <dt className="dt-hours-info">Monday- Closed</dt>
+                    <dt className="dt-hours-info">Tuesday- 9am to 5pm</dt>
+                    <dt className="dt-hours-info">Wednesday- 9am to 5pm</dt>
+                    <dt className="dt-hours-info">Thursday- 9am to 5pm</dt>
+                    <dt className="dt-hours-info">Friday- 9am to 11pm</dt>
+                    <dt className="dt-hours-info">Saturday- 8am to 4pm</dt>
+                    <dt className="dt-hours-info">Sunday- 8am to 4pm</dt>
+                  </dl>
+              </Col>
+              <Col lg={4} className="col-hours">
+                  <dl>
+                    <dt className="p-hours-season">Winter</dt>
+                    <dt className="dt-hours-info">Monday- Closed</dt>
+                    <dt className="dt-hours-info">Tuesday- 9am to 5pm</dt>
+                    <dt className="dt-hours-info">Wednesday- 9am to 5pm</dt>
+                    <dt className="dt-hours-info">Thursday- 9am to 5pm</dt>
+                    <dt className="dt-hours-info">Friday- 9am to 5pm</dt>
+                    <dt className="dt-hours-info">Saturday- 9am to 5pm</dt>
+                    <dt className="dt-hours-info">Sunday- 9am to 5pm</dt>
+                  </dl>
+              </Col>
+              <Col lg={4}>
+              </Col>
+              <Col lg={4} className="col-hours">
+                <p className="p-hours-season-month">*Summer is June - October.</p>
+              </Col>
+              <Col md={4} className="col-hours">
+                <p className="p-hours-season-month">*Winter is November - May.</p>
+              </Col>
+            </Row>
+              <img src={logo} alt="US Airsoft logo" className="small-logo-home2 hours-logo-home"/>
+          </div>
+        </Row>
       </Container>
     </div>
   </div>

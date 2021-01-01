@@ -175,14 +175,14 @@ class Teampage extends Component {
     render() {
         return (
             <div className="background-static-all">
-                <Container>
+                <Container className="container-teampage">
                     <div className="team-single">
                         <Row className="team-info">
                             <div>
-                                <div className="team-single-img">
+                                <div className="team-single-img padding-2px">
                                     <img className="team-icon-teamspage" src={this.state.teamicon} alt="" />
                                 </div>
-                                <Row className="text-center">
+                                <Row>
                                     <Col md={6} className="col-teampage">
                                         <div className="counter set-width-100">
                                             <i className="fa fa-users fa-2x text-black"></i>

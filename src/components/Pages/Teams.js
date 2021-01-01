@@ -111,7 +111,7 @@ const TeamList = ({ teams, teamicon }) => (
                         <img className="team-pictures"
                             src={teamicon[team.teamname.toString()]} alt={"Team " + team.teamname}></img>
                     </Td>
-                    <Td cl="team-name" to={"/teams/" + team.teamname}>
+                    <Td cl="team-name" to={"/teams/" + team.teamname} ct={"link-team-name"}>
                         <strong>{(team.teamname).toUpperCase()}</strong>
                     </Td>
                 </tr>

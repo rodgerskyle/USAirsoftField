@@ -196,6 +196,7 @@ class Leaderboards extends Component {
                 ...usersObject[key],
                 uid: key,
             }));
+
             usersList = usersList.filter(obj => typeof(obj.roles) === 'undefined' || !obj.roles[ROLES.WAIVER])
 
             this.setState({
@@ -369,7 +370,7 @@ function UserList ({users, getRank, monthly, currentMonth, currentYear, start })
                                 alt="Player Rank" className="rank-image-lb"/>
                             </OverlayTrigger>
                         </Td>
-                        <Td cl="profilelink-lb td-lb" to={'/profilelookup/' + user.uid}>{user.name}</Td>
+                        <Td cl="profilelink-lb td-lb" to={'/profilelookup/' + user.uid} ct="link-td-lb">{user.name}</Td>
                         <Td cl="wins-lb td-lb">
                             {monthly ? (countWins(user, currentMonth, currentYear)) : user.wins}
                         </Td>

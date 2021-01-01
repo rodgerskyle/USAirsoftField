@@ -198,7 +198,7 @@ class ProfileLookup extends Component {
 
                                 <div className="col-lg-8 col-md-7">
                                     <div className="team-single-text padding-50px-left sm-no-padding-left">
-                                        <p className="no-margin-bottom user-name header-profile">{this.state.authUser.name}</p>
+                                        <p className="user-name header-profile">{this.state.authUser.name}</p>
                                         <Row className="text-center stat-box">
                                             <Col>
                                                 <div className="counter">
