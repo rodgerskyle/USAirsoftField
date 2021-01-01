@@ -31,7 +31,7 @@ class Leaderboards extends Component {
             lastMonth: "",
             curPage: 1,
             numPages: 0,
-            usersPerPage: 12,
+            usersPerPage: 50,
             months: null,
         };
         this.handleClick = this.handleClick.bind(this);

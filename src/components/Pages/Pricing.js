@@ -27,28 +27,28 @@ class Pricing extends Component {
                 <h2 className="page-header">{this.state.title}</h2>
                 <Container>
                     <Row className="justify-content-row">
-                        <GradientButton color={this.state.showArray[0] ? "blue" : "gold"}
+                        <GradientButton color={this.state.showArray[0] ? "silver-black" : "black-silver"}
                         onClick={() => {
                             let showArray = this.state.showArray;
                             showArray.fill(false)
                             showArray[0] = true;
                             this.setState({showArray, title: "Membership Pricing"})
                         }}>Membership</GradientButton>
-                        <GradientButton color={this.state.showArray[1] ? "blue" : "gold"}
+                        <GradientButton color={this.state.showArray[1] ? "silver-black" : "black-silver"}
                         onClick={() => {
                             let showArray = this.state.showArray;
                             showArray.fill(false)
                             showArray[1] = true;
                             this.setState({showArray, title: "Gameplay Pricing"})
                         }}>Gameplay</GradientButton>
-                        <GradientButton color={this.state.showArray[2] ? "blue" : "gold"}
+                        <GradientButton color={this.state.showArray[2] ? "silver-black" : "black-silver"}
                         onClick={() => {
                             let showArray = this.state.showArray;
                             showArray.fill(false)
                             showArray[2] = true;
                             this.setState({showArray, title: "Rental Pricing"})
                         }}>Rental</GradientButton>
-                        <GradientButton color={this.state.showArray[3] ? "blue" : "gold"}
+                        <GradientButton color={this.state.showArray[3] ? "silver-black" : "black-silver"}
                         onClick={() => {
                             let showArray = this.state.showArray;
                             showArray.fill(false)

@@ -70,8 +70,9 @@ const VideoItem = ({video, handleVideoSelect, index, selected}) => {
         }} className="div-video-item-youtube">
             {video !== null ?
             <div>
-                <img src={video.thumbnail} alt={video.desc}
-                className={ selected === index ? "img-selected-video-youtube": null}/>
+                <img src={video.thumbnail} alt={video.desc} 
+                className={ selected === index ? "img-selected-video-youtube img-video-youtube" 
+                : "img-video-youtube"}/>
                 <div >
                     <div className="video-thumbnail-title-youtube">{video.title}</div>
                 </div>

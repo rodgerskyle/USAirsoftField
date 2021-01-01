@@ -55,7 +55,8 @@ class EnterWins extends Component {
     remapArray(userArray) {
         let array = [];
         for (let i=0; i<userArray.length; i++) {
-            array[userArray[i].username] = userArray[i];
+            let username = userArray[i].username.toLocaleLowerCase()
+            array[username] = userArray[i];
         }
         return array;
     }
@@ -69,9 +70,10 @@ class EnterWins extends Component {
 
     updateUser = (event) => {
         event.preventDefault()
-        const {value} = this.state;
+        const {value, loading} = this.state;
+        if (loading)
+            return
         const lc_value = value.toLocaleLowerCase()
-        let uid = this.state.users[lc_value].uid;
 
         let temp;
 
@@ -82,6 +84,7 @@ class EnterWins extends Component {
             return;
         }
 
+        let uid = this.state.users[lc_value].uid;
         // Match history portion
         const date = new Date().getFullYear() + "-" + new Date().getMonth() + "-" + new Date().getDate()
         let games = this.state.users[lc_value].games

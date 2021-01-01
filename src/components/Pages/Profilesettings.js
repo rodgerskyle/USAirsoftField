@@ -6,6 +6,8 @@ import PasswordChangeForm from '../../passwordChange';
 import { AuthUserContext, withAuthorization } from '../session';
 import ImageUpload from './ImageUpload';
 
+import * as ROLES from '../constants/roles';
+
 const ProfileSettings = () => (
   <AuthUserContext.Consumer>
     {authUser => (
@@ -22,6 +24,6 @@ const ProfileSettings = () => (
   </AuthUserContext.Consumer>
 );
 
-const condition = authUser => !!authUser;
+const condition = authUser => !!authUser && !(!!authUser.roles[ROLES.WAIVER]);
 
 export default withAuthorization(condition)(ProfileSettings);

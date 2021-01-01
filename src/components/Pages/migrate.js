@@ -7,6 +7,8 @@ import { compose } from 'recompose';
 
 import { Container, Row, Col, Breadcrumb } from 'react-bootstrap/';
 
+import { encode } from 'firebase-encode';
+
 import { LinkContainer } from 'react-router-bootstrap';
 
 import * as ROLES from '../constants/roles';
@@ -42,7 +44,7 @@ class Migration extends Component {
         var csv = event.target.result;
         //this.processData(csv);
         var lines = csv.split(/\r\n|\n/);
-        var sendMail = this.props.firebase.sendMail();
+        //var sendMail = this.props.firebase.sendMail();
         var mergeUsers = this.props.firebase.mergeUsers();
         for (let i=0; i<lines.length; i++) {
             let usr = String(lines[i]).split(',')
@@ -53,13 +55,13 @@ class Migration extends Component {
                 if (result.data && result.data.user !== null) {
                     var secret = 'm' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5).toUpperCase();
                     let email = result.data.user
-                    this.props.firebase.emailListMembers(secret).set({email})
+                    this.props.firebase.emailList(encode(email.toLowerCase())).set({secret})
                     // Send email from our end
-                    sendMail({email, body: null, subject: "US Airsoft Migration Notice", img: null, secret: "empty", migrate: true, addressee: usr[0]}).then((result) => {
+                    /*sendMail({email, body: null, subject: "US Airsoft Migration Notice", img: null, secret: "empty", migrate: true, addressee: usr[0]}).then((result) => {
                     if (result.data) console.log(result.data.status)
                     }).catch((error) => {
                     console.log(error)
-                    })
+                    }) */
                     //Add email call to our backend instead of reset
                 }
             });
@@ -106,7 +108,7 @@ class Migration extends Component {
 }
 
 const condition = authUser =>
-    authUser && !!authUser.roles[ROLES.ADMIN];
+    authUser && !!authUser.roles[ROLES.SUPER];
 
 export default compose(
     withAuthorization(condition),

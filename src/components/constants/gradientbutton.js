@@ -6,13 +6,13 @@ import Button from '@material-ui/core/Button';
 const useStyles = makeStyles({
   root: {
     background: (props) =>
-      props.color === 'gold'
+      props.color === 'black-silver' 
         ? 'linear-gradient(45deg, #353535 10%, #D7D7D7 90%)'
         : 'linear-gradient(45deg, #D2CCC4 10%, #2F4353 90%)',
     border: 0,
     borderRadius: 30,
     boxShadow: (props) =>
-      props.color === 'gold'
+      props.color === 'black-silver'
         ? '0 1px 1px 1px rgba(192, 192, 192, .3)'
         : '0 1px 1px 1px rgba(192, 192, 192, .3)',
     color: 'white',
@@ -29,5 +29,5 @@ export default function MyButton(props) {
 }
 
 MyButton.propTypes = {
-  color: PropTypes.oneOf(['blue', 'gold']).isRequired,
+  color: PropTypes.oneOf(['silver-black', 'black-silver']).isRequired,
 };
