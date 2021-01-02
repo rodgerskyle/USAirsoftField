@@ -86,7 +86,7 @@ class SignInFormBase extends Component {
                 this.props.history.push("/dashboard");
               }
               else {
-                this.props.history.push("/home");
+                this.props.history.push("/");
               }
           })
         })

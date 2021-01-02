@@ -27,6 +27,10 @@ class Videos extends Component {
         })
     }
 
+    componentWillUnmount() {
+        this.props.firebase.videos().off()
+    }
+
     handleVideoSelect = (video, index) => {
         this.setState({selectedVideo: video, selectedIndex: index})
     }

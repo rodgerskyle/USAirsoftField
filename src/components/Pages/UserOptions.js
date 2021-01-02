@@ -97,10 +97,9 @@ class UserOptions extends Component {
           // Update user database role for admin/waiver/clearing
           this.props.firebase.user(user).once("value", object => {
               const roles = {};
-              let pin;
+              let pin = "";
               if (choice === "waiver") {
                 roles[ROLES.WAIVER] = ROLES.WAIVER;
-                pin = "";
               }
               else if (choice === "admin")
                 roles[ROLES.ADMIN] = ROLES.ADMIN;

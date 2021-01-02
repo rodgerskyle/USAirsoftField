@@ -3,6 +3,7 @@ import { Container, Row, Col, InputGroup, FormControl, Button } from 'react-boot
 import { Link } from "react-router-dom";
 import { AuthUserContext } from '../session';
 import { withFirebase } from '../Firebase';
+import * as ROLES from "../constants/roles";
 import fblogo from '../../assets/SocialMedia/facebook.png';
 import twlogo from '../../assets/SocialMedia/twitter.png';
 import iglogo from '../../assets/SocialMedia/instagram.png';
@@ -22,7 +23,7 @@ class Footer extends Component {
         return (
         <AuthUserContext.Consumer>
             {authUser =>
-                authUser ? <FooterAuth authUser={authUser} /> : <FooterNonAuth emailMenu={this.props.firebase.emailOptMenu()}/>
+                authUser ? !!authUser.roles[ROLES.WAIVER] ? null : <FooterAuth authUser={authUser} /> : <FooterNonAuth emailMenu={this.props.firebase.emailOptMenu()}/>
             }
         </AuthUserContext.Consumer>
         );

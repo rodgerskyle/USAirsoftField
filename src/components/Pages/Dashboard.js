@@ -161,21 +161,23 @@ class WaiverDashboard extends Component {
                   </Col>
                 </Row>
             </Container> : 
-            <Container className="container-pin-code-dashboard">
-              <Row className="justify-content-row">
-                <img src={logo} alt="US Airsoft logo" className="img-logo-dashboard"/>
-              </Row>
-              <Row className="justify-content-row">
-                <h5 className="h5-dashboard">Enter the PIN Code:</h5>
-              </Row>
-              <Row className="justify-content-row">
-                <PinCode completePin={this.verifyPin}/>
-              </Row>
-              {this.state.error ?
-              <Row className="justify-content-row">
-                <p className="p-error-text-dashboard">{this.state.error}</p>
-              </Row> : null}
-            </Container>
+            <div className="div-pin-code-dashboard">
+              <Container className="container-pin-code-dashboard">
+                <Row className="justify-content-row row-img-logo-dashboard">
+                  <img src={logo} alt="US Airsoft logo" className="img-logo-dashboard"/>
+                </Row>
+                <Row className="justify-content-row">
+                  <h5 className="h5-dashboard">Enter the PIN Code:</h5>
+                </Row>
+                <Row className="justify-content-row">
+                  <PinCode completePin={this.verifyPin}/>
+                </Row>
+                {this.state.error ?
+                <Row className="justify-content-row">
+                  <p className="p-error-text-dashboard">{this.state.error}</p>
+                </Row> : null}
+              </Container>
+            </div>
             }
           </div>
         );
