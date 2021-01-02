@@ -483,7 +483,8 @@ function UserBox({users, index, search, length}) {
         <Card.Body className="status-card-body-main-admin">
             {users.map((user, i) => (
                 search !== "" ? // Search query case
-                    user.name.toLowerCase().includes(search.toLowerCase()) ? 
+                    user.username.toLowerCase().includes(search.toLowerCase() || 
+                    user.name.toLowerCase().includes(search.toLowerCase())) ? 
                         index++ % 2 === 0 ? 
                             <div key={i}>
                               <div id="options-buttons-admin" onClick={() => {
