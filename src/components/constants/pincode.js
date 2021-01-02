@@ -23,7 +23,7 @@ class PinCode extends Component {
             secret 
             onChange={(value, index) => {this.onChange(value)}} 
             type="numeric" 
-            inputMode="number"
+            inputMode="numeric"
             style={{padding: '10px'}}  
             inputStyle={{borderColor: 'white'}}
             inputFocusStyle={{borderColor: 'blue'}}

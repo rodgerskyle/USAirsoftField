@@ -297,7 +297,10 @@ class Leaderboards extends Component {
                                 <Dropdown.Menu as={CustomMenu} className="dropdown-waiverlookup">
                                     {months.map((month, i) => (
                                         <Dropdown.Item key={i} eventKey={i} active={i===currentMonth}
-                                        onClick={() => this.setState({currentMonth: i})}>
+                                        onClick={() => this.setState({
+                                            currentMonth: i, 
+                                            users: users.sort((a,b) => this.sortArray(a,b, month, currentYear))
+                                        })}>
                                             {month}
                                         </Dropdown.Item>
                                     ))}
@@ -312,7 +315,10 @@ class Leaderboards extends Component {
                                 <Dropdown.Menu as={CustomMenu} className="dropdown-waiverlookup">
                                     {years.map((year, i) => (
                                         <Dropdown.Item eventKey={i} key={i} active={year===currentYear}
-                                        onClick={() => this.setState({currentYear: year})}>
+                                        onClick={() => this.setState({
+                                            currentYear: year,
+                                            users: users.sort((a,b) => this.sortArray(a,b, currentMonth, year))
+                                        })}>
                                             {year}
                                         </Dropdown.Item>
                                     ))}

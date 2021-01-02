@@ -1381,6 +1381,7 @@ body {
 
 .row-notice {
   justify-content: center;
+  align-items: center;
 }
 
 .notice-text {
@@ -1981,13 +1982,20 @@ body {
   padding: 25px;
   padding-top: 0px;
   border-radius: 5px;
-  margin-top: 15px;
+}
+
+.div-pin-code-dashboard {
+  padding: 15px;
 }
 
 .img-logo-dashboard {
   height: auto;
   width: 15%;
   margin: 0;
+}
+
+.row-img-logo-dashboard {
+  align-items: center;
 }
 
 .hours-logo-home {
@@ -2005,7 +2013,7 @@ body {
   background: transparent;
   width: 50px;
   height: 50px;
-  font-size: 50px;
+  font-size: 20px;
   color: white;
   border-radius: 10px;
   padding-bottom: 9px !important;

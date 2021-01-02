@@ -15,7 +15,7 @@ import WaiverForm from './components/Pages/FillOutWaiver'
 import EnterWins from './components/Pages/enterwins';
 import EnterLosses from './components/Pages/enterlosses';
 import FreeGames from './components/Pages/freegames';
-import Migration from './components/Pages/migrate';
+//import Migration from './components/Pages/migrate';
 import Leaderboard from './components/Pages/leaderboard';
 import ProfileLookup from './components/Pages/Profilelookup';
 import Pricing from './components/Pages/Pricing';
@@ -38,6 +38,7 @@ import RenewSubscription from './components/Pages/Renew'
 import WaiverDashboard from './components/Pages/Dashboard'
 import UserOptions from './components/Pages/UserOptions';
 import ScrollToTop from './components/constants/scrolltotop';
+import Redirect from './components/constants/redirect';
 import CookieConsent from "react-cookie-consent";
 import PageNotFound from './components/Pages/PageNotFound';
 import RentalForm from './components/Pages/RentalForm';
@@ -45,6 +46,7 @@ import RentalForm from './components/Pages/RentalForm';
 const App = () => (
       <Router>
           <ScrollToTop />
+          <Redirect />
           <Navigation />
           <Switch>
             <Route exact path="/rentalform">
@@ -125,9 +127,6 @@ const App = () => (
             </Route>
             <Route exact path="/freegames">
               <FreeGames />
-            </Route>
-            <Route exact path="/migration">
-              <Migration />
             </Route>
             <Route exact path="/register">
               <SignUpForm />
