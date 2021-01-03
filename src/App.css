@@ -422,6 +422,7 @@ body {
   border-bottom: 1px solid rgb(255, 217, 0, .5);
   background-color: rgb(36, 36, 36);
   font-weight: 400;
+  text-align: center;
 }
 
 .tbody-lb {
@@ -430,7 +431,8 @@ body {
 
 .td-lb {
   vertical-align: middle !important;
-  padding: .5rem !important;
+  padding: .5rem .1rem !important;
+  text-align: center;
 }
 
 .link-td-lb {
@@ -1279,6 +1281,7 @@ body {
   justify-content: flex-end;
   align-items: flex-end;
   margin-bottom: -8px;
+  margin-top: 8px;
   display: flex;
 }
 
@@ -1485,7 +1488,10 @@ body {
 }
 
 .rank-image-lb {
-  max-width: 70%;
+  max-width: 40%;
+  display: block;
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
 
 .firstPlace {
@@ -1693,6 +1699,7 @@ body {
 
 .col-pricing {
   margin-bottom: 15px;
+  color: black;
 }
 
 .card-pricing {
@@ -1990,7 +1997,7 @@ body {
 
 .img-logo-dashboard {
   height: auto;
-  width: 15%;
+  width: 30%;
   margin: 0;
 }
 
@@ -2027,6 +2034,7 @@ body {
 /* Class for dropdown multiselect */
 .go3425554998 {
   font-size: 12px;
+  color: black;
 }
 
 .go2642161244 {
@@ -2050,6 +2058,7 @@ body {
 
   .rank-image-lb {
     max-width: 100%;
+    display: unset;
   }
 
   .firstPlace {
@@ -2228,10 +2237,25 @@ body {
   .td-lb {
     vertical-align: middle !important;
     padding: .75rem !important;
+    text-align: left;
+  }
+
+  .header-lb {
+    text-align: left;
   }
 
   .dl-hours-info {
     margin-left: 0;
+  }
+
+  .pincode-input-container .pincode-input-text {
+    font-size: 50px;
+  }
+
+  .img-logo-dashboard {
+    height: auto;
+    width: 15%;
+    margin: 0;
   }
 }
 

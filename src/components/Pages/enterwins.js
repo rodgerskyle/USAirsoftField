@@ -141,6 +141,8 @@ class EnterWins extends Component {
                                     <Form.Label>Username</Form.Label>
                                     <Form.Control onChange={this.handleChange}
                                         value={this.state.value}
+                                        autoFocus={true}
+                                        autoComplete="off"
                                         className="form-input-admin"
                                         placeholder="Enter username to add points to" />
                                     </Form.Group>

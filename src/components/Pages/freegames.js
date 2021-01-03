@@ -81,6 +81,7 @@ class FreeGames extends Component {
                                                 <Form.Control
                                                     type="name"
                                                     placeholder="ex: JohnDoe"
+                                                    autoComplete="off"
                                                     value={this.state.search}
                                                     onChange={(e) => {
                                                         this.onChange(e);

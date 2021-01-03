@@ -165,6 +165,7 @@ class WaiverLookup extends Component {
                                                         <Form.Label className="search-label-admin">Search by Name:</Form.Label>
                                                         <Form.Control
                                                             type="name"
+                                                            autoComplete="off"
                                                             placeholder="ex: JohnDoe"
                                                             value={this.state.search}
                                                             onChange={(e) => {

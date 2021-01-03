@@ -261,6 +261,7 @@ class RentalForm extends Component {
                                                         <Form.Label className="search-label-admin">Add Participant (Search by Name):</Form.Label>
                                                         <Form.Control
                                                             type="name"
+                                                            autoComplete="off"
                                                             placeholder="ex: JohnDoe"
                                                             value={this.state.search}
                                                             onChange={(e) => {
@@ -397,6 +398,7 @@ function SelectedPage({selection, showBox, box, participantsArray, participants,
                                 <Form.Label>Name on Rental Form:</Form.Label>
                                 <Form.Control onChange={(e) => setName(e.target.value)}
                                     value={name}
+                                    autoComplete="off"
                                     placeholder="Full Name" />
                                 </Form.Group>
                             </Form>
@@ -410,6 +412,7 @@ function SelectedPage({selection, showBox, box, participantsArray, participants,
                                     setParticipants(e.target.value)
                                 }}
                                     value={participants}
+                                    autoComplete="off"
                                     placeholder="ex: 5"
                                     />
                                 </Form.Group>
@@ -518,6 +521,7 @@ function SelectedPage({selection, showBox, box, participantsArray, participants,
                                                     value={rental?.number}
                                                     placeholder="Rental #"
                                                     size="sm" 
+                                                    autoComplete="off"
                                                 />
                                                 </Form.Group>
                                             </Form>
