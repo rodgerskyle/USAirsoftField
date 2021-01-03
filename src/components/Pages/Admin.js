@@ -297,6 +297,8 @@ class AdminPage extends Component {
                                     as="textarea" rows="1"
                                     placeholder="Email subject"
                                     value={this.state.emailSubject}
+                                    autoComplete="off"
+                                    disabled={!this.state.email_ready}
                                     onChange={(e) => {
                                         this.changeEmailSubject(e);
                                     }}
@@ -309,6 +311,8 @@ class AdminPage extends Component {
                                     className="email-body-form-admin"
                                     placeholder="Email body"
                                     value={this.state.emailBox}
+                                    autoComplete="off"
+                                    disabled={!this.state.email_ready}
                                     onChange={(e) => {
                                         this.changeEmailBox(e);
                                     }}
@@ -318,7 +322,8 @@ class AdminPage extends Component {
                             </Form.Group>
                                 <Form.Group>
                                   <Form.File id="email-image-input" onChange={this.handleUpload}
-                                  label="Attach Image" accept="image/*" custom data-browse="Upload"/>
+                                  label="Attach Image" accept="image/*" custom data-browse="Upload"
+                                  disabled={!this.state.email_ready} />
                                 </Form.Group>
                                 <Button className="admin-button-email1" variant="info" type="button"
                                 disabled={!this.state.email_ready} onClick={() => {
@@ -371,6 +376,7 @@ class AdminPage extends Component {
                                         type="name"
                                         placeholder="ex: JohnDoe"
                                         value={this.state.search}
+                                        autoComplete="off"
                                         onChange={(e) => {
                                             this.onChange(e);
                                         }}

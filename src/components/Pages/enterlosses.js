@@ -142,6 +142,8 @@ class EnterLosses extends Component {
                                     <Form.Control onChange={this.handleChange}
                                         value={this.state.value}
                                         className="form-input-admin"
+                                        autoFocus={true}
+                                        autoComplete="off"
                                         placeholder="Enter username to add points to" />
                                     </Form.Group>
                                 </Col>

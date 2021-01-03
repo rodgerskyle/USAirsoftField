@@ -213,6 +213,7 @@ class RenewSubscription extends Component {
                                                         name="search"
                                                         placeholder="ex: JohnDoe"
                                                         value={this.state.search}
+                                                        autoComplete="off"
                                                         onChange={(e) => {
                                                             this.onChange(e);
                                                         }}
@@ -256,6 +257,7 @@ class RenewSubscription extends Component {
                                                                 value={fname}
                                                                 onChange={this.onChange}
                                                                 type="text"
+                                                                autoComplete="off"
                                                                 placeholder="First Name"
                                                             />
                                                             </Form.Group>
@@ -268,6 +270,7 @@ class RenewSubscription extends Component {
                                                                 value={lname}
                                                                 onChange={this.onChange}
                                                                 type="text"
+                                                                autoComplete="off"
                                                                 placeholder="Last Name"
                                                             />
                                                             </Form.Group>
@@ -282,6 +285,7 @@ class RenewSubscription extends Component {
                                                                     value={email}
                                                                     onChange={this.onChange}
                                                                     type="text"
+                                                                    autoComplete="off"
                                                                     placeholder="Email Address"
                                                                 />
                                                                 </Form.Group>
@@ -294,6 +298,7 @@ class RenewSubscription extends Component {
                                                                 value={phone}
                                                                 onChange={this.onChange}
                                                                 type="phone"
+                                                                autoComplete="off"
                                                                 placeholder="Phone #"
                                                             />
                                                             </Form.Group>
@@ -308,6 +313,7 @@ class RenewSubscription extends Component {
                                                                 value={address}
                                                                 onChange={this.onChange}
                                                                 type="text"
+                                                                autoComplete="off"
                                                                 placeholder="Address"
                                                             />
                                                             </Form.Group>
@@ -320,6 +326,7 @@ class RenewSubscription extends Component {
                                                             value={city}
                                                             onChange={this.onChange}
                                                             type="text"
+                                                            autoComplete="off"
                                                             placeholder="City"
                                                         />
                                                         </Form.Group>
@@ -332,6 +339,7 @@ class RenewSubscription extends Component {
                                                             value={state}
                                                             onChange={this.onChange}
                                                             type="text"
+                                                            autoComplete="off"
                                                             placeholder="State"
                                                         />
                                                         </Form.Group>
@@ -346,6 +354,7 @@ class RenewSubscription extends Component {
                                                                 value={dob}
                                                                 onChange={this.checkDOB}
                                                                 type="date"
+                                                                autoComplete="off"
                                                                 placeholder="Ex: 03-24-1999"
                                                                 />
                                                             </Form.Group>
@@ -358,6 +367,7 @@ class RenewSubscription extends Component {
                                                                 value={zipcode}
                                                                 onChange={this.onChange}
                                                                 type="text"
+                                                                autoComplete="off"
                                                                 placeholder="Zipcode"
                                                                 />
                                                             </Form.Group>
@@ -414,6 +424,7 @@ class RenewSubscription extends Component {
                                                                 value={pgname}
                                                                 onChange={this.checkDOB}
                                                                 type="text"
+                                                                autoComplete="off"
                                                                 placeholder="Full Name"
                                                                 />
                                                             </Form.Group>
@@ -426,6 +437,7 @@ class RenewSubscription extends Component {
                                                                 value={pgphone}
                                                                 onChange={this.onChange}
                                                                 type="phone"
+                                                                autoComplete="off"
                                                                 placeholder="Phone"
                                                                 />
                                                             </Form.Group>
@@ -539,96 +551,80 @@ function UserBox({users, index, search, update, loading}) {
                     user.name.toLowerCase().includes(search.toLowerCase()) ? 
                             index++ % 2 === 0 ? 
                             <Row className="row-fg" key={index}>
-                                <Col className="col-name-fg">
+                                <Col className="col-name-fg" md={5}>
                                     <Card.Text>
                                         {"(" + index + ") " + user.name}
                                     </Card.Text>
                                 </Col>
-                                <Col>
-                                    <Row>
-                                        <Col className="col-name-fg">
-                                            {"Renewal Date: " + user.renewal}
-                                        </Col>
-                                            <Col>
-                                                <Button className="button-submit-admin2" onClick={() => {
-                                                    update(user.uid);
-                                                }}
-                                                type="submit" id="update" variant="success">
-                                                    Renew 
-                                                </Button>
-                                            </Col>
-                                    </Row>
+                                <Col className="col-name-fg" md={5}>
+                                    {"Renewal Date: " + user.renewal}
+                                </Col>
+                                <Col md={2}>
+                                    <Button className="button-submit-admin2" onClick={() => {
+                                        update(user.uid);
+                                    }}
+                                    type="submit" id="update" variant="success">
+                                        Renew 
+                                    </Button>
                                 </Col>
                             </Row>
                                 : 
                             <Row className="status-card-offrow-admin-fg" key={index}>
-                                <Col className="col-name-fg">
+                                <Col className="col-name-fg" md={5}>
                                     <Card.Text>
                                             {"(" + index + ") " + user.name}
                                     </Card.Text>
                                 </Col>
-                                <Col>
-                                    <Row>
-                                         <Col className="col-name-fg">
-                                            {"Renewal Date: " + user.renewal}
-                                        </Col>
-                                            <Col>
-                                                <Button className="button-submit-admin2" onClick={() => {
-                                                    update(user.uid);
-                                                }}
-                                                type="submit" id="update" variant="success">
-                                                    Renew 
-                                                </Button>
-                                            </Col>
-                                    </Row>
+                                <Col className="col-name-fg" md={5}>
+                                    {"Renewal Date: " + user.renewal}
+                                </Col>
+                                <Col md={2}>
+                                    <Button className="button-submit-admin2" onClick={() => {
+                                        update(user.uid);
+                                    }}
+                                    type="submit" id="update" variant="success">
+                                        Renew 
+                                    </Button>
                                 </Col>
                             </Row>
                     : ""
                 :
                         index++ % 2 === 0 ? 
                         <Row className="row-fg" key={index}>
-                            <Col className="col-name-fg">
+                            <Col className="col-name-fg" md={5}>
                                 <Card.Text>
                                     {"(" + index + ") " + user.name}
                                 </Card.Text>
                             </Col>
-                            <Col>
-                                <Row>
-                                     <Col className="col-name-fg">
-                                            {"Renewal Date: " + user.renewal}
-                                    </Col>
-                                        <Col>
-                                            <Button className="button-submit-admin2" onClick={() => {
-                                                    update(user.uid);
-                                                }}
-                                                type="submit" id="update" variant="success">
-                                                    Renew
-                                            </Button>
-                                        </Col>
-                                </Row>
+                            <Col className="col-name-fg" md={5}>
+                                {"Renewal Date: " + user.renewal}
+                            </Col>
+                            <Col md={2}>
+                                <Button className="button-submit-admin2" onClick={() => {
+                                        update(user.uid);
+                                    }}
+                                    type="submit" id="update" variant="success">
+                                        Renew
+                                </Button>
                             </Col>
                         </Row>
                             : 
                         <Row className="status-card-offrow-admin-fg" key={index}>
-                            <Col className="col-name-fg">
+                            <Col className="col-name-fg" md={5}>
                                 <Card.Text>
                                         {"(" + index + ") " + user.name}
                                 </Card.Text>
                             </Col>
-                            <Col>
-                                <Row>
-                                    <Col className="col-name-fg">
-                                            {"Renewal Date: " + user.renewal}
-                                    </Col>
-                                        <Col>
-                                            <Button className="button-submit-admin2" onClick={() => {
-                                                    update(user.uid);
-                                                }}
-                                                type="submit" id="update" variant="success">
-                                                    Renew 
-                                            </Button>
-                                        </Col>
-                                </Row>
+                            <Col className="col-name-fg" md={5}>
+                                    {"Renewal Date: " + user.renewal}
+                            </Col>
+                            <Col md={2}>
+                                <Button className="button-submit-admin2" onClick={() => {
+                                        update(user.uid);
+                                    }}
+                                    type="submit" id="update" variant="success">
+                                        Renew 
+                                </Button>
                             </Col>
                         </Row>
             ))

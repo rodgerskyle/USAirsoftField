@@ -82,11 +82,9 @@ class SignInFormBase extends Component {
           this.setState({ ...INITIAL_STATE });
           this.props.firebase.user(this.props.firebase.uid()).once('value', snapshot => {
               const userObject = snapshot.val();
+              this.props.history.push("/");
               if (!!userObject.roles[ROLES.WAIVER]) {
                 this.props.history.push("/dashboard");
-              }
-              else {
-                this.props.history.push("/");
               }
           })
         })

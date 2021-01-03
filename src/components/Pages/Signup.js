@@ -17,6 +17,8 @@ import { compose } from 'recompose';
 import { withFirebase } from '../Firebase';
 import * as ROLES from '../constants/roles';
 
+import PinCode from '../constants/pincode'
+
 
 //For creating a second reference to Firebase
 import app from 'firebase/app';
@@ -101,7 +103,8 @@ class SignUpFormBase extends Component {
     super(props);
 
     //this.completeWaiver = this.completeWaiver.bind(this);
-    this.state = { ...INITIAL_STATE, users: []};
+    this.state = { ...INITIAL_STATE, users: [], authorized: true};
+    this.verifyPin = this.verifyPin.bind(this)
   }
 
   // Will Check duplicates in list
@@ -246,9 +249,14 @@ class SignUpFormBase extends Component {
             uid: key,
         }));
 
+
         this.setState({
             users: this.remapArray(usersList),
+            authUser: usersObject[this.props.firebase.uid()],
             loading: false,
+        }, () => {
+          if (!!this.state.authUser.roles[ROLES.WAIVER])
+            this.setState({authorized: false})
         });
     });
   }
@@ -282,9 +290,24 @@ class SignUpFormBase extends Component {
       return newUser
     }
   }
+
+  // Verify pin from entered in value for passcode
+  verifyPin (val) {
+    if (this.state.authUser?.pin === parseInt(val)) {
+      this.setState({authorized: true})
+    }
+    else {
+      this.setState({error: "The pin code entered in was not correct. Please try again."}, () => {
+        setTimeout(() => {
+          this.setState({error: null})
+        }, 4000)
+      })
+    }
+  }
  
   render() {
     const {
+      authorized,
       fname,
       lname,
       email,
@@ -328,7 +351,8 @@ class SignUpFormBase extends Component {
  
     return (
       <div> 
-        {!showLander ?
+        {authorized ? 
+        !showLander ?
         <div>
           <Row className="row-rp">
             { this.state.pageIndex === 0 ? 
@@ -350,7 +374,7 @@ class SignUpFormBase extends Component {
                 </h2>
               </Row>
               <Row className="row-rp">
-              <Form className="waiver-form-rp">
+              <Form className="waiver-form-rp" autoComplete="off">
                 <Row>
                 <Col>
                   <Form.Group>
@@ -360,6 +384,7 @@ class SignUpFormBase extends Component {
                       value={fname}
                       onChange={this.onChange}
                       type="text"
+                      autoComplete="off"
                       placeholder="First Name"
                     />
                   </Form.Group>
@@ -372,6 +397,7 @@ class SignUpFormBase extends Component {
                       value={lname}
                       onChange={this.onChange}
                       type="text"
+                      autoComplete="off"
                       placeholder="Last Name"
                     />
                   </Form.Group>
@@ -386,6 +412,7 @@ class SignUpFormBase extends Component {
                       value={email}
                       onChange={this.onChange}
                       type="text"
+                      autoComplete="off"
                       placeholder="Email Address"
                     />
                   </Form.Group>
@@ -398,6 +425,7 @@ class SignUpFormBase extends Component {
                       value={phone}
                       onChange={this.onChange}
                       type="phone"
+                      autoComplete="off"
                       placeholder="Phone #"
                     />
                   </Form.Group>
@@ -412,6 +440,7 @@ class SignUpFormBase extends Component {
                       value={address}
                       onChange={this.onChange}
                       type="text"
+                      autoComplete="off"
                       placeholder="Address"
                     />
                   </Form.Group>
@@ -424,6 +453,7 @@ class SignUpFormBase extends Component {
                       value={city}
                       onChange={this.onChange}
                       type="text"
+                      autoComplete="off"
                       placeholder="City"
                     />
                   </Form.Group>
@@ -436,6 +466,7 @@ class SignUpFormBase extends Component {
                       value={state}
                       onChange={this.onChange}
                       type="text"
+                      autoComplete="off"
                       placeholder="State"
                     />
                   </Form.Group>
@@ -450,6 +481,7 @@ class SignUpFormBase extends Component {
                         value={dob}
                         onChange={this.checkDOB}
                         type="date"
+                        autoComplete="off"
                         placeholder="Ex: 03-24-1999"
                       />
                     </Form.Group>
@@ -462,6 +494,7 @@ class SignUpFormBase extends Component {
                         value={zipcode}
                         onChange={this.onChange}
                         type="text"
+                        autoComplete="off"
                         placeholder="Zipcode"
                       />
                     </Form.Group>
@@ -518,6 +551,7 @@ class SignUpFormBase extends Component {
                         value={pgname}
                         onChange={this.checkDOB}
                         type="text"
+                        autoComplete="off"
                         placeholder="Full Name"
                       />
                     </Form.Group>
@@ -530,6 +564,7 @@ class SignUpFormBase extends Component {
                         value={pgphone}
                         onChange={this.onChange}
                         type="phone"
+                        autoComplete="off"
                         placeholder="Phone"
                       />
                     </Form.Group>
@@ -618,6 +653,7 @@ class SignUpFormBase extends Component {
                       value={fname}
                       onChange={this.onChange}
                       type="text"
+                      autoComplete="off"
                       placeholder="First Name"
                     />
                   </Form.Group>
@@ -630,6 +666,7 @@ class SignUpFormBase extends Component {
                       value={lname}
                       onChange={this.onChange}
                       type="text"
+                      autoComplete="off"
                       placeholder="Last Name"
                     />
                   </Form.Group>
@@ -644,6 +681,7 @@ class SignUpFormBase extends Component {
                       value={email}
                       onChange={this.onChange}
                       type="text"
+                      autoComplete="off"
                       placeholder="Email Address"
                     />
                   </Form.Group>
@@ -658,6 +696,7 @@ class SignUpFormBase extends Component {
                         value={passwordOne}
                         onChange={this.onChange}
                         type="password"
+                        autoComplete="off"
                         placeholder="Password"
                       />
                     </Form.Group>
@@ -670,6 +709,7 @@ class SignUpFormBase extends Component {
                         value={passwordTwo}
                         onChange={this.onChange}
                         type="password"
+                        autoComplete="off"
                         placeholder="Confirm Password"
                       />
                     </Form.Group>
@@ -753,6 +793,24 @@ class SignUpFormBase extends Component {
                   </Col>
               </Row>
           </Container>
+            : 
+            <div className="div-pin-code-dashboard">
+              <Container className="container-pin-code-dashboard">
+                <Row className="justify-content-row row-img-logo-dashboard">
+                  <img src={logo} alt="US Airsoft logo" className="img-logo-dashboard"/>
+                </Row>
+                <Row className="justify-content-row">
+                  <h5 className="h5-dashboard">Enter the PIN Code:</h5>
+                </Row>
+                <Row className="justify-content-row">
+                  <PinCode completePin={this.verifyPin}/>
+                </Row>
+                {this.state.error ?
+                <Row className="justify-content-row">
+                  <p className="p-error-text-dashboard">{this.state.error}</p>
+                </Row> : null}
+              </Container>
+            </div>
             }
       </div>
     );

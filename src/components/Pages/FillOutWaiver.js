@@ -229,6 +229,7 @@ class WaiverPageFormBase extends Component {
                     value={fname}
                     onChange={this.onChange}
                     type="text"
+                    autoComplete="off"
                     placeholder="First Name"
                   />
                 </Form.Group>
@@ -241,6 +242,7 @@ class WaiverPageFormBase extends Component {
                     value={lname}
                     onChange={this.onChange}
                     type="text"
+                    autoComplete="off"
                     placeholder="Last Name"
                   />
                 </Form.Group>
@@ -255,6 +257,7 @@ class WaiverPageFormBase extends Component {
                     value={email}
                     onChange={this.onChange}
                     type="text"
+                    autoComplete="off"
                     placeholder="Email Address"
                   />
                 </Form.Group>
@@ -267,6 +270,7 @@ class WaiverPageFormBase extends Component {
                     value={phone}
                     onChange={this.onChange}
                     type="phone"
+                    autoComplete="off"
                     placeholder="Phone #"
                   />
                 </Form.Group>
@@ -281,6 +285,7 @@ class WaiverPageFormBase extends Component {
                     value={address}
                     onChange={this.onChange}
                     type="text"
+                    autoComplete="off"
                     placeholder="Address"
                   />
                 </Form.Group>
@@ -293,6 +298,7 @@ class WaiverPageFormBase extends Component {
                     value={city}
                     onChange={this.onChange}
                     type="text"
+                    autoComplete="off"
                     placeholder="City"
                   />
                 </Form.Group>
@@ -305,6 +311,7 @@ class WaiverPageFormBase extends Component {
                     value={state}
                     onChange={this.onChange}
                     type="text"
+                    autoComplete="off"
                     placeholder="State"
                   />
                 </Form.Group>
@@ -319,6 +326,7 @@ class WaiverPageFormBase extends Component {
                       value={dob}
                       onChange={this.checkDOB}
                       type="date"
+                      autoComplete="off"
                       placeholder="Ex: 03-24-1999"
                     />
                   </Form.Group>
@@ -331,6 +339,7 @@ class WaiverPageFormBase extends Component {
                       value={zipcode}
                       onChange={this.onChange}
                       type="text"
+                      autoComplete="off"
                       placeholder="Zipcode"
                     />
                   </Form.Group>
@@ -387,6 +396,7 @@ class WaiverPageFormBase extends Component {
                       value={pgname}
                       onChange={this.checkDOB}
                       type="text"
+                      autoComplete="off"
                       placeholder="Full Name"
                     />
                   </Form.Group>
@@ -399,6 +409,7 @@ class WaiverPageFormBase extends Component {
                       value={pgphone}
                       onChange={this.onChange}
                       type="phone"
+                      autoComplete="off"
                       placeholder="Phone"
                     />
                   </Form.Group>
