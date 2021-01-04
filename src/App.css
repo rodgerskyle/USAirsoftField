@@ -677,7 +677,7 @@ body {
 
 .status-card-body-main-admin {
   overflow-y: scroll;
-  max-height: 40vh;
+  max-height: 50vh;
   color: white;
   padding-bottom: 0 !important;
   padding-top: 5px !important;
@@ -790,7 +790,8 @@ body {
 
 .row-rp {
   justify-content: center;
-  background-color: rgb(108, 117, 125, 0.75)
+  background-color: rgb(108, 117, 125, 0.75);
+  padding: 0 15px;
 }
 
 .spinner-row-rp {
@@ -799,6 +800,16 @@ body {
 
 .row-renew {
   justify-content: center;
+  padding: 0 15px;
+}
+
+.col-waiver {
+  background-color: rgb(108, 117, 125, 0.75);
+}
+
+.row-buttons-admin {
+  padding-right: 15px;
+  padding-left: 15px;
 }
 
 .row-success-rp {
@@ -875,7 +886,7 @@ body {
   max-width: 766px;
   min-width: 766px;
   margin-top: 5px;
-  margin-left: 5px !important;
+  margin-left: 45px !important;
 }
 
 .card-row-rp {
@@ -995,6 +1006,13 @@ body {
   border: none !important;
 }
 
+.waiver-cards {
+  color: white;
+  background-color: transparent !important;
+  min-height: 100%;
+  border: none !important;
+}
+
 .admin-card-icon {
   text-align:right;
 }
@@ -1032,15 +1050,18 @@ body {
  }
 
  .admin-button-email1 {
+   font-size: .7rem !important;
    margin-right: 5px;
  }
 
  .admin-button-email2 {
+   font-size: .7rem !important;
    margin-left: 5px;
    margin-right: 5px;
  }
 
  .admin-button-email3 {
+   font-size: .7rem !important;
    margin-left: 5px;
  }
 
@@ -2011,6 +2032,16 @@ body {
   margin-right: auto !important;
 }
 
+.col-button-renew-uo {
+  display: flex;
+  align-items: center;
+  margin-bottom: -15px;
+}
+
+.waiver-row-renew {
+  background-color: rgb(108, 117, 125, 0.75) !important;
+}
+
 /* For pincode css */
 .pincode-input-container .pincode-input-text {
   padding:0 !important;
@@ -2257,6 +2288,72 @@ body {
     width: 15%;
     margin: 0;
   }
+
+  .text-block-waiver-rp {
+    margin-left: 5px !important;
+  }
+
+  .admin-button-email1 {
+    font-size: 1rem !important;
+    margin-right: 5px;
+  }
+
+  .admin-button-email2 {
+    font-size: 1rem !important;
+    margin-left: 5px;
+    margin-right: 5px;
+  }
+
+  .admin-button-email3 {
+    font-size: 1rem !important;
+    margin-left: 5px;
+  }
+
+  .status-card-body-main-admin {
+    max-height: 50vh;
+  }
 }
 
+/* Newest ipad formatting 
+*/
+@media only screen and (min-width: 810px) and (max-width: 1080px)  { 
+  .text-block-waiver-rp {
+    margin-left: 45px !important;
+  }
 
+  .col-hours-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .col-hours {
+    text-align: left;
+    display: flex;
+    justify-content: center;
+  }
+
+  .p-caption-instagram {
+    font-size: .5rem;
+  }
+
+  .admin-button-email1 {
+    font-size: .85rem !important;
+    margin-right: 5px;
+  }
+
+  .admin-button-email2 {
+    font-size: .85rem !important;
+    margin-left: 5px;
+    margin-right: 5px;
+  }
+
+  .admin-button-email3 {
+    font-size: .85rem !important;
+    margin-left: 5px;
+  }
+
+  .status-card-body-main-admin {
+    max-height: 30vh;
+  }
+}

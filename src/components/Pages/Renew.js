@@ -9,6 +9,8 @@ import SignedWaiver from './SignedWaiver';
 import SignatureCanvas from 'react-signature-canvas';
 import waiver from '../../assets/Waiver-cutoff.png'
 
+import logo from '../../assets/logo.png';
+
 import { pdf } from '@react-pdf/renderer';
 
 import { Button, Form, Container, Card, Row, Col, Breadcrumb, Spinner } from 'react-bootstrap/';
@@ -54,11 +56,13 @@ class RenewSubscription extends Component {
     this.state = { 
         ...INITIAL_STATE, 
         users: [],
+        width: window.innerWidth,
+        height: window.innerHeight,
         UpdateUserState: this.updateUser,
     };
     this.completeWaiver = this.completeWaiver.bind(this);
     this.handleChange = this.handleChange.bind(this);
-
+    this.updateWindowDimensions = this.updateWindowDimensions.bind(this);
     }
       
     handleChange(event) {
@@ -67,6 +71,12 @@ class RenewSubscription extends Component {
 
     componentWillUnmount() {
         this.props.firebase.users().off();
+        window.removeEventListener('resize', this.updateWindowDimensions);
+    }
+
+    // Updates window dimension
+    updateWindowDimensions() {
+        this.setState({ width: window.innerWidth, height: window.innerHeight });
     }
 
     // Checks date of users list to see which ones are expired
@@ -92,6 +102,17 @@ class RenewSubscription extends Component {
     componentDidMount() {
         this.setState({ loading: true });
 
+        this.updateWindowDimensions();
+        window.addEventListener('resize', this.updateWindowDimensions);
+
+        if (typeof this.props.match.params.id !== 'undefined') {
+            this.setState({
+                uid: this.props.match.params.id,
+                showWaiver: true,
+            })
+            console.log(this.props.match.params.id)
+        }
+
         this.props.firebase.users().on('value', snapshot => {
             const usersObject = snapshot.val()
 
@@ -99,10 +120,11 @@ class RenewSubscription extends Component {
                 ...usersObject[key],
                 uid: key,
             }));
-            const filteredList = usersList.filter(obj => this.checkDate(obj.renewal));
+            //const filteredList = usersList.filter(obj => this.checkDate(obj.renewal));
+            // Doesn't work right now anyways
 
             this.setState({
-                users: filteredList,
+                users: usersList,
                 loading: false,
             });
         });
@@ -151,9 +173,9 @@ class RenewSubscription extends Component {
         });
     };
 
-    updateUser = (uid, username) => {
+    updateUser = (uid) => {
         //Show waiver and set uid in state
-        this.setState({showWaiver: true, uid, username})
+        this.setState({showWaiver: true, uid })
     }
 
     onChange = event => {
@@ -200,9 +222,9 @@ class RenewSubscription extends Component {
                                 <Breadcrumb.Item active>Subscription Renewal</Breadcrumb.Item>
                             </Breadcrumb>
                                 : null }
-                            <Row>
+                            <Row className="waiver-row-renew">
                                 <Col>
-                                    <Card className="admin-cards">
+                                    <Card className="waiver-cards">
                                         {!showWaiver ?
                                         <Card.Header>
                                             <Form className="team-manage-text">
@@ -228,9 +250,9 @@ class RenewSubscription extends Component {
                                             search={this.state.search} update={this.state.UpdateUserState} loading={this.state.loading}/>
                                             :
                                             <div>
-                                                <Row className="row-renew">
+                                                <Row className="justify-content-row">
                                                     <Col>
-                                                        <Row className="row-renew waiver-row-rp">
+                                                        <Row className="justify-content-row waiver-row-rp">
                                                         <img src={waiver} alt="US Airsoft waiver" className={!hideWaiver ? "waiver-rp" : "waiver-hidden-rp"}/>
                                                             <Row className="text-block-waiver-rp">
                                                                 <Button variant="outline-secondary" type="button" className={hideWaiver ? "button-hidden-rp" : ""} 
@@ -383,7 +405,7 @@ class RenewSubscription extends Component {
                                                     <Row className="sig-row-rp">
                                                         {!this.state.participantImg ? 
                                                         <SignatureCanvas penColor='black' ref={(ref) => {this.sigRef = ref}}
-                                                        canvasProps={{width: 750, height: 150, className: 'participant-sig-rp'}} />
+                                                        canvasProps={{width: this.state.width*.75, height: 150, className: 'participant-sig-rp'}} />
                                                         : <img className="signBox-image-rt" src={this.state.participantImg} alt="signature" />
                                                         }
                                                     </Row>
@@ -453,7 +475,7 @@ class RenewSubscription extends Component {
                                                         <Row className="row-renew sig-row-rp">
                                                             {!this.state.pgImg? 
                                                             <SignatureCanvas penColor='black' ref={(ref) => {this.sigRef2 = ref}}
-                                                            canvasProps={{width: 750, height: 150, className: 'participant-sig-rp'}} />
+                                                            canvasProps={{width: this.state.width*.75, height: 150, className: 'participant-sig-rp'}} />
                                                             : <img className="signBox-image-rt" src={this.state.pgImg} alt="signature" />
                                                             }
                                                         </Row>
@@ -498,7 +520,7 @@ class RenewSubscription extends Component {
                                                         this.setState({errorWaiver: "Please fill out all boxes with your information."})
                                                     }
                                                     else if (this.state.participantImg === null || (this.state.pgImg === null && age < 18)) {
-                                                        this.setState({errorWaiver: "Please sign and save the waiver in the box."})
+                                                        this.setState({errorWaiver: "Please sign and save the signature in the box."})
                                                     }
                                                     else if (age < 8) {
                                                         this.setState({errorWaiver: "Participant must be older than 8 years."})
@@ -520,18 +542,25 @@ class RenewSubscription extends Component {
                             </Row>
                         </Container>
                         : 
-                        <Container>
+                        <Container className="notice-text-container">
                             <Row className="row-success-rp">
-                            <Col className="col-rp">
-                                <h2 className="page-header">Successful Membership Renewal.</h2>
-                                <p className="page-header">Please let your U.S. Airsoft employee know that you have finished.</p>
-                            </Col>
-                            </Row>
-                            <Row className="row-success-rp">
-                                <Button className="next-button-rp" variant="info" type="button" 
-                                onClick={() => {
-                                    this.setState({...INITIAL_STATE})
-                                }}>Return</Button>
+                                <Col className="col-rp">
+                                    <Row className="row-notice">
+                                        <h2 className="page-header">Successful Member Renewal.</h2>
+                                    </Row>
+                                    <Row className="row-notice">
+                                        <p className="notice-text-g">Please let your U.S. Airsoft employee know that you have finished.</p>
+                                    </Row>
+                                    <Row className="justify-content-row">
+                                        <Button className="next-button-rp" variant="info" type="button" 
+                                        onClick={() => {
+                                            this.setState({ ...INITIAL_STATE })
+                                        }}>Return</Button>
+                                    </Row>
+                                    <Row className="row-notice">
+                                        <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>
+                                    </Row>
+                                </Col>
                             </Row>
                         </Container>
                         }

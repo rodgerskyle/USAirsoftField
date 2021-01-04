@@ -119,6 +119,11 @@ const App = () => (
             <Route exact path="/renewal">
               <RenewSubscription />
             </Route>
+            <Route exact path="/renewal/:id"
+            render={(props) => (
+              <RenewSubscription {...props} />
+            )}
+            ></Route>
             <Route exact path="/enterwins">
               <EnterWins />
             </Route>

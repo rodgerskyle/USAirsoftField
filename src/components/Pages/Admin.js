@@ -325,27 +325,29 @@ class AdminPage extends Component {
                                   label="Attach Image" accept="image/*" custom data-browse="Upload"
                                   disabled={!this.state.email_ready} />
                                 </Form.Group>
-                                <Button className="admin-button-email1" variant="info" type="button"
-                                disabled={!this.state.email_ready} onClick={() => {
-                                  this.emailAll();
-                                }}
-                                >
-                                    Email All
-                                </Button>
-                                <Button className="admin-button-email2" variant="info" type="button"
-                                disabled={!this.state.email_ready} onClick={() => {
-                                  this.emailMembers();
-                                }}
-                                >
-                                    Email Members
-                                </Button>
-                                <Button className="admin-button-email3" variant="info" type="button"
-                                disabled={!this.state.email_ready} onClick={() => {
-                                  //this.emailMembers();
-                                }}
-                                >
-                                    Email Non-Members
-                                </Button>
+                                <Row className="row-buttons-admin">
+                                  <Button className="admin-button-email1" variant="info" type="button"
+                                  disabled={!this.state.email_ready} onClick={() => {
+                                    this.emailAll();
+                                  }}
+                                  >
+                                      Email All
+                                  </Button>
+                                  <Button className="admin-button-email2" variant="info" type="button"
+                                  disabled={!this.state.email_ready} onClick={() => {
+                                    this.emailMembers();
+                                  }}
+                                  >
+                                      Email Members
+                                  </Button>
+                                  <Button className="admin-button-email3" variant="info" type="button"
+                                  disabled={!this.state.email_ready} onClick={() => {
+                                    //this.emailMembers();
+                                  }}
+                                  >
+                                      Email Non-Members
+                                  </Button>
+                                </Row>
                         </Form>
                         {this.state.email_status ? <p className="status-email-admin">{this.state.email_status}</p> : ""}
                         {this.state.email_loading ? <ProgressBar animated now={this.state.email_loading} /> : ""}

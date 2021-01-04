@@ -1,4 +1,3 @@
-
 import React, { Component } from 'react';
 import '../../App.css';
 
@@ -31,9 +30,11 @@ class WaiverDashboard extends Component {
 
     componentDidMount() {
         this.authSubscription = this.props.firebase.auth.onAuthStateChanged((user) => {
-          this.props.firebase.user(user.uid).once("value", (authUser) => {
-            this.setState({authUser: authUser.val()})
-          })
+          if (user) {
+            this.props.firebase.user(user.uid).once("value", (authUser) => {
+              this.setState({authUser: authUser.val()})
+            })
+          }
         });
     }
 
