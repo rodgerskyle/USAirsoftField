@@ -11,6 +11,9 @@ import default_profile from '../../assets/default.png';
 
 import * as ROLES from '../constants/roles';
 import { LinkContainer } from 'react-router-bootstrap';
+import { Link } from 'react-router-dom';
+
+import { encode } from 'firebase-encode';
 
 class UserOptions extends Component {
     constructor(props) {
@@ -27,9 +30,13 @@ class UserOptions extends Component {
             points: 0,
             freegames: 0,
             profilepic: false,
+            renewal: "",
+            email: "",
+            password: "",
             removeImg: false,
             super_status: null,
             status: null,
+            error: null,
         };
         this.handleChange = this.handleChange.bind(this);
     }
@@ -53,6 +60,9 @@ class UserOptions extends Component {
                 points: userObject.points,
                 freegames: userObject.freegames,
                 profilepic: userObject.profilepic,
+                renewal: userObject.renewal,
+                email: userObject.email,
+                oldEmail: userObject.email,
             }, function () {
                 //After setstate, then grab points and profile
                 if (userObject.profilepic)
@@ -120,6 +130,10 @@ class UserOptions extends Component {
             points: this.state.user.points,
             freegames: this.state.user.freegames,
             profilepic: this.state.user.profilepic,
+            email: this.state.user.email,
+            password: "",
+            error: null,
+            status: null,
         }, function () {
             //After setstate, then grab points and profile
             if (this.state.user.profilepic)
@@ -131,7 +145,7 @@ class UserOptions extends Component {
 
     // Update changed items 
     updateUser() {
-        const { username, name, team, profilepic } = this.state;
+        const { username, name, team, profilepic, email, oldEmail, password } = this.state;
         let uid = this.props.match.params.id
         let points = this.state.wins*10 + this.state.losses*3 + 50
         let wins = parseInt(this.state.wins)
@@ -140,6 +154,31 @@ class UserOptions extends Component {
         this.props.firebase.user(uid).update({
             username, name, team, wins, losses, points, profilepic, freegames
         });
+
+        // Email portion
+        if (email !== oldEmail) {
+            let updateEmail = this.props.firebase.manageProfile();
+            updateEmail({choice: "emailAdmin", uid, email: encode(email), old_email: encode(oldEmail)}).then((res) => {
+                console.log(res)
+            })
+            this.setState({oldEmail: email})
+        }
+
+        // Password portion
+
+        if (password !== "") {
+            console.log(password.length)
+            if (password.length >= 6) {
+                let updatePassword = this.props.firebase.manageProfile();
+                updatePassword({choice: "passAdmin", uid, password}).then((res) => {
+                    console.log(res)
+                })
+            }
+            else {
+                this.setState({error: "Password must be longer than 6 characters."})
+            }
+        }
+
         this.setState({status: "Successfully updated " + this.state.name })
     }
 
@@ -209,20 +248,38 @@ class UserOptions extends Component {
                                             </Form.Group>
                                         </Form>
                                     </Col>
+                                </Row>
+                                <Row>
                                     <Col>
                                         <Form>
-                                            <Form.Group controlId="form.freegames">
-                                                <Form.Label>Free Games:</Form.Label>
+                                            <Form.Group controlId="form.email">
+                                                <Form.Label>Email:</Form.Label>
                                                 <Form.Control
                                                     type="text"
-                                                    name="freegames"
-                                                    value={this.state.freegames}
+                                                    name="email"
+                                                    value={this.state.email}
+                                                    onChange={this.onChange}
+                                                />
+                                            </Form.Group>
+                                        </Form>
+                                    </Col>
+                                    <Col>
+                                        <Form>
+                                            <Form.Group controlId="form.password">
+                                                <Form.Label>Password:</Form.Label>
+                                                <Form.Control
+                                                    type="text"
+                                                    name="password"
+                                                    value={this.state.password}
                                                     onChange={this.onChange}
                                                 />
                                             </Form.Group>
                                         </Form>
                                     </Col>
                                 </Row>
+                                {this.state.error ? <Row className="justify-content-row">
+                                    <p className="text-red">{this.state.error}</p>
+                                </Row> : null}
                                 <Row>
                                     <Col>
                                         <Form>
@@ -262,6 +319,39 @@ class UserOptions extends Component {
                                                 />
                                             </Form.Group>
                                         </Form>
+                                    </Col>
+                                    <Col>
+                                        <Form>
+                                            <Form.Group controlId="form.freegames">
+                                                <Form.Label>Free Games:</Form.Label>
+                                                <Form.Control
+                                                    type="text"
+                                                    name="freegames"
+                                                    value={this.state.freegames}
+                                                    onChange={this.onChange}
+                                                />
+                                            </Form.Group>
+                                        </Form>
+                                    </Col>
+                                </Row>
+                                <Row>
+                                    <Col>
+                                        <Form>
+                                            <Form.Group controlId="form.points">
+                                                <Form.Label>Renewal:</Form.Label>
+                                                <Form.Control
+                                                    type="text"
+                                                    name="renewal"
+                                                    value={this.state.renewal}
+                                                    disabled={true}
+                                                />
+                                            </Form.Group>
+                                        </Form>
+                                    </Col>
+                                    <Col className="col-button-renew-uo">
+                                        <Link to={"/renewal/" + this.props.match.params.id}>
+                                            <Button variant="primary">Renew</Button>
+                                        </Link>
                                     </Col>
                                 </Row>
                             </Col>

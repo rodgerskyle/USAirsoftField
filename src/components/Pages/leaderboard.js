@@ -344,7 +344,7 @@ class Leaderboards extends Component {
 
 function UserList ({users, getRank, monthly, currentMonth, currentYear, start }) {
     return (
-        <Table className="table table-striped table-dark table-lb" responsive={"xl"}>
+        <Table className="table table-striped table-dark table-lb">
             <thead className="header-lb">
                 <tr>
                     <th scope="col" className="header-th-lb">#</th>

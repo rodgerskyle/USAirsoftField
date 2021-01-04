@@ -103,8 +103,11 @@ class SignUpFormBase extends Component {
     super(props);
 
     //this.completeWaiver = this.completeWaiver.bind(this);
-    this.state = { ...INITIAL_STATE, users: [], authorized: true};
+    this.state = { ...INITIAL_STATE, users: [], authorized: true,
+      width: window.innerWidth, height: window.innerHeight,
+    };
     this.verifyPin = this.verifyPin.bind(this)
+    this.updateWindowDimensions = this.updateWindowDimensions.bind(this);
   }
 
   // Will Check duplicates in list
@@ -241,6 +244,9 @@ class SignUpFormBase extends Component {
   }
 
   componentDidMount() {
+    this.updateWindowDimensions();
+    window.addEventListener('resize', this.updateWindowDimensions);
+
     this.props.firebase.users().on('value', snapshot => {
         const usersObject = snapshot.val();
 
@@ -263,6 +269,12 @@ class SignUpFormBase extends Component {
 
   componentWillUnmount() {
     this.props.firebase.users().off()
+    window.removeEventListener('resize', this.updateWindowDimensions);
+  }
+
+  // Updates window dimension
+  updateWindowDimensions() {
+      this.setState({ width: window.innerWidth, height: window.innerHeight });
   }
 
   // Remaps user array to map to usernames rather than key
@@ -354,10 +366,10 @@ class SignUpFormBase extends Component {
         {authorized ? 
         !showLander ?
         <div>
-          <Row className="row-rp">
+          <Row className="justify-content-row">
             { this.state.pageIndex === 0 ? 
-            <Col>
-              <Row className="row-rp waiver-row-rp">
+            <Col className="col-waiver">
+              <Row className="justify-content-row waiver-row-rp">
                 <img src={waiver} alt="US Airsoft waiver" className={!hideWaiver ? "waiver-rp" : "waiver-hidden-rp"}/>
                 <Row className="text-block-waiver-rp">
                   <Button variant="outline-secondary" type="button" className={hideWaiver ? "button-hidden-rp" : ""} 
@@ -510,7 +522,7 @@ class SignUpFormBase extends Component {
                 <Row className="sig-row-rp">
                   {!this.state.participantImg ? 
                     <SignatureCanvas penColor='black' ref={(ref) => {this.sigRef = ref}}
-                    canvasProps={{width: 750, height: 150, className: 'participant-sig-rp'}} />
+                    canvasProps={{width: this.state.width*.75, height: 150, className: 'participant-sig-rp'}} />
                     : <img className="signBox-image-rt" src={this.state.participantImg} alt="signature" />
                   }
                 </Row>
@@ -580,7 +592,7 @@ class SignUpFormBase extends Component {
                 <Row className="row-rp sig-row-rp">
                   {!this.state.pgImg? 
                     <SignatureCanvas penColor='black' ref={(ref) => {this.sigRef2 = ref}}
-                    canvasProps={{width: 750, height: 150, className: 'participant-sig-rp'}} />
+                    canvasProps={{width: this.state.width*.75, height: 150, className: 'participant-sig-rp'}} />
                     : <img className="signBox-image-rt" src={this.state.pgImg} alt="signature" />
                   }
                 </Row>
@@ -753,7 +765,7 @@ class SignUpFormBase extends Component {
                   this.setState({errorWaiver: "Please fill out all boxes with your information."})
                 }
                 else if (this.state.participantImg === null || (this.state.pgImg === null && age < 18)) {
-                  this.setState({errorWaiver: "Please sign and save the waiver in the box."})
+                  this.setState({errorWaiver: "Please sign and save the signature in the box."})
                 }
                 else if (age < 8) {
                   this.setState({errorWaiver: "Participant must be older than 8 years."})
