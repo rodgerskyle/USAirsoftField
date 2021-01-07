@@ -386,7 +386,7 @@ class SignUpFormBase extends Component {
                 </h2>
               </Row>
               <Row className="row-rp">
-              <Form className="waiver-form-rp" autoComplete="off">
+              <Form className="waiver-form-rp" autoComplete="off" onSubmit={e => { e.preventDefault(); }}>
                 <Row>
                 <Col>
                   <Form.Group>

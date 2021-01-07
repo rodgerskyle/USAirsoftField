@@ -13,6 +13,9 @@ import CustomMenu from '../constants/custommenu'
 
 import * as ROLES from '../constants/roles';
 
+import { faDollarSign } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
 class WaiverLookup extends Component {
     constructor(props) {
         super(props);
@@ -160,7 +163,7 @@ class WaiverLookup extends Component {
                                     <Col>
                                         <Card className="admin-cards">
                                             <Card.Header>
-                                                <Form>
+                                                <Form onSubmit={e => { e.preventDefault(); }}>
                                                     <Form.Group controlId="input1">
                                                         <Form.Label className="search-label-admin">Search by Name:</Form.Label>
                                                         <Form.Control
@@ -332,15 +335,22 @@ function WaiverBox ({waivers, index, search, open, loading, month, day, year}) {
     <Card.Body className="status-card-body-wl-admin">
         {!loading ? 
         <Row className="card-header-wl">
-            <Col>
+            <Col md={3}>
                 <Card.Text>
                     Name:
                 </Card.Text>
             </Col>
-            <Col>
+            <Col md={4}>
                 <Card.Text>
                     Date Created:
                 </Card.Text>
+            </Col>
+            <Col md={3}>
+                <Card.Text>
+                    Validate:
+                </Card.Text>
+            </Col>
+            <Col md={2}>
             </Col>
         </Row>
         : null}
@@ -353,7 +363,7 @@ function WaiverBox ({waivers, index, search, open, loading, month, day, year}) {
                 waiver.name.toLowerCase().includes(search.toLowerCase()) ? 
                         index++ % 2 === 0 ? 
                         <Row className="row-wl" key={index}>
-                            <Col className="col-name-fg">
+                            <Col className="col-name-fg" md={3}>
                                 <Card.Text>
                                     {"(" + index + ") " + waiver.name.substr(0, waiver.name.lastIndexOf('('))}
                                 </Card.Text>
@@ -367,7 +377,7 @@ function WaiverBox ({waivers, index, search, open, loading, month, day, year}) {
                                     </Col>
                                     <Col>
                                         <Button className="button-submit-admin2" onClick={() => open(waiver.ref)}
-                                        type="submit" id="update" variant="success">
+                                        type="button" id="update" variant="success">
                                             Open
                                         </Button>
                                     </Col>
@@ -376,7 +386,7 @@ function WaiverBox ({waivers, index, search, open, loading, month, day, year}) {
                         </Row>
                             : 
                         <Row className="status-card-offrow-admin-wl" key={index}>
-                            <Col className="col-name-fg">
+                            <Col className="col-name-fg" md={3}>
                                 <Card.Text>
                                     {"(" + index + ") " + waiver.name.substr(0, waiver.name.lastIndexOf('('))}
                                 </Card.Text>
@@ -402,48 +412,50 @@ function WaiverBox ({waivers, index, search, open, loading, month, day, year}) {
                 compareDate(month, day, year, waiver.date ) ?
                         index++ % 2 === 0 ? 
                         <Row className="row-wl" key={index}>
-                            <Col className="col-name-fg">
+                            <Col className="col-name-fg" md={3}>
                                 <Card.Text>
                                     {"(" + index + ") " + waiver.name.substr(0, waiver.name.lastIndexOf('('))}
                                 </Card.Text>
                             </Col>
-                            <Col>
-                                <Row>
-                                    <Col className="col-name-fg">
-                                        {returnDay(waiver.date.getDay()) + ", " + 
-                                        waiver.date.getDate() + " " + returnMonth(waiver.date.getMonth()) +
-                                        " " + waiver.date.getFullYear()}
-                                    </Col>
-                                    <Col>
-                                        <Button className="button-submit-admin2" onClick={() => open(waiver.ref)}
-                                        type="submit" id="update" variant="success">
-                                            Open 
-                                        </Button>
-                                    </Col>
-                                </Row>
+                            <Col className="col-name-fg" md={4}>
+                                {returnDay(waiver.date.getDay()) + ", " + 
+                                waiver.date.getDate() + " " + returnMonth(waiver.date.getMonth()) +
+                                " " + waiver.date.getFullYear()}
+                            </Col>
+                            <Col md={3} className="align-items-center-col">
+                                <Button variant="warning" className="validate-button-wl">
+                                    <FontAwesomeIcon icon={faDollarSign} />
+                                </Button>
+                            </Col>
+                            <Col md={2}>
+                                <Button className="button-submit-admin2" onClick={() => open(waiver.ref)}
+                                type="submit" id="update" variant="success">
+                                    Open 
+                                </Button>
                             </Col>
                         </Row>
                             : 
                         <Row className="status-card-offrow-admin-wl" key={index}>
-                            <Col className="col-name-fg">
+                            <Col className="col-name-fg" md={3}>
                                 <Card.Text>
                                     {"(" + index + ") " + waiver.name.substr(0, waiver.name.lastIndexOf('('))}
                                 </Card.Text>
                             </Col>
-                            <Col>
-                                <Row>
-                                    <Col className="col-name-fg">
-                                        {returnDay(waiver.date.getDay()) + ", " + 
-                                        waiver.date.getDate() + " " + returnMonth(waiver.date.getMonth()) +
-                                        " " + waiver.date.getFullYear()}
-                                    </Col>
-                                    <Col>
-                                        <Button className="button-submit-admin2" onClick={() => open(waiver.ref)}
-                                        type="submit" id="update" variant="success">
-                                            Open 
-                                        </Button>
-                                    </Col>
-                                </Row>
+                            <Col className="col-name-fg" md={4}>
+                                {returnDay(waiver.date.getDay()) + ", " + 
+                                waiver.date.getDate() + " " + returnMonth(waiver.date.getMonth()) +
+                                " " + waiver.date.getFullYear()}
+                            </Col>
+                            <Col md={3} className="align-items-center-col">
+                                <Button variant="warning" className="validate-button-wl">
+                                    <FontAwesomeIcon icon={faDollarSign} />
+                                </Button>
+                            </Col>
+                            <Col md={2}>
+                                <Button className="button-submit-admin2" onClick={() => open(waiver.ref)}
+                                type="submit" id="update" variant="success">
+                                    Open 
+                                </Button>
                             </Col>
                         </Row>
                     : null

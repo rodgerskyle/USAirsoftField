@@ -75,7 +75,7 @@ class FreeGames extends Component {
                             <Col>
                                 <Card className="admin-cards">
                                     <Card.Header>
-                                        <Form className="team-manage-text">
+                                        <Form className="team-manage-text" onSubmit={e => { e.preventDefault(); }}>
                                             <Form.Group controlId="input1">
                                                 <Form.Label className="search-label-admin">Search by Username:</Form.Label>
                                                 <Form.Control
@@ -110,7 +110,7 @@ function UserBox({users, index, search, update, length}) {
         <Card.Body className="status-card-body-fg-admin">
             {users.map((user, i) => (
                 search !== "" ? // Search query case
-                    user.name.toLowerCase().includes(search.toLowerCase()) ? 
+                    user.username.toLowerCase().includes(search.toLowerCase()) ? 
                             index++ % 2 === 0 ? 
                             <Row className="row-fg" key={index}>
                                 <Col className="col-name-fg">

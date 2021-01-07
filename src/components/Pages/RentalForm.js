@@ -256,7 +256,7 @@ class RentalForm extends Component {
                                     <Col>
                                         <Card className="admin-cards">
                                             <Card.Header>
-                                                <Form>
+                                                <Form onSubmit={e => { e.preventDefault(); }}>
                                                     <Form.Group controlId="input1">
                                                         <Form.Label className="search-label-admin">Add Participant (Search by Name):</Form.Label>
                                                         <Form.Control
@@ -393,7 +393,7 @@ function SelectedPage({selection, showBox, box, participantsArray, participants,
                 <div>
                     <Row className="justify-content-row row-rf">
                         <Col md={4}>
-                            <Form className="form-rf">
+                            <Form className="form-rf" onSubmit={e => { e.preventDefault(); }}>
                                 <Form.Group>
                                 <Form.Label>Name on Rental Form:</Form.Label>
                                 <Form.Control onChange={(e) => setName(e.target.value)}
@@ -404,7 +404,7 @@ function SelectedPage({selection, showBox, box, participantsArray, participants,
                             </Form>
                         </Col>
                         <Col md={2}>
-                            <Form className="form-rf">
+                            <Form className="form-rf" onSubmit={e => { e.preventDefault(); }}>
                                 <Form.Group>
                                 <Form.Label>Participant(s):</Form.Label>
                                 <Form.Control onChange={(e) => {
@@ -419,7 +419,7 @@ function SelectedPage({selection, showBox, box, participantsArray, participants,
                             </Form>
                         </Col>
                         <Col md={2}>
-                            <Form className="form-rf">
+                            <Form className="form-rf" onSubmit={e => { e.preventDefault(); }}>
                                 <Form.Group>
                                 <Form.Label>Date:</Form.Label>
                                 <Form.Control disabled
@@ -498,7 +498,7 @@ function SelectedPage({selection, showBox, box, participantsArray, participants,
                                 rentals.map((rental, i) => (
                                     <Row key={i} className="justify-content-row">
                                         <Col md={2}>
-                                            <Form className="form-rf">
+                                            <Form className="form-rf" onSubmit={e => { e.preventDefault(); }}>
                                                 <Form.Group>
                                                 <Form.Label column="sm" lg={2} className="rental-label-rf"
                                                 >Rental:</Form.Label>
@@ -511,7 +511,7 @@ function SelectedPage({selection, showBox, box, participantsArray, participants,
                                             </Form>
                                         </Col>
                                         <Col md={2}>
-                                            <Form className="form-rf">
+                                            <Form className="form-rf" onSubmit={e => { e.preventDefault(); }}>
                                                 <Form.Group>
                                                 <Form.Label column="sm" lg={2} className="rental-label-rf"
                                                     >Number:</Form.Label>
