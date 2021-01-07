@@ -290,7 +290,7 @@ class AdminPage extends Component {
                         </Row>
                       </Card.Header>
                       <Card.Body>
-                        <Form>
+                        <Form onSubmit={e => { e.preventDefault(); }}>
                           <Form.Group controlId="email-subject-form">
                             <Form.Label>Add Subject Here:</Form.Label>
                                 <Form.Control
@@ -371,7 +371,7 @@ class AdminPage extends Component {
                       <Card.Body>
                         <Row>
                           <Col>
-                            <Form className="team-manage-text">
+                            <Form className="team-manage-text" onSubmit={e => { e.preventDefault(); }}>
                                 <Form.Group controlId="user-search">
                                     <Form.Label className="search-label-admin">Search by Username:</Form.Label>
                                     <Form.Control
@@ -403,7 +403,7 @@ class AdminPage extends Component {
                   <Col className="admin-col-cards">
                     <Link to={"/signup"} className="admin-cards-link">
                       <Card className="admin-cards">
-                        <Card.Body className="admin-card-header-link">Membership Registration</Card.Body>
+                        <Card.Body className="admin-card-header-link">Membership New Member</Card.Body>
                         <Card.Footer>
                           <Row>
                             <Col xs="auto">
@@ -486,13 +486,15 @@ class AdminPage extends Component {
 
 function UserBox({users, index, search, length}) {
     const [ButtonArray, setButtonArray] = useState( new Array(length).fill(false));
+    let checker = (arr, target) => target.every(v => arr.includes(v));
 
     return (
         <Card.Body className="status-card-body-main-admin">
             {users.map((user, i) => (
                 search !== "" ? // Search query case
-                    user.username.toLowerCase().includes(search.toLowerCase() || 
-                    user.name.toLowerCase().includes(search.toLowerCase())) ? 
+                    checker(user.name.toLowerCase().split(" "), search.toLowerCase().split(" ")) ||
+                    user.username.toLowerCase().includes(search.toLowerCase()) || 
+                    user.name.toLowerCase().includes(search.toLowerCase()) ? 
                         index++ % 2 === 0 ? 
                             <div key={i}>
                               <div id="options-buttons-admin" onClick={() => {

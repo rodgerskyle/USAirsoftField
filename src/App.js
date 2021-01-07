@@ -160,6 +160,11 @@ const App = () => (
             <Route exact path="/leaderboard">
               <Leaderboard />
             </Route>
+            <Route exact path="/leaderboard/query=:query"
+            render={(props) => (
+              <Leaderboard {...props} />
+            )}
+            ></Route>
             <Route exact path="/pricing">
               <Pricing />
             </Route>

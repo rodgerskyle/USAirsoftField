@@ -68,7 +68,7 @@ class WaiverDashboard extends Component {
                    <Col className="admin-col-cards">
                     <Link to={"/signup"} className="admin-cards-link">
                       <Card className="admin-cards">
-                        <Card.Body className="admin-card-header-link">Membership Registration</Card.Body>
+                        <Card.Body className="admin-card-header-link">Membership New Member</Card.Body>
                         <Card.Footer>
                           <Row>
                             <Col xs="auto">

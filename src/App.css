@@ -2042,6 +2042,11 @@ body {
   background-color: rgb(108, 117, 125, 0.75) !important;
 }
 
+.validate-button-wl {
+  font-size: .8rem !important;
+  margin-left: 15px;
+}
+
 /* For pincode css */
 .pincode-input-container .pincode-input-text {
   padding:0 !important;

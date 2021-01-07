@@ -3,6 +3,25 @@ import logo from '../../assets/logo.png';
 import { Container, Row, Col } from 'react-bootstrap/';
 import BackgroundVideo from '../constants/backgroundvideo';
 
+/* Needs to be added in
+Closed:
+
+  Mondays, Christmas Day, Thanksgiving Day, & Easter Sunday
+
+
+Special Arena Days Open:
+
+New Years Day
+Presidents' Day
+Memorial Day
+4th of July
+Labor Day
+Columbus Day
+Veterans' Day
+Friday after Thanksgiving Day
+Day after Christmas
+*/
+
 const Home = () => (
   <div>
   <BackgroundVideo/>

@@ -164,6 +164,9 @@ class Leaderboards extends Component {
     }
 
     componentDidMount() {
+        if (this.props.match?.params.query === "monthly") {
+            this.setState({monthly: true})
+        }
         this.setState({ loading: true });
         this.getMonths(parseInt(new Date().getMonth().toLocaleString()) + 1)
         let date = new Date();
@@ -199,11 +202,20 @@ class Leaderboards extends Component {
 
             usersList = usersList.filter(obj => typeof(obj.roles) === 'undefined' || !obj.roles[ROLES.WAIVER])
 
-            this.setState({
-                users: usersList.sort((a,b) => (a.points < b.points ? 1 : -1)),
-                loading: false,
-                numPages: Math.ceil(usersList.length/this.state.usersPerPage)
-            });
+            if (!this.state.monthly) {
+                this.setState({
+                    users: usersList.sort((a,b) => (a.points < b.points ? 1 : -1)),
+                    loading: false,
+                    numPages: Math.ceil(usersList.length/this.state.usersPerPage)
+                });
+            }
+            else {
+                this.setState({
+                    users: usersList.sort((a,b) => this.sortArray(a,b, this.state.currentMonth, this.state.currentYear)),
+                    loading: false,
+                    numPages: Math.ceil(usersList.length/this.state.usersPerPage)
+                });
+            }
         });
     }
 
