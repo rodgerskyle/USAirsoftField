@@ -57,35 +57,6 @@ class AdminPage extends Component {
         this.props.firebase.users().off();
     }
 
-    // Updates User's privilege level
-    updateUser = (user, choice) => {
-      if (choice === "admin" || choice === "waiver" || choice === "clear" || choice === "check") {
-        this.setState({status: null, error: null})
-
-        // Update token for the firebase uid
-        const upgrade = this.props.firebase.createPrivilegedUser();
-        upgrade({uid: user, privilege: choice
-        }).then((result) => {
-            //If complete finish loading
-            if (result) this.setState({ul_status: result.data.status})
-        }).catch((error) =>{
-            this.setState({ul_error: "Error: " + error})
-        });
-
-        if (choice !== "check") {
-          // Update user database role for admin/waiver/clearing
-          this.props.firebase.user(user).once("value", object => {
-              const roles = {};
-              if (choice === "waiver")
-                roles[ROLES.WAIVER] = ROLES.WAIVER;
-              else if (choice === "admin")
-                roles[ROLES.ADMIN] = ROLES.ADMIN;
-              this.props.firebase.user(user).update({roles})
-          })
-        }
-      }
-    }
-
     changeEmailBox = event => {
         this.setState({ emailBox: event.target.value });
     };
@@ -99,18 +70,37 @@ class AdminPage extends Component {
         // Grab users from users api call
         // Verify legal requirements when it comes to emailing
         // Add in opt out feature in backend
-        this.setState({email_loading: 0, email_status: null})
-        var sendMail = this.props.firebase.sendMail();
-        const {emailBox, emailSubject, emailImg} = this.state;
+        // this.setState({email_loading: 0, email_status: null})
+        // var sendMail = this.props.firebase.sendMail();
+        // const {emailBox, emailSubject, emailImg} = this.state;
        /* for (let i=0; i<length; i++) {
           this.setState({email_loading: i/length})
         } */
+        /*
+        this.props.firebase.emails().once('value', (obj) => {
+          //console.log(obj.val())
+          //console.log(obj.val().key())
+          const emailsObject = obj.val();
+
+          let emails2 = Object.keys(emailsObject).map(key => ({
+              ...emailsObject[key],
+              email: key,
+          }));
+          let emails = []
+          emails.push({secret: "working", email: "kyle77r@gmail%2Ecom"})
+          console.log(emails)
+          sendMail({emails, body: emailBox, subject: emailSubject, img: emailImg, migrate: false}).then((result) => {
+            if (result.data) console.log(result.data.status)
+          }).catch((error) => {
+            console.log(error)
+          })
+        }) */
         //After for loop update status
-        sendMail({email: "kyle77r@gmail.com", body: emailBox, subject: emailSubject, img: emailImg, secret: "empty", migrate: false}).then((result) => {
+        /*sendMail({emails, body: emailBox, subject: emailSubject, img: emailImg, secret: "empty", migrate: false}).then((result) => {
           if (result.data) console.log(result.data.status)
         }).catch((error) => {
           console.log(error)
-        })
+        }) */
         // Add loading to show completion
         this.setState({
           email_loading: null, 
@@ -128,8 +118,6 @@ class AdminPage extends Component {
 
     // Email members
     emailMembers = () => {
-      var testRenewal = this.props.firebase.testRenewal();
-      testRenewal();
     }
 
     onChange = event => {
@@ -243,7 +231,7 @@ class AdminPage extends Component {
                   <Col sm={3} className="admin-col-cards">
                     <Link to={"/renewal"} className="admin-cards-link">
                       <Card className="admin-cards">
-                        <Card.Body className="admin-card-header-link">Membership Renewal</Card.Body>
+                        <Card.Body className="admin-card-header-link">Renew Member</Card.Body>
                         <Card.Footer>
                           <Row>
                             <Col xs="auto">
@@ -403,7 +391,7 @@ class AdminPage extends Component {
                   <Col className="admin-col-cards">
                     <Link to={"/signup"} className="admin-cards-link">
                       <Card className="admin-cards">
-                        <Card.Body className="admin-card-header-link">Membership New Member</Card.Body>
+                        <Card.Body className="admin-card-header-link">New Member</Card.Body>
                         <Card.Footer>
                           <Row>
                             <Col xs="auto">
@@ -494,6 +482,7 @@ function UserBox({users, index, search, length}) {
                 search !== "" ? // Search query case
                     checker(user.name.toLowerCase().split(" "), search.toLowerCase().split(" ")) ||
                     user.username.toLowerCase().includes(search.toLowerCase()) || 
+                    user.email.toLowerCase().includes(search.toLowerCase()) || 
                     user.name.toLowerCase().includes(search.toLowerCase()) ? 
                         index++ % 2 === 0 ? 
                             <div key={i}>

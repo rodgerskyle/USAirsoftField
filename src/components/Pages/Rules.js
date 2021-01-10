@@ -703,14 +703,6 @@ const MembershipPointsRanking = () => (
                     </ol>
                 </li>
                 <li>
-                    US Airsoft barrel sock (barrel socks are required in barracks) (1)
-                    <ol>
-                        <li>
-                            Lost or damaged replacement US Airsoft barrel socks $5.00 each.
-                        </li>
-                    </ol>
-                </li>
-                <li>
                     US Airsoft Lucky Wrist Band. (1)
                     <ol>
                         <li>

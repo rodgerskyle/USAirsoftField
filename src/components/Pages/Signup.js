@@ -42,14 +42,14 @@ const SignUpPage = () => (
         <Container>
           <Row className="header-rp">
             <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>
-            <h2 className="page-header">Membership Form</h2>
+            <h2 className="page-header">New Member</h2>
           </Row>
           {authUser && !!authUser.roles[ROLES.ADMIN] ? 
           <Breadcrumb className="admin-breadcrumb">
               <LinkContainer to="/admin">
                   <Breadcrumb.Item>Admin</Breadcrumb.Item>
               </LinkContainer>
-              <Breadcrumb.Item active>Registration</Breadcrumb.Item>
+              <Breadcrumb.Item active>New Member</Breadcrumb.Item>
           </Breadcrumb>
               : null }
             <SignUpForm />
@@ -104,10 +104,8 @@ class SignUpFormBase extends Component {
 
     //this.completeWaiver = this.completeWaiver.bind(this);
     this.state = { ...INITIAL_STATE, users: [], authorized: true,
-      width: window.innerWidth, height: window.innerHeight,
     };
     this.verifyPin = this.verifyPin.bind(this)
-    this.updateWindowDimensions = this.updateWindowDimensions.bind(this);
   }
 
   // Will Check duplicates in list
@@ -244,9 +242,6 @@ class SignUpFormBase extends Component {
   }
 
   componentDidMount() {
-    this.updateWindowDimensions();
-    window.addEventListener('resize', this.updateWindowDimensions);
-
     this.props.firebase.users().on('value', snapshot => {
         const usersObject = snapshot.val();
 
@@ -261,7 +256,7 @@ class SignUpFormBase extends Component {
             authUser: usersObject[this.props.firebase.uid()],
             loading: false,
         }, () => {
-          if (!!this.state.authUser.roles[ROLES.WAIVER])
+          if (!!this.state.authUser.roles[ROLES.WAIVER]) 
             this.setState({authorized: false})
         });
     });
@@ -269,12 +264,6 @@ class SignUpFormBase extends Component {
 
   componentWillUnmount() {
     this.props.firebase.users().off()
-    window.removeEventListener('resize', this.updateWindowDimensions);
-  }
-
-  // Updates window dimension
-  updateWindowDimensions() {
-      this.setState({ width: window.innerWidth, height: window.innerHeight });
   }
 
   // Remaps user array to map to usernames rather than key
@@ -363,7 +352,7 @@ class SignUpFormBase extends Component {
  
     return (
       <div> 
-        {authorized ? 
+        {authorized || showLander ? 
         !showLander ?
         <div>
           <Row className="justify-content-row">
@@ -522,7 +511,7 @@ class SignUpFormBase extends Component {
                 <Row className="sig-row-rp">
                   {!this.state.participantImg ? 
                     <SignatureCanvas penColor='black' ref={(ref) => {this.sigRef = ref}}
-                    canvasProps={{width: this.state.width*.75, height: 150, className: 'participant-sig-rp'}} />
+                    canvasProps={{className: 'participant-sig-rp'}} />
                     : <img className="signBox-image-rt" src={this.state.participantImg} alt="signature" />
                   }
                 </Row>
@@ -592,7 +581,7 @@ class SignUpFormBase extends Component {
                 <Row className="row-rp sig-row-rp">
                   {!this.state.pgImg? 
                     <SignatureCanvas penColor='black' ref={(ref) => {this.sigRef2 = ref}}
-                    canvasProps={{width: this.state.width*.75, height: 150, className: 'participant-sig-rp'}} />
+                    canvasProps={{className: 'participant-sig-rp'}} />
                     : <img className="signBox-image-rt" src={this.state.pgImg} alt="signature" />
                   }
                 </Row>
@@ -634,9 +623,6 @@ class SignUpFormBase extends Component {
                   </Row>
                   <Row className="cardpreview-row-rp card-row-rp">
                     <img src={this.state.cards[this.state.index]} alt="US Airsoft cards" className="card-rp"/>
-                    <Row className={this.state.fname === "" && this.state.lname === "" ? "text-block-empty-rp" : "text-block-card-rp"}>
-                        {this.state.fname + " " + this.state.lname}
-                    </Row>
                   </Row>
                   <Row className="nav-row-rp">
                   <Button className="prev-button-rp" variant="info" type="button" disabled={this.state.index===0}
@@ -796,7 +782,7 @@ class SignUpFormBase extends Component {
                           <Button className="next-button-rp" variant="info" type="button" 
                           disabled={!emailAdded} onClick={() => {
                             this.setState({showLander: false})
-                            this.setState({ ...INITIAL_STATE, status: "Completed"});
+                            this.setState({ ...INITIAL_STATE, status: "Completed", authorized: false,});
                           }}>Return</Button>
                       </Row>
                       <Row className="row-notice">

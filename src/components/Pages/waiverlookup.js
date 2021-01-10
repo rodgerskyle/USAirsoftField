@@ -169,7 +169,7 @@ class WaiverLookup extends Component {
                                                         <Form.Control
                                                             type="name"
                                                             autoComplete="off"
-                                                            placeholder="ex: JohnDoe"
+                                                            placeholder="ex: John Doe"
                                                             value={this.state.search}
                                                             onChange={(e) => {
                                                                 this.onChange(e);
@@ -368,20 +368,21 @@ function WaiverBox ({waivers, index, search, open, loading, month, day, year}) {
                                     {"(" + index + ") " + waiver.name.substr(0, waiver.name.lastIndexOf('('))}
                                 </Card.Text>
                             </Col>
-                            <Col>
-                                <Row>
-                                    <Col className="col-name-fg">
-                                        {returnDay(waiver.date.getDay()) + ", " + 
-                                        waiver.date.getDate() + " " + returnMonth(waiver.date.getMonth()) +
-                                        " " + waiver.date.getFullYear()}
-                                    </Col>
-                                    <Col>
-                                        <Button className="button-submit-admin2" onClick={() => open(waiver.ref)}
-                                        type="button" id="update" variant="success">
-                                            Open
-                                        </Button>
-                                    </Col>
-                                </Row>
+                            <Col className="col-name-fg">
+                                {returnDay(waiver.date.getDay()) + ", " + 
+                                waiver.date.getDate() + " " + returnMonth(waiver.date.getMonth()) +
+                                " " + waiver.date.getFullYear()}
+                            </Col>
+                            <Col md={3} className="align-items-center-col">
+                                <Button variant="warning" className="validate-button-wl">
+                                    <FontAwesomeIcon icon={faDollarSign} />
+                                </Button>
+                            </Col>
+                            <Col md={2}>
+                                <Button className="button-submit-admin2" onClick={() => open(waiver.ref)}
+                                type="button" id="update" variant="success">
+                                    Open
+                                </Button>
                             </Col>
                         </Row>
                             : 
@@ -391,20 +392,21 @@ function WaiverBox ({waivers, index, search, open, loading, month, day, year}) {
                                     {"(" + index + ") " + waiver.name.substr(0, waiver.name.lastIndexOf('('))}
                                 </Card.Text>
                             </Col>
-                            <Col>
-                                <Row>
-                                    <Col className="col-name-fg">
-                                        {returnDay(waiver.date.getDay()) + ", " + 
-                                        waiver.date.getDate() + " " + returnMonth(waiver.date.getMonth()) +
-                                        " " + waiver.date.getFullYear()}
-                                    </Col>
-                                    <Col>
-                                        <Button className="button-submit-admin2" onClick={() => open(waiver.ref)}
-                                        type="submit" id="update" variant="success">
-                                            Open
-                                        </Button>
-                                    </Col>
-                                </Row>
+                            <Col className="col-name-fg">
+                                {returnDay(waiver.date.getDay()) + ", " + 
+                                waiver.date.getDate() + " " + returnMonth(waiver.date.getMonth()) +
+                                " " + waiver.date.getFullYear()}
+                            </Col>
+                            <Col md={3} className="align-items-center-col">
+                                <Button variant="warning" className="validate-button-wl">
+                                    <FontAwesomeIcon icon={faDollarSign} />
+                                </Button>
+                            </Col>
+                            <Col md={2}>
+                                <Button className="button-submit-admin2" onClick={() => open(waiver.ref)}
+                                type="submit" id="update" variant="success">
+                                    Open
+                                </Button>
                             </Col>
                         </Row>
                 : null
