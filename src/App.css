@@ -716,6 +716,7 @@ body {
   padding-bottom: 10px;
   padding-top: 10px;
   margin-bottom: 10px;
+  border-radius: 5px;
 }
 
 .status-card-offrow-admin-wl {
@@ -829,6 +830,7 @@ body {
 
 .card-rp {
   max-width: 50% !important;
+  margin: 0;
 }
 
 .waiver-rp {
@@ -916,11 +918,17 @@ body {
 
 .participant-sig-rp {
   background-color: white;
+  width: 90%;
+  height: 150px;
+  margin-right: -15px;
+  margin-left: -15px;
+  border-radius: 5px;
 }
 
 .sig-row-rp {
   justify-content: center;
   background-color: transparent !important;
+  position: relative;
 }
 
 .pg-sig-rp {
@@ -974,6 +982,7 @@ body {
 }
 
 .row-allwaivers-wl {
+  overflow-x: hidden;
   overflow-y: scroll;
   max-height: 40vh;
   margin-left: -15px;
@@ -2040,11 +2049,17 @@ body {
 
 .waiver-row-renew {
   background-color: rgb(108, 117, 125, 0.75) !important;
+  border-radius: 5px;
 }
 
 .validate-button-wl {
   font-size: .8rem !important;
   margin-left: 15px;
+}
+
+.div-main-birthday {
+  background-color: rgb(108, 117, 125, 0.75);
+  border-radius: 5px;
 }
 
 /* For pincode css */
@@ -2081,6 +2096,45 @@ body {
 .go2139093995 {
   width: 100%;
 }
+
+/*For 7 Columns for calendar*/
+
+.seven-cols {
+  grid-template-columns: repeat(7,minmax(0,1fr));
+  display: grid;
+}
+
+@media (min-width: 768px){
+  .seven-cols .col-md-1,
+  .seven-cols .col-sm-1,
+  .seven-cols .col-lg-1  {
+    width: 100%;
+    *width: 100%;
+    margin: 10px;
+  }
+}
+
+@media (min-width: 992px) {
+  .seven-cols .col-md-1,
+  .seven-cols .col-sm-1,
+  .seven-cols .col-lg-1 {
+    width: 14.285714285714285714285714285714%;
+    *width: 14.285714285714285714285714285714%;
+    margin: 10px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .seven-cols .col-md-1,
+  .seven-cols .col-sm-1,
+  .seven-cols .col-lg-1 {
+    width: 14.285714285714285714285714285714%;
+    *width: 14.285714285714285714285714285714%;
+    margin: 10px;
+  }
+}
+
+/*End Calendar*/
 
 /*Put default normal screen values in here*/
 @media screen and (min-width: 768px) {

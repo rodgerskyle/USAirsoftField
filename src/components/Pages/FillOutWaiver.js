@@ -73,9 +73,7 @@ class WaiverPageFormBase extends Component {
     super(props);
 
     //this.completeWaiver = this.completeWaiver.bind(this);
-    this.state = { ...INITIAL_STATE, emailListNM: null, emailListM: null, num_waivers: null,
-        width: window.innerWidth, height: window.innerHeight, };
-    this.updateWindowDimensions = this.updateWindowDimensions.bind(this);
+    this.state = { ...INITIAL_STATE, emailListNM: null, emailListM: null, num_waivers: null };
   }
 
   async completeWaiver(myProps) {
@@ -101,9 +99,6 @@ class WaiverPageFormBase extends Component {
   }
 
   componentDidMount() {
-    this.updateWindowDimensions();
-    window.addEventListener('resize', this.updateWindowDimensions);
-
     this.props.firebase.numWaivers().on('value', snapshot => {
       let num_waivers = snapshot.val().total_num;
       this.setState({num_waivers})
@@ -112,12 +107,6 @@ class WaiverPageFormBase extends Component {
 
   componentWillUnmount() {
       this.props.firebase.numWaivers().off();
-      window.removeEventListener('resize', this.updateWindowDimensions);
-  }
-
-  // Updates window dimension
-  updateWindowDimensions() {
-      this.setState({ width: window.innerWidth, height: window.innerHeight });
   }
 
   onChangeCheckbox = event => {
@@ -436,7 +425,7 @@ class WaiverPageFormBase extends Component {
               <Row className="row-rp sig-row-rp">
                 {!this.state.pgImg? 
                   <SignatureCanvas penColor='black' ref={(ref) => {this.sigRef2 = ref}}
-                  canvasProps={{width: this.state.width*.75, height: 150, className: 'participant-sig-rp'}} />
+                  canvasProps={{className: 'participant-sig-rp'}} />
                   : <img className="signBox-image-rt" src={this.state.pgImg} alt="signature" />
                 }
               </Row>

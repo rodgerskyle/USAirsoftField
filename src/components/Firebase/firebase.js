@@ -93,8 +93,6 @@ class Firebase {
 
     manageProfile = () => this.func.httpsCallable('manageProfile');
 
-    testRenewal = () => this.func.httpsCallable('testRenewal');
-
     checkRecaptcha = () => this.func.httpsCallable('checkRecaptcha');
 
     // Storage Database API
@@ -120,6 +118,8 @@ class Firebase {
     // Email List API
 
     emailList = (email) => this.db.ref(`emaillist/${email}`)
+
+    emails = () => this.db.ref(`emaillist`)
 
     // Videos API
 

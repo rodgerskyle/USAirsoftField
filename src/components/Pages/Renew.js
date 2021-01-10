@@ -56,27 +56,29 @@ class RenewSubscription extends Component {
     this.state = { 
         ...INITIAL_STATE, 
         users: [],
-        width: window.innerWidth,
-        height: window.innerHeight,
+        usersObject: null,
         UpdateUserState: this.updateUser,
     };
     this.completeWaiver = this.completeWaiver.bind(this);
     this.handleChange = this.handleChange.bind(this);
-    this.updateWindowDimensions = this.updateWindowDimensions.bind(this);
+    this.convertDate = this.convertDate.bind(this);
     }
       
     handleChange(event) {
         this.setState({ value: event.target.value });
     }
 
-    componentWillUnmount() {
-        this.props.firebase.users().off();
-        window.removeEventListener('resize', this.updateWindowDimensions);
+    convertDate(date) {
+        if (date === "N/A")
+            return new Date(-621672192000001)
+        else {
+            let temp = date.split("-")
+            return (new Date(temp[2], temp[0], temp[1]))
+        }
     }
 
-    // Updates window dimension
-    updateWindowDimensions() {
-        this.setState({ width: window.innerWidth, height: window.innerHeight });
+    componentWillUnmount() {
+        this.props.firebase.users().off();
     }
 
     // Checks date of users list to see which ones are expired
@@ -102,17 +104,6 @@ class RenewSubscription extends Component {
     componentDidMount() {
         this.setState({ loading: true });
 
-        this.updateWindowDimensions();
-        window.addEventListener('resize', this.updateWindowDimensions);
-
-        if (typeof this.props.match.params.id !== 'undefined') {
-            this.setState({
-                uid: this.props.match.params.id,
-                showWaiver: true,
-            })
-            console.log(this.props.match.params.id)
-        }
-
         this.props.firebase.users().on('value', snapshot => {
             const usersObject = snapshot.val()
 
@@ -124,12 +115,19 @@ class RenewSubscription extends Component {
             // Doesn't work right now anyways
 
             this.setState({
+                usersObject,
                 users: usersList,
                 loading: false,
             });
         });
-    }
 
+        if (typeof this.props.match.params.id !== 'undefined') {
+            this.setState({
+                uid: this.props.match.params.id,
+                showWaiver: true,
+            })
+        }
+    }
 
   async completeWaiver(myProps) {
     const blob = await pdf((
@@ -205,6 +203,8 @@ class RenewSubscription extends Component {
             saveButton2,
             showLander,
             showWaiver,
+            uid,
+            usersObject,
         } = this.state
         const myProps = {fname, lname, email, address, city, state, zipcode, phone, dob, pgname, pgphone, participantImg, pgImg, age }
         return (
@@ -213,13 +213,13 @@ class RenewSubscription extends Component {
                     <div className="background-static-all">
                         {!showLander ?
                         <Container>
-                            <h2 className="admin-header">Subscription Renewal</h2>
+                            <h2 className="admin-header">Renew Member{uid && usersObject && <div>{usersObject[uid].name}</div>}</h2>
                             {authUser && !!authUser.roles[ROLES.ADMIN] ? 
                             <Breadcrumb className="admin-breadcrumb">
                                 <LinkContainer to="/admin">
                                     <Breadcrumb.Item>Admin</Breadcrumb.Item>
                                 </LinkContainer>
-                                <Breadcrumb.Item active>Subscription Renewal</Breadcrumb.Item>
+                                <Breadcrumb.Item active>Renew Member</Breadcrumb.Item>
                             </Breadcrumb>
                                 : null }
                             <Row className="waiver-row-renew">
@@ -246,7 +246,7 @@ class RenewSubscription extends Component {
                                         : null
                                         }
                                         {!showWaiver ? 
-                                            <UserBox users={this.state.users} index={0} length={this.state.users.length}
+                                            <UserBox users={this.state.users} index={0} length={this.state.users.length} convert={this.convertDate}
                                             search={this.state.search} update={this.state.UpdateUserState} loading={this.state.loading}/>
                                             :
                                             <div>
@@ -405,7 +405,7 @@ class RenewSubscription extends Component {
                                                     <Row className="sig-row-rp">
                                                         {!this.state.participantImg ? 
                                                         <SignatureCanvas penColor='black' ref={(ref) => {this.sigRef = ref}}
-                                                        canvasProps={{width: this.state.width*.75, height: 150, className: 'participant-sig-rp'}} />
+                                                        canvasProps={{className: 'participant-sig-rp'}} />
                                                         : <img className="signBox-image-rt" src={this.state.participantImg} alt="signature" />
                                                         }
                                                     </Row>
@@ -571,11 +571,13 @@ class RenewSubscription extends Component {
     }
 }
 
-function UserBox({users, index, search, update, loading}) {
+function UserBox({users, index, search, update, loading, convert}) {
     return (
         <Card.Body className="status-card-body-renew-admin">
             {!loading ?
-            users.map((user, i) => (
+            users.sort((a, b) => 
+            (convert(b.renewal) - convert(a.renewal)))
+            .map((user, i) => (
                 search !== "" ? // Search query case
                     user.username.toLowerCase().includes(search.toLowerCase()) ? 
                             index++ % 2 === 0 ? 

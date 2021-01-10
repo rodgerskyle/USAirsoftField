@@ -42,6 +42,7 @@ import Redirect from './components/constants/redirect';
 import CookieConsent from "react-cookie-consent";
 import PageNotFound from './components/Pages/PageNotFound';
 import RentalForm from './components/Pages/RentalForm';
+import Birthday from './components/Pages/Birthday';
 
 const App = () => (
       <Router>
@@ -49,6 +50,9 @@ const App = () => (
           <Redirect />
           <Navigation />
           <Switch>
+            <Route exact path="/birthday">
+              <Birthday />
+            </Route>
             <Route exact path="/rentalform">
               <RentalForm />
             </Route>
