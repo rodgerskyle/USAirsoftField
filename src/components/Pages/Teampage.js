@@ -203,7 +203,7 @@ class Teampage extends Component {
                                 <Row className="description-row-teamspage stat-box">
                                     <div className="counter description-teamspage">
                                         <i className="fa fa-info-circle fa-2x text-black"></i>
-                                        <h2 className="timer count-title count-number" data-to="100" data-speed="1500">{
+                                        <h2 className="timer count-title count-number h2-description-team" data-to="100" data-speed="1500">{
                                         typeof this.state.teamObject.description !== 'undefined' ? this.state.teamObject.description : "N/A"
                                         }</h2>
                                         <p className="count-text ">Team Description</p>
@@ -229,9 +229,9 @@ class Teampage extends Component {
 }
 
     const TeamUserlist = ({ users }) => (
-        <Row className="stat-box">
+        <Row className="row-members-teams">
             {users.map(user => (
-                <Col key={user[0]} className="col-team-user">
+                <Col md={4} key={user[0]} className="col-team-user">
                     <div className="counter team-member-list">
                         <i className="fa fa-users fa-2x text-black"></i>
                         <Link className="profilelink-tm" to={"/profilelookup/" + user[1]}>

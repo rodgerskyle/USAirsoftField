@@ -389,6 +389,13 @@ body {
 .losses-lb {
   color: #fb6060;
 }
+.myprofilelink-lb:link {
+  color: gold;
+}
+
+.myprofilelink-lb:visited {
+  color: gold;
+}
 
 .profilelink-lb:link {
   color: white;
@@ -433,6 +440,22 @@ body {
   vertical-align: middle !important;
   padding: .5rem .1rem !important;
   text-align: center;
+}
+
+.td-tv-lb {
+  vertical-align: middle !important;
+  padding: 0 .1rem !important;
+  text-align: center;
+}
+
+.link-td-profile-lb {
+  color: gold;
+  vertical-align: middle;
+}
+
+.link-td-profile-lb:hover {
+  color: gold;
+  vertical-align: middle;
 }
 
 .link-td-lb {
@@ -660,6 +683,17 @@ body {
   margin-left: 0 !important;
 }
 
+.row-members-teams {
+  margin-bottom: 30px;
+  justify-content: center;
+}
+
+.h2-description-team {
+  font-size: 16px;
+  margin: 10px;
+  overflow-wrap: break-word;
+}
+
 .status-card-body-wl-admin {
   color: white;
   padding-bottom: 0 !important;
@@ -822,6 +856,7 @@ body {
 
 .cardpreview-row-rp {
   justify-content: center;
+  align-items: center;
 }
 
 .button-row-rp {
@@ -1296,6 +1331,11 @@ body {
 .row-header-lb {
   padding-top: 20px;
   padding-bottom: 20px;
+}
+
+.row-header-tv-lb {
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 
 .col-header-lb {
@@ -2062,6 +2102,18 @@ body {
   border-radius: 5px;
 }
 
+.a-youtube-link {
+  color: white !important;
+}
+
+.a-instagram-link {
+  color: white !important;
+}
+
+.tr-personal-rank-leaderboard {
+  border-bottom: 10px solid black;
+}
+
 /* For pincode css */
 .pincode-input-container .pincode-input-text {
   padding:0 !important;
@@ -2247,6 +2299,7 @@ body {
   .description-teamspage {
     text-align: center;
     width: 100%;
+    max-width: 654px;
   }
 
   .members-textbox-teamspage {
@@ -2327,6 +2380,12 @@ body {
   .td-lb {
     vertical-align: middle !important;
     padding: .75rem !important;
+    text-align: left;
+  }
+
+  .td-tv-lb {
+    vertical-align: middle !important;
+    padding: 0 .75rem !important;
     text-align: left;
   }
 

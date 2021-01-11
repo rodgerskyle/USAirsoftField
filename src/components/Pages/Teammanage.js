@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 
-import { Container, Form, Button, Row, Col } from 'react-bootstrap/';
+import { Container, Form, Button, Row, Col, Spinner } from 'react-bootstrap/';
 
 import { AuthUserContext, withAuthorization } from '../session';
 
@@ -39,6 +39,7 @@ class TeamManage extends Component {
             membersLoading: false,
             descriptionLoading: false,
             deleting: false,
+            loading: true,
             AcceptRequestState: this.AcceptRequest,
             DeclineRequestState: this.DeclineRequest,
             KickMemberState: this.KickMember,
@@ -76,7 +77,7 @@ class TeamManage extends Component {
     //Get image function for team image = teamname
     getPicture(teamname) {
         this.props.firebase.teamsPictures(`${teamname}.png`).getDownloadURL().then((url) => {
-            this.setState({ teamicon: url })
+            this.setState({ teamicon: url, loading: false })
         }).catch((error) => {
             // Handle any errors NOT DONE
             this.setState({})
@@ -108,7 +109,7 @@ class TeamManage extends Component {
         e.preventDefault();
         // Grabs index selected and grabbing user info
         var index = this.state.requestSelected;
-        if (index !== "" && index !== null && typeof index !== 'undefined') {
+        if (typeof index === 'string') {
             this.setState({requestLoading: true})
             var requests = this.state.requests;
             var user = requests[index][0];
@@ -132,6 +133,13 @@ class TeamManage extends Component {
                 this.setState({requestError: "Error: " + error.message})
             });
         }
+        else {
+            this.setState({ requestError: "Please select a user."}, function() {
+                setTimeout( () => {
+                    this.setState({requestError: null })
+                }, 5000);
+            })
+        }
     }
 
     // For declining requests to join the team
@@ -140,7 +148,7 @@ class TeamManage extends Component {
         // Grabs index selected and grabbing user info
         var index = this.state.requestSelected;
 
-        if (index !== "" && index !== null && typeof index !== 'undefined') {
+        if (typeof index === 'string') {
             this.setState({requestLoading: true})
             var requests = this.state.teamObject.requests;
 
@@ -154,6 +162,13 @@ class TeamManage extends Component {
                 })
             })
         }
+        else {
+            this.setState({ requestError: "Please select a user."}, function() {
+                setTimeout( () => {
+                    this.setState({requestError: null })
+                }, 5000);
+            })
+        }
     }
 
     // For kicking people off the team
@@ -161,7 +176,7 @@ class TeamManage extends Component {
         e.preventDefault();
         // Grabs index selected and grabbing user info
         var index = this.state.memberSelected;
-        if (index !== "" && index !== null && typeof index !== 'undefined') {
+        if (typeof index === 'string') {
             this.setState({memberLoading: true})
             var members = this.state.teamObject.members;
             var uid = members[index][1];
@@ -183,6 +198,13 @@ class TeamManage extends Component {
             }).catch( (error) => {
                 this.setState({memberError: "Error: " + error, memberLoading: false,})
             });
+        }
+        else {
+            this.setState({ memberError: "Please select a user."}, function() {
+                setTimeout( () => {
+                    this.setState({memberError: null })
+                }, 5000);
+            })
         }
     }
 
@@ -210,7 +232,7 @@ class TeamManage extends Component {
         e.preventDefault();
         // Grabs index selected and grabbing user info
         var index = this.state.memberSelected;
-        if (index !== "" && index !== null && typeof index !== 'undefined') {
+        if (typeof index === 'string') {
             this.setState({memberLoading: true})
             var members = this.state.members;
 
@@ -259,15 +281,24 @@ class TeamManage extends Component {
         this.setState({descriptionLoading: true})
         //update description 
         let description = this.state.description
-        this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({description}).then(() => {
-            this.setState({ descriptionError: "Successful update.", descriptionLoading: false}, function() {
+       
+        if (description.length <= 400) {
+            this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({description}).then(() => {
+                this.setState({ descriptionError: "Successful update.", descriptionLoading: false}, function() {
+                    setTimeout( () => {
+                        this.setState({descriptionError: null })
+                    }, 5000);
+                })
+            }).catch((error) => {
+
+            })
+        } else {
+            this.setState({ descriptionError: "Please use less than 400 characters for your description." }, function() {
                 setTimeout( () => {
                     this.setState({descriptionError: null })
                 }, 5000);
             })
-        }).catch((error) => {
-
-        })
+        }
     }
 
     render() {
@@ -275,7 +306,11 @@ class TeamManage extends Component {
             <AuthUserContext.Consumer>
                 {authUser => (
                     <div className="background-static-all">
-                        {authUser.team === "" ?
+                        {this.state.loading ? 
+                        <Row className="justify-content-row">
+                            <Spinner animation="border" variant="light"/>
+                        </Row> :
+                        authUser.team === "" ?
                             <Container className="notice-text-container">
                                 <Row className="row-success-rp">
                                     <Col className="col-rp">
@@ -299,45 +334,61 @@ class TeamManage extends Component {
                                     <img className="team-icon-individual" src={this.state.teamicon} alt="" />
                                 </div>
                                 {!this.state.deleting ?
-                                <MembersList members={this.state.members} kick={this.state.KickMemberState}
-                                promote={this.state.PromoteToLeaderState} onChange={this.state.onChangeSelectionMemState}
-                                quit={this.state.QuitTeamState} errortext={this.state.memberError}
-                                />
+                                <Row className="justify-content-row">
+                                    <Col md={7}>
+                                        <MembersList members={this.state.members} kick={this.state.KickMemberState}
+                                        promote={this.state.PromoteToLeaderState} onChange={this.state.onChangeSelectionMemState}
+                                        quit={this.state.QuitTeamState} errortext={this.state.memberError}
+                                        />
+                                    </Col>
+                                </Row>
                                 : null }
                                 {this.state.memberLoading ? <Progress type="spin" color="white"/> : null}
                                 {!this.state.deleting ?
-                                <RequestList requests={this.state.requests} decline={this.state.DeclineRequestState} 
-                                accept={this.state.AcceptRequestState} onChange={this.state.onChangeSelectionReqState}
-                                errortext={this.state.requestError}
-                                />
+                                <Row className="justify-content-row">
+                                    <Col md={7}>
+                                        <RequestList requests={this.state.requests} decline={this.state.DeclineRequestState} 
+                                        accept={this.state.AcceptRequestState} onChange={this.state.onChangeSelectionReqState}
+                                        errortext={this.state.requestError}
+                                        />
+                                    </Col>
+                                </Row>
                                 : null}
                                 {this.state.requestLoading ? <Progress type="spin" color="white"/> : null}
-
                                 {!this.state.deleting ?
-                                <Form className="team-manage-text">
-                                    <Form.Group controlId="exampleForm.ControlTextarea1">
-                                        <Form.Label>Add Description Here:</Form.Label>
-                                        <Form.Control as="textarea" rows="3" value={this.state.description}
-                                        onChange={(e) => this.onChangeDescription(e)}/>
-                                        <Button className="team-manage-button" variant="outline-success" 
-                                        type="button" onClick={(e) => this.UpdateDescription(e)}>
-                                            Update
-                                        </Button>
-                                    </Form.Group>
-                                </Form> : null }
+                                <Row className="justify-content-row">
+                                    <Col md={7}>
+                                        <Form className="team-manage-text">
+                                            <Form.Group controlId="exampleForm.ControlTextarea1">
+                                                <Form.Label>Add Description Here:</Form.Label>
+                                                <Form.Control as="textarea" rows="8" value={this.state.description}
+                                                onChange={(e) => this.onChangeDescription(e)}/>
+                                                <Button className="team-manage-button" variant="success" 
+                                                type="button" onClick={(e) => this.UpdateDescription(e)}>
+                                                    Update
+                                                </Button>
+                                            </Form.Group>
+                                        </Form>
+                                    </Col>
+                                </Row>
+                                : null }
                                 {this.state.descriptionError ? <p className="status-text-teammanage">{this.state.descriptionError}</p> : null}
                                 {this.state.descriptionLoading ? <Progress type="spin" color="white"/> : null}
-                                <Button variant="outline-danger" size="md" block disabled={!this.state.checkBox}
-                                type="button" onClick={(e) => this.DisbandTeam(e)}>
-                                    Disband team
-                                </Button>
+                                <Row className="justify-content-row">
+                                    <Col md={7}>
+                                        <Button variant="danger" size="md" block disabled={!this.state.checkBox}
+                                        type="button" onClick={(e) => this.DisbandTeam(e)}>
+                                            Disband team
+                                        </Button>
+                                        <Form.Group controlId="formBasicCheckbox">
+                                            <Form.Check checked={this.state.checkBox} 
+                                            onChange={this.onChangeCheck}
+                                            type="checkbox" className="team-manage-text"
+                                            label="By checking this box, you confirm to disband your team" />
+                                        </Form.Group>
+                                    </Col>
+                                </Row>
                                 {this.state.deleting ? <Progress type="spin" color="white"/> : null}
-                                <Form.Group controlId="formBasicCheckbox">
-                                    <Form.Check checked={this.state.checkBox} 
-                                    onChange={this.onChangeCheck}
-                                    type="checkbox" className="team-manage-text"
-                                    label="By checking this box, you confirm to disband your team" />
-                                </Form.Group>
                             </Container> 
                             :
                             <Container>
@@ -346,14 +397,14 @@ class TeamManage extends Component {
                                     <img className="team-icon-individual" src={this.state.teamicon} alt="" />
                                 </Row>
                                 <Row className="justify-content-row">
-                                    <Button className="team-manage-button-2" variant="outline-danger" type="submit" onClick={(e) => this.QuitTeam(e)}>
+                                    <Button className="team-manage-button-2" variant="danger" type="submit" onClick={(e) => this.QuitTeam(e)}>
                                         Quit Team
                                     </Button>
                                     {this.state.requestLoading ? <Progress type="spin" color="white"/> : null}
                                 </Row>
                             </Container> 
                         }
-                    </div>
+                    </div> 
                 )
                 }
             </AuthUserContext.Consumer>
@@ -372,13 +423,15 @@ const MembersList = ({ members, promote, kick, onChange, quit, errortext }) => (
                     <option value={i} key={i}>{index[0]}</option>
                 )): ""}
             </Form.Control>
-            <Button className="team-manage-button" variant="outline-success" type="button" onClick={(e) => promote(e)}>
+            <Button className="team-manage-button" variant="success" type="button" onClick={(e) => promote(e)}
+            disabled={members?.length === 0}>
                 Promote to leader
             </Button>
-            <Button className="team-manage-button-2" variant="outline-danger" type="button" onClick={(e) => kick(e)}>
+            <Button className="team-manage-button-2" variant="danger" type="button" onClick={(e) => kick(e)}
+            disabled={members?.length === 0}>
                 Kick
             </Button>
-            <Button className="team-manage-button-2" variant="outline-danger" type="submit" onClick={(e) => quit(e)}>
+            <Button className="team-manage-button-2" variant="danger" type="submit" onClick={(e) => quit(e)}>
                 Quit Team
             </Button>
         </Form.Group>
@@ -398,10 +451,12 @@ const RequestList = ({ requests, accept, decline, onChange, errortext }) => (
                     <option value={i} key={i}>{index[0]}</option>
                 )): ""}
             </Form.Control>
-            <Button className="team-manage-button" variant="outline-success" type="button" onClick={(e) => accept(e)}>
+            <Button className="team-manage-button" variant="success" type="button" onClick={(e) => accept(e)}
+            disabled={requests?.length === 0}>
                 Accept Request
             </Button>
-            <Button className="team-manage-button-2" variant="outline-danger" type="button" onClick={(e) => decline(e)}>
+            <Button className="team-manage-button-2" variant="danger" type="button" onClick={(e) => decline(e)}
+            disabled={requests?.length === 0}>
                 Decline Request
             </Button>
         </Form.Group>
