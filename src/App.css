@@ -1217,7 +1217,6 @@ body {
 .col-name-ul {
   display: flex;
   align-items: center;
-  white-space: nowrap;
   min-width: 100%;
 }
 
@@ -1418,6 +1417,56 @@ body {
 
 .profile-row-footer {
   justify-content: center;
+}
+
+.profile-icon-stats {
+  margin-bottom: 15px;
+}
+
+.icon-editing-rf {
+  font-size: 1.5rem;
+  color: white;
+}
+
+.icons-rf {
+  font-size: 1.5rem;
+}
+
+.col-form-rf {
+  padding-top: 10px;
+}
+
+.col-add-card-button-rf {
+  display: flex;
+  align-items: center;
+  padding-top: 25px;
+}
+
+.error-text-rental-rf {
+  color: red;
+}
+
+.col-submit-rf {
+  align-items: center;
+  display: flex;
+}
+
+.col-submit-rf .MuiButton-contained.Mui-disabled {
+  color: rgba(256, 256,256, 0.26);
+  box-shadow: none;
+  background-color: rgba(0, 0, 0, 0.12);
+}
+
+.cancel-button-rf {
+  margin-left: 15px !important;
+}
+
+.div-buttons-rf  .MuiButton-containedPrimary {
+  background-color: #008e2b
+}
+
+.div-buttons-rf .MuiButton-containedPrimary:hover {
+  background-color: #005c1c
 }
 
 .link-footer:link {
@@ -1675,6 +1724,18 @@ body {
 .padding-5px {
   padding: 5px;
   color: white;
+}
+
+.col-cc {
+  padding-top: 10px;
+}
+
+.row-cc {
+  padding-bottom: 10px;
+}
+
+.textfield-zip-cc {
+  width: 100%;
 }
 
 .div-loading-profile {
@@ -1958,6 +2019,138 @@ body {
   color: gray !important;
 }
 
+.row-notice-rf .MuiCheckbox-root {
+  color: #90caf9 !important;
+  padding: 0px;
+  padding-right: 10px;
+}
+
+.row-notice-rf .MuiCheckbox-colorPrimary.Mui-checked {
+  color: #90caf9 !important;
+}
+
+.p-notice-rf {
+  color: white;
+  padding: 10px;
+  text-align: justify;
+}
+
+.table-edit-rf .MuiTableCell-root{
+  font-size: 1rem;
+}
+
+.table-edit-rf.MuiPaper-root {
+  background-color: #424242;
+}
+
+.table-edit-rf .MuiTableCell-head {
+  color: white
+}
+
+.table-edit-rf .MuiTableCell-root {
+  border-bottom: 1px solid rgba(81, 81, 81, 1);
+}
+
+.table-edit-rf .MuiTableCell-body {
+  color: white
+}
+
+.table-edit-rf .MuiIconButton-root {
+  color: white;
+}
+
+.table-edit-rf .MuiTableCell-footer {
+  color: white;
+  background-color: rgba(81, 81, 81, 1);
+}
+
+.div-edit-rf {
+  background-color: rgb(51, 55, 60);
+  padding: 20px;
+  border-radius: 5px;
+}
+
+.icon-checked-rf {
+  font-size: 1.5rem;
+}
+
+.list-edit-rf.MuiList-root{
+  background-color: #424242;
+  border-radius: 5px;
+}
+
+.list-edit-rf .MuiTypography-body1 {
+  color: white;
+}
+
+.list-edit-rf .MuiTypography-colorTextSecondary {
+  color: rgba(255,255,255, 0.24);
+}
+
+.list-edit-rf .MuiIconButton-label {
+  color: white;
+}
+
+.list-edit-rf .MuiListItem-container {
+  border-bottom: 1px solid rgba(81, 81, 81, 1);
+}
+
+.list-edit-rf .MuiAvatar-colorDefault {
+  color: black;
+}
+
+.div-back-button-rf {
+  margin-bottom: 10px;
+}
+
+.div-back-button-rf .MuiButton-containedPrimary {
+  background-color: #6f6f6f
+}
+
+.div-back-button-rf .MuiButton-containedPrimary:hover {
+  background-color: #a1a1a1
+}
+
+.table-cell-button-rf .MuiButton-containedPrimary {
+  background-color: #008e2b
+}
+
+.table-cell-button-rf .MuiButton-containedPrimary:hover {
+  background-color: #005c1c
+}
+
+.collapse-table-row-rf .MuiTableCell-root {
+  background-color: rgb(119, 119, 119);
+}
+
+.div-add-rental-rf {
+  background-color: rgb(51, 55, 60);
+  padding: 20px;
+  border-radius: 5px;
+  margin-top: 15px;
+}
+
+.h5-add-rental-rf {
+  color: white;
+}
+
+.col-rentals-esf .MuiChip-label {
+  font-size: 15px;
+}
+
+.col-rentals-esf .MuiChip-root {
+  height: 36px;
+  color: white;
+}
+
+.col-rentals-esf .MuiChip-root .MuiChip-avatar {
+  font-size: 1rem;
+}
+
+.th-esf .MuiIconButton-root {
+  margin-top: -3px
+}
+
 .MuiBottomNavigationAction-root.Mui-selected {
   color: white !important;
 }
@@ -2097,6 +2290,13 @@ body {
   margin-left: 15px;
 }
 
+.check-button-wl {
+  font-size: .7rem !important;
+  margin-left: 15px;
+  padding: 8px 10px !important;
+  color: black !important;
+}
+
 .div-main-birthday {
   background-color: rgb(108, 117, 125, 0.75);
   border-radius: 5px;
@@ -2141,8 +2341,7 @@ body {
 }
 
 .go2642161244 {
-  height: auto !important;
-  padding: 2px !important;
+  padding: 4px !important;
 }
 
 .go2139093995 {
