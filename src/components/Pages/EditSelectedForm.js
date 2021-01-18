@@ -1,59 +1,54 @@
-import React, { Component } from 'react';
-import { withFirebase } from '../Firebase';
-import '../../App.css';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-
-// My imports 
-import uuid from 'uuid/v4';
-import { Button, Form, Container, Card, Row, Col, Breadcrumb, Spinner } from 'react-bootstrap/';
-import MUIButton from '@material-ui/core/Button';
-import { LinkContainer } from 'react-router-bootstrap';
-
-import BottomNavigation from '@material-ui/core/BottomNavigation';
-import BottomNavigationAction from '@material-ui/core/BottomNavigationAction';
-import Icon from '@material-ui/core/Icon';
-
-import { faEdit, faFolderPlus, faFolderMinus, faFolderOpen, faTimes, faCheck } from "@fortawesome/free-solid-svg-icons";
-import { faSquare, faCheckSquare } from "@fortawesome/free-regular-svg-icons";
+import { faCheckSquare, faSquare } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import styled from 'styled-components'
-
-import MultiSelect from "react-multi-select-component"
-
-import * as ROLES from '../constants/roles';
-import { TextField, Checkbox, List, ListItem, ListItemAvatar, Avatar, ListItemSecondaryAction, ListItemText, Fab, Chip } from '@material-ui/core';
-import { Contacts, Edit, ArrowBackIos, Add, Check, Close, HighlightOff, RemoveCircleOutline } from '@material-ui/icons'
-// Imports for MUI Table
-import { makeStyles, recomposeColor } from '@material-ui/core/styles';
+import { Avatar, Chip } from '@material-ui/core';
 import Box from '@material-ui/core/Box';
+import MUIButton from '@material-ui/core/Button';
 import Collapse from '@material-ui/core/Collapse';
+import Divider from '@material-ui/core/Divider';
 import IconButton from '@material-ui/core/IconButton';
+import InputBase from '@material-ui/core/InputBase';
+import Paper from '@material-ui/core/Paper';
+// Imports for MUI Table
+import { makeStyles } from '@material-ui/core/styles';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
+import TableFooter from '@material-ui/core/TableFooter';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
-import TableFooter from '@material-ui/core/TableFooter';
 import Typography from '@material-ui/core/Typography';
-import Paper from '@material-ui/core/Paper';
+import { Add, Cancel, CheckCircle, Edit, RemoveCircleOutline } from '@material-ui/icons';
 import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
+import React, { Component } from 'react';
+import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
+import { Col, Row, Spinner } from 'react-bootstrap/';
+import styled from 'styled-components';
+// My imports 
+import uuid from 'uuid/v4';
+
+import { withFirebase } from '../Firebase';
+
+import '../../App.css';
 
 const options = [
     { label: "M4 Rental w/ battery", value: "M4 Rental", number: "", checked: false, id: "r0" },
     { label: "M4 Magazine", value: "M4 Magazine", number: "", checked: false, id: "r1" },
-    { label: "Mask", value: "Mask", number: "", checked: false, id: "r2" },
+    { label: "Full Face Mask", value: "Mask", number: "", checked: false, id: "r2" },
     { label: "M4 Premium Rental w/ battery", value: "M4 Premium Rental", number: "", checked: false, id: "r3" },
-    { label: "Condor Sling", value: "Condor Sling", number: "", checked: false, id: "r4" },
-    { label: "Condor Vest", value: "Condor Vest", number: "", checked: false, id: "r5" },
-    { label: "9.6v Battery", value: "9.6v Battery", number: "", checked: false, id: "r6" },
-    { label: "Elite Force 1911", value: "Elite Force 1911", number: "", checked: false, id: "r7" },
-    { label: "Elite Force 1911 Magazine", value: "Elite Force 1911 Magazine", number: "", checked: false, id: "r8" },
+    { label: "Firehawk (9 to 11 yrs.)", value: "Firehawk", number: "", checked: false, id: "r4"},
+    { label: "Premium Dye Mask", value: "Dye Mask", number: "", checked: false, id: "r5" },
+    { label: "Condor Sling", value: "Condor Sling", number: "", checked: false, id: "r6" },
+    { label: "Condor Vest", value: "Condor Vest", number: "", checked: false, id: "r7" },
+    { label: "9.6v Battery", value: "9.6v Battery", number: "", checked: false, id: "r8" },
+    { label: "Elite Force 1911", value: "Elite Force 1911", number: "", checked: false, id: "r9" },
+    { label: "Elite Force 1911 Magazine", value: "Elite Force 1911 Magazine", number: "", checked: false, id: "r10" },
+    { label: "Glock 17", value: "Glock 17", number: "", checked: false, id: "r11" },
 ]
 
 const verify = (item, list) => {
-    for (let i=0; i<list.length; i++)
+    for (let i = 0; i < list.length; i++)
         if (list[i].value === item.value) return false;
     return true // Verified that it's safe
 }
@@ -61,13 +56,13 @@ const verify = (item, list) => {
 // Copies over item to another list, verifies it doesn't exist
 const copy = (source, destination, droppableSource, droppableDestination) => {
     const sourceClone = Array.from(source);
-    const destClone = Array.from(destination);
+    const destClone = typeof destination === 'object' ? Array.from(destination) : [];
     const item = sourceClone[droppableSource.index];
 
     // Make sure it doesn't exist at destination
 
     if (verify(item, destClone))
-        destClone.splice(droppableDestination.index, 0, {...item, id: uuid()});
+        destClone.splice(droppableDestination.index, 0, { ...item, id: uuid() });
     return destClone;
 };
 
@@ -77,47 +72,49 @@ const copy = (source, destination, droppableSource, droppableDestination) => {
 const move = (source, destination, droppableSource, droppableDestination, availableList) => {
     const sourceClone = Array.from(source);
     const destClone = typeof destination === 'object' ? Array.from(destination) : [];
-    let removed = source[droppableSource.index]
+    //let removed = source[droppableSource.index]
 
     //if (!removed) return;
 
-    let foundIndex = -1
+    //let foundIndex = -1
     if (droppableSource.droppableId.includes("p_rentals") && droppableDestination.droppableId.includes("p_rentals")) {
-        // DO nothing
+        return;
     }
-    else if (removed.amount) { // Copy case
-        // Decrement number of rentals left if the number is greater than 1
-        if (removed?.amount > 1) {
-            sourceClone.amount--
-            // Adds it back but we need to remove it if it is wrong
-            //sourceClone.splice(droppableSource.index, 0, Object.assign({}, removed));
-        }
-        else {
-            [removed] = sourceClone.splice(droppableSource.index, 1);
-        }
-    }
-    else {
-        // Moving it the opposite direction checking if it exists in Available object
-        // [removed] = sourceClone.splice(droppableSource.index, 1);
-        // let amount = 1
-        // // Change how duplicate is found
-        // for (let i = 0; i < availableList.length; i++) {
-        //     if (availableList[i].value === removed.value) {
-        //         amount = availableList[i].amount + 1
-        //         foundIndex = i
-        //         break;
-        //     }
-        // }
-        // removed["amount"] = amount
-    }
+    // else if (removed.amount) { // Copy case
+    //     // Decrement number of rentals left if the number is greater than 1
+    //     // if (removed?.amount > 1) {
+    //     //     sourceClone.amount--
+    //     //     // Adds it back but we need to remove it if it is wrong
+    //     //     //sourceClone.splice(droppableSource.index, 0, Object.assign({}, removed));
+    //     // }
+    //     else {
+    //         // [removed] = sourceClone.splice(droppableSource.index, 1);
+    //     }
+    // }
+    // else {
+    // Moving it the opposite direction checking if it exists in Available object
+    // [removed] = sourceClone.splice(droppableSource.index, 1);
+    // let amount = 1
+    // // Change how duplicate is found
+    // for (let i = 0; i < availableList.length; i++) {
+    //     if (availableList[i].value === removed.value) {
+    //         amount = availableList[i].amount + 1
+    //         foundIndex = i
+    //         break;
+    //     }
+    // }
+    // removed["amount"] = amount
+    //}
 
-    console.log(destClone)
-    // If it wasn't found add it back to the array
-    if (foundIndex === -1)
-        destClone.splice(droppableDestination.index, 0, removed);
-    else {
-        destClone[foundIndex] = removed
-    }
+    // console.log(destClone)
+    // // If it wasn't found add it back to the array
+    // if (foundIndex === -1)
+    //     destClone.splice(droppableDestination.index, 0, removed);
+    // else {
+    //     destClone[foundIndex] = removed
+    // }
+
+    const [removed] = sourceClone.splice(droppableSource.index, 1);
 
     const result = {};
     result[droppableSource.droppableId] = sourceClone;
@@ -157,10 +154,16 @@ const getItemStyle = (isDragging, draggableStyle) => ({
     margin: 5,
 
     // change background colour if dragging
-    background: isDragging ? 'lightgreen' : 'grey',
+    background: isDragging ? 'transparent' : 'grey',
+    border: isDragging ? '1px solid lightgreen' : 'none',
 
     // styles we need to apply on draggables
     ...draggableStyle
+});
+
+const getCellStyle = (isDragging) => ({
+    // change background colour if dragging
+    width: isDragging ? '100%' : 'initial',
 });
 
 const getListStyle = isDraggingOver => ({
@@ -220,16 +223,18 @@ class EditSelectedForm extends Component {
                     destination,
                     availableList
                 );
-                
-                if (index2) {
+
+                if (index2) { // Both are p_rental trips
                     let p_index = "p_rentals-" + index
                     let p_index2 = "p_rentals-" + index2
-                    this.props.firebase.participantsRentals(this.props.index, index).update({ rentals: result[p_index]})
-                    this.props.firebase.participantsRentals(this.props.index, index2).update({ rentals: result[p_index2]})
+                    console.log(result[p_index])
+                    console.log(result[p_index2])
+                    this.props.firebase.participantsRentals(this.props.index, index).update({ rentals: result[p_index] })
+                    this.props.firebase.participantsRentals(this.props.index, index2).update({ rentals: result[p_index2] })
                 }
-                else {
+                else { // Available case as destination (not gonna be used)
                     let p_index = "p_rentals-" + index
-                    this.props.firebase.participantsRentals(this.props.index, index).update({ rentals: result[p_index]})
+                    this.props.firebase.participantsRentals(this.props.index, index).update({ rentals: result[p_index] })
                     this.props.firebase.availableRentals(this.props.index).update(result.available)
                 }
             }
@@ -243,16 +248,17 @@ class EditSelectedForm extends Component {
                     source,
                     destination
                 )
-                console.log(result)
 
                 let p_index = "p_rentals-" + index
-                for (let i=0; i<result.length; i++) {
+                for (let i = 0; i < result.length; i++) {
                     result[i].number = ""
-                    delete result[i].amount 
+                    delete result[i].amount
                 }
 
                 console.log(result)
-                this.props.firebase.participantsRentals(this.props.index, index).update({ rentals: result})
+
+                this.updateAmount(source.index, null)
+                this.props.firebase.participantsRentals(this.props.index, index).update({ rentals: result })
                 // this.props.firebase.availableRentals(this.props.index).update(result.available)
             }
 
@@ -281,7 +287,7 @@ class EditSelectedForm extends Component {
 
 
 
-                //this.props.firebase.rental(this.props.index).update({ participants: temp })
+            //this.props.firebase.rental(this.props.index).update({ participants: temp })
 
             // this.setState({
             //     availableList: result.available,
@@ -312,6 +318,70 @@ class EditSelectedForm extends Component {
         this.props.firebase.rentals().off()
     }
 
+    // Detaches rental from user
+    detach = (rentalIndex, userIndex) => {
+        // Update firebase rental at this index and increase amount of available for this item
+        // Remove from participants at userIndex and remove rental at rentalIndex
+        let rentals = this.state.participants[userIndex].rentals
+        let obj = rentals.splice(rentalIndex, 1)
+        this.props.firebase.participantsRentals(this.props.index, userIndex).update({ rentals })
+        this.updateAmount(-1, obj[0])
+    }
+
+    // Edit rental number on user
+    edit = (rentalIndex, userIndex, value) => {
+        let rentals = this.state.participants[userIndex].rentals
+        rentals[rentalIndex].number = value
+        this.props.firebase.participantsRentals(this.props.index, userIndex).update({ rentals })
+    }
+
+    // Marks checked button on rental as opposite of what is on user
+    checkin = (rentalIndex, userIndex) => {
+        let rentals = this.state.participants[userIndex].rentals
+        rentals[rentalIndex].checked = !(rentals[rentalIndex].checked)
+        this.props.firebase.participantsRentals(this.props.index, userIndex).update({ rentals })
+    }
+
+    // Update amount of item in available list 
+    updateAmount = (rentalIndex, obj) => {
+        // Add 1 if index is -1
+        // Subtract 1 otherwise
+        let available = typeof this.state.availableList === 'object' ? this.state.availableList : []
+
+        if (rentalIndex === -1) { // Add case
+            let index = this.returnIndex(obj.value)
+            if (index === -1) { // Was not found, push new object back in
+                available.push(this.returnObject(obj.value))
+            }
+            else
+                available[index].amount = available[index].amount += 1
+            this.props.firebase.availableRentals(this.props.index).update(available)
+        }
+        else { // Subtract case
+            available[rentalIndex].amount -= 1
+            if (available[rentalIndex].amount === 0)
+                available.splice(rentalIndex, 1)
+            this.props.firebase.availableRentals(this.props.index).update(available)
+        }
+    }
+
+    // Return index from availablelist where object value is found
+    returnIndex = (value) => {
+        const { availableList } = this.state
+        for (let i = 0; i < availableList.length; i++) {
+            if (availableList[i].value === value)
+                return i
+        }
+        return -1
+    }
+
+    // Find rental from options array
+    returnObject = (value) => {
+        for (let i = 0; i < options.length; i++)
+            if (options[i].value === value) return options[i]
+        return null;
+    }
+
 
     // Normally you would want to split things out into separate components.
     // But in this example everything is just done in one place for simplicity
@@ -339,13 +409,14 @@ class EditSelectedForm extends Component {
                                 </TableHead>
                                 <TableBody>
                                     {
-                                    typeof participants !== 'undefined' ?
-                                        participants.map((row, i) => (
-                                            <MUITableRow key={row.name} row={row} index={i} />
-                                        )) : 
-                                        <Row className="justify-content-row">
-                                            <Spinner animation="border" />
-                                        </Row>
+                                        typeof participants !== 'undefined' ?
+                                            participants.map((row, i) => (
+                                                <MUITableRow key={row.name} row={row} index={i}
+                                                    detach={this.detach} edit={this.edit} checkin={this.checkin} />
+                                            )) :
+                                            <Row className="justify-content-row">
+                                                <Spinner animation="border" />
+                                            </Row>
                                     }
                                 </TableBody>
                                 <TableFooter>
@@ -373,28 +444,28 @@ class EditSelectedForm extends Component {
                             {(provided, snapshot) => (
                                 <Row>
                                     <Col
-                                    ref={provided.innerRef} className="col-rentals-esf"
-                                    style={getListStyle(snapshot.isDraggingOver)}>
-                                    {this.state.availableList.map((item, index) => (
-                                        <Draggable
-                                            key={item.id}
-                                            draggableId={item.id}
-                                            index={index}>
-                                            {(provided, snapshot) => (
-                                                <React.Fragment key={item.id}>
+                                        ref={provided.innerRef} className="col-rentals-esf"
+                                        style={getListStyle(snapshot.isDraggingOver)}>
+                                        {this.state.availableList.map((item, index) => (
+                                            <Draggable
+                                                key={item.id}
+                                                draggableId={item.id}
+                                                index={index}>
+                                                {(provided, snapshot) => (
+                                                    <React.Fragment key={item.id}>
                                                         <Chip avatar={<Avatar>{item.amount}</Avatar>} label={item.label}
-                                                        ref={provided.innerRef}
-                                                        {...provided.draggableProps}
-                                                        {...provided.dragHandleProps}
-                                                        style={getItemStyle(
-                                                            snapshot.isDragging,
-                                                            provided.draggableProps.style
-                                                        )}
+                                                            ref={provided.innerRef}
+                                                            {...provided.draggableProps}
+                                                            {...provided.dragHandleProps}
+                                                            style={getItemStyle(
+                                                                snapshot.isDragging,
+                                                                provided.draggableProps.style
+                                                            )}
                                                         />
-                                                </React.Fragment>
-                                            )}
-                                        </Draggable>
-                                    ))}
+                                                    </React.Fragment>
+                                                )}
+                                            </Draggable>
+                                        ))}
                                     </Col>
                                 </Row>
                             )}
@@ -413,11 +484,42 @@ const useRowStyles = makeStyles({
     },
 })
 
+const useStyles = makeStyles((theme) => ({
+    root: {
+        padding: '2px 4px',
+        display: 'flex',
+        alignItems: 'center',
+        width: 300,
+        float: 'right',
+        background: '#424242'
+    },
+    input: {
+        marginLeft: theme.spacing(1),
+        flex: 1,
+        color: 'white',
+    },
+    iconButton: {
+        padding: 10,
+        color: '#b1f48f !important',
+    },
+    cancelButton: {
+        padding: 10,
+        color: '#f48fb1 !important',
+    },
+    divider: {
+        height: 28,
+        margin: 4,
+    },
+}));
+
 function MUITableRow(props) {
-    const { row, index } = props;
+    const { row, index, detach, edit, checkin } = props;
 
     const [open, setOpen] = React.useState(false);
+    const [editArray, setEditArray] = React.useState(new Array(typeof row.rentals === 'object' ? (row.rentals.length) : []).fill(false));
+    const [editArrayValue, setEditArrayValue] = React.useState(new Array(typeof row.rentals === 'object' ? (row.rentals.length) : []).fill(""));
     const classes = useRowStyles();
+    const classes2 = useStyles()
 
     return (
         <React.Fragment>
@@ -432,17 +534,17 @@ function MUITableRow(props) {
                 </TableCell>
                 <TableCell align="right">{row.rentals ? row?.rentals.length : 0}</TableCell>
             </TableRow>
-            
-                    <TableRow className="collapse-table-row-rf" >
-                        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
-                            <Collapse in={open} timeout="auto" unmountOnExit>
-                                <Box margin={1}>
-                                    <Typography variant="h6" gutterBottom component="div">
-                                        {`Rentals for ${row.name.substr(0, row.name.lastIndexOf('('))}`}
-                                    </Typography>
-                                    <Droppable droppableId={"p_rentals-" + index}>
-                                                    {(provided, snapshot) => (
-                                    <Table size="small" aria-label="participants-rentals" ref={provided.innerRef} style={getListStyle(snapshot.isDraggingOver)}>
+            <TableRow className="collapse-table-row-rf" >
+                <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+                    <Collapse in={open} timeout="auto" unmountOnExit>
+                        <Box margin={1}>
+                            <Typography variant="h6" gutterBottom component="div">
+                                {`Rentals for ${row.name.substr(0, row.name.lastIndexOf('('))}`}
+                            </Typography>
+                            <Droppable droppableId={"p_rentals-" + index}>
+                                {(provided, snapshot) => (
+                                    <Table size="small" aria-label="participants-rentals" ref={provided.innerRef} style={getListStyle(snapshot.isDraggingOver)}
+                                        className="table-collapse-esf">
                                         <TableHead>
                                             <TableRow>
                                                 <TableCell>Rental</TableCell>
@@ -466,23 +568,82 @@ function MUITableRow(props) {
                                                                     snapshot.isDragging,
                                                                     provided.draggableProps.style
                                                                 )}>
-                                                                <TableCell component="th" scope="row" className="th-esf">
-                                                                    <IconButton aria-label="unlink">
+                                                                <TableCell component="th" scope="row" className="th-esf"
+                                                                    style={getCellStyle(
+                                                                        snapshot.isDragging,
+                                                                    )}>
+                                                                    <IconButton aria-label="unlink" onClick={() => detach(i, index)}>
                                                                         <RemoveCircleOutline />
                                                                     </IconButton>
-                                                                    {rental.label}        
+                                                                    {rental.label}
                                                                 </TableCell>
-                                                                <TableCell align="right">
-                                                                    <IconButton aria-label="edit">
-                                                                        <Edit />
-                                                                    </IconButton>
-                                                                    {rental.number}
-                                                                </TableCell>
-                                                                <TableCell align="right">{!rental.checked ?
-                                                                    <FontAwesomeIcon icon={faSquare} className="icon-checked-rf" />
+                                                                {!editArray[i] ?
+                                                                    <TableCell align="right"
+                                                                        style={getCellStyle(
+                                                                            snapshot.isDragging,
+                                                                        )}>
+                                                                        <IconButton aria-label="edit" onClick={() => {
+                                                                            let tempArray = [...editArray];
+                                                                            if (tempArray[i] !== true)
+                                                                                tempArray.fill(false)
+                                                                            tempArray[i] = !tempArray[i]
+                                                                            setEditArray(tempArray)
+                                                                        }}>
+                                                                            <Edit />
+                                                                        </IconButton>
+                                                                        {rental.number}
+                                                                    </TableCell>
                                                                     :
-                                                                    <FontAwesomeIcon icon={faCheckSquare} className="icon-checked-rf" />
-                                                                }</TableCell>
+                                                                    <TableCell align="right"
+                                                                        style={getCellStyle(
+                                                                            snapshot.isDragging,
+                                                                        )}>
+                                                                        <Paper component="form" className={classes2.root} onSubmit={(e) => {
+                                                                            e.preventDefault()
+                                                                            edit(i, index, editArrayValue[i])
+                                                                            let tempArray = [...editArray];
+                                                                            tempArray.fill(false)
+                                                                            setEditArray(tempArray)
+                                                                        }}>
+                                                                            <InputBase
+                                                                                className={classes2.input}
+                                                                                placeholder="Enter Rental Number"
+                                                                                inputProps={{ 'aria-label': 'enter rental number' }}
+                                                                                value={editArrayValue[i]}
+                                                                                onChange={(e) => {
+                                                                                    let tempArray = [...editArrayValue]
+                                                                                    tempArray[i] = e.target.value
+                                                                                    setEditArrayValue(tempArray)
+                                                                                }}
+                                                                            />
+                                                                            <IconButton type="submit" className={classes2.iconButton} aria-label="confirm">
+                                                                                <CheckCircle />
+                                                                            </IconButton>
+                                                                            <Divider className={classes2.divider} orientation="vertical" />
+                                                                            <IconButton className={classes2.cancelButton} aria-label="cancel"
+                                                                                onClick={() => {
+                                                                                    let tempArray = [...editArray];
+                                                                                    tempArray.fill(false)
+                                                                                    setEditArray(tempArray)
+                                                                                }}>
+                                                                                <Cancel />
+                                                                            </IconButton>
+                                                                        </Paper>
+                                                                    </TableCell>
+                                                                }
+                                                                <TableCell align="right"
+                                                                    style={getCellStyle(
+                                                                        snapshot.isDragging,
+                                                                    )}>
+                                                                    {!rental.checked ?
+                                                                        <IconButton onClick={() => checkin(i, index)}>
+                                                                            <FontAwesomeIcon icon={faSquare} className="icon-checked-rf" />
+                                                                        </IconButton>
+                                                                        :
+                                                                        <IconButton onClick={() => checkin(i, index)}>
+                                                                            <FontAwesomeIcon icon={faCheckSquare} className="icon-checked-rf" />
+                                                                        </IconButton>
+                                                                    }</TableCell>
                                                             </TableRow>
                                                         )}
                                                     </Draggable>
@@ -490,12 +651,12 @@ function MUITableRow(props) {
                                         </TableBody>
                                         {provided.placeholder}
                                     </Table>
-                                    )}
-                                    </Droppable>
-                                </Box>
-                            </Collapse>
-                        </TableCell>
-                    </TableRow>
+                                )}
+                            </Droppable>
+                        </Box>
+                    </Collapse>
+                </TableCell>
+            </TableRow>
         </React.Fragment>
     );
 }

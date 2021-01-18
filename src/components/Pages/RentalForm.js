@@ -1,54 +1,43 @@
-import React, { Component, useEffect, useState } from 'react';
-import '../../App.css';
-
-import { withFirebase } from '../Firebase';
-import { AuthUserContext, withAuthorization } from '../session';
-import { compose } from 'recompose';
-
-import { Button, Form, Container, Card, Row, Col, Breadcrumb, Spinner } from 'react-bootstrap/';
-import MUIButton from '@material-ui/core/Button';
-import { LinkContainer } from 'react-router-bootstrap';
-
+import { faCheckSquare, faSquare } from "@fortawesome/free-regular-svg-icons";
+import { faEdit, faFolderMinus, faFolderOpen, faFolderPlus } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Avatar, Checkbox, Fab, List, ListItem, ListItemAvatar, ListItemSecondaryAction, ListItemText, TextField } from '@material-ui/core';
 import BottomNavigation from '@material-ui/core/BottomNavigation';
 import BottomNavigationAction from '@material-ui/core/BottomNavigationAction';
-import Icon from '@material-ui/core/Icon';
-
-import { faEdit, faFolderPlus, faFolderMinus, faFolderOpen, faTimes, faCheck } from "@fortawesome/free-solid-svg-icons";
-import { faSquare, faCheckSquare } from "@fortawesome/free-regular-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-
-import MultiSelect from "react-multi-select-component"
-
-import * as ROLES from '../constants/roles';
-import { TextField, Checkbox, List, ListItem, ListItemAvatar, Avatar, ListItemSecondaryAction, ListItemText, Fab } from '@material-ui/core';
-import { Contacts, Edit, ArrowBackIos, Add, Check, Close } from '@material-ui/icons'
-import { withStyles } from '@material-ui/core/styles';
-import Autocomplete from '@material-ui/lab/Autocomplete';
-
-import PaymentForm from '../constants/creditcard';
-
-// Imports for Drag N drop
-import EditSelectedForm from './EditSelectedForm';
-
-//import { DragDropContext, Droppable, Draggable } from '../constants/DragDrop';
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-
-// Imports for MUI Table
-import { makeStyles } from '@material-ui/core/styles';
 import Box from '@material-ui/core/Box';
+import MUIButton from '@material-ui/core/Button';
 import Collapse from '@material-ui/core/Collapse';
+import Divider from '@material-ui/core/Divider';
+import Icon from '@material-ui/core/Icon';
 import IconButton from '@material-ui/core/IconButton';
+import InputBase from '@material-ui/core/InputBase';
+import Paper from '@material-ui/core/Paper';
+import { makeStyles, withStyles } from '@material-ui/core/styles';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
+import TableFooter from '@material-ui/core/TableFooter';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
-import TableFooter from '@material-ui/core/TableFooter';
 import Typography from '@material-ui/core/Typography';
-import Paper from '@material-ui/core/Paper';
+import { Add, ArrowBackIos, ArrowForwardIos, Contacts, Edit } from '@material-ui/icons';
 import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
+import React, { Component, useEffect, useState } from 'react';
+import { Breadcrumb, Button, Card, Col, Container, Form, Row, Spinner } from 'react-bootstrap/';
+import MultiSelect from "react-multi-select-component";
+import { LinkContainer } from 'react-router-bootstrap';
+import { compose } from 'recompose';
+
+import PaymentForm from '../constants/creditcard';
+import * as ROLES from '../constants/roles';
+import { withFirebase } from '../Firebase';
+import { AuthUserContext, withAuthorization } from '../session';
+// Imports for Drag N drop
+import EditSelectedForm from './EditSelectedForm';
+
+import '../../App.css';
 
 const TextFieldCreate = withStyles({
     root: {
@@ -88,7 +77,6 @@ const TextFieldCreate = withStyles({
 const INITIAL_STATE = {
     search: "",
     showAddParticipant: false,
-    showAddRental: false,
     participants: [],
     rentals: [],
     participantsRentals: [],
@@ -136,7 +124,6 @@ class RentalForm extends Component {
         this.handleInputChange = this.handleInputChange.bind(this)
         this.onChange = this.onChange.bind(this)
         this.setIndex = this.setIndex.bind(this)
-        this.showRentalBox = this.showRentalBox.bind(this)
     }
 
     // Normal onChange function for input boxes
@@ -257,12 +244,6 @@ class RentalForm extends Component {
         this.setState({ rentals: obj })
     }
 
-    // Shows rental box for current player 
-    showRentalBox = (index, name) => {
-        this.setState({showAddRental: !this.state.showAddRental, rentalIndex: index, 
-            rentalPName: name, showAddParticipant: false})
-    }
-
     // Show the search participant box
     showParticipantBox = () => {
         this.setState({ showAddParticipant: !this.state.showAddParticipant, showAddRental: false })
@@ -277,6 +258,7 @@ class RentalForm extends Component {
             let obj = {name, rentals}
             participants.push(obj)
             this.props.firebase.rental(index).update({participants})
+            this.props.firebase.validatedWaiver(name).set({attached: true})
             this.showParticipantBox(false)
             this.setState({ search: "" })
         }
@@ -389,15 +371,12 @@ class RentalForm extends Component {
                             {this.state.value === 2 ? 
                                 !loading ?
                                     <div className="div-edit-rf">
-                                        <EditForm2 rentalForms={rentalForms} showAP={this.showParticipantBox} setParentIndex={this.setIndex} showAR={this.showRentalBox}/>
+                                        <EditForm rentalForms={rentalForms} showAP={this.showParticipantBox} setParentIndex={this.setIndex} showAR={this.showRentalBox}/>
                                     </div>
                                 : <div>Teswting</div>
                             : null}
                             {this.state.showAddParticipant ? 
                                 <AddParticipant {...waiverProps}/>
-                            : null}
-                            {this.state.showAddRental ? 
-                                <AddRental {...rentalProps}/>
                             : null}
                             {this.state.value === 3 ? 
                                 <div>
@@ -444,8 +423,13 @@ class RentalForm extends Component {
 function CreateForm({cvc, number, expiry, name, zipcode, handleInputChange, onChange, numParticipants, rentalName, submit,
     cvcError, expiryError, nameError, numberError, numparticipantsError, rentalnameError, zipcodeError, checked}) {
 
+    const [page, setPage] = useState(0)
+
     return (
         <div className="div-selected-rf">
+            {page === 0 ?
+            <AddRentals setPage={setPage}/>
+            :
             <Form noValidate autoComplete="off" onSubmit={(e) => submit(e)}>
                 <Row className="justify-content-row row-rf">
                     <Col md={"auto"} className="col-form-rf">
@@ -500,286 +484,181 @@ function CreateForm({cvc, number, expiry, name, zipcode, handleInputChange, onCh
                 </Col>
             </Row>
             </Form>
+            } 
         </div> 
     )
 }
 
-function EditForm({showBox, box, participantsArray, participants, rentalForms,
-    setParticipants, rentals, setRentals, changeRental, submitDone, createForm,
-    checkRental }) {
-    let added = participantsArray.length
-    const [name, setName] = React.useState("")
-    const [ButtonArray, setButtonArray] = useState(new Array(added).fill(false));
-    const [DoneArray, setDoneArray] = useState(new Array(added).fill(false));
-    const [selected, setSelected] = useState([]);
-    const [done, setDone] = useState(true)
-    const [status, setStatus] = useState("")
-    const [rentalError, setRentalError] = useState(null)
+function AddRentals({setPage}) {
     const options = [
-        { label: "M4 Rental w/ battery", value: "M4 Rental", number: "", checked: false },
-        { label: "M4 Magazine", value: "M4 Magazine", number: "", checked: false },
-        { label: "Mask", value: "Mask", number: "", checked: false },
-        { label: "M4 Premium Rental w/ battery", value: "M4 Premium Rental", number: "", checked: false, },
-        { label: "Condor Sling", value: "Condor Sling", number: "", checked: false },
-        { label: "Condor Vest", value: "Condor Vest", number: "", checked: false },
-        { label: "9.6v Battery", value: "9.6v Battery", number: "", checked: false},
-        { label: "Elite Force 1911", value: "Elite Force 1911", number: "", checked: false },
-        { label: "Elite Force 1911 Magazine", value: "Elite Force 1911 Magazine", number: "", checked: false},
+        { label: "M4 Rental w/ battery", value: "M4 Rental", number: "", checked: false, id: "r0", cost: 180.00, amount: "" },
+        { label: "M4 Magazine", value: "M4 Magazine", number: "", checked: false, id: "r1", cost: 23.00, amount: "" },
+        { label: "Full Face Mask", value: "Mask", number: "", checked: false, id: "r2", cost: 29.99, amount: "" },
+        { label: "M4 Premium Rental w/ battery", value: "M4 Premium Rental", number: "", checked: false, id: "r3", cost: 274.99, amount: "" },
+        { label: "Firehawk (9 to 11 yrs.)", value: "Firehawk", number: "", checked: false, id: "r4", cost: 150.00, amount: ""},
+        { label: "Premium Dye Mask", value: "Dye Mask", number: "", checked: false, id: "r5", cost: 195.00, amount: "" },
+        { label: "Condor Sling", value: "Condor Sling", number: "", checked: false, id: "r6", cost: 15.00, amount: "" },
+        { label: "Condor Vest", value: "Condor Vest", number: "", checked: false, id: "r7", cost: 85.00, amount: ""},
+        { label: "9.6v Battery", value: "9.6v Battery", number: "", checked: false, id: "r8", cost: 19.00, amount: "" },
+        { label: "Elite Force 1911", value: "Elite Force 1911", number: "", checked: false, id: "r9", cost: 125.00, amount: "" },
+        { label: "Elite Force 1911 Magazine", value: "Elite Force 1911 Magazine", number: "", checked: false, id: "r10", cost: 38.99, amount: "" },
+        { label: "Glock 17", value: "Glock 17", number: "", checked: false, id: "r11", cost: 156.00, amount: "" },
     ]
 
-    useEffect(() => {
-        // This updates the array if there is a new input in the
-        // participation array
-        if (participantsArray.length !== 0) {
-            let i = participantsArray.length - 1;
-            let newarray = new Array(participantsArray.length).fill(true)
-            newarray.fill(false, i, i + 1)
-            setDoneArray(newarray)
-            setButtonArray(newarray)
-        }
-    }, [participantsArray.length])
+    const [optionsState, setOptionsState] = useState(options)
+    const [total, setTotal] = useState(0)
 
-    return (
-        <div className="div-selected-rf">
-            <Row className="justify-content-row row-rf">
+    function setNumber(i, val) {
+        let opt = [...optionsState]
+        opt[i].amount = val
+        setOptionsState(opt)
+        calcTotal(opt)
+    }
 
-                <Col md={4}>
-                    <Form className="form-rf" onSubmit={e => { e.preventDefault(); }}>
-                        <Form.Group>
-                            <Form.Label>Name on Rental Form:</Form.Label>
-                            <Form.Control onChange={(e) => setName(e.target.value)}
-                                value={name}
-                                autoComplete="off"
-                                placeholder="Full Name" />
-                        </Form.Group>
-                    </Form>
-                </Col>
-                <Col md={2}>
-                    <Form className="form-rf" onSubmit={e => { e.preventDefault(); }}>
-                        <Form.Group>
-                            <Form.Label>Participant(s):</Form.Label>
-                            <Form.Control onChange={(e) => {
-                                showBox(false)
-                                setParticipants(e.target.value)
-                            }}
-                                value={participants}
-                                autoComplete="off"
-                                placeholder="ex: 5"
-                            />
-                        </Form.Group>
-                    </Form>
-                </Col>
-                <Col md={2}>
-                    <Form className="form-rf" onSubmit={e => { e.preventDefault(); }}>
-                        <Form.Group>
-                            <Form.Label>Date:</Form.Label>
-                            <Form.Control disabled
-                                value={new Date().getMonth() + 1 + "-" + new Date().getDate() + "-" + new Date().getFullYear()}
-                            />
-                        </Form.Group>
-                    </Form>
-                </Col>
-            </Row>
-            {participantsArray.map((participant, i) => (
-                <div key={i}>
-                    <Row className="justify-content-row row-rf">
-                        {DoneArray[i] === true ?
-                            <Col md={"auto"} className="align-items-center-col">
-                                <i className="fa fa-check fa-2x text-green"></i>
-                            </Col> : null}
-                        <Col md={"auto"} className="align-items-center-col">
-                            <FontAwesomeIcon icon={faEdit} className="icon-editing-rf" />
-                        </Col>
-                        <Col md={"auto"} className="align-items-center-col">
-                            <p className="participant-p">{participant.substr(0, participant.lastIndexOf('('))}</p>
-                        </Col>
-                        {ButtonArray[i] !== true && DoneArray[i] === false ?
-                            <Col md={"auto"} className="align-items-center-col">
-                                <MUIButton
-                                    variant="contained"
-                                    color="primary"
-                                    size="small"
-                                    className="add-rental-button-rf"
-                                    startIcon={<Icon className="fa fa-plus-circle" />}
-                                    onClick={() => {
-                                        let tempArray = [...ButtonArray];
-                                        tempArray[i] = true;
-                                        setButtonArray(tempArray)
-                                    }}>
-                                    Add Rental
-                                    </MUIButton>
-                            </Col> : null}
-                        {ButtonArray[i] === true && DoneArray[i] === false ?
-                            <Col md={3} className="align-items-center-col">
-                                <MultiSelect
-                                    options={options}
-                                    value={selected}
-                                    onChange={(e) => {
-                                        setSelected(e)
-                                        setRentals(e, i)
-                                    }}
-                                    labelledBy={"Rental"}
-                                    hasSelectAll={false}
-                                />
-                            </Col>
-                            : null}
-                        {ButtonArray[i] === true && DoneArray[i] === false ?
-                            <Col md={"auto"} className="align-items-center-col">
-                                <MUIButton
-                                    variant="contained"
-                                    color="secondary"
-                                    size="small"
-                                    className="add-rental-button-rf"
-                                    startIcon={<Icon className="fa fa-check" />}
-                                    onClick={() => {
-                                        if (checkRental()) {
-                                            setRentalError(null)
-                                            setDone(true)
-                                            let tempArray = [...ButtonArray];
-                                            tempArray[i] = false;
-                                            setButtonArray(tempArray)
-                                            submitDone(participant.substr(0, participant.lastIndexOf('(')))
-                                            let doneArray = [...DoneArray];
-                                            doneArray[i] = true;
-                                            setDoneArray(doneArray)
-                                            setRentals([], i)
-                                            setSelected([])
-                                        }
-                                        else {
-                                            setRentalError("Please fill out numbers for the rentals.")
-                                        }
-                                    }}>
-                                    Done
-                                    </MUIButton>
-                            </Col>
-                            : null}
-                    </Row>
-                    {DoneArray[i] !== true ?
-                        rentals.map((rental, i) => (
-                            <Row key={i} className="justify-content-row">
-                                <Col md={2}>
-                                    <Form className="form-rf" onSubmit={e => { e.preventDefault(); }}>
-                                        <Form.Group>
-                                            <Form.Label column="sm" lg={2} className="rental-label-rf"
-                                            >Rental:</Form.Label>
-                                            <Form.Control
-                                                disabled
-                                                value={rental.label}
-                                                size="sm"
-                                            />
-                                        </Form.Group>
-                                    </Form>
-                                </Col>
-                                <Col md={2}>
-                                    <Form className="form-rf" onSubmit={e => { e.preventDefault(); }}>
-                                        <Form.Group>
-                                            <Form.Label column="sm" lg={2} className="rental-label-rf"
-                                            >Number:</Form.Label>
-                                            <Form.Control onChange={(e) => {
-                                                changeRental(e.target.value, i)
-                                            }}
-                                                value={rental.number}
-                                                placeholder="Rental #"
-                                                size="sm"
-                                                autoComplete="off"
-                                            />
-                                        </Form.Group>
-                                    </Form>
-                                </Col>
-                            </Row>
-                        )) : null}
-                </div>
-            ))}
-            {rentalError &&
-                <Row className="justify-content-row">
-                    <span className="error-text-rental-rf">
-                        {rentalError}
-                    </span>
-                </Row>
-            }
-            {participants - added > 0 && !box && done ?
-                <Row className="justify-content-row row-rf">
-                    <Col md={8} className="justify-content-flex-end-col col-margin15-right">
-                        <Button variant="info" disabled={participants - added <= 0}
-                            onClick={() => {
-                                showBox(true)
-                                setDone(false)
-                            }}>
-                            Add Participant
-                        </Button>
-                    </Col>
-                </Row> : null}
-            <Row className="justify-content-row row-rf">
-                <Col md={8} className="justify-content-flex-end-col col-margin15-right">
-                    {participants - added > 0 ? <p className="status-text-rf">{`${added}/${participants}`}</p> : null}
-                    <Button variant={participants - added > 0 ? "danger" : "success"} disabled={participants - added > 0}
-                        onClick={() => {
-                            if (name === "") {
-                                setStatus("Name must be filled out.")
-                                setTimeout(() => {
-                                    setStatus("")
-                                }, 5000);
-                            }
-                            else {
-                                createForm(name)
-                                setName("")
-                                setStatus("Form created.")
-                            }
-                        }}>
-                        Create
-                        </Button>
-                </Col>
-            </Row>
-            {status ? <Row className="justify-content-row">
-                <Col md={8} className="justify-content-flex-end-col col-margin15-right">
-                    <p className="status-text-rf2">{status}</p>
-                </Col>
-            </Row> : null}
-        </div>
-    )
-}
-
-function AddRental(props) {
-    const { rentalPName, rentalIndex } = props
-    const name = rentalPName.substr(0, rentalPName.lastIndexOf('('))
-    const [selected, setSelected] = useState([]);
-
-    const options = [
-        { label: "M4 Rental w/ battery", value: "M4 Rental", number: "", checked: false },
-        { label: "M4 Magazine", value: "M4 Magazine", number: "", checked: false },
-        { label: "Mask", value: "Mask", number: "", checked: false },
-        { label: "M4 Premium Rental w/ battery", value: "M4 Premium Rental", number: "", checked: false, },
-        { label: "Condor Sling", value: "Condor Sling", number: "", checked: false },
-        { label: "Condor Vest", value: "Condor Vest", number: "", checked: false },
-        { label: "9.6v Battery", value: "9.6v Battery", number: "", checked: false},
-        { label: "Elite Force 1911", value: "Elite Force 1911", number: "", checked: false },
-        { label: "Elite Force 1911 Magazine", value: "Elite Force 1911 Magazine", number: "", checked: false},
-    ]
-
-
+    function calcTotal(opt) {
+        let tot = 0;
+        for (let i=0; i<opt.length; i++)
+            tot+=opt[i].amount * opt[i].cost
+        setTotal(tot.toFixed(2))
+    }
 
     return (
         <div className="div-add-rental-rf">
-            <Row>
+            <Row className="justify-content-row">
                 <Col>
-                    <h5 className="h5-add-rental-rf">{`Add Rental(s) for ${name}`}</h5>
+                    <h5 className="h5-add-rental-rf">Create Rental Form:</h5>
                 </Col>
             </Row>
-            <Row>
-                <Col className="align-items-center-col">
-                    <MultiSelect
-                        options={options}
-                        value={selected}
-                        onChange={(e) => {
-                            setSelected(e)
-                        }}
-                        labelledBy={"Rental"}
-                        hasSelectAll={false}
-                    />
+            <Row className="justify-content-row">
+                <Col md={4}>
+                    <Row className="margin15-bottom">
+                        <Col className="col-notice-rf">
+                            <Row className="justify-content-row">
+                                <h5>Notice:</h5>
+                            </Row>
+                            <Row>
+                                <Col>
+                                    <p>
+                                        Please enter in the equipment you are needing to check out.
+                                        Note that the total price is calculated based on the equipment
+                                        being checked out. You will <u>NOT</u> be charged this amount below to
+                                        use this equipment. 
+                                    </p>
+                                    <p>
+                                        The credit card on the next page will be put
+                                        on hold but <u>NOT</u> charged unless in the event of the equipment
+                                        being damaged, lost, or stolen.
+                                    </p>
+                                </Col>
+                            </Row>
+                        </Col>
+                    </Row>
+                    <Row className="justify-content-row">
+                        <Col className="col-total-price-rf">
+                            <Row className="justify-content-row margin15-bottom">
+                                Total Value:
+                            </Row>
+                            {optionsState.map((rental, i) => {
+                                return(<CostRow key={i} obj={rental}/>)
+                            })}
+                            <Row className="row-margin15-top">
+                                <p className="p-total-price-rf">
+                                    {`\$${total}`}
+                                </p>
+                            </Row>
+                        </Col>
+                    </Row>
+                </Col>
+                <Col md="auto">
+                    {optionsState.map((rental, i) => {
+                        return(<RentalRow key={i} obj={rental} set={setNumber} i={i}/>)
+                    })}
+                </Col>
+            </Row>
+            <Row className="justify-content-row">
+                <Col md={9} className="justify-content-flex-end-col">
+                    <MUIButton
+                        variant="contained"
+                        color="primary"
+                        size="small"
+                        endIcon={<ArrowForwardIos />}
+                        onClick={() => {
+                            setPage(1)
+                        }}>
+                        Next
+                    </MUIButton>
                 </Col>
             </Row>
         </div>
     )
+}
+const useStyles = makeStyles((theme) => ({
+    root: {
+        padding: '2px 4px',
+        display: 'flex',
+        alignItems: 'center',
+        float: 'right',
+        background: '#424242',
+        margin: '5px',
+        width: 400,
+    },
+    input: {
+        marginLeft: theme.spacing(1),
+        color: 'white',
+        width: "20%",
+    },
+    divider: {
+        height: 28,
+        margin: 4,
+        background: "rgba(255, 255, 255, 0.12)",
+    },
+    label: {
+        color: 'white',
+        fontSize: "1rem",
+        margin: 0,
+        flex: 1,
+        marginRight: 15,
+        marginLeft: 15,
+    }
+}));
+
+// Rows for each rental selection the user will have
+const RentalRow = ({obj, set, i}) => {
+    const classes = useStyles();
+
+    return(
+        <Row>
+            <Col>
+                <Paper className={classes.root}>
+                    <InputBase
+                        className={classes.input}
+                        placeholder="Amount:"
+                        inputProps={{ 'aria-label': 'enter amount' }}
+                        type="number"
+                        value={obj.amount}
+                        onChange={(e) => set(i, e.target.value)}
+                    />
+
+                    <Divider className={classes.divider} orientation="vertical" />
+                    <h5 className={classes.label}>{obj.label}</h5>
+                </Paper>
+            </Col>
+        </Row>
+    )
+}
+
+const CostRow = ({obj}) => {
+    if (obj.amount !== "") {
+        return(
+            <Row className="justify-content-row">
+                <Col md={8}>
+                    {`(\$${(obj.amount * obj.cost).toFixed(2)}) ${obj.amount}x ${obj.value}`}
+                </Col>
+            </Row>
+        )
+    }
+    else 
+        return null;
 }
 
 function AddParticipant(props) {
@@ -814,7 +693,7 @@ function AddParticipant(props) {
     )
 }
 
-function EditForm2({rentalForms, showAP, setParentIndex}) {
+function EditForm({rentalForms, showAP, setParentIndex}) {
     const length = rentalForms.length
     const [editting, setEditting] = useState(false)
     const [index, setIndex] = useState(-1)
@@ -1033,7 +912,7 @@ function WaiverBox(props) {
                         waivers.sort((a, b) =>
                         (convertDate(b.filename.substr(b.filename.lastIndexOf('(') + 1).split(')')[0]) -
                             convertDate(a.filename.substr(a.filename.lastIndexOf('(') + 1).split(')')[0])))
-                            .map((waiver, i) => (
+                            .filter(obj => obj.attached === false).map((waiver, i) => (
                                 search !== "" ? // Search query case
                                     waiver.filename.toLowerCase().includes(search.toLowerCase()) ?
                                         i % 2 === 0 ?
@@ -1096,7 +975,7 @@ function WaiverBox(props) {
                                                         <Button className="button-submit-admin2" onClick={() => add(waiver.filename)}
                                                             type="submit" id="update" variant="success">
                                                             Add
-                                        </Button>
+                                                        </Button>
                                                     </Col>
                                                 </Row>
                                             </Col>

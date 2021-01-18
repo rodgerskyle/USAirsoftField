@@ -2124,14 +2124,45 @@ body {
 }
 
 .div-add-rental-rf {
-  background-color: rgb(51, 55, 60);
   padding: 20px;
-  border-radius: 5px;
   margin-top: 15px;
 }
 
 .h5-add-rental-rf {
   color: white;
+  text-align: center;
+}
+
+.col-notice-rf {
+  color: white;
+  background-color: #424242;
+  padding: 10px;
+  box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12);
+  border-radius: 5px;
+}
+
+.col-total-price-rf {
+  color: white;
+  background-color: #424242;
+  padding: 10px;
+  box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12);
+  border-radius: 5px;
+}
+
+.p-total-price-rf {
+  border-top: 1px solid white;
+  margin: 0 15px;
+  color: white;
+  flex: 1;
+  text-align:center;
+}
+
+.col-md-6 .makeStyles-root-1 {
+  min-width: 100%;
+}
+
+.margin15-bottom {
+  margin-bottom: 15px;
 }
 
 .col-rentals-esf .MuiChip-label {
@@ -2149,6 +2180,10 @@ body {
 
 .th-esf .MuiIconButton-root {
   margin-top: -3px
+}
+
+.table-collapse-esf .MuiTableCell-root{
+  width: 33.33%;
 }
 
 .MuiBottomNavigationAction-root.Mui-selected {

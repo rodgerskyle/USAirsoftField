@@ -3,6 +3,7 @@ import 'firebase/auth';
 import 'firebase/database';
 import 'firebase/storage';
 import 'firebase/functions';
+import 'firebase/analytics'
 require('dotenv').config();
 
 const config = {
@@ -19,6 +20,7 @@ const config = {
 class Firebase {
     constructor() {
         app.initializeApp(config);
+        app.analytics()
 
         this.auth = app.auth();
         this.db = app.database();
@@ -131,6 +133,10 @@ class Firebase {
 
     rental = (i) => this.db.ref('rentals/' + i)
 
+    participantsRentals = (i, id) => this.db.ref('rentals/' + i + '/participants/' + id)
+
+    availableRentals = (i) => this.db.ref('rentals/' + i + '/available/')
+
     // Team API
 
     team = name => this.db.ref(`teams/${name}`);
@@ -141,9 +147,13 @@ class Firebase {
 
     uid = () => this.auth.currentUser.uid;
 
-    // Waivers Amount API
+    // Waivers Amount API and validation
 
     numWaivers = () => this.db.ref('waivers');
+
+    validatedWaiver = file => this.db.ref(`waivers/validated/${file}`);
+
+    validatedWaivers = () => this.db.ref('waivers/validated')
 
 }
 
