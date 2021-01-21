@@ -2099,8 +2099,39 @@ body {
   color: black;
 }
 
+.col-textfield-rf {
+  padding: 0 !important;
+}
+
+.col-textfield-right-rf {
+  padding-left: 5px !important;
+}
+
+.row-group-name-rf {
+  padding-bottom: 10px;
+}
+
+.h5-group-name-rf {
+  color: white;
+  margin: 0;
+}
+
 .div-back-button-rf {
   margin-bottom: 10px;
+  position: absolute;
+}
+
+.div-back-button-2-rf {
+  padding-left: 10px;
+  padding-top: 10px;
+}
+
+.div-back-button-2-rf .MuiButton-containedPrimary {
+  background-color: #6f6f6f
+}
+
+.div-back-button-2-rf .MuiButton-containedPrimary:hover {
+  background-color: #a1a1a1
 }
 
 .div-back-button-rf .MuiButton-containedPrimary {
@@ -2125,12 +2156,31 @@ body {
 
 .div-add-rental-rf {
   padding: 20px;
-  margin-top: 15px;
 }
 
 .h5-add-rental-rf {
   color: white;
   text-align: center;
+}
+
+.button-next-create-rf {
+  width: 100%;
+}
+
+.row-next-button-rf {
+  margin-top: 15px;
+}
+
+.row-next-button-rf .MuiButtonBase-root {
+  background-color: #90caf9;
+}
+
+.row-next-button-rf .MuiButtonBase-root:hover {
+  background-color: #4a9ee2;
+}
+
+.col-rental-rows-rf {
+  display: grid;
 }
 
 .col-notice-rf {
@@ -2186,10 +2236,45 @@ body {
   width: 33.33%;
 }
 
+.tc-name-esf .MuiButton-label {
+  text-shadow: none;
+  font-weight:400;
+}
+
+.tc-name-esf .MuiButton-root {
+  font-size: inherit;
+  color: white;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  background-color:rgb(244, 143, 177, .2)
+}
+
+.tc-name-esf .MuiButton-root:hover {
+  background-color:rgba(172, 0, 57, 0.8)
+}
+
+.tc-name-esf .MuiButton-root.Mui-disabled {
+  color: white;
+  background-color:inherit;
+}
+
+.button-remove-esf {
+  margin-left: 15px !important;
+}
+
+/*For remove button on esf*/
+.MuiTableCell-root .MuiButton-containedSecondary:hover {
+  background-color: #7d012d;
+}
+
 .MuiBottomNavigationAction-root.Mui-selected {
   color: white !important;
 }
 
+.h2-modal-rf {
+  color: white;
+  text-align: center;
+}
 
 .div-selected-rf {
   background-color: rgb(73 80 87 / .6);
@@ -2216,6 +2301,23 @@ body {
   margin-right: 15px;
   margin-bottom: 0rem;
   color: red;
+}
+
+.row-error-rf {
+  color: red;
+  justify-content: center;
+  margin-top: 15px;
+  background-color: #424242;
+  padding: 10px;
+  box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12);
+  border-radius: 5px;
+  text-align: center;
+}
+
+.table-cell-total-participants-rf {
+  color: white;
+  padding: 5px;
+  font-size: 1rem;
 }
 
 .participant-p {
@@ -2349,6 +2451,100 @@ body {
   border-bottom: 10px solid black;
 }
 
+.h5-title-summary {
+  text-align: center;
+  color: white;
+  border-bottom: 1px solid #777777;
+  padding-bottom: 15px;
+  margin-bottom: 15px;
+}
+
+.p-cc-summary {
+  margin: 0;
+}
+
+.p-error-summary {
+  margin: 0;
+  color: red;
+}
+
+.div-cc-summary .MuiFormLabel-root.Mui-focused {
+  color: #90caf9 !important;
+}
+
+.div-cc-summary .MuiInputBase-input {
+  color: white;
+}
+
+.div-cc-summary .MuiFormLabel-root {
+  color: white;
+}
+
+.div-cc-summary .MuiInput-underline:after {
+  border-bottom-color: #90caf9;
+  color: white;
+}
+
+.div-cc-summary  .label.Mui-focused {
+  color: '#90caf9',
+}
+
+.div-cc-summary .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-bottom-color: #90caf9;
+}
+
+.div-cc-summary .MuiOutlinedInput-notchedOutline {
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  border-radius: 0px;
+  border-bottom-color: white;
+  margin: 0 15px;
+}
+
+.div-cc-summary .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #90caf9;
+}
+
+.div-cc-summary .MuiOutlinedInput-input {
+  padding: 15px 15px;
+}
+
+.div-cc-summary {
+  color: white;
+  border-bottom: 1px solid #777777;
+  margin-top: 15px;
+  padding-bottom: 15px;
+  margin-bottom: 15px;
+  display: flex;
+}
+
+.p-groupname-summary {
+  margin: 0;
+  margin-left: 16px;
+}
+
+.div-groupname-summary {
+  color: white;
+  border-bottom: 1px solid #777777;
+  padding-bottom: 15px;
+  margin-bottom: 15px;
+}
+
+.div-summary {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 15px;
+}
+
+.div-summary .MuiButton-containedPrimary {
+  background-color: #008e2b
+}
+
+.div-summary .MuiButton-containedPrimary:hover {
+  background-color: #005c1c
+}
+
 /* For pincode css */
 .pincode-input-container .pincode-input-text {
   padding:0 !important;
@@ -2366,7 +2562,7 @@ body {
 .pincode-input-container .pincode-input-text:focus {
   outline:none;
   box-shadow:none;
-  border-color: black;
+  border-color: black !important;
 }
 
 /* Class for dropdown multiselect */

@@ -129,13 +129,15 @@ class Firebase {
 
     // Rental Forms API
 
-    rentals = () => this.db.ref('rentals/')
+    rentalOptions = () => this.db.ref('rentals/options/')
 
-    rental = (i) => this.db.ref('rentals/' + i)
+    rentalGroups = () => this.db.ref('rentals/group/')
 
-    participantsRentals = (i, id) => this.db.ref('rentals/' + i + '/participants/' + id)
+    rentalGroup = (i) => this.db.ref('rentals/group/' + i)
 
-    availableRentals = (i) => this.db.ref('rentals/' + i + '/available/')
+    participantsRentals = (i, id) => this.db.ref('rentals/group/' + i + '/participants/' + id)
+
+    availableRentals = (i) => this.db.ref('rentals/group/' + i + '/available/')
 
     // Team API
 

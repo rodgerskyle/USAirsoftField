@@ -18,13 +18,12 @@ import TableFooter from '@material-ui/core/TableFooter';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Typography from '@material-ui/core/Typography';
-import { Add, Cancel, CheckCircle, Edit, RemoveCircleOutline } from '@material-ui/icons';
+import { Add, Cancel, CheckCircle, Delete, Edit, Remove, RemoveCircleOutline } from '@material-ui/icons';
 import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
 import React, { Component } from 'react';
 import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
 import { Col, Row, Spinner } from 'react-bootstrap/';
-import styled from 'styled-components';
 // My imports 
 import uuid from 'uuid/v4';
 
@@ -77,9 +76,9 @@ const move = (source, destination, droppableSource, droppableDestination, availa
     //if (!removed) return;
 
     //let foundIndex = -1
-    if (droppableSource.droppableId.includes("p_rentals") && droppableDestination.droppableId.includes("p_rentals")) {
-        return;
-    }
+    // ****if (droppableSource.droppableId.includes("p_rentals") && droppableDestination.droppableId.includes("p_rentals")) {
+    //     return;
+    // }
     // else if (removed.amount) { // Copy case
     //     // Decrement number of rentals left if the number is greater than 1
     //     // if (removed?.amount > 1) {
@@ -115,6 +114,7 @@ const move = (source, destination, droppableSource, droppableDestination, availa
     // }
 
     const [removed] = sourceClone.splice(droppableSource.index, 1);
+    destClone.splice(droppableDestination.index, 0, removed);
 
     const result = {};
     result[droppableSource.droppableId] = sourceClone;
@@ -122,25 +122,6 @@ const move = (source, destination, droppableSource, droppableDestination, availa
 
     return result;
 };
-
-const Item = styled.div`
-  display: flex;
-  user-select: none;
-  padding: 0.5rem;
-  margin: 0 0  0.5rem 0;
-  align-items: flex-start;
-  align-content: flex-start;
-  line-height: 1.5;
-  border-radius: 3px;
-  border: 1px ${props => (props.isDragging ? 'dashed #000' : 'solid #ddd')};
-
- `;
-
-const Clone = styled(Item)`
-  + div {
-    display: none!important;
-  }
-`;
 
 const grid = 8;
 
@@ -178,6 +159,7 @@ class EditSelectedForm extends Component {
         availableObject: null,
         participants: null,
         loading: true,
+        removing: false,
     };
 
     /**
@@ -233,15 +215,17 @@ class EditSelectedForm extends Component {
                     this.props.firebase.participantsRentals(this.props.index, index2).update({ rentals: result[p_index2] })
                 }
                 else { // Available case as destination (not gonna be used)
-                    let p_index = "p_rentals-" + index
-                    this.props.firebase.participantsRentals(this.props.index, index).update({ rentals: result[p_index] })
-                    this.props.firebase.availableRentals(this.props.index).update(result.available)
+                    // let p_index = "p_rentals-" + index
+                    // this.props.firebase.participantsRentals(this.props.index, index).update({ rentals: result[p_index] })
+                    // this.props.firebase.availableRentals(this.props.index).update(result.available)
                 }
             }
             else { // Available case as source
                 index = destination.droppableId.split("-")[1]
                 destination_arr = this.state.participants[index].rentals
                 source_arr = this.state.availableList
+
+                // Move instead of copy if 1 is left, MUST FIX
                 result = copy(
                     source_arr,
                     destination_arr,
@@ -249,22 +233,16 @@ class EditSelectedForm extends Component {
                     destination
                 )
 
-                let p_index = "p_rentals-" + index
-                for (let i = 0; i < result.length; i++) {
-                    result[i].number = ""
-                    delete result[i].amount
-                }
-
                 console.log(result)
 
                 this.updateAmount(source.index, null)
                 this.props.firebase.participantsRentals(this.props.index, index).update({ rentals: result })
+                //this.props.firebase.rentals(this.props.index)
                 // this.props.firebase.availableRentals(this.props.index).update(result.available)
             }
 
 
             console.log(result)
-            console.log(index2)
             //Update database here
             // if (typeof index2 !== 'undefined') {
             //     // temp = this.state.participants
@@ -298,24 +276,26 @@ class EditSelectedForm extends Component {
     };
 
     componentDidMount() {
-        this.props.firebase.rentals().on('value', snapshot => {
+        this.props.firebase.rentalGroups().on('value', snapshot => {
             const rentalsObject = snapshot.val()
 
             let rentalForms = Object.keys(rentalsObject).map(key => ({
-                ...rentalsObject[key]
+                ...rentalsObject[key],
             }))
 
+            let availableList = rentalForms[this.props.index].available
+
             this.setState({
-                availableList: rentalForms[this.props.index].available,
+                availableList: availableList,
                 participants: rentalForms[this.props.index].participants,
                 rentalForms: rentalForms,
-                loading: false
+                loading: false,
             })
         })
     }
 
     componentWillUnmount() {
-        this.props.firebase.rentals().off()
+        this.props.firebase.rentalGroups().off()
     }
 
     // Detaches rental from user
@@ -382,12 +362,28 @@ class EditSelectedForm extends Component {
         return null;
     }
 
+    // Remove participant from rental form
+    remove = (i, obj) => {
+        // Also move rentals back to original
+        if (obj.rentals) {
+            let available = this.state.availableList
+            for (let i=0; i<obj.rentals.length; i++) {
+                let index = available.findIndex(x => x.value === obj.rentals[i].value) 
+                available[index].amount += 1
+            }
+            this.props.firebase.availableRentals(this.props.index).update(available)
+        }
+        this.props.firebase.participantsRentals(this.props.index, i).remove()
+        this.props.firebase.validatedWaiver(obj.name).update({attached: false})
+        if (i === 0) this.setState({removing: false})
+    }
+
 
     // Normally you would want to split things out into separate components.
     // But in this example everything is just done in one place for simplicity
     render() {
         const { showAP } = this.props
-        const { index, loading, participants, rentalForms } = this.state
+        const { index, loading, participants, rentalForms, removing, availableList } = this.state
         return (
             <div>
                 {loading ?
@@ -409,14 +405,17 @@ class EditSelectedForm extends Component {
                                 </TableHead>
                                 <TableBody>
                                     {
-                                        typeof participants !== 'undefined' ?
+                                        participants && typeof participants !== 'undefined' ?
                                             participants.map((row, i) => (
-                                                <MUITableRow key={row.name} row={row} index={i}
-                                                    detach={this.detach} edit={this.edit} checkin={this.checkin} />
+                                                <MUITableRow key={row.name} row={row} index={i} removing={removing}
+                                                    detach={this.detach} edit={this.edit} checkin={this.checkin} 
+                                                    remove={this.remove.bind(this)}/>
                                             )) :
-                                            <Row className="justify-content-row">
-                                                <Spinner animation="border" />
-                                            </Row>
+                                            <TableRow>
+                                                <TableCell align="center" colSpan={6}>
+                                                    Add Participants to attach rentals!
+                                                </TableCell>
+                                            </TableRow>
                                     }
                                 </TableBody>
                                 <TableFooter>
@@ -426,27 +425,41 @@ class EditSelectedForm extends Component {
                                                 variant="contained"
                                                 color="primary"
                                                 size="small"
+                                                disabled={!((participants ? participants.length : 0) < rentalForms[index].size)}
                                                 startIcon={<Add />}
                                                 onClick={() => {
                                                     showAP()
                                                 }}>
                                                 Add Participant
-                                        </MUIButton>
+                                            </MUIButton>
+                                            <MUIButton
+                                                variant="contained"
+                                                color="secondary"
+                                                size="small"
+                                                className="button-remove-esf"
+                                                disabled={participants && participants.length === 0}
+                                                startIcon={<Remove />}
+                                                onClick={() => {
+                                                    this.setState({removing: !removing})
+                                                }}>
+                                                {!removing ? "Remove Participant" : "Removing"}
+                                            </MUIButton>
                                         </TableCell>
                                         <TableCell colSpan={2} align="right">
-                                            {`${participants.length ? participants.length : 0}/${rentalForms[index].size} Participants`}
+                                            {`${participants && participants.length ? participants.length : 0}/${rentalForms[index].size} Participants`}
                                         </TableCell>
                                     </TableRow>
                                 </TableFooter>
                             </Table>
                         </TableContainer>
+                        {availableList ?
                         <Droppable droppableId="available" isDropDisabled={true}>
                             {(provided, snapshot) => (
                                 <Row>
                                     <Col
                                         ref={provided.innerRef} className="col-rentals-esf"
                                         style={getListStyle(snapshot.isDraggingOver)}>
-                                        {this.state.availableList.map((item, index) => (
+                                        {availableList.map((item, index) => (
                                             <Draggable
                                                 key={item.id}
                                                 draggableId={item.id}
@@ -470,6 +483,7 @@ class EditSelectedForm extends Component {
                                 </Row>
                             )}
                         </Droppable>
+                         : null}
                     </DragDropContext>}
             </div>
         );
@@ -513,7 +527,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function MUITableRow(props) {
-    const { row, index, detach, edit, checkin } = props;
+    const { row, index, detach, edit, checkin, removing, remove } = props;
 
     const [open, setOpen] = React.useState(false);
     const [editArray, setEditArray] = React.useState(new Array(typeof row.rentals === 'object' ? (row.rentals.length) : []).fill(false));
@@ -524,13 +538,18 @@ function MUITableRow(props) {
     return (
         <React.Fragment>
             <TableRow className={classes.root}>
-                <TableCell>
+                <TableCell onClick={() => setOpen(!open)}>
                     <IconButton aria-label="expand row" size="small" onClick={() => setOpen(!open)}>
                         {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
                     </IconButton>
                 </TableCell>
-                <TableCell component="th" scope="row">
-                    {row.name.substr(0, row.name.lastIndexOf('('))}
+                <TableCell component="th" scope="row" className="tc-name-esf">
+                    <MUIButton disabled={!removing} onClick={() => {
+                        remove(index, row) 
+                    }} 
+                    startIcon={removing ? <Delete /> : null }>
+                        {row.name.substr(0, row.name.lastIndexOf('('))}
+                    </MUIButton>
                 </TableCell>
                 <TableCell align="right">{row.rentals ? row?.rentals.length : 0}</TableCell>
             </TableRow>
