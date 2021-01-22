@@ -2328,6 +2328,60 @@ body {
   margin-bottom: 0;
 }
 
+.div-checked-in-rf {
+  text-decoration: line-through;
+  color: red;
+  margin: 5px;
+  display: initial;
+}
+
+.div-checked-in-rf .MuiButton-text {
+  padding: 3px 5px;
+}
+
+.div-checked-in-rf .MuiButton-label{
+  color: white;
+  font-size: 1.4rem;
+}
+
+.div-checked-in-rf .MuiTouchRipple-root {
+  border: 2px solid red;
+  border-radius: 5px;
+  box-shadow: 0px 2px 1px 1px rgba(0,0,0,0.2), 0px 1px 1px 3px rgba(0,0,0,0.14), 0px 1px 3px -1px rgba(0,0,0,0.12)
+}
+
+.div-checked-out-rf {
+  margin: 5px;
+  display: initial;
+}
+
+.div-checked-out-rf .MuiButton-text {
+  padding: 3px 5px;
+}
+
+.div-checked-out-rf .MuiButton-label{
+  font-size: 1.4rem;
+  color: white;
+}
+
+.div-checked-out-rf .MuiTouchRipple-root {
+  border: 2px solid white;
+  border-radius: 5px;
+  box-shadow: 0px 2px 1px 1px rgba(0,0,0,0.2), 0px 1px 1px 3px rgba(0,0,0,0.14), 0px 1px 3px -1px rgba(0,0,0,0.12)
+}
+
+.div-checked-in-rf .MuiButton-root:hover {
+  background-color: rgb(255, 87, 87, .3)
+}
+
+.div-checked-out-rf .MuiButton-root:hover {
+  background-color: rgba(255, 255, 255, 0.3)
+}
+
+.tc-notice-rf {
+  color: rgb(110 255 129) !important;
+}
+
 .add-rental-button-rf {
   background-color: #90caf9 !important;
   color: rgba(0, 0, 0, 0.87);

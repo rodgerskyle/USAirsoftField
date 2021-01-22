@@ -1,6 +1,6 @@
 import { faCheckSquare, faSquare } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Avatar, Chip } from '@material-ui/core';
+import { Avatar, Checkbox, Chip } from '@material-ui/core';
 import Box from '@material-ui/core/Box';
 import MUIButton from '@material-ui/core/Button';
 import Collapse from '@material-ui/core/Collapse';
@@ -31,21 +31,6 @@ import { withFirebase } from '../Firebase';
 
 import '../../App.css';
 
-const options = [
-    { label: "M4 Rental w/ battery", value: "M4 Rental", number: "", checked: false, id: "r0" },
-    { label: "M4 Magazine", value: "M4 Magazine", number: "", checked: false, id: "r1" },
-    { label: "Full Face Mask", value: "Mask", number: "", checked: false, id: "r2" },
-    { label: "M4 Premium Rental w/ battery", value: "M4 Premium Rental", number: "", checked: false, id: "r3" },
-    { label: "Firehawk (9 to 11 yrs.)", value: "Firehawk", number: "", checked: false, id: "r4"},
-    { label: "Premium Dye Mask", value: "Dye Mask", number: "", checked: false, id: "r5" },
-    { label: "Condor Sling", value: "Condor Sling", number: "", checked: false, id: "r6" },
-    { label: "Condor Vest", value: "Condor Vest", number: "", checked: false, id: "r7" },
-    { label: "9.6v Battery", value: "9.6v Battery", number: "", checked: false, id: "r8" },
-    { label: "Elite Force 1911", value: "Elite Force 1911", number: "", checked: false, id: "r9" },
-    { label: "Elite Force 1911 Magazine", value: "Elite Force 1911 Magazine", number: "", checked: false, id: "r10" },
-    { label: "Glock 17", value: "Glock 17", number: "", checked: false, id: "r11" },
-]
-
 const verify = (item, list) => {
     for (let i = 0; i < list.length; i++)
         if (list[i].value === item.value) return false;
@@ -68,7 +53,7 @@ const copy = (source, destination, droppableSource, droppableDestination) => {
 /**
  * Moves an item from one list to another list.
  */
-const move = (source, destination, droppableSource, droppableDestination, availableList) => {
+const move = (source, destination, droppableSource, droppableDestination) => {
     const sourceClone = Array.from(source);
     const destClone = typeof destination === 'object' ? Array.from(destination) : [];
     //let removed = source[droppableSource.index]
@@ -160,7 +145,20 @@ class EditSelectedForm extends Component {
         participants: null,
         loading: true,
         removing: false,
+        options: null,
     };
+
+    // Checks to see if item exists in neighbor array before pushing it in
+    itemExists = (source_arr, destination_arr, source_index) => {
+        let rentalVal = source_arr[source_index].value
+        if (destination_arr) {
+            for (let i=0; i<destination_arr.length; i++) {
+                if (destination_arr[i].value === rentalVal)
+                    return true
+            }
+        }
+        return false
+    }
 
     /**
      * A semi-generic way to handle multiple lists. Matches
@@ -197,27 +195,21 @@ class EditSelectedForm extends Component {
                     destination_arr = this.state.availableList
                     source_arr = this.state.participants[index].rentals
                 }
-                const { availableList } = this.state
-                const result = move(
-                    source_arr,
-                    destination_arr,
-                    source,
-                    destination,
-                    availableList
-                );
+                // Check here if it exists in the list
+                if (!this.itemExists(source_arr, destination_arr, source.index)) {
+                    const result = move(
+                        source_arr,
+                        destination_arr,
+                        source,
+                        destination,
+                    );
 
-                if (index2) { // Both are p_rental trips
-                    let p_index = "p_rentals-" + index
-                    let p_index2 = "p_rentals-" + index2
-                    console.log(result[p_index])
-                    console.log(result[p_index2])
-                    this.props.firebase.participantsRentals(this.props.index, index).update({ rentals: result[p_index] })
-                    this.props.firebase.participantsRentals(this.props.index, index2).update({ rentals: result[p_index2] })
-                }
-                else { // Available case as destination (not gonna be used)
-                    // let p_index = "p_rentals-" + index
-                    // this.props.firebase.participantsRentals(this.props.index, index).update({ rentals: result[p_index] })
-                    // this.props.firebase.availableRentals(this.props.index).update(result.available)
+                    if (index2) { // Both are p_rental trips
+                        let p_index = "p_rentals-" + index
+                        let p_index2 = "p_rentals-" + index2
+                        this.props.firebase.participantsRentals(this.props.index, index).update({ rentals: result[p_index] })
+                        this.props.firebase.participantsRentals(this.props.index, index2).update({ rentals: result[p_index2] })
+                    }
                 }
             }
             else { // Available case as source
@@ -225,57 +217,48 @@ class EditSelectedForm extends Component {
                 destination_arr = this.state.participants[index].rentals
                 source_arr = this.state.availableList
 
-                // Move instead of copy if 1 is left, MUST FIX
-                result = copy(
-                    source_arr,
-                    destination_arr,
-                    source,
-                    destination
-                )
 
-                console.log(result)
-
-                this.updateAmount(source.index, null)
-                this.props.firebase.participantsRentals(this.props.index, index).update({ rentals: result })
-                //this.props.firebase.rentals(this.props.index)
-                // this.props.firebase.availableRentals(this.props.index).update(result.available)
+                if (!this.itemExists(source_arr, destination_arr, source.index)) {
+                // Move instead of copy if 1 is left
+                    if (source_arr[source.index].amount === 1) {
+                        result = move(
+                            source_arr,
+                            destination_arr,
+                            source,
+                            destination,
+                        );
+                        this.updateAmount(source.index, null)
+                        this.props.firebase.participantsRentals(this.props.index, index).update({ rentals: result[destination.droppableId] })
+                    }
+                    else {
+                        result = copy(
+                            source_arr,
+                            destination_arr,
+                            source,
+                            destination
+                        )
+                        this.updateAmount(source.index, null)
+                        this.props.firebase.participantsRentals(this.props.index, index).update({ rentals: result })
+                    }
+                }
             }
 
 
-            console.log(result)
-            //Update database here
-            // if (typeof index2 !== 'undefined') {
-            //     // temp = this.state.participants
-            //     // if (typeof temp.rentals === 'undefined')
-            //     //     temp.rentals = ""
-            //     // temp[index].rentals = result["p_rentals-" + index]
-            //     // temp[index2].rentals = result["p_rentals-" + index2]
-            // }
-            // else {
-            //     let p_index = "p_rentals-" + index
-            //     for (let i=0; i<result[p_index].length; i++) {
-            //         result[p_index][i].number = ""
-            //         delete result[p_index][i].amount 
-            //     }
-            //     this.props.firebase.participantsRentals(this.props.index, index).update({ rentals: result[p_index]})
-            //     this.props.firebase.availableRentals(this.props.index).update(result.available)
-            //     //this.props.firebase.rental(this.props.index).update({ participants: temp })
-            //     //this.props.firebase.rental(this.props.index).update({ available: result.available })
-            // }
 
-
-
-            //this.props.firebase.rental(this.props.index).update({ participants: temp })
-
-            // this.setState({
-            //     availableList: result.available,
-            //     participants: temp
-            // });
         }
         this.setState({ loading: false })
     };
 
     componentDidMount() {
+        this.props.firebase.rentalOptions().once('value', obj => {
+            const optionsObject = obj.val()
+
+            let options = Object.keys(optionsObject).map(key => ({
+                ...optionsObject[key],
+            }))
+            this.setState({options})
+        })
+
         this.props.firebase.rentalGroups().on('value', snapshot => {
             const rentalsObject = snapshot.val()
 
@@ -335,30 +318,38 @@ class EditSelectedForm extends Component {
             }
             else
                 available[index].amount = available[index].amount += 1
-            this.props.firebase.availableRentals(this.props.index).update(available)
+            this.props.firebase.availableRentals(this.props.index).set(available)
         }
         else { // Subtract case
             available[rentalIndex].amount -= 1
             if (available[rentalIndex].amount === 0)
                 available.splice(rentalIndex, 1)
-            this.props.firebase.availableRentals(this.props.index).update(available)
+            this.props.firebase.availableRentals(this.props.index).set(available)
         }
     }
 
     // Return index from availablelist where object value is found
     returnIndex = (value) => {
         const { availableList } = this.state
-        for (let i = 0; i < availableList.length; i++) {
-            if (availableList[i].value === value)
-                return i
+        if (availableList) {
+            for (let i = 0; i < availableList.length; i++) {
+                if (availableList[i].value === value)
+                    return i
+            }
         }
         return -1
     }
 
     // Find rental from options array
     returnObject = (value) => {
-        for (let i = 0; i < options.length; i++)
-            if (options[i].value === value) return options[i]
+        for (let i = 0; i < this.state.options.length; i++) {
+            if (this.state.options[i].value === value) {
+                let obj = this.state.options[i]
+                obj.amount = 1
+                console.log(obj)
+                return obj
+            }
+        }
         return null;
     }
 
@@ -400,7 +391,7 @@ class EditSelectedForm extends Component {
                                         <TableCell align="right">Number of Rentals</TableCell>
                                         <TableCell align="right"></TableCell>
                                         <TableCell align="right"></TableCell>
-                                        <TableCell align="right"></TableCell>
+                                        <TableCell align="right">Gamepass</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -412,7 +403,7 @@ class EditSelectedForm extends Component {
                                                     remove={this.remove.bind(this)}/>
                                             )) :
                                             <TableRow>
-                                                <TableCell align="center" colSpan={6}>
+                                                <TableCell align="left" colSpan={6} className="tc-notice-rf">
                                                     Add Participants to attach rentals!
                                                 </TableCell>
                                             </TableRow>
@@ -552,6 +543,16 @@ function MUITableRow(props) {
                     </MUIButton>
                 </TableCell>
                 <TableCell align="right">{row.rentals ? row?.rentals.length : 0}</TableCell>
+                <TableCell></TableCell>
+                <TableCell></TableCell>
+                <TableCell align="right">
+                    <div className="div-checkbox-esf">
+                        <Checkbox
+                            checked={row.gamepass}
+                            color="primary"
+                        />
+                    </div>
+                </TableCell>
             </TableRow>
             <TableRow className="collapse-table-row-rf" >
                 <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>

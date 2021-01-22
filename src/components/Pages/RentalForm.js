@@ -11,13 +11,11 @@ import InputBase from '@material-ui/core/InputBase';
 import Paper from '@material-ui/core/Paper';
 import { makeStyles, withStyles } from '@material-ui/core/styles';
 import { ArrowBackIos, ArrowForwardIos, Contacts, Edit, VerifiedUser } from '@material-ui/icons';
-import React, { Component, useEffect, useState } from 'react';
+import React, { Component, useState } from 'react';
 import { Breadcrumb, Button, Card, Col, Container, Form, Row, Spinner } from 'react-bootstrap/';
 import Collapse from '@material-ui/core/Collapse';
 import { LinkContainer } from 'react-router-bootstrap';
 import { compose } from 'recompose';
-
-import { MDBInput } from "mdbreact";
 
 import PinCode from '../constants/pincode'
 
@@ -211,14 +209,11 @@ class RentalForm extends Component {
     // Decrements stock of guns selected from the database
     decrementStock(options) {
         let newOptions = this.state.options;
-        console.log(newOptions)
         for (let i = 0; i < options.length; i++) {
             newOptions[i].stock -= options[i].amount
             newOptions[i].amount = ""
         }
-        console.log(newOptions)
-        console.log(options)
-        this.props.firebase.rentalOptions().update(newOptions)
+        this.props.firebase.rentalOptions().set(newOptions)
     }
 
     // Creates rental form
@@ -229,9 +224,8 @@ class RentalForm extends Component {
             this.props.firebase.rentalGroups().once("value", (obj) => {
                 let i = obj.val() ? obj.val().length : 0
                 let cc = { cvc, number, expiry, name, zipcode }
-                this.decrementStock(options)
-                let available = options.filter(obj => obj.amount > 0);
-                this.props.firebase.rentalGroup(i).set({ name: rentalName, size: numParticipants, cc, available, complete: false }, function(){
+                let available = options.filter(opt => opt.amount > 0);
+                this.props.firebase.rentalGroup(i).set({ name: rentalName, size: numParticipants, cc, available, complete: false }, () => {
                     this.grabNewForm(i)
                 })
                 this.setState({
@@ -246,6 +240,7 @@ class RentalForm extends Component {
                     checked: false,
                     createdIndex: i
                 })
+                this.decrementStock(options)
             })
         }
     }
@@ -253,7 +248,10 @@ class RentalForm extends Component {
     // Grabs newly created form
     grabNewForm = (i) => {
         this.props.firebase.rentalGroup(i).on("value", (obj) => {
-            this.setState({newForm: obj.val()})
+            const newForm = obj.val()
+
+            console.log(newForm)
+            this.setState({newForm})
         })
     }
 
@@ -288,8 +286,11 @@ class RentalForm extends Component {
     }
 
     // Show the search participant box
-    showParticipantBox = () => {
-        this.setState({ showAddParticipant: !this.state.showAddParticipant, showAddRental: false })
+    showParticipantBox = (val) => {
+        if (typeof val !== 'undefined')
+            this.setState({ showAddParticipant: val, showAddRental: false })
+        else
+            this.setState({ showAddParticipant: !this.state.showAddParticipant, showAddRental: false })
     }
 
     // Add to participants
@@ -297,11 +298,12 @@ class RentalForm extends Component {
         const { index, rentalForms } = this.state
         let participants = Array.from(rentalForms[index].participants ?? [])
         let rentals = ""
-        let obj = { name, rentals }
+        let gamepass = false
+        let obj = { name, rentals, gamepass }
         participants.splice(participants.length, 0, obj);
         this.props.firebase.rentalGroup(index).update({ participants })
         this.props.firebase.validatedWaiver(name).set({ attached: true })
-        this.showParticipantBox(false)
+        this.showParticipantBox()
         this.setState({ search: "" })
     }
 
@@ -344,7 +346,12 @@ class RentalForm extends Component {
         })
 
         this.props.firebase.rentalOptions().on('value', snapshot => {
-            const options = snapshot.val()
+            const optionsObject = snapshot.val()
+
+            let options = Object.keys(optionsObject).map(key => ({
+                ...optionsObject[key]
+            }))
+
             this.setState({ options, loading: false })
         })
     }
@@ -353,13 +360,12 @@ class RentalForm extends Component {
         const {
             cvc, number, expiry, name, zipcode, cvcError, expiryError, nameError, loading,
             numberError, numparticipantsError, rentalnameError, zipcodeError, rentalForms,
-            waivers, rentalIndex, rentalPName, createdIndex
+            waivers, createdIndex
         } = this.state
         const errorProps = { expiryError, nameError, numberError, numparticipantsError, cvcError, rentalnameError, zipcodeError }
         const add = this.addParticipant
         const waiverProps = { waivers, add, loading }
 
-        // Tester cokmponents
         return (
             <AuthUserContext.Consumer>
                 {authUser => (
@@ -435,7 +441,7 @@ function CreateForm({ cvc, number, expiry, name, zipcode, handleInputChange, onC
     cvcError, expiryError, nameError, numberError, numparticipantsError, rentalnameError, zipcodeError, checked, showComplete, hideComplete, authUser,
     createdIndex, firebase, dropNewForm, newForm }) {
 
-    const [optionsState, setOptionsState] = useState(options)
+    const [optionsState, setOptionsState] = useState([...options])
     const [page, setPage] = useState(0)
     const [rentalsError, setRentalsError] = useState(null)
     const [pinError, setPinError] = useState(null)
@@ -564,8 +570,11 @@ function CreateForm({ cvc, number, expiry, name, zipcode, handleInputChange, onC
                         </MUIButton>
                             </div>
                             <Form noValidate autoComplete="off" onSubmit={(e) => {
-                                if (validateItems(e))
-                                    submit(e, optionsState)
+                                if (validateItems(e)) {
+                                    console.log(optionsState)
+                                    let temp = optionsState
+                                    submit(e, temp)
+                                }
                             }}>
                                 <PaymentForm cvc={cvc} number={number} expiry={expiry} name={name} zipcode={zipcode} handleInputChange={handleInputChange}
                                     cvcError={cvcError} expiryError={expiryError} nameError={nameError} numberError={numberError} zipcodeError={zipcodeError} />
@@ -637,15 +646,14 @@ function CreateForm({ cvc, number, expiry, name, zipcode, handleInputChange, onC
 // Summary of the created rental form
 function Summary({ createdIndex, newForm, firebase, setPage }) {
 
-    const [loading, setLoading] = useState(false)
-    const [rentalObj, setRentalObj] = useState(newForm)
+    const [loading] = useState(false)
     const [transaction, setTransaction] = useState("")
     const [error, setError] = useState(null)
 
     function updateForm() {
-        rentalObj.complete = true;
-        rentalObj.transaction = transaction
-        firebase.rentalGroup(createdIndex).set(rentalObj)
+        newForm.complete = true;
+        newForm.transaction = transaction
+        firebase.rentalGroup(createdIndex).set(newForm)
     }
 
     const useStyles = makeStyles({
@@ -668,7 +676,7 @@ function Summary({ createdIndex, newForm, firebase, setPage }) {
                 <div>
                     <h5 className="h5-title-summary">Rental Form Summary</h5>
                     <div className="div-groupname-summary">
-                        <p className="p-groupname-summary">{`Group: ${rentalObj.name}`}</p>
+                        <p className="p-groupname-summary">{`Group: ${newForm.name}`}</p>
                     </div>
                     <TableContainer component={Paper} className="table-edit-rf">
                         <Table className={classes.table} aria-label="summary table">
@@ -679,7 +687,7 @@ function Summary({ createdIndex, newForm, firebase, setPage }) {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {rentalObj.available.map((row) => (
+                                {newForm.available.map((row) => (
                                     <TableRow key={row.name}>
                                         <TableCell component="th" scope="row">
                                             {row.label}
@@ -690,8 +698,8 @@ function Summary({ createdIndex, newForm, firebase, setPage }) {
                             </TableBody>
                             <TableFooter>
                                 <TableRow>
-                                    <TableCell colSpan={4} align="left" className="table-cell-total-participants-rf">
-                                        {`${rentalObj.participants ?? 0}/${rentalObj.size} Waivers Attached`}
+                                    <TableCell colSpan={4} align="right" className="table-cell-total-participants-rf">
+                                        {`${newForm.participants ?? 0}/${newForm.size} Waivers Attached`}
                                     </TableCell>
                                 </TableRow>
                         </TableFooter>
@@ -699,7 +707,7 @@ function Summary({ createdIndex, newForm, firebase, setPage }) {
                     </TableContainer>
                     <div className="div-cc-summary">
                         <Col md={4} className="align-items-center-col">
-                            <p className="p-cc-summary">{`Card ending in: ${rentalObj.cc.number.substr(rentalObj.cc.number.length - 4)}`}</p>
+                            <p className="p-cc-summary">{`Card ending in: ${newForm.cc.number.substr(newForm.cc.number.length - 4)}`}</p>
                         </Col>
                         <Col className="justify-content-flex-end-col">
                             <TextField
@@ -723,9 +731,10 @@ function Summary({ createdIndex, newForm, firebase, setPage }) {
                             onClick={() => {
                                 if (transaction === "")
                                     setError("Please enter a transaction/receipt number.")
-                                else 
+                                else {
                                     updateForm()
                                     setPage(3)
+                                }
                             }}>
                             Complete Form
                         </MUIButton>
@@ -740,25 +749,24 @@ function Summary({ createdIndex, newForm, firebase, setPage }) {
 // Add rental when creating a rental form
 function AddRentals({ setPage, optionsState, setOptionsState, onChange, validate1stPage,
     rentalName, rentalnameError, numParticipants, numparticipantsError, rentalsError }) {
-    const [total, setTotal] = useState(0)
+    const [total, setTotal] = useState(calcTotal(optionsState, false))
     const [error, setError] = useState(rentalsError)
-
-    useEffect(() => {
-        calcTotal(optionsState)
-    }, [])
 
     function setNumber(i, val) {
         let opt = [...optionsState]
         opt[i].amount = val
         setOptionsState(opt)
-        calcTotal(opt)
+        calcTotal(opt, true)
     }
 
-    function calcTotal(opt) {
+    function calcTotal(opt, flag) {
         let tot = 0;
         for (let i = 0; i < opt.length; i++)
             tot += opt[i].amount * opt[i].cost
-        setTotal(tot.toFixed(2))
+        if (flag)
+            setTotal(tot.toFixed(2))
+        else 
+            return tot
     }
 
     function validate() {
@@ -957,44 +965,45 @@ function AddParticipant(props) {
 }
 
 function EditForm({ rentalForms, showAP, setParentIndex }) {
-    const length = rentalForms.length
     const [editting, setEditting] = useState(false)
     const [index, setIndex] = useState(-1)
     const editProps = { showAP, index }
-    console.log(rentalForms)
     return (
         <div>
             {!editting ?
-                <List className="list-edit-rf">
-                    {rentalForms.map((form, i) => {
-                        if (form.complete === true) {
-                            return (
-                                <ListItem key={i}>
-                                    <ListItemAvatar>
-                                        <Avatar>
-                                            <Contacts />
-                                        </Avatar>
-                                    </ListItemAvatar>
-                                    <ListItemText
-                                        primary={form.name}
-                                        secondary={`${form.size} Participants`}
-                                    />
-                                    <ListItemSecondaryAction>
-                                        <IconButton edge="end" aria-label="edit"
-                                            onClick={() => {
-                                                setIndex(i)
-                                                setParentIndex(i)
-                                                setEditting(true)
-                                            }
-                                            }>
-                                            <Edit />
-                                        </IconButton>
-                                    </ListItemSecondaryAction>
-                                </ListItem>
-                            )
-                        } else return null
-                    })}
-                </List> :
+                <div>
+                    <h5 className="admin-header">Edit Rental Form</h5>
+                    <List className="list-edit-rf">
+                        {rentalForms.map((form, i) => {
+                            if (form.complete === true) {
+                                return (
+                                    <ListItem key={i}>
+                                        <ListItemAvatar>
+                                            <Avatar>
+                                                <Contacts />
+                                            </Avatar>
+                                        </ListItemAvatar>
+                                        <ListItemText
+                                            primary={form.name}
+                                            secondary={`${form.size} Participants`}
+                                        />
+                                        <ListItemSecondaryAction>
+                                            <IconButton edge="end" aria-label="edit"
+                                                onClick={() => {
+                                                    setIndex(i)
+                                                    setParentIndex(i)
+                                                    setEditting(true)
+                                                }
+                                                }>
+                                                <Edit />
+                                            </IconButton>
+                                        </ListItemSecondaryAction>
+                                    </ListItem>
+                                )
+                            } else return null
+                        })}
+                    </List>
+                </div> :
                 <div>
                     <div className="div-back-button-rf">
                         <MUIButton
@@ -1004,6 +1013,7 @@ function EditForm({ rentalForms, showAP, setParentIndex }) {
                             startIcon={<ArrowBackIos />}
                             onClick={() => {
                                 setEditting(false)
+                                showAP(false)
                             }}>
                             Back
                         </MUIButton>
