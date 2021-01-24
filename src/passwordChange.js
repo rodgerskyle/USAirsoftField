@@ -73,7 +73,7 @@ class PasswordChangeForm extends Component {
                 </Form.Group>
                 <Row className="passch-row-button">
                   <Button disabled={isInvalid} type="submit"
-                    variant="outline-success" className="password-forgot-button">
+                    variant="success" className="password-forgot-button">
                     Reset
                   </Button>
                 </Row>

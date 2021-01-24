@@ -12,6 +12,9 @@ import './Profile.css';
 
 import rankimages from '../constants/rankimgs';
 
+import { faTicketAlt } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
 class ProfileLookup extends Component {
     constructor(props) {
         super(props);
@@ -212,7 +215,7 @@ class ProfileLookup extends Component {
                                         <Row className="text-center stat-box">
                                             <Col>
                                                 <div className="win-box counter">
-                                                    <i className="fa fa-check-circle fa-2x text-green"></i>
+                                                    <i className="fa fa-check fa-2x text-green"></i>
                                                     <h2 className="timer count-title count-number" data-to="100" data-speed="1500">{this.state.authUser.wins}</h2>
                                                     <p className="count-text ">Wins</p>
                                                 </div>
@@ -229,7 +232,7 @@ class ProfileLookup extends Component {
                                         <Row className="text-center stat-box">
                                             <Col>
                                                 <div className="counter">
-                                                    <i className="fa fa-code fa-2x text-green"></i>
+                                                    <FontAwesomeIcon icon={faTicketAlt} className="fa fa-2x profile-icon-stats" />
                                                     <h2 className="timer count-title count-number" data-to="100" data-speed="1500">{this.state.authUser.freegames}</h2>
                                                     <p className="count-text ">Free Games</p>
                                                 </div>

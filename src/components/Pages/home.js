@@ -32,7 +32,7 @@ const Home = () => (
           <div className="counter boxes-home boxes-home-nopadbot about-div-home">
             <h2 className="header-about-us">About Us:</h2>
             <h5 className="about-us" data-to="1700" data-speed="1500">
-              U.S. AIRSOFT WORLD is the premier airsoft arena in the U.S. We are located in Anderson, CA - Just outside of Redding.
+              U.S. AIRSOFT is the premier airsoft arena in the U.S. We are located in Anderson, CA - Just outside of Redding.
               We have over 10 acres dedicated to Airsoft. We pride ourselves on being the first arena to provide stat tracking and leaderboards.
             </h5>
             <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>

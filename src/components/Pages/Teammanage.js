@@ -40,6 +40,7 @@ class TeamManage extends Component {
             descriptionLoading: false,
             deleting: false,
             loading: true,
+            disbandError: null,
             AcceptRequestState: this.AcceptRequest,
             DeclineRequestState: this.DeclineRequest,
             KickMemberState: this.KickMember,
@@ -255,7 +256,7 @@ class TeamManage extends Component {
         e.preventDefault();
         // Make sure team is empty first
         // Verify that user wants to disband team
-        if (this.state.checkBox === true) {
+        if (this.state.checkBox === true && this.state.members.length === 0) {
             this.setState({deleting: true})
             //Pass in user object
             var disbandTeam = this.props.firebase.disbandTeam();
@@ -272,6 +273,13 @@ class TeamManage extends Component {
                 console.log("error: " +error)
                 this.setState({deleting: false})
             });
+        }
+        else {
+            this.setState({ disbandError: "Please remove other teammates before disbanding."}, function() {
+                setTimeout( () => {
+                    this.setState({disbandError: null })
+                }, 5000);
+            })
         }
     }
 
@@ -386,6 +394,7 @@ class TeamManage extends Component {
                                             type="checkbox" className="team-manage-text"
                                             label="By checking this box, you confirm to disband your team" />
                                         </Form.Group>
+                                        {this.state.disbandError ? <p className="status-text-teammanage">{this.state.disbandError}</p> : null}
                                     </Col>
                                 </Row>
                                 {this.state.deleting ? <Progress type="spin" color="white"/> : null}

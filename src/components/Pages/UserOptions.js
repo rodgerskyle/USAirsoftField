@@ -159,7 +159,6 @@ class UserOptions extends Component {
         if (email !== oldEmail) {
             let updateEmail = this.props.firebase.manageProfile();
             updateEmail({choice: "emailAdmin", uid, email: encode(email), old_email: encode(oldEmail)}).then((res) => {
-                console.log(res)
             })
             this.setState({oldEmail: email})
         }
@@ -167,11 +166,9 @@ class UserOptions extends Component {
         // Password portion
 
         if (password !== "") {
-            console.log(password.length)
             if (password.length >= 6) {
                 let updatePassword = this.props.firebase.manageProfile();
                 updatePassword({choice: "passAdmin", uid, password}).then((res) => {
-                    console.log(res)
                 })
             }
             else {
