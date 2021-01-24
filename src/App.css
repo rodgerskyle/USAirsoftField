@@ -216,7 +216,7 @@ body {
 .team-name {
   vertical-align: middle !important;
   color: white !important;
-  font-size: 1.2em;
+  font-size: .6rem;
   text-align: center;
 }
 
@@ -820,7 +820,6 @@ body {
 
 .waiver-form-rp {
   color: white;
-  min-width: 67%;
 }
 
 .row-rp {
@@ -953,17 +952,24 @@ body {
 
 .participant-sig-rp {
   background-color: white;
-  width: 90%;
+  width: 100%;
   height: 150px;
-  margin-right: -15px;
-  margin-left: -15px;
+  position: absolute;
   border-radius: 5px;
+  top: 0;
+  left: 0;
 }
 
 .sig-row-rp {
   justify-content: center;
   background-color: transparent !important;
   position: relative;
+  margin: auto;
+  align-items: center;
+}
+
+.sig-col-rp {
+  height: 150px;
 }
 
 .pg-sig-rp {
@@ -977,6 +983,12 @@ body {
 .signBox-image-rt {
   background-color: white;
   padding: 20px;
+  margin: auto;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  position: absolute;
+  height: 150px;
 }
 
 .clear-button-rp {
@@ -1035,6 +1047,11 @@ body {
   padding-top: 10px;
   padding-bottom: 10px;
   background-color: rgb(108, 117, 125, 0.75);
+}
+
+.justify-content-center-col {
+  display: flex;
+  justify-content: center;
 }
 
 .admin-header {
@@ -2116,6 +2133,20 @@ body {
   margin: 0;
 }
 
+.row-transaction-rf {
+  justify-content: flex-end;
+}
+
+.h5-transaction-rf {
+  font-size: 1rem;
+  position: absolute;
+  display: flex;
+  margin: 0;
+  color: white;
+  margin-top: 10px;
+  margin-right: 15px;
+}
+
 .div-back-button-rf {
   margin-bottom: 10px;
   position: absolute;
@@ -2176,6 +2207,19 @@ body {
 }
 
 .row-next-button-rf .MuiButtonBase-root:hover {
+  background-color: #4a9ee2;
+}
+
+.row-hidenav-rf {
+  margin-bottom: 15px;
+  margin-top: -20px;
+}
+
+.row-hidenav-rf .MuiButtonBase-root {
+  background-color: #90caf9;
+}
+
+.row-hidenav-rf .MuiButtonBase-root:hover {
   background-color: #4a9ee2;
 }
 
@@ -2260,6 +2304,10 @@ body {
 
 .button-remove-esf {
   margin-left: 15px !important;
+}
+
+.div-checkbox-esf .MuiCheckbox-colorPrimary.Mui-checked {
+  color: #90caf9;
 }
 
 /*For remove button on esf*/
@@ -2797,6 +2845,24 @@ body {
     text-align: center;
   }
 
+  .p-groupname-rp {
+    margin: 0;
+    color: white;
+    margin-bottom: .5rem;
+  }
+
+  .row-typeahead-rp {
+    margin-bottom: 1rem;
+  }
+
+  .row-typeahead-rp .dropdown-item:focus, .dropdown-item:hover .rbt-highlight-text {
+    background-color: transparent;
+  }
+
+  .row-typeahead-rp .dropdown-item:focus, .dropdown-item .rbt-highlight-text {
+    background-color: transparent;
+  }
+
   .row-success-rp {
     width: 100%;
   }
@@ -2913,6 +2979,10 @@ body {
 
   .status-card-body-main-admin {
     max-height: 50vh;
+  }
+
+  .team-name {
+    font-size: 1.2em;
   }
 }
 

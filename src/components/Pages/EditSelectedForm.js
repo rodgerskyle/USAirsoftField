@@ -305,6 +305,12 @@ class EditSelectedForm extends Component {
         this.props.firebase.participantsRentals(this.props.index, userIndex).update({ rentals })
     }
 
+    // Marks gamepass on selected user
+    useGamepass = (userIndex) => {
+        let gamepass = !this.state.participants[userIndex].gamepass
+        this.props.firebase.participantsRentals(this.props.index, userIndex).update({ gamepass })
+    }
+
     // Update amount of item in available list 
     updateAmount = (rentalIndex, obj) => {
         // Add 1 if index is -1
@@ -346,7 +352,6 @@ class EditSelectedForm extends Component {
             if (this.state.options[i].value === value) {
                 let obj = this.state.options[i]
                 obj.amount = 1
-                console.log(obj)
                 return obj
             }
         }
@@ -400,7 +405,7 @@ class EditSelectedForm extends Component {
                                             participants.map((row, i) => (
                                                 <MUITableRow key={row.name} row={row} index={i} removing={removing}
                                                     detach={this.detach} edit={this.edit} checkin={this.checkin} 
-                                                    remove={this.remove.bind(this)}/>
+                                                    remove={this.remove.bind(this)} gamepass={this.useGamepass.bind(this)}/>
                                             )) :
                                             <TableRow>
                                                 <TableCell align="left" colSpan={6} className="tc-notice-rf">
@@ -518,7 +523,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function MUITableRow(props) {
-    const { row, index, detach, edit, checkin, removing, remove } = props;
+    const { row, index, detach, edit, checkin, removing, remove, gamepass } = props;
 
     const [open, setOpen] = React.useState(false);
     const [editArray, setEditArray] = React.useState(new Array(typeof row.rentals === 'object' ? (row.rentals.length) : []).fill(false));
@@ -550,6 +555,7 @@ function MUITableRow(props) {
                         <Checkbox
                             checked={row.gamepass}
                             color="primary"
+                            onClick={() => gamepass(index)}
                         />
                     </div>
                 </TableCell>

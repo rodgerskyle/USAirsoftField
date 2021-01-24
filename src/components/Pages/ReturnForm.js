@@ -135,7 +135,6 @@ class ReturnForm extends Component {
             rentalForms[index].participants.forEach(function(player) {
                 if (player.rentals) {
                     player.rentals.forEach(function(rental) {
-                        console.log(rental.checked)
                         if (rental.checked === false) {
                             status = false
                         }
@@ -209,6 +208,9 @@ class ReturnForm extends Component {
                 </div>
                 :
                     <div>
+                        <Row className="row-transaction-rf">
+                            <h5 className="h5-transaction-rf">{`Transaction #${rentalForms[index].transaction}`}</h5>
+                        </Row>
                         <div className="div-back-button-rf">
                             <MUIButton
                                 variant="contained"

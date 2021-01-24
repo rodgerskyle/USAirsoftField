@@ -114,6 +114,7 @@ class RentalForm extends Component {
             rentalForms: [],
             value: 0,
             options: null,
+            hidenav: false,
             ...INITIAL_STATE,
         };
 
@@ -138,9 +139,13 @@ class RentalForm extends Component {
     // Passed to credit card page to handle change
     handleInputChange = (e) => {
         const { name, value } = e.target;
-
-        if (name === "number" && value.length < 20)
-            this.setState({ number: value.replace(/[^\dA-Z]/g, '').replace(/(.{4})/g, '$1 ').trim(), numberError: null })
+        if (name === "number" && value.length < 17) {
+            this.setState({ 
+                // number: value.replace(/[^\dA-Z]/g, '').replace(/(.{4})/g, '$1 ').trim(),
+                number: value.length === 16 ? value.replace(/\d(?=\d{4})/g, "*") : value,
+                numberError: null 
+            })
+        }
         else if (name === "expiry" && value.length < 6) {
             if (value.length < 5)
                 this.setState({ [name]: value.replace(/[^\dA-Z]/g, '').replace(/(.{2})/g, '$1/').trim(), expiryError: null })
@@ -172,7 +177,7 @@ class RentalForm extends Component {
             this.setState({ cvcError: "Enter a valid CVC." })
             check = false
         }
-        if (number === "" || number.length !== 19) {
+        if (number === "" || number.length < 15) {
             this.setState({ numberError: "Enter a valid card number." })
             check = false
         }
@@ -255,7 +260,13 @@ class RentalForm extends Component {
         })
     }
 
+    // Hide navbar toggle
+    hideNav = () => {
+        this.setState({hidenav: true})
+    }
+
     dropNewForm = () => {
+        this.setState({hidenav: false})
         this.props.firebase.rentalGroup(this.state.createdIndex).off()
     }
 
@@ -360,7 +371,7 @@ class RentalForm extends Component {
         const {
             cvc, number, expiry, name, zipcode, cvcError, expiryError, nameError, loading,
             numberError, numparticipantsError, rentalnameError, zipcodeError, rentalForms,
-            waivers, createdIndex
+            waivers, createdIndex, hidenav
         } = this.state
         const errorProps = { expiryError, nameError, numberError, numparticipantsError, cvcError, rentalnameError, zipcodeError }
         const add = this.addParticipant
@@ -372,6 +383,7 @@ class RentalForm extends Component {
                     <div className="background-static-all">
                         <Container>
                             <h2 className="admin-header">Rental Form</h2>
+                            {!hidenav ? 
                             <Breadcrumb className="admin-breadcrumb">
                                 {authUser && !!authUser.roles[ROLES.ADMIN] ?
                                     <LinkContainer to="/admin">
@@ -383,7 +395,8 @@ class RentalForm extends Component {
                                     </LinkContainer>
                                 }
                                 <Breadcrumb.Item active>Rental Form</Breadcrumb.Item>
-                            </Breadcrumb>
+                            </Breadcrumb> : null}
+                            {!hidenav ? 
                             <Row>
                                 <Col>
                                     <BottomNavigation
@@ -400,13 +413,15 @@ class RentalForm extends Component {
                                     </BottomNavigation>
                                 </Col>
                             </Row>
+                            : null}
                             {this.state.value === 0 ?
                                 !loading ?
                                     <CreateForm cvc={cvc} number={number} expiry={expiry} name={name} zipcode={zipcode} handleInputChange={this.handleInputChange}
                                         numParticipants={this.state.numParticipants} rentalName={this.state.rentalName} onChange={this.onChange} submit={this.createForm}
                                         {...errorProps} checked={this.state.checked} showComplete={this.state.showComplete} hideComplete={this.hideComplete}
                                         options={this.state.options} validate1stPage={this.validate1stPage.bind(this)} authUser={authUser} createdIndex={createdIndex}
-                                        firebase={this.props.firebase} dropNewForm={this.dropNewForm.bind(this)} newForm={this.state.newForm}/>
+                                        firebase={this.props.firebase} dropNewForm={this.dropNewForm.bind(this)} newForm={this.state.newForm} hideNav={this.hideNav.bind(this)}
+                                        nav={this.state.hidenav}/>
                                     :
                                     <Row className="spinner-standard">
                                         <Spinner animation="border" />
@@ -417,14 +432,20 @@ class RentalForm extends Component {
                                     <div className="div-edit-rf">
                                         <ReturnForm />
                                     </div>
-                                    : <div>Teswting</div>
+                                    :
+                                    <Row className="spinner-standard">
+                                        <Spinner animation="border" />
+                                    </Row>
                                 : null}
                             {this.state.value === 2 ?
                                 !loading ?
                                     <div className="div-edit-rf">
                                         <EditForm rentalForms={rentalForms} showAP={this.showParticipantBox} setParentIndex={this.setIndex} showAR={this.showRentalBox} />
                                     </div>
-                                    : <div>Teswting</div>
+                                    :
+                                    <Row className="spinner-standard">
+                                        <Spinner animation="border" />
+                                    </Row>
                                 : null}
                             <Collapse in={this.state.showAddParticipant} timeout="auto" unmountOnExit>
                                 <AddParticipant {...waiverProps} />
@@ -439,18 +460,12 @@ class RentalForm extends Component {
 
 function CreateForm({ cvc, number, expiry, name, zipcode, handleInputChange, onChange, numParticipants, rentalName, submit, options, validate1stPage,
     cvcError, expiryError, nameError, numberError, numparticipantsError, rentalnameError, zipcodeError, checked, showComplete, hideComplete, authUser,
-    createdIndex, firebase, dropNewForm, newForm }) {
+    createdIndex, firebase, dropNewForm, newForm, hideNav, nav }) {
 
     const [optionsState, setOptionsState] = useState([...options])
     const [page, setPage] = useState(0)
     const [rentalsError, setRentalsError] = useState(null)
     const [pinError, setPinError] = useState(null)
-
-    // function resetAmounts(p_options) {
-    //     for (let i=0; i<p_options.length; i++)
-    //         p_options[i].amount = 0
-    //     setOptionsState(p_options)
-    // }
 
     const useStyles = makeStyles((theme) => ({
         modal: {
@@ -552,8 +567,9 @@ function CreateForm({ cvc, number, expiry, name, zipcode, handleInputChange, onC
                 :
                 page === 0 ?
                     <AddRentals setPage={setPage} optionsState={optionsState} setOptionsState={setOptionsState} onChange={onChange}
-                        numParticipants={numParticipants} rentalName={rentalName} validate1stPage={validate1stPage}
-                        numparticipantsError={numparticipantsError} rentalnameError={rentalnameError} rentalsError={rentalsError} />
+                        numParticipants={numParticipants} rentalName={rentalName} validate1stPage={validate1stPage} hideNav={hideNav}
+                        numparticipantsError={numparticipantsError} rentalnameError={rentalnameError} rentalsError={rentalsError} 
+                        nav={nav}/>
                     :
                     page === 1 ?
                         <div>
@@ -607,8 +623,8 @@ function CreateForm({ cvc, number, expiry, name, zipcode, handleInputChange, onC
                                                 color="primary"
                                             />
                                     By checking here, you agree that you will return back the rental equipment back to US Airsoft. You agree that you will bring the
-                                    equipment back in the same shape they were handed out in. You agree to reimburse US Aisoft for the price of the equipment if the
-                                    equipment is damaged, lost, stolen or kept.
+                                    equipment back in the same shape they were handed out in. You agree to reimburse US Aisoft for the price of the equipmenet listed
+                                    on the previous page. If the equipment is damaged, lost, stolen or kept, you will be charged.
                                 </p>
                                     </Col>
                                 </Row>
@@ -747,8 +763,8 @@ function Summary({ createdIndex, newForm, firebase, setPage }) {
 }
 
 // Add rental when creating a rental form
-function AddRentals({ setPage, optionsState, setOptionsState, onChange, validate1stPage,
-    rentalName, rentalnameError, numParticipants, numparticipantsError, rentalsError }) {
+function AddRentals({ setPage, optionsState, setOptionsState, onChange, validate1stPage, nav,
+    rentalName, rentalnameError, numParticipants, numparticipantsError, rentalsError, hideNav }) {
     const [total, setTotal] = useState(calcTotal(optionsState, false))
     const [error, setError] = useState(rentalsError)
 
@@ -782,6 +798,20 @@ function AddRentals({ setPage, optionsState, setOptionsState, onChange, validate
 
     return (
         <div className="div-add-rental-rf">
+            {!nav ? 
+            <Row className="justify-content-row row-hidenav-rf">
+                <MUIButton
+                    className="button-next-create-rf"
+                    variant="contained"
+                    color="primary"
+                    size="small"
+                    endIcon={<ArrowForwardIos />}
+                    onClick={() => {
+                        hideNav()
+                    }}>
+                    Hide Navbar
+                </MUIButton>
+            </Row> : null}
             <Row className="justify-content-row">
                 <Col>
                     <h5 className="h5-add-rental-rf">Create Rental Form:</h5>
@@ -993,8 +1023,7 @@ function EditForm({ rentalForms, showAP, setParentIndex }) {
                                                     setIndex(i)
                                                     setParentIndex(i)
                                                     setEditting(true)
-                                                }
-                                                }>
+                                                }}>
                                                 <Edit />
                                             </IconButton>
                                         </ListItemSecondaryAction>
@@ -1005,6 +1034,9 @@ function EditForm({ rentalForms, showAP, setParentIndex }) {
                     </List>
                 </div> :
                 <div>
+                    <Row className="row-transaction-rf">
+                        <h5 className="h5-transaction-rf">{`Transaction #${rentalForms[index].transaction}`}</h5>
+                    </Row>
                     <div className="div-back-button-rf">
                         <MUIButton
                             variant="contained"
