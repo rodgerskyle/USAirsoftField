@@ -509,11 +509,13 @@ class SignUpFormBase extends Component {
                   </Col>
                 </Row>
                 <Row className="sig-row-rp">
-                  {!this.state.participantImg ? 
-                    <SignatureCanvas penColor='black' ref={(ref) => {this.sigRef = ref}}
-                    canvasProps={{className: 'participant-sig-rp'}} />
-                    : <img className="signBox-image-rt" src={this.state.participantImg} alt="signature" />
-                  }
+                  <Col className="justify-content-center-col sig-col-rp">
+                    {!this.state.participantImg ? 
+                      <SignatureCanvas penColor='black' ref={(ref) => {this.sigRef = ref}}
+                      canvasProps={{className: 'participant-sig-rp'}} />
+                      : <img className="signBox-image-rt" src={this.state.participantImg} alt="signature" />
+                    }
+                 </Col>
                 </Row>
                 <Row className="button-row-rp2">
                   <Button variant="secondary" type="button" className="clear-button-rp"
@@ -537,7 +539,7 @@ class SignUpFormBase extends Component {
                   </Button>
                 </Row>
                 {!agecheck ? 
-                <Col>
+                <div>
                 <Row className="justify-content-row">
                   <h2 className="waiver-header-rp">
                     {"Guardian/Parent Information:"}
@@ -579,11 +581,13 @@ class SignUpFormBase extends Component {
                   </Col>
                 </Row>
                 <Row className="row-rp sig-row-rp">
-                  {!this.state.pgImg? 
-                    <SignatureCanvas penColor='black' ref={(ref) => {this.sigRef2 = ref}}
-                    canvasProps={{className: 'participant-sig-rp'}} />
-                    : <img className="signBox-image-rt" src={this.state.pgImg} alt="signature" />
-                  }
+                  <Col className="justify-content-center-col sig-col-rp">
+                    {!this.state.pgImg? 
+                      <SignatureCanvas penColor='black' ref={(ref) => {this.sigRef2 = ref}}
+                      canvasProps={{className: 'participant-sig-rp'}} />
+                      : <img className="signBox-image-rt" src={this.state.pgImg} alt="signature" />
+                    }
+                  </Col>
                 </Row>
                 <Row className="button-row-rp2">
                   <Button variant="secondary" type="button" className="clear-button-rp"
@@ -606,8 +610,8 @@ class SignUpFormBase extends Component {
                       Save
                   </Button>
                 </Row>
-                </Col>
-                : ""}
+                </div>
+                : null}
                 </Form>
                 </Row>
                 <Row className="row-rp">
