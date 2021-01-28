@@ -425,7 +425,7 @@ function UserList ({users, getRank, monthly, currentMonth, currentYear, start, f
                                 alt="Player Rank" className="rank-image-lb"/>
                             </OverlayTrigger>
                         </Td>
-                        <Td cl={tv ? "profilelink-lb td-tv-lb" : "profilelink-lb td-lb"} to={'/profilelookup/' + personalUser.uid} ct="link-td-profile-lb">{personalUser.name}</Td>
+                        <Td cl={tv ? "profilelink-lb td-tv-lb" : "profilelink-lb td-lb"} to={'/profilelookup/' + personalUid} ct="link-td-profile-lb">{personalUser.name}</Td>
                         <Td cl={tv ? "wins-lb td-tv-lb" : "wins-lb td-lb"}>
                             {monthly ? (countWins(personalUser, currentMonth, currentYear)) : personalUser.wins}
                         </Td>
