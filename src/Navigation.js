@@ -118,7 +118,7 @@ const NavigationAuth = ({ authUser }) => {
                                     <span>Media</span>
                                 </MDBDropdownToggle> 
                                 <MDBDropdownMenu className="dropdown-default">
-                                    <LinkContainer to="/instagram">
+                                    <LinkContainer to="/media/instagram">
                                         <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Instagram</MDBDropdownItem>
                                     </LinkContainer>
                                     <NavDropdown.Divider />
@@ -136,7 +136,7 @@ const NavigationAuth = ({ authUser }) => {
                         </MDBNavItem>
                         <MDBNavItem>
                             <MDBDropdown>
-                                <MDBDropdownToggle nav caret color="dark">
+                                <MDBDropdownToggle nav caret>
                                     <span>Information</span>
                                 </MDBDropdownToggle> 
                                 <MDBDropdownMenu className="dropdown-default">
@@ -208,7 +208,7 @@ const NavigationNonAuth = () => {
                                     <span>Media</span>
                                 </MDBDropdownToggle> 
                                 <MDBDropdownMenu className="dropdown-default">
-                                    <LinkContainer to="/instagram">
+                                    <LinkContainer to="/media/instagram">
                                         <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Instagram</MDBDropdownItem>
                                     </LinkContainer>
                                     <NavDropdown.Divider />
@@ -226,7 +226,7 @@ const NavigationNonAuth = () => {
                         </MDBNavItem>
                         <MDBNavItem>
                             <MDBDropdown>
-                                <MDBDropdownToggle nav caret color="dark">
+                                <MDBDropdownToggle nav caret>
                                     <span>Information</span>
                                 </MDBDropdownToggle> 
                                 <MDBDropdownMenu className="dropdown-default">
