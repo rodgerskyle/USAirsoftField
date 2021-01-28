@@ -283,6 +283,8 @@ body {
   border-radius: 5px;
   background-color: white;
   width: 80%;
+  margin-left: 15px;
+  margin-right: 15px;
 }
 
 .header-profile {
@@ -1765,6 +1767,7 @@ body {
 .col-team-user {
   display: flex;
   justify-content: center;
+  margin-bottom: 15px;
 }
 
 .row-update-rules {
@@ -2198,6 +2201,129 @@ body {
   width: 100%;
 }
 
+.div-modal-settings-rf {
+  width: 100%;
+}
+
+.div-modal-settings-rf .MuiPaper-root {
+  background-color: #4a4a4a;
+  color: white;
+}
+
+.div-modal-settings-rf .MuiTypography-root {
+  color: white;
+}
+
+.col-applyall-rf {
+  align-items: center;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.col-applyall-rf .MuiButtonBase-root {
+  background-color: #90caf9;
+}
+
+.col-applyall-rf .MuiButtonBase-root:hover {
+  background-color: #4a9ee2;
+}
+
+.col-applyall-rf .MuiButton-label {
+  color: white;
+}
+
+.accordion-details-rentals-rf {
+  height: 400px;
+  overflow: scroll;
+}
+
+.accordion-actions-rentals-rf .MuiButton-root {
+  background-color: #90caf9;
+}
+
+.accordion-actions-rentals-rf .MuiButton-root:hover {
+  background-color: #4a9ee2;
+}
+
+.accordion-actions-rentals-rf .MuiButton-label {
+  color: white;
+}
+
+.MuiAlert-standardError {
+  background-color: #f44336 !important;
+  color: white !important;
+}
+
+.MuiAlert-standardError .MuiAlert-icon {
+  color: white !important;
+}
+
+.MuiAlert-standardSuccess {
+  background-color: #4caf50 !important;
+  color: white !important;
+}
+
+.MuiAlert-standardSuccess .MuiAlert-icon {
+  color: white !important;
+}
+
+.col-save-button-ro {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+  margin-right: 10px;
+}
+
+.col-save-button-ro .MuiButton-root {
+  background-color: #90caf9;
+}
+
+.col-save-button-ro .MuiButton-root:hover {
+  background-color: #4a9ee2;
+}
+
+.col-save-button-ro .MuiButton-label {
+  color: white;
+}
+
+.header1-ro {
+  color: white;
+  margin: 0;
+}
+
+.header2-ro {
+  color: white;
+  margin: 0;
+  margin-left: -15px;
+}
+
+.header3-ro {
+  color: white;
+  margin: 0;
+  margin-left: -30px;
+}
+
+.col-rentals-ro .MuiInputBase-input.Mui-disabled {
+  color: gray;
+}
+
+.col-header-ro {
+  width: 20%;
+}
+
+.div-header-ro {
+    display: flex;
+    align-items: center;
+    margin: 5px;
+    width: 600px;
+}
+
+.row-teams {
+  max-width: 654px;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
 .row-next-button-rf {
   margin-top: 15px;
 }
@@ -2621,6 +2747,58 @@ body {
   display: flex;
 }
 
+.div-email-rf .MuiFormLabel-root.Mui-focused {
+  color: #90caf9 !important;
+}
+
+.div-email-rf .MuiInputBase-input {
+  color: white;
+}
+
+.div-email-rf .MuiFormLabel-root {
+  color: white;
+}
+
+.div-email-rf .MuiInput-underline:after {
+  border-bottom-color: #90caf9;
+  color: white;
+}
+
+.div-email-rf .label.Mui-focused {
+  color: '#90caf9',
+}
+
+.div-email-rf .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-bottom-color: #90caf9;
+}
+
+.div-email-rf .MuiOutlinedInput-notchedOutline {
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  border-radius: 0px;
+  border-bottom-color: white;
+  margin: 0 15px;
+}
+
+.div-email-rf .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #90caf9;
+}
+
+.div-email-rf .MuiOutlinedInput-input {
+  padding: 15px 15px;
+}
+
+.div-email-rf {
+  color: white;
+  margin-bottom: 15px;
+  display: flex;
+}
+
+.div-email-rf .MuiInputBase-root {
+  width: 300px;
+}
+
 .p-groupname-summary {
   margin: 0;
   margin-left: 16px;
@@ -2645,6 +2823,15 @@ body {
 
 .div-summary .MuiButton-containedPrimary:hover {
   background-color: #005c1c
+}
+
+.div-photo-cm {
+  margin-bottom: 1.75rem;
+}
+
+.row-fullname-ip {
+  justify-content: center;
+  color: white;
 }
 
 /* For pincode css */
@@ -2832,6 +3019,8 @@ body {
     text-align: center;
     width: 100%;
     max-width: 654px;
+    margin-left: 15px;
+    margin-right: 15px;
   }
 
   .members-textbox-teamspage {
@@ -3026,6 +3215,6 @@ body {
   }
 
   .status-card-body-main-admin {
-    max-height: 30vh;
+    max-height: 40vh;
   }
 }
