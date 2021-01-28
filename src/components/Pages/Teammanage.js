@@ -52,7 +52,7 @@ class TeamManage extends Component {
     }
 
     componentDidMount() {
-        if (this.state.authUser.team !== null && this.state.deleting === false) {
+        if (this.state.authUser.team !== "" && this.state.deleting === false) {
             //Figure out rank logic here
             this.props.firebase.team(this.state.authUser.team.toLowerCase()).on('value', snapshot => {
                 const Object = snapshot.val();
@@ -67,6 +67,9 @@ class TeamManage extends Component {
                     this.getPicture(this.state.authUser.team.toLowerCase());
                 });
             });
+        }
+        else {
+            this.setState({loading: false})
         }
     }
 
