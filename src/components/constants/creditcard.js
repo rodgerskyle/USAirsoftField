@@ -122,7 +122,7 @@ export default class PaymentForm extends React.Component {
                                 label="Card Number"
                                 variant="outlined"
                                 required
-                                value={this.props.number}
+                                value={this.props.number.length === 16 ? this.props.number.replace(/\d(?=\d{4})/g, "*") : this.props.number}
                                 error={numberError !== null}
                                 helperText={numberError}
                                 onChange={this.handleInputChange.bind(this)}

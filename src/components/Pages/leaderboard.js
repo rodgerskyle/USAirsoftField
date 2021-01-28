@@ -230,6 +230,7 @@ class Leaderboards extends Component {
     }
 
     findRanking(uid) {
+        if (!uid) return null;
         for (let i=0; i<this.state.users.length; i++)
             if (this.state.users[i].uid === uid) return i;
         return null;
@@ -359,7 +360,7 @@ class Leaderboards extends Component {
                     <Row>
                         <UserList users={users.slice((curPage-1) * usersPerPage, ((curPage-1) * usersPerPage) + usersPerPage )} getRank={getRankState} 
                         monthly={this.state.monthly} currentMonth={currentMonth} currentYear={currentYear} start={usersPerPage * (curPage-1)} 
-                        findRanking={this.findRanking} personalUser={usersObject[authUser.uid]} personalUid={authUser.uid} tv={tv}/> 
+                        findRanking={this.findRanking} personalUser={authUser ? usersObject[authUser.uid] : null} personalUid={authUser?.uid} tv={tv}/> 
                     </Row> 
                     }
                     {!loading ? 

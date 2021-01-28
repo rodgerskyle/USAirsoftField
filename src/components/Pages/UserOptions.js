@@ -346,7 +346,7 @@ class UserOptions extends Component {
                                         </Form>
                                     </Col>
                                     <Col className="col-button-renew-uo">
-                                        <Link to={"/renewal/" + this.props.match.params.id}>
+                                        <Link to={"/admin/renewal/" + this.props.match.params.id}>
                                             <Button variant="primary">Renew</Button>
                                         </Link>
                                     </Col>

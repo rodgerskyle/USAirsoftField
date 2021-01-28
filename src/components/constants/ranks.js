@@ -2,7 +2,7 @@
 
 export default [
     'Private',
-    'Private First Classj',
+    'Private First Class',
     'Specialist',
     'Corporal',
     'Sergeant',

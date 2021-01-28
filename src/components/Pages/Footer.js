@@ -83,16 +83,16 @@ const FooterAuth = () => (
                     <div className="divider-footer"/>
                 </Row>
                 <Row className="socials-icons-row"> 
-                    <a href="https://www.facebook.com/USAirsoftworld/">
+                    <a href="https://www.facebook.com/USAirsoftworld/" target="_blank" rel="noopener noreferrer">
                         <img src={fblogo} alt="Facebook Logo" className="socials-icons-footer"/>
                     </a>
-                    <a href="https://www.instagram.com/usairsoftworld/">
+                    <a href="https://www.instagram.com/usairsoftworld/" target="_blank" rel="noopener noreferrer">
                         <img src={iglogo} alt="Instagram Logo" className="socials-icons-footer"/>
                     </a>
-                    <a href="https://twitter.com/usairsoftworld">
+                    <a href="https://twitter.com/usairsoftworld" target="_blank" rel="noopener noreferrer">
                         <img src={twlogo} alt="Twitter Logo" className="socials-icons-footer"/>
                     </a>
-                    <a href="https://www.youtube.com/user/USAirsoftWorldInc">
+                    <a href="https://www.youtube.com/user/USAirsoftWorldInc" target="_blank" rel="noopener noreferrer">
                         <img src={ytlogo} alt="Youtube Logo" className="socials-icons-footer"/>
                     </a>
                 </Row>
@@ -197,16 +197,16 @@ function FooterNonAuth ({emailMenu}) {
             </Row>
             {Status ? <Row className="status-row-footer">{Status}</Row> : null}
             <Row className="socials-icons-row"> 
-                <a href="https://www.facebook.com/USAirsoftworld/">
+                <a href="https://www.facebook.com/USAirsoftworld/" target="_blank" rel="noopener noreferrer">
                     <img src={fblogo} alt="Facebook Logo" className="socials-icons-footer"/>
                 </a>
-                <a href="https://www.instagram.com/usairsoftworld/">
+                <a href="https://www.instagram.com/usairsoftworld/" target="_blank" rel="noopener noreferrer">
                     <img src={iglogo} alt="Instagram Logo" className="socials-icons-footer"/>
                 </a>
-                <a href="https://twitter.com/usairsoftworld">
+                <a href="https://twitter.com/usairsoftworld" target="_blank" rel="noopener noreferrer">
                     <img src={twlogo} alt="Twitter Logo" className="socials-icons-footer"/>
                 </a>
-                <a href="https://www.youtube.com/user/USAirsoftWorldInc">
+                <a href="https://www.youtube.com/user/USAirsoftWorldInc" target="_blank" rel="noopener noreferrer">
                     <img src={ytlogo} alt="Youtube Logo" className="socials-icons-footer"/>
                 </a>
             </Row>
