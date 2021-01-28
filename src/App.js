@@ -15,7 +15,7 @@ import WaiverForm from './components/Pages/FillOutWaiver'
 import EnterWins from './components/Pages/enterwins';
 import EnterLosses from './components/Pages/enterlosses';
 import FreeGames from './components/Pages/freegames';
-import Migration from './components/Pages/migrate';
+// import Migration from './components/Pages/migrate';
 import Leaderboard from './components/Pages/leaderboard';
 import ProfileLookup from './components/Pages/Profilelookup';
 import Pricing from './components/Pages/Pricing';
@@ -80,7 +80,7 @@ const App = () => (
             <Route exact path="/rules">
               <Rules />
             </Route>
-            <Route exact path="/videos">
+            <Route exact path="/media/videos">
               <Videos />
             </Route>
             <Route exact path="/media/instagram">

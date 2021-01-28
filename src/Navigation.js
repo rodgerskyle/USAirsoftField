@@ -122,7 +122,7 @@ const NavigationAuth = ({ authUser }) => {
                                         <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Instagram</MDBDropdownItem>
                                     </LinkContainer>
                                     <NavDropdown.Divider />
-                                    <LinkContainer to="/videos">
+                                    <LinkContainer to="/media/videos">
                                         <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Videos</MDBDropdownItem>
                                     </LinkContainer>
                                 </MDBDropdownMenu>
@@ -212,7 +212,7 @@ const NavigationNonAuth = () => {
                                         <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Instagram</MDBDropdownItem>
                                     </LinkContainer>
                                     <NavDropdown.Divider />
-                                    <LinkContainer to="/videos">
+                                    <LinkContainer to="/media/videos">
                                         <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Videos</MDBDropdownItem>
                                     </LinkContainer>
                                 </MDBDropdownMenu>
