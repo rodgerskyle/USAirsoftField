@@ -32,8 +32,7 @@ class Instagram extends Component {
         }))
       }
       
-      async getPosts(url) {
-        const data = await fetch(url).then(res => res.json())
+      async getPosts(url) { const data = await fetch(url).then(res => res.json())
         return this.slimUpPosts(data)
       }
 
@@ -49,12 +48,15 @@ class Instagram extends Component {
         const { data } = this.state
         return (
             <div className="background-static-all">
-                <h2 className="page-header"> <img src={iglogo} alt="Instagram Logo" className="instagram-logo"/>Instagram Media</h2>
+                <h2 className="page-header"> 
+                    <a href="https://www.instagram.com/usairsoftworld/" target="_blank" rel="noopener noreferrer" className="a-instagram-link">
+                    <img src={iglogo} alt="Instagram Logo" className="instagram-logo"/>Instagram Media</a>
+                </h2>
                 <Container className="container-instagram">
                     <Row>
                         {data.length !== 0 ? data.map(photo => (
                             <Col md={4} key={photo.id} className="col-photo-instagram">
-                                <a href={photo.url}>
+                                <a href={photo.url} target="_blank" rel="noopener noreferrer">
                                     <img src={photo.thumbnail} alt={photo.caption} className="img-instagram"></img>
                                 </a>
                                 <Row className="row-instagram">

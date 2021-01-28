@@ -176,6 +176,17 @@ class RenewSubscription extends Component {
         this.setState({showWaiver: true, uid })
     }
 
+    // Pads date to look like a better format
+    pad = (date) => {
+        if (date !== "N/A") {
+            let date_arr = date.split("-")
+            date_arr[0] = date_arr[0].length === 1 ? ("0" + date_arr[0]) : date_arr[0]
+            date_arr[1] = date_arr[1].length === 1 ? ("0" + date_arr[1]) : date_arr[1]
+            return date_arr.join('-')
+        }
+        return date
+    }
+
     onChange = event => {
         this.setState({ [event.target.name]: event.target.value });
     };
@@ -247,7 +258,7 @@ class RenewSubscription extends Component {
                                         }
                                         {!showWaiver ? 
                                             <UserBox users={this.state.users} index={0} length={this.state.users.length} convert={this.convertDate}
-                                            search={this.state.search} update={this.state.UpdateUserState} loading={this.state.loading}/>
+                                            search={this.state.search} update={this.state.UpdateUserState} loading={this.state.loading} pad={this.pad.bind(this)}/>
                                             :
                                             <div>
                                                 <Row className="justify-content-row">
@@ -403,11 +414,13 @@ class RenewSubscription extends Component {
                                                         </Col>
                                                     </Row>
                                                     <Row className="sig-row-rp">
-                                                        {!this.state.participantImg ? 
-                                                        <SignatureCanvas penColor='black' ref={(ref) => {this.sigRef = ref}}
-                                                        canvasProps={{className: 'participant-sig-rp'}} />
-                                                        : <img className="signBox-image-rt" src={this.state.participantImg} alt="signature" />
-                                                        }
+                                                        <Col className="justify-content-center-col sig-col-rp">
+                                                            {!this.state.participantImg ? 
+                                                            <SignatureCanvas penColor='black' ref={(ref) => {this.sigRef = ref}}
+                                                            canvasProps={{className: 'participant-sig-rp'}} />
+                                                            : <img className="signBox-image-rt" src={this.state.participantImg} alt="signature" />
+                                                            }
+                                                        </Col>
                                                     </Row>
                                                     <Row className="button-row-rp2">
                                                         <Button variant="secondary" type="button" className="clear-button-rp"
@@ -431,7 +444,7 @@ class RenewSubscription extends Component {
                                                         </Button>
                                                     </Row>
                                                     {!agecheck ? 
-                                                    <Col>
+                                                    <div>
                                                         <Row className="row-renew">
                                                             <h2 className="waiver-header-rp">
                                                             {"Guardian/Parent Information:"}
@@ -473,11 +486,13 @@ class RenewSubscription extends Component {
                                                             </Col>
                                                         </Row>
                                                         <Row className="row-renew sig-row-rp">
-                                                            {!this.state.pgImg? 
-                                                            <SignatureCanvas penColor='black' ref={(ref) => {this.sigRef2 = ref}}
-                                                            canvasProps={{width: this.state.width*.75, height: 150, className: 'participant-sig-rp'}} />
-                                                            : <img className="signBox-image-rt" src={this.state.pgImg} alt="signature" />
-                                                            }
+                                                            <Col className="justify-content-center-col sig-col-rp">
+                                                                {!this.state.pgImg? 
+                                                                <SignatureCanvas penColor='black' ref={(ref) => {this.sigRef2 = ref}}
+                                                                canvasProps={{width: this.state.width*.75, height: 150, className: 'participant-sig-rp'}} />
+                                                                : <img className="signBox-image-rt" src={this.state.pgImg} alt="signature" />
+                                                                }
+                                                            </Col>
                                                         </Row>
                                                         <Row className="row-renew">
                                                             <Button variant="secondary" type="button" className="clear-button-rp"
@@ -500,8 +515,8 @@ class RenewSubscription extends Component {
                                                                 Save
                                                             </Button>
                                                         </Row>
-                                                    </Col>
-                                                    : ""}
+                                                    </div>
+                                                    : null}
                                                     </Form>
                                                     </Row>
                                                     <Row className="row-renew">
@@ -571,7 +586,7 @@ class RenewSubscription extends Component {
     }
 }
 
-function UserBox({users, index, search, update, loading, convert}) {
+function UserBox({users, index, search, update, loading, convert, pad}) {
     return (
         <Card.Body className="status-card-body-renew-admin">
             {!loading ?
@@ -588,7 +603,7 @@ function UserBox({users, index, search, update, loading, convert}) {
                                     </Card.Text>
                                 </Col>
                                 <Col className="col-name-fg" md={5}>
-                                    {"Renewal Date: " + user.renewal}
+                                    {"Renewal Date: " + pad(user.renewal)}
                                 </Col>
                                 <Col md={2}>
                                     <Button className="button-submit-admin2" onClick={() => {
@@ -607,7 +622,7 @@ function UserBox({users, index, search, update, loading, convert}) {
                                     </Card.Text>
                                 </Col>
                                 <Col className="col-name-fg" md={5}>
-                                    {"Renewal Date: " + user.renewal}
+                                    {"Renewal Date: " + pad(user.renewal)}
                                 </Col>
                                 <Col md={2}>
                                     <Button className="button-submit-admin2" onClick={() => {
@@ -628,7 +643,7 @@ function UserBox({users, index, search, update, loading, convert}) {
                                 </Card.Text>
                             </Col>
                             <Col className="col-name-fg" md={5}>
-                                {"Renewal Date: " + user.renewal}
+                                {"Renewal Date: " + pad(user.renewal)}
                             </Col>
                             <Col md={2}>
                                 <Button className="button-submit-admin2" onClick={() => {
@@ -647,7 +662,7 @@ function UserBox({users, index, search, update, loading, convert}) {
                                 </Card.Text>
                             </Col>
                             <Col className="col-name-fg" md={5}>
-                                    {"Renewal Date: " + user.renewal}
+                                    {"Renewal Date: " + pad(user.renewal)}
                             </Col>
                             <Col md={2}>
                                 <Button className="button-submit-admin2" onClick={() => {

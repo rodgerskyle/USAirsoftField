@@ -172,7 +172,7 @@ class AdminPage extends Component {
                 </Breadcrumb>
                 <Row>
                   <Col sm={3} className="admin-col-cards">
-                    <Link to={"/enterwins"} className="admin-cards-link">
+                    <Link to={"/admin/enterwins"} className="admin-cards-link">
                       <Card className="admin-cards">
                         <Card.Body className="admin-card-header-link">Enter Wins</Card.Body>
                         <Card.Footer>
@@ -191,7 +191,7 @@ class AdminPage extends Component {
                     </Link>
                   </Col>
                   <Col sm={3} className="admin-col-cards">
-                    <Link to={"/enterlosses"} className="admin-cards-link">
+                    <Link to={"/admin/enterlosses"} className="admin-cards-link">
                       <Card className="admin-cards">
                         <Card.Body className="admin-card-header-link">Enter Losses</Card.Body>
                         <Card.Footer>
@@ -210,7 +210,7 @@ class AdminPage extends Component {
                     </Link>
                   </Col>
                   <Col sm={3} className="admin-col-cards">
-                    <Link to={"/freegames"} className="admin-cards-link">
+                    <Link to={"/admin/freegames"} className="admin-cards-link">
                       <Card className="admin-cards">
                         <Card.Body className="admin-card-header-link">Check Free Games</Card.Body>
                         <Card.Footer>
@@ -229,7 +229,7 @@ class AdminPage extends Component {
                     </Link>
                   </Col>
                   <Col sm={3} className="admin-col-cards">
-                    <Link to={"/renewal"} className="admin-cards-link">
+                    <Link to={"/admin/renewal"} className="admin-cards-link">
                       <Card className="admin-cards">
                         <Card.Body className="admin-card-header-link">Renew Member</Card.Body>
                         <Card.Footer>
@@ -389,7 +389,7 @@ class AdminPage extends Component {
                 </Row>
                 <Row className="admin-row-email">
                   <Col className="admin-col-cards">
-                    <Link to={"/signup"} className="admin-cards-link">
+                    <Link to={"/admin/signup"} className="admin-cards-link">
                       <Card className="admin-cards">
                         <Card.Body className="admin-card-header-link">New Member</Card.Body>
                         <Card.Footer>
@@ -408,7 +408,7 @@ class AdminPage extends Component {
                     </Link>
                   </Col>
                   <Col className="admin-col-cards">
-                    <Link to={"/waiverform"} className="admin-cards-link">
+                    <Link to={"/admin/waiverform"} className="admin-cards-link">
                       <Card className="admin-cards">
                         <Card.Body className="admin-card-header-link">Sign Waiver</Card.Body>
                         <Card.Footer>
@@ -427,9 +427,9 @@ class AdminPage extends Component {
                     </Link>
                   </Col>
                   <Col className="admin-col-cards">
-                    <Link to={"/waiverlookup"} className="admin-cards-link">
+                    <Link to={"/admin/scanwaiver"} className="admin-cards-link">
                       <Card className="admin-cards">
-                        <Card.Body className="admin-card-header-link">Waiver Search</Card.Body>
+                        <Card.Body className="admin-card-header-link">Scan Waiver</Card.Body>
                         <Card.Footer>
                           <Row>
                             <Col xs="auto">
@@ -446,7 +446,26 @@ class AdminPage extends Component {
                     </Link>
                   </Col>
                   <Col className="admin-col-cards">
-                    <Link to={"/rentalform"} className="admin-cards-link">
+                    <Link to={"/admin/waiverlookup"} className="admin-cards-link">
+                      <Card className="admin-cards">
+                        <Card.Body className="admin-card-header-link">Search Waiver</Card.Body>
+                        <Card.Footer>
+                          <Row>
+                            <Col xs="auto">
+                              <Card.Text className="admin-card-footer">View</Card.Text>
+                            </Col>
+                            <Col>
+                              <Card.Text className="admin-card-icon">
+                                <i className="fa fa-angle-double-right fa-1x text-white"></i>
+                              </Card.Text>
+                            </Col>
+                          </Row>
+                        </Card.Footer>
+                      </Card>
+                    </Link>
+                  </Col>
+                  <Col className="admin-col-cards">
+                    <Link to={"/admin/rentalform"} className="admin-cards-link">
                       <Card className="admin-cards">
                         <Card.Body className="admin-card-header-link">Rental Form</Card.Body>
                         <Card.Footer>

@@ -159,7 +159,6 @@ class UserOptions extends Component {
         if (email !== oldEmail) {
             let updateEmail = this.props.firebase.manageProfile();
             updateEmail({choice: "emailAdmin", uid, email: encode(email), old_email: encode(oldEmail)}).then((res) => {
-                console.log(res)
             })
             this.setState({oldEmail: email})
         }
@@ -167,11 +166,9 @@ class UserOptions extends Component {
         // Password portion
 
         if (password !== "") {
-            console.log(password.length)
             if (password.length >= 6) {
                 let updatePassword = this.props.firebase.manageProfile();
                 updatePassword({choice: "passAdmin", uid, password}).then((res) => {
-                    console.log(res)
                 })
             }
             else {
@@ -349,7 +346,7 @@ class UserOptions extends Component {
                                         </Form>
                                     </Col>
                                     <Col className="col-button-renew-uo">
-                                        <Link to={"/renewal/" + this.props.match.params.id}>
+                                        <Link to={"/admin/renewal/" + this.props.match.params.id}>
                                             <Button variant="primary">Renew</Button>
                                         </Link>
                                     </Col>

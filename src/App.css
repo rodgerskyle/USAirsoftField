@@ -216,7 +216,7 @@ body {
 .team-name {
   vertical-align: middle !important;
   color: white !important;
-  font-size: 1.2em;
+  font-size: .6rem;
   text-align: center;
 }
 
@@ -283,6 +283,8 @@ body {
   border-radius: 5px;
   background-color: white;
   width: 80%;
+  margin-left: 15px;
+  margin-right: 15px;
 }
 
 .header-profile {
@@ -389,6 +391,13 @@ body {
 .losses-lb {
   color: #fb6060;
 }
+.myprofilelink-lb:link {
+  color: gold;
+}
+
+.myprofilelink-lb:visited {
+  color: gold;
+}
 
 .profilelink-lb:link {
   color: white;
@@ -433,6 +442,22 @@ body {
   vertical-align: middle !important;
   padding: .5rem .1rem !important;
   text-align: center;
+}
+
+.td-tv-lb {
+  vertical-align: middle !important;
+  padding: 0 .1rem !important;
+  text-align: center;
+}
+
+.link-td-profile-lb {
+  color: gold;
+  vertical-align: middle;
+}
+
+.link-td-profile-lb:hover {
+  color: gold;
+  vertical-align: middle;
 }
 
 .link-td-lb {
@@ -660,6 +685,17 @@ body {
   margin-left: 0 !important;
 }
 
+.row-members-teams {
+  margin-bottom: 30px;
+  justify-content: center;
+}
+
+.h2-description-team {
+  font-size: 16px;
+  margin: 10px;
+  overflow-wrap: break-word;
+}
+
 .status-card-body-wl-admin {
   color: white;
   padding-bottom: 0 !important;
@@ -786,7 +822,6 @@ body {
 
 .waiver-form-rp {
   color: white;
-  min-width: 67%;
 }
 
 .row-rp {
@@ -822,6 +857,7 @@ body {
 
 .cardpreview-row-rp {
   justify-content: center;
+  align-items: center;
 }
 
 .button-row-rp {
@@ -918,17 +954,24 @@ body {
 
 .participant-sig-rp {
   background-color: white;
-  width: 90%;
+  width: 100%;
   height: 150px;
-  margin-right: -15px;
-  margin-left: -15px;
+  position: absolute;
   border-radius: 5px;
+  top: 0;
+  left: 0;
 }
 
 .sig-row-rp {
   justify-content: center;
   background-color: transparent !important;
   position: relative;
+  margin: auto;
+  align-items: center;
+}
+
+.sig-col-rp {
+  height: 150px;
 }
 
 .pg-sig-rp {
@@ -942,6 +985,12 @@ body {
 .signBox-image-rt {
   background-color: white;
   padding: 20px;
+  margin: auto;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  position: absolute;
+  height: 150px;
 }
 
 .clear-button-rp {
@@ -1000,6 +1049,11 @@ body {
   padding-top: 10px;
   padding-bottom: 10px;
   background-color: rgb(108, 117, 125, 0.75);
+}
+
+.justify-content-center-col {
+  display: flex;
+  justify-content: center;
 }
 
 .admin-header {
@@ -1182,7 +1236,6 @@ body {
 .col-name-ul {
   display: flex;
   align-items: center;
-  white-space: nowrap;
   min-width: 100%;
 }
 
@@ -1298,6 +1351,11 @@ body {
   padding-bottom: 20px;
 }
 
+.row-header-tv-lb {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
 .col-header-lb {
   align-items: center;
   display: flex;
@@ -1378,6 +1436,56 @@ body {
 
 .profile-row-footer {
   justify-content: center;
+}
+
+.profile-icon-stats {
+  margin-bottom: 15px;
+}
+
+.icon-editing-rf {
+  font-size: 1.5rem;
+  color: white;
+}
+
+.icons-rf {
+  font-size: 1.5rem;
+}
+
+.col-form-rf {
+  padding-top: 10px;
+}
+
+.col-add-card-button-rf {
+  display: flex;
+  align-items: center;
+  padding-top: 25px;
+}
+
+.error-text-rental-rf {
+  color: red;
+}
+
+.col-submit-rf {
+  align-items: center;
+  display: flex;
+}
+
+.col-submit-rf .MuiButton-contained.Mui-disabled {
+  color: rgba(256, 256,256, 0.26);
+  box-shadow: none;
+  background-color: rgba(0, 0, 0, 0.12);
+}
+
+.cancel-button-rf {
+  margin-left: 15px !important;
+}
+
+.div-buttons-rf  .MuiButton-containedPrimary {
+  background-color: #008e2b
+}
+
+.div-buttons-rf .MuiButton-containedPrimary:hover {
+  background-color: #005c1c
 }
 
 .link-footer:link {
@@ -1637,6 +1745,18 @@ body {
   color: white;
 }
 
+.col-cc {
+  padding-top: 10px;
+}
+
+.row-cc {
+  padding-bottom: 10px;
+}
+
+.textfield-zip-cc {
+  width: 100%;
+}
+
 .div-loading-profile {
   justify-content: center;
   display: flex;
@@ -1647,6 +1767,7 @@ body {
 .col-team-user {
   display: flex;
   justify-content: center;
+  margin-bottom: 15px;
 }
 
 .row-update-rules {
@@ -1918,10 +2039,416 @@ body {
   color: gray !important;
 }
 
+.row-notice-rf .MuiCheckbox-root {
+  color: #90caf9 !important;
+  padding: 0px;
+  padding-right: 10px;
+}
+
+.row-notice-rf .MuiCheckbox-colorPrimary.Mui-checked {
+  color: #90caf9 !important;
+}
+
+.p-notice-rf {
+  color: white;
+  padding: 10px;
+  text-align: justify;
+}
+
+.table-edit-rf .MuiTableCell-root{
+  font-size: 1rem;
+}
+
+.table-edit-rf.MuiPaper-root {
+  background-color: #424242;
+}
+
+.table-edit-rf .MuiTableCell-head {
+  color: white
+}
+
+.table-edit-rf .MuiTableCell-root {
+  border-bottom: 1px solid rgba(81, 81, 81, 1);
+}
+
+.table-edit-rf .MuiTableCell-body {
+  color: white
+}
+
+.table-edit-rf .MuiIconButton-root {
+  color: white;
+}
+
+.table-edit-rf .MuiTableCell-footer {
+  color: white;
+  background-color: rgba(81, 81, 81, 1);
+}
+
+.div-edit-rf {
+  background-color: rgb(51, 55, 60);
+  padding: 20px;
+  border-radius: 5px;
+}
+
+.icon-checked-rf {
+  font-size: 1.5rem;
+}
+
+.list-edit-rf.MuiList-root{
+  background-color: #424242;
+  border-radius: 5px;
+}
+
+.list-edit-rf .MuiTypography-body1 {
+  color: white;
+}
+
+.list-edit-rf .MuiTypography-colorTextSecondary {
+  color: rgba(255,255,255, 0.24);
+}
+
+.list-edit-rf .MuiIconButton-label {
+  color: white;
+}
+
+.list-edit-rf .MuiListItem-container {
+  border-bottom: 1px solid rgba(81, 81, 81, 1);
+}
+
+.list-edit-rf .MuiAvatar-colorDefault {
+  color: black;
+}
+
+.col-textfield-rf {
+  padding: 0 !important;
+}
+
+.col-textfield-right-rf {
+  padding-left: 5px !important;
+}
+
+.row-group-name-rf {
+  padding-bottom: 10px;
+}
+
+.h5-group-name-rf {
+  color: white;
+  margin: 0;
+}
+
+.row-transaction-rf {
+  justify-content: flex-end;
+}
+
+.h5-transaction-rf {
+  font-size: 1rem;
+  position: absolute;
+  display: flex;
+  margin: 0;
+  color: white;
+  margin-top: 10px;
+  margin-right: 15px;
+}
+
+.div-back-button-rf {
+  margin-bottom: 10px;
+  position: absolute;
+}
+
+.div-back-button-2-rf {
+  padding-left: 10px;
+  padding-top: 10px;
+}
+
+.div-back-button-2-rf .MuiButton-containedPrimary {
+  background-color: #6f6f6f
+}
+
+.div-back-button-2-rf .MuiButton-containedPrimary:hover {
+  background-color: #a1a1a1
+}
+
+.div-back-button-rf .MuiButton-containedPrimary {
+  background-color: #6f6f6f
+}
+
+.div-back-button-rf .MuiButton-containedPrimary:hover {
+  background-color: #a1a1a1
+}
+
+.table-cell-button-rf .MuiButton-containedPrimary {
+  background-color: #008e2b
+}
+
+.table-cell-button-rf .MuiButton-containedPrimary:hover {
+  background-color: #005c1c
+}
+
+.collapse-table-row-rf .MuiTableCell-root {
+  background-color: rgb(119, 119, 119);
+}
+
+.div-add-rental-rf {
+  padding: 20px;
+}
+
+.h5-add-rental-rf {
+  color: white;
+  text-align: center;
+}
+
+.button-next-create-rf {
+  width: 100%;
+}
+
+.div-modal-settings-rf {
+  width: 100%;
+}
+
+.div-modal-settings-rf .MuiPaper-root {
+  background-color: #4a4a4a;
+  color: white;
+}
+
+.div-modal-settings-rf .MuiTypography-root {
+  color: white;
+}
+
+.col-applyall-rf {
+  align-items: center;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.col-applyall-rf .MuiButtonBase-root {
+  background-color: #90caf9;
+}
+
+.col-applyall-rf .MuiButtonBase-root:hover {
+  background-color: #4a9ee2;
+}
+
+.col-applyall-rf .MuiButton-label {
+  color: white;
+}
+
+.accordion-details-rentals-rf {
+  height: 400px;
+  overflow: scroll;
+}
+
+.accordion-actions-rentals-rf .MuiButton-root {
+  background-color: #90caf9;
+}
+
+.accordion-actions-rentals-rf .MuiButton-root:hover {
+  background-color: #4a9ee2;
+}
+
+.accordion-actions-rentals-rf .MuiButton-label {
+  color: white;
+}
+
+.MuiAlert-standardError {
+  background-color: #f44336 !important;
+  color: white !important;
+}
+
+.MuiAlert-standardError .MuiAlert-icon {
+  color: white !important;
+}
+
+.MuiAlert-standardSuccess {
+  background-color: #4caf50 !important;
+  color: white !important;
+}
+
+.MuiAlert-standardSuccess .MuiAlert-icon {
+  color: white !important;
+}
+
+.col-save-button-ro {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+  margin-right: 10px;
+}
+
+.col-save-button-ro .MuiButton-root {
+  background-color: #90caf9;
+}
+
+.col-save-button-ro .MuiButton-root:hover {
+  background-color: #4a9ee2;
+}
+
+.col-save-button-ro .MuiButton-label {
+  color: white;
+}
+
+.header1-ro {
+  color: white;
+  margin: 0;
+}
+
+.header2-ro {
+  color: white;
+  margin: 0;
+  margin-left: -15px;
+}
+
+.header3-ro {
+  color: white;
+  margin: 0;
+  margin-left: -30px;
+}
+
+.col-rentals-ro .MuiInputBase-input.Mui-disabled {
+  color: gray;
+}
+
+.col-header-ro {
+  width: 20%;
+}
+
+.div-header-ro {
+    display: flex;
+    align-items: center;
+    margin: 5px;
+    width: 600px;
+}
+
+.row-teams {
+  max-width: 654px;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+.row-next-button-rf {
+  margin-top: 15px;
+}
+
+.row-next-button-rf .MuiButtonBase-root {
+  background-color: #90caf9;
+}
+
+.row-next-button-rf .MuiButtonBase-root:hover {
+  background-color: #4a9ee2;
+}
+
+.row-hidenav-rf {
+  margin-bottom: 15px;
+  margin-top: -20px;
+}
+
+.row-hidenav-rf .MuiButtonBase-root {
+  background-color: #90caf9;
+}
+
+.row-hidenav-rf .MuiButtonBase-root:hover {
+  background-color: #4a9ee2;
+}
+
+.col-rental-rows-rf {
+  display: grid;
+}
+
+.col-notice-rf {
+  color: white;
+  background-color: #424242;
+  padding: 10px;
+  box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12);
+  border-radius: 5px;
+}
+
+.col-total-price-rf {
+  color: white;
+  background-color: #424242;
+  padding: 10px;
+  box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12);
+  border-radius: 5px;
+}
+
+.p-total-price-rf {
+  border-top: 1px solid white;
+  margin: 0 15px;
+  color: white;
+  flex: 1;
+  text-align:center;
+}
+
+.col-md-6 .makeStyles-root-1 {
+  min-width: 100%;
+}
+
+.margin15-bottom {
+  margin-bottom: 15px;
+}
+
+.col-rentals-esf .MuiChip-label {
+  font-size: 15px;
+}
+
+.col-rentals-esf .MuiChip-root {
+  height: 36px;
+  color: white;
+}
+
+.col-rentals-esf .MuiChip-root .MuiChip-avatar {
+  font-size: 1rem;
+}
+
+.th-esf .MuiIconButton-root {
+  margin-top: -3px
+}
+
+.table-collapse-esf .MuiTableCell-root{
+  width: 33.33%;
+}
+
+.tc-name-esf .MuiButton-label {
+  text-shadow: none;
+  font-weight:400;
+}
+
+.tc-name-esf .MuiButton-root {
+  font-size: inherit;
+  color: white;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  background-color:rgb(244, 143, 177, .2)
+}
+
+.tc-name-esf .MuiButton-root:hover {
+  background-color:rgba(172, 0, 57, 0.8)
+}
+
+.tc-name-esf .MuiButton-root.Mui-disabled {
+  color: white;
+  background-color:inherit;
+}
+
+.button-remove-esf {
+  margin-left: 15px !important;
+}
+
+.div-checkbox-esf .MuiCheckbox-colorPrimary.Mui-checked {
+  color: #90caf9;
+}
+
+/*For remove button on esf*/
+.MuiTableCell-root .MuiButton-containedSecondary:hover {
+  background-color: #7d012d;
+}
+
 .MuiBottomNavigationAction-root.Mui-selected {
   color: white !important;
 }
 
+.h2-modal-rf {
+  color: white;
+  text-align: center;
+}
 
 .div-selected-rf {
   background-color: rgb(73 80 87 / .6);
@@ -1950,12 +2477,83 @@ body {
   color: red;
 }
 
+.row-error-rf {
+  color: red;
+  justify-content: center;
+  margin-top: 15px;
+  background-color: #424242;
+  padding: 10px;
+  box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12);
+  border-radius: 5px;
+  text-align: center;
+}
+
+.table-cell-total-participants-rf {
+  color: white;
+  padding: 5px;
+  font-size: 1rem;
+}
+
 .participant-p {
   background-color: rgb(73 80 87 / .6);
   border-radius: 5px;
   color: white;
   padding: 5px;
   margin-bottom: 0;
+}
+
+.div-checked-in-rf {
+  text-decoration: line-through;
+  color: red;
+  margin: 5px;
+  display: initial;
+}
+
+.div-checked-in-rf .MuiButton-text {
+  padding: 3px 5px;
+}
+
+.div-checked-in-rf .MuiButton-label{
+  color: white;
+  font-size: 1.4rem;
+}
+
+.div-checked-in-rf .MuiTouchRipple-root {
+  border: 2px solid red;
+  border-radius: 5px;
+  box-shadow: 0px 2px 1px 1px rgba(0,0,0,0.2), 0px 1px 1px 3px rgba(0,0,0,0.14), 0px 1px 3px -1px rgba(0,0,0,0.12)
+}
+
+.div-checked-out-rf {
+  margin: 5px;
+  display: initial;
+}
+
+.div-checked-out-rf .MuiButton-text {
+  padding: 3px 5px;
+}
+
+.div-checked-out-rf .MuiButton-label{
+  font-size: 1.4rem;
+  color: white;
+}
+
+.div-checked-out-rf .MuiTouchRipple-root {
+  border: 2px solid white;
+  border-radius: 5px;
+  box-shadow: 0px 2px 1px 1px rgba(0,0,0,0.2), 0px 1px 1px 3px rgba(0,0,0,0.14), 0px 1px 3px -1px rgba(0,0,0,0.12)
+}
+
+.div-checked-in-rf .MuiButton-root:hover {
+  background-color: rgb(255, 87, 87, .3)
+}
+
+.div-checked-out-rf .MuiButton-root:hover {
+  background-color: rgba(255, 255, 255, 0.3)
+}
+
+.tc-notice-rf {
+  color: rgb(110 255 129) !important;
 }
 
 .add-rental-button-rf {
@@ -2057,9 +2655,183 @@ body {
   margin-left: 15px;
 }
 
+.check-button-wl {
+  font-size: .7rem !important;
+  margin-left: 15px;
+  padding: 8px 10px !important;
+  color: black !important;
+}
+
 .div-main-birthday {
   background-color: rgb(108, 117, 125, 0.75);
   border-radius: 5px;
+}
+
+.a-youtube-link {
+  color: white !important;
+}
+
+.a-instagram-link {
+  color: white !important;
+}
+
+.tr-personal-rank-leaderboard {
+  border-bottom: 10px solid black;
+}
+
+.h5-title-summary {
+  text-align: center;
+  color: white;
+  border-bottom: 1px solid #777777;
+  padding-bottom: 15px;
+  margin-bottom: 15px;
+}
+
+.p-cc-summary {
+  margin: 0;
+}
+
+.p-error-summary {
+  margin: 0;
+  color: red;
+}
+
+.div-cc-summary .MuiFormLabel-root.Mui-focused {
+  color: #90caf9 !important;
+}
+
+.div-cc-summary .MuiInputBase-input {
+  color: white;
+}
+
+.div-cc-summary .MuiFormLabel-root {
+  color: white;
+}
+
+.div-cc-summary .MuiInput-underline:after {
+  border-bottom-color: #90caf9;
+  color: white;
+}
+
+.div-cc-summary  .label.Mui-focused {
+  color: '#90caf9',
+}
+
+.div-cc-summary .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-bottom-color: #90caf9;
+}
+
+.div-cc-summary .MuiOutlinedInput-notchedOutline {
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  border-radius: 0px;
+  border-bottom-color: white;
+  margin: 0 15px;
+}
+
+.div-cc-summary .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #90caf9;
+}
+
+.div-cc-summary .MuiOutlinedInput-input {
+  padding: 15px 15px;
+}
+
+.div-cc-summary {
+  color: white;
+  border-bottom: 1px solid #777777;
+  margin-top: 15px;
+  padding-bottom: 15px;
+  margin-bottom: 15px;
+  display: flex;
+}
+
+.div-email-rf .MuiFormLabel-root.Mui-focused {
+  color: #90caf9 !important;
+}
+
+.div-email-rf .MuiInputBase-input {
+  color: white;
+}
+
+.div-email-rf .MuiFormLabel-root {
+  color: white;
+}
+
+.div-email-rf .MuiInput-underline:after {
+  border-bottom-color: #90caf9;
+  color: white;
+}
+
+.div-email-rf .label.Mui-focused {
+  color: '#90caf9',
+}
+
+.div-email-rf .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-bottom-color: #90caf9;
+}
+
+.div-email-rf .MuiOutlinedInput-notchedOutline {
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  border-radius: 0px;
+  border-bottom-color: white;
+  margin: 0 15px;
+}
+
+.div-email-rf .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #90caf9;
+}
+
+.div-email-rf .MuiOutlinedInput-input {
+  padding: 15px 15px;
+}
+
+.div-email-rf {
+  color: white;
+  margin-bottom: 15px;
+  display: flex;
+}
+
+.div-email-rf .MuiInputBase-root {
+  width: 300px;
+}
+
+.p-groupname-summary {
+  margin: 0;
+  margin-left: 16px;
+}
+
+.div-groupname-summary {
+  color: white;
+  border-bottom: 1px solid #777777;
+  padding-bottom: 15px;
+  margin-bottom: 15px;
+}
+
+.div-summary {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 15px;
+}
+
+.div-summary .MuiButton-containedPrimary {
+  background-color: #008e2b
+}
+
+.div-summary .MuiButton-containedPrimary:hover {
+  background-color: #005c1c
+}
+
+.div-photo-cm {
+  margin-bottom: 1.75rem;
+}
+
+.row-fullname-ip {
+  justify-content: center;
+  color: white;
 }
 
 /* For pincode css */
@@ -2079,7 +2851,7 @@ body {
 .pincode-input-container .pincode-input-text:focus {
   outline:none;
   box-shadow:none;
-  border-color: black;
+  border-color: black !important;
 }
 
 /* Class for dropdown multiselect */
@@ -2089,8 +2861,7 @@ body {
 }
 
 .go2642161244 {
-  height: auto !important;
-  padding: 2px !important;
+  padding: 4px !important;
 }
 
 .go2139093995 {
@@ -2247,6 +3018,9 @@ body {
   .description-teamspage {
     text-align: center;
     width: 100%;
+    max-width: 654px;
+    margin-left: 15px;
+    margin-right: 15px;
   }
 
   .members-textbox-teamspage {
@@ -2258,6 +3032,24 @@ body {
   .team-member-list {
     width: 100%;
     text-align: center;
+  }
+
+  .p-groupname-rp {
+    margin: 0;
+    color: white;
+    margin-bottom: .5rem;
+  }
+
+  .row-typeahead-rp {
+    margin-bottom: 1rem;
+  }
+
+  .row-typeahead-rp .dropdown-item:focus, .dropdown-item:hover .rbt-highlight-text {
+    background-color: transparent;
+  }
+
+  .row-typeahead-rp .dropdown-item:focus, .dropdown-item .rbt-highlight-text {
+    background-color: transparent;
   }
 
   .row-success-rp {
@@ -2330,6 +3122,12 @@ body {
     text-align: left;
   }
 
+  .td-tv-lb {
+    vertical-align: middle !important;
+    padding: 0 .75rem !important;
+    text-align: left;
+  }
+
   .header-lb {
     text-align: left;
   }
@@ -2370,6 +3168,10 @@ body {
 
   .status-card-body-main-admin {
     max-height: 50vh;
+  }
+
+  .team-name {
+    font-size: 1.2em;
   }
 }
 
@@ -2413,6 +3215,6 @@ body {
   }
 
   .status-card-body-main-admin {
-    max-height: 30vh;
+    max-height: 40vh;
   }
 }

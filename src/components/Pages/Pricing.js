@@ -63,7 +63,7 @@ class Pricing extends Component {
                                     <Card>
                                         <Card.Header className="text-align-center">New Membership</Card.Header>
                                         <Card.Body>
-                                            <Card.Title className="text-align-center">$40.00</Card.Title>
+                                            <Card.Title className="text-align-center">$40.00*</Card.Title>
                                                 <dl>
                                                     <dd>
                                                         <i className="fa fa-check fa-1x text-green dd-text-pricing"></i>
@@ -398,7 +398,7 @@ class Pricing extends Component {
                                                     6 Players
                                                 </dd>
                                                 <dd>
-                                                    10 Rentals (w/ Masks)
+                                                    6 Rentals (w/ Masks)
                                                 </dd>
                                                 <dd>
                                                     1x Large Pepperoni/Cheese Pizza

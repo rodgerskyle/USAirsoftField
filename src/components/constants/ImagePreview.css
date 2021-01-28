@@ -1,0 +1,34 @@
+.demo-image-preview {
+    position: relative;
+    text-align: center;
+  }
+  
+  /* fullscreen enable by props */
+  
+  .demo-image-preview-fullscreen>img {
+    width: 100vw;
+    height: 100vh;
+  }
+  
+  .IconRetake {
+    position: absolute;
+    z-index: 2;
+  }
+
+  .IconRetake .MuiSvgIcon-root {
+    color: red;
+  }
+  
+  .IconAccept {
+    width: 100%;
+    margin-left: -15px;
+    padding-right: 15px;
+    position: absolute;
+    display: flex;
+    justify-content: flex-end;
+    z-index: 1;
+  }
+
+  .IconAccept .MuiSvgIcon-root {
+      color: green;
+  }

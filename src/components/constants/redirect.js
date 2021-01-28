@@ -11,8 +11,8 @@ class Redirect extends Component {
         this.state = { 
             user: null,
             waiverlocations: [
-                "/dashboard", "/signup", "/renewal", "/waiverform", "/waiverlookup", 
-                "/rentalform", "/signout", "/login",
+                "/dashboard", "/dashboard/signup", "/dashboard/renewal", "/dashboard/waiverform", "/dashboard/waiverlookup", 
+                "/dashboard/rentalform", "/dashboard/scanwaiver", "/signout", "/login",
             ]
          };
 

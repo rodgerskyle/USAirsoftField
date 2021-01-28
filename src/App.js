@@ -15,7 +15,7 @@ import WaiverForm from './components/Pages/FillOutWaiver'
 import EnterWins from './components/Pages/enterwins';
 import EnterLosses from './components/Pages/enterlosses';
 import FreeGames from './components/Pages/freegames';
-//import Migration from './components/Pages/migrate';
+import Migration from './components/Pages/migrate';
 import Leaderboard from './components/Pages/leaderboard';
 import ProfileLookup from './components/Pages/Profilelookup';
 import Pricing from './components/Pages/Pricing';
@@ -43,6 +43,7 @@ import CookieConsent from "react-cookie-consent";
 import PageNotFound from './components/Pages/PageNotFound';
 import RentalForm from './components/Pages/RentalForm';
 import Birthday from './components/Pages/Birthday';
+import ScanWaiver from './components/Pages/ScanWaiver';
 
 const App = () => (
       <Router>
@@ -50,11 +51,11 @@ const App = () => (
           <Redirect />
           <Navigation />
           <Switch>
+            {/* <Route exact path="/migrate">
+              <Migration />
+            </Route> */}
             <Route exact path="/birthday">
               <Birthday />
-            </Route>
-            <Route exact path="/rentalform">
-              <RentalForm />
             </Route>
             <Route exact path="/emailoptout/:secret"
             render={(props) => (
@@ -82,7 +83,7 @@ const App = () => (
             <Route exact path="/videos">
               <Videos />
             </Route>
-            <Route exact path="/instagram">
+            <Route exact path="/media/instagram">
               <Instagram />
             </Route>
             <Route exact path="/teams">
@@ -111,46 +112,66 @@ const App = () => (
             <Route exact path="/profilesettings">
               <ProfileSettings />
             </Route>
-            <Route exact path="/signup">
+            <Route exact path="/admin">
+              <Admin />
+            </Route>
+            <Route exact path="/admin/signup">
               <SignUpForm />
             </Route>
-            <Route exact path="/waiverform">
+            <Route exact path="/admin/waiverform">
               <WaiverForm />
             </Route>
-            <Route exact path="/waiverlookup">
+            <Route exact path="/admin/waiverlookup">
               <WaiverLookup />
             </Route>
-            <Route exact path="/renewal">
+            <Route exact path="/admin/renewal">
               <RenewSubscription />
             </Route>
-            <Route exact path="/renewal/:id"
+            <Route exact path="/admin/renewal/:id"
             render={(props) => (
               <RenewSubscription {...props} />
             )}
             ></Route>
-            <Route exact path="/enterwins">
+            <Route exact path="/admin/enterwins">
               <EnterWins />
             </Route>
-            <Route exact path="/enterlosses">
+            <Route exact path="/admin/enterlosses">
               <EnterLosses />
             </Route>
-            <Route exact path="/freegames">
+            <Route exact path="/admin/freegames">
               <FreeGames />
             </Route>
-            <Route exact path="/register">
-              <SignUpForm />
+            <Route exact path="/admin/scanwaiver">
+              <ScanWaiver />
             </Route>
-            <Route exact path="/dashboard">
-              <WaiverDashboard />
+            <Route exact path="/admin/rentalform">
+              <RentalForm />
             </Route>
             <Route exact path="/admin/useroptions/:id"
             render={(props) => (
               <UserOptions {...props} />
             )}
-            >
+            />
+            <Route exact path="/dashboard">
+              <WaiverDashboard />
             </Route>
-            <Route exact path="/admin">
-              <Admin />
+            <Route exact path="/dashboard/waiverform">
+              <WaiverForm />
+            </Route>
+            <Route exact path="/dashboard/scanwaiver">
+              <ScanWaiver />
+            </Route>
+            <Route exact path="/dashboard/waiverlookup">
+              <WaiverLookup />
+            </Route>
+            <Route exact path="/dashboard/signup">
+              <SignUpForm />
+            </Route>
+            <Route exact path="/dashboard/renewal">
+              <RenewSubscription />
+            </Route>
+            <Route exact path="/dashboard/rentalform">
+              <RentalForm />
             </Route>
             <Route exact path="/account">
               <AccountPage />

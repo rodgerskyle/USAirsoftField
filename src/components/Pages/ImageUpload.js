@@ -124,7 +124,7 @@ class ImageUpload extends Component {
                         <Row className="justify-content-flex-end-row">
                             <Button
                                 onClick={(() => this.handleUpload(authUser.uid))}
-                                variant="outline-success"
+                                variant="success"
                                 className="imgUpload-submit"
                                 disabled={isInvalid}
                             >

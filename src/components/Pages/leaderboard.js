@@ -14,13 +14,14 @@ import CustomToggle from '../constants/customtoggle'
 import CustomMenu from '../constants/custommenu'
 
 import { withFirebase } from '../Firebase';
+import { AuthUserContext } from '../session';
 
 class Leaderboards extends Component {
     constructor(props) {
         super(props);
 
         this.state = {
-            loading: false,
+            loading: true,
             users: [],
             displayUsers: [],
             getRankState: this.getRank,
@@ -33,10 +34,13 @@ class Leaderboards extends Component {
             numPages: 0,
             usersPerPage: 50,
             months: null,
+            tv: false,
+            usersObject: null,
         };
         this.handleClick = this.handleClick.bind(this);
         this.handleLastClick = this.handleLastClick.bind(this);
         this.handleFirstClick = this.handleFirstClick.bind(this);
+        this.findRanking = this.findRanking.bind(this);
     }
 
     //Figuring out rank logic
@@ -165,7 +169,7 @@ class Leaderboards extends Component {
 
     componentDidMount() {
         if (this.props.match?.params.query === "monthly") {
-            this.setState({monthly: true})
+            this.setState({monthly: true, tv: true,})
         }
         this.setState({ loading: true });
         this.getMonths(parseInt(new Date().getMonth().toLocaleString()) + 1)
@@ -205,15 +209,17 @@ class Leaderboards extends Component {
             if (!this.state.monthly) {
                 this.setState({
                     users: usersList.sort((a,b) => (a.points < b.points ? 1 : -1)),
+                    usersObject,
+                    numPages: Math.ceil(usersList.length/this.state.usersPerPage),
                     loading: false,
-                    numPages: Math.ceil(usersList.length/this.state.usersPerPage)
                 });
             }
             else {
                 this.setState({
                     users: usersList.sort((a,b) => this.sortArray(a,b, this.state.currentMonth, this.state.currentYear)),
+                    usersObject,
+                    numPages: Math.ceil(usersList.length/this.state.usersPerPage),
                     loading: false,
-                    numPages: Math.ceil(usersList.length/this.state.usersPerPage)
                 });
             }
         });
@@ -221,6 +227,13 @@ class Leaderboards extends Component {
 
     componentWillUnmount() {
         this.props.firebase.users().off();
+    }
+
+    findRanking(uid) {
+        if (!uid) return null;
+        for (let i=0; i<this.state.users.length; i++)
+            if (this.state.users[i].uid === uid) return i;
+        return null;
     }
 
     // Current month sorting
@@ -248,12 +261,14 @@ class Leaderboards extends Component {
 
 
     render() {
-        const { users, loading, getRankState, numPages, curPage, currentMonth, usersPerPage, currentYear, months, years } = this.state;
+        const { users, loading, getRankState, numPages, curPage, currentMonth, usersPerPage, currentYear, months, years, tv, usersObject } = this.state;
 
         return (
+            <AuthUserContext.Consumer>
+                {authUser => (
             <div className="background-static-lb">
                 <Container className="leaderboard-page">
-                    <Row className="row-header-lb">
+                    <Row className={tv ? "row-header-tv-lb" : "row-header-lb"}>
                         <Col xs="auto" className="col-header-lb vertical-divider-col-lb">
                             <h2 className="page-header-lb">Leaderboards</h2>
                         </Col>
@@ -299,7 +314,7 @@ class Leaderboards extends Component {
                             </Pagination>
                         </Col>
                     </Row>
-                    {this.state.monthly === true ?
+                    {this.state.monthly === true && !tv ?
                     <Row className="row-dropdown-months-lb">
                         <Col xs={"auto"}>
                             <Dropdown className="dropdown-lb">
@@ -344,17 +359,39 @@ class Leaderboards extends Component {
                     </Row>  :
                     <Row>
                         <UserList users={users.slice((curPage-1) * usersPerPage, ((curPage-1) * usersPerPage) + usersPerPage )} getRank={getRankState} 
-                        monthly={this.state.monthly} currentMonth={currentMonth} currentYear={currentYear} start={usersPerPage * (curPage-1)} /> 
+                        monthly={this.state.monthly} currentMonth={currentMonth} currentYear={currentYear} start={usersPerPage * (curPage-1)} 
+                        findRanking={this.findRanking} personalUser={authUser ? usersObject[authUser.uid] : null} personalUid={authUser?.uid} tv={tv}/> 
                     </Row> 
                     }
+                    {!loading ? 
+                    <Row>
+                        <Col className="pagination-col-lb">
+                            <Pagination>
+                                <Pagination.First onClick={this.handleFirstClick}/>
+                                <Pagination.Prev onClick={() => {this.handleClick(curPage-1)}} disabled={curPage === 1}/>
+                                {curPage-1 >= 1 ? 
+                                <Pagination.Item onClick={() => {this.handleClick(curPage-1)}}>{curPage-1}</Pagination.Item> 
+                                : null}
+                                <Pagination.Item active>{curPage}</Pagination.Item>
+                                {curPage+1 <= numPages ? 
+                                <Pagination.Item onClick={() => {this.handleClick(curPage+1)}}>{curPage+1}</Pagination.Item> 
+                                : null}
+                                <Pagination.Next onClick={() => {this.handleClick(curPage+1)}} disabled={curPage === numPages}/>
+                                <Pagination.Last onClick={this.handleLastClick}/>
+                            </Pagination>
+                        </Col>
+                    </Row> : null }
                 </Container>
             </div>
+                )}
+            </AuthUserContext.Consumer>
         );
     }
 }
 
 
-function UserList ({users, getRank, monthly, currentMonth, currentYear, start }) {
+function UserList ({users, getRank, monthly, currentMonth, currentYear, start, findRanking, personalUser, personalUid, tv }) {
+    const rank = findRanking(personalUid)
     return (
         <Table className="table table-striped table-dark table-lb">
             <thead className="header-lb">
@@ -368,12 +405,43 @@ function UserList ({users, getRank, monthly, currentMonth, currentYear, start })
                 </tr>
             </thead>
             <tbody className="tbody-lb">
+                {personalUser !== null && start === 0 && 
+                !!!personalUser.roles ?
+                <tr className="tr-personal-rank-leaderboard">
+                        <Td cl={tv ? "td-tv-lb" : "td-lb"} scope="row"><p className={rank+1 ===0 ? "firstPlace" : (rank+1 ===1 ? "secondPlace" : (rank+1 ===2 ? "thirdPlace" : "p-rank-leaderboard"))}>
+                        {rank+1}</p></Td>
+                        <Td cl={tv ? "td-tv-lb" : "td-lb"}>
+                            <OverlayTrigger
+                            transition={false}
+                            key='top'
+                            placement='top'
+                            overlay={
+                                <Tooltip id={`tooltip-top`}>
+                                    {ranks[getRank(personalUser.points)]}
+                                </Tooltip>
+                            }
+                            >
+                                <img src={rankimages.length !== 0 ? rankimages[getRank(personalUser.points)] : null}
+                                alt="Player Rank" className="rank-image-lb"/>
+                            </OverlayTrigger>
+                        </Td>
+                        <Td cl={tv ? "profilelink-lb td-tv-lb" : "profilelink-lb td-lb"} to={'/profilelookup/' + personalUser.uid} ct="link-td-profile-lb">{personalUser.name}</Td>
+                        <Td cl={tv ? "wins-lb td-tv-lb" : "wins-lb td-lb"}>
+                            {monthly ? (countWins(personalUser, currentMonth, currentYear)) : personalUser.wins}
+                        </Td>
+                        <Td cl={tv ? "losses-lb td-tv-lb" : "losses-lb td-lb"}>
+                            {monthly ? (countLosses(personalUser, currentMonth, currentYear)) : personalUser.losses}
+                        </Td>
+                        <Td cl={tv ? "td-tv-lb" : "td-lb"}>
+                            {monthly ? (countPoints(personalUser, currentMonth, currentYear)) : personalUser.points}
+                        </Td>
+                </tr>  : null}
                 {users
                 .map((user, i) => (
                     <tr key={user.uid}>
-                        <Td cl="td-lb" scope="row"><p className={i + start ===0 ? "firstPlace" : (i + start ===1 ? "secondPlace" : (i + start ===2 ? "thirdPlace" : "p-rank-leaderboard"))}>
+                        <Td cl={tv ? "td-tv-lb" : "td-lb"} scope="row"><p className={i + start ===0 ? "firstPlace" : (i + start ===1 ? "secondPlace" : (i + start ===2 ? "thirdPlace" : "p-rank-leaderboard"))}>
                         {i + start + 1}</p></Td>
-                        <Td cl="td-lb">
+                        <Td cl={tv ? "td-tv-lb" : "td-lb"}>
                             <OverlayTrigger
                             transition={false}
                             key='top'
@@ -388,14 +456,14 @@ function UserList ({users, getRank, monthly, currentMonth, currentYear, start })
                                 alt="Player Rank" className="rank-image-lb"/>
                             </OverlayTrigger>
                         </Td>
-                        <Td cl="profilelink-lb td-lb" to={'/profilelookup/' + user.uid} ct="link-td-lb">{user.name}</Td>
-                        <Td cl="wins-lb td-lb">
+                        <Td cl={tv ? "profilelink-lb td-tv-lb" : "profilelink-lb td-lb"} to={'/profilelookup/' + user.uid} ct="link-td-lb">{user.name}</Td>
+                        <Td cl={tv ? "wins-lb td-tv-lb" : "wins-lb td-lb"}>
                             {monthly ? (countWins(user, currentMonth, currentYear)) : user.wins}
                         </Td>
-                        <Td cl="losses-lb td-lb">
+                        <Td cl={tv ? "losses-lb td-tv-lb" : "losses-lb td-lb"}>
                             {monthly ? (countLosses(user, currentMonth, currentYear)) : user.losses}
                         </Td>
-                        <Td cl="td-lb">
+                        <Td cl={tv ? "td-tv-lb" : "td-lb"}>
                             {monthly ? (countPoints(user, currentMonth, currentYear)) : user.points}
                         </Td>
                     </tr>

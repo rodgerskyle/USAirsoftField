@@ -66,7 +66,7 @@ class WaiverDashboard extends Component {
                 </Breadcrumb>
                 <Row>
                    <Col className="admin-col-cards">
-                    <Link to={"/signup"} className="admin-cards-link">
+                    <Link to={"/dashboard/signup"} className="admin-cards-link">
                       <Card className="admin-cards">
                         <Card.Body className="admin-card-header-link">New Member</Card.Body>
                         <Card.Footer>
@@ -85,7 +85,7 @@ class WaiverDashboard extends Component {
                     </Link>
                   </Col>
                   <Col className="admin-col-cards">
-                    <Link to={"/renewal"} className="admin-cards-link">
+                    <Link to={"/dashboard/renewal"} className="admin-cards-link">
                       <Card className="admin-cards">
                         <Card.Body className="admin-card-header-link">Renew Member</Card.Body>
                         <Card.Footer>
@@ -104,7 +104,28 @@ class WaiverDashboard extends Component {
                     </Link>
                   </Col>
                   <Col className="admin-col-cards">
-                    <Link to={"/waiverform"} className="admin-cards-link">
+                    <Link to={"/dashboard/rentalform"} className="admin-cards-link">
+                      <Card className="admin-cards">
+                        <Card.Body className="admin-card-header-link">Rental Forms</Card.Body>
+                        <Card.Footer>
+                          <Row>
+                            <Col xs="auto">
+                              <Card.Text className="admin-card-footer">View</Card.Text>
+                            </Col>
+                            <Col>
+                              <Card.Text className="admin-card-icon">
+                                <i className="fa fa-angle-double-right fa-1x text-white"></i>
+                              </Card.Text>
+                            </Col>
+                          </Row>
+                        </Card.Footer>
+                      </Card>
+                    </Link>
+                  </Col>
+                </Row>
+                <Row>
+                  <Col className="admin-col-cards">
+                    <Link to={"/dashboard/waiverform"} className="admin-cards-link">
                       <Card className="admin-cards">
                         <Card.Body className="admin-card-header-link">Sign Waiver</Card.Body>
                         <Card.Footer>
@@ -123,9 +144,9 @@ class WaiverDashboard extends Component {
                     </Link>
                   </Col>
                   <Col className="admin-col-cards">
-                    <Link to={"/waiverlookup"} className="admin-cards-link">
+                    <Link to={"/dashboard/waiverlookup"} className="admin-cards-link">
                       <Card className="admin-cards">
-                        <Card.Body className="admin-card-header-link">Waiver Search</Card.Body>
+                        <Card.Body className="admin-card-header-link">Search Waiver</Card.Body>
                         <Card.Footer>
                           <Row>
                             <Col xs="auto">
@@ -142,9 +163,9 @@ class WaiverDashboard extends Component {
                     </Link>
                   </Col>
                   <Col className="admin-col-cards">
-                    <Link to={"/rentalform"} className="admin-cards-link">
+                    <Link to={"/dashboard/scanwaiver"} className="admin-cards-link">
                       <Card className="admin-cards">
-                        <Card.Body className="admin-card-header-link">Rental Forms</Card.Body>
+                        <Card.Body className="admin-card-header-link">Scan Waiver</Card.Body>
                         <Card.Footer>
                           <Row>
                             <Col xs="auto">

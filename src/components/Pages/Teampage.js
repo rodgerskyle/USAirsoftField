@@ -182,7 +182,7 @@ class Teampage extends Component {
                                 <div className="team-single-img padding-2px">
                                     <img className="team-icon-teamspage" src={this.state.teamicon} alt="" />
                                 </div>
-                                <Row>
+                                <Row className="row-teams">
                                     <Col md={6} className="col-teampage">
                                         <div className="counter set-width-100">
                                             <i className="fa fa-users fa-2x text-black"></i>
@@ -200,16 +200,16 @@ class Teampage extends Component {
                                         </div>
                                     </Col>
                                 </Row>
-                                <Row className="description-row-teamspage stat-box">
+                                <Row className="description-row-teamspage stat-box row-teams">
                                     <div className="counter description-teamspage">
                                         <i className="fa fa-info-circle fa-2x text-black"></i>
-                                        <h2 className="timer count-title count-number" data-to="100" data-speed="1500">{
+                                        <h2 className="timer count-title count-number h2-description-team" data-to="100" data-speed="1500">{
                                         typeof this.state.teamObject.description !== 'undefined' ? this.state.teamObject.description : "N/A"
                                         }</h2>
                                         <p className="count-text ">Team Description</p>
                                     </div>
                                 </Row>
-                                <Row className="members-row-teamspage">
+                                <Row className="members-row-teamspage row-teams">
                                     <div className="members-textbox-teamspage">
                                         <h2>
                                             Members:
@@ -229,9 +229,9 @@ class Teampage extends Component {
 }
 
     const TeamUserlist = ({ users }) => (
-        <Row className="stat-box">
+        <Row className="row-members-teams row-teams">
             {users.map(user => (
-                <Col key={user[0]} className="col-team-user">
+                <Col md={4} key={user[0]} className="col-team-user">
                     <div className="counter team-member-list">
                         <i className="fa fa-users fa-2x text-black"></i>
                         <Link className="profilelink-tm" to={"/profilelookup/" + user[1]}>

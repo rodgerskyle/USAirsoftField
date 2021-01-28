@@ -39,7 +39,10 @@ class Videos extends Component {
         const { selectedVideo, videos } = this.state
         return (
             <div className="background-static-all">
-                <h2 className="page-header"> <img src={ytlogo} alt="Instagram Logo" className="youtube-logo"/>Youtube Videos</h2>
+                <h2 className="page-header"> 
+                <a href="https://www.youtube.com/user/USAirsoftWorldInc" target="_blank" rel="noopener noreferrer" className="a-youtube-link">
+                <img src={ytlogo} alt="Instagram Logo" className="youtube-logo"/>Youtube Videos</a>
+                </h2>
                 <Container className="container-youtube">
                     <Row>
                         <Col md={8}>

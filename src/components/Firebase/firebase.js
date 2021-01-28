@@ -3,6 +3,7 @@ import 'firebase/auth';
 import 'firebase/database';
 import 'firebase/storage';
 import 'firebase/functions';
+import 'firebase/analytics'
 require('dotenv').config();
 
 const config = {
@@ -19,6 +20,7 @@ const config = {
 class Firebase {
     constructor() {
         app.initializeApp(config);
+        app.analytics()
 
         this.auth = app.auth();
         this.db = app.database();
@@ -95,6 +97,8 @@ class Firebase {
 
     checkRecaptcha = () => this.func.httpsCallable('checkRecaptcha');
 
+    sendReceipt = () => this.func.httpsCallable('sendReceipt');
+
     // Storage Database API
 
     membersWaivers = pdf => this.st.ref().child(`waivers/members/${pdf}`);
@@ -127,9 +131,15 @@ class Firebase {
 
     // Rental Forms API
 
-    rentals = () => this.db.ref('rentals/')
+    rentalOptions = () => this.db.ref('rentals/options/')
 
-    rental = (i) => this.db.ref('rentals/' + i)
+    rentalGroups = () => this.db.ref('rentals/group/')
+
+    rentalGroup = (i) => this.db.ref('rentals/group/' + i)
+
+    participantsRentals = (i, id) => this.db.ref('rentals/group/' + i + '/participants/' + id)
+
+    availableRentals = (i) => this.db.ref('rentals/group/' + i + '/available/')
 
     // Team API
 
@@ -141,9 +151,13 @@ class Firebase {
 
     uid = () => this.auth.currentUser.uid;
 
-    // Waivers Amount API
+    // Waivers Amount API and validation
 
     numWaivers = () => this.db.ref('waivers');
+
+    validatedWaiver = file => this.db.ref(`waivers/validated/${file}`);
+
+    validatedWaivers = () => this.db.ref('waivers/validated')
 
 }
 
