@@ -24,6 +24,11 @@ import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
 import React, { Component } from 'react';
 import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
 import { Col, Row, Spinner } from 'react-bootstrap/';
+import Snackbar from '@material-ui/core/Snackbar';
+import Alert from '@material-ui/lab/Alert';
+import * as ROLES from '../constants/roles';
+import { withAuthorization } from '../session';
+import { compose } from 'recompose';
 // My imports 
 import uuid from 'uuid/v4';
 
@@ -56,47 +61,6 @@ const copy = (source, destination, droppableSource, droppableDestination) => {
 const move = (source, destination, droppableSource, droppableDestination) => {
     const sourceClone = Array.from(source);
     const destClone = typeof destination === 'object' ? Array.from(destination) : [];
-    //let removed = source[droppableSource.index]
-
-    //if (!removed) return;
-
-    //let foundIndex = -1
-    // ****if (droppableSource.droppableId.includes("p_rentals") && droppableDestination.droppableId.includes("p_rentals")) {
-    //     return;
-    // }
-    // else if (removed.amount) { // Copy case
-    //     // Decrement number of rentals left if the number is greater than 1
-    //     // if (removed?.amount > 1) {
-    //     //     sourceClone.amount--
-    //     //     // Adds it back but we need to remove it if it is wrong
-    //     //     //sourceClone.splice(droppableSource.index, 0, Object.assign({}, removed));
-    //     // }
-    //     else {
-    //         // [removed] = sourceClone.splice(droppableSource.index, 1);
-    //     }
-    // }
-    // else {
-    // Moving it the opposite direction checking if it exists in Available object
-    // [removed] = sourceClone.splice(droppableSource.index, 1);
-    // let amount = 1
-    // // Change how duplicate is found
-    // for (let i = 0; i < availableList.length; i++) {
-    //     if (availableList[i].value === removed.value) {
-    //         amount = availableList[i].amount + 1
-    //         foundIndex = i
-    //         break;
-    //     }
-    // }
-    // removed["amount"] = amount
-    //}
-
-    // console.log(destClone)
-    // // If it wasn't found add it back to the array
-    // if (foundIndex === -1)
-    //     destClone.splice(droppableDestination.index, 0, removed);
-    // else {
-    //     destClone[foundIndex] = removed
-    // }
 
     const [removed] = sourceClone.splice(droppableSource.index, 1);
     destClone.splice(droppableDestination.index, 0, removed);
@@ -146,7 +110,41 @@ class EditSelectedForm extends Component {
         loading: true,
         removing: false,
         options: null,
+        error: null,
     };
+
+    // Apply all function to add items > 1 to all participants if
+    // the rental doesn't exist already
+    applyAll = () => {
+        let { participants, availableList } = this.state
+        let cutout = availableList.filter(obj => obj.amount === 1)
+        availableList = availableList.filter(obj => obj.amount > 1)
+        participants.forEach((participant, p_i) => {
+            availableList.forEach((rental, i) => {
+                if (rental.amount > 0) {
+                    // Check if rental exists in participants rentals
+                    // Push rental into participants rentals if not
+                    rental.id = uuid()
+                    if (participant.rentals) {
+                        if (!this.itemExists(availableList, participants[p_i].rentals, i)) {
+                            participants[p_i].rentals.push(rental)
+                            // Subtract from available list
+                            availableList[i].amount--
+                        }
+                    }
+                    else {
+                        participants[p_i].rentals = [rental]
+                        // participants[p_i].rentals.push(rental)
+                        availableList[i].amount--
+                    }
+                }
+            })
+        })
+        // Filter out amounts === 0 and add back original ones taken out
+        availableList = availableList.filter(obj => obj.amount > 0)
+        availableList.push(...cutout)
+        this.props.firebase.rentalGroup(this.props.index).update({ participants, available: availableList })
+    }
 
     // Checks to see if item exists in neighbor array before pushing it in
     itemExists = (source_arr, destination_arr, source_index) => {
@@ -158,6 +156,24 @@ class EditSelectedForm extends Component {
             }
         }
         return false
+    }
+
+    // Checks to see if the rental number already exists in the rental group
+    rentalNumCheck = (num, val) => {
+        const {participants} = this.state
+        for (let i=0; i<participants.length; i++) {
+            if (participants[i].rentals) {
+                for (let z=0; z<participants[i].rentals.length; z++) {
+                    if (participants[i].rentals[z].number === num && participants[i].rentals[z].value === val) {
+                        this.setState({
+                            error: `Rental number: ${num} is already in use by ${participants[i].name.substr(0, participants[i].name.lastIndexOf('('))}`
+                        })
+                        return false
+                    }
+                }
+            }
+        }
+        return true;
     }
 
     /**
@@ -405,7 +421,8 @@ class EditSelectedForm extends Component {
                                             participants.map((row, i) => (
                                                 <MUITableRow key={row.name} row={row} index={i} removing={removing}
                                                     detach={this.detach} edit={this.edit} checkin={this.checkin} 
-                                                    remove={this.remove.bind(this)} gamepass={this.useGamepass.bind(this)}/>
+                                                    remove={this.remove.bind(this)} gamepass={this.useGamepass.bind(this)}
+                                                    checkNum={this.rentalNumCheck.bind(this)}/>
                                             )) :
                                             <TableRow>
                                                 <TableCell align="left" colSpan={6} className="tc-notice-rf">
@@ -476,11 +493,22 @@ class EditSelectedForm extends Component {
                                             </Draggable>
                                         ))}
                                     </Col>
+                                    {provided.placeholder}
+                                    <Col md={4} className="col-applyall-rf">
+                                        <MUIButton onClick={() => this.applyAll()}>
+                                            Apply To All
+                                        </MUIButton>
+                                    </Col>
                                 </Row>
                             )}
                         </Droppable>
                          : null}
                     </DragDropContext>}
+                <Snackbar open={this.state.error !== null} autoHideDuration={6000} onClose={() => this.setState({error: null})}>
+                    <Alert onClose={() => this.setState({error: null})} severity="error">
+                        {this.state.error}
+                    </Alert>
+                </Snackbar>
             </div>
         );
     }
@@ -523,7 +551,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function MUITableRow(props) {
-    const { row, index, detach, edit, checkin, removing, remove, gamepass } = props;
+    const { row, index, detach, edit, checkin, removing, remove, gamepass, checkNum } = props;
 
     const [open, setOpen] = React.useState(false);
     const [editArray, setEditArray] = React.useState(new Array(typeof row.rentals === 'object' ? (row.rentals.length) : []).fill(false));
@@ -582,6 +610,7 @@ function MUITableRow(props) {
                                             {typeof row.rentals === 'object' ?
                                                 row.rentals.map((rental, i) => (
                                                     <Draggable
+                                                        isDragDisabled={true}
                                                         key={rental.id}
                                                         draggableId={rental.id}
                                                         index={i}>
@@ -626,15 +655,21 @@ function MUITableRow(props) {
                                                                         )}>
                                                                         <Paper component="form" className={classes2.root} onSubmit={(e) => {
                                                                             e.preventDefault()
-                                                                            edit(i, index, editArrayValue[i])
-                                                                            let tempArray = [...editArray];
-                                                                            tempArray.fill(false)
-                                                                            setEditArray(tempArray)
+                                                                            if (checkNum(editArrayValue[i], rental.value)) {
+                                                                                edit(i, index, editArrayValue[i])
+                                                                                let tempArray = [...editArray];
+                                                                                tempArray.fill(false)
+                                                                                setEditArray(tempArray)
+                                                                                let editArrayVal = [...editArrayValue]
+                                                                                editArrayVal[i] = ""
+                                                                                setEditArrayValue(editArrayVal)
+                                                                            }
                                                                         }}>
                                                                             <InputBase
                                                                                 className={classes2.input}
                                                                                 placeholder="Enter Rental Number"
                                                                                 inputProps={{ 'aria-label': 'enter rental number' }}
+                                                                                autoFocus
                                                                                 value={editArrayValue[i]}
                                                                                 onChange={(e) => {
                                                                                     let tempArray = [...editArrayValue]
@@ -651,6 +686,9 @@ function MUITableRow(props) {
                                                                                     let tempArray = [...editArray];
                                                                                     tempArray.fill(false)
                                                                                     setEditArray(tempArray)
+                                                                                    let editArrayVal = [...editArrayValue]
+                                                                                    editArrayVal[i] = ""
+                                                                                    setEditArrayValue(editArrayVal)
                                                                                 }}>
                                                                                 <Cancel />
                                                                             </IconButton>
@@ -687,4 +725,10 @@ function MUITableRow(props) {
     );
 }
 
-export default withFirebase(EditSelectedForm);
+const condition = authUser =>
+    authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]);
+
+export default compose(
+    withAuthorization(condition),
+    withFirebase,
+)(EditSelectedForm);

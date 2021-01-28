@@ -86,21 +86,20 @@ class WaiverLookup extends Component {
                 }
                 tempWaivers.push(waiver_obj)
             }
-            this.setState({waivers: tempWaivers}, function() {
-                    this.setState({loading: false})
-                })
+            this.setState({waivers: tempWaivers})
             }).catch(function(error) {
               // Uh-oh, an error occurred!
               console.log(error)
             });
 
         this.props.firebase.numWaivers().on('value', snapshot => {
+            console.log(snapshot.val())
             let num_waivers = snapshot.val().total_num;
             this.setState({num_waivers_cur: num_waivers, validateArray: snapshot.val().validated})
         })
         this.props.firebase.numWaivers().once('value', snapshot => {
             let prev = snapshot.val().total_num;
-            this.setState({num_waivers_prev: prev})
+            this.setState({num_waivers_prev: prev, loading: false})
         })
     }
 

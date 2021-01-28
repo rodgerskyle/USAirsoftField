@@ -90,7 +90,6 @@ class WaiverPageFormBase extends Component {
       if (selectedGroup.length !== 0) {
         if (typeof groupsObject[groupIndex[selectedGroup[0]]].participants === 'undefined') {
           // Push participant into new array and set it
-          console.log("nEw case")
           let participants = []
           let obj = {name: `${fname} ${lname}(${date})`, gamepass: false}
           participants.push(obj)

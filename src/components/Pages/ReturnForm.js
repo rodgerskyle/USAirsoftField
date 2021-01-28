@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
 import '../../App.css';
 import { withFirebase } from '../Firebase';
-import { Avatar, List, ListItem, ListItemAvatar, ListItemSecondaryAction, ListItemText } from '@material-ui/core';
+import { Avatar, List, ListItem, ListItemAvatar, ListItemSecondaryAction, ListItemText, TextField } from '@material-ui/core';
 import IconButton from '@material-ui/core/IconButton';
 import { Contacts, AssignmentTurnedIn, ArrowBackIos, VerifiedUser } from '@material-ui/icons';
 import MUIButton from '@material-ui/core/Button';
 
+import logo from '../../assets/logo.png';
 import Snackbar from '@material-ui/core/Snackbar';
 import MuiAlert from '@material-ui/lab/Alert';
 
@@ -20,7 +21,7 @@ import TableFooter from '@material-ui/core/TableFooter';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 
-import { Row, Spinner } from 'react-bootstrap/';
+import { Row, Spinner, Button } from 'react-bootstrap/';
 
 function Alert(props) {
     return <MuiAlert elevation={6} variant="filled" {...props} />;
@@ -36,8 +37,11 @@ class ReturnForm extends Component {
             index: -1,
             combinedList: null,
             optionsLength: 0, optionsObject: null,
+            optionsList: null,
             error: null,
             success: false,
+            complete: false,
+            email: "",
         };
     }
 
@@ -146,17 +150,56 @@ class ReturnForm extends Component {
         else return status
     }
 
+    // Return back stock from group
+    returnRentals(rentalForm) {
+        let optionsObject = this.state.optionsObject
+        let options = this.state.optionsList
+        // Check if participants exist at all
+        if (rentalForm.participants) {
+            for (let i=0; i < rentalForm.participants.length; i++) {
+                let participant = rentalForm.participants[i]
+                // Check if participant has any rentals
+                if (participant.rentals) {
+                    for (let z=0; z < participant.rentals.length; z++) {
+                        let rental = participant.rentals[z]
+                        let index = parseInt(optionsObject[rental.value].id.substring(1))
+                        options[index].stock = parseInt(options[index].stock) - 1
+                    }
+                }
+            }
+        }
+        if (rentalForm.available) {
+            for (let i=0; i<rentalForm.available.length; i++) {
+                let rental = rentalForm.available[i]
+                let index = parseInt(rental.id.substring(1))
+                options[index].stock = parseInt(options[index].stock) - 1
+            }
+        }
+
+        // Set the options with the new updated
+        this.props.firebase.rentalOptions().set(options)
+    }
+
     // Release form function
     releaseForm() {
-        const { index, rentalForms } = this.state
+        const { index, rentalForms, email } = this.state
         // Add stock back to original
-        this.setState({successMessage: `Group ${rentalForms[index].name} was successfully removed.`, success: true, index: -1})
+        this.returnRentals(rentalForms[index])
+        // Email a summary if email is not empty
+        if (email) {
+            let sendReceipt = this.props.firebase.sendReceipt()
+            const name = rentalForms[index].name
+            const receipt = rentalForms[index].transaction
+            const last4 = rentalForms[index].cc.number.substr(rentalForms[index].cc.number.length - 4)
+            sendReceipt({email, name, receipt, last4})
+        }
+        this.setState({successMessage: `Group ${rentalForms[index].name} was successfully removed.`, success: true, index: -1, complete: false, email: ""})
         this.props.firebase.rentalGroup(index).remove()
     }
 
 
     render() {
-        const {rentalForms, loading, index, combinedList, optionsList, error} = this.state
+        const {rentalForms, loading, index, combinedList, optionsList, error, complete} = this.state
 
 
 
@@ -207,6 +250,39 @@ class ReturnForm extends Component {
                     </List> 
                 </div>
                 :
+                    complete ? 
+                        <div>
+                            <Row className="row-notice">
+                                <h2 className="page-header">Rental Form Completed.</h2>
+                            </Row>
+                            <Row className="row-notice">
+                                <p className="notice-text-g">Please type in the customer's email below for them to </p>
+                            </Row>
+                            <Row className="row-notice">
+                                <p className="notice-text-g">receive a receipt. Finally, click Complete Form when finished.</p>
+                            </Row>
+                            <Row className="justify-content-row">
+                                <div className="div-email-rf">
+                                    <TextField
+                                        id="email"
+                                        label="Email Address"
+                                        variant="outlined"
+                                        value={this.state.email}
+                                        onChange={(e) => this.setState({email: e.target.value})}
+                                    />
+                                </div>
+                            </Row>
+                            <Row className="justify-content-row">
+                                <Button className="next-button-rp" variant="info" type="button"
+                                    onClick={() => {
+                                        this.releaseForm()
+                                    }}>Complete Form</Button>
+                            </Row>
+                            <Row className="row-notice">
+                                <img src={logo} alt="US Airsoft logo" className="small-logo-home" />
+                            </Row> 
+                    </div> 
+                    :
                     <div>
                         <Row className="row-transaction-rf">
                             <h5 className="h5-transaction-rf">{`Transaction #${rentalForms[index].transaction}`}</h5>
@@ -244,7 +320,7 @@ class ReturnForm extends Component {
                                                         {optionsList[i].label}
                                                     </TableCell>
                                                     <TableCell align="left">
-                                                        {row.sort((a,b) => (a.number < b.number ? 1 : -1)).map((rental, i) => (
+                                                        {row.sort((a,b) => (a.number > b.number ? 1 : -1)).map((rental, i) => (
                                                             <div key={i} 
                                                             className={rentalForms[index].participants[rental.participantIndex].rentals[rental.rentalIndex].checked ?
                                                              "div-checked-in-rf" : "div-checked-out-rf"}>
@@ -281,7 +357,7 @@ class ReturnForm extends Component {
                                                 endIcon={<VerifiedUser />}
                                                 onClick={() => {
                                                     if (this.validateReturn())
-                                                        this.releaseForm()
+                                                        this.setState({complete: true})
                                                     else 
                                                         this.setState({error: "Please verify that all items were checked in."})
                                                 }}>
@@ -299,7 +375,7 @@ class ReturnForm extends Component {
                         {this.state.successMessage}
                     </Alert>
                 </Snackbar>
-                <Snackbar open={error} autoHideDuration={6000} onClose={() => this.setState({error: null})}>
+                <Snackbar open={error !== null} autoHideDuration={6000} onClose={() => this.setState({error: null})}>
                     <Alert onClose={() => this.setState({error: null})} severity="error">
                         {error}
                     </Alert>

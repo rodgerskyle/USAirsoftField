@@ -1,6 +1,6 @@
-import { faFolderMinus, faFolderOpen, faFolderPlus } from "@fortawesome/free-solid-svg-icons";
+import { faCog, faFolderMinus, faFolderOpen, faFolderPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Avatar, Checkbox, List, ListItem, ListItemAvatar, ListItemSecondaryAction, ListItemText, TextField, Modal, Fade, Backdrop } from '@material-ui/core';
+import { Avatar, Checkbox, List, ListItem, ListItemAvatar, ListItemSecondaryAction, ListItemText, TextField, Modal, Fade, Backdrop, AccordionActions } from '@material-ui/core';
 import BottomNavigation from '@material-ui/core/BottomNavigation';
 import BottomNavigationAction from '@material-ui/core/BottomNavigationAction';
 import MUIButton from '@material-ui/core/Button';
@@ -10,12 +10,20 @@ import IconButton from '@material-ui/core/IconButton';
 import InputBase from '@material-ui/core/InputBase';
 import Paper from '@material-ui/core/Paper';
 import { makeStyles, withStyles } from '@material-ui/core/styles';
-import { ArrowBackIos, ArrowForwardIos, Contacts, Edit, VerifiedUser } from '@material-ui/icons';
+import { AddRounded, ArrowBackIos, ArrowForwardIos, Contacts, RemoveRounded, Edit, VerifiedUser } from '@material-ui/icons';
 import React, { Component, useState } from 'react';
 import { Breadcrumb, Button, Card, Col, Container, Form, Row, Spinner } from 'react-bootstrap/';
 import Collapse from '@material-ui/core/Collapse';
 import { LinkContainer } from 'react-router-bootstrap';
 import { compose } from 'recompose';
+
+import Accordion from '@material-ui/core/Accordion';
+import AccordionDetails from '@material-ui/core/AccordionDetails';
+import AccordionSummary from '@material-ui/core/AccordionSummary';
+import Typography from '@material-ui/core/Typography';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import Snackbar from '@material-ui/core/Snackbar';
+import Alert from '@material-ui/lab/Alert';
 
 import PinCode from '../constants/pincode'
 
@@ -37,6 +45,7 @@ import ReturnForm from './ReturnForm';
 
 import logo from '../../assets/logo.png';
 import '../../App.css';
+import RentalOptions from "./RentalOptions";
 
 const TextFieldCreate = withStyles({
     root: {
@@ -140,10 +149,10 @@ class RentalForm extends Component {
     handleInputChange = (e) => {
         const { name, value } = e.target;
         if (name === "number" && value.length < 17) {
-            this.setState({ 
+            this.setState({
                 // number: value.replace(/[^\dA-Z]/g, '').replace(/(.{4})/g, '$1 ').trim(),
-                number: value.length === 16 ? value.replace(/\d(?=\d{4})/g, "*") : value,
-                numberError: null 
+                number: value.includes('*') ? this.state.number.slice(0, -1) : value,
+                numberError: null
             })
         }
         else if (name === "expiry" && value.length < 6) {
@@ -211,11 +220,11 @@ class RentalForm extends Component {
         return check
     }
 
-    // Decrements stock of guns selected from the database
-    decrementStock(options) {
+    // Increments stock of guns selected from the database
+    incrementStock(options) {
         let newOptions = this.state.options;
         for (let i = 0; i < options.length; i++) {
-            newOptions[i].stock -= options[i].amount
+            newOptions[i].stock = parseInt(newOptions[i].stock) + parseInt(options[i].amount)
             newOptions[i].amount = ""
         }
         this.props.firebase.rentalOptions().set(newOptions)
@@ -245,7 +254,7 @@ class RentalForm extends Component {
                     checked: false,
                     createdIndex: i
                 })
-                this.decrementStock(options)
+                this.incrementStock(options)
             })
         }
     }
@@ -255,18 +264,17 @@ class RentalForm extends Component {
         this.props.firebase.rentalGroup(i).on("value", (obj) => {
             const newForm = obj.val()
 
-            console.log(newForm)
-            this.setState({newForm})
+            this.setState({ newForm })
         })
     }
 
     // Hide navbar toggle
     hideNav = () => {
-        this.setState({hidenav: true})
+        this.setState({ hidenav: true })
     }
 
     dropNewForm = () => {
-        this.setState({hidenav: false})
+        this.setState({ hidenav: false })
         this.props.firebase.rentalGroup(this.state.createdIndex).off()
     }
 
@@ -307,11 +315,12 @@ class RentalForm extends Component {
     // Add to participants
     addParticipant = (name) => {
         const { index, rentalForms } = this.state
-        let participants = Array.from(rentalForms[index].participants ?? [])
+        let participants = Array.from(rentalForms[index].participants ? rentalForms[index].participants : [])
         let rentals = ""
         let gamepass = false
         let obj = { name, rentals, gamepass }
-        participants.splice(participants.length, 0, obj);
+        // participants.splice(participants.length, 0, obj);
+        participants.push(obj)
         this.props.firebase.rentalGroup(index).update({ participants })
         this.props.firebase.validatedWaiver(name).set({ attached: true })
         this.showParticipantBox()
@@ -383,37 +392,38 @@ class RentalForm extends Component {
                     <div className="background-static-all">
                         <Container>
                             <h2 className="admin-header">Rental Form</h2>
-                            {!hidenav ? 
-                            <Breadcrumb className="admin-breadcrumb">
-                                {authUser && !!authUser.roles[ROLES.ADMIN] ?
-                                    <LinkContainer to="/admin">
-                                        <Breadcrumb.Item>Admin</Breadcrumb.Item>
-                                    </LinkContainer>
-                                    :
-                                    <LinkContainer to="/dashboard">
-                                        <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
-                                    </LinkContainer>
-                                }
-                                <Breadcrumb.Item active>Rental Form</Breadcrumb.Item>
-                            </Breadcrumb> : null}
-                            {!hidenav ? 
-                            <Row>
-                                <Col>
-                                    <BottomNavigation
-                                        value={this.state.value}
-                                        onChange={(e, newvalue) => {
-                                            this.setState({ value: newvalue, ...INITIAL_STATE })
-                                        }}
-                                        showLabels
-                                        className="navigation-rf"
-                                    >
-                                        <BottomNavigationAction className="bottom-nav-rf" label="New Form" icon={<FontAwesomeIcon icon={faFolderPlus} className="icons-rf" />} />
-                                        <BottomNavigationAction className="bottom-nav-rf" label="Return Form" icon={<FontAwesomeIcon icon={faFolderMinus} className="icons-rf" />} />
-                                        <BottomNavigationAction className="bottom-nav-rf" label="Edit Form" icon={<FontAwesomeIcon icon={faFolderOpen} className="icons-rf" />} />
-                                    </BottomNavigation>
-                                </Col>
-                            </Row>
-                            : null}
+                            {!hidenav ?
+                                <Breadcrumb className="admin-breadcrumb">
+                                    {authUser && !!authUser.roles[ROLES.ADMIN] ?
+                                        <LinkContainer to="/admin">
+                                            <Breadcrumb.Item>Admin</Breadcrumb.Item>
+                                        </LinkContainer>
+                                        :
+                                        <LinkContainer to="/dashboard">
+                                            <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
+                                        </LinkContainer>
+                                    }
+                                    <Breadcrumb.Item active>Rental Form</Breadcrumb.Item>
+                                </Breadcrumb> : null}
+                            {!hidenav ?
+                                <Row>
+                                    <Col>
+                                        <BottomNavigation
+                                            value={this.state.value}
+                                            onChange={(e, newvalue) => {
+                                                this.setState({ value: newvalue, ...INITIAL_STATE })
+                                            }}
+                                            showLabels
+                                            className="navigation-rf"
+                                        >
+                                            <BottomNavigationAction className="bottom-nav-rf" label="New Form" icon={<FontAwesomeIcon icon={faFolderPlus} className="icons-rf" />} />
+                                            <BottomNavigationAction className="bottom-nav-rf" label="Return Form" icon={<FontAwesomeIcon icon={faFolderMinus} className="icons-rf" />} />
+                                            <BottomNavigationAction className="bottom-nav-rf" label="Edit Form" icon={<FontAwesomeIcon icon={faFolderOpen} className="icons-rf" />} />
+                                            <BottomNavigationAction className="bottom-nav-rf" label="Rentals" icon={<FontAwesomeIcon icon={faCog} className="icons-rf" />} />
+                                        </BottomNavigation>
+                                    </Col>
+                                </Row>
+                                : null}
                             {this.state.value === 0 ?
                                 !loading ?
                                     <CreateForm cvc={cvc} number={number} expiry={expiry} name={name} zipcode={zipcode} handleInputChange={this.handleInputChange}
@@ -421,7 +431,7 @@ class RentalForm extends Component {
                                         {...errorProps} checked={this.state.checked} showComplete={this.state.showComplete} hideComplete={this.hideComplete}
                                         options={this.state.options} validate1stPage={this.validate1stPage.bind(this)} authUser={authUser} createdIndex={createdIndex}
                                         firebase={this.props.firebase} dropNewForm={this.dropNewForm.bind(this)} newForm={this.state.newForm} hideNav={this.hideNav.bind(this)}
-                                        nav={this.state.hidenav}/>
+                                        nav={this.state.hidenav} />
                                     :
                                     <Row className="spinner-standard">
                                         <Spinner animation="border" />
@@ -440,7 +450,18 @@ class RentalForm extends Component {
                             {this.state.value === 2 ?
                                 !loading ?
                                     <div className="div-edit-rf">
-                                        <EditForm rentalForms={rentalForms} showAP={this.showParticipantBox} setParentIndex={this.setIndex} showAR={this.showRentalBox} />
+                                        <EditForm rentalForms={rentalForms} showAP={this.showParticipantBox} setParentIndex={this.setIndex} showAR={this.showRentalBox}
+                                            authUser={authUser} options={JSON.parse(JSON.stringify(this.state.options))} firebase={this.props.firebase}/>
+                                    </div>
+                                    :
+                                    <Row className="spinner-standard">
+                                        <Spinner animation="border" />
+                                    </Row>
+                                : null}
+                            {this.state.value === 3 ?
+                                !loading ?
+                                    <div className="div-edit-rf">
+                                        <RentalOptions />
                                     </div>
                                     :
                                     <Row className="spinner-standard">
@@ -485,9 +506,9 @@ function CreateForm({ cvc, number, expiry, name, zipcode, handleInputChange, onC
     function validateItems(e) {
         e.preventDefault()
         for (let i = 0; i < optionsState.length; i++) {
-            if (optionsState[i].amount > options[i].stock) {
+            if (optionsState[i].amount+options[i].stock > options[i].max) {
                 setPage(0)
-                setRentalsError(`For the ${optionsState[i].label} rental, we only have ${options[i].stock} left. Please ask a US Airsoft Employee to clarify.`)
+                setRentalsError(`For the ${optionsState[i].label} rental, we only have ${options[i].max - options[i].stock} left. Please ask a US Airsoft Employee to clarify.`)
                 return false;
             }
         }
@@ -568,8 +589,8 @@ function CreateForm({ cvc, number, expiry, name, zipcode, handleInputChange, onC
                 page === 0 ?
                     <AddRentals setPage={setPage} optionsState={optionsState} setOptionsState={setOptionsState} onChange={onChange}
                         numParticipants={numParticipants} rentalName={rentalName} validate1stPage={validate1stPage} hideNav={hideNav}
-                        numparticipantsError={numparticipantsError} rentalnameError={rentalnameError} rentalsError={rentalsError} 
-                        nav={nav}/>
+                        numparticipantsError={numparticipantsError} rentalnameError={rentalnameError} rentalsError={rentalsError}
+                        nav={nav} />
                     :
                     page === 1 ?
                         <div>
@@ -587,7 +608,6 @@ function CreateForm({ cvc, number, expiry, name, zipcode, handleInputChange, onC
                             </div>
                             <Form noValidate autoComplete="off" onSubmit={(e) => {
                                 if (validateItems(e)) {
-                                    console.log(optionsState)
                                     let temp = optionsState
                                     submit(e, temp)
                                 }
@@ -623,7 +643,7 @@ function CreateForm({ cvc, number, expiry, name, zipcode, handleInputChange, onC
                                                 color="primary"
                                             />
                                     By checking here, you agree that you will return back the rental equipment back to US Airsoft. You agree that you will bring the
-                                    equipment back in the same shape they were handed out in. You agree to reimburse US Aisoft for the price of the equipmenet listed
+                                    equipment back in the same shape they were handed out in. You agree to reimburse US Aisoft for the price of the equipment listed
                                     on the previous page. If the equipment is damaged, lost, stolen or kept, you will be charged.
                                 </p>
                                     </Col>
@@ -632,29 +652,29 @@ function CreateForm({ cvc, number, expiry, name, zipcode, handleInputChange, onC
                         </div>
                         :
                         page === 2 ?
-                        <Summary createdIndex={createdIndex} newForm={newForm} firebase={firebase} setPage={setPage}/>
-                        :
-                        <div>
-                            <Row className="row-notice">
-                                <h2 className="page-header">Successful Rental Form Creation.</h2>
-                            </Row>
-                            <Row className="row-notice">
-                                <p className="notice-text-g">Click return to create another Rental Form.</p>
-                            </Row>
-                            <Row className="justify-content-row">
-                                <Button className="next-button-rp" variant="info" type="button"
-                                    onClick={() => {
-                                        setPage(0)
-                                        setOptionsState(options)
-                                        dropNewForm()
-                                        // Get rid of listener on newly created form
-                                    }}>Return</Button>
-                            </Row>
-                            <Row className="row-notice">
-                                <img src={logo} alt="US Airsoft logo" className="small-logo-home" />
-                            </Row>
-                        </div>
-                }
+                            <Summary createdIndex={createdIndex} newForm={newForm} firebase={firebase} setPage={setPage} />
+                            :
+                            <div>
+                                <Row className="row-notice">
+                                    <h2 className="page-header">Successful Rental Form Creation.</h2>
+                                </Row>
+                                <Row className="row-notice">
+                                    <p className="notice-text-g">Click return to create another Rental Form.</p>
+                                </Row>
+                                <Row className="justify-content-row">
+                                    <Button className="next-button-rp" variant="info" type="button"
+                                        onClick={() => {
+                                            setPage(0)
+                                            setOptionsState(options)
+                                            dropNewForm()
+                                            // Get rid of listener on newly created form
+                                        }}>Return</Button>
+                                </Row>
+                                <Row className="row-notice">
+                                    <img src={logo} alt="US Airsoft logo" className="small-logo-home" />
+                                </Row>
+                            </div>
+            }
         </div>
     )
 }
@@ -704,7 +724,7 @@ function Summary({ createdIndex, newForm, firebase, setPage }) {
                             </TableHead>
                             <TableBody>
                                 {newForm.available.map((row) => (
-                                    <TableRow key={row.name}>
+                                    <TableRow key={row.id}>
                                         <TableCell component="th" scope="row">
                                             {row.label}
                                         </TableCell>
@@ -715,10 +735,10 @@ function Summary({ createdIndex, newForm, firebase, setPage }) {
                             <TableFooter>
                                 <TableRow>
                                     <TableCell colSpan={4} align="right" className="table-cell-total-participants-rf">
-                                        {`${newForm.participants ?? 0}/${newForm.size} Waivers Attached`}
+                                        {`${newForm.participants ? newForm.participants.length : 0}/${newForm.size} Waivers Attached`}
                                     </TableCell>
                                 </TableRow>
-                        </TableFooter>
+                            </TableFooter>
                         </Table>
                     </TableContainer>
                     <div className="div-cc-summary">
@@ -769,10 +789,13 @@ function AddRentals({ setPage, optionsState, setOptionsState, onChange, validate
     const [error, setError] = useState(rentalsError)
 
     function setNumber(i, val) {
-        let opt = [...optionsState]
-        opt[i].amount = val
-        setOptionsState(opt)
-        calcTotal(opt, true)
+        val = Math.floor(val)
+        if (val >= 0) {
+            let opt = [...optionsState]
+            opt[i].amount = val
+            setOptionsState(opt)
+            calcTotal(opt, true)
+        }
     }
 
     function calcTotal(opt, flag) {
@@ -781,7 +804,7 @@ function AddRentals({ setPage, optionsState, setOptionsState, onChange, validate
             tot += opt[i].amount * opt[i].cost
         if (flag)
             setTotal(tot.toFixed(2))
-        else 
+        else
             return tot
     }
 
@@ -798,20 +821,20 @@ function AddRentals({ setPage, optionsState, setOptionsState, onChange, validate
 
     return (
         <div className="div-add-rental-rf">
-            {!nav ? 
-            <Row className="justify-content-row row-hidenav-rf">
-                <MUIButton
-                    className="button-next-create-rf"
-                    variant="contained"
-                    color="primary"
-                    size="small"
-                    endIcon={<ArrowForwardIos />}
-                    onClick={() => {
-                        hideNav()
-                    }}>
-                    Hide Navbar
+            {!nav ?
+                <Row className="justify-content-row row-hidenav-rf">
+                    <MUIButton
+                        className="button-next-create-rf"
+                        variant="contained"
+                        color="primary"
+                        size="small"
+                        endIcon={<ArrowForwardIos />}
+                        onClick={() => {
+                            hideNav()
+                        }}>
+                        Hide Navbar
                 </MUIButton>
-            </Row> : null}
+                </Row> : null}
             <Row className="justify-content-row">
                 <Col>
                     <h5 className="h5-add-rental-rf">Create Rental Form:</h5>
@@ -843,15 +866,17 @@ function AddRentals({ setPage, optionsState, setOptionsState, onChange, validate
                     </Row>
                     <Row className="justify-content-row">
                         <Col className="col-total-price-rf">
-                            <Row className="justify-content-row margin15-bottom">
-                                Rental Breakdown:
+                            <Row className="justify-content-row margin15-bottom"
+                                style={{ textAlign: 'center' }}>
+                                Rental Replacement Breakdown:
                             </Row>
                             {optionsState.map((rental, i) => {
                                 return (<CostRow key={i} obj={rental} />)
                             })}
                             <Row className="row-margin15-top">
                                 <p className="p-total-price-rf">
-                                    {`$${total} - Total Rental Value`}
+                                    Total Rental Replacement Value<br />
+                                    {`$${total}`}
                                 </p>
                             </Row>
                         </Col>
@@ -994,10 +1019,150 @@ function AddParticipant(props) {
     )
 }
 
-function EditForm({ rentalForms, showAP, setParentIndex }) {
+function EditForm({ rentalForms, showAP, setParentIndex, authUser, options, firebase }) {
     const [editting, setEditting] = useState(false)
     const [index, setIndex] = useState(-1)
+    const [open, setOpen] = useState(false)
+    const [optionsState, setOptionsState] = useState(options)
+    const [rentalsError, setRentalsError] = useState(null)
+    const [rentalsSuccess, setRentalsSuccess] = useState(null)
     const editProps = { showAP, index }
+
+    const [expanded, setExpanded] = React.useState(false);
+
+    // Map the options array with the available one
+    function mapOptions(ind) {
+        if (rentalForms[ind].available) {
+            let new_options = optionsState
+            rentalForms[ind].available.forEach(item => {
+                let i = parseInt(item.id.substring(1))
+                new_options[i].amount = item.amount
+            })
+            setOptionsState(new_options)
+        }
+        else {
+            setOptionsState(options)
+        }
+    }
+
+    const handleChange = (panel) => (event, isExpanded) => {
+        setExpanded(isExpanded ? panel : false);
+    };
+
+    function setNumber(i, val) {
+        val = Math.floor(val)
+        if (val >= 0) {
+            let opt = [...optionsState]
+            opt[i].amount = val
+            setOptionsState(opt)
+        }
+    }
+
+
+    // Validates items in selected options for group
+    function validateItems(available) {
+        let optionsSelected = JSON.parse(JSON.stringify(optionsState))
+        // We need to filter out the ones that already had an amount
+        if (available) {
+            for (let i=0; i < available.length; i++) {
+                let y = parseInt(available[i].id.substring(1))
+                optionsSelected[y].amount -= available[i].amount
+            }
+        }
+        for (let i = 0; i < optionsState.length; i++) {
+            if (optionsSelected[i].amount+options[i].stock > options[i].max) {
+                setRentalsError(`For the ${optionsState[i].label} rental, we only have ${options[i].max - options[i].stock} left. Please ask a US Airsoft Employee to clarify.`)
+                return false;
+            }
+        }
+        setRentalsError(null)
+        return true
+    }
+
+
+    // Increments stock of guns selected from the database
+    function incrementStock(available) {
+        let newOptions = options;
+        let optionsSelected = JSON.parse(JSON.stringify(optionsState))
+        // We need to filter out the ones that already had an amount
+        if (available) {
+            for (let i=0; i < available.length; i++) {
+                let y = parseInt(available[i].id.substring(1))
+                optionsSelected[y].amount -= available[i].amount
+            }
+        }
+        for (let i = 0; i < options.length; i++) {
+            newOptions[i].stock = parseInt(newOptions[i].stock) + parseInt(optionsSelected[i].amount)
+            newOptions[i].amount = ""
+        }
+        firebase.rentalOptions().set(newOptions)
+    }
+
+    // Changes group max size
+    function changeMax(add) {
+        let size = parseInt(rentalForms[index].size)
+        if (add){
+            // Add to max
+            size+=1
+            firebase.rentalGroup(index).update({size})
+        }
+        else {
+            // Subtract max amount but verify that the number of participants is less
+            if (size-1 !== 0) {
+                if (rentalForms[index].participants && rentalForms[index].participants.length < size) {
+                    size-=1;
+                }
+                else if (!rentalForms[index].participants) {
+                    size-=1;
+                }
+                else {
+                    setRentalsError(`You must remove users in order to decrease the size.`)
+                }
+                firebase.rentalGroup(index).update({size})
+            }
+        }
+    }
+
+    // Saves changes to rentals done
+    function saveAvailable() {
+        let available = optionsState.filter(obj => obj.amount > 0)
+        if (validateItems(rentalForms[index].available ? rentalForms[index].available : null)) {
+            incrementStock(rentalForms[index].available ? rentalForms[index].available : null)
+            firebase.rentalGroup(index).update({available})
+            setRentalsSuccess(`The ${rentalForms[index].name} group's available rentals was updated.`)
+        }
+    }
+
+    const useStyles = makeStyles((theme) => ({
+        modal: {
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+        paper: {
+            backgroundColor: "rgb(73 80 87 / .9)",
+            border: '2px solid #000',
+            boxShadow: theme.shadows[5],
+            padding: theme.spacing(2, 4, 3),
+            borderRadius: "5px",
+        },
+        root: {
+            width: '100%',
+        },
+        heading: {
+            fontSize: theme.typography.pxToRem(15),
+            flexBasis: '33.33%',
+            flexShrink: 0,
+            color: 'white',
+        },
+        secondaryHeading: {
+            fontSize: theme.typography.pxToRem(15),
+            color: theme.palette.text.secondary,
+        },
+    }));
+
+    const classes = useStyles()
+
     return (
         <div>
             {!editting ?
@@ -1023,6 +1188,7 @@ function EditForm({ rentalForms, showAP, setParentIndex }) {
                                                     setIndex(i)
                                                     setParentIndex(i)
                                                     setEditting(true)
+                                                    mapOptions(i)
                                                 }}>
                                                 <Edit />
                                             </IconButton>
@@ -1051,11 +1217,134 @@ function EditForm({ rentalForms, showAP, setParentIndex }) {
                         </MUIButton>
                     </div>
                     <Row className="justify-content-row row-group-name-rf">
+                        {!!authUser.roles[ROLES.ADMIN] ?
+                            <IconButton aria-label="edit" style={{ padding: 0, paddingRight: '5px', color: "white" }}
+                                onClick={() => {
+                                    setOpen(true)
+                                }}>
+                                <Edit />
+                            </IconButton> : null}
                         <h5 className="h5-group-name-rf">{`Group: ${rentalForms[index].name}`}</h5>
                     </Row>
                     <EditSelectedForm {...editProps} />
+                    <Modal
+                        aria-labelledby="Rental Settings"
+                        className={classes.modal}
+                        open={open}
+                        onClose={() => setOpen(false)}
+                        closeAfterTransition
+                        BackdropComponent={Backdrop}
+                        BackdropProps={{
+                            timeout: 500,
+                        }}>
+                        <Fade in={open}>
+                            <div className={classes.paper}>
+                                <div className="div-modal-settings-rf">
+                                    <Accordion expanded={expanded === 'panel1'} onChange={handleChange('panel1')}>
+                                        <AccordionSummary
+                                            expandIcon={<ExpandMoreIcon />}
+                                            aria-controls="summarypanel-content"
+                                            id="summarypanel"
+                                        >
+                                            <Typography className={classes.heading}>General settings</Typography>
+                                        </AccordionSummary>
+                                        <AccordionDetails>
+                                            <Typography>
+                                                {`Group: ${rentalForms[index].name}`}<br />
+                                                {`Transaction: ${rentalForms[index].transaction}`}
+                                            </Typography>
+                                        </AccordionDetails>
+                                    </Accordion>
+                                    <Accordion expanded={expanded === 'panel2'} onChange={handleChange('panel2')}>
+                                        <AccordionSummary
+                                            expandIcon={<ExpandMoreIcon />}
+                                            aria-controls="userspanel-content"
+                                            id="userspanel"
+                                        >
+                                            <Typography className={classes.heading}>Users</Typography>
+                                            <Typography className={classes.secondaryHeading}>
+                                                Increase max number of users in group 
+                                            </Typography>
+                                        </AccordionSummary>
+                                        <AccordionDetails>
+                                            <Typography>
+                                                <IconButton aria-label="edit" style={{ padding: 0, paddingRight: '5px', color: "white" }}
+                                                    onClick={() => {
+                                                        changeMax(true) 
+                                                    }}>
+                                                    <AddRounded />
+                                                </IconButton>
+                                                {rentalForms[index].size}
+                                                <IconButton aria-label="edit" style={{ padding: 0, paddingLeft: '5px', color: "white" }}
+                                                    onClick={() => {
+                                                        changeMax(false)
+                                                    }}>
+                                                    <RemoveRounded />
+                                                </IconButton>
+                                            </Typography>
+                                        </AccordionDetails>
+                                    </Accordion>
+                                    <Accordion expanded={expanded === 'panel3'} onChange={handleChange('panel3')}>
+                                        <AccordionSummary
+                                            expandIcon={<ExpandMoreIcon />}
+                                            aria-controls="rentalpanel-content"
+                                            id="rentalpanel"
+                                        >
+                                            <Typography className={classes.heading}>Rentals</Typography>
+                                            <Typography className={classes.secondaryHeading}>
+                                                Add or remove rentals from group
+                                            </Typography>
+                                        </AccordionSummary>
+                                        <AccordionDetails className="accordion-details-rentals-rf">
+                                            <Typography>
+                                                {optionsState.map((rental, i) => {
+                                                    return (<RentalRow key={i} obj={rental} set={setNumber} i={i} />)
+                                                })}
+                                            </Typography>
+                                        </AccordionDetails>
+                                        <Divider />
+                                        <AccordionActions className="accordion-actions-rentals-rf">
+                                            <MUIButton type="button" onClick={() => {
+                                                saveAvailable()
+                                            }}>
+                                                Save
+                                            </MUIButton>
+                                        </AccordionActions>
+                                    </Accordion>
+                                    <Accordion expanded={expanded === 'panel4'} onChange={handleChange('panel4')}>
+                                        <AccordionSummary
+                                            expandIcon={<ExpandMoreIcon />}
+                                            aria-controls="creditcardpanel-content"
+                                            id="creditcardpanel"
+                                        >
+                                            <Typography className={classes.heading}>Credit Card Information</Typography>
+                                        </AccordionSummary>
+                                        <AccordionDetails>
+                                            <Typography>
+                                                {`Name on Card: ${rentalForms[index].cc.name}`}<br />
+                                                {`Card Number: ${rentalForms[index].cc.number}`}<br />
+                                                {`Expiration: ${rentalForms[index].cc.expiry}`}<br />
+                                                {`CVC: ${rentalForms[index].cc.cvc}`}<br />
+                                                {`Zipcode: ${rentalForms[index].cc.zipcode}`}
+                                            </Typography>
+                                        </AccordionDetails>
+                                    </Accordion>
+                                </div>
+                            </div>
+                        </Fade>
+                    </Modal>
                 </div>
             }
+                <Snackbar open={rentalsSuccess !== null} autoHideDuration={6000} onClose={() => setRentalsSuccess(null)}>
+                    <Alert onClose={() => setRentalsSuccess(null)} severity="success">
+                        {rentalsSuccess}
+                    </Alert>
+                </Snackbar>
+                <Snackbar open={rentalsError !== null} autoHideDuration={6000} onClose={() => setRentalsError(null)}>
+                    <Alert onClose={() => setRentalsError(null)} severity="error">
+                        {rentalsError}
+                    </Alert>
+                </Snackbar>
         </div>
     )
 }
