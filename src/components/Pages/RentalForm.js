@@ -11,7 +11,7 @@ import InputBase from '@material-ui/core/InputBase';
 import Paper from '@material-ui/core/Paper';
 import { makeStyles, withStyles } from '@material-ui/core/styles';
 import { AddRounded, ArrowBackIos, ArrowForwardIos, Contacts, RemoveRounded, Edit, VerifiedUser } from '@material-ui/icons';
-import React, { Component, useState } from 'react';
+import React, { Component, useState, useEffect } from 'react';
 import { Breadcrumb, Button, Card, Col, Container, Form, Row, Spinner } from 'react-bootstrap/';
 import Collapse from '@material-ui/core/Collapse';
 import { LinkContainer } from 'react-router-bootstrap';
@@ -457,7 +457,7 @@ class RentalForm extends Component {
                             {this.state.value === 2 ?
                                 !loading ?
                                     <div className="div-edit-rf">
-                                        <EditForm rentalForms={rentalForms} showAP={this.showParticipantBox} setParentIndex={this.setIndex} showAR={this.showRentalBox}
+                                        <EditForm forms={rentalForms} showAP={this.showParticipantBox} setParentIndex={this.setIndex} showAR={this.showRentalBox}
                                             authUser={authUser} options={JSON.parse(JSON.stringify(this.state.options))} firebase={this.props.firebase}/>
                                     </div>
                                     :
@@ -1026,7 +1026,8 @@ function AddParticipant(props) {
     )
 }
 
-function EditForm({ rentalForms, showAP, setParentIndex, authUser, options, firebase }) {
+function EditForm({ forms, showAP, setParentIndex, authUser, options, firebase }) {
+    const [rentalForms, setRentalForms] = useState(forms)
     const [editting, setEditting] = useState(false)
     const [index, setIndex] = useState(-1)
     const [open, setOpen] = useState(false)
@@ -1036,6 +1037,10 @@ function EditForm({ rentalForms, showAP, setParentIndex, authUser, options, fire
     const editProps = { showAP, index }
 
     const [expanded, setExpanded] = React.useState(false);
+
+    useEffect(() => {
+        setRentalForms(forms)
+    }, [forms])
 
     // Map the options array with the available one
     function mapOptions(ind) {
