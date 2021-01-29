@@ -224,7 +224,8 @@ class RentalForm extends Component {
     incrementStock(options) {
         let newOptions = this.state.options;
         for (let i = 0; i < options.length; i++) {
-            newOptions[i].stock = parseInt(newOptions[i].stock) + parseInt(options[i].amount)
+            let num = options[i].amount !== "" ? parseInt(options[i].amount) : 0
+            newOptions[i].stock = parseInt(newOptions[i].stock) + num
             newOptions[i].amount = ""
         }
         this.props.firebase.rentalOptions().set(newOptions)
@@ -236,10 +237,12 @@ class RentalForm extends Component {
         if (this.validateCreateForm()) {
             const { cvc, number, expiry, name, zipcode, rentalName, numParticipants } = this.state
             this.props.firebase.rentalGroups().once("value", (obj) => {
-                let i = obj.val() ? obj.val().length : 0
+                let group = obj.val() ? obj.val() : []
+                let i = group.length
                 let cc = { cvc, number, expiry, name, zipcode }
                 let available = options.filter(opt => opt.amount > 0);
-                this.props.firebase.rentalGroup(i).set({ name: rentalName, size: numParticipants, cc, available, complete: false }, () => {
+                group.push({ name: rentalName, size: numParticipants, cc, available, complete: false})
+                this.props.firebase.rentals().update({group}, () => {
                     this.grabNewForm(i)
                 })
                 this.setState({
@@ -368,6 +371,10 @@ class RentalForm extends Component {
         this.props.firebase.rentalOptions().on('value', snapshot => {
             const optionsObject = snapshot.val()
 
+            // let optionsObjectarr = {};
+            // for (let i=0; i<optionsObject.length; i++)
+            //     optionsObjectarr[optionsObject[i].value] = {...optionsObject[i]}
+
             let options = Object.keys(optionsObject).map(key => ({
                 ...optionsObject[key]
             }))
@@ -483,7 +490,7 @@ function CreateForm({ cvc, number, expiry, name, zipcode, handleInputChange, onC
     cvcError, expiryError, nameError, numberError, numparticipantsError, rentalnameError, zipcodeError, checked, showComplete, hideComplete, authUser,
     createdIndex, firebase, dropNewForm, newForm, hideNav, nav }) {
 
-    const [optionsState, setOptionsState] = useState([...options])
+    const [optionsState, setOptionsState] = useState(JSON.parse(JSON.stringify(options)))
     const [page, setPage] = useState(0)
     const [rentalsError, setRentalsError] = useState(null)
     const [pinError, setPinError] = useState(null)
@@ -1036,6 +1043,7 @@ function EditForm({ rentalForms, showAP, setParentIndex, authUser, options, fire
             let new_options = optionsState
             rentalForms[ind].available.forEach(item => {
                 let i = parseInt(item.id.substring(1))
+                // let i = parseInt(optionsObject[item.value].id.substring(1))
                 new_options[i].amount = item.amount
             })
             setOptionsState(new_options)
@@ -1092,7 +1100,8 @@ function EditForm({ rentalForms, showAP, setParentIndex, authUser, options, fire
             }
         }
         for (let i = 0; i < options.length; i++) {
-            newOptions[i].stock = parseInt(newOptions[i].stock) + parseInt(optionsSelected[i].amount)
+            let num = optionsSelected[i].amount !== "" ? parseInt(optionsSelected[i].amount) : 0
+            newOptions[i].stock = parseInt(newOptions[i].stock) + num
             newOptions[i].amount = ""
         }
         firebase.rentalOptions().set(newOptions)
@@ -1169,7 +1178,8 @@ function EditForm({ rentalForms, showAP, setParentIndex, authUser, options, fire
                 <div>
                     <h5 className="admin-header">Edit Rental Form</h5>
                     <List className="list-edit-rf">
-                        {rentalForms.map((form, i) => {
+                        {rentalForms.length > 0 ? 
+                        rentalForms.map((form, i) => {
                             if (form.complete === true) {
                                 return (
                                     <ListItem key={i}>
@@ -1196,7 +1206,7 @@ function EditForm({ rentalForms, showAP, setParentIndex, authUser, options, fire
                                     </ListItem>
                                 )
                             } else return null
-                        })}
+                        }) : <p className="p-empty-rentals-rf">Add Rental Forms to see groups here.</p>}
                     </List>
                 </div> :
                 <div>
@@ -1361,7 +1371,6 @@ function convertDate(date) {
 }
 
 function WaiverBox(props) {
-    console.log(props)
     const { waivers, search, add, loading } = props
     return (
         <div>

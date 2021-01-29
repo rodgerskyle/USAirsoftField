@@ -1443,6 +1443,13 @@ body {
   margin-bottom: 15px;
 }
 
+.p-empty-rentals-rf {
+  color: white;
+  font-weight: 400;
+  text-align: center;
+  margin: 0;
+}
+
 .icon-editing-rf {
   font-size: 1.5rem;
   color: white;
