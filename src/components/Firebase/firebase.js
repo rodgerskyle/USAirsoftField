@@ -131,6 +131,8 @@ class Firebase {
 
     // Rental Forms API
 
+    rentals = () => this.db.ref('rentals/')
+
     rentalOptions = () => this.db.ref('rentals/options/')
 
     rentalGroups = () => this.db.ref('rentals/group/')

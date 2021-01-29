@@ -65,14 +65,19 @@ class ReturnForm extends Component {
         this.props.firebase.rentalGroups().on('value', snapshot => {
             const rentalsObject = snapshot.val()
 
-            let rentalForms = Object.keys(rentalsObject).map(key => ({
-                ...rentalsObject[key],
-            }))
-
-            this.setState({
-                rentalForms: rentalForms,
-                loading: false,
-            })
+            if (rentalsObject) {
+                let rentalForms = Object.keys(rentalsObject).map(key => ({
+                    ...rentalsObject[key],
+                }))
+    
+                this.setState({
+                    rentalForms: rentalForms,
+                    loading: false,
+                })
+            }
+            else {
+                this.setState({loading: false})
+            }
         })
     }
 
@@ -194,7 +199,10 @@ class ReturnForm extends Component {
             sendReceipt({email, name, receipt, last4})
         }
         this.setState({successMessage: `Group ${rentalForms[index].name} was successfully removed.`, success: true, index: -1, complete: false, email: ""})
-        this.props.firebase.rentalGroup(index).remove()
+        // Removes index from group and updates firebase
+        let group = rentalForms
+        group.splice(index, 1)
+        this.props.firebase.rentals().update({group})
     }
 
 
@@ -221,7 +229,8 @@ class ReturnForm extends Component {
                 <div>
                     <h5 className="admin-header">Return Rental Form</h5>
                     <List className="list-edit-rf">
-                        {rentalForms.map((form, i) => {
+                        {rentalForms ?
+                        rentalForms.map((form, i) => {
                             if (form.complete !== false) {
                                 return (
                                     <ListItem key={i}>
@@ -246,7 +255,7 @@ class ReturnForm extends Component {
                                     </ListItem>
                                 )
                             } else return null
-                        })}
+                        }) : <p className="p-empty-rentals-rf">Add Rental Forms to see groups here.</p>}
                     </List> 
                 </div>
                 :
