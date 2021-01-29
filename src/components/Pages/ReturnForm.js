@@ -177,7 +177,7 @@ class ReturnForm extends Component {
             for (let i=0; i<rentalForm.available.length; i++) {
                 let rental = rentalForm.available[i]
                 let index = parseInt(rental.id.substring(1))
-                options[index].stock = parseInt(options[index].stock) - 1
+                options[index].stock = parseInt(options[index].stock) - parseInt(rental.amount)
             }
         }
 
