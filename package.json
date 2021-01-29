@@ -27,6 +27,7 @@
     "google-map-react": "^2.1.9",
     "jspdf": "^2.3.0",
     "mdbreact": "^5.0.1",
+    "payment": "^2.4.0",
     "prop-types": "^15.7.2",
     "react": "^17.0.1",
     "react-beautiful-dnd": "^13.0.0",

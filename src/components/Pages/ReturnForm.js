@@ -164,7 +164,7 @@ class ReturnForm extends Component {
             for (let i=0; i < rentalForm.participants.length; i++) {
                 let participant = rentalForm.participants[i]
                 // Check if participant has any rentals
-                if (participant.rentals) {
+                if (typeof participant.rentals === 'object') {
                     for (let z=0; z < participant.rentals.length; z++) {
                         let rental = participant.rentals[z]
                         let index = parseInt(optionsObject[rental.value].id.substring(1))
@@ -276,6 +276,7 @@ class ReturnForm extends Component {
                                         id="email"
                                         label="Email Address"
                                         variant="outlined"
+                                        type="email"
                                         value={this.state.email}
                                         onChange={(e) => this.setState({email: e.target.value})}
                                     />
