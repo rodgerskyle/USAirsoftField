@@ -124,10 +124,11 @@ class EditSelectedForm extends Component {
                 if (rental.amount > 0) {
                     // Check if rental exists in participants rentals
                     // Push rental into participants rentals if not
-                    rental.id = uuid()
+                    let new_rental = JSON.parse(JSON.stringify(rental))
+                    new_rental.id = uuid()
                     if (participant.rentals) {
                         if (!this.itemExists(availableList, participants[p_i].rentals, i)) {
-                            participants[p_i].rentals.push(rental)
+                            participants[p_i].rentals.push(new_rental)
                             // Subtract from available list
                             availableList[i].amount--
                         }
@@ -670,6 +671,7 @@ function MUITableRow(props) {
                                                                                 placeholder="Enter Rental Number"
                                                                                 inputProps={{ 'aria-label': 'enter rental number' }}
                                                                                 autoFocus
+                                                                                type="number"
                                                                                 value={editArrayValue[i]}
                                                                                 onChange={(e) => {
                                                                                     let tempArray = [...editArrayValue]

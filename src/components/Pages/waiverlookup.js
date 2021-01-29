@@ -93,7 +93,6 @@ class WaiverLookup extends Component {
             });
 
         this.props.firebase.numWaivers().on('value', snapshot => {
-            console.log(snapshot.val())
             let num_waivers = snapshot.val().total_num;
             this.setState({num_waivers_cur: num_waivers, validateArray: snapshot.val().validated})
         })

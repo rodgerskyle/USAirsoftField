@@ -89,13 +89,16 @@ export default class PaymentForm extends React.Component {
         <Row className="justify-content-row row-cc">
             <Col md="auto" className="align-items-center-col">
                 <Cards
-                    preview={false}
+                    preview={true}
                     cvc={this.props.cvc}
                     expiry={this.props.expiry}
                     focused={this.state.focus}
                     name={this.props.name}
-                    number={this.props.number}
+                    number={this.props.number.length >= 16 ? this.props.number.replace(/\s/g, '').replace(/\d(?=\d{4})/g, "*") : this.props.number}
                     zipcode={this.props.zipcode}
+                    placeholders={{
+                        name: 'YOUR NAME HERE',
+                }}
                 />
             </Col>
             <Col md="auto" className="align-items-center-col">
@@ -117,12 +120,14 @@ export default class PaymentForm extends React.Component {
                         </Col>
                         <Col className="col-cc">
                             <TextFieldCard
-                                type="tel"
+                                type={this.state.focus === "number" ? 'tel' : 'password'}
                                 name="number"
                                 label="Card Number"
                                 variant="outlined"
                                 required
-                                value={this.props.number.length === 16 ? this.props.number.replace(/\d(?=\d{4})/g, "*") : this.props.number}
+                                value = {this.props.number}
+                                pattern="[\d| ]{16,22}"
+                                // value={this.props.number.length === 16 ? this.props.number.replace(/\d(?=\d{4})/g, "*") : this.props.number}
                                 error={numberError !== null}
                                 helperText={numberError}
                                 onChange={this.handleInputChange.bind(this)}
@@ -139,6 +144,7 @@ export default class PaymentForm extends React.Component {
                                 variant="outlined"
                                 required
                                 value={this.props.expiry}
+                                pattern="\d\d/\d\d"
                                 error={expiryError !== null}
                                 helperText={expiryError}
                                 onChange={this.props.handleInputChange}
@@ -153,6 +159,7 @@ export default class PaymentForm extends React.Component {
                                 variant="outlined"
                                 required
                                 value={this.props.cvc}
+                                pattern="\d{3,4}"
                                 error={cvcError !== null}
                                 helperText={cvcError}
                                 onChange={this.props.handleInputChange}
