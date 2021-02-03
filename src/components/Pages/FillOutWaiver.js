@@ -69,6 +69,7 @@ const INITIAL_STATE = {
   emailAdded: false,
   loading: false,
   selectedGroup: [],
+  submitted: false,
 };
 
 class WaiverPageFormBase extends Component {
@@ -91,16 +92,16 @@ class WaiverPageFormBase extends Component {
         if (typeof groupsObject[groupIndex[selectedGroup[0]]].participants === 'undefined') {
           // Push participant into new array and set it
           let participants = []
-          let obj = {name: `${fname} ${lname}(${date})`, gamepass: false}
+          let obj = { name: `${fname} ${lname}(${date})`, gamepass: false }
           participants.push(obj)
-          this.props.firebase.rentalGroup(groupIndex[selectedGroup[0]]).update({participants})
+          this.props.firebase.rentalGroup(groupIndex[selectedGroup[0]]).update({ participants })
         }
         else if (groupsObject[groupIndex[selectedGroup[0]]].participants.length < groupsObject[groupIndex[selectedGroup[0]]].size) {
           // Push participant into existing array and set it
           let participants = groupsObject[groupIndex[selectedGroup[0]]].participants
-          let obj = {name: `${fname} ${lname}(${date})`, gamepass: false}
+          let obj = { name: `${fname} ${lname}(${date})`, gamepass: false }
           participants.push(obj)
-          this.props.firebase.rentalGroup(groupIndex[selectedGroup[0]]).update({participants})
+          this.props.firebase.rentalGroup(groupIndex[selectedGroup[0]]).update({ participants })
         }
         // Make sure length and size are not equal
         // Push new user to participants table
@@ -133,8 +134,8 @@ class WaiverPageFormBase extends Component {
 
       if (groupsObj) {
         groupsObject = Object.keys(groupsObj).map(key => ({
-            ...groupsObj[key],
-            index: key,
+          ...groupsObj[key],
+          index: key,
         }))
         for (let i = 0; i < groupsObj.length; i++) {
           groups[i] = groupsObj[i].name
@@ -221,6 +222,7 @@ class WaiverPageFormBase extends Component {
       showLander,
       emailAdded,
       loading,
+      submitted
     } = this.state;
 
     const myProps = { fname, lname, email, address, city, state, zipcode, phone, dob, pgname, pgphone, participantImg, pgImg, age }
@@ -517,8 +519,9 @@ class WaiverPageFormBase extends Component {
                 </Col>
               </Row>
               {!loading ?
+              <div>
                 <Row className="nav-row-rp">
-                  <Button className="next-button-rp" variant="info" type="button" disabled={this.state.pageIndex === 1}
+                  <Button className="next-button-rp" variant="info" type="button" disabled={submitted}
                     onClick={() => {
                       if (address === "" || fname === "" || lname === "" || email === "" || address === "" ||
                         city === "" || state === "" || zipcode === "" || phone === "" || dob === "") {
@@ -539,15 +542,21 @@ class WaiverPageFormBase extends Component {
                       else if (!this.validateEmail(email)) {
                         this.setState({ errorWaiver: "Email must be a valid email." })
                       }
-                      else if (this.state.pageIndex !== 1) {
+                      else {
                         this.setState({ submitted: true })
                         this.emailSignUp();
                         this.completeWaiver(myProps)
                       }
                     }}>
                     Submit
-            </Button>
+                  </Button>
                 </Row>
+                {submitted ?
+                  <Row className="spinner-standard">
+                    <Spinner animation="border" />
+                  </Row> 
+                : null}
+                </div>
                 : null}
             </div> :
             <Row className="spinner-standard">

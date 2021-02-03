@@ -21,7 +21,6 @@ import Alert from '@material-ui/lab/Alert';
 import * as ROLES from '../constants/roles';
 import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
-// Imports for Drag N drop
 import EditSelectedForm from './EditSelectedForm';
 
 import '../../App.css';
@@ -194,34 +193,6 @@ class EditForm extends Component {
         const { loading, editting, rentalForms, options, index, authUser, open, expanded, optionsState,
             rentalsSuccess, rentalsError } = this.state
 
-        const classes = makeStyles((theme) => ({
-            modal: {
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-            },
-            paper: {
-                backgroundColor: "rgb(73 80 87 / .9)",
-                border: '2px solid #000',
-                boxShadow: theme.shadows[5],
-                padding: theme.spacing(2, 4, 3),
-                borderRadius: "5px",
-            },
-            root: {
-                width: '100%',
-            },
-            heading: {
-                fontSize: theme.typography.pxToRem(15),
-                flexBasis: '33.33%',
-                flexShrink: 0,
-                color: 'white',
-            },
-            secondaryHeading: {
-                fontSize: theme.typography.pxToRem(15),
-                color: theme.palette.text.secondary,
-            },
-        }));
-
         return (
             <div>
                 {loading ?
@@ -267,7 +238,7 @@ class EditForm extends Component {
                                     }) : <p className="p-empty-rentals-rf">Add Rental Forms to see groups here.</p>}
                             </List>
                         </div> :
-                        <div>
+                        <div className="div-parent-ef">
                             <Row className="row-transaction-rf">
                                 <h5 className="h5-transaction-rf">{`Transaction #${rentalForms[index].transaction}`}</h5>
                             </Row>
@@ -297,7 +268,7 @@ class EditForm extends Component {
                             <EditSelectedForm {...editProps} />
                             <Modal
                                 aria-labelledby="Rental Settings"
-                                className={classes.modal}
+                                className={"modal-ef"}
                                 open={open}
                                 onClose={() => this.setState({ open: false })}
                                 closeAfterTransition
@@ -306,7 +277,7 @@ class EditForm extends Component {
                                     timeout: 500,
                                 }}>
                                 <Fade in={open}>
-                                    <div className={classes.paper}>
+                                    <div className={"paper-ef"}>
                                         <div className="div-modal-settings-rf">
                                             <Accordion expanded={expanded === 'panel1'} onChange={this.handleChange('panel1')}>
                                                 <AccordionSummary
@@ -314,7 +285,7 @@ class EditForm extends Component {
                                                     aria-controls="summarypanel-content"
                                                     id="summarypanel"
                                                 >
-                                                    <Typography className={classes.heading}>General settings</Typography>
+                                                    <Typography className={"heading-ef"}>General settings</Typography>
                                                 </AccordionSummary>
                                                 <AccordionDetails>
                                                     <Typography>
@@ -329,9 +300,9 @@ class EditForm extends Component {
                                                     aria-controls="userspanel-content"
                                                     id="userspanel"
                                                 >
-                                                    <Typography className={classes.heading}>Users</Typography>
-                                                    <Typography className={classes.secondaryHeading}>
-                                                        Increase max number of users in group
+                                                    <Typography className={"heading-ef"}>Users</Typography>
+                                                    <Typography className={"secondaryHeading-ef"}>
+                                                        Change number of users
                                             </Typography>
                                                 </AccordionSummary>
                                                 <AccordionDetails>
@@ -358,8 +329,8 @@ class EditForm extends Component {
                                                     aria-controls="rentalpanel-content"
                                                     id="rentalpanel"
                                                 >
-                                                    <Typography className={classes.heading}>Rentals</Typography>
-                                                    <Typography className={classes.secondaryHeading}>
+                                                    <Typography className={"heading-ef"}>Rentals</Typography>
+                                                    <Typography className={"secondaryHeading-ef"}>
                                                         Add or remove rentals from group
                                             </Typography>
                                                 </AccordionSummary>
@@ -385,7 +356,7 @@ class EditForm extends Component {
                                                     aria-controls="creditcardpanel-content"
                                                     id="creditcardpanel"
                                                 >
-                                                    <Typography className={classes.heading}>Credit Card Information</Typography>
+                                                    <Typography className={"heading-ef"}>Credit Card Information</Typography>
                                                 </AccordionSummary>
                                                 <AccordionDetails>
                                                     <Typography>
@@ -418,37 +389,40 @@ class EditForm extends Component {
     }
 }
 
+const useStyles = makeStyles((theme) => ({
+    root: {
+        padding: '2px 4px',
+        display: 'flex',
+        alignItems: 'center',
+        float: 'right',
+        background: '#424242',
+        margin: '5px',
+        width: 400,
+    },
+    input: {
+        marginLeft: theme.spacing(1),
+        color: 'white',
+        width: "20%",
+    },
+    divider: {
+        height: 28,
+        margin: 4,
+        background: "rgba(255, 255, 255, 0.12)",
+    },
+    label: {
+        color: 'white',
+        fontSize: "1rem",
+        margin: 0,
+        flex: 1,
+        marginRight: 15,
+        marginLeft: 15,
+    }
+}));
+
+
 // Rows for each rental selection the user will have
 const RentalRow = ({ obj, set, i }) => {
-    const classes = makeStyles((theme) => ({
-        root: {
-            padding: '2px 4px',
-            display: 'flex',
-            alignItems: 'center',
-            float: 'right',
-            background: '#424242',
-            margin: '5px',
-            width: 400,
-        },
-        input: {
-            marginLeft: theme.spacing(1),
-            color: 'white',
-            width: "20%",
-        },
-        divider: {
-            height: 28,
-            margin: 4,
-            background: "rgba(255, 255, 255, 0.12)",
-        },
-        label: {
-            color: 'white',
-            fontSize: "1rem",
-            margin: 0,
-            flex: 1,
-            marginRight: 15,
-            marginLeft: 15,
-        }
-    }));
+    const classes = useStyles()
 
     return (
         <Row>

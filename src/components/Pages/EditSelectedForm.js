@@ -496,7 +496,8 @@ class EditSelectedForm extends Component {
                                     </Col>
                                     {provided.placeholder}
                                     <Col md={4} className="col-applyall-rf">
-                                        <MUIButton onClick={() => this.applyAll()}>
+                                        <MUIButton disabled={!(participants)}
+                                        onClick={() => this.applyAll()}>
                                             Apply To All
                                         </MUIButton>
                                     </Col>
