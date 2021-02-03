@@ -13,6 +13,9 @@ class Redirect extends Component {
             waiverlocations: [
                 "/dashboard", "/dashboard/signup", "/dashboard/renewal", "/dashboard/waiverform", "/dashboard/waiverlookup", 
                 "/dashboard/rentalform", "/dashboard/scanwaiver", "/signout", "/login",
+            ],
+            staticlocations: [
+                "/dashboard/waiverform", "/signout", "/login"
             ]
          };
 
@@ -26,9 +29,11 @@ class Redirect extends Component {
         this.authSubscription()
     }
 	componentDidUpdate(prevProps) {
-        let { user, waiverlocations } = this.state
+        let { user, waiverlocations, staticlocations } = this.state
         if (user && !!user.roles[ROLES.WAIVER]) {
-            if (!waiverlocations.includes(this.props.location.pathname))
+            if (!!user.roles[ROLES.STATIC] && !staticlocations.includes(this.props.location.pathname))
+                this.props.history.push("/dashboard/waiverform")
+            else if (!waiverlocations.includes(this.props.location.pathname))
                 this.props.history.push("/dashboard");
         }
 	}

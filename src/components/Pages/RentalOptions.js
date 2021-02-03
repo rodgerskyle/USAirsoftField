@@ -49,12 +49,28 @@ class RentalOptions extends Component {
     // Set number of max rentals given index
     setNumber(i, val) {
         const { options } = this.state
-        val = Math.floor(val)
-        if (val >= 0 && options[i].stock <= val) {
+        // val = Math.floor(val)
+        // if (val >= 0 && options[i].stock <= val) {
             let opt = [...options]
             opt[i].max = val
-            this.setState({ optionsState: opt })
+            this.setState({ options: opt })
+        // }
+    }
+
+    // Submit the saved changes if it passes validation
+    submit() {
+        const { options } = this.state
+        for (let i=0; i<options.length; i++) {
+            if (options[i].stock > options[i].max) {
+                //error case
+                this.setState({
+                    rentalsError: `The number inputted for ${options[i].value} was less than the current stock checked out.`,
+                })
+                return;
+            }
         }
+        this.props.firebase.rentalOptions().set(options)
+        this.setState({rentalsSuccess: "Rental inventory successfully updated."})
     }
 
     render() {
@@ -101,8 +117,9 @@ class RentalOptions extends Component {
                         <Row className="justify-content-row">
                             <Col md={7} className="col-save-button-ro">
                                 <MUIButton type="button" onClick={() => {
-                                    this.props.firebase.rentalOptions().set(this.state.optionsState)
-                                    this.setState({rentalsSuccess: "Rental inventory successfully updated."})
+                                    this.submit()
+                                    // this.props.firebase.rentalOptions().set(this.state.optionsState)
+                                    // this.setState({rentalsSuccess: "Rental inventory successfully updated."})
                                 }}>
                                     Save
                         </MUIButton>

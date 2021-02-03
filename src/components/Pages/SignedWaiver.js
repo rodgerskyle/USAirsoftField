@@ -101,8 +101,8 @@ class SignedWaiver extends Component {
 
     const styles = StyleSheet.create({
       body: {
-        paddingTop: 35,
-        paddingBottom: 35,
+        paddingTop: 30,
+        paddingBottom: 30,
         paddingHorizontal: 35,
       },
       text: {
@@ -128,7 +128,7 @@ class SignedWaiver extends Component {
         fontFamily: 'calibri',
         fontWeight: 'bold',
         textAlign: 'center',
-        marginBottom: 20,
+        marginBottom: 15,
       },
       header: {
         fontSize: 16,

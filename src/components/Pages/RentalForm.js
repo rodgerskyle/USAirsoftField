@@ -38,7 +38,7 @@ import {
     formatCreditCardNumber,
     formatCVC,
     formatExpirationDate,
-  } from "../constants/formatcard";
+} from "../constants/formatcard";
 
 import logo from '../../assets/logo.png';
 import '../../App.css';
@@ -155,21 +155,21 @@ class RentalForm extends Component {
         }
         else if (name === "expiry" && value.length < 6) {
             if (value.length < 5) {
-                this.setState({ 
+                this.setState({
                     // [name]: value.replace(/[^\dA-Z]/g, '').replace(/(.{2})/g, '$1/').trim(), 
                     [name]: formatExpirationDate(value),
-                    expiryError: null 
+                    expiryError: null
                 })
             }
             else {
-                this.setState({[name]: value})
+                this.setState({ [name]: value })
             }
         }
         else if (name === "cvc")
-            this.setState({ 
+            this.setState({
                 // [name]: value.replace(/[^\dA-Z]/g, ''), 
                 [name]: formatCVC(value),
-                cvcError: null 
+                cvcError: null
             })
         else if (name === "name")
             this.setState({ [name]: value.replace(/^\d+$/, ''), nameError: null })
@@ -190,7 +190,7 @@ class RentalForm extends Component {
     validateCreateForm() {
         const { cvc, number, expiry, name, zipcode } = this.state
         let check = true
-        if (cvc === "" || cvc.length !== 3) {
+        if (cvc === "" || (cvc.length < 3 && cvc.length > 4)) {
             this.setState({ cvcError: "Enter a valid CVC." })
             check = false
         }
@@ -230,13 +230,15 @@ class RentalForm extends Component {
 
     // Increments stock of guns selected from the database
     incrementStock(options) {
-        let newOptions = this.state.options;
-        for (let i = 0; i < options.length; i++) {
-            let num = options[i].amount !== "" ? parseInt(options[i].amount) : 0
-            newOptions[i].stock = parseInt(newOptions[i].stock) + num
-            newOptions[i].amount = ""
-        }
-        this.props.firebase.rentalOptions().set(newOptions)
+        this.props.firebase.rentalOptions().once('value', obj => {
+            let newOptions = obj.val()
+            for (let i = 0; i < options.length; i++) {
+                let num = options[i].amount !== "" ? parseInt(options[i].amount) : 0
+                newOptions[i].stock = parseInt(newOptions[i].stock) + num
+                newOptions[i].amount = ""
+            }
+            this.props.firebase.rentalOptions().set(newOptions)
+        })
     }
 
     // Creates rental form
@@ -249,8 +251,8 @@ class RentalForm extends Component {
                 let i = group.length
                 let cc = { cvc, number, expiry, name, zipcode }
                 let available = options.filter(opt => opt.amount > 0);
-                group.push({ name: rentalName, size: numParticipants, cc, available, complete: false})
-                this.props.firebase.rentals().update({group}, () => {
+                group.push({ name: rentalName, size: numParticipants, cc, available, complete: false })
+                this.props.firebase.rentals().update({ group }, () => {
                     this.grabNewForm(i)
                 })
                 this.setState({
@@ -434,8 +436,8 @@ class RentalForm extends Component {
                                             className="navigation-rf"
                                         >
                                             <BottomNavigationAction className="bottom-nav-rf" label="New Form" icon={<FontAwesomeIcon icon={faFolderPlus} className="icons-rf" />} />
-                                            <BottomNavigationAction className="bottom-nav-rf" label="Return Form" icon={<FontAwesomeIcon icon={faFolderMinus} className="icons-rf" />} />
                                             <BottomNavigationAction className="bottom-nav-rf" label="Edit Form" icon={<FontAwesomeIcon icon={faFolderOpen} className="icons-rf" />} />
+                                            <BottomNavigationAction className="bottom-nav-rf" label="Return Form" icon={<FontAwesomeIcon icon={faFolderMinus} className="icons-rf" />} />
                                             <BottomNavigationAction className="bottom-nav-rf" label="Rentals" icon={<FontAwesomeIcon icon={faCog} className="icons-rf" />} />
                                         </BottomNavigation>
                                     </Col>
@@ -457,7 +459,10 @@ class RentalForm extends Component {
                             {this.state.value === 1 ?
                                 !loading ?
                                     <div className="div-edit-rf">
-                                        <ReturnForm />
+                                        {/* <EditForm forms={rentalForms} showAP={this.showParticipantBox} setParentIndex={this.setIndex} showAR={this.showRentalBox}
+                                                        authUser={authUser} options={JSON.parse(JSON.stringify(this.state.options))} firebase={this.props.firebase}/> */}
+                                        <EditForm showAP={this.showParticipantBox} setParentIndex={this.setIndex} showAR={this.showRentalBox}
+                                            authUser={authUser} />
                                     </div>
                                     :
                                     <Row className="spinner-standard">
@@ -467,10 +472,7 @@ class RentalForm extends Component {
                             {this.state.value === 2 ?
                                 !loading ?
                                     <div className="div-edit-rf">
-                                        {/* <EditForm forms={rentalForms} showAP={this.showParticipantBox} setParentIndex={this.setIndex} showAR={this.showRentalBox}
-                                            authUser={authUser} options={JSON.parse(JSON.stringify(this.state.options))} firebase={this.props.firebase}/> */}
-                                        <EditForm showAP={this.showParticipantBox} setParentIndex={this.setIndex} showAR={this.showRentalBox}
-                                        authUser={authUser}/>
+                                        <ReturnForm />
                                     </div>
                                     :
                                     <Row className="spinner-standard">
@@ -525,7 +527,7 @@ function CreateForm({ cvc, number, expiry, name, zipcode, handleInputChange, onC
     function validateItems(e) {
         e.preventDefault()
         for (let i = 0; i < optionsState.length; i++) {
-            if (optionsState[i].amount+options[i].stock > options[i].max) {
+            if (optionsState[i].amount + options[i].stock > options[i].max) {
                 setPage(0)
                 setRentalsError(`For the ${optionsState[i].label} rental, we only have ${options[i].max - options[i].stock} left. Please ask a US Airsoft Employee to clarify.`)
                 return false;
@@ -808,8 +810,7 @@ function AddRentals({ setPage, optionsState, setOptionsState, onChange, validate
     const [error, setError] = useState(rentalsError)
 
     function setNumber(i, val) {
-        val = Math.floor(val)
-        if (val >= 0) {
+        if (Number.isInteger(parseInt(val)) || val === "") {
             let opt = [...optionsState]
             opt[i].amount = val
             setOptionsState(opt)
@@ -828,12 +829,17 @@ function AddRentals({ setPage, optionsState, setOptionsState, onChange, validate
     }
 
     function validate() {
-        if (total > 0) {
+        let check = true
+        for (let i = 0; i < optionsState.length; i++) {
+            if (optionsState[i].amount !== "" && parseInt(optionsState[i].amount) < 0)
+                check = false
+        }
+        if (check) {
             setError(null)
             return validate1stPage();
         }
         else {
-            setError("Please enter in the amount of each equipment you wish to check out.")
+            setError("Please enter in a valid amount of each equipment you wish to check out.")
             return false
         }
     }

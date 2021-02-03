@@ -386,14 +386,15 @@ function WaiverBox ({waivers, index, search, open, loading, month, day, year, va
                                 " " + waiver.date.getFullYear()}
                             </Col>
                             <Col md={3} className="align-items-center-col">
-                                {lookup(waiver.name) ?
-                                <Button variant="success" className="check-button-wl">
-                                    <FontAwesomeIcon icon={faCheck} />
-                                </Button> :
-                                <Button variant="warning" className="validate-button-wl"
+                                {!lookup(waiver.name) ?
+                                <Button variant="warning" className="check-button-wl"
                                 onClick={() => {
                                     validate(waiver.name)
                                 }}>
+                                    <FontAwesomeIcon icon={faCheck} />
+                                </Button> 
+                                :
+                                <Button variant="success" className="validate-button-wl">
                                     <FontAwesomeIcon icon={faDollarSign} />
                                 </Button>
                                 }
@@ -418,14 +419,15 @@ function WaiverBox ({waivers, index, search, open, loading, month, day, year, va
                                 " " + waiver.date.getFullYear()}
                             </Col>
                             <Col md={3} className="align-items-center-col">
-                                {lookup(waiver.name) ?
-                                <Button variant="success" className="check-button-wl">
-                                    <FontAwesomeIcon icon={faCheck} />
-                                </Button> :
-                                <Button variant="warning" className="validate-button-wl"
+                                {!lookup(waiver.name) ?
+                                <Button variant="warning" className="check-button-wl"
                                 onClick={() => {
                                     validate(waiver.name)
                                 }}>
+                                    <FontAwesomeIcon icon={faCheck} />
+                                </Button> 
+                                :
+                                <Button variant="success" className="validate-button-wl">
                                     <FontAwesomeIcon icon={faDollarSign} />
                                 </Button>
                                 }
@@ -453,14 +455,15 @@ function WaiverBox ({waivers, index, search, open, loading, month, day, year, va
                                 " " + waiver.date.getFullYear()}
                             </Col>
                             <Col md={3} className="align-items-center-col">
-                                {lookup(waiver.name) ?
-                                <Button variant="success" className="check-button-wl">
-                                    <FontAwesomeIcon icon={faCheck} />
-                                </Button> :
-                                <Button variant="warning" className="validate-button-wl"
+                                {!lookup(waiver.name) ?
+                                <Button variant="warning" className="check-button-wl"
                                 onClick={() => {
                                     validate(waiver.name)
                                 }}>
+                                    <FontAwesomeIcon icon={faCheck} />
+                                </Button> 
+                                :
+                                <Button variant="success" className="validate-button-wl">
                                     <FontAwesomeIcon icon={faDollarSign} />
                                 </Button>
                                 }
@@ -485,14 +488,15 @@ function WaiverBox ({waivers, index, search, open, loading, month, day, year, va
                                 " " + waiver.date.getFullYear()}
                             </Col>
                             <Col md={3} className="align-items-center-col">
-                                {lookup(waiver.name) ?
-                                <Button variant="success" className="check-button-wl">
-                                    <FontAwesomeIcon icon={faCheck} />
-                                </Button> :
-                                <Button variant="warning" className="validate-button-wl"
+                                {!lookup(waiver.name) ?
+                                <Button variant="warning" className="check-button-wl"
                                 onClick={() => {
                                     validate(waiver.name)
                                 }}>
+                                    <FontAwesomeIcon icon={faCheck} />
+                                </Button> 
+                                :
+                                <Button variant="success" className="validate-button-wl">
                                     <FontAwesomeIcon icon={faDollarSign} />
                                 </Button>
                                 }

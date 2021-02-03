@@ -1496,6 +1496,32 @@ body {
   background-color: #005c1c
 }
 
+.modal-ef {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.paper-ef {
+    background-color: rgb(73 80 87 / .9);
+    border: 2px solid #000;
+    box-shadow: 0px 2px 1px -1px rgb(0 0 0 / 20%), 0px 1px 1px 0px rgb(0 0 0 / 14%), 0px 1px 3px 0px rgb(0 0 0 / 12%);
+    border-radius: 5px;
+}
+.root-ef {
+    width: 100%;
+}
+.heading-ef {
+    font-size: 0.9375rem !important;
+    flex-basis: 33.33%;
+    flex-shrink: 0;
+    color: white;
+    white-space: nowrap;
+}
+.secondaryHeading-ef {
+    font-size: 0.9375rem !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
 .link-footer:link {
   color: white;
 }
@@ -2211,6 +2237,7 @@ body {
 
 .div-modal-settings-rf {
   width: 100%;
+  padding: 24px;
 }
 
 .div-modal-settings-rf .MuiPaper-root {
@@ -2238,6 +2265,14 @@ body {
 
 .col-applyall-rf .MuiButton-label {
   color: white;
+}
+
+.col-applyall-rf .MuiButton-root.Mui-disabled {
+  background-color: rgb(4,4,4,.2);
+}
+
+.col-applyall-rf .MuiButton-root.Mui-disabled .MuiButton-label {
+  color: darkgray;
 }
 
 .accordion-details-rentals-rf {
@@ -2661,6 +2696,9 @@ body {
 .validate-button-wl {
   font-size: .8rem !important;
   margin-left: 15px;
+  color: black !important;
+  padding-top: .5px;
+  padding-bottom: .5px;
 }
 
 .check-button-wl {
