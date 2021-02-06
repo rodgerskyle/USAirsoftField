@@ -138,8 +138,8 @@ class SignUpFormBase extends Component {
   };
 
   onSubmit = (event, myProps) => {
-    this.setState({submitted: true})
     event.preventDefault();
+    this.setState({submitted: true})
     const { email, passwordOne, fname, lname } = this.state;
     const points = 50;
     const wins = 0;
