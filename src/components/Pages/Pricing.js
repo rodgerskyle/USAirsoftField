@@ -31,29 +31,45 @@ class Pricing extends Component {
                         onClick={() => {
                             let showArray = this.state.showArray;
                             showArray.fill(false)
-                            showArray[0] = true;
-                            this.setState({showArray, title: "Membership Pricing"})
+                            this.setState({showArray}, () => {
+                                showArray[0] = true;
+                                setTimeout(() => { 
+                                    this.setState({showArray, title: "Membership Pricing"})
+                                }, 150)
+                            })
                         }}>Membership</GradientButton>
                         <GradientButton color={this.state.showArray[1] ? "silver-black" : "black-silver"}
                         onClick={() => {
                             let showArray = this.state.showArray;
                             showArray.fill(false)
-                            showArray[1] = true;
-                            this.setState({showArray, title: "Gameplay Pricing"})
+                            this.setState({showArray}, () => {
+                                showArray[1] = true;
+                                setTimeout(() => { 
+                                    this.setState({showArray, title: "Gameplay Pricing"})
+                                }, 150)
+                            })
                         }}>Gameplay</GradientButton>
                         <GradientButton color={this.state.showArray[2] ? "silver-black" : "black-silver"}
                         onClick={() => {
                             let showArray = this.state.showArray;
                             showArray.fill(false)
-                            showArray[2] = true;
-                            this.setState({showArray, title: "Rental Pricing"})
+                            this.setState({showArray}, () => {
+                                showArray[2] = true;
+                                setTimeout(() => { 
+                                    this.setState({showArray, title: "Rental Pricing"})
+                                }, 150)
+                            })
                         }}>Rental</GradientButton>
                         <GradientButton color={this.state.showArray[3] ? "silver-black" : "black-silver"}
                         onClick={() => {
                             let showArray = this.state.showArray;
                             showArray.fill(false)
-                            showArray[3] = true;
-                            this.setState({showArray, title: "Birthday Pricing"})
+                            this.setState({showArray}, () => {
+                                showArray[3] = true;
+                                setTimeout(() => { 
+                                    this.setState({showArray, title: "Birthday Pricing"})
+                                }, 150)
+                            })
                         }}>Birthday</GradientButton>
                     </Row>
                     <Fade in={this.state.showArray[0]} unmountOnExit={true}>

@@ -47,6 +47,7 @@ const INITIAL_STATE = {
     uid: null,
     saveButton: true,
     saveButton2: true,
+    submitted: false,
 }
 
 class RenewSubscription extends Component {
@@ -216,6 +217,7 @@ class RenewSubscription extends Component {
             showWaiver,
             uid,
             usersObject,
+            submitted,
         } = this.state
         const myProps = {fname, lname, email, address, city, state, zipcode, phone, dob, pgname, pgphone, participantImg, pgImg, age }
         return (
@@ -525,7 +527,7 @@ class RenewSubscription extends Component {
                                                 </Col>
                                                 </Row>
                                                 <Row className="nav-row-rp">
-                                                    <Button className="next-button-rp" variant="info" type="button" disabled={this.state.pageIndex===1}
+                                                    <Button className="next-button-rp" variant="info" type="button" disabled={this.state.pageIndex===1 || submitted}
                                                     onClick={() => {
                                                     if (address === "" || fname === "" || lname === "" || email === "" || address === "" ||
                                                     city === "" || state === "" || zipcode === "" || phone === "" || dob === "") {
@@ -544,6 +546,7 @@ class RenewSubscription extends Component {
                                                         this.setState({errorWaiver: "Participant must be younger than 85 years."})
                                                     }
                                                     else if (this.state.pageIndex!==1) {
+                                                        this.setState({submitted: true})
                                                         this.completeWaiver(myProps)
                                                     }
                                                     }}>

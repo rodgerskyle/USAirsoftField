@@ -527,7 +527,7 @@ function CreateForm({ cvc, number, expiry, name, zipcode, handleInputChange, onC
     function validateItems(e) {
         e.preventDefault()
         for (let i = 0; i < optionsState.length; i++) {
-            if (optionsState[i].amount + options[i].stock > options[i].max) {
+            if (+optionsState[i].amount + +options[i].stock > options[i].max) {
                 setPage(0)
                 setRentalsError(`For the ${optionsState[i].label} rental, we only have ${options[i].max - options[i].stock} left. Please ask a US Airsoft Employee to clarify.`)
                 return false;
