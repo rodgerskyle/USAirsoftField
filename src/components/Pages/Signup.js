@@ -96,6 +96,7 @@ const INITIAL_STATE = {
     emailAdded: false,
     loading: false,
     status: null,
+    submitted: false,
   };
  
 class SignUpFormBase extends Component {
@@ -158,7 +159,7 @@ class SignUpFormBase extends Component {
     //roles.push(ROLES.ADMIN);
     //}
     if (!this.validateEmail(email)) {
-      this.setState({error: "Email is not properly formatted."})
+      this.setState({error: "Email is not properly formatted.", submitted: false,})
     }
 
     else {
@@ -191,7 +192,7 @@ class SignUpFormBase extends Component {
             this.completeWaiver(myProps)
           })
         .catch(error => {
-          this.setState({ error });
+          this.setState({ error, submitted: false });
         });
     }
   event.preventDefault();
@@ -338,6 +339,7 @@ class SignUpFormBase extends Component {
       showLander,
       loading,
       emailAdded,
+      submitted,
     } = this.state;
 
     const myProps = {fname, lname, email, address, city, state, zipcode, phone, dob, pgname, pgphone, participantImg, pgImg, age, member, uid, }
@@ -720,8 +722,8 @@ class SignUpFormBase extends Component {
                 {!loading ? 
                 <Row className="button-row-rp">
                   <Col>
-                    <Button variant={isInvalid ? "danger" : "success"} disabled={isInvalid} type="submit"
-                    className="button-signup-rp">
+                    <Button variant={isInvalid ? "danger" : "success"} disabled={isInvalid || submitted} type="submit"
+                    className="button-signup-rp" onClick={this.setState({submitted: true})}>
                         Sign Up
                     </Button> 
                   </Col>
