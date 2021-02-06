@@ -138,6 +138,7 @@ class SignUpFormBase extends Component {
   };
 
   onSubmit = (event, myProps) => {
+    this.setState({submitted: true})
     event.preventDefault();
     const { email, passwordOne, fname, lname } = this.state;
     const points = 50;
@@ -723,7 +724,7 @@ class SignUpFormBase extends Component {
                 <Row className="button-row-rp">
                   <Col>
                     <Button variant={isInvalid ? "danger" : "success"} disabled={isInvalid || submitted} type="submit"
-                    className="button-signup-rp" onClick={() => {this.setState({submitted: true})}}>
+                    className="button-signup-rp">
                         Sign Up
                     </Button> 
                   </Col>
