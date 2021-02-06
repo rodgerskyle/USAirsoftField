@@ -2697,8 +2697,8 @@ body {
   font-size: .8rem !important;
   margin-left: 15px;
   color: black !important;
-  padding-top: .5px;
-  padding-bottom: .5px;
+  padding-top: 6.5px !important;
+  padding-bottom: 6.5px !important;
 }
 
 .check-button-wl {
