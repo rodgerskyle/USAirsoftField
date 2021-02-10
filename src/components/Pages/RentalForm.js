@@ -501,9 +501,10 @@ class RentalForm extends Component {
 }
 
 function CreateForm({ cvc, number, expiry, name, zipcode, handleInputChange, onChange, numParticipants, rentalName, submit, options, validate1stPage,
-    cvcError, expiryError, nameError, numberError, numparticipantsError, rentalnameError, zipcodeError, checked, showComplete, hideComplete, authUser,
+    cvcError, expiryError, nameError, numberError, numparticipantsError, rentalnameError, zipcodeError, showComplete, hideComplete, authUser,
     createdIndex, firebase, dropNewForm, newForm, hideNav, nav }) {
 
+    const [checked, setChecked] = useState(false)
     const [optionsState, setOptionsState] = useState(JSON.parse(JSON.stringify(options)))
     const [page, setPage] = useState(0)
     const [rentalsError, setRentalsError] = useState(null)
@@ -659,8 +660,7 @@ function CreateForm({ cvc, number, expiry, name, zipcode, handleInputChange, onC
                                             <Checkbox
                                                 value={checked}
                                                 name="checked"
-                                                disabled={checked ? true : false}
-                                                onChange={onChange}
+                                                onChange={(e, val) => setChecked(val)}
                                                 color="primary"
                                             />
                                     By checking here, you agree that you will return back the rental equipment back to US Airsoft. You agree that you will bring the
