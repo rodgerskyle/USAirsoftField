@@ -2,7 +2,6 @@ import { Avatar, List, ListItem, ListItemAvatar, ListItemSecondaryAction, ListIt
 import MUIButton from '@material-ui/core/Button';
 import Divider from '@material-ui/core/Divider';
 import IconButton from '@material-ui/core/IconButton';
-import InputBase from '@material-ui/core/InputBase';
 import Paper from '@material-ui/core/Paper';
 import { makeStyles } from '@material-ui/core/styles';
 import { AddRounded, ArrowBackIos, Contacts, RemoveRounded, Edit } from '@material-ui/icons';
@@ -74,6 +73,9 @@ class EditForm extends Component {
             let options = Object.keys(optionsObject).map(key => ({
                 ...optionsObject[key]
             }))
+
+            if (this.state.editting)
+                this.mapOptions(this.state.index)
 
             this.setState({ options, loading: false })
         })
@@ -180,10 +182,12 @@ class EditForm extends Component {
     // Saves changes to rentals done
     saveAvailable = () => {
         const { optionsState, rentalForms, index } = this.state
-        let available = optionsState.filter(obj => obj.amount > 0)
+        let available = JSON.parse(JSON.stringify(optionsState)).filter(obj => obj.amount > 0)
         if (this.validateItems(rentalForms[index].available ? rentalForms[index].available : null)) {
             this.incrementStock(rentalForms[index].available ? rentalForms[index].available : null)
-            this.props.firebase.rentalGroup(index).update({ available })
+            this.props.firebase.rentalGroup(index).update({ available }, () => {
+                this.mapOptions(index)
+            })
             this.setState({ rentalsSuccess: `The ${rentalForms[index].name} group's available rentals was updated.` })
         }
     }
@@ -405,6 +409,7 @@ const useStyles = makeStyles((theme) => ({
         width: "20%",
     },
     divider: {
+        marginLeft: 15,
         height: 28,
         margin: 4,
         background: "rgba(255, 255, 255, 0.12)",
@@ -428,15 +433,23 @@ const RentalRow = ({ obj, set, i }) => {
         <Row>
             <Col>
                 <Paper className={classes.root}>
-                    <InputBase
-                        className={classes.input}
-                        placeholder="Amount:"
-                        inputProps={{ 'aria-label': 'enter amount' }}
-                        type="number"
-                        value={obj.amount}
-                        onChange={(e) => set(i, e.target.value)}
-                    />
-
+                    <IconButton aria-label="edit" style={{ padding: 0, paddingRight: '5px', color: "white" }}
+                        onClick={() => {
+                            if (obj.amount !== "")
+                                set(i, obj.amount+1)
+                            else
+                                set(i, 1)
+                        }}>
+                        <AddRounded />
+                    </IconButton>
+                    {obj.amount === "" ? 0 : obj.amount}
+                    <IconButton aria-label="edit" style={{ padding: 0, paddingLeft: '5px', color: "white" }}
+                        onClick={() => {
+                            if (obj.amount !== "")
+                                set(i, obj.amount-1)
+                        }}>
+                        <RemoveRounded />
+                    </IconButton>
                     <Divider className={classes.divider} orientation="vertical" />
                     <h5 className={classes.label}>{obj.label}</h5>
                 </Paper>
