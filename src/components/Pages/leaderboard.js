@@ -244,7 +244,7 @@ class Leaderboards extends Component {
             Object.keys(a.games).forEach((date) => {
                 let l_date = date.split('-')
                 if (parseInt(l_date[1]) === month && parseInt(l_date[0]) === year) {
-                    a_points += a.games[date].wins*10 + a.games[date].losses*3
+                    a_points += +a.games[date].wins*10 + +a.games[date].losses*3
                 }
             })
         }
@@ -252,11 +252,11 @@ class Leaderboards extends Component {
             Object.keys(b.games).forEach((date) => {
                 let l_date = date.split('-')
                 if (parseInt(l_date[1]) === month && parseInt(l_date[0]) === year) {
-                    b_points += b.games[date].wins*10 + b.games[date].losses*3
+                    b_points += +b.games[date].wins*10 + +b.games[date].losses*3
                 }
             })
         }
-        return a_points > b_points ? -1 : 1
+        return a_points < b_points ? 1 : -1
     }
 
 
@@ -291,8 +291,7 @@ class Leaderboards extends Component {
                                             this.setState({ 
                                                 monthly: !this.state.monthly,
                                                 currentMonth: new Date().getMonth(),
-                                                //users: users.sort((a,b) => (a.cmwins*10 + a.cmlosses*3 < b.cmwins*10 + b.cmlosses*3 ? 1 : -1))
-                                                users: users.sort((a,b) => this.sortArray(a,b, currentMonth, currentYear))
+                                                users: users.sort((a,b) => this.sortArray(a,b, new Date().getMonth(), currentYear))
                                             })
                                     }}
                                 />
@@ -324,10 +323,13 @@ class Leaderboards extends Component {
                                 <Dropdown.Menu as={CustomMenu} className="dropdown-waiverlookup">
                                     {months.map((month, i) => (
                                         <Dropdown.Item key={i} eventKey={i} active={i===currentMonth}
-                                        onClick={() => this.setState({
-                                            currentMonth: i, 
-                                            users: users.sort((a,b) => this.sortArray(a,b, month, currentYear))
-                                        })}>
+                                        onClick={() => {
+                                            this.setState({
+                                                currentMonth: i, 
+                                                users: users.sort((a,b) => this.sortArray(a,b, i, currentYear))
+                                            })
+                                        }
+                                        }>
                                             {month}
                                         </Dropdown.Item>
                                     ))}

@@ -39,18 +39,20 @@ class EditForm extends Component {
             rentalsError: null,
             rentalsSuccess: null,
             expanded: false,
+            rentalForm: null,
         };
     }
 
     componentWillUnmount() {
         this.props.firebase.rentalGroups().off()
         this.props.firebase.rentalOptions().off()
+        if (this.state.index !== -1)
+            this.props.firebase.rentalGroup(this.state.index).off()
     }
 
     componentDidMount() {
         this.props.firebase.rentalGroups().on('value', snapshot => {
             const rentalsObject = snapshot.val()
-
             let rentalForms = []
             if (rentalsObject) {
                 rentalForms = Object.keys(rentalsObject).map(key => ({
@@ -66,10 +68,6 @@ class EditForm extends Component {
         this.props.firebase.rentalOptions().on('value', snapshot => {
             const optionsObject = snapshot.val()
 
-            // let optionsObjectarr = {};
-            // for (let i=0; i<optionsObject.length; i++)
-            //     optionsObjectarr[optionsObject[i].value] = {...optionsObject[i]}
-
             let options = Object.keys(optionsObject).map(key => ({
                 ...optionsObject[key]
             }))
@@ -82,10 +80,10 @@ class EditForm extends Component {
     }
     // Map the options array with the available one
     mapOptions = (ind) => {
-        const { rentalForms, options } = this.state
-        if (rentalForms[ind].available) {
-            let new_options = this.state.options
-            rentalForms[ind].available.forEach(item => {
+        const { rentalForm, options } = this.state
+        if (rentalForm.available) {
+            let new_options = JSON.parse(JSON.stringify(options))
+            rentalForm.available.forEach(item => {
                 let i = parseInt(item.id.substring(1))
                 // let i = parseInt(optionsObject[item.value].id.substring(1))
                 new_options[i].amount = item.amount
@@ -155,8 +153,8 @@ class EditForm extends Component {
 
     // Changes group max size
     changeMax = (add) => {
-        const { rentalForms, index } = this.state
-        let size = parseInt(rentalForms[index].size)
+        const { rentalForm, index } = this.state
+        let size = parseInt(rentalForm.size)
         if (add) {
             // Add to max
             size += 1
@@ -165,10 +163,10 @@ class EditForm extends Component {
         else {
             // Subtract max amount but verify that the number of participants is less
             if (size - 1 !== 0) {
-                if (rentalForms[index].participants && rentalForms[index].participants.length < size) {
+                if (rentalForm.participants && rentalForm.participants.length < size) {
                     size -= 1;
                 }
-                else if (!rentalForms[index].participants) {
+                else if (!rentalForm.participants) {
                     size -= 1;
                 }
                 else {
@@ -195,7 +193,7 @@ class EditForm extends Component {
     render() {
         const editProps = { showAP: this.props.showAP, index: this.state.index }
         const { loading, editting, rentalForms, options, index, authUser, open, expanded, optionsState,
-            rentalsSuccess, rentalsError } = this.state
+            rentalsSuccess, rentalsError, rentalForm} = this.state
 
         return (
             <div>
@@ -228,10 +226,12 @@ class EditForm extends Component {
                                                                 // setIndex(i)
                                                                 // setEditting(true)
                                                                 this.props.setParentIndex(i)
-                                                                // this.setState({ index: i, editting: true })
-                                                                this.setState({optionsState: options}, () => {
-                                                                    this.mapOptions(i)
+                                                                this.props.firebase.rentalGroup(i).on('value', obj => {
+                                                                    this.setState({rentalForm: obj.val(), optionsState: JSON.parse(JSON.stringify(options))}, () => {
+                                                                        this.mapOptions(i)
+                                                                    })
                                                                 })
+                                                                // this.setState({ index: i, editting: true })
                                                             }}>
                                                             <Edit />
                                                         </IconButton>
@@ -244,7 +244,7 @@ class EditForm extends Component {
                         </div> :
                         <div className="div-parent-ef">
                             <Row className="row-transaction-rf">
-                                <h5 className="h5-transaction-rf">{`Transaction #${rentalForms[index].transaction}`}</h5>
+                                <h5 className="h5-transaction-rf">{`Transaction #${rentalForm.transaction}`}</h5>
                             </Row>
                             <div className="div-back-button-rf">
                                 <MUIButton
@@ -255,6 +255,7 @@ class EditForm extends Component {
                                     onClick={() => {
                                         this.setState({ editting: false })
                                         this.props.showAP(false)
+                                        this.props.firebase.rentalGroup(index).off()
                                     }}>
                                     Back
                         </MUIButton>
@@ -267,7 +268,7 @@ class EditForm extends Component {
                                         }}>
                                         <Edit />
                                     </IconButton> : null}
-                                <h5 className="h5-group-name-rf">{`Group: ${rentalForms[index].name}`}</h5>
+                                <h5 className="h5-group-name-rf">{`Group: ${rentalForm.name}`}</h5>
                             </Row>
                             <EditSelectedForm {...editProps} />
                             <Modal
@@ -293,8 +294,8 @@ class EditForm extends Component {
                                                 </AccordionSummary>
                                                 <AccordionDetails>
                                                     <Typography>
-                                                        {`Group: ${rentalForms[index].name}`}<br />
-                                                        {`Transaction: ${rentalForms[index].transaction}`}
+                                                        {`Group: ${rentalForm.name}`}<br />
+                                                        {`Transaction: ${rentalForm.transaction}`}
                                                     </Typography>
                                                 </AccordionDetails>
                                             </Accordion>
@@ -309,22 +310,22 @@ class EditForm extends Component {
                                                         Change number of users
                                             </Typography>
                                                 </AccordionSummary>
-                                                <AccordionDetails>
-                                                    <Typography>
+                                                <AccordionDetails className="accordion-details-rentals-ef">
+                                                    <div>
                                                         <IconButton aria-label="edit" style={{ padding: 0, paddingRight: '5px', color: "white" }}
                                                             onClick={() => {
                                                                 this.changeMax(true)
                                                             }}>
                                                             <AddRounded />
                                                         </IconButton>
-                                                        {rentalForms[index].size}
+                                                        {rentalForm.size}
                                                         <IconButton aria-label="edit" style={{ padding: 0, paddingLeft: '5px', color: "white" }}
                                                             onClick={() => {
                                                                 this.changeMax(false)
                                                             }}>
                                                             <RemoveRounded />
                                                         </IconButton>
-                                                    </Typography>
+                                                    </div>
                                                 </AccordionDetails>
                                             </Accordion>
                                             <Accordion expanded={expanded === 'panel3'} onChange={this.handleChange('panel3')}>
@@ -339,11 +340,11 @@ class EditForm extends Component {
                                             </Typography>
                                                 </AccordionSummary>
                                                 <AccordionDetails className="accordion-details-rentals-rf">
-                                                    <Typography>
+                                                    <div>
                                                         {optionsState.map((rental, i) => {
                                                             return (<RentalRow key={i} obj={rental} set={this.setNumber.bind(this)} i={i} />)
                                                         })}
-                                                    </Typography>
+                                                    </div>
                                                 </AccordionDetails>
                                                 <Divider />
                                                 <AccordionActions className="accordion-actions-rentals-rf">
@@ -364,11 +365,11 @@ class EditForm extends Component {
                                                 </AccordionSummary>
                                                 <AccordionDetails>
                                                     <Typography>
-                                                        {`Name on Card: ${rentalForms[index].cc.name}`}<br />
-                                                        {`Card Number: ${rentalForms[index].cc.number}`}<br />
-                                                        {`Expiration: ${rentalForms[index].cc.expiry}`}<br />
-                                                        {`CVC: ${rentalForms[index].cc.cvc}`}<br />
-                                                        {`Zipcode: ${rentalForms[index].cc.zipcode}`}
+                                                        {`Name on Card: ${rentalForm.cc.name}`}<br />
+                                                        {`Card Number: ${rentalForm.cc.number}`}<br />
+                                                        {`Expiration: ${rentalForm.cc.expiry}`}<br />
+                                                        {`CVC: ${rentalForm.cc.cvc}`}<br />
+                                                        {`Zipcode: ${rentalForm.cc.zipcode}`}
                                                     </Typography>
                                                 </AccordionDetails>
                                             </Accordion>

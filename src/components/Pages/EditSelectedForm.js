@@ -283,7 +283,7 @@ class EditSelectedForm extends Component {
                 ...rentalsObject[key],
             }))
 
-            let availableList = rentalForms[this.props.index].available
+            let availableList = rentalForms[this.props.index].available ?? []
 
             this.setState({
                 availableList: availableList,
@@ -382,9 +382,14 @@ class EditSelectedForm extends Component {
             let available = this.state.availableList
             for (let i=0; i<obj.rentals.length; i++) {
                 let index = available.findIndex(x => x.value === obj.rentals[i].value) 
-                available[index].amount += 1
+                if (index !== -1)
+                    available[index].amount += 1
+                else {
+                    obj.rentals[i].amount = 1
+                    available.push(obj.rentals[i])
+                }
             }
-            this.props.firebase.availableRentals(this.props.index).update(available)
+            this.props.firebase.availableRentals(this.props.index).set(available)
         }
         this.props.firebase.participantsRentals(this.props.index, i).remove()
         this.props.firebase.validatedWaiver(obj.name).update({attached: false})
