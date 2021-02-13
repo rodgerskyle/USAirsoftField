@@ -2880,6 +2880,10 @@ body {
   color: white;
 }
 
+.accordion-details-rentals-rf {
+  overflow-x: hidden;
+}
+
 /* For pincode css */
 .pincode-input-container .pincode-input-text {
   padding:0 !important;
