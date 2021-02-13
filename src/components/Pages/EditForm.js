@@ -82,7 +82,7 @@ class EditForm extends Component {
     mapOptions = (ind) => {
         const { rentalForm, options } = this.state
         if (rentalForm.available) {
-            let new_options = this.state.options
+            let new_options = JSON.parse(JSON.stringify(options))
             rentalForm.available.forEach(item => {
                 let i = parseInt(item.id.substring(1))
                 // let i = parseInt(optionsObject[item.value].id.substring(1))
@@ -227,7 +227,7 @@ class EditForm extends Component {
                                                                 // setEditting(true)
                                                                 this.props.setParentIndex(i)
                                                                 this.props.firebase.rentalGroup(i).on('value', obj => {
-                                                                    this.setState({rentalForm: obj.val(), optionsState: options}, () => {
+                                                                    this.setState({rentalForm: obj.val(), optionsState: JSON.parse(JSON.stringify(options))}, () => {
                                                                         this.mapOptions(i)
                                                                     })
                                                                 })
