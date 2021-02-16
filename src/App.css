@@ -2379,9 +2379,17 @@ body {
   background-color: #4a9ee2;
 }
 
+.button-hide-nav-rf {
+  width: 100%;
+  border-bottom-right-radius: 0px !important;
+  border-bottom-left-radius: 0px !important;
+}
+
 .row-hidenav-rf {
   margin-bottom: 15px;
   margin-top: -20px;
+  margin-left: -20px !important;
+  margin-right: -20px !important;
 }
 
 .row-hidenav-rf .MuiButtonBase-root {
@@ -2882,6 +2890,10 @@ body {
 
 .accordion-details-rentals-rf {
   overflow-x: hidden;
+}
+
+.list-item-unfinished-rental-ef {
+  background-color: rgb(160, 63, 63, .6);
 }
 
 /* For pincode css */

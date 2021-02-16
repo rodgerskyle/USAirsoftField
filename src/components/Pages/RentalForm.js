@@ -430,7 +430,9 @@ class RentalForm extends Component {
                                         <BottomNavigation
                                             value={this.state.value}
                                             onChange={(e, newvalue) => {
-                                                this.setState({ value: newvalue, ...INITIAL_STATE })
+                                                this.setState({value: -1}, () => {
+                                                    this.setState({ value: newvalue, ...INITIAL_STATE })
+                                                })
                                             }}
                                             showLabels
                                             className="navigation-rf"
@@ -849,7 +851,7 @@ function AddRentals({ setPage, optionsState, setOptionsState, onChange, validate
             {!nav ?
                 <Row className="justify-content-row row-hidenav-rf">
                     <MUIButton
-                        className="button-next-create-rf"
+                        className="button-hide-nav-rf"
                         variant="contained"
                         color="primary"
                         size="small"
