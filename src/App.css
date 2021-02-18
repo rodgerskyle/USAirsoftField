@@ -3010,6 +3010,7 @@ body {
 }
 
 .row-table-match-history-rp .MuiTableCell-root {
+  text-align: center;
   color: gray;
 }
 
