@@ -63,10 +63,13 @@ class RankProgress extends Component {
     getMatchHistory(user) {
         this.props.firebase.user(user.uid).on('value', (obj) => {
             const matchObj = obj.val().games
-            const matches = Object.keys(matchObj).map((key) => ({
-                ...matchObj[key],
-                date: key,
-            }))
+            let matches = null;
+            if (matchObj) {
+                const matches = Object.keys(matchObj).map((key) => ({
+                    ...matchObj[key],
+                    date: key,
+                }))
+            }
             this.setState({matches, authUser: obj.val()}, () => {
                 this.getRank();
             })
@@ -308,7 +311,6 @@ function MatchHistory({matches}) {
     const useStyles = makeStyles({
         table: {
             padding: '2px 4px',
-            height: 365,
         },
         container: {
             maxHeight: 365,
@@ -352,7 +354,7 @@ function MatchHistory({matches}) {
                                         </TableRow>
                                     )): 
                                         <TableRow>
-                                            <TableCell className="p-rank-title-rp">Scan games to see your match history!</TableCell>
+                                            <TableCell colspan={5} className="p-rank-title-rp">Scan games to see your match history!</TableCell>
                                         </TableRow>
                                     }
                                 </TableBody>
