@@ -99,6 +99,9 @@ const NavigationAuth = ({ authUser }) => {
                                     <LinkContainer to="/account">
                                         <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>My Profile</MDBDropdownItem>
                                     </LinkContainer>
+                                    <LinkContainer to="/rankprogress">
+                                        <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Ranking</MDBDropdownItem>
+                                    </LinkContainer>
                                     <NavDropdown.Divider />
                                     <LinkContainer to="/profilesettings">
                                         <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Settings</MDBDropdownItem>

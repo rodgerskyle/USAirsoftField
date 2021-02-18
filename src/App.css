@@ -497,6 +497,12 @@ body {
 .header-th-lb {
   border-bottom: 1px solid rgb(255, 217, 0, .5) !important;
   border-bottom-width: 1px !important;
+  text-align: center;
+}
+
+.name-header-th-lb {
+  border-bottom: 1px solid rgb(255, 217, 0, .5) !important;
+  border-bottom-width: 1px !important;
 }
 
 .button-left-lb {
@@ -516,6 +522,10 @@ body {
 }
 
 .background-static-all::before {
+  background-color: rgb(0, 0 ,0);
+}
+
+.background-static-rp::before {
   background-color: rgb(0, 0 ,0);
 }
 
@@ -540,21 +550,21 @@ body {
   color: white !important;
   background-color: rgb(4, 4, 4, .4) !important;
   border-radius: 5px;
-  box-shadow: 0 5px 11px 0 rgba(0,0,0,0.18), 0 4px 15px 0 rgba(0,0,0,0.15);
+  /* box-shadow: 0 5px 11px 0 rgba(0,0,0,0.18), 0 4px 15px 0 rgba(0,0,0,0.15); */
   position: relative;
 }
 
 .dropdown-item:active {
   background-color: rgb(4, 4, 4, .4) !important;
   border-radius: 5px;
-  box-shadow: 0 5px 11px 0 rgba(0,0,0,0.18), 0 4px 15px 0 rgba(0,0,0,0.15);
+  /* box-shadow: 0 5px 11px 0 rgba(0,0,0,0.18), 0 4px 15px 0 rgba(0,0,0,0.15); */
 }
 
 .dropdown-item:hover {
   color: white !important;
-  background-color: rgb(4, 4, 4, .4) !important;
+  background-color: rgb(4, 4, 4, .2) !important;
   border-radius: 5px;
-  box-shadow: 0 5px 11px 0 rgba(0,0,0,0.18), 0 4px 15px 0 rgba(0,0,0,0.15);
+  /* box-shadow: 0 5px 11px 0 rgba(0,0,0,0.18), 0 4px 15px 0 rgba(0,0,0,0.15); */
   transition: all .1s linear;
   position: relative;
 }
@@ -2157,6 +2167,10 @@ body {
   padding: 0 !important;
 }
 
+.col-textfield-rf .WithStyles\(ForwardRef\(TextField\)\)-root-5 .MuiInputBase-input {
+  font-size: 14px;
+}
+
 .col-textfield-right-rf {
   padding-left: 5px !important;
 }
@@ -2896,6 +2910,229 @@ body {
   background-color: rgb(160, 63, 63, .6);
 }
 
+.row-cur-rank-rp {
+  background-color: rgb(37, 41, 45, .7);
+  overflow: hidden;
+  margin-top: 1rem;
+  clip-path: polygon(
+    0 10%,
+    5% 0,
+    100% 0,
+    100% 0%,
+    100% 100%,
+    106% 100%,
+    10% 100%,
+    0% 100%,
+    0% 0%
+  )
+}
+
+.row-next-rank-rp {
+  background-color: rgb(37, 41, 45, .7);
+  overflow: hidden;
+  margin-top: 1rem;
+  clip-path: polygon(
+    0 7%,
+    5% 0,
+    100% 0,
+    100% 0%,
+    100% 100%,
+    106% 100%,
+    10% 100%,
+    0% 100%,
+    0% 0%
+  )
+}
+
+.row-points-rp {
+  background-color: rgb(37, 41, 45, .7);
+  overflow: hidden;
+  margin-top: 1rem;
+  clip-path: polygon(
+    0 30%,
+    3% 0,
+    100% 0,
+    100% 0%,
+    100% 100%,
+    106% 100%,
+    10% 100%,
+    0% 100%,
+    0% 0%
+  )
+}
+
+.col-match-history-rp {
+  background-color: rgb(37, 41, 45, .7);
+  overflow: hidden;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  clip-path: polygon(
+    0 7%,
+    5% 0,
+    100% 0,
+    100% 0%,
+    100% 100%,
+    106% 100%,
+    10% 100%,
+    0% 100%,
+    0% 0%
+  )
+}
+
+.p-rank-title-rp {
+  color: gray;
+  text-align: center;
+  margin-bottom: 0;
+}
+
+.p-match-history-title-rp {
+  color: white;
+  font-weight: 600;
+  margin-bottom: 0;
+  padding-left: 15px;
+  padding: 10px;
+}
+
+.row-table-match-history-rp .MuiPaper-root {
+  background-color: transparent;
+}
+
+.row-table-match-history-rp .MuiTableCell-stickyHeader {
+  background-color: rgb(25, 27, 27);
+}
+
+.row-table-match-history-rp .MuiTableCell-root {
+  color: gray;
+}
+
+.row-table-match-history-rp .MuiTableCell-head {
+  color: white !important;
+}
+
+.p-page-title-rp {
+  margin-top: 1rem;
+  font-size: 24px;
+  font-weight: 600;
+  color: rgb(144, 202, 249, .5);
+  text-align: center;
+}
+
+.padding-0 {
+  padding: 0 !important;
+}
+
+.col-title-rp {
+  flex: 0 0 35% !important;
+  max-width: 35% !important;
+}
+
+.row-progress-bar-rp {
+  padding: 5px;
+  justify-content: center;
+}
+
+.row-progress-bar-rp .progress {
+  background-color: gray;
+  width: 90%;
+}
+
+.row-progress-bar-rp .progress-bar {
+  background-color: rgb(144, 202, 249, .5);
+}
+
+.p-rank-progress-rp {
+  color: gray;
+  text-align: center;
+  margin-bottom: 0.5rem;
+  font-size: 12px;
+}
+
+.p-ranks-rp {
+  color: gray;
+  text-align: center;
+  font-size: 12px;
+  margin-bottom: 0;
+}
+
+.row-rank-name-rp {
+  height: 30%;
+}
+
+.row-parent-rp {
+  min-height: 50vh;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.col-rank-icon-rp {
+  background-color: rgb(144, 202, 249, .1);
+}
+
+.col-your-rank-rp {
+  background-color: rgba(247, 249, 144, 0.2);
+}
+
+.col-logo-points-rp {
+  padding: 0;
+  margin: 0;
+  height: 70%;
+}
+
+.col-navigation-left-rp {
+   display: flex;
+   justify-content: center;
+}
+
+.col-navigation-right-rp {
+   display: flex;
+   justify-content: center;
+}
+
+.col-navigation-rp {
+  align-items: center;
+  display: flex;
+}
+
+.col-navigation-rp .MuiSvgIcon-root {
+  font-size: 2.5rem;
+  color: white;
+}
+
+.col-navigation-rp .MuiIconButton-root.Mui-disabled .MuiSvgIcon-root {
+  font-size: 2.5rem;
+  color: gray;
+}
+
+.col-justify-content-flex-end {
+  justify-content: flex-end;
+  display: flex;
+}
+
+.row-rank-name-rp {
+  min-height: 40%;
+}
+
+.switch-off.btn {
+  padding-left: 12px !important;
+}
+
+.button-more-info-profile .MuiButton-label {
+  text-shadow: none;
+  color: rgb(172, 171, 171);
+}
+
+.row-parent-profile {
+  align-items: flex-end;
+}
+
+.row-title-rp {
+  justify-content: center;
+}
+
+.row-bottom {
+  margin-bottom: 15px;
+}
+
 /* For pincode css */
 .pincode-input-container .pincode-input-text {
   padding:0 !important;
@@ -3016,12 +3253,22 @@ body {
     min-height: 100vh;
     background-color: rgb(0, 0 ,0);
   }
+  .background-static-rp {
+    background: url("assets/background-rp.jpeg") center no-repeat;
+    background-size: 100% auto;
+    background-position: top center;
+    min-height: 100vh;
+    background-color: rgb(0, 0 ,0);
+  }
+
+  .row-title-rp {
+    justify-content: flex-start;
+  }
 
   .topdiv-footer {
     background-color: rgb(73 80 87 / .6);
     border-top: 1px solid darkgray;
     padding: 20px;
-    margin-top: 15px;
   }
 
   .input-group-footer {
@@ -3181,7 +3428,12 @@ body {
   .td-lb {
     vertical-align: middle !important;
     padding: .75rem !important;
-    text-align: left;
+    text-align: center !important;
+  }
+
+  .td-name-lb {
+    vertical-align: middle !important;
+    padding: .75rem !important;
   }
 
   .td-tv-lb {
@@ -3234,6 +3486,16 @@ body {
 
   .team-name {
     font-size: 1.2em;
+  }
+
+  .col-navigation-left-rp {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .col-navigation-right-rp {
+    display: flex;
+    justify-content: flex-start;
   }
 }
 
