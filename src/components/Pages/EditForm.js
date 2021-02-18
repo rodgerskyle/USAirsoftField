@@ -4,8 +4,8 @@ import Divider from '@material-ui/core/Divider';
 import IconButton from '@material-ui/core/IconButton';
 import Paper from '@material-ui/core/Paper';
 import { makeStyles } from '@material-ui/core/styles';
-import { AddRounded, ArrowBackIos, Contacts, RemoveRounded, Edit } from '@material-ui/icons';
-import React, { Component } from 'react';
+import { AddRounded, ArrowBackIos, Contacts, RemoveRounded, Edit, VerifiedUser, Warning } from '@material-ui/icons';
+import React, { Component, useState } from 'react';
 import { Col, Row, Spinner } from 'react-bootstrap/';
 import { compose } from 'recompose';
 
@@ -16,6 +16,15 @@ import Typography from '@material-ui/core/Typography';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Snackbar from '@material-ui/core/Snackbar';
 import Alert from '@material-ui/lab/Alert';
+
+import TextField from '@material-ui/core/TextField';
+import Table from '@material-ui/core/Table';
+import TableBody from '@material-ui/core/TableBody';
+import TableCell from '@material-ui/core/TableCell';
+import TableContainer from '@material-ui/core/TableContainer';
+import TableFooter from '@material-ui/core/TableFooter';
+import TableHead from '@material-ui/core/TableHead';
+import TableRow from '@material-ui/core/TableRow';
 
 import * as ROLES from '../constants/roles';
 import { withFirebase } from '../Firebase';
@@ -40,6 +49,7 @@ class EditForm extends Component {
             rentalsSuccess: null,
             expanded: false,
             rentalForm: null,
+            showSummary: false,
         };
     }
 
@@ -177,6 +187,12 @@ class EditForm extends Component {
         }
     }
 
+    // Goes back from summary screen
+    goBack = () => {
+        this.props.firebase.rentalGroup(this.state.index).off()
+        this.setState({showSummary: false, index: -1})
+    }
+
     // Saves changes to rentals done
     saveAvailable = () => {
         const { optionsState, rentalForms, index } = this.state
@@ -193,7 +209,7 @@ class EditForm extends Component {
     render() {
         const editProps = { showAP: this.props.showAP, index: this.state.index }
         const { loading, editting, rentalForms, options, index, authUser, open, expanded, optionsState,
-            rentalsSuccess, rentalsError, rentalForm} = this.state
+            rentalsSuccess, rentalsError, rentalForm, showSummary} = this.state
 
         return (
             <div>
@@ -202,7 +218,7 @@ class EditForm extends Component {
                         <Spinner animation="border" />
                     </Row>
                     :
-                    !editting ?
+                    !editting && !showSummary ?
                         <div>
                             <h5 className="admin-header">Edit Rental Form</h5>
                             <List className="list-edit-rf">
@@ -238,10 +254,36 @@ class EditForm extends Component {
                                                     </ListItemSecondaryAction>
                                                 </ListItem>
                                             )
-                                        } else return null
+                                        } else 
+                                        return (
+                                                <ListItem key={i} className="list-item-unfinished-rental-ef">
+                                                    <ListItemAvatar>
+                                                        <Avatar>
+                                                            <Warning />
+                                                        </Avatar>
+                                                    </ListItemAvatar>
+                                                    <ListItemText
+                                                        primary={form.name}
+                                                        secondary={`${form.size} Participants`}
+                                                    />
+                                                    <ListItemSecondaryAction>
+                                                        <IconButton edge="end" aria-label="complete"
+                                                            onClick={() => {
+                                                                this.props.firebase.rentalGroup(i).on('value', obj => {
+                                                                    this.setState({rentalForm: obj.val(), index: i, showSummary: true})
+                                                                })
+                                                            }}>
+                                                            <VerifiedUser />
+                                                        </IconButton>
+                                                    </ListItemSecondaryAction>
+                                                </ListItem>
+                                        )
                                     }) : <p className="p-empty-rentals-rf">Add Rental Forms to see groups here.</p>}
                             </List>
                         </div> :
+                        showSummary ?
+                        <Summary createdIndex={index} newForm={this.state.rentalForm} firebase={this.props.firebase} goBack={this.goBack.bind(this)}/>
+                        :
                         <div className="div-parent-ef">
                             <Row className="row-transaction-rf">
                                 <h5 className="h5-transaction-rf">{`Transaction #${rentalForm.transaction}`}</h5>
@@ -253,12 +295,12 @@ class EditForm extends Component {
                                     size="small"
                                     startIcon={<ArrowBackIos />}
                                     onClick={() => {
-                                        this.setState({ editting: false })
+                                        this.setState({ editting: false, index: -1 })
                                         this.props.showAP(false)
                                         this.props.firebase.rentalGroup(index).off()
                                     }}>
                                     Back
-                        </MUIButton>
+                                </MUIButton>
                             </div>
                             <Row className="justify-content-row row-group-name-rf">
                                 {!!authUser.roles[ROLES.ADMIN] ?
@@ -394,6 +436,121 @@ class EditForm extends Component {
     }
 }
 
+// Summary of the created rental form
+function Summary({ createdIndex, newForm, firebase, goBack }) {
+
+    const [loading] = useState(false)
+    const [transaction, setTransaction] = useState("")
+    const [error, setError] = useState(null)
+
+    function updateForm() {
+        newForm.complete = true;
+        newForm.transaction = transaction
+        firebase.rentalGroup(createdIndex).set(newForm)
+    }
+
+    const useStyles = makeStyles({
+        table: {
+            '& > *': {
+                borderBottom: 'unset',
+            },
+        },
+    });
+
+    const classes = useStyles();
+
+    return (
+        <div className="div-add-rental-rf">
+            {loading ?
+                <Row className="spinner-standard">
+                    <Spinner animation="border" />
+                </Row>
+                :
+                <div>
+                    <div className="div-back-button-rf">
+                        <MUIButton
+                            variant="contained"
+                            color="primary"
+                            size="small"
+                            startIcon={<ArrowBackIos />}
+                            onClick={() => {
+                                goBack()
+                            }}>
+                            Back
+                        </MUIButton>
+                    </div>
+                    <h5 className="h5-title-summary">Rental Form Summary</h5>
+                    <div className="div-groupname-summary">
+                        <p className="p-groupname-summary">{`Group: ${newForm.name}`}</p>
+                    </div>
+                    <TableContainer component={Paper} className="table-edit-rf">
+                        <Table className={classes.table} aria-label="summary table">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>Rental</TableCell>
+                                    <TableCell align="center">Amount Rented</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {newForm.available.map((row) => (
+                                    <TableRow key={row.id}>
+                                        <TableCell component="th" scope="row">
+                                            {row.label}
+                                        </TableCell>
+                                        <TableCell align="center">{row.amount}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                            <TableFooter>
+                                <TableRow>
+                                    <TableCell colSpan={4} align="right" className="table-cell-total-participants-rf">
+                                        {`${newForm.participants ? newForm.participants.length : 0}/${newForm.size} Waivers Attached`}
+                                    </TableCell>
+                                </TableRow>
+                            </TableFooter>
+                        </Table>
+                    </TableContainer>
+                    <div className="div-cc-summary">
+                        <Col md={4} className="align-items-center-col">
+                            <p className="p-cc-summary">{`Card ending in: ${newForm.cc.number.substr(newForm.cc.number.length - 4)}`}</p>
+                        </Col>
+                        <Col className="justify-content-flex-end-col">
+                            <TextField
+                                id="transaction-required"
+                                label="Transaction #"
+                                variant="outlined"
+                                value={transaction}
+                                onChange={(e) => setTransaction(e.target.value)}
+                            />
+                        </Col>
+                    </div>
+                    <div className="div-summary">
+                        <Col md={"auto"} className="justify-content-flex-end-col">
+                            {error && <p className="p-error-summary">{error}</p>}
+                        </Col>
+                        <MUIButton
+                            variant="contained"
+                            color="primary"
+                            size="small"
+                            endIcon={<VerifiedUser />}
+                            onClick={() => {
+                                if (transaction === "")
+                                    setError("Please enter a transaction/receipt number.")
+                                else {
+                                    updateForm()
+                                    goBack()
+                                }
+                            }}>
+                            Complete Form
+                        </MUIButton>
+                    </div>
+                </div>
+            }
+        </div>
+    )
+
+}
+
 const useStyles = makeStyles((theme) => ({
     root: {
         padding: '2px 4px',
@@ -437,7 +594,7 @@ const RentalRow = ({ obj, set, i }) => {
                     <IconButton aria-label="edit" style={{ padding: 0, paddingRight: '5px', color: "white" }}
                         onClick={() => {
                             if (obj.amount !== "")
-                                set(i, obj.amount+1)
+                                set(i, +obj.amount+1)
                             else
                                 set(i, 1)
                         }}>
@@ -447,7 +604,7 @@ const RentalRow = ({ obj, set, i }) => {
                     <IconButton aria-label="edit" style={{ padding: 0, paddingLeft: '5px', color: "white" }}
                         onClick={() => {
                             if (obj.amount !== "")
-                                set(i, obj.amount-1)
+                                set(i, +obj.amount-1)
                         }}>
                         <RemoveRounded />
                     </IconButton>

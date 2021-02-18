@@ -171,8 +171,8 @@ class ProfileLookup extends Component {
         return (
             <div className="background-static-all">
                     <Container>
-                        <div className="team-single">
-                            <Row>
+                        <div>
+                            <Row className="row-parent-profile">
                                 <div className="col-lg-4 col-md-5 xs-margin-30px-bottom left-column-profile">
                                     <div className="team-single-img">
                                         {!this.state.loading ? 

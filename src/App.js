@@ -44,6 +44,7 @@ import PageNotFound from './components/Pages/PageNotFound';
 import RentalForm from './components/Pages/RentalForm';
 import Birthday from './components/Pages/Birthday';
 import ScanWaiver from './components/Pages/ScanWaiver';
+import RankProgress from './components/Pages/RankProgress';
 
 const App = () => (
       <Router>
@@ -175,6 +176,9 @@ const App = () => (
             </Route>
             <Route exact path="/account">
               <AccountPage />
+            </Route>
+            <Route exact path="/rankprogress">
+              <RankProgress />
             </Route>
             <Route exact path="/forgotpassword">
               <PasswordForgetForm />

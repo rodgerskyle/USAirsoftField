@@ -366,7 +366,7 @@ class Leaderboards extends Component {
                     </Row> 
                     }
                     {!loading ? 
-                    <Row>
+                    <Row className="row-bottom">
                         <Col className="pagination-col-lb">
                             <Pagination>
                                 <Pagination.First onClick={this.handleFirstClick}/>
@@ -400,7 +400,7 @@ function UserList ({users, getRank, monthly, currentMonth, currentYear, start, f
                 <tr>
                     <th scope="col" className="header-th-lb">#</th>
                     <th scope="col" className="header-th-lb">Rank</th>
-                    <th scope="col" className="header-th-lb">Name</th>
+                    <th scope="col" className="name-header-th-lb">Name</th>
                     <th scope="col" className="header-th-lb">Wins</th>
                     <th scope="col" className="header-th-lb">Losses</th>
                     <th scope="col" className="header-th-lb">Points</th>
@@ -427,7 +427,7 @@ function UserList ({users, getRank, monthly, currentMonth, currentYear, start, f
                                 alt="Player Rank" className="rank-image-lb"/>
                             </OverlayTrigger>
                         </Td>
-                        <Td cl={tv ? "profilelink-lb td-tv-lb" : "profilelink-lb td-lb"} to={'/profilelookup/' + personalUid} ct="link-td-profile-lb">{personalUser.name}</Td>
+                        <Td cl={tv ? "profilelink-lb td-tv-lb" : "profilelink-lb td-name-lb"} to={'/profilelookup/' + personalUid} ct="link-td-profile-lb">{personalUser.name}</Td>
                         <Td cl={tv ? "wins-lb td-tv-lb" : "wins-lb td-lb"}>
                             {monthly ? (countWins(personalUser, currentMonth, currentYear)) : personalUser.wins}
                         </Td>
@@ -458,7 +458,7 @@ function UserList ({users, getRank, monthly, currentMonth, currentYear, start, f
                                 alt="Player Rank" className="rank-image-lb"/>
                             </OverlayTrigger>
                         </Td>
-                        <Td cl={tv ? "profilelink-lb td-tv-lb" : "profilelink-lb td-lb"} to={'/profilelookup/' + user.uid} ct="link-td-lb">{user.name}</Td>
+                        <Td cl={tv ? "profilelink-lb td-tv-lb" : "profilelink-lb td-name-lb"} to={'/profilelookup/' + user.uid} ct="link-td-lb">{user.name}</Td>
                         <Td cl={tv ? "wins-lb td-tv-lb" : "wins-lb td-lb"}>
                             {monthly ? (countWins(user, currentMonth, currentYear)) : user.wins}
                         </Td>

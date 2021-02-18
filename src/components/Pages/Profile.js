@@ -16,6 +16,10 @@ import rankimages from '../constants/rankimgs';
 
 import { faTicketAlt } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Button } from '@material-ui/core';
+import Info from '@material-ui/icons/Info';
+import { LinkContainer } from 'react-router-bootstrap';
+
 
 class Profile extends Component {
     constructor(props) {
@@ -28,6 +32,7 @@ class Profile extends Component {
             profileicon: '',
             authUser: JSON.parse(localStorage.getItem('authUser')),
             team: '',
+            loading: true,
         };
     }
 
@@ -39,7 +44,7 @@ class Profile extends Component {
             if (this.state.authUser.profilepic)
                 this.getProfile(`${user.uid}/profilepic`);
             else 
-                this.setState({ profileicon: default_profile })
+                this.setState({ profileicon: default_profile, loading: false, })
         });
     }
 
@@ -153,10 +158,10 @@ class Profile extends Component {
     //Get image function for profile image = uid
     getProfile(uid) {
         this.props.firebase.pictures(`${uid}.png`).getDownloadURL().then((url) => {
-            this.setState({ profileicon: url })
+            this.setState({ profileicon: url, loading: false })
         }).catch((error) => {
             // Handle any errors
-            this.setState({ profileicon: default_profile })
+            this.setState({ profileicon: default_profile, loading: false })
         })
     }
 
@@ -165,9 +170,14 @@ class Profile extends Component {
             <AuthUserContext.Consumer>
                 {authUser => (
                     <div className="background-static-all">
+                        {this.state.loading ?
+                            <Row className="spinner-standard">
+                                <Spinner animation="border" />
+                            </Row>
+                        :
                         <Container>
-                            <div className="team-single">
-                                <Row>
+                            <div>
+                                <Row className="row-parent-profile">
                                     <div className="col-lg-4 col-md-5 xs-margin-30px-bottom left-column-profile">
                                         <div className="team-single-img">
                                         {!this.state.loading ? 
@@ -181,6 +191,12 @@ class Profile extends Component {
                                                     <img className="margin-10px-bottom font-size24 md-font-size22 sm-font-size20 font-weight-600" src={this.state.images.length !== 0 ? this.state.images[this.state.rankindex] : null}
                                                         alt="Players rank" />
                                                     <p className="sm-width-95 sm-margin-auto rank-title">Rank: {this.state.rank}</p>
+                                                    <LinkContainer to="/rankprogress">
+                                                        <Button style={{fontStyle: 'italic'}} endIcon={<Info />}
+                                                        className="button-more-info-profile">
+                                                            More Info
+                                                        </Button>
+                                                    </LinkContainer>
                                                 </div>
                                             </Col>
                                         </Row>
@@ -245,7 +261,7 @@ class Profile extends Component {
                                     </div>
                                 </Row>
                             </div>
-                        </Container>
+                        </Container>}
                     </div>
                 )}
             </AuthUserContext.Consumer>
