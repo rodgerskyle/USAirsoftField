@@ -65,7 +65,7 @@ class RankProgress extends Component {
             const matchObj = obj.val().games
             let matches = null;
             if (matchObj) {
-                const matches = Object.keys(matchObj).map((key) => ({
+                matches = Object.keys(matchObj).map((key) => ({
                     ...matchObj[key],
                     date: key,
                 }))
