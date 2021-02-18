@@ -170,6 +170,8 @@ class RankProgress extends Component {
 
     render() {
         const {images, rankindex, rankprogress, loading, page, matches, authUser} = this.state;
+        const curRankPoints = rankincrements[rankindex]
+        const nextRankPoints = rankincrements[rankindex+1 <= images.length ? rankindex + 1 : rankindex]
         return (
                     <div className="background-static-rp">
                     {loading ?
@@ -224,8 +226,8 @@ class RankProgress extends Component {
                                                     <ProgressBar now={rankprogress*100} label={`${rankprogress*100}%`}/>
                                                 </Row>
                                                 <Row className="justify-content-row">
-                                                    <p className="p-rank-progress-rp">{`${authUser.points - rankincrements[rankindex]} / 
-                                                    ${rankincrements[rankindex+1 <= images.length ? rankindex + 1 : rankindex] - rankincrements[rankindex]} 
+                                                    <p className="p-rank-progress-rp">{`${ (nextRankPoints - curRankPoints) - (authUser.points - curRankPoints)} / 
+                                                    ${nextRankPoints - curRankPoints} 
                                                     points needed in order to rank up.`}
                                                     </p>
                                                 </Row>
