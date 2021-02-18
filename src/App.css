@@ -1712,6 +1712,14 @@ body {
   min-height: 100vh;
 }
 
+.background-static-rp {
+  background: url("assets/background-mobile.jpg") center no-repeat;
+  background-size: cover;
+  background-position: 50% 50%;
+  object-fit: cover;
+  min-height: 100vh;
+}
+
 .topdiv-footer {
   background-color: rgb(73 80 87 / .6);
   border-top: 1px solid darkgray;
@@ -3065,7 +3073,7 @@ body {
 }
 
 .col-rank-icon-rp {
-  background-color: rgb(144, 202, 249, .1);
+  background-color: rgb(37, 41, 45, .4);
 }
 
 .col-your-rank-rp {
@@ -3130,7 +3138,7 @@ body {
 }
 
 .row-bottom {
-  margin-bottom: 15px;
+  padding-bottom: 15px;
 }
 
 /* For pincode css */
@@ -3496,6 +3504,10 @@ body {
   .col-navigation-right-rp {
     display: flex;
     justify-content: flex-start;
+  }
+
+  .col-rank-icon-rp {
+    background-color: rgb(144, 202, 249, .1);
   }
 }
 

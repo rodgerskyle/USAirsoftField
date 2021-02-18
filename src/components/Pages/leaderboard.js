@@ -366,7 +366,7 @@ class Leaderboards extends Component {
                     </Row> 
                     }
                     {!loading ? 
-                    <Row>
+                    <Row className="row-bottom">
                         <Col className="pagination-col-lb">
                             <Pagination>
                                 <Pagination.First onClick={this.handleFirstClick}/>

@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 
 import { Container, Row, Col, Spinner, ProgressBar } from 'react-bootstrap/';
 
-import { Link } from 'react-router-dom';
 
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
@@ -12,13 +11,11 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
 
-import { AuthUserContext, withAuthorization } from '../session';
+import { withAuthorization } from '../session';
 
-import { BrowserView, isBrowser, isMobile, MobileView } from 'react-device-detect';
+import { BrowserView, MobileView } from 'react-device-detect';
 
 import { withFirebase } from '../Firebase';
-
-import './Profile.css';
 
 import rankimages from '../constants/rankimgs';
 
@@ -28,8 +25,6 @@ import rankincrements from '../constants/rankincrements';
 
 import { makeStyles } from '@material-ui/core/styles';
 
-import { faTicketAlt } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { IconButton } from '@material-ui/core';
 import { ArrowBackIos, ArrowForwardIos } from '@material-ui/icons';
 
@@ -309,7 +304,7 @@ function RankList({images, ranks, rankincs, next, prev, page, rankindex}) {
 }
 
 // Shows the users match history
-function MatchHistory({user, matches}) {
+function MatchHistory({matches}) {
     const useStyles = makeStyles({
         table: {
             padding: '2px 4px',
@@ -339,9 +334,9 @@ function MatchHistory({user, matches}) {
                                 <TableHead>
                                 <TableRow>
                                     <TableCell>Date</TableCell>
-                                    <TableCell align="right">Wins</TableCell>
-                                    <TableCell align="right">Losses&nbsp;</TableCell>
-                                    <TableCell align="right">Points&nbsp;</TableCell>
+                                    <TableCell align="center">Wins</TableCell>
+                                    <TableCell align="center">Losses&nbsp;</TableCell>
+                                    <TableCell align="center">Points&nbsp;</TableCell>
                                 </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -351,9 +346,9 @@ function MatchHistory({user, matches}) {
                                             <TableCell component="th" scope="row">
                                                 {day.date}
                                             </TableCell>
-                                            <TableCell align="right">{day.wins}</TableCell>
-                                            <TableCell align="right">{day.losses}</TableCell>
-                                            <TableCell align="right">{day.wins*10 + day.losses*3}</TableCell>
+                                            <TableCell align="center">{day.wins}</TableCell>
+                                            <TableCell align="center">{day.losses}</TableCell>
+                                            <TableCell align="center">{day.wins*10 + day.losses*3}</TableCell>
                                         </TableRow>
                                     )): 
                                         <TableRow>

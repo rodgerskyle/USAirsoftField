@@ -94,6 +94,7 @@ class Teams extends Component {
                     {this.state.loading ? 
                     <Row className="justify-content-row padding-5px"><Spinner animation="border" /></Row> : 
                     <TeamList teams={this.state.teams} teamicon={this.state.teamicon} /> }
+                    <Row className="row-bottom"></Row>
                 </Container>
             </div>
         );

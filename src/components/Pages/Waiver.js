@@ -33,7 +33,7 @@ class Waiver extends Component {
                             </a>
                             </Col>
                         </Row>
-                        <Row className="align-items-center">
+                        <Row className="align-items-center row-bottom">
                             <Col className="pdfFile">
                                 <img src={waiver_full} alt="Waiver for US Airsoft" />
                             </Col>
