@@ -192,6 +192,19 @@ class UserOptions extends Component {
         })
     }
 
+    // Checks if given date is expired or not
+    checkDate(dt) {
+        if (dt === 'N/A')
+            return false
+        const dateArray = dt.split('-')
+        const date = new Date(dateArray[2], dateArray[0]-1, dateArray[1])
+        const today = new Date()
+        if (date < today)
+            return true // expired
+        else 
+            return false // not expired
+    }
+
     render() {
         return (
             <AuthUserContext.Consumer>
@@ -337,6 +350,7 @@ class UserOptions extends Component {
                                             <Form.Group controlId="form.points">
                                                 <Form.Label>Renewal:</Form.Label>
                                                 <Form.Control
+                                                    className={this.checkDate(this.state.renewal) ? "form-control-expired-uo" : null}
                                                     type="text"
                                                     name="renewal"
                                                     value={this.state.renewal}
