@@ -925,13 +925,13 @@ function AddRentals({ setPage, optionsState, setOptionsState, onChange, validate
                     {error && <Row className="row-error-rf">{error}</Row>}
                 </Col>
                 <Col md="auto" className="col-rental-rows-rf">
-                    <Row className="justify-content-row row-rf">
-                        <Col md={"auto"} className="col-textfield-rf">
+                    <Row className="row-rf">
+                        <Col md={7} className="col-textfield-rf col-textfield-left-rf">
                             <TextFieldCreate id="name" label="Group Name" variant="outlined" required
                                 onChange={onChange} value={rentalName} name="rentalName"
                                 error={rentalnameError !== null} helperText={rentalnameError} />
                         </Col>
-                        <Col md={"auto"} className="col-textfield-rf col-textfield-right-rf">
+                        <Col md={5} className="col-textfield-rf col-textfield-right-rf">
                             <TextFieldCreate id="participants" label="# Participants" variant="outlined"
                                 type="number" required onChange={onChange} value={numParticipants} name="numParticipants"
                                 error={numparticipantsError !== null} helperText={numparticipantsError} />

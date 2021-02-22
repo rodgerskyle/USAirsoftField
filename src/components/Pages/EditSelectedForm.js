@@ -386,7 +386,8 @@ class EditSelectedForm extends Component {
                     available[index].amount += 1
                 else {
                     obj.rentals[i].amount = 1
-                    available.push(obj.rentals[i])
+                    // Change id to old value
+                    available.push(this.returnObject(obj.rentals[i].value))
                 }
             }
             this.props.firebase.availableRentals(this.props.index).set(available)
@@ -456,7 +457,7 @@ class EditSelectedForm extends Component {
                                                 color="secondary"
                                                 size="small"
                                                 className="button-remove-esf"
-                                                disabled={participants && participants.length === 0}
+                                                disabled={!participants}
                                                 startIcon={<Remove />}
                                                 onClick={() => {
                                                     this.setState({removing: !removing})
@@ -501,7 +502,7 @@ class EditSelectedForm extends Component {
                                     </Col>
                                     {provided.placeholder}
                                     <Col md={4} className="col-applyall-rf">
-                                        <MUIButton disabled={!(participants)}
+                                        <MUIButton disabled={!(participants) || (availableList.length === 0)}
                                         onClick={() => this.applyAll()}>
                                             Apply To All
                                         </MUIButton>
