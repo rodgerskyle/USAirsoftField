@@ -44,7 +44,7 @@ import PageNotFound from './components/Pages/PageNotFound';
 import RentalForm from './components/Pages/RentalForm';
 import Birthday from './components/Pages/Birthday';
 import ScanWaiver from './components/Pages/ScanWaiver';
-import RankProgress from './components/Pages/RankProgress';
+import About from './components/Pages/About';
 
 const App = () => (
       <Router>
@@ -74,6 +74,9 @@ const App = () => (
             </Route>
             <Route exact path="/contact">
               <Contact />
+            </Route>
+            <Route exact path="/about">
+              <About />
             </Route>
             <Route exact path="/gametypes">
               <Gametypes/>
@@ -176,9 +179,6 @@ const App = () => (
             </Route>
             <Route exact path="/account">
               <AccountPage />
-            </Route>
-            <Route exact path="/rankprogress">
-              <RankProgress />
             </Route>
             <Route exact path="/forgotpassword">
               <PasswordForgetForm />

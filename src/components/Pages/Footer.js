@@ -9,6 +9,7 @@ import twlogo from '../../assets/SocialMedia/twitter.png';
 import iglogo from '../../assets/SocialMedia/instagram.png';
 import ytlogo from '../../assets/SocialMedia/youtube.png';
 import { encode } from 'firebase-encode';
+import logo from '../../assets/logo.png';
 
 
 class Footer extends Component {
@@ -34,53 +35,18 @@ const FooterAuth = () => (
         <div className="topdiv-footer">
             <Container>
                 <Row>
-                    <Col className="all-cols-footer">
-                        <Row>
-                            <h3 className="header-footer">About US Airsoft</h3>
-                        </Row>
-                        <Row>
-                            <Col xs="auto" className="about-col-left-footer">
-                                <Row>
-                                    <Link className="link-footer" to="contact">Contact Us</Link>
-                                </Row>
-                                <Row>
-                                    <Link className="link-footer" to="rules">Our Rules</Link>
-                                </Row>
-                                <Row>
-                                    <Link className="link-footer" to="/media/instagram">Instagram</Link>
-                                </Row>
-                            </Col>
-                            <Col className="about-col-right-footer">
-                                <Row>
-                                    <Link className="link-footer" to="/media/videos">Videos</Link>
-                                </Row>
-                                <Row>
-                                    <Link className="link-footer" to="leaderboard">Leaderboard</Link>
-                                </Row>
-                                <Row>
-                                    <Link className="link-footer" to="waiver">Waiver</Link>
-                                </Row>
-                            </Col>
-                        </Row>
-                    </Col>
-                    <Col className="all-cols-footer">
-                        <Row>
-                            <h3 className="header-footer">My Account</h3>
-                        </Row>
-                        <Row className="profile-row-footer">
-                            <Col xs="auto" className="about-col-left-footer">
-                                <Row>
-                                    <Link className="link-footer" to="account">Profile</Link>
-                                </Row>
-                                <Row>
-                                    <Link className="link-footer" to="profilesettings">Settings</Link>
-                                </Row>
-                            </Col>
-                        </Row>
-                    </Col>
-                </Row>
-                <Row>
                     <div className="divider-footer"/>
+                </Row>
+                <Row className="justify-content-row" style={{marginTop: 10, marginBottom: 10}}>
+                    <Col md={2} className="col-link-footer">
+                        <Link className="link-footer" to="/404">STORE</Link>
+                    </Col>
+                    <Col md={2} className="col-link-footer">
+                        <Link className="link-footer" to="about">ABOUT US</Link>
+                    </Col>
+                    <Col md={2} className="col-link-footer-right">
+                        <Link className="link-footer" to="contact">CONTACT US</Link>
+                    </Col>
                 </Row>
                 <Row className="socials-icons-row"> 
                     <a href="https://www.facebook.com/USAirsoftworld/" target="_blank" rel="noopener noreferrer">
@@ -95,6 +61,9 @@ const FooterAuth = () => (
                     <a href="https://www.youtube.com/user/USAirsoftWorldInc" target="_blank" rel="noopener noreferrer">
                         <img src={ytlogo} alt="Youtube Logo" className="socials-icons-footer"/>
                     </a>
+                </Row>
+                <Row className="justify-content-row">
+                    <img src={logo} alt="US Airsoft logo" className="small-logo-home2 hours-logo-home"/>
                 </Row>
             </Container>
         </div>
@@ -141,39 +110,19 @@ function FooterNonAuth ({emailMenu}) {
     return (
     <div className="topdiv-footer">
         <Container>
-            <Row className="row-header-footer">
-                <h3 className="header-footer">About US Airsoft</h3> 
-            </Row>
-            <Row className="row-header-footer">
-                <Col className="col-nonauth-footer">
-                    <Row>
-                        <Col xs="auto" className="about-col-left-footer">
-                            <Row>
-                                <Link className="link-footer" to="contact">Contact Us</Link>
-                            </Row>
-                            <Row>
-                                <Link className="link-footer" to="rules">Our Rules</Link>
-                            </Row>
-                            <Row>
-                                <Link className="link-footer" to="/media/Instagram">Photos</Link>
-                            </Row>
-                        </Col>
-                        <Col className="about-col-right-footer">
-                            <Row>
-                                <Link className="link-footer" to="/media/videos">Videos</Link>
-                            </Row>
-                            <Row>
-                                <Link className="link-footer" to="leaderboard">Leaderboard</Link>
-                            </Row>
-                            <Row>
-                                <Link className="link-footer" to="waiver">Waiver</Link>
-                            </Row>
-                        </Col>
-                    </Row>
-                </Col>
-            </Row>
             <Row>
                 <div className="divider-footer"/>
+            </Row>
+            <Row className="justify-content-row" style={{marginTop: 10, marginBottom: 10}}>
+                <Col md={2} className="col-link-footer">
+                    <Link className="link-footer" to="/404">STORE</Link>
+                </Col>
+                <Col md={2} className="col-link-footer">
+                    <Link className="link-footer" to="about">ABOUT US</Link>
+                </Col>
+                <Col md={2} className="col-link-footer-right">
+                    <Link className="link-footer" to="contact">CONTACT US</Link>
+                </Col>
             </Row>
             <Row className="row-header-footer">
                 <InputGroup className="mb-1 input-group-footer">
@@ -209,6 +158,11 @@ function FooterNonAuth ({emailMenu}) {
                 <a href="https://www.youtube.com/user/USAirsoftWorldInc" target="_blank" rel="noopener noreferrer">
                     <img src={ytlogo} alt="Youtube Logo" className="socials-icons-footer"/>
                 </a>
+            </Row>
+            <Row className="justify-content-row">
+                <Col className="col-image-home">
+                    <img src={logo} alt="US Airsoft logo" className="small-logo-home2 hours-logo-home"/>
+                </Col>
             </Row>
         </Container>
     </div>
