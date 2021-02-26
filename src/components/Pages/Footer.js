@@ -42,10 +42,10 @@ const FooterAuth = () => (
                         <Link className="link-footer" to="/404">STORE</Link>
                     </Col>
                     <Col md={2} className="col-link-footer">
-                        <Link className="link-footer" to="about">ABOUT US</Link>
+                        <Link className="link-footer" to="/about">ABOUT US</Link>
                     </Col>
                     <Col md={2} className="col-link-footer-right">
-                        <Link className="link-footer" to="contact">CONTACT US</Link>
+                        <Link className="link-footer" to="/contact">CONTACT US</Link>
                     </Col>
                 </Row>
                 <Row className="socials-icons-row"> 
@@ -118,10 +118,10 @@ function FooterNonAuth ({emailMenu}) {
                     <Link className="link-footer" to="/404">STORE</Link>
                 </Col>
                 <Col md={2} className="col-link-footer">
-                    <Link className="link-footer" to="about">ABOUT US</Link>
+                    <Link className="link-footer" to="/about">ABOUT US</Link>
                 </Col>
                 <Col md={2} className="col-link-footer-right">
-                    <Link className="link-footer" to="contact">CONTACT US</Link>
+                    <Link className="link-footer" to="/contact">CONTACT US</Link>
                 </Col>
             </Row>
             <Row className="row-header-footer">
