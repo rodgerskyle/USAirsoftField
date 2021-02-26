@@ -98,10 +98,10 @@ class ImageUpload extends Component {
                     <Col sm={4}>
                         <Row className="justify-content-row">
                             <img
-                                src={this.state.url || "https://via.placeholder.com/350x250"}
+                                src={this.state.url || "https://via.placeholder.com/250x250"}
                                 alt="Uploaded Images"
                                 height="250"
-                                width="350"
+                                width="250"
                                 className="profile-img-settings"
                             />
                         </Row>

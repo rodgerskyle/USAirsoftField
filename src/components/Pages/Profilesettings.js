@@ -17,7 +17,7 @@ const ProfileSettings = () => (
           <Row className="row-settings">
               <ImageUpload />
           </Row>
-              <PasswordChangeForm />
+              <PasswordChangeForm authUser={authUser}/>
         </Container>
       </div>
     )}

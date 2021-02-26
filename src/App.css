@@ -520,6 +520,16 @@ body {
   padding: 10px 15px; 
 }
 
+.toggled-lb .switch-handle {
+  background-color: #343a40;
+  border-color: #343a40;
+}
+
+.not-toggled-lb .switch-handle {
+  background-color: #fff;
+  border-color: #fff;
+}
+
 .title-lb {
   padding-top: 20px;
 }
@@ -543,6 +553,7 @@ body {
 .profile-img-settings {
   width: 250px;
   height: 250px;
+  border-radius: 50%;
 }
 
 .button-create-teams {
@@ -1763,7 +1774,8 @@ body {
 }
 
 .background-static-lb{
-  background: url("assets/background-mobile.jpg") center no-repeat;
+  /* background: url("assets/background-mobile.jpg") center no-repeat; */
+  background: linear-gradient(174deg, rgba(35,38,38,0.7511379551820728) 25%, rgba(0,0,0,0.8547794117647058) 72%);
   background-size: cover;
   background-position: 50% 50%;
   object-fit: cover;
@@ -1810,10 +1822,6 @@ body {
 .input-group-footer {
   margin-top: .5rem;
   width: 100% !important;
-}
-
-.navbar-toggler {
-  margin-top: 10px;
 }
 
 .divider-footer {
@@ -2104,10 +2112,89 @@ body {
   cursor: pointer;
 }
 
+.profile-pic {
+  border-radius: 50%;
+  width: 250px;
+  height: 250px;
+}
+
+.img-profile-pic-nav {
+  border: 1px solid rgb(82, 82, 82);
+}
+
+.row-nav-auth {
+  /* flex: 1;
+  justify-content: flex-end; */
+  padding: 10px 0;
+}
+
+.col-mobile-profile-nav .dropdown-menu.show {
+  transform: translate3d(-35px, 47px, 0px) !important;
+}
+
+.nav-item-loggedout .dropdown-menu.show {
+  transform: translate3d(-70px, 47px, 0px) !important;
+}
+
+.div-hamburger {
+  padding-right: 15px;
+  display: flex;
+}
+
+.div-hamburger .navbar-toggler {
+  border: 0;
+}
+
+.col-mobile-profile-nav {
+  display: unset;
+}
+
+.mdb-nav-not-mobile-profile.navbar-nav {
+  display: none;
+}
+
+@media screen and (min-width: 1200px) {
+  .col-mobile-profile-nav {
+    display: none;
+  }
+
+  .mdb-nav-not-mobile-profile.navbar-nav {
+    display: unset;
+  }
+}
+
+
+.nav-item-profile-nav img{
+  height: 35px;
+  width: 35px;
+  border-radius: 50%;
+}
+
+.nav-item-profile-nav .nav-link{
+  padding: unset;
+}
+
+.nav-item-profile-nav .MuiButton-containedSizeLarge {
+  padding: 6px 16px;
+}
+
+.nav-item-profile-nav .MuiButton-containedPrimary {
+  color: rgba(255,255,255,.5);
+  background-color: transparent;
+}
+
+.nav-item-profile-nav .MuiButton-contained {
+  box-shadow: unset;
+}
+
+.nav-item-profile-nav .MuiButton-containedPrimary:hover {
+  background-color: transparent;
+  color: rgba(255,255,255,.75);
+  box-shadow: unset;
+}
+
 .container-youtube {
-  background-color: rgb(73 80 87 / .6);
   color: white;
-  border-radius: 5px;
   padding: 15px;
 }
 
@@ -3406,7 +3493,8 @@ body {
 
 .img-profile-p {
   height: 150px;
-  width: 150px
+  width: 150px;
+  border-radius: 50%;
 }
 
 .p-nav-profile {
@@ -3435,7 +3523,6 @@ body {
 }
 
 .col-profile-pic-p {
-  padding-right: 0 !important;
   padding-left: 0 !important;
   display: flex;
   justify-content: flex-end;
@@ -3495,6 +3582,17 @@ body {
   font-size: 12px;
   margin-bottom: 0 !important;
   padding-top: 20px;
+}
+
+.link-img-nav {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.link-img-nav img{
+  min-width: 220px;
+  position: absolute;
 }
 
 /* For pincode css */
@@ -3576,6 +3674,18 @@ body {
     font-size: 1rem;
   }
 
+  .link-img-nav {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+  }
+
+  .link-img-nav img {
+    min-width: 300px;
+    position: unset;
+    top: unset;
+  }
+
   .page-header-lb {
     font-size: 2rem;
   }
@@ -3621,7 +3731,7 @@ body {
   .background-static-rp {
     background: url("assets/background-rp.jpeg") center no-repeat;
     background-size: 100% auto;
-    /* background-position: top center; */
+    background-position: top center;
     min-height: 100vh;
     background-color: rgb(0, 0 ,0);
   }
