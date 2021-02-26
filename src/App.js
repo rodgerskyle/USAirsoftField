@@ -45,6 +45,7 @@ import RentalForm from './components/Pages/RentalForm';
 import Birthday from './components/Pages/Birthday';
 import ScanWaiver from './components/Pages/ScanWaiver';
 import About from './components/Pages/About';
+import Logout from './components/constants/logout';
 
 const App = () => (
       <Router>
@@ -185,6 +186,9 @@ const App = () => (
             </Route>
             <Route exact path="/login">
               <LoginRoute />
+            </Route>
+            <Route exact path="/logout">
+              <Logout />
             </Route>
             <Route exact path="/leaderboard">
               <Leaderboard />
