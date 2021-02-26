@@ -8,7 +8,6 @@ import { withFirebase } from '../Firebase';
 
 import logo from '../../assets/logo.png';
 
-import './Profile.css';
 import 'react-bootstrap-typeahead/css/Typeahead.css';
 
 import ReactLoading from 'react-loading';

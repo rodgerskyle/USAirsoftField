@@ -3,7 +3,6 @@ import { Table, Button } from 'react-bootstrap/';
 import '../../App.css';
 
 import { Container, Row, Col, Spinner } from 'react-bootstrap/';
-import './Profile.css';
 import Td from '../constants/td';
 
 import { Link } from 'react-router-dom';
