@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Table } from 'react-bootstrap/';
 import '../../App.css';
 
-import { Container, Row, Col, Pagination, OverlayTrigger, Tooltip, Spinner, Dropdown } from 'react-bootstrap/';
+import { Container, Row, Col, OverlayTrigger, Tooltip, Spinner, Dropdown } from 'react-bootstrap/';
 import BootstrapSwitchButton from 'bootstrap-switch-button-react';
 
 import ranks from '../constants/ranks';
@@ -15,6 +15,9 @@ import CustomMenu from '../constants/custommenu'
 
 import { withFirebase } from '../Firebase';
 import { AuthUserContext } from '../session';
+
+import MUIPagination from '@material-ui/lab/Pagination';
+import { isMobile } from 'react-device-detect';
 
 class Leaderboards extends Component {
     constructor(props) {
@@ -118,33 +121,33 @@ class Leaderboards extends Component {
         index--;
         return index;
     }
-    
+
     //Grabbing month and storing it
     getMonths(month) {
         if (month === 1)
-            this.setState({thisMonth: "January", lastMonth: "December"})
+            this.setState({ thisMonth: "January", lastMonth: "December" })
         else if (month === 2)
-            this.setState({thisMonth: "February", lastMonth: "January"})
+            this.setState({ thisMonth: "February", lastMonth: "January" })
         else if (month === 3)
-            this.setState({thisMonth: "March", lastMonth: "February"})
+            this.setState({ thisMonth: "March", lastMonth: "February" })
         else if (month === 4)
-            this.setState({thisMonth: "April", lastMonth: "March"})
+            this.setState({ thisMonth: "April", lastMonth: "March" })
         else if (month === 5)
-            this.setState({thisMonth: "May", lastMonth: "April"})
+            this.setState({ thisMonth: "May", lastMonth: "April" })
         else if (month === 6)
-            this.setState({thisMonth: "June", lastMonth: "May"})
+            this.setState({ thisMonth: "June", lastMonth: "May" })
         else if (month === 7)
-            this.setState({thisMonth: "July", lastMonth: "June"})
+            this.setState({ thisMonth: "July", lastMonth: "June" })
         else if (month === 8)
-            this.setState({thisMonth: "August", lastMonth: "July"})
+            this.setState({ thisMonth: "August", lastMonth: "July" })
         else if (month === 9)
-            this.setState({thisMonth: "September", lastMonth: "August"})
+            this.setState({ thisMonth: "September", lastMonth: "August" })
         else if (month === 10)
-            this.setState({thisMonth: "October", lastMonth: "September"})
+            this.setState({ thisMonth: "October", lastMonth: "September" })
         else if (month === 11)
-            this.setState({thisMonth: "November", lastMonth: "October"})
+            this.setState({ thisMonth: "November", lastMonth: "October" })
         else if (month === 12)
-            this.setState({thisMonth: "December", lastMonth: "November"})
+            this.setState({ thisMonth: "December", lastMonth: "November" })
     }
 
     //Pagination Logic
@@ -163,13 +166,13 @@ class Leaderboards extends Component {
     handleFirstClick(event) {
         event.preventDefault();
         this.setState({
-            curPage:1
+            curPage: 1
         });
     }
 
     componentDidMount() {
         if (this.props.match?.params.query === "monthly") {
-            this.setState({monthly: true, tv: true,})
+            this.setState({ monthly: true, tv: true, })
         }
         this.setState({ loading: true });
         this.getMonths(parseInt(new Date().getMonth().toLocaleString()) + 1)
@@ -188,13 +191,13 @@ class Leaderboards extends Component {
         months.push("October")
         months.push("November")
         months.push("December")
-        this.setState({months})
+        this.setState({ months })
 
         let years = [];
-        for(let i=2020; i<date.getFullYear()+1; i++) {
+        for (let i = 2020; i < date.getFullYear() + 1; i++) {
             years.push(i)
         }
-        this.setState({years, currentYear: date.getFullYear()})
+        this.setState({ years, currentYear: date.getFullYear() })
 
         this.props.firebase.users().on('value', snapshot => {
             const usersObject = snapshot.val();
@@ -204,21 +207,21 @@ class Leaderboards extends Component {
                 uid: key,
             }));
 
-            usersList = usersList.filter(obj => typeof(obj.roles) === 'undefined' || !obj.roles[ROLES.WAIVER])
+            usersList = usersList.filter(obj => typeof (obj.roles) === 'undefined' || !obj.roles[ROLES.WAIVER])
 
             if (!this.state.monthly) {
                 this.setState({
-                    users: usersList.sort((a,b) => (a.points < b.points ? 1 : -1)),
+                    users: usersList.sort((a, b) => (a.points < b.points ? 1 : -1)),
                     usersObject,
-                    numPages: Math.ceil(usersList.length/this.state.usersPerPage),
+                    numPages: Math.ceil(usersList.length / this.state.usersPerPage),
                     loading: false,
                 });
             }
             else {
                 this.setState({
-                    users: usersList.sort((a,b) => this.sortArray(a,b, this.state.currentMonth, this.state.currentYear)),
+                    users: usersList.sort((a, b) => this.sortArray(a, b, this.state.currentMonth, this.state.currentYear)),
                     usersObject,
-                    numPages: Math.ceil(usersList.length/this.state.usersPerPage),
+                    numPages: Math.ceil(usersList.length / this.state.usersPerPage),
                     loading: false,
                 });
             }
@@ -231,7 +234,7 @@ class Leaderboards extends Component {
 
     findRanking(uid) {
         if (!uid) return null;
-        for (let i=0; i<this.state.users.length; i++)
+        for (let i = 0; i < this.state.users.length; i++)
             if (this.state.users[i].uid === uid) return i;
         return null;
     }
@@ -244,7 +247,7 @@ class Leaderboards extends Component {
             Object.keys(a.games).forEach((date) => {
                 let l_date = date.split('-')
                 if (parseInt(l_date[1]) === month && parseInt(l_date[0]) === year) {
-                    a_points += +a.games[date].wins*10 + +a.games[date].losses*3
+                    a_points += +a.games[date].wins * 10 + +a.games[date].losses * 3
                 }
             })
         }
@@ -252,7 +255,7 @@ class Leaderboards extends Component {
             Object.keys(b.games).forEach((date) => {
                 let l_date = date.split('-')
                 if (parseInt(l_date[1]) === month && parseInt(l_date[0]) === year) {
-                    b_points += +b.games[date].wins*10 + +b.games[date].losses*3
+                    b_points += +b.games[date].wins * 10 + +b.games[date].losses * 3
                 }
             })
         }
@@ -266,125 +269,107 @@ class Leaderboards extends Component {
         return (
             <AuthUserContext.Consumer>
                 {authUser => (
-            <div className="background-static-lb">
-                <Container className="leaderboard-page">
-                    <Row className={tv ? "row-header-tv-lb" : "row-header-lb"}>
-                        <Col xs="auto" className="col-header-lb vertical-divider-col-lb">
-                            <h2 className="page-header-lb">Leaderboards</h2>
-                        </Col>
-                        <Col>
-                            <Row className="button-right-lb">
-                                <BootstrapSwitchButton
-                                    checked={!this.state.monthly}
-                                    onstyle="dark"
-                                    width={120}
-                                    onlabel='All Time'
-                                    offlabel='Monthly'
-                                    onChange={() => {
-                                        if (this.state.monthly) {
-                                            this.setState({ 
-                                                monthly: !this.state.monthly, 
-                                                users: users.sort((a,b) => (a.points < b.points ? 1 : -1))
-                                            })
-                                        }
-                                        else
-                                            this.setState({ 
-                                                monthly: !this.state.monthly,
-                                                currentMonth: new Date().getMonth(),
-                                                users: users.sort((a,b) => this.sortArray(a,b, new Date().getMonth(), currentYear))
-                                            })
-                                    }}
-                                />
+                    <div className="background-static-lb">
+                        <Container className="leaderboard-page">
+                            <Row className={tv ? "row-header-tv-lb" : "row-header-lb"}>
+                                <Col xs={"auto"} className="col-header-lb vertical-divider-col-lb">
+                                    <h2 className="page-header-lb">Leaderboards</h2>
+                                </Col>
+                                <Col xs={4}>
+                                    <Row className={this.state.monthly ? "button-right-lb toggled-lb" : "button-right-lb not-toggled-lb"}>
+                                        <BootstrapSwitchButton
+                                            checked={!this.state.monthly}
+                                            onstyle="dark"
+                                            width={120}
+                                            onlabel='All Time'
+                                            offlabel='Monthly'
+                                            onChange={() => {
+                                                if (this.state.monthly) {
+                                                    this.setState({
+                                                        monthly: !this.state.monthly,
+                                                        users: users.sort((a, b) => (a.points < b.points ? 1 : -1))
+                                                    })
+                                                }
+                                                else
+                                                    this.setState({
+                                                        monthly: !this.state.monthly,
+                                                        currentMonth: new Date().getMonth(),
+                                                        users: users.sort((a, b) => this.sortArray(a, b, new Date().getMonth(), currentYear))
+                                                    })
+                                            }}
+                                        />
+                                    </Row>
+                                </Col>
+                                {this.state.monthly === true && !tv ?
+                                    <Col className="col-dropdown-months-lb">
+                                        <Row className="row-dropdown-months-lb">
+                                            <Col xs={"auto"}>
+                                                <Dropdown className="dropdown-lb">
+                                                    <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components">
+                                                        Month: {months[currentMonth]}
+                                                    </Dropdown.Toggle>
+                                                    <Dropdown.Menu as={CustomMenu} className="dropdown-waiverlookup">
+                                                        {months.map((month, i) => (
+                                                            <Dropdown.Item key={i} eventKey={i} active={i === currentMonth}
+                                                                onClick={() => {
+                                                                    this.setState({
+                                                                        currentMonth: i,
+                                                                        users: users.sort((a, b) => this.sortArray(a, b, i, currentYear))
+                                                                    })
+                                                                }
+                                                                }>
+                                                                {month}
+                                                            </Dropdown.Item>
+                                                        ))}
+                                                    </Dropdown.Menu>
+                                                </Dropdown>
+                                            </Col>
+                                            <Col xs={"auto"}>
+                                                <Dropdown className="dropdown-lb">
+                                                    <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components">
+                                                        Year: {currentYear}
+                                                    </Dropdown.Toggle>
+                                                    <Dropdown.Menu as={CustomMenu} className="dropdown-waiverlookup">
+                                                        {years.map((year, i) => (
+                                                            <Dropdown.Item eventKey={i} key={i} active={year === currentYear}
+                                                                onClick={() => this.setState({
+                                                                    currentYear: year,
+                                                                    users: users.sort((a, b) => this.sortArray(a, b, currentMonth, year))
+                                                                })}>
+                                                                {year}
+                                                            </Dropdown.Item>
+                                                        ))}
+                                                    </Dropdown.Menu>
+                                                </Dropdown>
+                                            </Col>
+                                        </Row>
+                                    </Col> : null}
                             </Row>
-                        </Col>
-                        <Col className="pagination-col-lb">
-                            <Pagination>
-                                <Pagination.First onClick={this.handleFirstClick}/>
-                                <Pagination.Prev onClick={() => {this.handleClick(curPage-1)}} disabled={curPage === 1}/>
-                                {curPage-1 >= 1 ? 
-                                <Pagination.Item onClick={() => {this.handleClick(curPage-1)}}>{curPage-1}</Pagination.Item> 
-                                : null}
-                                <Pagination.Item active>{curPage}</Pagination.Item>
-                                {curPage+1 <= numPages ? 
-                                <Pagination.Item onClick={() => {this.handleClick(curPage+1)}}>{curPage+1}</Pagination.Item> 
-                                : null}
-                                <Pagination.Next onClick={() => {this.handleClick(curPage+1)}} disabled={curPage === numPages}/>
-                                <Pagination.Last onClick={this.handleLastClick}/>
-                            </Pagination>
-                        </Col>
-                    </Row>
-                    {this.state.monthly === true && !tv ?
-                    <Row className="row-dropdown-months-lb">
-                        <Col xs={"auto"}>
-                            <Dropdown className="dropdown-lb">
-                                <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components">
-                                Month: {months[currentMonth]}
-                                </Dropdown.Toggle>
-                                <Dropdown.Menu as={CustomMenu} className="dropdown-waiverlookup">
-                                    {months.map((month, i) => (
-                                        <Dropdown.Item key={i} eventKey={i} active={i===currentMonth}
-                                        onClick={() => {
-                                            this.setState({
-                                                currentMonth: i, 
-                                                users: users.sort((a,b) => this.sortArray(a,b, i, currentYear))
-                                            })
-                                        }
-                                        }>
-                                            {month}
-                                        </Dropdown.Item>
-                                    ))}
-                                </Dropdown.Menu>
-                            </Dropdown>
-                        </Col>
-                        <Col xs={"auto"}>
-                            <Dropdown className="dropdown-lb">
-                                <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components">
-                                Year: {currentYear}
-                                </Dropdown.Toggle>
-                                <Dropdown.Menu as={CustomMenu} className="dropdown-waiverlookup">
-                                    {years.map((year, i) => (
-                                        <Dropdown.Item eventKey={i} key={i} active={year===currentYear}
-                                        onClick={() => this.setState({
-                                            currentYear: year,
-                                            users: users.sort((a,b) => this.sortArray(a,b, currentMonth, year))
-                                        })}>
-                                            {year}
-                                        </Dropdown.Item>
-                                    ))}
-                                </Dropdown.Menu>
-                            </Dropdown>
-                        </Col>
-                    </Row> : null}
-                    {loading ? 
-                    <Row className="justify-content-row">
-                        <Spinner animation="border" />
-                    </Row>  :
-                    <Row>
-                        <UserList users={users.slice((curPage-1) * usersPerPage, ((curPage-1) * usersPerPage) + usersPerPage )} getRank={getRankState} 
-                        monthly={this.state.monthly} currentMonth={currentMonth} currentYear={currentYear} start={usersPerPage * (curPage-1)} 
-                        findRanking={this.findRanking} personalUser={authUser ? usersObject[authUser.uid] : null} personalUid={authUser?.uid} tv={tv}/> 
-                    </Row> 
-                    }
-                    {!loading ? 
-                    <Row className="row-bottom">
-                        <Col className="pagination-col-lb">
-                            <Pagination>
-                                <Pagination.First onClick={this.handleFirstClick}/>
-                                <Pagination.Prev onClick={() => {this.handleClick(curPage-1)}} disabled={curPage === 1}/>
-                                {curPage-1 >= 1 ? 
-                                <Pagination.Item onClick={() => {this.handleClick(curPage-1)}}>{curPage-1}</Pagination.Item> 
-                                : null}
-                                <Pagination.Item active>{curPage}</Pagination.Item>
-                                {curPage+1 <= numPages ? 
-                                <Pagination.Item onClick={() => {this.handleClick(curPage+1)}}>{curPage+1}</Pagination.Item> 
-                                : null}
-                                <Pagination.Next onClick={() => {this.handleClick(curPage+1)}} disabled={curPage === numPages}/>
-                                <Pagination.Last onClick={this.handleLastClick}/>
-                            </Pagination>
-                        </Col>
-                    </Row> : null }
-                </Container>
-            </div>
+                            <Row className="row-pagination-lb">
+                                <Col className="pagination-col-lb">
+                                    <MUIPagination count={numPages} page={curPage} onChange={(e, val) => this.handleClick(val)}
+                                        showFirstButton showLastButton color="primary" variant="outlined" shape="rounded" size={isMobile ? 'small' : 'medium'} />
+                                </Col>
+                            </Row>
+                            {loading ?
+                                <Row className="justify-content-row">
+                                    <Spinner animation="border" />
+                                </Row> :
+                                <Row>
+                                    <UserList users={users.slice((curPage - 1) * usersPerPage, ((curPage - 1) * usersPerPage) + usersPerPage)} getRank={getRankState}
+                                        monthly={this.state.monthly} currentMonth={currentMonth} currentYear={currentYear} start={usersPerPage * (curPage - 1)}
+                                        findRanking={this.findRanking} personalUser={authUser ? usersObject[authUser.uid] : null} personalUid={authUser?.uid} tv={tv} />
+                                </Row>
+                            }
+                            {!loading ?
+                                <Row className="row-bottom">
+                                    <Col className="pagination-col-lb">
+                                        <MUIPagination count={numPages} page={curPage} onChange={(e, val) => this.handleClick(val)}
+                                            showFirstButton showLastButton color="primary" variant="outlined" shape="rounded" size={isMobile ? 'small' : 'medium'} />
+                                    </Col>
+                                </Row> : null}
+                        </Container>
+                    </div>
                 )}
             </AuthUserContext.Consumer>
         );
@@ -392,7 +377,7 @@ class Leaderboards extends Component {
 }
 
 
-function UserList ({users, getRank, monthly, currentMonth, currentYear, start, findRanking, personalUser, personalUid, tv }) {
+function UserList({ users, getRank, monthly, currentMonth, currentYear, start, findRanking, personalUser, personalUid, tv }) {
     const rank = findRanking(personalUid)
     return (
         <Table className="table table-striped table-dark table-lb">
@@ -407,24 +392,24 @@ function UserList ({users, getRank, monthly, currentMonth, currentYear, start, f
                 </tr>
             </thead>
             <tbody className="tbody-lb">
-                {personalUser !== null && start === 0 && 
-                !!!personalUser.roles ?
-                <tr className="tr-personal-rank-leaderboard">
-                        <Td cl={tv ? "td-tv-lb" : "td-lb"} scope="row"><p className={rank+1 ===0 ? "firstPlace" : (rank+1 ===1 ? "secondPlace" : (rank+1 ===2 ? "thirdPlace" : "p-rank-leaderboard"))}>
-                        {rank+1}</p></Td>
+                {personalUser !== null && start === 0 &&
+                    !!!personalUser.roles ?
+                    <tr className="tr-personal-rank-leaderboard">
+                        <Td cl={tv ? "td-tv-lb" : "td-lb"} scope="row"><p className={rank + 1 === 0 ? "firstPlace" : (rank + 1 === 1 ? "secondPlace" : (rank + 1 === 2 ? "thirdPlace" : "p-rank-leaderboard"))}>
+                            {rank + 1}</p></Td>
                         <Td cl={tv ? "td-tv-lb" : "td-lb"}>
                             <OverlayTrigger
-                            transition={false}
-                            key='top'
-                            placement='top'
-                            overlay={
-                                <Tooltip id={`tooltip-top`}>
-                                    {ranks[getRank(personalUser.points)]}
-                                </Tooltip>
-                            }
+                                transition={false}
+                                key='top'
+                                placement='top'
+                                overlay={
+                                    <Tooltip id={`tooltip-top`}>
+                                        {ranks[getRank(personalUser.points)]}
+                                    </Tooltip>
+                                }
                             >
                                 <img src={rankimages.length !== 0 ? rankimages[getRank(personalUser.points)] : null}
-                                alt="Player Rank" className="rank-image-lb"/>
+                                    alt="Player Rank" className="rank-image-lb" />
                             </OverlayTrigger>
                         </Td>
                         <Td cl={tv ? "profilelink-lb td-tv-lb" : "profilelink-lb td-name-lb"} to={'/profilelookup/' + personalUid} ct="link-td-profile-lb">{personalUser.name}</Td>
@@ -437,39 +422,39 @@ function UserList ({users, getRank, monthly, currentMonth, currentYear, start, f
                         <Td cl={tv ? "td-tv-lb" : "td-lb"}>
                             {monthly ? (countPoints(personalUser, currentMonth, currentYear)) : personalUser.points}
                         </Td>
-                </tr>  : null}
+                    </tr> : null}
                 {users
-                .map((user, i) => (
-                    <tr key={user.uid}>
-                        <Td cl={tv ? "td-tv-lb" : "td-lb"} scope="row"><p className={i + start ===0 ? "firstPlace" : (i + start ===1 ? "secondPlace" : (i + start ===2 ? "thirdPlace" : "p-rank-leaderboard"))}>
-                        {i + start + 1}</p></Td>
-                        <Td cl={tv ? "td-tv-lb" : "td-lb"}>
-                            <OverlayTrigger
-                            transition={false}
-                            key='top'
-                            placement='top'
-                            overlay={
-                                <Tooltip id={`tooltip-top`}>
-                                    {ranks[getRank(user.points)]}
-                                </Tooltip>
-                            }
-                            >
-                                <img src={rankimages.length !== 0 ? rankimages[getRank(user.points)] : null}
-                                alt="Player Rank" className="rank-image-lb"/>
-                            </OverlayTrigger>
-                        </Td>
-                        <Td cl={tv ? "profilelink-lb td-tv-lb" : "profilelink-lb td-name-lb"} to={'/profilelookup/' + user.uid} ct="link-td-lb">{user.name}</Td>
-                        <Td cl={tv ? "wins-lb td-tv-lb" : "wins-lb td-lb"}>
-                            {monthly ? (countWins(user, currentMonth, currentYear)) : user.wins}
-                        </Td>
-                        <Td cl={tv ? "losses-lb td-tv-lb" : "losses-lb td-lb"}>
-                            {monthly ? (countLosses(user, currentMonth, currentYear)) : user.losses}
-                        </Td>
-                        <Td cl={tv ? "td-tv-lb" : "td-lb"}>
-                            {monthly ? (countPoints(user, currentMonth, currentYear)) : user.points}
-                        </Td>
-                    </tr>
-                ))}
+                    .map((user, i) => (
+                        <tr key={user.uid}>
+                            <Td cl={tv ? "td-tv-lb" : "td-lb"} scope="row"><p className={i + start === 0 ? "firstPlace" : (i + start === 1 ? "secondPlace" : (i + start === 2 ? "thirdPlace" : "p-rank-leaderboard"))}>
+                                {i + start + 1}</p></Td>
+                            <Td cl={tv ? "td-tv-lb" : "td-lb"}>
+                                <OverlayTrigger
+                                    transition={false}
+                                    key='top'
+                                    placement='top'
+                                    overlay={
+                                        <Tooltip id={`tooltip-top`}>
+                                            {ranks[getRank(user.points)]}
+                                        </Tooltip>
+                                    }
+                                >
+                                    <img src={rankimages.length !== 0 ? rankimages[getRank(user.points)] : null}
+                                        alt="Player Rank" className="rank-image-lb" />
+                                </OverlayTrigger>
+                            </Td>
+                            <Td cl={tv ? "profilelink-lb td-tv-lb" : "profilelink-lb td-name-lb"} to={'/profilelookup/' + user.uid} ct="link-td-lb">{user.name}</Td>
+                            <Td cl={tv ? "wins-lb td-tv-lb" : "wins-lb td-lb"}>
+                                {monthly ? (countWins(user, currentMonth, currentYear)) : user.wins}
+                            </Td>
+                            <Td cl={tv ? "losses-lb td-tv-lb" : "losses-lb td-lb"}>
+                                {monthly ? (countLosses(user, currentMonth, currentYear)) : user.losses}
+                            </Td>
+                            <Td cl={tv ? "td-tv-lb" : "td-lb"}>
+                                {monthly ? (countPoints(user, currentMonth, currentYear)) : user.points}
+                            </Td>
+                        </tr>
+                    ))}
             </tbody>
         </Table>
     )
@@ -483,7 +468,7 @@ function countPoints(obj, month, year) {
         Object.keys(obj.games).forEach((date) => {
             let l_date = date.split('-')
             if (parseInt(l_date[1]) === month && parseInt(l_date[0]) === year) {
-                points += obj.games[date].wins*10 + obj.games[date].losses*3
+                points += obj.games[date].wins * 10 + obj.games[date].losses * 3
             }
         })
     }
