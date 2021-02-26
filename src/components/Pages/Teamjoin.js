@@ -13,7 +13,6 @@ import { withFirebase } from '../Firebase';
 
 import ReactLoading from 'react-loading';
 
-import './Profile.css';
 import 'react-bootstrap-typeahead/css/Typeahead.css';
 
 

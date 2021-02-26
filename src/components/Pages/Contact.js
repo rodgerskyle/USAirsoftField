@@ -23,6 +23,11 @@ class Contact extends Component {
         return (
             <div className="background-static-all">
                 <Container>
+                    <Row className="justify-content-row">
+                        <Col md={10}>
+                            <p className="p-header-about">Contact Us</p>
+                        </Col>
+                    </Row>
                     <Row className="row-contact">
                         <Col className="text-col-contact" md={4}>
                             <Row className="text-row-contact">

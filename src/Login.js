@@ -113,6 +113,7 @@ class SignInFormBase extends Component {
               value={email}
               onChange={this.onChange}
               type="text"
+              autoComplete="email"
               placeholder="Email Address"
             />
           </Form.Group>
@@ -123,6 +124,7 @@ class SignInFormBase extends Component {
               value={password}
               onChange={this.onChange}
               type="password"
+              autoComplete="current-password"
               placeholder="Enter Password"
             />
           </Form.Group>

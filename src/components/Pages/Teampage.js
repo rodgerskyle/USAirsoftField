@@ -6,8 +6,6 @@ import { Link } from 'react-router-dom';
 
 import { withFirebase } from '../Firebase';
 
-import './Profile.css';
-
 import rankimages from '../constants/rankimgs';
 
 class Teampage extends Component {

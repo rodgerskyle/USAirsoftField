@@ -51,6 +51,16 @@ class PasswordChangeForm extends Component {
         <Row className="justify-content-row">
           <Col sm={4}>
             <Form className="password-change-form" onSubmit={this.onSubmit}>
+                <Form.Group style={{display: 'none'}}>
+                  <Form.Control
+                    name="email"
+                    value={this.props.authUser.email}
+                    onChange={this.onChange}
+                    type="text"
+                    autoComplete="email"
+                    placeholder="email"
+                  />
+                </Form.Group>
                 <Form.Group>
                   <Form.Label>Password:</Form.Label>
                   <Form.Control
@@ -58,6 +68,7 @@ class PasswordChangeForm extends Component {
                     value={passwordOne}
                     onChange={this.onChange}
                     type="password"
+                    autoComplete="new-password"
                     placeholder="New Password"
                   />
                 </Form.Group>
@@ -68,6 +79,7 @@ class PasswordChangeForm extends Component {
                     value={passwordTwo}
                     onChange={this.onChange}
                     type="password"
+                    autoComplete="new-password"
                     placeholder="Confirm New Password"
                   />
                 </Form.Group>

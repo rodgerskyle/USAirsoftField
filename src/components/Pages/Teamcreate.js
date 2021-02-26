@@ -10,7 +10,6 @@ import { withFirebase } from '../Firebase';
 
 import alticon from '../../assets/team-img-placeholder.png';
 
-import './Profile.css';
 import 'react-bootstrap-typeahead/css/Typeahead.css';
 
 

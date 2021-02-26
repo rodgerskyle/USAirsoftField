@@ -115,7 +115,7 @@ class RentalOptions extends Component {
                             </Col>
                         </Row>
                         <Row className="justify-content-row">
-                            <Col md={7} className="col-save-button-ro">
+                            <Col md={12} className="col-save-button-ro">
                                 <MUIButton type="button" onClick={() => {
                                     this.submit()
                                     // this.props.firebase.rentalOptions().set(this.state.optionsState)
