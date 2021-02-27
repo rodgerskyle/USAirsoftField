@@ -34,6 +34,8 @@ body {
   -webkit-font-smoothing: antialiased;
   line-height: 1.5 !important;
   background-color: rgb(1, 1, 1) !important;
+  overflow-y: scroll;
+  -webkit-overflow-scrolling: touch;
 }
 
 .overlay {
@@ -644,7 +646,6 @@ body {
 }
 
 .dl-hours-info {
-  margin-left: -15px;
   text-align: center;
 }
 
@@ -2129,11 +2130,13 @@ body {
 }
 
 .col-mobile-profile-nav .dropdown-menu.show {
-  transform: translate3d(-35px, 47px, 0px) !important;
+  transform: translate3d(-25px, 47px, 0px) !important;
+  left: -10px;
 }
 
 .nav-item-loggedout .dropdown-menu.show {
-  transform: translate3d(-70px, 47px, 0px) !important;
+  transform: translate3d(-60px, 47px, 0px) !important;
+  left: -10px
 }
 
 .div-hamburger {
@@ -3533,6 +3536,9 @@ body {
   padding-left: 0 !important;
   width: 135px !important;
   height: 135px; 
+  justify-content: center;
+  align-items: center;
+  display: flex;
 }
 
 .col-stats-p {
@@ -3591,8 +3597,14 @@ body {
 }
 
 .link-img-nav img{
-  min-width: 220px;
+  min-width: 56vw;
   position: absolute;
+}
+
+.col-image-home {
+  align-items: center;
+  justify-content: center;
+  display: flex;
 }
 
 /* For pincode css */
@@ -3795,12 +3807,6 @@ body {
     margin: 0;
   }
 
-  .col-image-home {
-    align-items: center;
-    justify-content: center;
-    display: flex;
-  }
-
   .small-logo-home2 {
     height: auto;
     width: 10%;
@@ -3936,7 +3942,6 @@ body {
   }
 
   .dl-hours-info {
-    margin-left: 0;
     text-align: center;
   }
 

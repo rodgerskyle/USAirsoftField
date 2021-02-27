@@ -20,7 +20,7 @@ class Navigation extends Component {
         super(props);
 
         this.state = {
-            profilepic: default_profile,
+            profilePic: default_profile,
             authUser: JSON.parse(localStorage.getItem('authUser')),
         };
     }

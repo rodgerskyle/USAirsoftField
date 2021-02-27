@@ -194,7 +194,7 @@ class Leaderboards extends Component {
         this.setState({ months })
 
         let years = [];
-        for (let i = 2020; i < date.getFullYear() + 1; i++) {
+        for (let i = 2021; i < date.getFullYear() + 1; i++) {
             years.push(i)
         }
         this.setState({ years, currentYear: date.getFullYear() })
