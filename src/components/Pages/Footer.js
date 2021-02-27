@@ -63,7 +63,9 @@ const FooterAuth = () => (
                     </a>
                 </Row>
                 <Row className="justify-content-row">
-                    <img src={logo} alt="US Airsoft logo" className="small-logo-home2 hours-logo-home"/>
+                    <Col className="col-image-home">
+                        <img src={logo} alt="US Airsoft logo" className="small-logo-home2 hours-logo-home"/>
+                    </Col>
                 </Row>
             </Container>
         </div>
