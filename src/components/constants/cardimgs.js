@@ -22,16 +22,7 @@ import card20 from '../../assets/Cards/20.png'
 import card21 from '../../assets/Cards/21.png'
 import card22 from '../../assets/Cards/22.png'
 
-export default [
-    /*card1,
-    card2,
-    card3,
-    card4,
-    card5,
-    card6,
-    card7,
-    card8,
-    card9, */
+let array = [
     card10,
     card11,
     card12,
@@ -44,5 +35,7 @@ export default [
     card19,
     card20,
     card21,
-    card22,
+    card22
 ]
+
+export default array

@@ -1,6 +1,6 @@
 // ranks.js
 
-export default [
+let array = [
     'Private',
     'Private First Class',
     'Specialist',
@@ -25,3 +25,5 @@ export default [
     'General',
     'General Of The Army'
 ]
+
+export default array
