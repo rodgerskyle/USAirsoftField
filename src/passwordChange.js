@@ -6,8 +6,6 @@ import { withFirebase } from './components/Firebase';
 
 import { compose } from 'recompose';
 
-import { Helmet } from 'react-helmet-async';
- 
 const INITIAL_STATE = {
   passwordOne: '',
   passwordTwo: '',
@@ -53,9 +51,6 @@ class PasswordChangeForm extends Component {
  
     return (
         <Row className="justify-content-row">
-          <Helmet>
-            <title>US Airsoft Field: Change Password</title>
-          </Helmet>
           <Col sm={4}>
             <Form className="password-change-form" onSubmit={this.onSubmit}>
                 <Form.Group style={{display: 'none'}}>
