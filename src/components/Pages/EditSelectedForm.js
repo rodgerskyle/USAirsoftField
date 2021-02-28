@@ -36,11 +36,11 @@ import { withFirebase } from '../Firebase';
 
 import '../../App.css';
 
-const verify = (item, list) => {
-    for (let i = 0; i < list.length; i++)
-        if (list[i].value === item.value) return false;
-    return true // Verified that it's safe
-}
+// const verify = (item, list) => {
+//     for (let i = 0; i < list.length; i++)
+//         if (list[i].value === item.value) return false;
+//     return true // Verified that it's safe
+// }
 
 // Copies over item to another list, verifies it doesn't exist
 const copy = (source, destination, droppableSource, droppableDestination) => {
@@ -50,7 +50,7 @@ const copy = (source, destination, droppableSource, droppableDestination) => {
 
     // Make sure it doesn't exist at destination
 
-    if (verify(item, destClone))
+    // if (verify(item, destClone))
         destClone.splice(droppableDestination.index, 0, { ...item, id: uuid() });
     return destClone;
 };
@@ -213,7 +213,7 @@ class EditSelectedForm extends Component {
                     source_arr = this.state.participants[index].rentals
                 }
                 // Check here if it exists in the list
-                if (!this.itemExists(source_arr, destination_arr, source.index)) {
+                // if (!this.itemExists(source_arr, destination_arr, source.index)) {
                     const result = move(
                         source_arr,
                         destination_arr,
@@ -227,7 +227,7 @@ class EditSelectedForm extends Component {
                         this.props.firebase.participantsRentals(this.props.index, index).update({ rentals: result[p_index] })
                         this.props.firebase.participantsRentals(this.props.index, index2).update({ rentals: result[p_index2] })
                     }
-                }
+                // }
             }
             else { // Available case as source
                 index = destination.droppableId.split("-")[1]
@@ -235,7 +235,7 @@ class EditSelectedForm extends Component {
                 source_arr = this.state.availableList
 
 
-                if (!this.itemExists(source_arr, destination_arr, source.index)) {
+                // if (!this.itemExists(source_arr, destination_arr, source.index)) {
                 // Move instead of copy if 1 is left
                     if (source_arr[source.index].amount === 1) {
                         result = move(
@@ -257,7 +257,7 @@ class EditSelectedForm extends Component {
                         this.updateAmount(source.index, null)
                         this.props.firebase.participantsRentals(this.props.index, index).update({ rentals: result })
                     }
-                }
+                // }
             }
 
 
@@ -392,7 +392,10 @@ class EditSelectedForm extends Component {
             }
             this.props.firebase.availableRentals(this.props.index).set(available)
         }
-        this.props.firebase.participantsRentals(this.props.index, i).remove()
+        let rentalForm = this.state.rentalForms[this.props.index]
+        rentalForm.participants.splice(i, 1)
+        this.props.firebase.rentalGroup(this.props.index).set(rentalForm)
+        // this.props.firebase.participantsRentals(this.props.index, i).remove()
         this.props.firebase.validatedWaiver(obj.name).update({attached: false})
         if (i === 0) this.setState({removing: false})
     }
