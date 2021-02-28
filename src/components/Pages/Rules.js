@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 
 import { Container, Row, Col, Tab, ListGroup } from 'react-bootstrap/';
-
+import { Helmet } from 'react-helmet-async';
 
 class Rules extends Component {
     constructor(props) {
@@ -14,6 +14,9 @@ class Rules extends Component {
     render() {
         return (
             <div className="background-static-all">
+                <Helmet>
+                    <title>US Airsoft Field: Rules</title>
+                </Helmet>
                 <h2 className="page-header">Game and Safety Rules</h2>
                 <Container>
                     <Row className="row-update-rules"><p>Last Updated: 1/1/2020</p></Row>

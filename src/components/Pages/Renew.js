@@ -17,6 +17,7 @@ import { Button, Form, Container, Card, Row, Col, Breadcrumb, Spinner } from 're
 
 import * as ROLES from '../constants/roles';
 import { LinkContainer } from 'react-router-bootstrap';
+import { Helmet } from 'react-helmet-async';
 
 const INITIAL_STATE = {
     value: '',
@@ -224,6 +225,9 @@ class RenewSubscription extends Component {
             <AuthUserContext.Consumer>
                 {authUser => (
                     <div className="background-static-all">
+                        <Helmet>
+                            <title>US Airsoft Field: Renewal</title>
+                        </Helmet>
                         {!showLander ?
                         <Container>
                             <h2 className="admin-header">Renew Member{uid && usersObject && <div>{usersObject[uid].name}</div>}</h2>

@@ -22,6 +22,7 @@ import PinCode from '../constants/pincode'
 
 //For creating a second reference to Firebase
 import app from 'firebase/app';
+import { Helmet } from 'react-helmet-async';
 require('dotenv').config();
 const config = {
     apiKey: process.env.REACT_APP_API_KEY,
@@ -39,6 +40,9 @@ const SignUpPage = () => (
   <AuthUserContext.Consumer>
       {authUser => (
       <div className="background-static-all">
+        <Helmet>
+          <title>US Airsoft Field: Account Signup</title>
+        </Helmet>
         <Container>
           <Row className="header-rp">
             <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>

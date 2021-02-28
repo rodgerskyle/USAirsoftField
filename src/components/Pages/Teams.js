@@ -9,6 +9,9 @@ import { Link } from 'react-router-dom';
 
 import { withFirebase } from '../Firebase';
 
+import { compose } from 'recompose';
+import { Helmet } from 'react-helmet-async';
+
 class Teams extends Component {
     constructor(props) {
         super(props);
@@ -61,6 +64,9 @@ class Teams extends Component {
     render() {
         return (
             <div className="background-static-all">
+                <Helmet>
+                    <title>US Airsoft Field: Teams</title>
+                </Helmet>
                 <h2 className="page-header">Teams</h2>
                 <Container>
                     <Row>
@@ -120,7 +126,6 @@ const TeamList = ({ teams, teamicon }) => (
     </Table>
 );
 
-
-
-
-export default withFirebase(Teams);
+export default compose(
+    withFirebase,
+    )(Teams);

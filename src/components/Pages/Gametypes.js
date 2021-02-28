@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 
 import { Container, Row, Col, Tab, ListGroup } from 'react-bootstrap/';
 
+import { Helmet } from 'react-helmet-async';
+
 class Gametypes extends Component {
     constructor(props) {
         super(props);
@@ -13,6 +15,9 @@ class Gametypes extends Component {
     render() {
         return (
             <div className="background-static-all">
+                <Helmet>
+                    <title>US Airsoft Field: Gametypes</title>
+                </Helmet>
                 <h2 className="page-header">Gametypes</h2>
                 <Container>
                     <Row className="row-update-rules"><p>Last Updated: 1/1/2020</p></Row>

@@ -15,6 +15,7 @@ import * as ROLES from '../constants/roles';
 
 import { faCheck, faDollarSign } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Helmet } from 'react-helmet-async';
 
 class WaiverLookup extends Component {
     constructor(props) {
@@ -156,6 +157,9 @@ class WaiverLookup extends Component {
             <AuthUserContext.Consumer>
                 {authUser => (
                     <div className="background-static-all">
+                        <Helmet>
+                            <title>US Airsoft Field: Waiver Lookup</title>
+                        </Helmet>
                             <Container>
                                 <h2 className="admin-header">Waiver Lookup</h2>
                                 <Breadcrumb className="admin-breadcrumb">

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Container, Row, Col } from 'react-bootstrap/';
+import { Helmet } from 'react-helmet-async';
 import BackgroundVideo from '../constants/backgroundvideo';
 
 /* Needs to be added in
@@ -25,6 +26,9 @@ const today = new Date()
 
 const Home = () => (
   <div>
+  <Helmet>
+    <title>US Airsoft Field: Home</title>
+  </Helmet>
   <div className="background-static-all">
     <BackgroundVideo/>
     <Container fluid={true}>

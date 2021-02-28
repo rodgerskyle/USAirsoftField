@@ -33,6 +33,7 @@ import { AuthUserContext, withAuthorization } from '../session';
 // Imports for Drag N drop
 import EditForm from './EditForm';
 import ReturnForm from './ReturnForm';
+import { Helmet } from 'react-helmet-async';
 
 import {
     formatCreditCardNumber,
@@ -409,6 +410,9 @@ class RentalForm extends Component {
             <AuthUserContext.Consumer>
                 {authUser => (
                     <div className="background-static-all">
+                        <Helmet>
+                            <title>US Airsoft Field: Rental Forms</title>
+                        </Helmet>
                         <Container>
                             <h2 className="admin-header">Rental Form</h2>
                             {!hidenav ?

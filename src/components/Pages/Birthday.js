@@ -10,6 +10,7 @@ import { Container, Col, Breadcrumb } from 'react-bootstrap/';
 import { LinkContainer } from 'react-router-bootstrap';
 
 import * as ROLES from '../constants/roles';
+import { Helmet } from 'react-helmet-async';
 
 class Birthday extends Component {
     constructor(props) {
@@ -23,6 +24,9 @@ class Birthday extends Component {
     render() {
         return (
             <div className="background-static-all">
+                <Helmet>
+                    <title>US Airsoft Field: Birthday</title>
+                </Helmet>
                     <Container>
                         <h2 className="admin-header">Calendar - Birthday</h2>
                         <Breadcrumb className="admin-breadcrumb">

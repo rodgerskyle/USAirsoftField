@@ -12,6 +12,10 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
 
+import { compose } from 'recompose';
+
+import { Helmet } from 'react-helmet-async';
+
 import { Link } from 'react-router-dom';
 
 import default_profile from '../../assets/default.png';
@@ -180,6 +184,9 @@ class ProfileLookup extends Component {
                     </Row>
                     :
                     <div style={{ overflowX: 'hidden' }}>
+                        <Helmet>
+                            <title>{`US Airsoft Field: ${authUser.username} Profile`}</title>
+                        </Helmet>
                         <Container>
                             <div>
                                 <div className="div-profile-main-p">
@@ -482,4 +489,6 @@ function MatchHistory({ matches }) {
     )
 }
 
-export default withFirebase(ProfileLookup);
+export default compose(
+    withFirebase,
+    )(ProfileLookup);

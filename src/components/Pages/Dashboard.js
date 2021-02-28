@@ -13,6 +13,7 @@ import logo from '../../assets/logo.png';
 import * as ROLES from '../constants/roles';
 
 import PinCode from '../constants/pincode'
+import { Helmet } from 'react-helmet-async';
  
 class WaiverDashboard extends Component {
   constructor(props) {
@@ -58,6 +59,9 @@ class WaiverDashboard extends Component {
     render() {
         return (
           <div className="background-static-all">
+            <Helmet>
+              <title>US Airsoft Field: Waiver Dashboard</title>
+            </Helmet>
             {this.state.authorized ? 
             <Container>
                 <h1 className="admin-header">Waiver Dashboard</h1>

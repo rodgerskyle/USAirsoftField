@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Container, Row, Col } from 'react-bootstrap';
+import { Helmet } from 'react-helmet-async';
 import '../../App.css';
 import iglogo from '../../assets/SocialMedia/instagram.png';
 
@@ -48,6 +49,9 @@ class Instagram extends Component {
         const { data } = this.state
         return (
             <div className="background-static-all">
+                <Helmet>
+                    <title>US Airsoft Field: Instagram Photos</title>
+                </Helmet>
                 <h2 className="page-header"> 
                     <a href="https://www.instagram.com/usairsoftworld/" target="_blank" rel="noopener noreferrer" className="a-instagram-link">
                     <img src={iglogo} alt="Instagram Logo" className="instagram-logo"/>Instagram Media</a>

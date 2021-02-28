@@ -10,6 +10,8 @@ import { Button, Form, Container, Card, Row, Col, Breadcrumb, Spinner } from 're
 import * as ROLES from '../constants/roles';
 import { LinkContainer } from 'react-router-bootstrap';
 
+import { Helmet } from 'react-helmet-async';
+
 class EnterWins extends Component {
     constructor(props) {
         super(props);
@@ -125,6 +127,9 @@ class EnterWins extends Component {
     render() {
         return (
             <div className="background-static-all">
+                <Helmet>
+                    <title>US Airsoft Field: Enter Wins</title>
+                </Helmet>
                 {!this.state.loading ?
                 <Container>
                     <h2 className="admin-header">Enter Wins</h2>

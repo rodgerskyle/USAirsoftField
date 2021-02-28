@@ -10,6 +10,7 @@ import { Button, Form, Container, Card, Row, Col, Breadcrumb, Spinner } from 're
 import { LinkContainer } from 'react-router-bootstrap';
 
 import * as ROLES from '../constants/roles';
+import { Helmet } from 'react-helmet-async';
 
 class FreeGames extends Component {
     constructor(props) {
@@ -63,6 +64,9 @@ class FreeGames extends Component {
     render() {
         return (
             <div className="background-static-all">
+                <Helmet>
+                    <title>US Airsoft Field: Free Games Lookup</title>
+                </Helmet>
                     <Container>
                         <h2 className="admin-header">Redeem Free Game</h2>
                         <Breadcrumb className="admin-breadcrumb">

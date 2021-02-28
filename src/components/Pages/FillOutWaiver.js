@@ -16,11 +16,15 @@ import { AuthUserContext, withAuthorization } from '../session';
 import { compose } from 'recompose';
 import { withFirebase } from '../Firebase';
 import * as ROLES from '../constants/roles';
+import { Helmet } from 'react-helmet-async';
 
 const WaiverPage = () => (
   <AuthUserContext.Consumer>
     {authUser => (
       <div className="background-static-all">
+        <Helmet>
+          <title>US Airsoft Field: Fill Out Waiver</title>
+        </Helmet>
         <Container>
           <Row className="header-rp">
             <img src={logo} alt="US Airsoft logo" className="small-logo-home" />

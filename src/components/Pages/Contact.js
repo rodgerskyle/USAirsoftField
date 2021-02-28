@@ -3,6 +3,7 @@ import '../../App.css';
 import store_front from '../../assets/store_front.jpg';
 import { Row, Container, Button, Col } from 'react-bootstrap/';
 import GMap from './GoogleMap';
+import { Helmet } from 'react-helmet-async';
 
 class Contact extends Component {
     constructor(props) {
@@ -22,6 +23,9 @@ class Contact extends Component {
       }
         return (
             <div className="background-static-all">
+                <Helmet>
+                    <title>US Airsoft Field: Contact Us</title>
+                </Helmet>
                 <Container>
                     <Row className="justify-content-row">
                         <Col md={10}>

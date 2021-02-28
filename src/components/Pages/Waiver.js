@@ -5,6 +5,8 @@ import waiver_full from '../../assets/waiver-full.png';
 import waiver from './waiver.pdf';
 import '../../App.css';
 
+import { Helmet } from 'react-helmet-async';
+
 import { Container, Row, Col } from 'react-bootstrap/';
 
 class Waiver extends Component {
@@ -23,6 +25,9 @@ class Waiver extends Component {
     render() {
         return (
             <div className="background-static-all">
+                <Helmet>
+                    <title>US Airsoft Field: Waiver</title>
+                </Helmet>
                 <div className="pdfStyle">
                     <h2 className="page-header">Waiver</h2>
                     <Container fluid>

@@ -13,6 +13,8 @@ import { Link } from 'react-router-dom';
 
 import * as ROLES from '../constants/roles';
 import { FormControlLabel, FormGroup } from '@material-ui/core';
+
+import { Helmet } from 'react-helmet-async';
  
 class AdminPage extends Component {
   constructor(props) {
@@ -165,6 +167,9 @@ class AdminPage extends Component {
      
         return (
           <div className="background-static-all">
+            <Helmet>
+              <title>US Airsoft Field: Administrator</title>
+            </Helmet>
             <Container>
                 <h1 className="admin-header">Admin Dashboard</h1>
                 <Breadcrumb className="admin-breadcrumb">
