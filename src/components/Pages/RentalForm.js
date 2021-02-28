@@ -651,7 +651,7 @@ function CreateForm({ cvc, number, expiry, name, zipcode, handleInputChange, onC
                                                     startIcon={<Icon className="fa fa-check-circle" />}
                                                     type="submit">
                                                     Submit
-                                        </MUIButton>
+                                                </MUIButton>
                                             </Col>
                                         </Row>
                                     </Col>
