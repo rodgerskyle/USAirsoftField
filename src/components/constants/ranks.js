@@ -6,7 +6,7 @@ let array = [
     'Specialist',
     'Corporal',
     'Sergeant',
-    'Staff Seargeant',
+    'Staff Sergeant',
     'Sergeant First Class',
     'Master Sergeant',
     'First Sergeant',
