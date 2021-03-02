@@ -186,6 +186,8 @@ class ProfileLookup extends Component {
                     <div style={{ overflowX: 'hidden' }}>
                         <Helmet>
                             <title>{`US Airsoft Field: ${authUser.username} Profile`}</title>
+                            <meta property="og:title" content={`US Airsoft Field: ${authUser.username} Profile`} />
+                            <meta property="og:image" content={profileicon} />
                         </Helmet>
                         <Container>
                             <div>
