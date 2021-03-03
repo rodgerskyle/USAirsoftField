@@ -307,7 +307,7 @@ class Leaderboards extends Component {
                                     </Row>
                                 </Col>
                                 {this.state.monthly === true && !tv ?
-                                    <Col className="col-dropdown-months-lb">
+                                    <Col className="col-dropdown-months-lb" md={5}>
                                         <Row className="row-dropdown-months-lb">
                                             <Col xs={"auto"}>
                                                 <Dropdown className="dropdown-lb">

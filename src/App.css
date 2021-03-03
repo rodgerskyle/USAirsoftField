@@ -2129,6 +2129,19 @@ body {
   border: 1px solid rgb(82, 82, 82);
 }
 
+.navbar-dark .MuiCollapse-hidden {
+  visibility: unset;
+}
+
+.navbar-collapse .MuiCollapse-wrapper {
+  width: 100%;
+}
+
+.navbar-collapse .MuiCollapse-wrapperInner {
+  display: flex;
+  align-items: center;
+}
+
 .row-nav-auth {
   /* flex: 1;
   justify-content: flex-end; */
@@ -2169,6 +2182,10 @@ body {
 
   .mdb-nav-not-mobile-profile.navbar-nav {
     display: unset;
+  }
+
+  .navbar-dark .MuiCollapse-container {
+    overflow: unset;
   }
 }
 
