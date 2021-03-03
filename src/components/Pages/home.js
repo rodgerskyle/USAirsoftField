@@ -27,7 +27,7 @@ const today = new Date()
 const Home = () => (
   <div>
   <Helmet>
-    <title>US Airsoft Field: Home</title>
+    <title>US Airsoft Field</title>
   </Helmet>
   <div className="background-static-all">
     <BackgroundVideo/>
