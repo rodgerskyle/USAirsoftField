@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Container, Row, Col } from 'react-bootstrap/';
 import logowbg from '../../assets/usairsoftwbg.png';
-
+import { Helmet } from 'react-helmet-async';
 class About extends Component {
     constructor(props) {
         super(props);
@@ -12,6 +12,9 @@ class About extends Component {
     render() {
         return (
             <div className="background-static-all">
+                <Helmet>
+                    <title>US Airsoft Field: About Us</title>
+                </Helmet>
                 <Container>
                     <Row>
                         <p className="p-header-about">About Us</p>

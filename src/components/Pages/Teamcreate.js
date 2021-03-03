@@ -12,6 +12,8 @@ import alticon from '../../assets/team-img-placeholder.png';
 
 import 'react-bootstrap-typeahead/css/Typeahead.css';
 
+import { compose } from 'recompose';
+import { Helmet } from 'react-helmet-async';
 
 class TeamCreate extends Component {
     constructor(props) {
@@ -186,6 +188,9 @@ class TeamCreate extends Component {
             <AuthUserContext.Consumer>
                 {authUser => (
                     <div className="background-static-all">
+                        <Helmet>
+                            <title>US Airsoft Field: Create Team</title>
+                        </Helmet>
                         {authUser.team !== '' ?
                             <Container className="notice-text-container">
                                 <Row className="row-success-rp">
@@ -290,4 +295,7 @@ class TeamCreate extends Component {
 
 const condition = authUser => !!authUser;
 
-export default withFirebase(withAuthorization(condition)(TeamCreate));
+export default compose(
+    withFirebase,
+    withAuthorization(condition),
+    )(TeamCreate);

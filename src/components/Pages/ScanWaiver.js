@@ -13,6 +13,7 @@ import { LinkContainer } from 'react-router-bootstrap';
 import { withFirebase } from '../Firebase';
 
 import * as ROLES from '../constants/roles';
+import { Helmet } from 'react-helmet-async';
 
 class ScanWaiver extends Component {
     constructor(props) {
@@ -27,6 +28,9 @@ class ScanWaiver extends Component {
             <AuthUserContext.Consumer>
                 {authUser => (
                     <div className="background-static-all">
+                        <Helmet>
+                            <title>US Airsoft Field: Scan Waiver</title>
+                        </Helmet>
                         <Container>
                             <h2 className="admin-header">Scan Waiver</h2>
                             <Breadcrumb className="admin-breadcrumb">

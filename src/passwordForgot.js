@@ -5,7 +5,10 @@ import logo from './assets/logo.png';
 import { withFirebase } from './components/Firebase';
 import { Container, Row, Col, Form, Button, InputGroup, FormControl } from 'react-bootstrap/';
 
+import { compose } from 'recompose';
+
 import ReCAPTCHA from 'react-google-recaptcha';
+import { Helmet } from 'react-helmet-async';
  
 const INITIAL_STATE = {
   email: '',
@@ -81,6 +84,9 @@ class PasswordForgetFormBase extends Component {
  
     return (
     <div className="background-static-all">
+      <Helmet>
+        <title>US Airsoft Field: Forgot Password</title>
+      </Helmet>
       <Container className="login-container">
         <Col className="login-col">
           <Row className="header-rp">
@@ -127,6 +133,8 @@ const PasswordForgetLink = () => (
   </p>
 );
  
-const PasswordForgetForm = withFirebase(PasswordForgetFormBase);
+const PasswordForgetForm = compose(
+  withFirebase,
+  )(PasswordForgetFormBase);
  
 export { PasswordForgetForm, PasswordForgetLink };

@@ -2,9 +2,9 @@
 import React, { Component } from 'react';
 
 import { Container, Row, Col } from 'react-bootstrap/';
+import { Helmet } from 'react-helmet-async';
 
 import logo from '../../assets/logo.png';
-
 
 class PageNotFound extends Component {
     constructor(props) {
@@ -17,6 +17,9 @@ class PageNotFound extends Component {
     render() {
         return (
             <div className="background-static-all">
+                <Helmet>
+                    <title>US Airsoft Field: 404</title>
+                </Helmet>
                 <Container className="notice-text-container">
                     <Row className="row-success-rp">
                         <Col className="col-rp">

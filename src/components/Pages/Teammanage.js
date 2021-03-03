@@ -12,6 +12,9 @@ import 'react-bootstrap-typeahead/css/Typeahead.css';
 
 import ReactLoading from 'react-loading';
 
+import { compose } from 'recompose';
+
+import { Helmet } from 'react-helmet-async';
 
 class TeamManage extends Component {
     constructor(props) {
@@ -316,6 +319,9 @@ class TeamManage extends Component {
             <AuthUserContext.Consumer>
                 {authUser => (
                     <div className="background-static-all">
+                        <Helmet>
+                            <title>US Airsoft Field: Manage Team</title>
+                        </Helmet>
                         {this.state.loading ? 
                         <Row className="justify-content-row">
                             <Spinner animation="border" variant="light"/>
@@ -481,4 +487,7 @@ const Progress = ({ type, color }) => (
 
 const condition = authUser => !!authUser;
 
-export default withFirebase(withAuthorization(condition)(TeamManage));
+export default compose(
+    withFirebase,
+    withAuthorization(condition),
+    )(TeamManage);

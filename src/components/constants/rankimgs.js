@@ -23,7 +23,7 @@ import rank21 from '../../assets/ranks/3general.png'
 import rank22 from '../../assets/ranks/4general.png'
 import rank23 from '../../assets/ranks/5general.png'
 
-export default [
+let array = [
     rank1,
     rank2,
     rank3,
@@ -48,3 +48,5 @@ export default [
     rank22,
     rank23
 ]
+
+export default array

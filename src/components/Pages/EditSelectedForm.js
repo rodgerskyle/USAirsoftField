@@ -29,8 +29,8 @@ import Alert from '@material-ui/lab/Alert';
 import * as ROLES from '../constants/roles';
 import { withAuthorization } from '../session';
 import { compose } from 'recompose';
-// My imports 
-import uuid from 'uuid/v4';
+// import uuid from 'uuid/v4';
+import { v4 as uuid } from 'uuid';
 
 import { withFirebase } from '../Firebase';
 

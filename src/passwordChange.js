@@ -3,7 +3,9 @@ import React, { Component } from 'react';
 import { Button, Form, Row, Col } from 'react-bootstrap/';
  
 import { withFirebase } from './components/Firebase';
- 
+
+import { compose } from 'recompose';
+
 const INITIAL_STATE = {
   passwordOne: '',
   passwordTwo: '',
@@ -101,4 +103,6 @@ class PasswordChangeForm extends Component {
   }
 }
  
-export default withFirebase(PasswordChangeForm);
+export default compose(
+  withFirebase,
+  )(PasswordChangeForm);

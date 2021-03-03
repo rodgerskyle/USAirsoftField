@@ -14,6 +14,7 @@ import { AuthUserContext } from './components/session';
 import * as ROLES from './components/constants/roles';
 import { withFirebase } from './components/Firebase';
 import { isMobile } from 'react-device-detect';
+import { Collapse } from '@material-ui/core';
 
 class Navigation extends Component {
     constructor(props) {
@@ -171,7 +172,7 @@ const NavigationAuth = ({ authUser, profilePic}) => {
                         <MDBNavbarToggler onClick={() => setTimeout(() => { setExpanded(!expanded) }, 150)} />
                     </div>
                 </Row>
-                <MDBCollapse isOpen={expanded} navbar>
+                <Collapse in={expanded} className="navbar-collapse">
                     <MDBNavbarNav left >
                         <MDBNavItem>
                             <MDBNavLink as={Link} className="nav-link" to="/home" 
@@ -280,7 +281,7 @@ const NavigationAuth = ({ authUser, profilePic}) => {
                             </MDBDropdown>
                         </MDBNavItem>
                     </MDBNavbarNav>
-                </MDBCollapse>
+                </Collapse>
             </MDBNavbar>
         </div>
     );
@@ -325,7 +326,7 @@ const NavigationNonAuth = () => {
                     </div>
                 </Row>
                 {/* <MDBNavbarToggler onClick={() => setTimeout(() => { setExpanded(!expanded) }, 150)} /> */}
-                <MDBCollapse isOpen={expanded} navbar>
+                <Collapse in={expanded} className="navbar-collapse">
                     <MDBNavbarNav left >
                         <MDBNavItem>
                             <MDBNavLink as={Link} className="nav-link" to="/home" 
@@ -405,7 +406,7 @@ const NavigationNonAuth = () => {
                             </MDBDropdown>
                         </MDBNavItem>
                     </MDBNavbarNav> }
-                </MDBCollapse>
+                </Collapse>
             </MDBNavbar>
         </div>
     );

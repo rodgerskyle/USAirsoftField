@@ -8,6 +8,9 @@ import { withFirebase } from '../Firebase';
 
 import rankimages from '../constants/rankimgs';
 
+import { compose } from 'recompose';
+import { Helmet } from 'react-helmet-async';
+
 class Teampage extends Component {
     constructor(props) {
         super(props);
@@ -173,6 +176,9 @@ class Teampage extends Component {
     render() {
         return (
             <div className="background-static-all">
+                <Helmet>
+                    <title>{`US Airsoft Field: ${this.props.match.params.id} Team`}</title>
+                </Helmet>
                 <Container className="container-teampage">
                     <div className="team-single">
                         <Row className="team-info">
@@ -242,4 +248,6 @@ class Teampage extends Component {
         </Row>
     );
 
-export default withFirebase(Teampage);
+export default compose(
+    withFirebase,
+    )(Teampage);

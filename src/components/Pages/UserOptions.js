@@ -14,6 +14,7 @@ import { LinkContainer } from 'react-router-bootstrap';
 import { Link } from 'react-router-dom';
 
 import { encode } from 'firebase-encode';
+import { Helmet } from 'react-helmet-async';
 
 class UserOptions extends Component {
     constructor(props) {
@@ -210,6 +211,9 @@ class UserOptions extends Component {
             <AuthUserContext.Consumer>
             {authUser =>
                 <div className="background-static-all">
+                    <Helmet>
+                        <title>{`US Airsoft Field: ${this.state.username} Options`}</title>
+                    </Helmet>
                     {!this.state.loading ?
                     <Container>
                         <h2 className="admin-header">User Options</h2>

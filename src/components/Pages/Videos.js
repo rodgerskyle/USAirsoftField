@@ -6,6 +6,10 @@ import ytlogo from '../../assets/SocialMedia/youtube.png';
 
 import { withFirebase } from '../Firebase';
 
+import { compose } from 'recompose';
+
+import { Helmet } from 'react-helmet-async';
+
 class Videos extends Component {
     constructor(props) {
         super(props);
@@ -39,6 +43,9 @@ class Videos extends Component {
         const { selectedVideo, videos } = this.state
         return (
             <div className="background-static-all">
+                <Helmet>
+                    <title>US Airsoft Field: Youtube Videos</title>
+                </Helmet>
                 <h2 className="page-header"> 
                 <a href="https://www.youtube.com/user/USAirsoftWorldInc" target="_blank" rel="noopener noreferrer" className="a-youtube-link">
                 <img src={ytlogo} alt="Instagram Logo" className="youtube-logo"/>Youtube Videos</a>
@@ -112,4 +119,6 @@ function VideoDetail({video}) {
     )
 }
 
-export default withFirebase(Videos);
+export default compose(
+    withFirebase,
+    )(Videos);

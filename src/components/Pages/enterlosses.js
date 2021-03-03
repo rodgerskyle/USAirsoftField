@@ -10,6 +10,7 @@ import { Button, Form, Container, Card, Row, Col, Breadcrumb, Spinner } from 're
 import { LinkContainer } from 'react-router-bootstrap';
 
 import * as ROLES from '../constants/roles';
+import { Helmet } from 'react-helmet-async';
  
 class EnterLosses extends Component {
     constructor(props) {
@@ -125,6 +126,9 @@ class EnterLosses extends Component {
     render() {
         return (
             <div className="background-static-all">
+                <Helmet>
+                    <title>US Airsoft Field: Enter Losses</title>
+                </Helmet>
                 {!this.state.loading ?
                 <Container>
                     <h2 className="admin-header">Enter Losses</h2>

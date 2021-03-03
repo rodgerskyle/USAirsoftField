@@ -16,8 +16,11 @@ import CustomMenu from '../constants/custommenu'
 import { withFirebase } from '../Firebase';
 import { AuthUserContext } from '../session';
 
+import { compose } from 'recompose';
+
 import MUIPagination from '@material-ui/lab/Pagination';
 import { isMobile } from 'react-device-detect';
+import { Helmet } from 'react-helmet-async';
 
 class Leaderboards extends Component {
     constructor(props) {
@@ -270,6 +273,9 @@ class Leaderboards extends Component {
             <AuthUserContext.Consumer>
                 {authUser => (
                     <div className="background-static-lb">
+                        <Helmet>
+                            <title>US Airsoft Field: Leaderboards</title>
+                        </Helmet>
                         <Container className="leaderboard-page">
                             <Row className={tv ? "row-header-tv-lb" : "row-header-lb"}>
                                 <Col xs={"auto"} className="col-header-lb vertical-divider-col-lb">
@@ -301,7 +307,7 @@ class Leaderboards extends Component {
                                     </Row>
                                 </Col>
                                 {this.state.monthly === true && !tv ?
-                                    <Col className="col-dropdown-months-lb">
+                                    <Col className="col-dropdown-months-lb" md={5}>
                                         <Row className="row-dropdown-months-lb">
                                             <Col xs={"auto"}>
                                                 <Dropdown className="dropdown-lb">
@@ -503,4 +509,6 @@ function countLosses(obj, month, year) {
     return losses
 }
 
-export default withFirebase(Leaderboards);
+export default compose(
+    withFirebase,
+    )(Leaderboards);

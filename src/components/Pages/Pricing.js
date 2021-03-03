@@ -3,6 +3,7 @@ import '../../App.css';
 import { Container, Row, Col, Card, Button, Fade } from 'react-bootstrap/';
 import { Link } from 'react-router-dom';
 import GradientButton from '../constants/gradientbutton';
+import { Helmet } from 'react-helmet-async';
 
 class Pricing extends Component {
     constructor(props) {
@@ -24,6 +25,9 @@ class Pricing extends Component {
     render() {
         return (
             <div className="background-static-all">
+                <Helmet>
+                    <title>US Airsoft Field: Pricing</title>
+                </Helmet>
                 <h2 className="page-header">{this.state.title}</h2>
                 <Container>
                     <Row className="justify-content-row">

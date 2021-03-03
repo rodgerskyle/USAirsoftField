@@ -1,6 +1,6 @@
 // rankincrements.js
 
-export default [
+let array = [
     0,
     125,
     225,
@@ -25,3 +25,5 @@ export default [
     4115,
     4500
 ]
+
+export default array

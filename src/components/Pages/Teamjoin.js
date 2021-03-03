@@ -15,6 +15,9 @@ import ReactLoading from 'react-loading';
 
 import 'react-bootstrap-typeahead/css/Typeahead.css';
 
+import { compose } from 'recompose';
+
+import { Helmet } from 'react-helmet-async';
 
 class TeamJoin extends Component {
     constructor(props) {
@@ -96,6 +99,9 @@ class TeamJoin extends Component {
             <AuthUserContext.Consumer>
                 {authUser => (
                     <div className="background-static-all">
+                        <Helmet>
+                            <title>US Airsoft Field: Join Team</title>
+                        </Helmet>
                         {authUser.team !== "" ?
                             <Container className="notice-text-container">
                                 <Row className="row-success-rp">
@@ -146,4 +152,7 @@ const Progress = ({ type, color }) => (
 
 const condition = authUser => !!authUser;
 
-export default withFirebase(withAuthorization(condition)(TeamJoin));
+export default compose(
+    withFirebase,
+    withAuthorization(condition),
+    )(TeamJoin)

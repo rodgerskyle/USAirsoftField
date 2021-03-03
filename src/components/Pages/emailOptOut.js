@@ -7,6 +7,10 @@ import { encode } from 'firebase-encode';
 
 import { withFirebase } from '../Firebase';
 
+import { compose } from 'recompose';
+
+import { Helmet } from 'react-helmet-async';
+
 import logo from '../../assets/logo.png';
 
 class emailOptOut extends Component {
@@ -38,6 +42,9 @@ class emailOptOut extends Component {
     render() {
         return (
             <div className="background-static-all">
+                <Helmet>
+                    <title>US Airsoft Field: Email Opt Out</title>
+                </Helmet>
                 <Container className="container-emailoptout">
                     <div className="admin-row-emailoptout">
                         <Row className="header-rp">
@@ -87,4 +94,6 @@ class emailOptOut extends Component {
 }
 
 
-export default withFirebase(emailOptOut);
+export default compose(
+    withFirebase,
+    )(emailOptOut)

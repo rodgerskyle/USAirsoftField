@@ -4,10 +4,10 @@ import '../../App.css';
 import map from '../../assets/MapHigherRes.jpg';
 import lowmap from '../../assets/MapLowerRes.jpg'
 
-import { SideBySideMagnifier } from "react-image-magnifiers";
-
+import { SideBySideMagnifier, TOUCH_ACTIVATION } from "react-image-magnifiers";
 
 import { Container, Row, Col } from 'react-bootstrap/';
+import { Helmet } from 'react-helmet-async';
 
 class Map extends Component {
     constructor(props) {
@@ -20,6 +20,9 @@ class Map extends Component {
     render() {
         return (
             <div className="background-static-all">
+                <Helmet>
+                    <title>US Airsoft Field: Map</title>
+                </Helmet>
                 <div className="mapStyle">
                     <h2 className="page-header">Map</h2>
                     <Container>
@@ -32,6 +35,7 @@ class Map extends Component {
                                     largeImageSrc={map}
                                     alwaysInPlace={true}
                                     fillAvailableSpace={true}
+                                    touchActivation={TOUCH_ACTIVATION.TAP}
                                 />
                             </Col>
                         </Row>

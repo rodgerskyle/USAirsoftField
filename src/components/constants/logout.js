@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import { withRouter } from "react-router-dom";
 import { withFirebase } from '../Firebase';
 import { compose } from 'recompose';
+import { Helmet } from 'react-helmet-async';
 
 class Logout extends Component {
   constructor(props){
@@ -16,7 +17,7 @@ class Logout extends Component {
   }
 
   render() {
-    return(<div></div>);
+    return(<div><Helmet><title>US Airsoft Field: Logout</title></Helmet></div>);
   }
 }
 
