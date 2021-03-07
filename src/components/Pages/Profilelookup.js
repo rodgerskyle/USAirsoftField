@@ -16,8 +16,6 @@ import { compose } from 'recompose';
 
 import { Helmet } from 'react-helmet-async';
 
-import MetaTags from 'react-meta-tags';
-
 import { Link } from 'react-router-dom';
 
 import default_profile from '../../assets/default.png';
@@ -186,11 +184,11 @@ class ProfileLookup extends Component {
                     </Row>
                     :
                     <div style={{ overflowX: 'hidden' }}>
-                        <MetaTags>
+                        <Helmet>
                             <title>{`US Airsoft Field: ${authUser.username} Profile`}</title>
                             <meta property="og:title" content={`US Airsoft Field: ${authUser.username} Profile`} />
                             <meta property="og:image" content={profileicon} />
-                        </MetaTags>
+                        </Helmet>
                         <Container>
                             <div>
                                 <div className="div-profile-main-p">
