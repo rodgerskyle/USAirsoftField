@@ -52,7 +52,7 @@ class RentalOptions extends Component {
         // val = Math.floor(val)
         // if (val >= 0 && options[i].stock <= val) {
             let opt = [...options]
-            opt[i].max = val
+            opt[i].max = parseInt(val)
             this.setState({ options: opt })
         // }
     }
