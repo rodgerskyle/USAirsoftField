@@ -367,7 +367,8 @@ body {
 }
 
 .team-pictures {
-  border: 1px solid black;
+  border: 1px solid #969696;
+  max-width: 250px;
 }
 
 .team-upload-warning {
@@ -406,6 +407,11 @@ body {
 .losses-lb {
   color: #fb6060;
 }
+
+.profilelink-lb {
+  width: 50%;
+}
+
 .myprofilelink-lb:link {
   color: gold;
 }
@@ -620,14 +626,14 @@ body {
 }
 
 .h5-hours-subheader {
-  font-size: .8rem;
+  font-size: 1.2rem;
   padding-bottom: 0px;
   font-weight: 300;
   color: white;
 }
 
 .dt-hours-info {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 300 !important;
   color: white;
 }
@@ -1453,6 +1459,123 @@ body {
   color: white;
 }
 
+.div-team-leader-teams {
+  display: unset;
+  padding: 16px;
+}
+
+.img-team-member-teams {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.img-crown-teams {
+  width: 15px;
+  height: 15px;
+  position: absolute;
+  margin-top: -10px;
+  margin-left: -10px;
+}
+
+.row-header-teams {
+  padding-top: 15px;
+  padding-bottom: 15px;
+}
+
+.col-options-dropdown-teams .MuiListItem-root.Mui-selected, .col-options-dropdown-teams .MuiListItem-root.Mui-selected:hover {
+  background-color: rgb(73 80 87 / .2);
+  font-weight: 700;
+}
+
+.col-options-dropdown-teams .MuiListItem-button:hover {
+  background-color: rgb(73 80 87 / .2);
+}
+
+.col-options-dropdown-teams .MuiButton-containedPrimary {
+  background-color: transparent;
+  color: rgba(255,255,255,.5);
+}
+
+.col-options-dropdown-teams .MuiButton-containedPrimary:hover {
+  background-color: transparent;
+  color: white;
+}
+
+.col-options-dropdown-teams .MuiButton-text {
+  color: rgba(255,255,255,.5);
+}
+
+.col-options-dropdown-teams .MuiButton-label {
+  font-weight: 300;
+  font-size: 20px;
+}
+
+.col-options-dropdown-teams .MuiButton-root {
+  font-family: unset;
+}
+
+.col-options-dropdown-teams .MuiButtonGroup-groupedContainedPrimary:not(:last-child) {
+  border: none;
+}
+
+.col-options-dropdown-teams a:hover .MuiButton-text {
+  color: white;
+  text-decoration: none;
+}
+
+.col-options-dropdown-teams a:hover {
+  text-decoration: none;
+}
+
+.p-header-teams {
+  font-size: 24px;
+  font-weight: 300;
+  color: white;
+  border-right: 1px solid #595959;
+  margin-bottom: 0 !important;
+  padding-right: 30px;
+}
+
+.row-navigation-teams {
+  margin-bottom: 15px;
+}
+
+.pagination-col-teams {
+  /* justify-content: flex-end; */
+  justify-content: center;
+  align-items: flex-end;
+  /* margin-bottom: -8px;
+  margin-top: 8px; */
+  margin-top: 8px;
+  margin-bottom: 8px;
+  display: flex;
+}
+
+.pagination-col-teams .MuiPaginationItem-outlined {
+  color: rgb(222 222 222);
+  border: 1px solid rgb(210 210 210 / 23%);
+  background-color: rgb(73 80 87 / .6);
+}
+
+.pagination-col-teams .MuiPagination-root {
+  right: unset;
+}
+
+.pagination-col-teams .MuiPaginationItem-outlinedPrimary.Mui-selected {
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background-color: transparent;
+}
+
+.pagination-col-teams .MuiPaginationItem-outlinedPrimary.Mui-selected:hover, .MuiPaginationItem-outlinedPrimary.Mui-selected.Mui-focusVisible {
+  background-color: rgb(73 80 87 / .6);
+}
+
+.pagination-col-teams .MuiPaginationItem-ellipsis {
+  color: white;
+}
+
 .img-row-contact {
   justify-content: center;
   align-items: center;
@@ -1823,7 +1946,12 @@ body {
 .p-description-about {
   color: white;
   font-weight: 300;
-  font-size: 22px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.row-description-about {
+  justify-content: center;
 }
 
 .input-group-footer {
@@ -1985,6 +2113,30 @@ body {
 
 .dd-text-pricing {
   margin-right: 5px;
+}
+
+.card-body-birthday-pricing {
+  justify-content: center;
+  display: flex;
+  align-items: center;
+}
+
+.col-left-nav-button-pricing {
+  justify-content: flex-end;
+  display: flex;
+}
+
+.col-left-nav-button-pricing .btn {
+  padding: 0.175rem 0.75rem;
+}
+
+.col-right-nav-button-pricing {
+  justify-content: flex-start;
+  display: flex;
+}
+
+.col-right-nav-button-pricing .btn {
+  padding: 0.175rem 0.75rem;
 }
 
 .MuiButton-label {
@@ -2968,6 +3120,116 @@ body {
   border-radius: 5px;
 }
 
+.div-main-birthday .rbc-month-view {
+  height: 70vh;
+}
+
+.div-main-birthday .rbc-toolbar-label {
+  color: white;
+  font-size: 24px;
+}
+
+.div-main-birthday .rbc-toolbar {
+  margin: 10px;
+}
+
+.div-main-birthday .rbc-off-range-bg {
+  background-color: rgb(4, 4, 4, .8);
+}
+
+.div-main-birthday .rbc-date-cell {
+  color: white;
+}
+
+.div-main-birthday .rbc-date-cell.rbc-now {
+  color: black;
+}
+
+.div-main-birthday .rbc-day-bg + .rbc-day-bg + .rbc-today{
+  background-color: rgb(138, 138, 138);
+}
+
+.div-main-birthday .rbc-toolbar button {
+  color: white;
+}
+
+.div-main-birthday .rbc-toolbar button:active, .rbc-toolbar button.rbc-active {
+  color: #373a3c;
+}
+
+.div-main-birthday .rbc-header.rbc-today {
+  color: black;
+  background-color: rgb(138, 138, 138);
+}
+
+.div-main-birthday .rbc-header {
+  color: white;
+}
+
+.div-main-birthday .rbc-label {
+  color: white;
+}
+
+.div-main-birthday .rbc-today .rbc-timeslot-group {
+  background-color: rgb(138, 138, 138);
+}
+
+.div-main-birthday .rbc-agenda-event-cell,
+.div-main-birthday .rbc-agenda-time-cell,
+.div-main-birthday .rbc-agenda-date-cell
+{
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.dialog-create-birthday .MuiDialogActions-root{
+  border-top: 2px solid black;
+  background-color: rgb(77, 77, 77, .8);
+}
+
+.dialog-edit-birthday .MuiDialogActions-root{
+  border-top: 2px solid black;
+  background-color: rgb(77, 77, 77, .8);
+}
+
+.actions-create-birthday .MuiButton-textPrimary {
+  color: white;
+}
+
+.actions-create-birthday .MuiButton-textPrimary:hover {
+  color: white;
+  background-color: rgb(4, 4, 4, .2);
+}
+
+.actions-create-birthday .MuiButton-label {
+  text-shadow: unset;
+}
+
+.content-create-birthday .MuiFormLabel-root.Mui-focused {
+  color: #4d4d4d;;
+}
+
+.content-create-birthday .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #4d4d4d;
+}
+
+.content-create-birthday .MuiCheckbox-colorSecondary.Mui-checked {
+  color: #4d4d4d;;
+}
+
+.content-create-birthday .MuiIconButton-colorSecondary:hover {
+  background-color: rgb(77, 77, 77, .1);
+}
+
+.row-deposit-birthday {
+  padding-left: 10px;
+  margin-bottom: 10px;
+}
+
+.row-notes-birthday {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
 .a-youtube-link {
   color: white !important;
 }
@@ -3580,6 +3842,11 @@ body {
   display: flex;
 }
 
+.col-justify-content-flex-start {
+  justify-content: flex-start;
+  display: flex;
+}
+
 .row-rank-name-rp {
   min-height: 40%;
 }
@@ -3858,6 +4125,17 @@ body {
   .team-member-list {
     width: 100%;
     text-align: center;
+  }
+
+  .p-description-about {
+    color: white;
+    font-weight: 300;
+    font-size: 22px;
+    text-align: unset;
+  }
+
+  .row-description-about {
+    justify-content: unset;
   }
 
   .p-groupname-rp {

@@ -159,7 +159,13 @@ class Firebase {
 
     validatedWaiver = file => this.db.ref(`waivers/validated/${file}`);
 
-    validatedWaivers = () => this.db.ref('waivers/validated')
+    validatedWaivers = () => this.db.ref('waivers/validated');
+
+    // Calendar API
+
+    calendar = () => this.db.ref(`calendar`);
+
+    calendarEvent = i => this.db.ref(`calendar/${i}`);
 
 }
 
