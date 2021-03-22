@@ -176,7 +176,7 @@ class AdminPage extends Component {
                   <Breadcrumb.Item active>Admin</Breadcrumb.Item>
                 </Breadcrumb>
                 <Row>
-                  <Col sm={3} className="admin-col-cards">
+                  <Col className="admin-col-cards">
                     <Link to={"/admin/enterwins"} className="admin-cards-link">
                       <Card className="admin-cards">
                         <Card.Body className="admin-card-header-link">Enter Wins</Card.Body>
@@ -195,7 +195,7 @@ class AdminPage extends Component {
                       </Card>
                     </Link>
                   </Col>
-                  <Col sm={3} className="admin-col-cards">
+                  <Col className="admin-col-cards">
                     <Link to={"/admin/enterlosses"} className="admin-cards-link">
                       <Card className="admin-cards">
                         <Card.Body className="admin-card-header-link">Enter Losses</Card.Body>
@@ -214,7 +214,7 @@ class AdminPage extends Component {
                       </Card>
                     </Link>
                   </Col>
-                  <Col sm={3} className="admin-col-cards">
+                  <Col className="admin-col-cards">
                     <Link to={"/admin/freegames"} className="admin-cards-link">
                       <Card className="admin-cards">
                         <Card.Body className="admin-card-header-link">Check Free Games</Card.Body>
@@ -233,7 +233,26 @@ class AdminPage extends Component {
                       </Card>
                     </Link>
                   </Col>
-                  <Col sm={3} className="admin-col-cards">
+                  <Col className="admin-col-cards">
+                    <Link to={"/admin/signup"} className="admin-cards-link">
+                      <Card className="admin-cards">
+                        <Card.Body className="admin-card-header-link">New Member</Card.Body>
+                        <Card.Footer>
+                          <Row>
+                            <Col xs="auto">
+                              <Card.Text className="admin-card-footer">View</Card.Text>
+                            </Col>
+                            <Col>
+                              <Card.Text className="admin-card-icon">
+                                <i className="fa fa-angle-double-right fa-1x text-white"></i>
+                              </Card.Text>
+                            </Col>
+                          </Row>
+                        </Card.Footer>
+                      </Card>
+                    </Link>
+                  </Col>
+                  <Col className="admin-col-cards">
                     <Link to={"/admin/renewal"} className="admin-cards-link">
                       <Card className="admin-cards">
                         <Card.Body className="admin-card-header-link">Renew Member</Card.Body>
@@ -394,9 +413,9 @@ class AdminPage extends Component {
                 </Row>
                 <Row className="admin-row-email">
                   <Col className="admin-col-cards">
-                    <Link to={"/admin/signup"} className="admin-cards-link">
+                    <Link to={"/admin/birthday"} className="admin-cards-link">
                       <Card className="admin-cards">
-                        <Card.Body className="admin-card-header-link">New Member</Card.Body>
+                        <Card.Body className="admin-card-header-link">Calendar</Card.Body>
                         <Card.Footer>
                           <Row>
                             <Col xs="auto">

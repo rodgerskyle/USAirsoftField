@@ -26,7 +26,6 @@ class Navigation extends Component {
         };
     }
 
-
     //Get image function for profile image = uid
     getProfile(uid) {
         this.props.firebase.pictures(`${uid}/profilepic.png`).getDownloadURL().then((url) => {
@@ -35,8 +34,17 @@ class Navigation extends Component {
     }
 
     componentDidMount() {
-        if (this.state.authUser && this.state.authUser.profilepic)
-            this.getProfile(this.state.authUser.uid)
+        if (this.state.authUser) {
+            this.props.firebase.user(this.state.authUser.uid).on('value', obj => {
+                if (obj.val().profilepic)
+                    this.getProfile(this.state.authUser.uid)
+            })
+        }
+    }
+
+    componentWillUnmount() {
+        if (this.state.authUser) 
+            this.props.firebase.user(this.state.authUser.uid).off()
     }
 
     render() {
