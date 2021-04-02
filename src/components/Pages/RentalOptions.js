@@ -25,6 +25,7 @@ class RentalOptions extends Component {
             loading: true,
             rentalsError: null,
             rentalsSuccess: null,
+            authUser: JSON.parse(localStorage.getItem('authUser')),
         };
 
     }
@@ -73,8 +74,18 @@ class RentalOptions extends Component {
         this.setState({rentalsSuccess: "Rental inventory successfully updated."})
     }
 
+    // Resets the numbers for rental options temporarily for bug reasons
+    resetNums() {
+        const { options } = this.state
+        for (let i=0; i<options.length; i++) {
+            options[i].stock = 0;
+        }
+        this.props.firebase.rentalOptions().set(options)
+        this.setState({rentalsSuccess: "Rental inventory successfully reset."})
+    }
+
     render() {
-        const {loading, rentalsSuccess, rentalsError} = this.state
+        const {loading, rentalsSuccess, rentalsError, authUser} = this.state
         return (
             <Container>
                 {loading ?
@@ -116,13 +127,17 @@ class RentalOptions extends Component {
                         </Row>
                         <Row className="justify-content-row">
                             <Col md={12} className="col-save-button-ro">
-                                <MUIButton type="button" onClick={() => {
+                                <MUIButton type="button" className="button-submit-ro" onClick={() => {
                                     this.submit()
-                                    // this.props.firebase.rentalOptions().set(this.state.optionsState)
-                                    // this.setState({rentalsSuccess: "Rental inventory successfully updated."})
                                 }}>
                                     Save
-                        </MUIButton>
+                                </MUIButton>
+                                {authUser && !!authUser.roles[ROLES.SUPER] ?
+                                <MUIButton type="button" onClick={() => {
+                                    this.resetNums()
+                                }}>
+                                    Reset
+                                </MUIButton> : null}
                             </Col>
                         </Row>
                     </div>

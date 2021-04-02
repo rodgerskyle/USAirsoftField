@@ -144,7 +144,7 @@ class ReturnForm extends Component {
             rentalForms[index].participants.forEach(function(player) {
                 if (player.rentals) {
                     player.rentals.forEach(function(rental) {
-                        if (rental.checked === false) {
+                        if (rental.checked === false && rental.number !== "") {
                             status = false
                         }
                     })

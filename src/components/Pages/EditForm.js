@@ -492,14 +492,14 @@ function Summary({ createdIndex, newForm, firebase, goBack }) {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {newForm.available.map((row) => (
+                                {newForm.available ? newForm.available.map((row) => (
                                     <TableRow key={row.id}>
                                         <TableCell component="th" scope="row">
                                             {row.label}
                                         </TableCell>
                                         <TableCell align="center">{row.amount}</TableCell>
                                     </TableRow>
-                                ))}
+                                )) : null}
                             </TableBody>
                             <TableFooter>
                                 <TableRow>

@@ -126,6 +126,7 @@ class AccountChangeForm extends Component {
                 <Form.Control
                   value={this.props.authUser.email}
                   type="text"
+                  className="form-control-cur-email-settings"
                   disabled
                 />
               </Form.Group>

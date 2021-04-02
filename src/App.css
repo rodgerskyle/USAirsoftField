@@ -2687,7 +2687,6 @@ body {
   display: flex;
   justify-content: flex-end;
   margin-top: 10px;
-  margin-right: 10px;
 }
 
 .col-save-button-ro .MuiButton-root {
@@ -2700,6 +2699,10 @@ body {
 
 .col-save-button-ro .MuiButton-label {
   color: white;
+}
+
+.button-submit-ro {
+  margin-right: 15px !important;
 }
 
 .header1-ro {
@@ -3227,6 +3230,72 @@ body {
   margin-bottom: 10px;
 }
 
+.col-rank-title-teams {
+  font-weight: 300;
+  color: white;
+}
+
+.col-team-title-teams {
+  font-weight: 300;
+  color: white;
+}
+
+.col-points-title-teams {
+  font-weight: 300;
+  color: white;
+  justify-content: flex-end;
+  display: flex;
+}
+
+.row-pagination-bot-teams {
+  justify-content: flex-end;
+  margin-top: 30px;
+}
+
+.div-parent-teams {
+  width: 100%;
+  overflow: hidden;
+}
+
+.div-parent-teams .MuiTableCell-root {
+  border: none;
+}
+
+.col-team-name-teams {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.td-team-imgname-teams {
+  font-weight: 300 !important;
+  color: #595959 !important;
+  border: 1px solid #595959 !important;
+  padding: 5px !important;
+}
+
+.td-team-imgname-teams a {
+  color: white;
+}
+
+.td-team-imgname-teams a:hover {
+  color: white;
+}
+
+.position-relative {
+  position: relative;
+}
+
+.spinner-table-teams {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 5px;
+  color: white;
+}
+
 .row-settings {
   justify-content: center;
   margin-top: 15px;
@@ -3394,8 +3463,9 @@ body {
   margin-left: 15px;
 }
 
-.form-control:disabled {
+.form-control-cur-email-settings {
   background-color: #adadad !important; 
+  color: black !important;
 }
 
 .div-crop-image-settings {
