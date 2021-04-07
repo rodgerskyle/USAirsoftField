@@ -13,7 +13,6 @@ import { LinkContainer } from "react-router-bootstrap";
 import { AuthUserContext } from './components/session';
 import * as ROLES from './components/constants/roles';
 import { withFirebase } from './components/Firebase';
-import { isMobile } from 'react-device-detect';
 import { Collapse } from '@material-ui/core';
 
 class Navigation extends Component {
@@ -393,7 +392,6 @@ const NavigationNonAuth = () => {
                             </MDBDropdown>
                         </MDBNavItem>
                     </MDBNavbarNav>
-                    {isMobile ? null :
                     <MDBNavbarNav right className="mdb-nav-not-mobile-profile">
                         <MDBNavItem className="nav-item-loggedout nav-item-profile-nav">
                             <MDBDropdown>
@@ -413,7 +411,7 @@ const NavigationNonAuth = () => {
                                 </MDBDropdownMenu>
                             </MDBDropdown>
                         </MDBNavItem>
-                    </MDBNavbarNav> }
+                    </MDBNavbarNav>
                 </Collapse>
             </MDBNavbar>
         </div>

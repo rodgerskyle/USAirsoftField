@@ -40,6 +40,7 @@ class Teams extends Component {
         this.state = {
             loading: true,
             teams: [],
+            teamObj: [],
             teamicon: [],
             usericons: [],
             anchor: React.createRef(null),
@@ -49,8 +50,10 @@ class Teams extends Component {
             curPage: 1,
             teamsPerPage: 6,
             loadingTeams: false,
+            search: "",
         };
         this.handleClick = this.handleClick.bind(this);
+        this.handleSearch = this.handleSearch.bind(this);
     }
 
     //Get image function for team image = teamname
@@ -129,8 +132,14 @@ class Teams extends Component {
                 teamname: key,
             }));
 
+            let teams = [];
+            for (var i = 0; i < teamsList.length; i++) {
+                teams.push({index: i, ...teamsList[i]})
+            }
+
             this.setState({
-                teams: teamsList,
+                teams,
+                teamObj: (JSON.parse(JSON.stringify(teams))).filter(obj => obj.teamname.includes(this.state.search))
             }, () => {
                 for (var i = 0; i < this.state.teams.length; i++) {
                     this.getPicture(this.state.teams[i].teamname);
@@ -171,8 +180,16 @@ class Teams extends Component {
         });
     }
 
+    //Handle search that filters out array and passes it to our render function
+    handleSearch(val) {
+        let teamObj = this.state.teamObj;
+        teamObj = this.state.teams.filter(obj => obj.teamname.includes(val))
+        this.setState({search: val, teamObj})
+    }
+
     render() {
-        const { anchor, open, options, selected, loading, usericons, curPage, teams, teamsPerPage, loadingTeams } = this.state
+        const { anchor, open, options, selected, loading, usericons, curPage, 
+            teams, teamsPerPage, loadingTeams, teamObj } = this.state
         return (
             <div className="background-static-all">
                 <Helmet>
@@ -223,8 +240,9 @@ class Teams extends Component {
                             </Popper>
                         </Col>
                     </Row>
-                    <TeamList teams={teams.slice((curPage - 1) * teamsPerPage, ((curPage - 1) * teamsPerPage) + teamsPerPage)} teamsPerPage={teamsPerPage} loading={loadingTeams}
-                    teamicon={this.state.teamicon} numPages={Math.ceil(teams.length / teamsPerPage)} curPage={curPage} usericons={usericons} handleClick={this.handleClick}/>
+                    <TeamList teams={teamObj.slice((curPage - 1) * teamsPerPage, ((curPage - 1) * teamsPerPage) + teamsPerPage)} teamsPerPage={teamsPerPage} loading={loadingTeams}
+                    teamicon={this.state.teamicon} numPages={Math.ceil(teams.length / teamsPerPage)} curPage={curPage} usericons={usericons} handleClick={this.handleClick}
+                    search={this.state.search} handleSearch={this.handleSearch}/>
                     <Row className="row-bottom"></Row>
                 </Container> }
             </div>
@@ -257,7 +275,6 @@ const useStyles = makeStyles((theme) => ({
         margin: 4,
     },
     table: {
-        minWidth: 500,
     },
     tableCell: {
         fontWeight: 300,
@@ -321,17 +338,17 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
-const TeamList = ({ teams, teamicon, numPages, teamsPerPage, curPage, usericons, handleClick, loading }) => {
+const TeamList = ({ teams, teamicon, numPages, teamsPerPage, curPage, usericons, handleClick, loading, search, handleSearch }) => {
     const classes = useStyles();
 
-    const [search, handleSearch] = React.useState("");
+    const isSelected = (name) => selected.indexOf(name) !== -1;
 
     return (
         <div>
             <Row className="row-navigation-teams">
                 <Col md={8}>
                     <Paper component="form" className={classes.root}>
-                        <IconButton type="submit" className={classes.iconButton} aria-label="search">
+                        <IconButton type="button" className={classes.iconButton} aria-label="search">
                             <SearchIcon />
                         </IconButton>
                         <InputBase
@@ -365,21 +382,20 @@ const TeamList = ({ teams, teamicon, numPages, teamsPerPage, curPage, usericons,
                         </TableHead>
                             <TableBody className={loading ? classes.tableBodyLoading : null}>
                                 {teams.map((team, i) => {
-                                    if (team.teamname.includes(search.toLowerCase())) {
                                         return (
                                             <TableRow key={i}>
-                                                <TableCell className={classes.tableCellIndex}>{i+1+((curPage-1)*teamsPerPage)}</TableCell>
+                                                <TableCell className={classes.tableCellIndex}>{team.index+1}</TableCell>
                                                 {/* <Td to={"/teams/" + team.teamname.toString()} ct={"link-team-name"}
                                                 cl={classes.tableTeamNameCell}>{team.teamname.toUpperCase()}</Td> */}
                                                 <TableCell className="td-team-imgname-teams">
                                                     <Row>
-                                                        <Col xs={10}>
+                                                        <Col xl={10} className="col-team-picture-teams">
                                                             <Link to={"/teams/" + team.teamname.toString()}>
                                                                 <img className="team-pictures"
                                                                     src={teamicon[team.teamname.toString()]} alt={"Team " + team.teamname}></img>
                                                             </Link>
                                                         </Col>
-                                                        <Col className="col-team-name-teams" xs={2}>
+                                                        <Col className="col-team-name-teams" xl={2}>
                                                             <Link to={"/teams/" + team.teamname.toString()}>
                                                                 {team.teamname.toUpperCase()}
                                                             </Link>
@@ -403,7 +419,7 @@ const TeamList = ({ teams, teamicon, numPages, teamsPerPage, curPage, usericons,
                                                 </TableCell> */}
                                                 <TableCell className={classes.tableCellPoints} align="center">{400}</TableCell>
                                             </TableRow>
-                                    )} return null;
+                                    )
                                 })}
                             </TableBody>
                     </Table>
