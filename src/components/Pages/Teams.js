@@ -190,7 +190,7 @@ class Teams extends Component {
 
     render() {
         const { anchor, open, options, selected, loading, usericons, curPage, 
-            teams, teamsPerPage, loadingTeams, teamObj } = this.state
+            teamsPerPage, loadingTeams, teamObj } = this.state
         return (
             <div className="background-static-all">
                 <Helmet>
@@ -242,7 +242,7 @@ class Teams extends Component {
                         </Col>
                     </Row>
                     <TeamList teams={teamObj.slice((curPage - 1) * teamsPerPage, ((curPage - 1) * teamsPerPage) + teamsPerPage)} teamsPerPage={teamsPerPage} loading={loadingTeams}
-                    teamicon={this.state.teamicon} numPages={Math.ceil(teams.length / teamsPerPage)} curPage={curPage} usericons={usericons} handleClick={this.handleClick}
+                    teamicon={this.state.teamicon} numPages={Math.ceil(teamObj.length / teamsPerPage)} curPage={curPage} usericons={usericons} handleClick={this.handleClick}
                     search={this.state.search} handleSearch={this.handleSearch}/>
                     <Row className="row-bottom"></Row>
                 </Container> }
@@ -348,7 +348,7 @@ const TeamList = ({ teams, teamicon, numPages, teamsPerPage, curPage, usericons,
         <div>
             <Row className="row-navigation-teams">
                 <Col md={8}>
-                    <Paper component="form" className={classes.root}>
+                    <Paper component="form" className={classes.root} onSubmit={(e) => {e.preventDefault()}}>
                         <IconButton type="button" className={classes.iconButton} aria-label="search">
                             <SearchIcon />
                         </IconButton>
