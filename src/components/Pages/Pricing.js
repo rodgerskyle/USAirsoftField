@@ -136,12 +136,14 @@ class Pricing extends Component {
                                                 <p className="text-align-center">
                                                     Please contact us to further inquire about signing up for a membership.
                                                 </p>
+                                        </Card.Body>
+                                        <Card.Footer>
                                             <Row className="justify-content-row">
                                                 <Link to="/contact">
                                                     <Button variant="primary">Contact Us</Button>
                                                 </Link>
                                             </Row>
-                                        </Card.Body>
+                                        </Card.Footer>
                                     </Card>
                                 </Col>
                                 <Col sm={6} className="col-pricing">
@@ -358,15 +360,17 @@ class Pricing extends Component {
                                                     $15.00 - Vest Rental (Comes with 2 Magazines)
                                                 </dd>
                                             </dl>
-                                            <p className="text-align-center">
+                                            <p className="text-align-center" style={{marginBottom: 0}}>
                                                 Please contact us to further inquire about rentals.
                                             </p>
+                                        </Card.Body>
+                                        <Card.Footer>
                                             <Row className="justify-content-row">
                                                 <Link to="/contact">
                                                     <Button variant="primary">Contact Us</Button>
                                                 </Link>
                                             </Row>
-                                        </Card.Body>
+                                        </Card.Footer>
                                     </Card>
                                 </Col>
                             </Row>
@@ -378,18 +382,25 @@ class Pricing extends Component {
                                 <Col sm={6} className="col-pricing">
                                     <Card className="card-pricing">
                                         <Card.Header className="text-align-center">Birthday Package Notice</Card.Header>
-                                        <Card.Body>
+                                        <Card.Body className="card-body-birthday-pricing">
                                             <p className="text-align-center">
                                                 Please contact us for further questions about birthday parties, or to place a deposit down to schedule your birthday!
                                             </p>
+                                        </Card.Body>
+                                        <Card.Footer>
                                             <Row className="justify-content-row">
                                                 <Link to="/contact">
                                                     <Button variant="primary">Contact Us</Button>
                                                 </Link>
                                             </Row>
-                                        </Card.Body>
-                                            <p className="text-align-center no-margin-bottom">Scroll through packages</p>
-                                            <Row className="justify-content-row row-buttons-pricing">
+                                        </Card.Footer>
+                                    </Card>
+                                </Col>
+                                {this.state.index === 0 ?
+                                <Col sm={6} className="col-pricing">
+                                    <Card>
+                                        <Card.Header className="text-align-center" style={{display: 'flex'}}>
+                                            <Col className="col-left-nav-button-pricing">
                                                 <Button variant="secondary" type="button" disabled={this.state.index===0}
                                                 className="buttons-pricing" onClick={() => {
                                                     if (this.state.index!==0)
@@ -397,6 +408,11 @@ class Pricing extends Component {
                                                 }}>
                                                 <i className="fa fa-angle-left fa-1x text-black"></i>
                                                 </Button>
+                                            </Col>
+                                            <Col md="auto" className="col-center-middle">
+                                                Birthday Package #1
+                                            </Col>
+                                            <Col className="col-right-nav-button-pricing">
                                                 <Button variant="secondary" type="button" disabled={this.state.index===3}
                                                 className="buttons-pricing" onClick={() => {
                                                     if (this.state.index!==3)
@@ -404,13 +420,8 @@ class Pricing extends Component {
                                                 }}>
                                                 <i className="fa fa-angle-right fa-1x text-black"></i>
                                                 </Button>
-                                            </Row>
-                                    </Card>
-                                </Col>
-                                {this.state.index === 0 ?
-                                <Col sm={6} className="col-pricing">
-                                    <Card>
-                                        <Card.Header className="text-align-center">Birthday Package #1</Card.Header>
+                                            </Col>
+                                        </Card.Header>
                                         <Card.Body>
                                             <Card.Title className="text-align-center">$250.00</Card.Title>
                                             <dl>
@@ -437,7 +448,29 @@ class Pricing extends Component {
                                 {this.state.index === 1 ?
                                 <Col sm={6} className="col-pricing">
                                     <Card className="card-pricing">
-                                        <Card.Header className="text-align-center">Birthday Package #2</Card.Header>
+                                        <Card.Header className="text-align-center" style={{display: 'flex'}}>
+                                            <Col className="col-left-nav-button-pricing">
+                                                <Button variant="secondary" type="button" disabled={this.state.index===0}
+                                                className="buttons-pricing" onClick={() => {
+                                                    if (this.state.index!==0)
+                                                    this.setState({index: this.state.index-1})
+                                                }}>
+                                                <i className="fa fa-angle-left fa-1x text-black"></i>
+                                                </Button>
+                                            </Col>
+                                            <Col md="auto" className="col-center-middle">
+                                                Birthday Package #2
+                                            </Col>
+                                            <Col className="col-right-nav-button-pricing">
+                                                <Button variant="secondary" type="button" disabled={this.state.index===3}
+                                                className="buttons-pricing" onClick={() => {
+                                                    if (this.state.index!==3)
+                                                    this.setState({index: this.state.index+1})
+                                                }}>
+                                                <i className="fa fa-angle-right fa-1x text-black"></i>
+                                                </Button>
+                                            </Col>
+                                        </Card.Header>
                                         <Card.Body>
                                             <Card.Title className="text-align-center">$350.00</Card.Title>
                                             <dl>
@@ -464,7 +497,29 @@ class Pricing extends Component {
                                 {this.state.index === 2 ?
                                 <Col sm={6} className="col-pricing">
                                     <Card>
-                                        <Card.Header className="text-align-center">Birthday Package #3</Card.Header>
+                                        <Card.Header className="text-align-center" style={{display: 'flex'}}>
+                                            <Col className="col-left-nav-button-pricing">
+                                                <Button variant="secondary" type="button" disabled={this.state.index===0}
+                                                className="buttons-pricing" onClick={() => {
+                                                    if (this.state.index!==0)
+                                                    this.setState({index: this.state.index-1})
+                                                }}>
+                                                <i className="fa fa-angle-left fa-1x text-black"></i>
+                                                </Button>
+                                            </Col>
+                                            <Col md="auto" className="col-center-middle">
+                                                Birthday Package #3
+                                            </Col>
+                                            <Col className="col-right-nav-button-pricing">
+                                                <Button variant="secondary" type="button" disabled={this.state.index===3}
+                                                className="buttons-pricing" onClick={() => {
+                                                    if (this.state.index!==3)
+                                                    this.setState({index: this.state.index+1})
+                                                }}>
+                                                <i className="fa fa-angle-right fa-1x text-black"></i>
+                                                </Button>
+                                            </Col>
+                                        </Card.Header>
                                         <Card.Body>
                                             <Card.Title className="text-align-center">$500.00</Card.Title>
                                             <dl>
@@ -491,7 +546,29 @@ class Pricing extends Component {
                                 {this.state.index === 3 ?
                                 <Col sm={6} className="col-pricing">
                                     <Card>
-                                        <Card.Header className="text-align-center">Birthday Package #4</Card.Header>
+                                        <Card.Header className="text-align-center" style={{display: 'flex'}}>
+                                            <Col className="col-left-nav-button-pricing">
+                                                <Button variant="secondary" type="button" disabled={this.state.index===0}
+                                                className="buttons-pricing" onClick={() => {
+                                                    if (this.state.index!==0)
+                                                    this.setState({index: this.state.index-1})
+                                                }}>
+                                                <i className="fa fa-angle-left fa-1x text-black"></i>
+                                                </Button>
+                                            </Col>
+                                            <Col md="auto" className="col-center-middle">
+                                                Birthday Package #4
+                                            </Col>
+                                            <Col className="col-right-nav-button-pricing">
+                                                <Button variant="secondary" type="button" disabled={this.state.index===3}
+                                                className="buttons-pricing" onClick={() => {
+                                                    if (this.state.index!==3)
+                                                    this.setState({index: this.state.index+1})
+                                                }}>
+                                                <i className="fa fa-angle-right fa-1x text-black"></i>
+                                                </Button>
+                                            </Col>
+                                        </Card.Header>
                                         <Card.Body>
                                             <Card.Title className="text-align-center">$650.00</Card.Title>
                                             <dl>

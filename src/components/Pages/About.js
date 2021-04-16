@@ -16,7 +16,7 @@ class About extends Component {
                     <title>US Airsoft Field: About Us</title>
                 </Helmet>
                 <Container>
-                    <Row>
+                    <Row className="row-title-about">
                         <p className="p-header-about">About Us</p>
                     </Row>
                     <Row>

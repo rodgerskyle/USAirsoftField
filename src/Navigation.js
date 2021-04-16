@@ -13,7 +13,6 @@ import { LinkContainer } from "react-router-bootstrap";
 import { AuthUserContext } from './components/session';
 import * as ROLES from './components/constants/roles';
 import { withFirebase } from './components/Firebase';
-import { isMobile } from 'react-device-detect';
 import { Collapse } from '@material-ui/core';
 
 class Navigation extends Component {
@@ -26,7 +25,6 @@ class Navigation extends Component {
         };
     }
 
-
     //Get image function for profile image = uid
     getProfile(uid) {
         this.props.firebase.pictures(`${uid}/profilepic.png`).getDownloadURL().then((url) => {
@@ -35,8 +33,17 @@ class Navigation extends Component {
     }
 
     componentDidMount() {
-        if (this.state.authUser && this.state.authUser.profilepic)
-            this.getProfile(this.state.authUser.uid)
+        if (this.state.authUser) {
+            this.props.firebase.user(this.state.authUser.uid).on('value', obj => {
+                if (obj.val().profilepic)
+                    this.getProfile(this.state.authUser.uid)
+            })
+        }
+    }
+
+    componentWillUnmount() {
+        if (this.state.authUser) 
+            this.props.firebase.user(this.state.authUser.uid).off()
     }
 
     render() {
@@ -385,7 +392,6 @@ const NavigationNonAuth = () => {
                             </MDBDropdown>
                         </MDBNavItem>
                     </MDBNavbarNav>
-                    {isMobile ? null :
                     <MDBNavbarNav right className="mdb-nav-not-mobile-profile">
                         <MDBNavItem className="nav-item-loggedout nav-item-profile-nav">
                             <MDBDropdown>
@@ -405,7 +411,7 @@ const NavigationNonAuth = () => {
                                 </MDBDropdownMenu>
                             </MDBDropdown>
                         </MDBNavItem>
-                    </MDBNavbarNav> }
+                    </MDBNavbarNav>
                 </Collapse>
             </MDBNavbar>
         </div>

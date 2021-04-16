@@ -56,9 +56,6 @@ const App = () => (
       {/* <Route exact path="/migrate">
                 <Migration />
               </Route> */}
-      <Route exact path="/birthday">
-        <Birthday />
-      </Route>
       <Route exact path="/emailoptout/:secret"
         render={(props) => (
           <EmailOptOut {...props} />
@@ -151,6 +148,9 @@ const App = () => (
       </Route>
       <Route exact path="/admin/rentalform">
         <RentalForm />
+      </Route>
+      <Route exact path="/admin/birthday">
+        <Birthday />
       </Route>
       <Route exact path="/admin/useroptions/:id"
         render={(props) => (

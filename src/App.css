@@ -367,7 +367,8 @@ body {
 }
 
 .team-pictures {
-  border: 1px solid black;
+  border: 1px solid #969696;
+  max-width: 150px;
 }
 
 .team-upload-warning {
@@ -406,6 +407,11 @@ body {
 .losses-lb {
   color: #fb6060;
 }
+
+.profilelink-lb {
+  width: 50%;
+}
+
 .myprofilelink-lb:link {
   color: gold;
 }
@@ -620,14 +626,14 @@ body {
 }
 
 .h5-hours-subheader {
-  font-size: .8rem;
+  font-size: 1.2rem;
   padding-bottom: 0px;
   font-weight: 300;
   color: white;
 }
 
 .dt-hours-info {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 300 !important;
   color: white;
 }
@@ -1453,6 +1459,123 @@ body {
   color: white;
 }
 
+.div-team-leader-teams {
+  display: unset;
+  padding: 16px;
+}
+
+.img-team-member-teams {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.img-crown-teams {
+  width: 15px;
+  height: 15px;
+  position: absolute;
+  margin-top: -10px;
+  margin-left: -10px;
+}
+
+.row-header-teams {
+  padding-top: 15px;
+  padding-bottom: 15px;
+}
+
+.col-options-dropdown-teams .MuiListItem-root.Mui-selected, .col-options-dropdown-teams .MuiListItem-root.Mui-selected:hover {
+  background-color: rgb(73 80 87 / .2);
+  font-weight: 700;
+}
+
+.col-options-dropdown-teams .MuiListItem-button:hover {
+  background-color: rgb(73 80 87 / .2);
+}
+
+.col-options-dropdown-teams .MuiButton-containedPrimary {
+  background-color: transparent;
+  color: rgba(255,255,255,.5);
+}
+
+.col-options-dropdown-teams .MuiButton-containedPrimary:hover {
+  background-color: transparent;
+  color: white;
+}
+
+.col-options-dropdown-teams .MuiButton-text {
+  color: rgba(255,255,255,.5);
+}
+
+.col-options-dropdown-teams .MuiButton-label {
+  font-weight: 300;
+  font-size: 20px;
+}
+
+.col-options-dropdown-teams .MuiButton-root {
+  font-family: unset;
+}
+
+.col-options-dropdown-teams .MuiButtonGroup-groupedContainedPrimary:not(:last-child) {
+  border: none;
+}
+
+.col-options-dropdown-teams a:hover .MuiButton-text {
+  color: white;
+  text-decoration: none;
+}
+
+.col-options-dropdown-teams a:hover {
+  text-decoration: none;
+}
+
+.p-header-teams {
+  font-size: 24px;
+  font-weight: 300;
+  color: white;
+  border-right: 1px solid #595959;
+  margin-bottom: 0 !important;
+  padding-right: 30px;
+}
+
+.row-navigation-teams {
+  margin-bottom: 15px;
+}
+
+.pagination-col-teams {
+  /* justify-content: flex-end; */
+  justify-content: center;
+  align-items: flex-end;
+  /* margin-bottom: -8px;
+  margin-top: 8px; */
+  margin-top: 8px;
+  margin-bottom: 8px;
+  display: flex;
+}
+
+.pagination-col-teams .MuiPaginationItem-outlined {
+  color: rgb(222 222 222);
+  border: 1px solid rgb(210 210 210 / 23%);
+  background-color: rgb(73 80 87 / .6);
+}
+
+.pagination-col-teams .MuiPagination-root {
+  right: unset;
+}
+
+.pagination-col-teams .MuiPaginationItem-outlinedPrimary.Mui-selected {
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background-color: transparent;
+}
+
+.pagination-col-teams .MuiPaginationItem-outlinedPrimary.Mui-selected:hover, .MuiPaginationItem-outlinedPrimary.Mui-selected.Mui-focusVisible {
+  background-color: rgb(73 80 87 / .6);
+}
+
+.pagination-col-teams .MuiPaginationItem-ellipsis {
+  color: white;
+}
+
 .img-row-contact {
   justify-content: center;
   align-items: center;
@@ -1700,16 +1823,13 @@ body {
   color: gray;
 }
 
-.row-settings {
-  justify-content: center;
-}
-
 .password-forgot-button {
   float: right;
 }
 
 .password-change-form {
   color: white;
+  display: contents;
 }
 
 .dropdown-waiverlookup {
@@ -1823,7 +1943,12 @@ body {
 .p-description-about {
   color: white;
   font-weight: 300;
-  font-size: 22px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.row-description-about {
+  justify-content: center;
 }
 
 .input-group-footer {
@@ -1881,7 +2006,7 @@ body {
 
 .passch-row-button {
   justify-content: flex-end;
-  padding-right: 15px;
+  flex: 1;
 }
 
 .justify-content-row {
@@ -1985,6 +2110,30 @@ body {
 
 .dd-text-pricing {
   margin-right: 5px;
+}
+
+.card-body-birthday-pricing {
+  justify-content: center;
+  display: flex;
+  align-items: center;
+}
+
+.col-left-nav-button-pricing {
+  justify-content: flex-end;
+  display: flex;
+}
+
+.col-left-nav-button-pricing .btn {
+  padding: 0.175rem 0.75rem;
+}
+
+.col-right-nav-button-pricing {
+  justify-content: flex-start;
+  display: flex;
+}
+
+.col-right-nav-button-pricing .btn {
+  padding: 0.175rem 0.75rem;
 }
 
 .MuiButton-label {
@@ -2538,7 +2687,6 @@ body {
   display: flex;
   justify-content: flex-end;
   margin-top: 10px;
-  margin-right: 10px;
 }
 
 .col-save-button-ro .MuiButton-root {
@@ -2551,6 +2699,10 @@ body {
 
 .col-save-button-ro .MuiButton-label {
   color: white;
+}
+
+.button-submit-ro {
+  margin-right: 15px !important;
 }
 
 .header1-ro {
@@ -2966,6 +3118,406 @@ body {
 .div-main-birthday {
   background-color: rgb(108, 117, 125, 0.75);
   border-radius: 5px;
+}
+
+.div-main-birthday .rbc-month-view {
+  height: 70vh;
+}
+
+.div-main-birthday .rbc-toolbar-label {
+  color: white;
+  font-size: 24px;
+}
+
+.div-main-birthday .rbc-toolbar {
+  margin: 10px;
+}
+
+.div-main-birthday .rbc-off-range-bg {
+  background-color: rgb(4, 4, 4, .8);
+}
+
+.div-main-birthday .rbc-date-cell {
+  color: white;
+}
+
+.div-main-birthday .rbc-date-cell.rbc-now {
+  color: black;
+}
+
+.div-main-birthday .rbc-day-bg + .rbc-day-bg + .rbc-today{
+  background-color: rgb(138, 138, 138);
+}
+
+.div-main-birthday .rbc-toolbar button {
+  color: white;
+}
+
+.div-main-birthday .rbc-toolbar button:active, .rbc-toolbar button.rbc-active {
+  color: #373a3c;
+}
+
+.div-main-birthday .rbc-header.rbc-today {
+  color: black;
+  background-color: rgb(138, 138, 138);
+}
+
+.div-main-birthday .rbc-header {
+  color: white;
+}
+
+.div-main-birthday .rbc-label {
+  color: white;
+}
+
+.div-main-birthday .rbc-today .rbc-timeslot-group {
+  background-color: rgb(138, 138, 138);
+}
+
+.div-main-birthday .rbc-agenda-event-cell,
+.div-main-birthday .rbc-agenda-time-cell,
+.div-main-birthday .rbc-agenda-date-cell
+{
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.dialog-create-birthday .MuiDialogActions-root{
+  border-top: 2px solid black;
+  background-color: rgb(77, 77, 77, .8);
+}
+
+.dialog-edit-birthday .MuiDialogActions-root{
+  border-top: 2px solid black;
+  background-color: rgb(77, 77, 77, .8);
+}
+
+.actions-create-birthday .MuiButton-textPrimary {
+  color: white;
+}
+
+.actions-create-birthday .MuiButton-textPrimary:hover {
+  color: white;
+  background-color: rgb(4, 4, 4, .2);
+}
+
+.actions-create-birthday .MuiButton-label {
+  text-shadow: unset;
+}
+
+.content-create-birthday .MuiFormLabel-root.Mui-focused {
+  color: #4d4d4d;;
+}
+
+.content-create-birthday .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #4d4d4d;
+}
+
+.content-create-birthday .MuiCheckbox-colorSecondary.Mui-checked {
+  color: #4d4d4d;;
+}
+
+.content-create-birthday .MuiIconButton-colorSecondary:hover {
+  background-color: rgb(77, 77, 77, .1);
+}
+
+.row-deposit-birthday {
+  padding-left: 10px;
+  margin-bottom: 10px;
+}
+
+.row-notes-birthday {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.col-rank-title-teams {
+  font-weight: 300;
+  color: white;
+}
+
+.col-team-title-teams {
+  font-weight: 300;
+  color: white;
+}
+
+.col-points-title-teams {
+  font-weight: 300;
+  color: white;
+  justify-content: flex-end;
+  display: flex;
+}
+
+.row-pagination-bot-teams {
+  justify-content: flex-end;
+  margin-top: 30px;
+}
+
+.div-parent-teams {
+  width: 100%;
+  overflow: hidden;
+}
+
+.div-parent-teams .MuiTableCell-root {
+  border: none;
+}
+
+.col-team-name-teams {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  margin-top: 5px;
+}
+
+.td-team-imgname-teams {
+  font-weight: 300 !important;
+  color: #595959 !important;
+  border: 1px solid #595959 !important;
+  padding: 5px !important;
+}
+
+.td-team-imgname-teams a {
+  color: white;
+  font-size: 12px;
+}
+
+.col-team-picture-teams {
+  display: flex;
+  justify-content: center;
+}
+
+.td-team-imgname-teams a:hover {
+  color: white;
+}
+
+.position-relative {
+  position: relative;
+}
+
+.spinner-table-teams {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 5px;
+  color: white;
+}
+
+.row-settings {
+  justify-content: center;
+  margin-top: 15px;
+}
+
+.p-picture-label-settings {
+  margin: none;
+  font-size: 16px;
+  font-weight: 300;
+  color: white;
+}
+
+.container-settings .MuiTab-textColorPrimary.Mui-selected {
+  color: white;
+}
+
+.container-settings .MuiTabs-indicator {
+  background-color: transparent;
+}
+
+.container-settings .MuiPaper-root {
+  background-color: rgba(255, 255, 255, 0.1);;
+}
+
+.container-settings .MuiTab-textColorPrimary {
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 300;
+}
+
+.crop-container-settings {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 80px;
+}
+
+.controls-settings {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 50%;
+  transform: translateX(-50%);
+  height: 80px;
+  display: flex;
+  align-items: center;
+}
+
+.div-upload-settings input {
+  display: none;
+}
+
+.div-upload-settings .MuiButton-containedPrimary {
+  background-color: #494949;
+}
+
+.div-upload-settings .MuiButton-containedPrimary:hover {
+  background-color: #6d6d6d;
+}
+
+.div-crop-image-settings .MuiButton-containedPrimary {
+  background-color: #494949;
+  margin-right: -15px;
+}
+
+.div-crop-image-settings .MuiButton-containedPrimary:hover {
+  background-color: #6d6d6d;
+}
+
+.col-update-button-settings {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+
+.col-update-button-settings .MuiButton-containedPrimary {
+  background-color: #494949;
+}
+
+.col-update-button-settings .MuiButton-containedPrimary:hover {
+  background-color: #6d6d6d;
+}
+
+.row-img-settings {
+  position: relative;
+  color: white;
+  font-weight: 500;
+}
+
+.div-img-settings:hover .profile-img-settings {
+  transition: opacity .25s ease-in-out;
+  -moz-transition: opacity .25s ease-in-out;
+  -webkit-transition: opacity .25s ease-in-out;
+  opacity: .4;
+  cursor: pointer;
+}
+
+.div-img-settings {
+  border-radius: 50%;
+  position: relative;
+}
+
+.div-img-settings:hover .div-img-text-settings {
+  display: unset;
+}
+
+.div-img-text-settings:hover {
+  cursor: pointer;
+}
+
+.div-img-text-settings {
+  color: white;
+  font-weight: 500;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: none;
+  white-space: pre-line;
+}
+
+.div-img-button-settings {
+  position: absolute;
+  top: 5%;
+  right: 10%;
+}
+
+.div-img-button-settings {
+  background-color: #494949;
+  border-radius: 50%;
+  min-width: 50px;
+  width: 50px;
+  height: 50px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+}
+
+.div-img-button-settings:hover {
+  cursor: pointer;
+}
+
+.div-account-inputs-settings {
+  padding-top: 15px;
+  min-height: 100%;
+  flex-direction: column;
+  display: flex;
+}
+
+.row-parent-settings {
+  margin: 15px 0 !important;
+  background-color: rgba(255, 255, 255, 0.1);
+  padding-bottom: 15px;
+}
+
+.row-password-settings {
+  padding-top: 15px;
+  min-height: 100%;
+}
+
+.verify-form {
+  color: white;
+  margin-right: 15px;
+  margin-left: 15px;
+}
+
+.form-control-cur-email-settings {
+  background-color: #adadad !important; 
+  color: black !important;
+}
+
+.div-crop-image-settings {
+  position: relative;
+  width: 300px;
+  height: 400px;
+  border: 1px solid #3a3a3a;
+}
+
+@media (min-width: 576px) {
+  .div-crop-image-settings {
+    width: 300px;
+    height: 300px;
+  }
+}
+
+@media (min-width: 768px) {
+  .div-crop-image-settings {
+    width: 450px;
+    height: 450px;
+  }
+}
+
+@media (min-width: 992px) {
+  .div-crop-image-settings {
+    width: 550px;
+    height: 550px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .div-crop-image-settings {
+    width: 700px;
+    height: 700px;
+  }
+}
+
+.div-crop-image-settings .MuiSlider-root {
+  color: #aeb1c1;
+  margin-right: 15px;
+}
+
+.div-cancel-button-settings {
+  position: absolute;
+  z-index: 2;
 }
 
 .a-youtube-link {
@@ -3580,6 +4132,11 @@ body {
   display: flex;
 }
 
+.col-justify-content-flex-start {
+  justify-content: flex-start;
+  display: flex;
+}
+
 .row-rank-name-rp {
   min-height: 40%;
 }
@@ -3723,6 +4280,7 @@ body {
 
   .page-header-lb {
     font-size: 2rem;
+    font-weight: 300;
   }
 
   .rank-image-lb {
@@ -3858,6 +4416,17 @@ body {
   .team-member-list {
     width: 100%;
     text-align: center;
+  }
+
+  .p-description-about {
+    color: white;
+    font-weight: 300;
+    font-size: 22px;
+    text-align: unset;
+  }
+
+  .row-description-about {
+    justify-content: unset;
   }
 
   .p-groupname-rp {
@@ -4047,6 +4616,24 @@ body {
     display: flex;
     justify-content: flex-end;
     align-items: flex-end;
+  }
+
+  .team-pictures {
+    max-width: 250px;
+  }
+
+  .td-team-imgname-teams a {
+    color: white;
+    font-size: 14px;
+  }
+
+  .col-team-picture-teams {
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .col-team-name-teams {
+    margin-top: 0;
   }
 }
 

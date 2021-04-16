@@ -26,6 +26,7 @@ class Firebase {
         this.db = app.database();
         this.st = app.storage();
         this.func = app.functions();
+        this.ns_auth = app.auth;
     }
     // *** Auth API ***
     doCreateUserWithEmailAndPassword = (email, password) =>
@@ -43,6 +44,9 @@ class Firebase {
     
     doEmailUpdate = email => 
         this.auth.currentUser.updateEmail(email)
+
+    doReauthenticate = (email, password) =>
+        this.auth.currentUser.reauthenticateWithCredential(this.ns_auth.EmailAuthProvider.credential(email, password));
 
     // *** Merge Auth and DB User API *** //
     onAuthUserListener = (next, fallback) =>
@@ -159,7 +163,13 @@ class Firebase {
 
     validatedWaiver = file => this.db.ref(`waivers/validated/${file}`);
 
-    validatedWaivers = () => this.db.ref('waivers/validated')
+    validatedWaivers = () => this.db.ref('waivers/validated');
+
+    // Calendar API
+
+    calendar = () => this.db.ref(`calendar`);
+
+    calendarEvent = i => this.db.ref(`calendar/${i}`);
 
 }
 
