@@ -46,7 +46,7 @@ class ReturnForm extends Component {
     }
 
     componentDidMount() {
-        this.props.firebase.rentalOptions().once('value', snapshot => {
+        this.props.firebase.rentalOptions().on('value', snapshot => {
             const obj = snapshot.val()
             let optionsObject = {};
             for (let i=0; i<obj.length; i++)
@@ -83,6 +83,7 @@ class ReturnForm extends Component {
 
     componentWillUnmount() {
         this.props.firebase.rentalGroups().off()
+        this.props.firebase.rentalOptions().off()
     }
 
     // creates array given dimensions
@@ -158,7 +159,7 @@ class ReturnForm extends Component {
     // Return back stock from group
     returnRentals(rentalForm) {
         let optionsObject = this.state.optionsObject
-        let options = this.state.optionsList
+        let options = JSON.parse(JSON.stringify(this.state.optionsList))
         // Check if participants exist at all
         if (rentalForm.participants) {
             for (let i=0; i < rentalForm.participants.length; i++) {

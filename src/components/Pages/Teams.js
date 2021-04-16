@@ -127,10 +127,11 @@ class Teams extends Component {
         this.props.firebase.teams().on('value', snapshot => {
             const teamObject = snapshot.val();
 
-            const teamsList = Object.keys(teamObject).map(key => ({
+            let teamsList = Object.keys(teamObject).map(key => ({
                 ...teamObject[key],
                 teamname: key,
             }));
+            teamsList = teamsList.sort((a, b) => a.points < b.points ? 1 : -1)
 
             let teams = [];
             for (var i = 0; i < teamsList.length; i++) {
@@ -341,7 +342,7 @@ const useStyles = makeStyles((theme) => ({
 const TeamList = ({ teams, teamicon, numPages, teamsPerPage, curPage, usericons, handleClick, loading, search, handleSearch }) => {
     const classes = useStyles();
 
-    const isSelected = (name) => selected.indexOf(name) !== -1;
+    // const isSelected = (name) => selected.indexOf(name) !== -1;
 
     return (
         <div>
@@ -417,7 +418,7 @@ const TeamList = ({ teams, teamicon, numPages, teamsPerPage, curPage, usericons,
                                                     : null }
                                                     </div>
                                                 </TableCell> */}
-                                                <TableCell className={classes.tableCellPoints} align="center">{400}</TableCell>
+                                                <TableCell className={classes.tableCellPoints} align="center">{team.points}</TableCell>
                                             </TableRow>
                                     )
                                 })}
