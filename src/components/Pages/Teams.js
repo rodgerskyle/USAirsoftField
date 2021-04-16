@@ -184,7 +184,7 @@ class Teams extends Component {
     //Handle search that filters out array and passes it to our render function
     handleSearch(val) {
         let teamObj = this.state.teamObj;
-        teamObj = this.state.teams.filter(obj => obj.teamname.includes(val))
+        teamObj = this.state.teams.filter(obj => obj.teamname.includes(val.toLowerCase()))
         this.setState({search: val, teamObj})
     }
 
