@@ -3475,6 +3475,10 @@ body {
   color: black !important;
 }
 
+.rbc-calendar {
+  display: unset !important;
+}
+
 .div-crop-image-settings {
   position: relative;
   width: 300px;
