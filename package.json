@@ -25,7 +25,7 @@
     "firebase": "^7.24.0",
     "firebase-encode": "0.0.5",
     "google-map-react": "^2.1.9",
-    "jspdf": "^2.3.0",
+    "jspdf": "^2.3.1",
     "mdbreact": "^5.0.1",
     "payment": "^2.4.0",
     "prop-types": "^15.7.2",
