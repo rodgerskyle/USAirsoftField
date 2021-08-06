@@ -1934,6 +1934,10 @@ body {
   padding: 20px;
 }
 
+.row-title-about {
+  justify-content: center;
+}
+
 .p-header-about {
   color: white;
   font-size: 24px;
@@ -3514,6 +3518,36 @@ body {
   }
 }
 
+.season-button-row .MuiButton-root {
+  width: 100%;
+  border-radius: unset;
+}
+
+.season-button-row .MuiButton-outlined {
+  background-color: rgb(247 247 247 / 25%);
+}
+
+.season-button-row .MuiButtonBase-root {
+  margin-bottom: 1rem;
+}
+
+.season-button-row .MuiButton-label {
+  text-shadow: none;
+}
+
+.season-button-row .MuiButton-root:hover {
+  background-color: rgb(165, 165, 165);
+}
+
+.season-button-row .season-button-active {
+  background-color: rgb(165, 165, 165);
+}
+
+.season-button-row .col-md-2 {
+  padding-left: 0;
+  padding-right: 0;
+}
+
 .div-crop-image-settings .MuiSlider-root {
   color: #aeb1c1;
   margin-right: 15px;
@@ -4459,7 +4493,7 @@ body {
   }
   .header-about-us {
     font-size: 2rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
   }
 
   .h5-hours-subheader {
@@ -4638,6 +4672,10 @@ body {
 
   .col-team-name-teams {
     margin-top: 0;
+  }
+
+  .row-title-about {
+    justify-content: flex-start;
   }
 }
 

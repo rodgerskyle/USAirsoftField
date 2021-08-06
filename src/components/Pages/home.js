@@ -2,6 +2,7 @@ import React from 'react';
 import { Container, Row, Col } from 'react-bootstrap/';
 import { Helmet } from 'react-helmet-async';
 import BackgroundVideo from '../constants/backgroundvideo';
+import MUIButton from '@material-ui/core/Button';
 
 /* Needs to be added in
 Closed:
@@ -22,9 +23,10 @@ Friday after Thanksgiving Day
 Day after Christmas
 */
 
-const today = new Date()
-
-const Home = () => (
+const Home = () => {
+  const today = new Date();
+  const [summer, setSummer] = React.useState(today.getMonth() > 4 && today.getMonth() < 10);
+  return (
   <div>
   <Helmet>
     <title>US Airsoft Field</title>
@@ -49,6 +51,18 @@ const Home = () => (
       <Row className="justify-content-row" style={{marginTop: '3rem'}}>
         <h2 className="header-about-us">Hours of Operation</h2>
       </Row>
+      <Row className="season-button-row justify-content-center">
+        <Col lg={1} className="justify-content-flex-end-col">
+          <MUIButton variant="outlined" className={summer ? "season-button-active" : null} onClick={() => {
+            setSummer(true)
+            }}>Summer</MUIButton>
+        </Col>
+        <Col lg={1}>
+          <MUIButton variant="outlined" className={!summer ? "season-button-active" : null} onClick={() => {
+            setSummer(false)
+            }}>Winter</MUIButton>
+        </Col>
+      </Row>
       <Row className="justify-content-row">
         <Col md={2}>
           <Row className="justify-content-row">
@@ -57,7 +71,7 @@ const Home = () => (
             </h5>
           </Row>
           <Row className="justify-content-row">
-            {today.getMonth() > 4 && today.getMonth() < 10 ?
+            {summer ?
             <dl className="dl-hours-info">
               <dt className="dt-hours-info">FRI: 6PM - 11PM</dt>
               <dt className="dt-hours-info">SAT: 8AM - 2PM</dt>
@@ -78,17 +92,17 @@ const Home = () => (
             </h5>
           </Row>
           <Row className="justify-content-row">
-            {today.getMonth() > 4 && today.getMonth() < 10 ?
+            {summer ?
               <dl style={{textAlign: 'center'}}>
                 {/* <dt className="dt-hours-info">Monday- Closed</dt> */}
-                <dt className="dt-hours-info">TUE-THU: 9AM - 5PM</dt>
+                <dt className="dt-hours-info">MON-THU: 9AM - 5PM</dt>
                 <dt className="dt-hours-info">FRI: 9AM - 11PM</dt>
                 <dt className="dt-hours-info">SAT: 8AM - 4PM</dt>
                 <dt className="dt-hours-info">SUN: 8AM - 4PM</dt>
               </dl> : 
               <dl style={{textAlign: 'center'}}>
                 {/* <dt className="dt-hours-info">Monday- Closed</dt> */}
-                <dt className="dt-hours-info">TUE-FRI: 9AM - 5PM</dt>
+                <dt className="dt-hours-info">MON-FRI: 9AM - 5PM</dt>
                 <dt className="dt-hours-info">SAT: 9AM - 5PM</dt>
                 <dt className="dt-hours-info">SUN: 9AM - 5PM</dt>
               </dl>
@@ -163,12 +177,13 @@ const Home = () => (
           </div> */}
         </Row>
         <Row className="justify-content-row">
-          <p className="p-notice-text-home">*Hours will differ based on season and will update here.</p>
+          <p className="p-notice-text-home">{summer ? "01 May - 01 Nov" : "02 Nov - 30 Apr"}</p>
         </Row>
       </div>
       </Container>
     </div>
   </div>
-);
+  )
+}
 
 export default Home;
