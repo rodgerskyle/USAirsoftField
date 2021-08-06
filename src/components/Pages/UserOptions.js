@@ -1,6 +1,9 @@
 import React, { Component } from 'react';
 import '../../App.css';
 
+import Snackbar from '@material-ui/core/Snackbar';
+import Alert from '@material-ui/lab/Alert';
+
 import { withFirebase } from '../Firebase';
 import { withAuthorization, AuthUserContext } from '../session';
 import { compose } from 'recompose';
@@ -38,6 +41,7 @@ class UserOptions extends Component {
             super_status: null,
             status: null,
             error: null,
+            notification: null,
         };
         this.handleChange = this.handleChange.bind(this);
     }
@@ -206,7 +210,14 @@ class UserOptions extends Component {
             return false // not expired
     }
 
+    // Copies text to clipboard and then posts a status saying successfully copied
+    copyToClipboard(uid, name){
+        navigator.clipboard.writeText("https://www.usairsoftfield.com/profilelookup/"+uid)
+        this.setState({notification: `Profile link for ${name} copied to clipboard.`})
+    }
+
     render() {
+        const { notification } = this.state
         return (
             <AuthUserContext.Consumer>
             {authUser =>
@@ -383,6 +394,10 @@ class UserOptions extends Component {
                             onClick={() => this.updateUser()}>
                                 Update
                             </Button>
+                            <Button variant="outline-primary" className="button-update-uo"
+                            onClick={() => this.copyToClipboard(this.props.match.params.id, this.state.name)}>
+                                Copy Profile Link
+                            </Button>
                             {this.state.status ? 
                                 <p className="status-uo-admin">{this.state.status}</p>
                             : null}
@@ -426,6 +441,11 @@ class UserOptions extends Component {
                         </Row> : null}
                     </Container>
                     : <h2 className="pagePlaceholder">Loading...</h2>}
+                <Snackbar open={notification !== null} autoHideDuration={6000} onClose={() => this.setState({ notification: null })}>
+                    <Alert onClose={() => this.setState({ notification: null })} severity="info">
+                        {notification}
+                    </Alert>
+                </Snackbar>
                 </div>
             }
             </AuthUserContext.Consumer>
