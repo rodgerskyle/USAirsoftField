@@ -3716,6 +3716,22 @@ body {
   background-color: #005c1c
 }
 
+.img-small-rank {
+  width: 32px;
+}
+
+.img-normal-rank {
+  width: 70px;
+}
+
+.img-large-rank {
+  width: 105px;
+}
+
+.img-xlarge-rank {
+  width: 245px;
+}
+
 .div-photo-cm {
   margin-bottom: 1.75rem;
 }
