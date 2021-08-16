@@ -3732,6 +3732,72 @@ body {
   width: 245px;
 }
 
+.date-tc-profile {
+  color: white !important;
+  font-weight: bold;
+}
+
+.email-template-div {
+  position: relative;
+  height: 1000px;
+}
+
+.email-template-div .MuiDrawer-paper {
+  position: absolute;
+  width: 57px;
+  overflow-x: hidden;
+}
+
+.email-template-base-div {
+  padding-left: 57px;
+}
+
+.email-templates-title-row {
+  padding-left: 72px;
+}
+
+.email-templates-title-h {
+  color: black;
+  flex: 1;
+  background-color: rgb(255, 255, 255);
+  padding: 10px;
+}
+
+.email-template-card-actions .MuiButton-textPrimary {
+  color: unset;
+}
+
+.email-template-card-actions .MuiButton-label {
+  text-shadow: none;
+}
+
+.email-template-card-actions .MuiButton-textPrimary {
+  background-color: black;
+  color: white;
+}
+
+.email-template-card-actions .MuiButton-textPrimary:hover {
+  background-color: rgb(51, 51, 51, .8);
+}
+
+.add-participant-form-group-rf .MuiCheckbox-colorPrimary.Mui-checked {
+  color: black;
+}
+
+.add-participant-form-group-rf {
+  margin-bottom: 0 !important;
+}
+
+.row-subscribe-email-rp .form-group {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0;
+}
+
+.row-subscribe-email-rp .MuiCheckbox-colorPrimary.Mui-checked {
+  color: black;
+}
+
 .div-photo-cm {
   margin-bottom: 1.75rem;
 }

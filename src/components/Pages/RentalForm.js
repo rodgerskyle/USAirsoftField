@@ -1,6 +1,6 @@
 import { faCog, faFolderMinus, faFolderOpen, faFolderPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Checkbox, TextField, Modal, Fade, Backdrop } from '@material-ui/core';
+import { Checkbox, TextField, Modal, Fade, Backdrop, FormControlLabel } from '@material-ui/core';
 import BottomNavigation from '@material-ui/core/BottomNavigation';
 import BottomNavigationAction from '@material-ui/core/BottomNavigationAction';
 import MUIButton from '@material-ui/core/Button';
@@ -15,6 +15,8 @@ import { Breadcrumb, Button, Card, Col, Container, Form, Row, Spinner } from 're
 import Collapse from '@material-ui/core/Collapse';
 import { LinkContainer } from 'react-router-bootstrap';
 import { compose } from 'recompose';
+import Snackbar from '@material-ui/core/Snackbar';
+import Alert from '@material-ui/lab/Alert';
 
 import PinCode from '../constants/pincode'
 
@@ -87,6 +89,7 @@ const INITIAL_STATE = {
     rentals: [],
     participantsRentals: [],
     rentalIndex: "",
+    rentalsError: null,
     index: "",
     newForm: null,
     createdIndex: "",
@@ -121,6 +124,7 @@ class RentalForm extends Component {
             rentalForms: [],
             value: 0,
             options: null,
+            members: null,
             hidenav: false,
             ...INITIAL_STATE,
         };
@@ -326,19 +330,36 @@ class RentalForm extends Component {
             this.setState({ showAddParticipant: !this.state.showAddParticipant, showAddRental: false })
     }
 
+    // Lookup participant to see if they exist already
+    // This will mainly be a function to check for members existance
+    // Return false if not found, true if found
+    lookupMember = (participants, name) => {
+        for (let i=0; i< participants.length; i++) {
+            if (participants[0].name === name)
+                return true;
+        }
+        return false;
+    }
+
     // Add to participants
-    addParticipant = (name) => {
+    addParticipant = (name, isMember) => {
         const { index } = this.state
-        // let participants = Array.from(rentalForms[index].participants ? rentalForms[index].participants : [])
         this.props.firebase.rentalGroup(index).once(('value'), group => {
             let participants = Array.from(group.val().participants ? group.val().participants : [])
+            if (this.lookupMember(participants, name)) {
+                // Member was found already in the list, possibly write that they are already in the group
+                this.setState({ rentalsError: "This member is already added to this group." })
+                return;
+            }
             let rentals = ""
             let gamepass = false
-            let obj = { name, rentals, gamepass }
+            let obj = { name, rentals, gamepass, isMember }
             // participants.splice(participants.length, 0, obj);
             participants.push(obj)
             this.props.firebase.rentalGroup(index).update({ participants })
-            this.props.firebase.validatedWaiver(name).set({ attached: true })
+            if (!isMember) {
+                this.props.firebase.validatedWaiver(name).set({ attached: true })
+            }
             this.showParticipantBox()
             this.setState({ search: "" })
         })
@@ -353,6 +374,7 @@ class RentalForm extends Component {
         this.props.firebase.validatedWaivers().off();
         this.props.firebase.rentalGroups().off()
         this.props.firebase.rentalOptions().off()
+        this.props.firebase.users().off()
     }
 
     componentDidMount() {
@@ -382,6 +404,17 @@ class RentalForm extends Component {
             this.setState({ rentalForms })
         })
 
+        this.props.firebase.users().on('value', snapshot => {
+            const usersObject = snapshot.val();
+
+            let usersList = Object.keys(usersObject).map(key => ({
+                ...usersObject[key],
+                uid: key,
+            }));
+            
+            this.setState({members: usersList})
+        })
+
         this.props.firebase.rentalOptions().on('value', snapshot => {
             const optionsObject = snapshot.val()
 
@@ -399,12 +432,12 @@ class RentalForm extends Component {
 
     render() {
         const {
-            cvc, number, expiry, name, zipcode, cvcError, expiryError, nameError, loading,
+            cvc, number, expiry, name, zipcode, cvcError, expiryError, nameError, loading, members, rentalsError,
             numberError, numparticipantsError, rentalnameError, zipcodeError, waivers, createdIndex, hidenav
         } = this.state
         const errorProps = { expiryError, nameError, numberError, numparticipantsError, cvcError, rentalnameError, zipcodeError }
         const add = this.addParticipant
-        const waiverProps = { waivers, add, loading }
+        const waiverProps = { waivers, add, loading, members }
 
         return (
             <AuthUserContext.Consumer>
@@ -498,6 +531,11 @@ class RentalForm extends Component {
                             <Collapse in={this.state.showAddParticipant} timeout="auto" unmountOnExit>
                                 <AddParticipant {...waiverProps} />
                             </Collapse>
+                            <Snackbar open={rentalsError} autoHideDuration={6000} onClose={() => this.setState({rentalsError: null})}>
+                                <Alert onClose={() => this.setState({rentalsError: null})} severity="error">
+                                    {rentalsError}
+                                </Alert>
+                            </Snackbar>
                         </Container>
                     </div>
                 )}
@@ -1020,7 +1058,8 @@ const CostRow = ({ obj }) => {
 
 function AddParticipant(props) {
     const [search, setSearch] = useState("")
-    let newprops = { ...props, search }
+    const [isMember, setIsMember] = useState(false)
+    let newprops = { ...props, search, isMember }
     return (
         <div>
             <Row className="row-margin15-top">
@@ -1028,7 +1067,7 @@ function AddParticipant(props) {
                     <Card className="admin-cards">
                         <Card.Header>
                             <Form onSubmit={e => { e.preventDefault(); }}>
-                                <Form.Group controlId="input1">
+                                <Form.Group controlId="input1" className="add-participant-form-group-rf">
                                     <Form.Label className="search-label-admin">Add Participant (Search by Name):</Form.Label>
                                     <Form.Control
                                         type="name"
@@ -1039,10 +1078,13 @@ function AddParticipant(props) {
                                             setSearch(e.target.value);
                                         }}
                                     />
+                                    <FormControlLabel label="Members Search" control={<Checkbox color="primary" />} value={isMember} onChange={(e) => {
+                                        setIsMember(!isMember)
+                                    }}/>
                                 </Form.Group>
                             </Form>
                         </Card.Header>
-                        <WaiverBox {...newprops} />
+                        {isMember ? <MemberBox {...newprops} /> : <WaiverBox {...newprops} />}
                     </Card>
                 </Col>
             </Row>
@@ -1050,6 +1092,7 @@ function AddParticipant(props) {
     )
 }
 
+// Converts Non-Members date to a date object
 function convertDate(date) {
     // Making date variables in correct format
     date = date.split('-');
@@ -1061,8 +1104,29 @@ function convertDate(date) {
     return new Date(date[2], date[0] - 1, date[1], date[3], date[4], date[5], date[6])
 }
 
+// Converts Members renewal date to a date object
+function membersConvertDate(date) {
+    if (date === "N/A")
+        return new Date(-621672192000001)
+    else {
+        let temp = date.split("-")
+        return (new Date(temp[2], temp[0], temp[1]))
+    }
+}
+
+// Convert renewal date to date signed up (just subtract one from the year)
+function membersConvertRenewal(date) {
+    if (date === "N/A")
+        return "N/A"
+    else {
+        let temp = date.split('-')
+        let newDate = new Date(temp[2]-1, temp[0]-1, temp[1])
+        return `${newDate.getMonth()+1}-${newDate.getDate()}-${newDate.getFullYear()}`
+    }
+}
+
 function WaiverBox(props) {
-    const { waivers, search, add, loading } = props
+    const { waivers, search, add, loading, isMember } = props
     return (
         <div>
             <Card.Body className="status-card-body-wl-admin">
@@ -1087,7 +1151,7 @@ function WaiverBox(props) {
                                                             {waiver.filename.substr(waiver.filename.lastIndexOf('(') + 1).split(')')[0]}
                                                         </Col>
                                                         <Col>
-                                                            <Button className="button-submit-admin2" onClick={() => add(waiver.filename)}
+                                                            <Button className="button-submit-admin2" onClick={() => add(waiver.filename, isMember)}
                                                                 type="submit" id="update" variant="success">
                                                                 Add
                                                             </Button>
@@ -1108,7 +1172,7 @@ function WaiverBox(props) {
                                                             {waiver.filename.substr(waiver.filename.lastIndexOf('(') + 1).split(')')[0]}
                                                         </Col>
                                                         <Col>
-                                                            <Button className="button-submit-admin2" onClick={() => add(waiver.filename)}
+                                                            <Button className="button-submit-admin2" onClick={() => add(waiver.filename, isMember)}
                                                                 type="submit" id="update" variant="success">
                                                                 Add
                                                             </Button>
@@ -1131,7 +1195,7 @@ function WaiverBox(props) {
                                                         {waiver.filename.substr(waiver.filename.lastIndexOf('(') + 1).split(')')[0]}
                                                     </Col>
                                                     <Col>
-                                                        <Button className="button-submit-admin2" onClick={() => add(waiver.filename)}
+                                                        <Button className="button-submit-admin2" onClick={() => add(waiver.filename, isMember)}
                                                             type="submit" id="update" variant="success">
                                                             Add
                                                         </Button>
@@ -1152,7 +1216,7 @@ function WaiverBox(props) {
                                                         {waiver.filename.substr(waiver.filename.lastIndexOf('(') + 1).split(')')[0]}
                                                     </Col>
                                                     <Col>
-                                                        <Button className="button-submit-admin2" onClick={() => add(waiver.filename)}
+                                                        <Button className="button-submit-admin2" onClick={() => add(waiver.filename, isMember)}
                                                             type="submit" id="update" variant="success">
                                                             Add
                                                         </Button>
@@ -1170,6 +1234,116 @@ function WaiverBox(props) {
         </div>
     )
 };
+
+function MemberBox(props) {
+    const { members, search, add, loading, isMember } = props
+    return (
+        <div>
+            <Card.Body className="status-card-body-wl-admin">
+                <div className="row-allwaivers-wl">
+                    {!loading ?
+                        members.sort((a, b) => 
+                        (membersConvertDate(b.renewal) - membersConvertDate(a.renewal)))
+                        .map((user, i) => (
+                                search !== "" ? // Search query case
+                                    user.name.toLowerCase().includes(search.toLowerCase()) ?
+                                        i % 2 === 0 ?
+                                            <Row className="row-wl" key={i}>
+                                                <Col className="col-name-fg">
+                                                    <Card.Text>
+                                                        {"(" + i + ") " + user.name}
+                                                    </Card.Text>
+                                                </Col>
+                                                <Col>
+                                                    <Row>
+                                                        <Col className="col-name-fg">
+                                                            {membersConvertRenewal(user.renewal)}
+                                                        </Col>
+                                                        <Col>
+                                                            <Button className="button-submit-admin2" onClick={() => add(`${user.name}(${membersConvertRenewal(user.renewal)})`, isMember)}
+                                                                type="submit" id="update" variant="success">
+                                                                Add
+                                                            </Button>
+                                                        </Col>
+                                                    </Row>
+                                                </Col>
+                                            </Row>
+                                            :
+                                            <Row className="status-card-offrow-admin-wl" key={i}>
+                                                <Col className="col-name-fg">
+                                                    <Card.Text>
+                                                        {"(" + i + ") " + user.name}
+                                                    </Card.Text>
+                                                </Col>
+                                                <Col>
+                                                    <Row>
+                                                        <Col className="col-name-fg">
+                                                            {membersConvertRenewal(user.renewal)}
+                                                        </Col>
+                                                        <Col>
+                                                            <Button className="button-submit-admin2" onClick={() => add(`${user.name}(${membersConvertRenewal(user.renewal)})`, isMember)}
+                                                                type="submit" id="update" variant="success">
+                                                                Add
+                                                            </Button>
+                                                        </Col>
+                                                    </Row>
+                                                </Col>
+                                            </Row>
+                                        : null
+                                    :
+                                    i % 2 === 0 ?
+                                        <Row className="row-wl" key={i}>
+                                            <Col className="col-name-fg">
+                                                <Card.Text>
+                                                    {"(" + i + ") " + user.name}
+                                                </Card.Text>
+                                            </Col>
+                                            <Col>
+                                                <Row>
+                                                    <Col className="col-name-fg">
+                                                        {membersConvertRenewal(user.renewal)}
+                                                    </Col>
+                                                    <Col>
+                                                        <Button className="button-submit-admin2" onClick={() => add(`${user.name}(${membersConvertRenewal(user.renewal)})`, isMember)}
+                                                            type="submit" id="update" variant="success">
+                                                            Add
+                                                        </Button>
+                                                    </Col>
+                                                </Row>
+                                            </Col>
+                                        </Row>
+                                        :
+                                        <Row className="status-card-offrow-admin-wl" key={i}>
+                                            <Col className="col-name-fg">
+                                                <Card.Text>
+                                                    {"(" + i + ") " + user.name}
+                                                </Card.Text>
+                                            </Col>
+                                            <Col>
+                                                <Row>
+                                                    <Col className="col-name-fg">
+                                                        {membersConvertRenewal(user.renewal)}
+                                                    </Col>
+                                                    <Col>
+                                                        <Button className="button-submit-admin2" onClick={() => add(`${user.name}(${membersConvertRenewal(user.renewal)})`, isMember)}
+                                                            type="submit" id="update" variant="success">
+                                                            Add
+                                                        </Button>
+                                                    </Col>
+                                                </Row>
+                                            </Col>
+                                        </Row>
+                            ))
+                        :
+                        <Row className="spinner-standard">
+                            <Spinner animation="border" />
+                        </Row>}
+                </div>
+            </Card.Body>
+        </div>
+    )
+};
+
 
 const condition = authUser =>
     authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]);

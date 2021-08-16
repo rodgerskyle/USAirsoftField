@@ -77,7 +77,7 @@ class ProfileLookup extends Component {
             matches = Object.keys(matchObj).map((key) => ({
                 ...matchObj[key],
                 date: key,
-            }))
+            })).reverse()
         }
         this.setState({ matches, authUser: user }, () => {
             this.getRank();
@@ -469,7 +469,7 @@ function MatchHistory({ matches }) {
                                     {matches ?
                                         matches.map((day) => (
                                             <TableRow key={day.date}>
-                                                <TableCell component="th" scope="row">
+                                                <TableCell component="th" scope="row" className="date-tc-profile">
                                                     {convert(day.date)}
                                                 </TableCell>
                                                 <TableCell align="center">{day.wins}</TableCell>

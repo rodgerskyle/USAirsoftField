@@ -191,8 +191,10 @@ class ReturnForm extends Component {
         if (rentalForm.participants) {
             for (let i=0; i < rentalForm.participants.length; i++) {
                 let name = rentalForm.participants[i].name;
-                // Delete from validated array to clean up and allow recycle of users
-                this.props.firebase.validatedWaiver(name.substr(0, name.lastIndexOf(')')+1)).remove()
+                // Delete from validated array to clean up and allow recycle of users if they are not a member
+                if (!rentalForm.participants[i].isMember) {
+                    this.props.firebase.validatedWaiver(name.substr(0, name.lastIndexOf(')')+1)).remove()
+                }
             }
         }
     }

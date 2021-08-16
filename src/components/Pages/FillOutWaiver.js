@@ -7,6 +7,7 @@ import SignatureCanvas from 'react-signature-canvas';
 import SignedWaiver from './SignedWaiver';
 import '../../App.css';
 import { encode } from 'firebase-encode';
+import { Checkbox, FormControlLabel } from '@material-ui/core';
 
 import waiver from '../../assets/Waiver-cutoff.png'
 
@@ -71,6 +72,7 @@ const INITIAL_STATE = {
   saveButton2: true,
   showLander: false,
   emailAdded: false,
+  acceptEmailSubscription: true,
   loading: false,
   selectedGroup: [],
   submitted: false,
@@ -226,6 +228,7 @@ class WaiverPageFormBase extends Component {
       showLander,
       emailAdded,
       loading,
+      acceptEmailSubscription,
       submitted
     } = this.state;
 
@@ -510,6 +513,16 @@ class WaiverPageFormBase extends Component {
                           </Row>
                         </div>
                         : null}
+                          <Row className="row-subscribe-email-rp">
+                            <Col>
+                              <Form.Group>
+                                  <FormControlLabel label="Subscribe to US Airsoft Newsletter" control={<Checkbox color="primary" checked={acceptEmailSubscription}/>} 
+                                  onChange={(e) => {
+                                      this.setState({acceptEmailSubscription: !acceptEmailSubscription})
+                                  }}/>
+                              </Form.Group>
+                            </Col>
+                          </Row>
                     </Form>
                   </Row>
                   {loading ?
@@ -548,7 +561,8 @@ class WaiverPageFormBase extends Component {
                       }
                       else {
                         this.setState({ submitted: true })
-                        this.emailSignUp();
+                        if (acceptEmailSubscription)
+                          this.emailSignUp();
                         this.completeWaiver(myProps)
                       }
                     }}>
