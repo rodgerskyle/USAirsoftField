@@ -334,8 +334,8 @@ class RentalForm extends Component {
     // This will mainly be a function to check for members existance
     // Return false if not found, true if found
     lookupMember = (participants, name) => {
-        for (let i=0; i< participants.length; i++) {
-            if (participants[0].name === name)
+        for (let i=0; i<participants.length; i++) {
+            if (participants[i].name === name)
                 return true;
         }
         return false;
@@ -531,7 +531,7 @@ class RentalForm extends Component {
                             <Collapse in={this.state.showAddParticipant} timeout="auto" unmountOnExit>
                                 <AddParticipant {...waiverProps} />
                             </Collapse>
-                            <Snackbar open={rentalsError} autoHideDuration={6000} onClose={() => this.setState({rentalsError: null})}>
+                            <Snackbar open={rentalsError !== null} autoHideDuration={6000} onClose={() => this.setState({rentalsError: null})}>
                                 <Alert onClose={() => this.setState({rentalsError: null})} severity="error">
                                     {rentalsError}
                                 </Alert>
