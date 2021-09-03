@@ -6,7 +6,7 @@ import { Container, Row, Col, OverlayTrigger, Tooltip, Spinner, Dropdown } from 
 import BootstrapSwitchButton from 'bootstrap-switch-button-react';
 
 import ranks from '../constants/ranks';
-import rankimages from '../constants/smallrankimgs';
+import rankimages from '../constants/rankimgs';
 import Td from '../constants/td';
 import * as ROLES from '../constants/roles';
 
@@ -415,7 +415,7 @@ function UserList({ users, getRank, monthly, currentMonth, currentYear, start, f
                                 }
                             >
                                 <img src={rankimages.length !== 0 ? rankimages[getRank(personalUser.points)] : null}
-                                    alt="Player Rank" className="rank-image-lb" />
+                                    alt="Player Rank" className="rank-image-lb img-small-rank" />
                             </OverlayTrigger>
                         </Td>
                         <Td cl={tv ? "profilelink-lb td-tv-lb" : "profilelink-lb td-name-lb"} to={'/profilelookup/' + personalUid} ct="link-td-profile-lb">{personalUser.name}</Td>
@@ -446,7 +446,7 @@ function UserList({ users, getRank, monthly, currentMonth, currentYear, start, f
                                     }
                                 >
                                     <img src={rankimages.length !== 0 ? rankimages[getRank(user.points)] : null}
-                                        alt="Player Rank" className="rank-image-lb" />
+                                        alt="Player Rank" className="rank-image-lb img-small-rank" />
                                 </OverlayTrigger>
                             </Td>
                             <Td cl={tv ? "profilelink-lb td-tv-lb" : "profilelink-lb td-name-lb"} to={'/profilelookup/' + user.uid} ct="link-td-lb">{user.name}</Td>

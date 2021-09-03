@@ -396,7 +396,9 @@ class EditSelectedForm extends Component {
         rentalForm.participants.splice(i, 1)
         this.props.firebase.rentalGroup(this.props.index).set(rentalForm)
         // this.props.firebase.participantsRentals(this.props.index, i).remove()
-        this.props.firebase.validatedWaiver(obj.name).update({attached: false})
+        if (!obj.isMember) {
+            this.props.firebase.validatedWaiver(obj.name).update({attached: false})
+        }
         if (i === 0) this.setState({removing: false})
     }
 

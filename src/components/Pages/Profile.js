@@ -78,7 +78,7 @@ class Profile extends Component {
                 matches = Object.keys(matchObj).map((key) => ({
                     ...matchObj[key],
                     date: key,
-                }))
+                })).reverse()
             }
             this.setState({ matches, authUser: obj.val() }, () => {
                 this.getRank();
@@ -283,7 +283,7 @@ class Profile extends Component {
                                                 </Col>
                                                 <Col md={4} className="col-rank-box-profile">
                                                     <img style={{width: '100%'}}src={images.length !== 0 ? images[rankindex] : null}
-                                                        alt="Players rank" />
+                                                        alt="Players rank" className="img-xlarge-rank"/>
                                                 </Col>
                                                 <Col md={4}>
                                                     <div className="div-stats-box-profile">
@@ -323,7 +323,7 @@ class Profile extends Component {
                                                         <div style={{ position: 'absolute' }}>
                                                             <Row className="justify-content-row">
                                                                 <img src={images.length !== 0 ? images[rankindex] : null}
-                                                                    alt="Players rank" />
+                                                                    alt="Players rank" className="img-large-rank"/>
                                                             </Row>
                                                             <Row className="justify-content-row">
                                                                 <p className="p-rank-title-rp">{ranks[rankindex]}</p>
@@ -340,7 +340,7 @@ class Profile extends Component {
                                                     </div>
                                                     <Row className="justify-content-row">
                                                         <img src={images.length !== 0 ? images[rankindex+1 < images.length ? rankindex + 1 : rankindex] : null}
-                                                            alt="Players rank" />
+                                                            alt="Players rank" className="img-large-rank"/>
                                                     </Row>
                                                     <Row className="justify-content-row">
                                                         <p className="p-next-rank-title-rp">{ranks[rankindex+1 < images.length ? rankindex + 1 : rankindex]}</p>
@@ -408,7 +408,7 @@ function RankList({ images, ranks, rankincs, page, rankindex }) {
                 {images.map((image, i) => (
                     <Col md={2} className={rankindex === i + (page * 6) ? "col-your-rank-rp" : "col-rank-icon-rp"} key={i}>
                         <Row className="justify-content-row">
-                            <img src={image} alt={ranks[i + (page * 6)]} />
+                            <img src={image} alt={ranks[i + (page * 6)]} className="img-normal-rank"/>
                         </Row>
                         <Row className="justify-content-row">
                             <p className="p-ranks-rp">{rankincs[i + (page * 6)]}</p>
@@ -466,7 +466,7 @@ function MatchHistory({ matches }) {
                                     {matches ?
                                         matches.map((day) => (
                                             <TableRow key={day.date}>
-                                                <TableCell component="th" scope="row">
+                                                <TableCell component="th" scope="row" className="date-tc-profile">
                                                     {convert(day.date)}
                                                 </TableCell>
                                                 <TableCell align="center">{day.wins}</TableCell>

@@ -23,9 +23,16 @@ Friday after Thanksgiving Day
 Day after Christmas
 */
 
+// Checks date to check for season
+function checkSeason() {
+  const today = new Date()
+  const summerStart = new Date(today.getFullYear(), 4, 1)
+  const summerEnd = new Date(today.getFullYear(), 10, 1)
+  return ((summerStart.getTime() <= today.getTime()) && (today.getTime() <= summerEnd.getTime()));
+}
+
 const Home = () => {
-  const today = new Date();
-  const [summer, setSummer] = React.useState(today.getMonth() > 4 && today.getMonth() < 10);
+  const [summer, setSummer] = React.useState(checkSeason());
   return (
   <div>
   <Helmet>

@@ -186,11 +186,26 @@ class ReturnForm extends Component {
         this.props.firebase.rentalOptions().set(options)
     }
 
+    // Looks through users attached to rental form and detaches them for future use
+    detachUsers(rentalForm) {
+        if (rentalForm.participants) {
+            for (let i=0; i < rentalForm.participants.length; i++) {
+                let name = rentalForm.participants[i].name;
+                // Delete from validated array to clean up and allow recycle of users if they are not a member
+                if (!rentalForm.participants[i].isMember) {
+                    this.props.firebase.validatedWaiver(name.substr(0, name.lastIndexOf(')')+1)).remove()
+                }
+            }
+        }
+    }
+
     // Release form function
     releaseForm() {
         const { index, rentalForms, email } = this.state
         // Add stock back to original
         this.returnRentals(rentalForms[index])
+        // Detach users from rental
+        this.detachUsers(rentalForms[index])
         // Email a summary if email is not empty
         if (email) {
             let sendReceipt = this.props.firebase.sendReceipt()
