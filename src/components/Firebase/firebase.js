@@ -69,7 +69,7 @@ class Firebase {
                         next(authUser);
                     });
             } else {
-                // fallback();
+                fallback();
             }
         });
 
@@ -128,6 +128,14 @@ class Firebase {
     emailList = (email) => this.db.ref(`emaillist/${email}`)
 
     emails = () => this.db.ref(`emaillist`)
+
+    // Email Templates
+
+    emailTemplateDefault = () => this.db.ref(`emailtemplates/default`)
+
+    emailTemplate = (template) => this.db.ref(`emailtemplates/list/${template}`)
+
+    emailTemplates = () => this.db.ref(`emailtemplates`)
 
     // Videos API
 

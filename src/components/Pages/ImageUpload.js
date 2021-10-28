@@ -15,6 +15,7 @@ import EditIcon from '@material-ui/icons/Edit';
 
 import Snackbar from '@material-ui/core/Snackbar';
 import Alert from '@material-ui/lab/Alert';
+import { ThreeSixtyOutlined } from '@material-ui/icons';
 
 const createImage = url =>
   new Promise((resolve, reject) => {
@@ -80,7 +81,7 @@ class ImageUpload extends Component {
             image: null,
             url: "",
             uploadedUrl: "",
-            authUser: JSON.parse(localStorage.getItem('authUser')),
+            authUser: null,
             loading: true,
             user: "",
             progress: null,
@@ -108,13 +109,16 @@ class ImageUpload extends Component {
     }
 
     componentDidMount() {
-        this.authSubscription = this.props.firebase.auth.onAuthStateChanged((user) => {
+        this.authSubscription = this.props.firebase.onAuthUserListener((user) => {
+            this.setState({authUser: user})
             this.props.firebase.user(user.uid).on('value', obj => {
                 if (obj.val().profilepic)
                     this.getProfile(`${user.uid}/profilepic`);
                 else
                     this.setState({ url: "" })
             })
+        }, () => {
+            this.setState({authUser: null})
         });
     }
 

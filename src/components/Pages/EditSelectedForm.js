@@ -377,9 +377,10 @@ class EditSelectedForm extends Component {
 
     // Remove participant from rental form
     remove = (i, obj) => {
+        let available;
         // Also move rentals back to original
         if (obj.rentals) {
-            let available = this.state.availableList
+            available = this.state.availableList
             for (let i=0; i<obj.rentals.length; i++) {
                 let index = available.findIndex(x => x.value === obj.rentals[i].value) 
                 if (index !== -1)
@@ -390,10 +391,13 @@ class EditSelectedForm extends Component {
                     available.push(this.returnObject(obj.rentals[i].value))
                 }
             }
-            this.props.firebase.availableRentals(this.props.index).set(available)
+            // this.props.firebase.availableRentals(this.props.index).set(available)
         }
         let rentalForm = this.state.rentalForms[this.props.index]
         rentalForm.participants.splice(i, 1)
+        if (obj.rentals){
+            rentalForm.available = available
+        }
         this.props.firebase.rentalGroup(this.props.index).set(rentalForm)
         // this.props.firebase.participantsRentals(this.props.index, i).remove()
         if (!obj.isMember) {

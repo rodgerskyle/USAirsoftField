@@ -25,12 +25,21 @@ class RentalOptions extends Component {
             loading: true,
             rentalsError: null,
             rentalsSuccess: null,
-            authUser: JSON.parse(localStorage.getItem('authUser')),
+            authUser: null,
         };
 
     }
 
     componentDidMount() {
+
+        this.authSubscription = 
+            this.props.firebase.onAuthUserListener((user) => {
+                if (user) {
+                    this.setState({authUser: user})
+            }
+        }, () => {
+            this.setState({authUser: null})
+        })
         this.props.firebase.rentalOptions().on('value', snapshot => {
             const optionsObject = snapshot.val()
 
@@ -44,6 +53,7 @@ class RentalOptions extends Component {
 
     componentWillUnmount() {
         this.props.firebase.rentalOptions().off()
+        this.authSubscription()
     }
 
 

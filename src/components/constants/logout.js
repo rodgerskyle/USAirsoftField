@@ -17,7 +17,9 @@ class Logout extends Component {
   }
 
   render() {
-    return(<div><Helmet><title>US Airsoft Field: Logout</title></Helmet></div>);
+    return(
+    <div><Helmet><title>US Airsoft Field: Logout</title></Helmet></div>
+    );
   }
 }
 

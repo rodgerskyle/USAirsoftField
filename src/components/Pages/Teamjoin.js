@@ -24,44 +24,47 @@ class TeamJoin extends Component {
         super(props);
 
         this.state = {
-            authUser: JSON.parse(localStorage.getItem('authUser')),
+            authUser: null,
             teamObject: '',
             teams: [],
             joinbox: [],
             statustext: '',
             loading: false,
-            userObject: '',
         };
     }
 
     componentDidMount() {
-        if (this.state.authUser.team !== null) {
-            //Figure out rank logic here
-            this.props.firebase.teams().on('value', snapshot => {
-                const teamsObject = snapshot.val();
-                const teamsList = Object.keys(teamsObject).map(key => ({
-                    ...teamsObject[key],
-                    teamname: key,
-                }));
-                let temp = [];
-                for (var i=0; i<teamsList.length; i++) {
-                    temp.push(teamsList[i].teamname)
-                }
-                this.setState({
-                    teams: temp,
-                    teamObject: teamsObject,
-                })
-            });
-            // Check user list
-            this.props.firebase.user(this.state.authUser.uid).once('value', snapshot => {
-                const userObject = snapshot.val();
-                this.setState({userObject: userObject});
-            })
-        }
+        this.authSubscription = 
+            this.props.firebase.onAuthUserListener((user) => {
+                if (user) {
+                    this.setState({authUser: user})
+                    if (user.team !== null) {
+                        //Figure out rank logic here
+                        this.props.firebase.teams().on('value', snapshot => {
+                            const teamsObject = snapshot.val();
+                            const teamsList = Object.keys(teamsObject).map(key => ({
+                                ...teamsObject[key],
+                                teamname: key,
+                            }));
+                            let temp = [];
+                            for (var i=0; i<teamsList.length; i++) {
+                                temp.push(teamsList[i].teamname)
+                            }
+                            this.setState({
+                                teams: temp,
+                                teamObject: teamsObject,
+                            })
+                        });
+                    }
+            }
+        }, () => {
+            this.setState({authUser: null})
+        })
     }
 
     componentWillUnmount() {
         this.props.firebase.teams().off();
+        this.authSubscription()
     }
 
     // Call function to request to join team
@@ -70,7 +73,7 @@ class TeamJoin extends Component {
         this.setState({loading: true})
         // Calling firebase function
         const requestTeam = this.props.firebase.requestTeam();
-        requestTeam({team: this.state.joinbox[0], user: this.state.userObject
+        requestTeam({team: this.state.joinbox[0], user: this.state.authUser
         }).then((result) => {
             //If complete finish loading
                 if(result.data.message === "Complete") {
