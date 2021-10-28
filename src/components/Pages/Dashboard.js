@@ -30,12 +30,12 @@ class WaiverDashboard extends Component {
 
 
     componentDidMount() {
-        this.authSubscription = this.props.firebase.auth.onAuthStateChanged((user) => {
+        this.authSubscription = this.props.firebase.onAuthUserListener((user) => {
           if (user) {
-            this.props.firebase.user(user.uid).once("value", (authUser) => {
-              this.setState({authUser: authUser.val()})
-            })
+              this.setState({authUser: user})
           }
+        }, () => {
+          this.setState({authUser: null})
         });
     }
 

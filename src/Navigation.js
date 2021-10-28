@@ -6,11 +6,12 @@ import {
     MDBNavbar, MDBNavbarBrand, MDBNavbarNav, MDBNavItem, MDBNavLink, MDBNavbarToggler, MDBCollapse,
     MDBDropdown, MDBDropdownToggle, MDBDropdownMenu, MDBDropdownItem
 } from "mdbreact";
+import { compose } from 'recompose';
 import MUIButton from '@material-ui/core/Button';
 import { Row } from 'react-bootstrap/';
 import { Link } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
-import { AuthUserContext } from './components/session';
+import { AuthUserContext, withAuthorization } from './components/session';
 import * as ROLES from './components/constants/roles';
 import { withFirebase } from './components/Firebase';
 import { Collapse } from '@material-ui/core';
@@ -21,7 +22,7 @@ class Navigation extends Component {
 
         this.state = {
             profilePic: default_profile,
-            authUser: JSON.parse(localStorage.getItem('authUser')),
+            authUser: null,
         };
     }
 
@@ -33,28 +34,31 @@ class Navigation extends Component {
     }
 
     componentDidMount() {
-        if (this.state.authUser) {
-            this.props.firebase.user(this.state.authUser.uid).on('value', obj => {
-                if (obj.val().profilepic)
-                    this.getProfile(this.state.authUser.uid)
-            })
-        }
+        this.authSubscription = 
+            this.props.firebase.onAuthUserListener((user) => {
+                if (user) {
+                    this.setState({authUser: user})
+                    this.getProfile(user.uid)
+            }
+        }, 
+        () => {
+                this.setState({authUser: null, profilePic: default_profile})
+            },
+        )
     }
 
     componentWillUnmount() {
-        if (this.state.authUser) 
-            this.props.firebase.user(this.state.authUser.uid).off()
+        this.authSubscription()
     }
 
     render() {
+        const { authUser } = this.state
         return(
             <div>
-                <AuthUserContext.Consumer>
-                    {authUser =>
-                        authUser ? !!authUser.roles[ROLES.WAIVER] ? <NavigationWaiver authUser={authUser} profilePic={this.state.profilePic}/>
-                            : <NavigationAuth authUser={authUser} profilePic={this.state.profilePic}/> : <NavigationNonAuth />
-                    }
-                </AuthUserContext.Consumer>
+                {
+                     authUser ? !!authUser.roles[ROLES.WAIVER] ? <NavigationWaiver authUser={authUser} profilePic={this.state.profilePic}/>
+                    : <NavigationAuth authUser={authUser} profilePic={this.state.profilePic}/> : <NavigationNonAuth />
+                }
             </div>
         )
     }
@@ -418,4 +422,6 @@ const NavigationNonAuth = () => {
     );
 }
 
-export default withFirebase(Navigation);
+export default compose(
+    withFirebase,
+    )(Navigation);

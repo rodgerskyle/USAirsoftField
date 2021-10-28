@@ -23,7 +23,9 @@ class Redirect extends Component {
 
     componentDidMount() {
         this.authSubscription = 
-            this.props.firebase.onAuthUserListener((user) => {this.setState({user})});
+            this.props.firebase.onAuthUserListener((user) => {
+                this.setState({user})
+            }, () => {this.setState({user: null})});
     }
     componentWillUnmount() {
         this.authSubscription()

@@ -23,7 +23,7 @@ class TeamCreate extends Component {
         this.nextPage = this.nextPage.bind(this);
 
         this.state = {
-            authUser: JSON.parse(localStorage.getItem('authUser')),
+            authUser: null,
             teamObject: '',
             teamicon: '',
             teamname: "",

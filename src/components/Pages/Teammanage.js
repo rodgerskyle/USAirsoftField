@@ -23,7 +23,7 @@ class TeamManage extends Component {
         this.onChange = this.onChange.bind(this);
 
         this.state = {
-            authUser: JSON.parse(localStorage.getItem('authUser')),
+            authUser: null,
             teamObject: '',
             teamicon: '',
             addbox: [],
@@ -54,28 +54,36 @@ class TeamManage extends Component {
     }
 
     componentDidMount() {
-        if (this.state.authUser.team !== "" && this.state.deleting === false) {
-            //Figure out rank logic here
-            this.props.firebase.team(this.state.authUser.team.toLowerCase()).on('value', snapshot => {
-                const Object = snapshot.val();
 
-                this.setState({
-                    teamObject: Object,
-                    requests: typeof Object.requests !== 'undefined' ? Object.requests : '',
-                    members: typeof Object.members !== 'undefined' ? Object.members: '',
-                    description: typeof Object.description !== 'undefined' ? Object.description: '',
-                }, function () {
-                    //After setstate, then grab points and profile
-                    this.getPicture(this.state.authUser.team.toLowerCase());
-                });
-            });
-        }
-        else {
-            this.setState({loading: false})
-        }
+        this.authSubscription = 
+            this.props.firebase.onAuthUserListener((user) => {
+                if (user) {
+                    this.setState({authUser: user})
+                    if (user.team !== "" && this.state.deleting === false) {
+                        //Figure out rank logic here
+                        this.props.firebase.team(user.team.toLowerCase()).on('value', snapshot => {
+                            const Object = snapshot.val();
+            
+                            this.setState({
+                                teamObject: Object,
+                                requests: typeof Object.requests !== 'undefined' ? Object.requests : '',
+                                members: typeof Object.members !== 'undefined' ? Object.members: '',
+                                description: typeof Object.description !== 'undefined' ? Object.description: '',
+                            }, function () {
+                                //After setstate, then grab points and profile
+                                this.getPicture(user.team.toLowerCase());
+                            });
+                        });
+                    }
+                }
+        }, () => {
+            this.setState({authUser: null})
+        })
+        this.setState({loading: false})
     }
 
     componentWillUnmount() {
+        this.authSubscription()
         if (this.state.authUser.team !== null)
             this.props.firebase.team(this.state.authUser.team.toLowerCase()).off();
     }
@@ -225,7 +233,7 @@ class TeamManage extends Component {
             if (result.data.message === "Complete") {
                 var tempUser = this.state.authUser;
                 tempUser.team = "";
-                localStorage.setItem('authUser', JSON.stringify(tempUser));
+                // localStorage.setItem('authUser', JSON.stringify(tempUser));
                 window.location.href = "/teams";
             }
         }).catch( (error) => {
@@ -271,7 +279,7 @@ class TeamManage extends Component {
                     // WIP on making sure cache is updated
                     var tempUser = this.state.authUser;
                     tempUser.team = "";
-                    localStorage.setItem('authUser', JSON.stringify(tempUser));
+                    // localStorage.setItem('authUser', JSON.stringify(tempUser));
                     window.location.href = "/teams";
                 }
             }).catch( (error) => {

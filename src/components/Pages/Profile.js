@@ -52,7 +52,7 @@ class Profile extends Component {
 
     componentDidMount() {
         //Figure out rank logic here
-        this.authSubscription = this.props.firebase.auth.onAuthStateChanged((user) => {
+        this.authSubscription = this.props.firebase.onAuthUserListener((user) => {
             // grab points and profile
             this.getMatchHistory(user)
         });
@@ -61,18 +61,16 @@ class Profile extends Component {
     componentWillUnmount() {
         //this.props.firebase.user(this.state.authUser.uid).off();
         this.authSubscription();
-        this.props.firebase.user(this.state.authUser.uid).off()
     }
 
 
     // grabs match history for the user and returns the object with the necessary information
     getMatchHistory(user) {
-        this.props.firebase.user(user.uid).on('value', (obj) => {
-            if (obj.val().profilepic)
+            if (user.profilepic)
                 this.getProfile(`${user.uid}/profilepic`);
             else
                 this.setState({ profileicon: default_profile })
-            const matchObj = obj.val().games
+            const matchObj = user.games
             let matches = null;
             if (matchObj) {
                 matches = Object.keys(matchObj).map((key) => ({
@@ -80,10 +78,9 @@ class Profile extends Component {
                     date: key,
                 })).reverse()
             }
-            this.setState({ matches, authUser: obj.val() }, () => {
+            this.setState({ matches, authUser: user }, () => {
                 this.getRank();
             })
-        })
     }
 
 

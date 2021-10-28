@@ -39,7 +39,7 @@ const FooterAuth = () => (
                 </Row>
                 <Row className="justify-content-row" style={{marginTop: 10, marginBottom: 10}}>
                     <Col md={2} className="col-link-footer">
-                        <Link className="link-footer" to="/404">STORE</Link>
+                        <a className="link-footer" href="https://www.usairsoft.com" target="_blank" rel="noopener noreferrer">STORE</a>
                     </Col>
                     <Col md={2} className="col-link-footer">
                         <Link className="link-footer" to="/about">ABOUT US</Link>
