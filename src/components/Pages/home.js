@@ -3,6 +3,8 @@ import { Container, Row, Col } from 'react-bootstrap/';
 import { Helmet } from 'react-helmet-async';
 import BackgroundVideo from '../constants/backgroundvideo';
 import MUIButton from '@material-ui/core/Button';
+import countdown_picture from '../../assets/countdown_picture.png';
+import Countdown from 'react-countdown';
 
 /* Needs to be added in
 Closed:
@@ -31,14 +33,67 @@ function checkSeason() {
   return ((summerStart.getTime() <= today.getTime()) && (today.getTime() <= summerEnd.getTime()));
 }
 
+// Renderer callback with condition
+const renderer = ({ hours, minutes, seconds, completed, days }) => {
+    // Render a countdown
+    return (
+      <div className="countdown-row-home">
+        <Row className="countdown-row-title-home">
+          <Col className="countdown-col-title-home" xs={3}>
+            Hours
+          </Col>
+          <Col className="countdown-col-title-home" xs={3}>
+            Minutes
+          </Col>
+          <Col className="countdown-col-title-home" xs={3}>
+            Seconds
+          </Col>
+        </Row>
+        <Row className="countdown-row-number-home">
+          <Col className="countdown-col-number-home" xs={3}>
+            {hours + (days*24)}
+          </Col>
+          <Col className="countdown-col-number-home" xs={3}>
+            {minutes}
+          </Col>
+          <Col className="countdown-col-number-home" xs={3}>
+            {seconds}
+          </Col>
+        </Row>
+      </div>
+    );
+};
+
+const Disclaimer = () => {
+  return (
+    <div className="disclaimer-div-home">
+      <Row>
+        <Col className="disclaimer-col-home">
+          Release Date: 11/05/2021
+        </Col>
+      </Row>
+    </div>
+  )
+}
+
 const Home = () => {
   const [summer, setSummer] = React.useState(checkSeason());
+  const launchDate = new Date(2021, 10, 5, 9, 0, 0)
+  console.log(launchDate)
   return (
   <div>
   <Helmet>
     <title>US Airsoft Field</title>
   </Helmet>
   <div className="background-static-all">
+    {!window.location.hostname.includes("usairsoftfield.com") ?
+    <Row>
+      <div className="countdown-div-home">
+        <img src={countdown_picture} className="countdown-img-home"/>
+        <Countdown date={launchDate} renderer={renderer} daysInHours={true}/>
+        {/* <Disclaimer /> */}
+      </div>
+    </Row> : null}
     <BackgroundVideo/>
     <Container fluid={true}>
       {/* <Row className="text-center justify-content-row">
