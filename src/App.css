@@ -4076,6 +4076,55 @@ body {
   text-align: center;
 }
 
+.countdown-div-home {
+  position: relative;
+}
+
+.countdown-row-home {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.countdown-col-number-home {
+  color: white;
+  font-size: 11vw;
+  display: flex;
+  justify-content: center;
+  /* font-weight: bold; */
+  margin-top: -30px;
+  font-family: "Gill Sans", sans-serif;
+}
+
+.countdown-col-title-home {
+  color: white;
+  font-size: 2vw;
+  display: flex;
+  justify-content: center;
+}
+
+.countdown-row-number-home {
+  width: 80vw;
+  justify-content: center;
+}
+
+.countdown-row-title-home {
+  width: 80vw;
+  justify-content: center;
+  padding-bottom: 25px;
+}
+
+.disclaimer-col-home {
+  color: white;
+  display: flex;
+  justify-content: center;
+}
+
+.disclaimer-div-home {
+  margin-top: -35px;
+}
+
 .padding-0 {
   padding: 0 !important;
 }
