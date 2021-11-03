@@ -39,13 +39,13 @@ const TimeTitles = () => {
       <div className="countdown-titles-row-home">
         <Row className="countdown-row-title-home">
           <Col className="countdown-col-title-home" xs={4}>
-            Hours
+            HOURS
           </Col>
           <Col className="countdown-col-title-home" xs={4}>
-            Minutes
+            MINUTES
           </Col>
           <Col className="countdown-col-title-home" xs={4}>
-            Seconds
+            SECONDS
           </Col>
         </Row>
       </div>
@@ -72,18 +72,6 @@ const renderer = ({ hours, minutes, seconds, completed, days }) => {
     );
 };
 
-const Disclaimer = () => {
-  return (
-    <div className="disclaimer-div-home">
-      <Row>
-        <Col className="disclaimer-col-home">
-          Release Date: 11/05/2021
-        </Col>
-      </Row>
-    </div>
-  )
-}
-
 const Home = () => {
   const [summer, setSummer] = React.useState(checkSeason());
   const launchDate = new Date(2021, 10, 5, 9, 0, 0)
@@ -97,11 +85,10 @@ const Home = () => {
     {!window.location.hostname.includes("usairsoftfield.com") ?
     <Row>
       <div className="countdown-div-home">
-        <img src={countdown_picture} className="countdown-img-home"/>
+        <img src={countdown_picture} className="countdown-img-home" alt="American flag in grayscale"/>
         <TimeTitles />
         <Countdown date={launchDate} renderer={renderer} daysInHours={true}/>
-        <img src={soldiers} className="soldiers-img-home"/>
-        {/* <Disclaimer /> */}
+        <img src={soldiers} className="soldiers-img-home" alt="Soldiers posing in line"/>
       </div>
     </Row> : null}
     <BackgroundVideo/>
