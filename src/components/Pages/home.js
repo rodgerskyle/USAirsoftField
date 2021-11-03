@@ -4,6 +4,9 @@ import { Helmet } from 'react-helmet-async';
 import BackgroundVideo from '../constants/backgroundvideo';
 import MUIButton from '@material-ui/core/Button';
 import countdown_picture from '../../assets/countdown_picture.png';
+import soldier1 from '../../assets/Tactical guy3.png';
+import soldier2 from '../../assets/Tactical guy4.png'
+import soldier3 from '../../assets/Tactical guy5.png'
 import Countdown from 'react-countdown';
 
 /* Needs to be added in
@@ -33,36 +36,61 @@ function checkSeason() {
   return ((summerStart.getTime() <= today.getTime()) && (today.getTime() <= summerEnd.getTime()));
 }
 
+const TimeTitles = () => {
+  return (
+      <div className="countdown-titles-row-home">
+        <Row className="countdown-row-title-home">
+          <Col className="countdown-col-title-home" xs={4}>
+            Hours
+          </Col>
+          <Col className="countdown-col-title-home" xs={4}>
+            Minutes
+          </Col>
+          <Col className="countdown-col-title-home" xs={4}>
+            Seconds
+          </Col>
+        </Row>
+      </div>
+  );
+}
+
 // Renderer callback with condition
 const renderer = ({ hours, minutes, seconds, completed, days }) => {
     // Render a countdown
     return (
       <div className="countdown-row-home">
-        <Row className="countdown-row-title-home">
-          <Col className="countdown-col-title-home" xs={3}>
-            Hours
-          </Col>
-          <Col className="countdown-col-title-home" xs={3}>
-            Minutes
-          </Col>
-          <Col className="countdown-col-title-home" xs={3}>
-            Seconds
-          </Col>
-        </Row>
         <Row className="countdown-row-number-home">
-          <Col className="countdown-col-number-home" xs={3}>
+          <Col className="countdown-col-number-home" xs={4}>
             {hours + (days*24)}
           </Col>
-          <Col className="countdown-col-number-home" xs={3}>
+          <Col className="countdown-col-number-home" xs={4}>
             {minutes}
           </Col>
-          <Col className="countdown-col-number-home" xs={3}>
+          <Col className="countdown-col-number-home" xs={4}>
             {seconds}
           </Col>
         </Row>
       </div>
     );
 };
+
+const Soldiers = () => {
+  return (
+    <div className="soldiers-div-home">
+      <Row>
+        <Col xs={4}>
+          <img src={soldier3} />
+        </Col>
+        <Col xs={4}>
+          <img src={soldier2} />
+        </Col>
+        <Col xs={4}>
+          <img src={soldier1} />
+        </Col>
+      </Row>
+    </div>
+  )
+}
 
 const Disclaimer = () => {
   return (
@@ -90,7 +118,9 @@ const Home = () => {
     <Row>
       <div className="countdown-div-home">
         <img src={countdown_picture} className="countdown-img-home"/>
+        <TimeTitles />
         <Countdown date={launchDate} renderer={renderer} daysInHours={true}/>
+        <Soldiers />
         {/* <Disclaimer /> */}
       </div>
     </Row> : null}
