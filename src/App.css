@@ -4078,23 +4078,33 @@ body {
 
 .countdown-div-home {
   position: relative;
+  margin-bottom: 3px;
 }
 
 .countdown-row-home {
   position: absolute;
-  top: 45%;
+  top: 33%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.countdown-titles-row-home {
+  position: absolute;
+  top: 20%;
   left: 50%;
   transform: translate(-50%, -50%);
 }
 
 .countdown-col-number-home {
   color: white;
-  font-size: 11vw;
+  font-size: 16vw;
   display: flex;
   justify-content: center;
-  /* font-weight: bold; */
-  margin-top: -30px;
-  font-family: "Gill Sans", sans-serif;
+  font-weight: 500;
+  font-family: "Teko";
+  text-shadow: 8px 8px 16px #000000;
+  /* -webkit-text-stroke-width: 4px;
+  -webkit-text-stroke-color: black; */
 }
 
 .countdown-col-title-home {
@@ -4102,6 +4112,14 @@ body {
   font-size: 2vw;
   display: flex;
   justify-content: center;
+}
+
+.soldiers-div-home {
+  position: absolute;
+  top: 65%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90vw
 }
 
 .countdown-row-number-home {
