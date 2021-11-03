@@ -4,9 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import BackgroundVideo from '../constants/backgroundvideo';
 import MUIButton from '@material-ui/core/Button';
 import countdown_picture from '../../assets/countdown_picture.png';
-import soldier1 from '../../assets/Tactical guy3.png';
-import soldier2 from '../../assets/Tactical guy4.png'
-import soldier3 from '../../assets/Tactical guy5.png'
+import soldiers from '../../assets/soldiers_picture.png';
 import Countdown from 'react-countdown';
 
 /* Needs to be added in
@@ -74,24 +72,6 @@ const renderer = ({ hours, minutes, seconds, completed, days }) => {
     );
 };
 
-const Soldiers = () => {
-  return (
-    <div className="soldiers-div-home">
-      <Row>
-        <Col xs={4}>
-          <img src={soldier3} />
-        </Col>
-        <Col xs={4}>
-          <img src={soldier2} />
-        </Col>
-        <Col xs={4}>
-          <img src={soldier1} />
-        </Col>
-      </Row>
-    </div>
-  )
-}
-
 const Disclaimer = () => {
   return (
     <div className="disclaimer-div-home">
@@ -120,7 +100,7 @@ const Home = () => {
         <img src={countdown_picture} className="countdown-img-home"/>
         <TimeTitles />
         <Countdown date={launchDate} renderer={renderer} daysInHours={true}/>
-        <Soldiers />
+        <img src={soldiers} className="soldiers-img-home"/>
         {/* <Disclaimer /> */}
       </div>
     </Row> : null}
