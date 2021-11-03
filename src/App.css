@@ -4083,21 +4083,21 @@ body {
 
 .countdown-row-home {
   position: absolute;
-  top: 33%;
+  top: 40%;
   left: 50%;
   transform: translate(-50%, -50%);
 }
 
 .countdown-titles-row-home {
   position: absolute;
-  top: 20%;
+  top: 22%;
   left: 50%;
   transform: translate(-50%, -50%);
 }
 
 .countdown-col-number-home {
   color: white;
-  font-size: 16vw;
+  font-size: 20vw;
   display: flex;
   justify-content: center;
   font-weight: 500;
@@ -4114,12 +4114,16 @@ body {
   justify-content: center;
 }
 
-.soldiers-div-home {
+.countdown-img-home {
+  position: relative;
+  top: 0;
+  left: 0;
+}
+
+.soldiers-img-home {
   position: absolute;
-  top: 65%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 90vw
+  top: 00;
+  left: 0;
 }
 
 .countdown-row-number-home {
