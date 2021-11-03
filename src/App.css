@@ -4109,9 +4109,10 @@ body {
 
 .countdown-col-title-home {
   color: white;
-  font-size: 2vw;
+  font-size: 3vw;
   display: flex;
   justify-content: center;
+  font-family: "Teko";
 }
 
 .countdown-img-home {

@@ -39,13 +39,13 @@ const TimeTitles = () => {
       <div className="countdown-titles-row-home">
         <Row className="countdown-row-title-home">
           <Col className="countdown-col-title-home" xs={4}>
-            Hours
+            HOURS
           </Col>
           <Col className="countdown-col-title-home" xs={4}>
-            Minutes
+            MINUTES
           </Col>
           <Col className="countdown-col-title-home" xs={4}>
-            Seconds
+            SECONDS
           </Col>
         </Row>
       </div>
