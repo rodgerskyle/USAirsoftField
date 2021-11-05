@@ -74,7 +74,7 @@ const renderer = ({ hours, minutes, seconds, completed, days }) => {
 
 const Home = () => {
   const [summer, setSummer] = React.useState(checkSeason());
-  const launchDate = new Date(2021, 10, 6, 0, 0, 0)
+  const launchDate = new Date(2021, 10, 6, 9, 0, 0)
   return (
   <div>
   <Helmet>
