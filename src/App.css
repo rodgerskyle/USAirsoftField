@@ -78,8 +78,7 @@ body {
   border-bottom: 1px solid black;
 }
 
-.bg-nav {
-  background-color: rgba(62,62,62,.9)!important;
+.bg-nav { background-color: rgba(22,22,22,.9)!important;
   border-bottom: 3px solid black;
 }
 
