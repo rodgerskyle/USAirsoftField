@@ -15,7 +15,6 @@ import EditIcon from '@material-ui/icons/Edit';
 
 import Snackbar from '@material-ui/core/Snackbar';
 import Alert from '@material-ui/lab/Alert';
-import { ThreeSixtyOutlined } from '@material-ui/icons';
 
 const createImage = url =>
   new Promise((resolve, reject) => {
