@@ -14,6 +14,7 @@ import { LinkContainer } from "react-router-bootstrap";
 import * as ROLES from './components/constants/roles';
 import { withFirebase } from './components/Firebase';
 import { Collapse } from '@material-ui/core';
+import Preheader from './components/constants/Preheader';
 
 class Navigation extends Component {
     constructor(props) {
@@ -142,6 +143,7 @@ const NavigationAuth = ({ authUser, profilePic}) => {
 
     return (
         <div>
+            <Preheader />
             <MDBNavbar dark expand={"xl"} className="bg-nav">
                 <MDBNavbarNav left>
                     <MDBNavbarBrand className="navitem-img">
@@ -192,9 +194,6 @@ const NavigationAuth = ({ authUser, profilePic}) => {
                         </MDBNavItem>
                         <MDBNavItem>
                             <MDBNavLink as={Link} className="nav-link" to="/leaderboard" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Leaderboard</MDBNavLink>
-                        </MDBNavItem>
-                        <MDBNavItem>
-                            <a className="nav-link" href="https://www.usairsoft.com" target="_blank" rel="noopener noreferrer">Store</a>
                         </MDBNavItem>
                         <MDBNavItem>
                             <MDBNavLink as={Link} className="nav-link" to="/teams" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Teams</MDBNavLink>
@@ -305,6 +304,7 @@ const NavigationNonAuth = () => {
     const profilePic = default_profile
     return (
         <div>
+            <Preheader />
             <MDBNavbar dark expand={"xl"} className="bg-nav">
                 <MDBNavbarNav left>
                     <MDBNavbarBrand className="navitem-img">
@@ -349,9 +349,6 @@ const NavigationNonAuth = () => {
                         </MDBNavItem>
                         <MDBNavItem>
                             <MDBNavLink as={Link} className="nav-link" to="/leaderboard" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Leaderboard</MDBNavLink>
-                        </MDBNavItem>
-                        <MDBNavItem>
-                            <a className="nav-link" href="https://www.usairsoft.com" target="_blank" rel="noopener noreferrer">Store</a>
                         </MDBNavItem>
                         <MDBNavItem>
                             <MDBNavLink as={Link} className="nav-link" to="/teams" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Teams</MDBNavLink>
