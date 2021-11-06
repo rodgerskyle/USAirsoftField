@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { withRouter } from 'react-router-dom';
 import { compose } from 'recompose';
-import logo from '../../assets/logo.png';
+import logo from '../../assets/usairsoft-small-logo.png';
 
 import { withFirebase } from '../Firebase';
 import ReCAPTCHA from 'react-google-recaptcha';

@@ -5,7 +5,7 @@ import { Container, Button, Row, Col } from 'react-bootstrap/';
 
 import { Typeahead } from 'react-bootstrap-typeahead';
 
-import logo from '../../assets/logo.png';
+import logo from '../../assets/usairsoft-small-logo.png';
 
 import { AuthUserContext, withAuthorization } from '../session';
 

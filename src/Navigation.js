@@ -1,5 +1,5 @@
 import React, { useState, Component } from 'react';
-import logo from './assets/us-airsoft-logo.png';
+import logo from './assets/usairsoft-wide-logo.png';
 import default_profile from './assets/default.png';
 import { NavDropdown } from 'react-bootstrap/';
 import {
@@ -11,7 +11,6 @@ import MUIButton from '@material-ui/core/Button';
 import { Row } from 'react-bootstrap/';
 import { Link } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
-import { AuthUserContext, withAuthorization } from './components/session';
 import * as ROLES from './components/constants/roles';
 import { withFirebase } from './components/Firebase';
 import { Collapse } from '@material-ui/core';
@@ -195,6 +194,9 @@ const NavigationAuth = ({ authUser, profilePic}) => {
                             <MDBNavLink as={Link} className="nav-link" to="/leaderboard" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Leaderboard</MDBNavLink>
                         </MDBNavItem>
                         <MDBNavItem>
+                            <a className="nav-link" href="https://www.usairsoft.com" target="_blank" rel="noopener noreferrer">Store</a>
+                        </MDBNavItem>
+                        <MDBNavItem>
                             <MDBNavLink as={Link} className="nav-link" to="/teams" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Teams</MDBNavLink>
                         </MDBNavItem>
                         {/* <MDBNavItem>
@@ -347,6 +349,9 @@ const NavigationNonAuth = () => {
                         </MDBNavItem>
                         <MDBNavItem>
                             <MDBNavLink as={Link} className="nav-link" to="/leaderboard" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Leaderboard</MDBNavLink>
+                        </MDBNavItem>
+                        <MDBNavItem>
+                            <a className="nav-link" href="https://www.usairsoft.com" target="_blank" rel="noopener noreferrer">Store</a>
                         </MDBNavItem>
                         <MDBNavItem>
                             <MDBNavLink as={Link} className="nav-link" to="/teams" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Teams</MDBNavLink>

@@ -11,7 +11,7 @@ import { compose } from 'recompose';
 
 import { Helmet } from 'react-helmet-async';
 
-import logo from '../../assets/logo.png';
+import logo from '../../assets/usairsoft-small-logo.png';
 
 class emailOptOut extends Component {
     constructor(props) {

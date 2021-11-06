@@ -79,7 +79,7 @@ body {
 }
 
 .bg-nav {
-  background-color: rgba(22,22,22,0.9)!important;
+  background-color: rgba(16,36,65,.9)!important;
   border-bottom: 3px solid black;
 }
 
@@ -4516,7 +4516,7 @@ body {
 
   .link-img-nav {
     display: flex;
-    justify-content: flex-start;
+    justify-content: center;
     align-items: center;
   }
 

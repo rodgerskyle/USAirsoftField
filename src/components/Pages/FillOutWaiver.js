@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import logo from '../../assets/logo.png';
+import logo from '../../assets/usairsoft-small-logo.png';
 import { Container, Row, Col, Form, Button, Breadcrumb, Spinner } from 'react-bootstrap/';
 import { pdf } from '@react-pdf/renderer';
 import { LinkContainer } from 'react-router-bootstrap';

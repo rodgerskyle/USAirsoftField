@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 
 import { Container, Row, Col, Spinner } from 'react-bootstrap/';
 
-import logo from '../../assets/logo.png';
+import logo from '../../assets/usairsoft-small-logo.png';
 
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';

@@ -18,10 +18,10 @@ class Instagram extends Component {
     }
 
     async componentDidMount() {
-        let data = await this.useInstagram();
-        this.setState({data}, () => {
-            this.setState({loading: false})
-        })
+        // let data = await this.useInstagram();
+        // this.setState({data}, () => {
+        //     this.setState({loading: false})
+        // })
     }
 
     slimUpPosts(response) {

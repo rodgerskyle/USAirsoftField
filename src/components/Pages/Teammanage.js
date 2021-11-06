@@ -6,7 +6,7 @@ import { AuthUserContext, withAuthorization } from '../session';
 
 import { withFirebase } from '../Firebase';
 
-import logo from '../../assets/logo.png';
+import logo from '../../assets/usairsoft-small-logo.png';
 
 import 'react-bootstrap-typeahead/css/Typeahead.css';
 

@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
-import logo from '../../assets/logo.png';
+import logo from '../../assets/usairsoft-small-logo.png';
 import { Button, Form, Container, Row, Col, Breadcrumb, Spinner } from 'react-bootstrap/';
 import { LinkContainer } from 'react-router-bootstrap';
 import SignatureCanvas from 'react-signature-canvas';
