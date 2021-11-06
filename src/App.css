@@ -78,9 +78,21 @@ body {
   border-bottom: 1px solid black;
 }
 
-.bg-nav {
-  background-color: rgba(22,22,22,0.9)!important;
+.bg-nav { background-color: rgba(22,22,22,.9)!important;
   border-bottom: 3px solid black;
+}
+
+.preheader-parent-div {
+  background-color: rgba(16,36,65,1)!important;
+}
+
+.preheader-link {
+  font-size: 12px;
+  padding-left: 0.5rem;
+}
+
+.preheader-link:hover {
+  text-decoration: unset;
 }
 
 .logobox {
@@ -2279,7 +2291,7 @@ body {
 }
 
 .img-profile-pic-nav {
-  border: 1px solid rgb(82, 82, 82);
+  border: 1px solid rgb(247, 247, 247);
 }
 
 .navbar-dark .MuiCollapse-hidden {
@@ -4516,7 +4528,7 @@ body {
 
   .link-img-nav {
     display: flex;
-    justify-content: flex-start;
+    justify-content: center;
     align-items: center;
   }
 

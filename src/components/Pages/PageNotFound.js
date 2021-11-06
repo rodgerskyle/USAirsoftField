@@ -4,7 +4,7 @@ import React, { Component } from 'react';
 import { Container, Row, Col } from 'react-bootstrap/';
 import { Helmet } from 'react-helmet-async';
 
-import logo from '../../assets/logo.png';
+import logo from '../../assets/usairsoft-small-logo.png';
 
 class PageNotFound extends Component {
     constructor(props) {

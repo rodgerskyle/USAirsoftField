@@ -4,7 +4,7 @@ import { Container, Row, Col, Form, Button, ProgressBar } from 'react-bootstrap/
 
 import { AuthUserContext, withAuthorization } from '../session';
 
-import logo from '../../assets/logo.png';
+import logo from '../../assets/usairsoft-small-logo.png';
 
 import { withFirebase } from '../Firebase';
 

@@ -43,7 +43,7 @@ import {
     formatExpirationDate,
 } from "../constants/formatcard";
 
-import logo from '../../assets/logo.png';
+import logo from '../../assets/usairsoft-small-logo.png';
 import '../../App.css';
 import RentalOptions from "./RentalOptions";
 

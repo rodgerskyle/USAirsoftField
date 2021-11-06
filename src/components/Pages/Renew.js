@@ -9,7 +9,7 @@ import SignedWaiver from './SignedWaiver';
 import SignatureCanvas from 'react-signature-canvas';
 import waiver from '../../assets/Waiver-cutoff.png'
 
-import logo from '../../assets/logo.png';
+import logo from '../../assets/usairsoft-small-logo.png';
 
 import { pdf } from '@react-pdf/renderer';
 

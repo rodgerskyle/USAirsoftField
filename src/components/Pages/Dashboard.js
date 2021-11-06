@@ -8,7 +8,7 @@ import { compose } from 'recompose';
 import { Container, Row, Col, Breadcrumb, Card} from 'react-bootstrap/';
 
 import { Link } from 'react-router-dom';
-import logo from '../../assets/logo.png';
+import logo from '../../assets/usairsoft-small-logo.png';
 
 import * as ROLES from '../constants/roles';
 

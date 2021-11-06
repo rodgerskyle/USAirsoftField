@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
-import logo from './assets/logo.png';
+import logo from './assets/usairsoft-small-logo.png';
  
 import { withFirebase } from './components/Firebase';
 import { Container, Row, Col, Form, Button, InputGroup, FormControl } from 'react-bootstrap/';

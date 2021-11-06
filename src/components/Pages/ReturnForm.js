@@ -6,7 +6,7 @@ import IconButton from '@material-ui/core/IconButton';
 import { Contacts, AssignmentTurnedIn, ArrowBackIos, VerifiedUser } from '@material-ui/icons';
 import MUIButton from '@material-ui/core/Button';
 
-import logo from '../../assets/logo.png';
+import logo from '../../assets/usairsoft-small-logo.png';
 import Snackbar from '@material-ui/core/Snackbar';
 import MuiAlert from '@material-ui/lab/Alert';
 

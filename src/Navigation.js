@@ -1,5 +1,5 @@
 import React, { useState, Component } from 'react';
-import logo from './assets/us-airsoft-logo.png';
+import logo from './assets/usairsoft-wide-logo.png';
 import default_profile from './assets/default.png';
 import { NavDropdown } from 'react-bootstrap/';
 import {
@@ -11,10 +11,10 @@ import MUIButton from '@material-ui/core/Button';
 import { Row } from 'react-bootstrap/';
 import { Link } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
-import { AuthUserContext, withAuthorization } from './components/session';
 import * as ROLES from './components/constants/roles';
 import { withFirebase } from './components/Firebase';
 import { Collapse } from '@material-ui/core';
+import Preheader from './components/constants/Preheader';
 
 class Navigation extends Component {
     constructor(props) {
@@ -143,6 +143,7 @@ const NavigationAuth = ({ authUser, profilePic}) => {
 
     return (
         <div>
+            <Preheader />
             <MDBNavbar dark expand={"xl"} className="bg-nav">
                 <MDBNavbarNav left>
                     <MDBNavbarBrand className="navitem-img">
@@ -303,6 +304,7 @@ const NavigationNonAuth = () => {
     const profilePic = default_profile
     return (
         <div>
+            <Preheader />
             <MDBNavbar dark expand={"xl"} className="bg-nav">
                 <MDBNavbarNav left>
                     <MDBNavbarBrand className="navitem-img">

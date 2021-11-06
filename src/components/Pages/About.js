@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Container, Row, Col } from 'react-bootstrap/';
-import logowbg from '../../assets/usairsoftwbg.png';
+import logowbg from '../../assets/usairsoft-square-logo.png';
 import { Helmet } from 'react-helmet-async';
 class About extends Component {
     constructor(props) {
