@@ -18,7 +18,9 @@ import { LinkContainer } from 'react-router-bootstrap';
 
 import * as ROLES from '../constants/roles';
 import { Helmet } from 'react-helmet-async';
-import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField, Checkbox } from '@material-ui/core';
+import { Dialog, DialogActions, DialogContent, DialogTitle, Button, 
+    TextField, Checkbox, Select, MenuItem, InputLabel, FormControl } from '@material-ui/core';
+import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 
 class Birthday extends Component {
     constructor(props) {
@@ -39,6 +41,10 @@ class Birthday extends Component {
             depositAmt: 0,
             notes: '',
             index: null,
+            startTimeHours: '',
+            startTimeMinutes: '',
+            endTimeHours: '',
+            endTimeMinutes: '',
         }
     }
 
@@ -52,6 +58,12 @@ class Birthday extends Component {
     // Handles the logic on click for existing event
     handleEdit = (event) => {
         // need to set all the states to the items in the event
+        this.setState({ 
+            startTimeHours: event.start.getHours(),
+            startTimeMinutes: event.start.getMinutes(),
+            endTimeHours: event.end.getHours(),
+            endTimeMinutes: event.end.getMinutes()
+        })
         this.setState(event)
         this.setState({editDialog: true})
     }
@@ -81,6 +93,10 @@ class Birthday extends Component {
                         deposit: false,
                         depositAmt: 0,
                         notes: '',
+                        startTimeHours: '',
+                        startTimeMinutes: '',
+                        endTimeHours: '',
+                        endTimeMinutes: '',
                     })
                 })
             })
@@ -125,6 +141,12 @@ class Birthday extends Component {
                 depositAmt: 0,
                 notes: '',
                 index: null,
+                start: null,
+                startTimeHours: '',
+                startTimeMinutes: '',
+                endTimeHours: '',
+                endTimeMinutes: '',
+                end: null,
             })
         })
     }
@@ -140,6 +162,12 @@ class Birthday extends Component {
                 depositAmt: 0,
                 notes: '',
                 index: null,
+                start: null,
+                startTimeHours: '',
+                startTimeMinutes: '',
+                endTimeHours: '',
+                endTimeMinutes: '',
+                end: null,
             })
         })
     }
@@ -174,6 +202,42 @@ class Birthday extends Component {
         this.setState({ notes: val })
     }
 
+    // Handles start time for calendar selection
+    handleStartHour = (val) => {
+        console.log(val)
+        let startTemp = this.state.start
+        startTemp.setHours(val)
+        console.log(startTemp)
+        this.setState({ start: startTemp, startTimeHours: val })
+    }
+
+    // Handles start time for calendar selection
+    handleStartMinutes = (val) => {
+        console.log(val)
+        let startTemp = this.state.start
+        startTemp.setMinutes(val)
+        console.log(startTemp)
+        this.setState({ start: startTemp, startTimeMinutes: val })
+    }
+
+    // Handles start time for calendar selection
+    handleEndHour = (val) => {
+        console.log(val)
+        let endTemp = this.state.end
+        endTemp.setHours(val)
+        console.log(endTemp)
+        this.setState({ end: endTemp, endTimeHours: val })
+    }
+
+    // Handles start time for calendar selection
+    handleEndMinutes = (val) => {
+        console.log(val)
+        let endTemp = this.state.end
+        endTemp.setMinutes(val)
+        console.log(endTemp)
+        this.setState({ end: endTemp, endTimeMinutes: val })
+    }
+
     componentDidMount() {
         this.props.firebase.calendar().on('value', obj => {
             let events = obj.val() || [];
@@ -201,7 +265,8 @@ class Birthday extends Component {
         const localizer = momentLocalizer(moment)
         const { 
             events, loading, showDialog, start, deposit, 
-            notes, editDialog, title, size, receipt, depositAmt
+            notes, editDialog, title, size, receipt, depositAmt,
+            startTimeHours, startTimeMinutes, endTimeHours, endTimeMinutes
         } = this.state
         const VM = Views.MONTH
         return (
@@ -244,6 +309,136 @@ class Birthday extends Component {
                                     {`Selected Date: ${start !== null ? start.toDateString() : start}`}
                                 </DialogTitle>
                                 <DialogContent className="content-create-birthday">
+                                    <Row>
+                                        <Col md={7}>
+                                            Start Time
+                                        </Col>
+                                        <Col md={5}>
+                                            End Time
+                                        </Col>
+                                    </Row>
+                                    <Row className="margin15-bottom justify-content-row">
+                                        {/* Start time hours */}
+                                        <Col md={2}>
+                                            <FormControl fullWidth className="tester-test">
+                                                <InputLabel style={{fontSize: 12}} id="time-start-hours-label">Hour</InputLabel>
+                                                <Select
+                                                    labelId='time-start-hours-label'
+                                                    id='time-start-hours-label'
+                                                    value={startTimeHours}
+                                                    label="Start Time Hour"
+                                                    onChange={(e) => this.handleStartHour(e.target.value)}
+                                                    MenuProps={{ style: { maxHeight: 'calc(50% - 96px)'}}}
+                                                >
+                                                    <MenuItem value={0}>0</MenuItem>
+                                                    <MenuItem value={1}>1</MenuItem>
+                                                    <MenuItem value={2}>2</MenuItem>
+                                                    <MenuItem value={3}>3</MenuItem>
+                                                    <MenuItem value={4}>4</MenuItem>
+                                                    <MenuItem value={5}>5</MenuItem>
+                                                    <MenuItem value={6}>6</MenuItem>
+                                                    <MenuItem value={7}>7</MenuItem>
+                                                    <MenuItem value={8}>8</MenuItem>
+                                                    <MenuItem value={9}>9</MenuItem>
+                                                    <MenuItem value={10}>10</MenuItem>
+                                                    <MenuItem value={11}>11</MenuItem>
+                                                    <MenuItem value={12}>12</MenuItem>
+                                                    <MenuItem value={13}>13</MenuItem>
+                                                    <MenuItem value={14}>14</MenuItem>
+                                                    <MenuItem value={15}>15</MenuItem>
+                                                    <MenuItem value={16}>16</MenuItem>
+                                                    <MenuItem value={17}>17</MenuItem>
+                                                    <MenuItem value={18}>18</MenuItem>
+                                                    <MenuItem value={19}>19</MenuItem>
+                                                    <MenuItem value={20}>20</MenuItem>
+                                                    <MenuItem value={21}>21</MenuItem>
+                                                    <MenuItem value={22}>22</MenuItem>
+                                                    <MenuItem value={23}>23</MenuItem>
+                                                </Select>
+                                            </FormControl>
+                                        </Col>
+                                        <Col md={3}>
+                                            <FormControl fullWidth>
+                                                <InputLabel style={{fontSize: 12}} id="time-start-minutes-label">Minutes</InputLabel>
+                                                <Select
+                                                    labelId='time-start-minutes-label'
+                                                    id='time-start-minutes-label'
+                                                    value={startTimeMinutes}
+                                                    label="Start Time Minutes"
+                                                    onChange={(e) => this.handleStartMinutes(e.target.value)}
+                                                >
+                                                    <MenuItem value={0}>00</MenuItem>
+                                                    <MenuItem value={10}>10</MenuItem>
+                                                    <MenuItem value={20}>20</MenuItem>
+                                                    <MenuItem value={30}>30</MenuItem>
+                                                    <MenuItem value={40}>40</MenuItem>
+                                                    <MenuItem value={50}>50</MenuItem>
+                                                </Select>
+                                            </FormControl>
+                                        </Col>
+                                        <Col md={2} className="col-center-middle">
+                                            <ArrowForwardIcon />
+                                        </Col>
+                                        {/* End time hours */}
+                                        <Col md={2}>
+                                            <FormControl fullWidth>
+                                                <InputLabel style={{fontSize: 12}} id="time-start-hours-label">Hour</InputLabel>
+                                                <Select
+                                                    labelId='time-start-hours-label'
+                                                    id='time-start-hours-label'
+                                                    value={endTimeHours}
+                                                    label="Start Time Hour"
+                                                    className="hour-select-birthday"
+                                                    onChange={(e) => this.handleEndHour(e.target.value)}
+                                                    MenuProps={{ style: { maxHeight: 'calc(50% - 96px)'}}}
+                                                >
+                                                    <MenuItem value={0}>0</MenuItem>
+                                                    <MenuItem value={1}>1</MenuItem>
+                                                    <MenuItem value={2}>2</MenuItem>
+                                                    <MenuItem value={3}>3</MenuItem>
+                                                    <MenuItem value={4}>4</MenuItem>
+                                                    <MenuItem value={5}>5</MenuItem>
+                                                    <MenuItem value={6}>6</MenuItem>
+                                                    <MenuItem value={7}>7</MenuItem>
+                                                    <MenuItem value={8}>8</MenuItem>
+                                                    <MenuItem value={9}>9</MenuItem>
+                                                    <MenuItem value={10}>10</MenuItem>
+                                                    <MenuItem value={11}>11</MenuItem>
+                                                    <MenuItem value={12}>12</MenuItem>
+                                                    <MenuItem value={13}>13</MenuItem>
+                                                    <MenuItem value={14}>14</MenuItem>
+                                                    <MenuItem value={15}>15</MenuItem>
+                                                    <MenuItem value={16}>16</MenuItem>
+                                                    <MenuItem value={17}>17</MenuItem>
+                                                    <MenuItem value={18}>18</MenuItem>
+                                                    <MenuItem value={19}>19</MenuItem>
+                                                    <MenuItem value={20}>20</MenuItem>
+                                                    <MenuItem value={21}>21</MenuItem>
+                                                    <MenuItem value={22}>22</MenuItem>
+                                                    <MenuItem value={23}>23</MenuItem>
+                                                </Select>
+                                            </FormControl>
+                                        </Col>
+                                        <Col md={3}>
+                                            <FormControl fullWidth>
+                                                <InputLabel style={{fontSize: 12}} id="time-start-minutes-label">Minutes</InputLabel>
+                                                <Select
+                                                    labelId='time-end-minutes-label'
+                                                    id='time-end-minutes-label'
+                                                    value={endTimeMinutes}
+                                                    label="End Time Minutes"
+                                                    onChange={(e) => this.handleEndMinutes(e.target.value)}
+                                                >
+                                                    <MenuItem value={0}>00</MenuItem>
+                                                    <MenuItem value={10}>10</MenuItem>
+                                                    <MenuItem value={20}>20</MenuItem>
+                                                    <MenuItem value={30}>30</MenuItem>
+                                                    <MenuItem value={40}>40</MenuItem>
+                                                    <MenuItem value={50}>50</MenuItem>
+                                                </Select>
+                                            </FormControl>
+                                        </Col>
+                                    </Row>
                                     <Row>
                                         <Col>
                                             <TextField
@@ -334,6 +529,135 @@ class Birthday extends Component {
                                     {`Selected Date: ${start !== null ? start.toDateString() : start}`}
                                 </DialogTitle>
                                 <DialogContent className="content-create-birthday">
+                                    <Row>
+                                        <Col md={7}>
+                                            Start Time
+                                        </Col>
+                                        <Col md={5}>
+                                            End Time
+                                        </Col>
+                                    </Row>
+                                    <Row className="margin15-bottom justify-content-row">
+                                        {/* Start time hours */}
+                                        <Col md={2}>
+                                            <FormControl fullWidth>
+                                                <InputLabel style={{fontSize: 12}} id="time-start-hours-label">Hour</InputLabel>
+                                                <Select
+                                                    labelId='time-start-hours-label'
+                                                    id='time-start-hours-label'
+                                                    value={startTimeHours}
+                                                    label="Start Time Hour"
+                                                    onChange={(e) => this.handleStartHour(e.target.value)}
+                                                    MenuProps={{ style: { maxHeight: 'calc(50% - 96px)'}}}
+                                                >
+                                                    <MenuItem value={0}>0</MenuItem>
+                                                    <MenuItem value={1}>1</MenuItem>
+                                                    <MenuItem value={2}>2</MenuItem>
+                                                    <MenuItem value={3}>3</MenuItem>
+                                                    <MenuItem value={4}>4</MenuItem>
+                                                    <MenuItem value={5}>5</MenuItem>
+                                                    <MenuItem value={6}>6</MenuItem>
+                                                    <MenuItem value={7}>7</MenuItem>
+                                                    <MenuItem value={8}>8</MenuItem>
+                                                    <MenuItem value={9}>9</MenuItem>
+                                                    <MenuItem value={10}>10</MenuItem>
+                                                    <MenuItem value={11}>11</MenuItem>
+                                                    <MenuItem value={12}>12</MenuItem>
+                                                    <MenuItem value={13}>13</MenuItem>
+                                                    <MenuItem value={14}>14</MenuItem>
+                                                    <MenuItem value={15}>15</MenuItem>
+                                                    <MenuItem value={16}>16</MenuItem>
+                                                    <MenuItem value={17}>17</MenuItem>
+                                                    <MenuItem value={18}>18</MenuItem>
+                                                    <MenuItem value={19}>19</MenuItem>
+                                                    <MenuItem value={20}>20</MenuItem>
+                                                    <MenuItem value={21}>21</MenuItem>
+                                                    <MenuItem value={22}>22</MenuItem>
+                                                    <MenuItem value={23}>23</MenuItem>
+                                                </Select>
+                                            </FormControl>
+                                        </Col>
+                                        <Col md={3}>
+                                            <FormControl fullWidth>
+                                                <InputLabel style={{fontSize: 12}} id="time-start-minutes-label">Minutes</InputLabel>
+                                                <Select
+                                                    labelId='time-start-minutes-label'
+                                                    id='time-start-minutes-label'
+                                                    value={startTimeMinutes}
+                                                    label="Start Time Minutes"
+                                                    onChange={(e) => this.handleStartMinutes(e.target.value)}
+                                                >
+                                                    <MenuItem value={0}>00</MenuItem>
+                                                    <MenuItem value={10}>10</MenuItem>
+                                                    <MenuItem value={20}>20</MenuItem>
+                                                    <MenuItem value={30}>30</MenuItem>
+                                                    <MenuItem value={40}>40</MenuItem>
+                                                    <MenuItem value={50}>50</MenuItem>
+                                                </Select>
+                                            </FormControl>
+                                        </Col>
+                                        <Col md={2} className="col-center-middle">
+                                            <ArrowForwardIcon />
+                                        </Col>
+                                        {/* End time hours */}
+                                        <Col md={2}>
+                                            <FormControl fullWidth>
+                                                <InputLabel style={{fontSize: 12}} id="time-start-hours-label">Hour</InputLabel>
+                                                <Select
+                                                    labelId='time-start-hours-label'
+                                                    id='time-start-hours-label'
+                                                    value={endTimeHours}
+                                                    label="Start Time Hour"
+                                                    onChange={(e) => this.handleEndHour(e.target.value)}
+                                                    MenuProps={{ style: { maxHeight: 'calc(50% - 96px)'}}}
+                                                >
+                                                    <MenuItem value={0}>0</MenuItem>
+                                                    <MenuItem value={1}>1</MenuItem>
+                                                    <MenuItem value={2}>2</MenuItem>
+                                                    <MenuItem value={3}>3</MenuItem>
+                                                    <MenuItem value={4}>4</MenuItem>
+                                                    <MenuItem value={5}>5</MenuItem>
+                                                    <MenuItem value={6}>6</MenuItem>
+                                                    <MenuItem value={7}>7</MenuItem>
+                                                    <MenuItem value={8}>8</MenuItem>
+                                                    <MenuItem value={9}>9</MenuItem>
+                                                    <MenuItem value={10}>10</MenuItem>
+                                                    <MenuItem value={11}>11</MenuItem>
+                                                    <MenuItem value={12}>12</MenuItem>
+                                                    <MenuItem value={13}>13</MenuItem>
+                                                    <MenuItem value={14}>14</MenuItem>
+                                                    <MenuItem value={15}>15</MenuItem>
+                                                    <MenuItem value={16}>16</MenuItem>
+                                                    <MenuItem value={17}>17</MenuItem>
+                                                    <MenuItem value={18}>18</MenuItem>
+                                                    <MenuItem value={19}>19</MenuItem>
+                                                    <MenuItem value={20}>20</MenuItem>
+                                                    <MenuItem value={21}>21</MenuItem>
+                                                    <MenuItem value={22}>22</MenuItem>
+                                                    <MenuItem value={23}>23</MenuItem>
+                                                </Select>
+                                            </FormControl>
+                                        </Col>
+                                        <Col md={3}>
+                                            <FormControl fullWidth>
+                                                <InputLabel style={{fontSize: 12}} id="time-start-minutes-label">Minutes</InputLabel>
+                                                <Select
+                                                    labelId='time-end-minutes-label'
+                                                    id='time-end-minutes-label'
+                                                    value={endTimeMinutes}
+                                                    label="End Time Minutes"
+                                                    onChange={(e) => this.handleEndMinutes(e.target.value)}
+                                                >
+                                                    <MenuItem value={0}>00</MenuItem>
+                                                    <MenuItem value={10}>10</MenuItem>
+                                                    <MenuItem value={20}>20</MenuItem>
+                                                    <MenuItem value={30}>30</MenuItem>
+                                                    <MenuItem value={40}>40</MenuItem>
+                                                    <MenuItem value={50}>50</MenuItem>
+                                                </Select>
+                                            </FormControl>
+                                        </Col>
+                                    </Row>
                                     <Row>
                                         <Col>
                                             <TextField

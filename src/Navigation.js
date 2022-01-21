@@ -34,6 +34,9 @@ class Navigation extends Component {
     }
 
     componentDidMount() {
+        if (window.location.href.indexOf("admin") > -1) {
+            this.setState({showNav: false})
+        }
         this.authSubscription = 
             this.props.firebase.onAuthUserListener((user) => {
                 if (user) {
