@@ -31,6 +31,8 @@ img {
 
 body {
   font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji" !important;
+  font-size: 1rem !important;
+  letter-spacing: unset !important;
   -webkit-font-smoothing: antialiased;
   line-height: 1.5 !important;
   background-color: rgb(1, 1, 1) !important;
@@ -2029,6 +2031,11 @@ body {
   justify-content: center;
 }
 
+.justify-content-center-link {
+  justify-content: center;
+  display: flex;
+}
+
 .padding-5px {
   padding: 5px;
   color: white;
@@ -3796,12 +3803,65 @@ body {
   position: relative;
 }
 
-.div-parent-admin .MuiDrawer-paper {
-  position: absolute;
+.background-static-admin {
+  min-height: 91vh !important;
 }
 
-.div-parent-admin .MuiAppBar-root {
+/* .div-parent-admin .MuiDrawer-paper {
   position: absolute;
+} */
+
+.div-parent-admin .MuiAppBar-root {
+  /* position: absolute; */
+}
+
+.div-parent-admin .MuiListItem-gutters {
+  padding-left: 22px;
+  padding-right: 22px;
+}
+
+.close-button-admin .MuiSvgIcon-root {
+  fill: rgb(255, 255, 255)
+}
+
+.last-tab-list-admin-drawer .MuiButtonBase-root:hover {
+  color: unset;
+}
+
+.paper-shadow {
+  box-shadow: 0 3px 10px rgb(0 0 0 / 0.2);
+}
+
+.more-info-button-user-table .MuiButton-label {
+  color: white;
+}
+
+.user-table-footer .MuiTablePagination-caption {
+  color: rgba(255, 255, 255, .9);
+}
+
+.user-table-footer .MuiSelect-select.MuiSelect-select {
+  color: rgba(255, 255, 255, .9);
+}
+
+.user-table-footer .MuiSelect-select.MuiSelect-select option {
+  color: black;
+}
+
+.user-table-footer .MuiIconButton-root.Mui-disabled {
+  color: rgba(134, 134, 134, 0.26)
+}
+
+.user-table-footer .MuiSelect-icon {
+  color: rgba(255, 255, 255, .9);
+}
+
+.user-table-footer .MuiIconButton-root {
+  color: rgba(255, 255, 255, .9);
+}
+
+.more-info-button-user-table:hover {
+  background-color: rgb(41 48 60);
 }
 
 .div-parent-admin .MuiPaper-root {
@@ -3830,12 +3890,8 @@ body {
   width: 97%;
 }
 
-.container-content-admin {
-  margin-left: 240px !important;
-}
-
 .img-logo-admin {
-  width: 65%;
+  max-height: 64px;
 }
 
 .list-admin-drawer .MuiListItemIcon-root {

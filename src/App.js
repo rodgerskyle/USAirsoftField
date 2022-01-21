@@ -1,6 +1,6 @@
 import React from 'react';
 import './App.css';
-import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
+import { BrowserRouter as Router, Route, Switch, useLocation } from "react-router-dom";
 import Login from "./Login"
 import Navigation from "./Navigation"
 import Footer from "./components/Pages/Footer";
@@ -46,12 +46,14 @@ import Birthday from './components/Pages/Birthday';
 import ScanWaiver from './components/Pages/ScanWaiver';
 import About from './components/Pages/About';
 import Logout from './components/constants/logout';
+// import EmailDashboard from './components/Pages/EmailDashboard';
+import { useState } from 'react';
 
 const App = () => (
   <Router>
     <ScrollToTop />
     <Redirect />
-    <Navigation />
+    <NavigationRoute />
     <Switch>
       {/* <Route exact path="/migrate">
                 <Migration />
@@ -152,6 +154,9 @@ const App = () => (
       <Route exact path="/admin/birthday">
         <Birthday />
       </Route>
+      {/* <Route exact path="/admin/sendmail">
+        <EmailDashboard />
+      </Route> */}
       <Route exact path="/admin/useroptions/:id"
         render={(props) => (
           <UserOptions {...props} />
@@ -209,7 +214,7 @@ const App = () => (
       </Route>
       <Route component={PageNotFound} />
     </Switch>
-    <Footer />
+    <FooterRoute />
     <CookieConsent>This website uses cookies to enhance the user experience.</CookieConsent>
   </Router>
 );
@@ -217,4 +222,35 @@ const App = () => (
 function LoginRoute() {
   return <div><Login /></div>
 }
+
+function NavigationRoute() {
+  const [nav, showNav] = useState(true);
+  let location = useLocation();
+  React.useEffect(() => {
+    if (location.pathname.includes('/admin')) {
+      showNav(false)
+    }
+    else {
+      showNav(true)
+    }
+  }, [location]);
+
+  return <div>{nav ? <Navigation /> : (null)}</div>
+}
+
+function FooterRoute() {
+  const [footer, showFooter] = useState(true);
+  let location = useLocation();
+  React.useEffect(() => {
+    if (location.pathname.includes('/admin')) {
+      showFooter(false)
+    }
+    else {
+      showFooter(true)
+    }
+  }, [location]);
+
+  return <div>{footer ? <Footer /> : (null)}</div>
+}
+
 export default withAuthentication(App);

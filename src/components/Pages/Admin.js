@@ -1,20 +1,19 @@
-import React, { Component, useState } from 'react';
+import React, { Component } from 'react';
 import '../../App.css';
 
 import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
 import { compose } from 'recompose';
 
-import { Container, Row, Col, Form, Button, Breadcrumb, Card, ProgressBar, Spinner, Collapse } from 'react-bootstrap/';
-
-import Switch from '@material-ui/core/Switch'
+import { Container, Row, Col, Form, Card, Spinner } from 'react-bootstrap/';
 
 import { Link } from 'react-router-dom';
 
 import * as ROLES from '../constants/roles';
-import { FormControlLabel, FormGroup } from '@material-ui/core';
 
 import { Helmet } from 'react-helmet-async';
+import AdminDrawer from '../constants/admindrawer';
+import UserTable from '../constants/usertable';
  
 class AdminPage extends Component {
   constructor(props) {
@@ -26,6 +25,7 @@ class AdminPage extends Component {
         emailSubject: '',
         emailImg: null,
         users: [],
+        usersSearchList: [],
         search: "",
         ul_status: null,
         ul_error: null,
@@ -48,11 +48,16 @@ class AdminPage extends Component {
                 uid: key,
             }));
 
+
             this.setState({
                 users: usersList,
+                usersSearchList: usersList,
                 loading: false,
             });
         });
+    }
+
+    componentDidUpdate() {
     }
    
     componentWillUnmount() {
@@ -124,6 +129,16 @@ class AdminPage extends Component {
 
     onChange = event => {
       this.setState({ search: event.target.value });
+      const search = event.target.value
+      let newUsersList = this.state.users
+      let checker = (arr, target) => target.every(v => arr.includes(v));
+
+      let newUsers = newUsersList.filter(user => 
+        checker(user.name.toLowerCase().split(" "), search.toLowerCase().split(" ")) ||
+        user.username.toLowerCase().includes(search.toLowerCase()) || 
+        user.email.toLowerCase().includes(search.toLowerCase()) || 
+        user.name.toLowerCase().includes(search.toLowerCase()))
+      this.setState({usersSearchList: newUsers})
     };
 
     // Checks dimensions of uploaded image
@@ -166,541 +181,456 @@ class AdminPage extends Component {
         const { loading } = this.state;
      
         return (
-          <div className="background-static-all">
+          <div className="div-parent-admin">
             <Helmet>
               <title>US Airsoft Field: Administrator</title>
             </Helmet>
-            <Container>
-                <h1 className="admin-header">Admin Dashboard</h1>
-                <Breadcrumb className="admin-breadcrumb">
-                  <Breadcrumb.Item active>Admin</Breadcrumb.Item>
-                </Breadcrumb>
-                <Row>
-                  <Col className="admin-col-cards">
-                    <Link to={"/admin/enterwins"} className="admin-cards-link">
-                      <Card className="admin-cards">
-                        <Card.Body className="admin-card-header-link">Enter Wins</Card.Body>
-                        <Card.Footer>
-                          <Row>
-                            <Col xs="auto">
-                              <Card.Text className="admin-card-footer">View</Card.Text>
-                            </Col>
-                            <Col>
-                              <Card.Text className="admin-card-icon">
-                                <i className="fa fa-angle-double-right fa-1x text-white"></i>
-                              </Card.Text>
-                            </Col>
-                          </Row>
-                        </Card.Footer>
-                      </Card>
-                    </Link>
-                  </Col>
-                  <Col className="admin-col-cards">
-                    <Link to={"/admin/enterlosses"} className="admin-cards-link">
-                      <Card className="admin-cards">
-                        <Card.Body className="admin-card-header-link">Enter Losses</Card.Body>
-                        <Card.Footer>
-                          <Row>
-                            <Col xs="auto">
-                              <Card.Text className="admin-card-footer">View</Card.Text>
-                            </Col>
-                            <Col>
-                              <Card.Text className="admin-card-icon">
-                                <i className="fa fa-angle-double-right fa-1x text-white"></i>
-                              </Card.Text>
-                            </Col>
-                          </Row>
-                        </Card.Footer>
-                      </Card>
-                    </Link>
-                  </Col>
-                  <Col className="admin-col-cards">
-                    <Link to={"/admin/freegames"} className="admin-cards-link">
-                      <Card className="admin-cards">
-                        <Card.Body className="admin-card-header-link">Check Free Games</Card.Body>
-                        <Card.Footer>
-                          <Row>
-                          <Col xs="auto">
-                              <Card.Text className="admin-card-footer">View</Card.Text>
-                            </Col>
-                            <Col>
-                              <Card.Text className="admin-card-icon">
-                                <i className="fa fa-angle-double-right fa-1x text-white"></i>
-                              </Card.Text>
-                            </Col>
-                          </Row>
-                        </Card.Footer>
-                      </Card>
-                    </Link>
-                  </Col>
-                  <Col className="admin-col-cards">
-                    <Link to={"/admin/signup"} className="admin-cards-link">
-                      <Card className="admin-cards">
-                        <Card.Body className="admin-card-header-link">New Member</Card.Body>
-                        <Card.Footer>
-                          <Row>
-                            <Col xs="auto">
-                              <Card.Text className="admin-card-footer">View</Card.Text>
-                            </Col>
-                            <Col>
-                              <Card.Text className="admin-card-icon">
-                                <i className="fa fa-angle-double-right fa-1x text-white"></i>
-                              </Card.Text>
-                            </Col>
-                          </Row>
-                        </Card.Footer>
-                      </Card>
-                    </Link>
-                  </Col>
-                  <Col className="admin-col-cards">
-                    <Link to={"/admin/renewal"} className="admin-cards-link">
-                      <Card className="admin-cards">
-                        <Card.Body className="admin-card-header-link">Renew Member</Card.Body>
-                        <Card.Footer>
-                          <Row>
-                            <Col xs="auto">
-                              <Card.Text className="admin-card-footer">View</Card.Text>
-                            </Col>
-                            <Col>
-                              <Card.Text className="admin-card-icon">
-                                <i className="fa fa-angle-double-right fa-1x text-white"></i>
-                              </Card.Text>
-                            </Col>
-                          </Row>
-                        </Card.Footer>
-                      </Card>
-                    </Link>
-                  </Col>
-                </Row>
-                <Row className="admin-row-email">
-                  <Col sm={8} className="admin-col-cards">
-                    <Card className="admin-cards">
-                      <Card.Header className="admin-card-header-link">
-                        <Row>
-                          <Col xs="auto">
-                            <Card.Text className="admin-card-icon2">
-                                <i className="fa fa-address-card fa-1x text-white"></i>
-                            </Card.Text>
-                          </Col>
-                          <Col>
-                            Email Users
-                          </Col>
-                          <Col className="justify-content-flex-end-col switch-button-col-admin">
-                            <FormGroup>
-                              <FormControlLabel 
-                                control={
-                                  <Switch 
-                                    checked={this.state.email_ready}
-                                    onChange={() => {this.setState({email_ready: !this.state.email_ready})}}
-                                    color="primary"
-                                  />
-                                }
-                                label="Ready"
-                              />
-                            </FormGroup>
-                          </Col>
-                        </Row>
-                      </Card.Header>
-                      <Card.Body>
-                        <Form onSubmit={e => { e.preventDefault(); }}>
-                          <Form.Group controlId="email-subject-form">
-                            <Form.Label>Add Subject Here:</Form.Label>
-                                <Form.Control
-                                    as="textarea" rows="1"
-                                    placeholder="Email subject"
-                                    value={this.state.emailSubject}
-                                    autoComplete="off"
-                                    disabled={!this.state.email_ready}
-                                    onChange={(e) => {
-                                        this.changeEmailSubject(e);
-                                    }}
-                                />
-                            </Form.Group>
-                          <Form.Group controlId="email-body-form">
-                            <Form.Label>Add Body Here:</Form.Label>
-                                <Form.Control
-                                    as="textarea" rows={this.state.rows}
-                                    className="email-body-form-admin"
-                                    placeholder="Email body"
-                                    value={this.state.emailBox}
-                                    autoComplete="off"
-                                    disabled={!this.state.email_ready}
-                                    onChange={(e) => {
-                                        this.changeEmailBox(e);
-                                    }}
-                                />
-                                {this.state.emailImg ? <img className="email-img-admin" src={this.state.emailImg} alt="email attachment"
-                                onLoad={() => this.checkDimensions()} ref={this.imgRef}/> : ""}
-                            </Form.Group>
-                                <Form.Group>
-                                  <Form.File id="email-image-input" onChange={this.handleUpload}
-                                  label="Attach Image" accept="image/*" custom data-browse="Upload"
-                                  disabled={!this.state.email_ready} />
-                                </Form.Group>
-                                <Row className="row-buttons-admin">
-                                  <Button className="admin-button-email1" variant="info" type="button"
-                                  disabled={!this.state.email_ready} onClick={() => {
-                                    this.emailAll();
-                                  }}
-                                  >
-                                      Email All
-                                  </Button>
-                                  <Button className="admin-button-email2" variant="info" type="button"
-                                  disabled={!this.state.email_ready} onClick={() => {
-                                    this.emailMembers();
-                                  }}
-                                  >
-                                      Email Members
-                                  </Button>
-                                  <Button className="admin-button-email3" variant="info" type="button"
-                                  disabled={!this.state.email_ready} onClick={() => {
-                                    //this.emailMembers();
-                                  }}
-                                  >
-                                      Email Non-Members
-                                  </Button>
-                                </Row>
-                        </Form>
-                        {this.state.email_status ? <p className="status-email-admin">{this.state.email_status}</p> : ""}
-                        {this.state.email_loading ? <ProgressBar animated now={this.state.email_loading} /> : ""}
-                      </Card.Body>
-                    </Card>
-                  </Col>
-                  <Col sm={4} className="admin-col-cards">
-                    <Card className="admin-cards">
-                      <Card.Header className="admin-card-header-link">
-                        <Row>
-                          <Col xs="auto">
-                            <Card.Text className="admin-card-icon2">
-                                <i className="fa fa-users fa-1x text-white"></i>
-                            </Card.Text>
-                          </Col>
-                          <Col>
-                            Users List
-                          </Col>
-                        </Row>
-                      </Card.Header>
-                      <Card.Body>
-                        <Row>
-                          <Col>
-                            <Form className="team-manage-text" onSubmit={e => { e.preventDefault(); }}>
-                                <Form.Group controlId="user-search">
-                                    <Form.Label className="search-label-admin">Search by Username:</Form.Label>
-                                    <Form.Control
-                                        type="name"
-                                        placeholder="ex: JohnDoe"
-                                        value={this.state.search}
-                                        autoComplete="off"
-                                        onChange={(e) => {
-                                            this.onChange(e);
-                                        }}
-                                    />
-                                </Form.Group>
-                            </Form>
-                          </Col>
-                        </Row>
-                        {this.state.ul_status ? <p className="status-ul-admin">{this.state.ul_status}</p> : ""}
-                        {this.state.ul_error ? <p className="error-ul-admin">{this.state.ul_error}</p> : ""}
-                        <Row className={loading ? "justify-content-row" : ""}>
-                          {loading ? <Spinner animation="border" /> : 
-                            <UserBox users={this.state.users} index={0} length={this.state.users.length}
-                            search={this.state.search} />
-                          }
-                        </Row>
-                      </Card.Body>
-                    </Card>
-                  </Col>
-                </Row>
-                <Row className="admin-row-email">
-                  <Col className="admin-col-cards">
-                    <Link to={"/admin/birthday"} className="admin-cards-link">
-                      <Card className="admin-cards">
-                        <Card.Body className="admin-card-header-link">Calendar</Card.Body>
-                        <Card.Footer>
-                          <Row>
-                            <Col xs="auto">
-                              <Card.Text className="admin-card-footer">View</Card.Text>
-                            </Col>
-                            <Col>
-                              <Card.Text className="admin-card-icon">
-                                <i className="fa fa-angle-double-right fa-1x text-white"></i>
-                              </Card.Text>
-                            </Col>
-                          </Row>
-                        </Card.Footer>
-                      </Card>
-                    </Link>
-                  </Col>
-                  <Col className="admin-col-cards">
-                    <Link to={"/admin/waiverform"} className="admin-cards-link">
-                      <Card className="admin-cards">
-                        <Card.Body className="admin-card-header-link">Sign Waiver</Card.Body>
-                        <Card.Footer>
-                          <Row>
-                            <Col xs="auto">
-                              <Card.Text className="admin-card-footer">View</Card.Text>
-                            </Col>
-                            <Col>
-                              <Card.Text className="admin-card-icon">
-                                <i className="fa fa-angle-double-right fa-1x text-white"></i>
-                              </Card.Text>
-                            </Col>
-                          </Row>
-                        </Card.Footer>
-                      </Card>
-                    </Link>
-                  </Col>
-                  <Col className="admin-col-cards">
-                    <Link to={"/admin/scanwaiver"} className="admin-cards-link">
-                      <Card className="admin-cards">
-                        <Card.Body className="admin-card-header-link">Scan Waiver</Card.Body>
-                        <Card.Footer>
-                          <Row>
-                            <Col xs="auto">
-                              <Card.Text className="admin-card-footer">View</Card.Text>
-                            </Col>
-                            <Col>
-                              <Card.Text className="admin-card-icon">
-                                <i className="fa fa-angle-double-right fa-1x text-white"></i>
-                              </Card.Text>
-                            </Col>
-                          </Row>
-                        </Card.Footer>
-                      </Card>
-                    </Link>
-                  </Col>
-                  <Col className="admin-col-cards">
-                    <Link to={"/admin/waiverlookup"} className="admin-cards-link">
-                      <Card className="admin-cards">
-                        <Card.Body className="admin-card-header-link">Search Waiver</Card.Body>
-                        <Card.Footer>
-                          <Row>
-                            <Col xs="auto">
-                              <Card.Text className="admin-card-footer">View</Card.Text>
-                            </Col>
-                            <Col>
-                              <Card.Text className="admin-card-icon">
-                                <i className="fa fa-angle-double-right fa-1x text-white"></i>
-                              </Card.Text>
-                            </Col>
-                          </Row>
-                        </Card.Footer>
-                      </Card>
-                    </Link>
-                  </Col>
-                  <Col className="admin-col-cards">
-                    <Link to={"/admin/rentalform"} className="admin-cards-link">
-                      <Card className="admin-cards">
-                        <Card.Body className="admin-card-header-link">Rental Form</Card.Body>
-                        <Card.Footer>
-                          <Row>
-                            <Col xs="auto">
-                              <Card.Text className="admin-card-footer">View</Card.Text>
-                            </Col>
-                            <Col>
-                              <Card.Text className="admin-card-icon">
-                                <i className="fa fa-angle-double-right fa-1x text-white"></i>
-                              </Card.Text>
-                            </Col>
-                          </Row>
-                        </Card.Footer>
-                      </Card>
-                    </Link>
-                  </Col>
-                </Row>
-            </Container>
+            {/* Pass a prop for a tab number so that we can choose which to render here and pass function to setState of that prop 
+              Actually: Use words from url to decide which thing to display
+            */}
+            <AdminDrawer component={
+              <div className="background-static-all background-static-admin">
+                <Container>
+                    {/* <h1 className="admin-header">Admin Dashboard</h1>
+                    <Breadcrumb className="admin-breadcrumb">
+                      <Breadcrumb.Item active>Admin</Breadcrumb.Item>
+                    </Breadcrumb> */}
+                    <Row>
+                      <Col className="admin-col-cards">
+                        <Link to={"/admin/enterwins"} className="admin-cards-link">
+                          <Card className="admin-cards">
+                            <Card.Body className="admin-card-header-link">Enter Wins</Card.Body>
+                            <Card.Footer>
+                              <Row>
+                                <Col xs="auto">
+                                  <Card.Text className="admin-card-footer">View</Card.Text>
+                                </Col>
+                                <Col>
+                                  <Card.Text className="admin-card-icon">
+                                    <i className="fa fa-angle-double-right fa-1x text-white"></i>
+                                  </Card.Text>
+                                </Col>
+                              </Row>
+                            </Card.Footer>
+                          </Card>
+                        </Link>
+                      </Col>
+                      <Col className="admin-col-cards">
+                        <Link to={"/admin/enterlosses"} className="admin-cards-link">
+                          <Card className="admin-cards">
+                            <Card.Body className="admin-card-header-link">Enter Losses</Card.Body>
+                            <Card.Footer>
+                              <Row>
+                                <Col xs="auto">
+                                  <Card.Text className="admin-card-footer">View</Card.Text>
+                                </Col>
+                                <Col>
+                                  <Card.Text className="admin-card-icon">
+                                    <i className="fa fa-angle-double-right fa-1x text-white"></i>
+                                  </Card.Text>
+                                </Col>
+                              </Row>
+                            </Card.Footer>
+                          </Card>
+                        </Link>
+                      </Col>
+                      <Col className="admin-col-cards">
+                        <Link to={"/admin/freegames"} className="admin-cards-link">
+                          <Card className="admin-cards">
+                            <Card.Body className="admin-card-header-link">Check Free Games</Card.Body>
+                            <Card.Footer>
+                              <Row>
+                              <Col xs="auto">
+                                  <Card.Text className="admin-card-footer">View</Card.Text>
+                                </Col>
+                                <Col>
+                                  <Card.Text className="admin-card-icon">
+                                    <i className="fa fa-angle-double-right fa-1x text-white"></i>
+                                  </Card.Text>
+                                </Col>
+                              </Row>
+                            </Card.Footer>
+                          </Card>
+                        </Link>
+                      </Col>
+                      <Col className="admin-col-cards">
+                        <Link to={"/admin/signup"} className="admin-cards-link">
+                          <Card className="admin-cards">
+                            <Card.Body className="admin-card-header-link">New Member</Card.Body>
+                            <Card.Footer>
+                              <Row>
+                                <Col xs="auto">
+                                  <Card.Text className="admin-card-footer">View</Card.Text>
+                                </Col>
+                                <Col>
+                                  <Card.Text className="admin-card-icon">
+                                    <i className="fa fa-angle-double-right fa-1x text-white"></i>
+                                  </Card.Text>
+                                </Col>
+                              </Row>
+                            </Card.Footer>
+                          </Card>
+                        </Link>
+                      </Col>
+                      <Col className="admin-col-cards">
+                        <Link to={"/admin/renewal"} className="admin-cards-link">
+                          <Card className="admin-cards">
+                            <Card.Body className="admin-card-header-link">Renew Member</Card.Body>
+                            <Card.Footer>
+                              <Row>
+                                <Col xs="auto">
+                                  <Card.Text className="admin-card-footer">View</Card.Text>
+                                </Col>
+                                <Col>
+                                  <Card.Text className="admin-card-icon">
+                                    <i className="fa fa-angle-double-right fa-1x text-white"></i>
+                                  </Card.Text>
+                                </Col>
+                              </Row>
+                            </Card.Footer>
+                          </Card>
+                        </Link>
+                      </Col>
+                    </Row>
+                    <Row className="admin-row-email">
+                      <Col sm={12} className="admin-col-cards">
+                        <Card className="admin-cards">
+                          <Card.Header className="admin-card-header-link">
+                            <Row>
+                              <Col xs="auto">
+                                <Card.Text className="admin-card-icon2">
+                                    <i className="fa fa-users fa-1x text-white"></i>
+                                </Card.Text>
+                              </Col>
+                              <Col>
+                                Users List
+                              </Col>
+                            </Row>
+                          </Card.Header>
+                          <Card.Body>
+                            <Row>
+                              <Col>
+                                <Form className="team-manage-text" onSubmit={e => { e.preventDefault(); }}>
+                                    <Form.Group controlId="user-search">
+                                        <Form.Label className="search-label-admin">Search by Username:</Form.Label>
+                                        <Form.Control
+                                            type="name"
+                                            placeholder="ex: JohnDoe"
+                                            value={this.state.search}
+                                            autoComplete="off"
+                                            onChange={(e) => {
+                                                this.onChange(e);
+                                            }}
+                                        />
+                                    </Form.Group>
+                                </Form>
+                              </Col>
+                            </Row>
+                            {/* {this.state.ul_status ? <p className="status-ul-admin">{this.state.ul_status}</p> : ""}
+                            {this.state.ul_error ? <p className="error-ul-admin">{this.state.ul_error}</p> : ""} */}
+                            <Row className="justify-content-row">
+                              {loading ? <Spinner animation="border" /> : 
+                                <UserTable users={this.state.usersSearchList} index={0} length={this.state.usersSearchList.length}
+                                search={this.state.search} />
+                              }
+                            </Row>
+                          </Card.Body>
+                        </Card>
+                      </Col>
+                    </Row>
+                    <Row className="admin-row-email">
+                      <Col className="admin-col-cards">
+                        <Link to={"/admin/birthday"} className="admin-cards-link">
+                          <Card className="admin-cards">
+                            <Card.Body className="admin-card-header-link">Calendar</Card.Body>
+                            <Card.Footer>
+                              <Row>
+                                <Col xs="auto">
+                                  <Card.Text className="admin-card-footer">View</Card.Text>
+                                </Col>
+                                <Col>
+                                  <Card.Text className="admin-card-icon">
+                                    <i className="fa fa-angle-double-right fa-1x text-white"></i>
+                                  </Card.Text>
+                                </Col>
+                              </Row>
+                            </Card.Footer>
+                          </Card>
+                        </Link>
+                      </Col>
+                      <Col className="admin-col-cards">
+                        <Link to={"/admin/waiverform"} className="admin-cards-link">
+                          <Card className="admin-cards">
+                            <Card.Body className="admin-card-header-link">Sign Waiver</Card.Body>
+                            <Card.Footer>
+                              <Row>
+                                <Col xs="auto">
+                                  <Card.Text className="admin-card-footer">View</Card.Text>
+                                </Col>
+                                <Col>
+                                  <Card.Text className="admin-card-icon">
+                                    <i className="fa fa-angle-double-right fa-1x text-white"></i>
+                                  </Card.Text>
+                                </Col>
+                              </Row>
+                            </Card.Footer>
+                          </Card>
+                        </Link>
+                      </Col>
+                      <Col className="admin-col-cards">
+                        <Link to={"/admin/scanwaiver"} className="admin-cards-link">
+                          <Card className="admin-cards">
+                            <Card.Body className="admin-card-header-link">Scan Waiver</Card.Body>
+                            <Card.Footer>
+                              <Row>
+                                <Col xs="auto">
+                                  <Card.Text className="admin-card-footer">View</Card.Text>
+                                </Col>
+                                <Col>
+                                  <Card.Text className="admin-card-icon">
+                                    <i className="fa fa-angle-double-right fa-1x text-white"></i>
+                                  </Card.Text>
+                                </Col>
+                              </Row>
+                            </Card.Footer>
+                          </Card>
+                        </Link>
+                      </Col>
+                      <Col className="admin-col-cards">
+                        <Link to={"/admin/waiverlookup"} className="admin-cards-link">
+                          <Card className="admin-cards">
+                            <Card.Body className="admin-card-header-link">Search Waiver</Card.Body>
+                            <Card.Footer>
+                              <Row>
+                                <Col xs="auto">
+                                  <Card.Text className="admin-card-footer">View</Card.Text>
+                                </Col>
+                                <Col>
+                                  <Card.Text className="admin-card-icon">
+                                    <i className="fa fa-angle-double-right fa-1x text-white"></i>
+                                  </Card.Text>
+                                </Col>
+                              </Row>
+                            </Card.Footer>
+                          </Card>
+                        </Link>
+                      </Col>
+                      <Col className="admin-col-cards">
+                        <Link to={"/admin/rentalform"} className="admin-cards-link">
+                          <Card className="admin-cards">
+                            <Card.Body className="admin-card-header-link">Rental Form</Card.Body>
+                            <Card.Footer>
+                              <Row>
+                                <Col xs="auto">
+                                  <Card.Text className="admin-card-footer">View</Card.Text>
+                                </Col>
+                                <Col>
+                                  <Card.Text className="admin-card-icon">
+                                    <i className="fa fa-angle-double-right fa-1x text-white"></i>
+                                  </Card.Text>
+                                </Col>
+                              </Row>
+                            </Card.Footer>
+                          </Card>
+                        </Link>
+                      </Col>
+                    </Row>
+                </Container>
+              </div>
+            }>
+            </AdminDrawer>
           </div>
         );
       }
     }
     
 
-function UserBox({users, index, search, length}) {
-    const [ButtonArray, setButtonArray] = useState( new Array(length).fill(false));
-    let checker = (arr, target) => target.every(v => arr.includes(v));
+// function UserBox({users, index, search, length}) {
+//     const [ButtonArray, setButtonArray] = useState( new Array(length).fill(false));
+//     let checker = (arr, target) => target.every(v => arr.includes(v));
 
-    return (
-        <Card.Body className="status-card-body-main-admin">
-            {users.map((user, i) => (
-                search !== "" ? // Search query case
-                    checker(user.name.toLowerCase().split(" "), search.toLowerCase().split(" ")) ||
-                    user.username.toLowerCase().includes(search.toLowerCase()) || 
-                    user.email.toLowerCase().includes(search.toLowerCase()) || 
-                    user.name.toLowerCase().includes(search.toLowerCase()) ? 
-                        index++ % 2 === 0 ? 
-                            <div key={i}>
-                              <div id="options-buttons-admin" onClick={() => {
-                                let tempArray = [...ButtonArray];
-                                if (tempArray[i] !== true)
-                                  tempArray.fill(false)
-                                tempArray[i] = !tempArray[i]
-                                setButtonArray(tempArray)
-                              }}>
-                                  <Row className={ButtonArray[i] ? "row-users-card-active-admin" :
-                                    "row-users-card-admin"}>
-                                    <Col className="col-name-ul">
-                                            {"(" + index + ") " + user.name}
-                                    </Col>
-                                    <Col className="col-name-ul">
-                                        {user.email}
-                                    </Col>
-                                  </Row>
-                                </div>
-                                  <Collapse in={ButtonArray[i]}>
-                                    <Row className="row-options-admin">
-                                      <Col md="auto" className="button-options-col-admin">
-                                          <Link to={"admin/useroptions/" + user.uid}>
-                                            <Button className="button-options-style-admin"
-                                            type="button" id="update" variant="info">
-                                              Options
-                                            </Button>
-                                          </Link>
-                                      </Col>
-                                      <Col>
-                                        <Button className="button-options-style-admin" onClick={() => {
-                                            let tempArray = [...ButtonArray];
-                                            tempArray[i] = false;
-                                            setButtonArray(tempArray)
-                                        }}
-                                        type="button" id="update" variant="danger">
-                                            <i className="fa fa-times fa-1x text-white"></i>
-                                        </Button>
-                                      </Col>
-                                    </Row>
-                                  </Collapse>
-                            </div>
-                                : 
-                            <div key={i}>
-                              <div id="options-buttons-admin" onClick={() => {
-                                let tempArray = [...ButtonArray];
-                                if (tempArray[i] !== true)
-                                  tempArray.fill(false)
-                                tempArray[i] = !tempArray[i]
-                                setButtonArray(tempArray)
-                              }}>
-                                    <Row className={ButtonArray[i] ? 
-                                      "row-users-card-offrow-active-admin" : "row-users-card-offrow-admin"}>
-                                      <Col className="col-name-ul">
-                                              {"(" + index + ") " + user.name}
-                                      </Col>
-                                      <Col className="col-name-ul">
-                                          {user.email}
-                                      </Col>
-                                  </Row>
-                                </div>
-                                  <Collapse in={ButtonArray[i]}>
-                                    <Row className="row-options-admin">
-                                      <Col md="auto" className="button-options-col-admin">
-                                          <Link to={"admin/useroptions/" + user.uid}>
-                                            <Button className="button-options-style-admin"
-                                            type="button" id="update" variant="info">
-                                              Options
-                                            </Button>
-                                          </Link>
-                                      </Col>
-                                      <Col>
-                                        <Button className="button-options-style-admin" onClick={() => {
-                                            let tempArray = [...ButtonArray];
-                                            tempArray[i] = false;
-                                            setButtonArray(tempArray)
-                                        }}
-                                        type="button" id="update" variant="danger">
-                                            <i className="fa fa-times fa-1x text-white"></i>
-                                        </Button>
-                                      </Col>
-                                    </Row>
-                                  </Collapse>
-                            </div>
-                    : ""
-                :
-                        index++ % 2 === 0 ? 
-                            <div key={i}>
-                              <div id="options-buttons-admin" onClick={() => {
-                                let tempArray = [...ButtonArray];
-                                if (tempArray[i] !== true)
-                                  tempArray.fill(false)
-                                tempArray[i] = !tempArray[i]
-                                setButtonArray(tempArray)
-                              }}>
-                                  <Row className={ButtonArray[i] ? "row-users-card-active-admin" :
-                                    "row-users-card-admin"}>
-                                    <Col className="col-name-ul">
-                                            {"(" + index + ") " + user.name}
-                                    </Col>
-                                    <Col className="col-name-ul">
-                                        {user.email}
-                                    </Col>
-                                  </Row>
-                                </div>
-                                  <Collapse in={ButtonArray[i]}>
-                                    <Row className="row-options-admin">
-                                      <Col md="auto" className="button-options-col-admin">
-                                          <Link to={"admin/useroptions/" + user.uid}>
-                                            <Button className="button-options-style-admin"
-                                            type="button" id="update" variant="info">
-                                              Options
-                                            </Button>
-                                          </Link>
-                                      </Col>
-                                      <Col>
-                                        <Button className="button-options-style-admin" onClick={() => {
-                                            let tempArray = [...ButtonArray];
-                                            tempArray[i] = false;
-                                            setButtonArray(tempArray)
-                                        }}
-                                        type="button" id="update" variant="danger">
-                                            <i className="fa fa-times fa-1x text-white"></i>
-                                        </Button>
-                                      </Col>
-                                    </Row>
-                                  </Collapse>
-                            </div>
-                            : 
-                            <div key={i}>
-                              <div id="options-buttons-admin" onClick={() => {
-                                let tempArray = [...ButtonArray];
-                                if (tempArray[i] !== true)
-                                  tempArray.fill(false)
-                                tempArray[i] = !tempArray[i]
-                                setButtonArray(tempArray)
-                              }}>
-                                    <Row className={ButtonArray[i] ? 
-                                      "row-users-card-offrow-active-admin" : "row-users-card-offrow-admin"}>
-                                      <Col className="col-name-ul">
-                                              {"(" + index + ") " + user.name}
-                                      </Col>
-                                      <Col className="col-name-ul">
-                                          {user.email}
-                                      </Col>
-                                  </Row>
-                                </div>
-                                  <Collapse in={ButtonArray[i]}>
-                                    <Row className="row-options-admin">
-                                      <Col md="auto" className="button-options-col-admin">
-                                          <Link to={"admin/useroptions/" + user.uid}>
-                                            <Button className="button-options-style-admin"
-                                            type="button" id="update" variant="info">
-                                              Options
-                                            </Button>
-                                          </Link>
-                                      </Col>
-                                      <Col>
-                                        <Button className="button-options-style-admin" onClick={() => {
-                                            let tempArray = [...ButtonArray];
-                                            tempArray[i] = false;
-                                            setButtonArray(tempArray)
-                                        }}
-                                        type="button" id="update" variant="danger">
-                                            <i className="fa fa-times fa-1x text-white"></i>
-                                        </Button>
-                                      </Col>
-                                    </Row>
-                                  </Collapse>
-                            </div>
-            ))}
-        </Card.Body>
-    )
-};
+//     return (
+//         <Card.Body className="status-card-body-main-admin">
+//             {users.map((user, i) => (
+//                 search !== "" ? // Search query case
+//                     checker(user.name.toLowerCase().split(" "), search.toLowerCase().split(" ")) ||
+//                     user.username.toLowerCase().includes(search.toLowerCase()) || 
+//                     user.email.toLowerCase().includes(search.toLowerCase()) || 
+//                     user.name.toLowerCase().includes(search.toLowerCase()) ? 
+//                         index++ % 2 === 0 ? 
+//                             <div key={i}>
+//                               <div id="options-buttons-admin" onClick={() => {
+//                                 let tempArray = [...ButtonArray];
+//                                 if (tempArray[i] !== true)
+//                                   tempArray.fill(false)
+//                                 tempArray[i] = !tempArray[i]
+//                                 setButtonArray(tempArray)
+//                               }}>
+//                                   <Row className={ButtonArray[i] ? "row-users-card-active-admin" :
+//                                     "row-users-card-admin"}>
+//                                     <Col className="col-name-ul">
+//                                             {"(" + index + ") " + user.name}
+//                                     </Col>
+//                                     <Col className="col-name-ul">
+//                                         {user.email}
+//                                     </Col>
+//                                   </Row>
+//                                 </div>
+//                                   <Collapse in={ButtonArray[i]}>
+//                                     <Row className="row-options-admin">
+//                                       <Col md="auto" className="button-options-col-admin">
+//                                           <Link to={"admin/useroptions/" + user.uid}>
+//                                             <Button className="button-options-style-admin"
+//                                             type="button" id="update" variant="info">
+//                                               Options
+//                                             </Button>
+//                                           </Link>
+//                                       </Col>
+//                                       <Col>
+//                                         <Button className="button-options-style-admin" onClick={() => {
+//                                             let tempArray = [...ButtonArray];
+//                                             tempArray[i] = false;
+//                                             setButtonArray(tempArray)
+//                                         }}
+//                                         type="button" id="update" variant="danger">
+//                                             <i className="fa fa-times fa-1x text-white"></i>
+//                                         </Button>
+//                                       </Col>
+//                                     </Row>
+//                                   </Collapse>
+//                             </div>
+//                                 : 
+//                             <div key={i}>
+//                               <div id="options-buttons-admin" onClick={() => {
+//                                 let tempArray = [...ButtonArray];
+//                                 if (tempArray[i] !== true)
+//                                   tempArray.fill(false)
+//                                 tempArray[i] = !tempArray[i]
+//                                 setButtonArray(tempArray)
+//                               }}>
+//                                     <Row className={ButtonArray[i] ? 
+//                                       "row-users-card-offrow-active-admin" : "row-users-card-offrow-admin"}>
+//                                       <Col className="col-name-ul">
+//                                               {"(" + index + ") " + user.name}
+//                                       </Col>
+//                                       <Col className="col-name-ul">
+//                                           {user.email}
+//                                       </Col>
+//                                   </Row>
+//                                 </div>
+//                                   <Collapse in={ButtonArray[i]}>
+//                                     <Row className="row-options-admin">
+//                                       <Col md="auto" className="button-options-col-admin">
+//                                           <Link to={"admin/useroptions/" + user.uid}>
+//                                             <Button className="button-options-style-admin"
+//                                             type="button" id="update" variant="info">
+//                                               Options
+//                                             </Button>
+//                                           </Link>
+//                                       </Col>
+//                                       <Col>
+//                                         <Button className="button-options-style-admin" onClick={() => {
+//                                             let tempArray = [...ButtonArray];
+//                                             tempArray[i] = false;
+//                                             setButtonArray(tempArray)
+//                                         }}
+//                                         type="button" id="update" variant="danger">
+//                                             <i className="fa fa-times fa-1x text-white"></i>
+//                                         </Button>
+//                                       </Col>
+//                                     </Row>
+//                                   </Collapse>
+//                             </div>
+//                     : ""
+//                 :
+//                         index++ % 2 === 0 ? 
+//                             <div key={i}>
+//                               <div id="options-buttons-admin" onClick={() => {
+//                                 let tempArray = [...ButtonArray];
+//                                 if (tempArray[i] !== true)
+//                                   tempArray.fill(false)
+//                                 tempArray[i] = !tempArray[i]
+//                                 setButtonArray(tempArray)
+//                               }}>
+//                                   <Row className={ButtonArray[i] ? "row-users-card-active-admin" :
+//                                     "row-users-card-admin"}>
+//                                     <Col className="col-name-ul">
+//                                             {"(" + index + ") " + user.name}
+//                                     </Col>
+//                                     <Col className="col-name-ul">
+//                                         {user.email}
+//                                     </Col>
+//                                   </Row>
+//                                 </div>
+//                                   <Collapse in={ButtonArray[i]}>
+//                                     <Row className="row-options-admin">
+//                                       <Col md="auto" className="button-options-col-admin">
+//                                           <Link to={"admin/useroptions/" + user.uid}>
+//                                             <Button className="button-options-style-admin"
+//                                             type="button" id="update" variant="info">
+//                                               Options
+//                                             </Button>
+//                                           </Link>
+//                                       </Col>
+//                                       <Col>
+//                                         <Button className="button-options-style-admin" onClick={() => {
+//                                             let tempArray = [...ButtonArray];
+//                                             tempArray[i] = false;
+//                                             setButtonArray(tempArray)
+//                                         }}
+//                                         type="button" id="update" variant="danger">
+//                                             <i className="fa fa-times fa-1x text-white"></i>
+//                                         </Button>
+//                                       </Col>
+//                                     </Row>
+//                                   </Collapse>
+//                             </div>
+//                             : 
+//                             <div key={i}>
+//                               <div id="options-buttons-admin" onClick={() => {
+//                                 let tempArray = [...ButtonArray];
+//                                 if (tempArray[i] !== true)
+//                                   tempArray.fill(false)
+//                                 tempArray[i] = !tempArray[i]
+//                                 setButtonArray(tempArray)
+//                               }}>
+//                                     <Row className={ButtonArray[i] ? 
+//                                       "row-users-card-offrow-active-admin" : "row-users-card-offrow-admin"}>
+//                                       <Col className="col-name-ul">
+//                                               {"(" + index + ") " + user.name}
+//                                       </Col>
+//                                       <Col className="col-name-ul">
+//                                           {user.email}
+//                                       </Col>
+//                                   </Row>
+//                                 </div>
+//                                   <Collapse in={ButtonArray[i]}>
+//                                     <Row className="row-options-admin">
+//                                       <Col md="auto" className="button-options-col-admin">
+//                                           <Link to={"admin/useroptions/" + user.uid}>
+//                                             <Button className="button-options-style-admin"
+//                                             type="button" id="update" variant="info">
+//                                               Options
+//                                             </Button>
+//                                           </Link>
+//                                       </Col>
+//                                       <Col>
+//                                         <Button className="button-options-style-admin" onClick={() => {
+//                                             let tempArray = [...ButtonArray];
+//                                             tempArray[i] = false;
+//                                             setButtonArray(tempArray)
+//                                         }}
+//                                         type="button" id="update" variant="danger">
+//                                             <i className="fa fa-times fa-1x text-white"></i>
+//                                         </Button>
+//                                       </Col>
+//                                     </Row>
+//                                   </Collapse>
+//                             </div>
+//             ))}
+//         </Card.Body>
+//     )
+// };
 
 
 const condition = authUser =>

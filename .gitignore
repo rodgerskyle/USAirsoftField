@@ -110,6 +110,9 @@ dist
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
 
+# Production build files
+build
+
 # yarn v2
 .yarn/cache
 .yarn/unplugged
