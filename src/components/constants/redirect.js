@@ -26,7 +26,6 @@ class Redirect extends Component {
             this.props.firebase.onAuthUserListener((user) => {
                 this.setState({user})
             }, () => {this.setState({user: null})});
-            console.log("here")
     }
     componentWillUnmount() {
         this.authSubscription()
