@@ -628,8 +628,8 @@ class SignUpFormBase extends Component {
             :
             <Form className="form-rp" onSubmit={(e) => this.onSubmit(e, myProps)}>
               <Row>
-                <Col>
-                  <Row className="cardpreview-row-rp">
+                {/* <Col> */}
+                  {/* <Row className="cardpreview-row-rp">
                     <h5>Card Preview:</h5>
                   </Row>
                   <Row className="cardpreview-row-rp card-row-rp">
@@ -650,8 +650,8 @@ class SignUpFormBase extends Component {
                   }}>
                       Next
                   </Button>
-                  </Row>
-                </Col>
+                  </Row> */}
+                {/* </Col> */}
                 <Col>
               <Row>
                 <Col>
@@ -664,6 +664,7 @@ class SignUpFormBase extends Component {
                       type="text"
                       autoComplete="off"
                       placeholder="First Name"
+                      disabled 
                     />
                   </Form.Group>
                 </Col>
@@ -677,6 +678,7 @@ class SignUpFormBase extends Component {
                       type="text"
                       autoComplete="off"
                       placeholder="Last Name"
+                      disabled 
                     />
                   </Form.Group>
                 </Col>
@@ -692,6 +694,7 @@ class SignUpFormBase extends Component {
                       type="text"
                       autoComplete="off"
                       placeholder="Email Address"
+                      disabled
                     />
                   </Form.Group>
                 </Col>

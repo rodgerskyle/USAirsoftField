@@ -13,8 +13,6 @@ import CustomMenu from '../constants/custommenu'
 
 import * as ROLES from '../constants/roles';
 
-import { faCheck, faDollarSign } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Helmet } from 'react-helmet-async';
 
 class WaiverLookup extends Component {
@@ -37,7 +35,7 @@ class WaiverLookup extends Component {
             num_waivers_cur: null,
             validateArray: null,
         };
-        this.validate = this.validate.bind(this)
+        // this.validate = this.validate.bind(this)
         this.lookup = this.lookup.bind(this)
     }
 
@@ -132,9 +130,9 @@ class WaiverLookup extends Component {
     }
 
     // Adds user to validate list
-    validate = (file) => {
-        this.props.firebase.validatedWaiver(file.substr(0, file.lastIndexOf(')')+1)).set({attached: false})
-    }
+    // validate = (file) => {
+    //     this.props.firebase.validatedWaiver(file.substr(0, file.lastIndexOf(')')+1)).set({attached: false})
+    // }
 
     // Lookups file to see if it exists in validated array
     lookup = (file) => {
@@ -361,11 +359,11 @@ function WaiverBox ({waivers, index, search, open, loading, month, day, year, va
                     Date Created:
                 </Card.Text>
             </Col>
-            <Col md={3}>
+            {/* <Col md={3}>
                 <Card.Text>
                     Validate:
                 </Card.Text>
-            </Col>
+            </Col> */}
             <Col md={2}>
             </Col>
         </Row>
@@ -389,7 +387,7 @@ function WaiverBox ({waivers, index, search, open, loading, month, day, year, va
                                 waiver.date.getDate() + " " + returnMonth(waiver.date.getMonth()) +
                                 " " + waiver.date.getFullYear()}
                             </Col>
-                            <Col md={3} className="align-items-center-col">
+                            {/* <Col md={3} className="align-items-center-col">
                                 {!lookup(waiver.name) ?
                                 <Button variant="warning" className="check-button-wl"
                                 onClick={() => {
@@ -402,7 +400,7 @@ function WaiverBox ({waivers, index, search, open, loading, month, day, year, va
                                     <FontAwesomeIcon icon={faDollarSign} />
                                 </Button>
                                 }
-                            </Col>
+                            </Col> */}
                             <Col md={2}>
                                 <Button className="button-submit-admin2" onClick={() => open(waiver.ref)}
                                 type="button" id="update" variant="success">
@@ -417,12 +415,12 @@ function WaiverBox ({waivers, index, search, open, loading, month, day, year, va
                                     {"(" + index + ") " + waiver.name.substr(0, waiver.name.lastIndexOf('('))}
                                 </Card.Text>
                             </Col>
-                            <Col className="col-name-fg">
+                            <Col className="col-name-fg" md={7}>
                                 {returnDay(waiver.date.getDay()) + ", " + 
                                 waiver.date.getDate() + " " + returnMonth(waiver.date.getMonth()) +
                                 " " + waiver.date.getFullYear()}
                             </Col>
-                            <Col md={3} className="align-items-center-col">
+                            {/* <Col md={3} className="align-items-center-col">
                                 {!lookup(waiver.name) ?
                                 <Button variant="warning" className="check-button-wl"
                                 onClick={() => {
@@ -435,7 +433,7 @@ function WaiverBox ({waivers, index, search, open, loading, month, day, year, va
                                     <FontAwesomeIcon icon={faDollarSign} />
                                 </Button>
                                 }
-                            </Col>
+                            </Col> */}
                             <Col md={2}>
                                 <Button className="button-submit-admin2" onClick={() => open(waiver.ref)}
                                 type="submit" id="update" variant="success">
@@ -453,12 +451,12 @@ function WaiverBox ({waivers, index, search, open, loading, month, day, year, va
                                     {"(" + index + ") " + waiver.name.substr(0, waiver.name.lastIndexOf('('))}
                                 </Card.Text>
                             </Col>
-                            <Col className="col-name-fg" md={4}>
+                            <Col className="col-name-fg" md={7}>
                                 {returnDay(waiver.date.getDay()) + ", " + 
                                 waiver.date.getDate() + " " + returnMonth(waiver.date.getMonth()) +
                                 " " + waiver.date.getFullYear()}
                             </Col>
-                            <Col md={3} className="align-items-center-col">
+                            {/* <Col md={3} className="align-items-center-col">
                                 {!lookup(waiver.name) ?
                                 <Button variant="warning" className="check-button-wl"
                                 onClick={() => {
@@ -471,7 +469,7 @@ function WaiverBox ({waivers, index, search, open, loading, month, day, year, va
                                     <FontAwesomeIcon icon={faDollarSign} />
                                 </Button>
                                 }
-                            </Col>
+                            </Col> */}
                             <Col md={2}>
                                 <Button className="button-submit-admin2" onClick={() => open(waiver.ref)}
                                 type="submit" id="update" variant="success">
@@ -486,12 +484,12 @@ function WaiverBox ({waivers, index, search, open, loading, month, day, year, va
                                     {"(" + index + ") " + waiver.name.substr(0, waiver.name.lastIndexOf('('))}
                                 </Card.Text>
                             </Col>
-                            <Col className="col-name-fg" md={4}>
+                            <Col className="col-name-fg" md={7}>
                                 {returnDay(waiver.date.getDay()) + ", " + 
                                 waiver.date.getDate() + " " + returnMonth(waiver.date.getMonth()) +
                                 " " + waiver.date.getFullYear()}
                             </Col>
-                            <Col md={3} className="align-items-center-col">
+                            {/* <Col md={3} className="align-items-center-col">
                                 {!lookup(waiver.name) ?
                                 <Button variant="warning" className="check-button-wl"
                                 onClick={() => {
@@ -504,7 +502,7 @@ function WaiverBox ({waivers, index, search, open, loading, month, day, year, va
                                     <FontAwesomeIcon icon={faDollarSign} />
                                 </Button>
                                 }
-                            </Col>
+                            </Col> */}
                             <Col md={2}>
                                 <Button className="button-submit-admin2" onClick={() => open(waiver.ref)}
                                 type="submit" id="update" variant="success">

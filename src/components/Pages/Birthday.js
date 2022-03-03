@@ -279,9 +279,15 @@ class Birthday extends Component {
                     <Container>
                         <h2 className="admin-header">Calendar - Birthday</h2>
                         <Breadcrumb className="admin-breadcrumb">
+                            {window.location.href.indexOf("admin") > -1 ? 
                             <LinkContainer to="/admin">
                                 <Breadcrumb.Item>Admin</Breadcrumb.Item>
                             </LinkContainer>
+                            :
+                            <LinkContainer to="/dashboard">
+                                <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
+                            </LinkContainer> 
+                            }
                             <Breadcrumb.Item active>Calendar</Breadcrumb.Item>
                         </Breadcrumb>
                         <div className="div-main-birthday">

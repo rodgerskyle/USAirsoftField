@@ -12,7 +12,7 @@ class Redirect extends Component {
             user: null,
             waiverlocations: [
                 "/dashboard", "/dashboard/signup", "/dashboard/renewal", "/dashboard/waiverform", "/dashboard/waiverlookup", 
-                "/dashboard/rentalform", "/dashboard/scanwaiver", "/signout", "/login",
+                "/dashboard/rentalform", "/dashboard/scanwaiver", "/signout", "/login", "/dashboard/freegames", "/dashboard/birthday"
             ],
             staticlocations: [
                 "/dashboard/waiverform", "/signout", "/login"
@@ -26,6 +26,7 @@ class Redirect extends Component {
             this.props.firebase.onAuthUserListener((user) => {
                 this.setState({user})
             }, () => {this.setState({user: null})});
+            console.log("here")
     }
     componentWillUnmount() {
         this.authSubscription()

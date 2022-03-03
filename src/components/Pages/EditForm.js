@@ -303,7 +303,7 @@ class EditForm extends Component {
                                 </MUIButton>
                             </div>
                             <Row className="justify-content-row row-group-name-rf">
-                                {!!authUser.roles[ROLES.ADMIN] ?
+                                {!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER] ?
                                     <IconButton aria-label="edit" style={{ padding: 0, paddingRight: '5px', color: "white" }}
                                         onClick={() => {
                                             this.setState({ open: true })
@@ -397,6 +397,7 @@ class EditForm extends Component {
                                             </MUIButton>
                                                 </AccordionActions>
                                             </Accordion>
+                                            {!!authUser.roles[ROLES.ADMIN] ?
                                             <Accordion expanded={expanded === 'panel4'} onChange={this.handleChange('panel4')}>
                                                 <AccordionSummary
                                                     expandIcon={<ExpandMoreIcon />}
@@ -414,7 +415,7 @@ class EditForm extends Component {
                                                         {`Zipcode: ${rentalForm.cc.zipcode}`}
                                                     </Typography>
                                                 </AccordionDetails>
-                                            </Accordion>
+                                            </Accordion> : null }
                                         </div>
                                     </div>
                                 </Fade>

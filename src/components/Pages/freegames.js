@@ -70,9 +70,15 @@ class FreeGames extends Component {
                     <Container>
                         <h2 className="admin-header">Redeem Free Game</h2>
                         <Breadcrumb className="admin-breadcrumb">
+                            {window.location.href.indexOf("admin") > -1 ? 
                             <LinkContainer to="/admin">
                                 <Breadcrumb.Item>Admin</Breadcrumb.Item>
                             </LinkContainer>
+                            :
+                            <LinkContainer to="/dashboard">
+                                <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
+                            </LinkContainer> 
+                            }
                             <Breadcrumb.Item active>Free Games</Breadcrumb.Item>
                         </Breadcrumb>
                         <Row>
@@ -331,7 +337,7 @@ function UserBox({users, index, search, update, length}) {
 };
 
 const condition = authUser =>
-    authUser && !!authUser.roles[ROLES.ADMIN];
+    authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]);
 
 export default compose(
     withAuthorization(condition),
