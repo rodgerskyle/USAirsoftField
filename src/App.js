@@ -183,6 +183,12 @@ const App = () => (
       <Route exact path="/dashboard/rentalform">
         <RentalForm />
       </Route>
+      <Route exact path="/dashboard/freegames">
+        <FreeGames />
+      </Route>
+      <Route exact path="/dashboard/birthday">
+        <Birthday />
+      </Route>
       <Route exact path="/account">
         <AccountPage />
       </Route>

@@ -334,7 +334,7 @@ class RentalForm extends Component {
     // This will mainly be a function to check for members existance
     // Return false if not found, true if found
     lookupMember = (participants, name) => {
-        for (let i=0; i<participants.length; i++) {
+        for (let i = 0; i < participants.length; i++) {
             if (participants[i].name === name)
                 return true;
         }
@@ -357,9 +357,9 @@ class RentalForm extends Component {
             // participants.splice(participants.length, 0, obj);
             participants.push(obj)
             this.props.firebase.rentalGroup(index).update({ participants })
-            if (!isMember) {
-                this.props.firebase.validatedWaiver(name).set({ attached: true })
-            }
+            // if (!isMember) {
+            //     this.props.firebase.validatedWaiver(name).set({ attached: true })
+            // }
             this.showParticipantBox()
             this.setState({ search: "" })
         })
@@ -371,7 +371,8 @@ class RentalForm extends Component {
     }
 
     componentWillUnmount() {
-        this.props.firebase.validatedWaivers().off();
+        // this.props.firebase.validatedWaivers().off();
+        this.props.firebase.numWaivers().off();
         this.props.firebase.rentalGroups().off()
         this.props.firebase.rentalOptions().off()
         this.props.firebase.users().off()
@@ -380,15 +381,31 @@ class RentalForm extends Component {
     componentDidMount() {
         this.setState({ loading: true });
 
-        this.props.firebase.validatedWaivers().on('value', snapshot => {
-            const filesObject = snapshot.val()
+        this.props.firebase.waiversList().listAll().then((res) => {
+            var tempWaivers = [];
+            for (let i = 0; i < res.items.length; i++) {
+                let waiverName = res.items[i].name
+                let dateObj = (convertDate(waiverName.substr(waiverName.lastIndexOf('(') + 1).split(')')[0]))
+                let waiver_obj = {
+                    name: waiverName,
+                    date: dateObj,
+                    ref: res.items[i]
+                }
+                tempWaivers.push(waiver_obj)
+            }
+            this.setState({ waivers: tempWaivers })
+        }).catch(function (error) {
+            // Uh-oh, an error occurred!
+            console.log(error)
+        });
 
-            let validatedList = Object.keys(filesObject).map(key => ({
-                ...filesObject[key],
-                filename: key,
-            }));
-
-            this.setState({ waivers: validatedList })
+        this.props.firebase.numWaivers().on('value', snapshot => {
+            let num_waivers = snapshot.val().total_num;
+            this.setState({ num_waivers_cur: num_waivers, validateArray: snapshot.val().validated })
+        })
+        this.props.firebase.numWaivers().once('value', snapshot => {
+            let prev = snapshot.val().total_num;
+            this.setState({ num_waivers_prev: prev })
         })
 
         this.props.firebase.rentalGroups().on('value', snapshot => {
@@ -411,8 +428,8 @@ class RentalForm extends Component {
                 ...usersObject[key],
                 uid: key,
             }));
-            
-            this.setState({members: usersList})
+
+            this.setState({ members: usersList })
         })
 
         this.props.firebase.rentalOptions().on('value', snapshot => {
@@ -430,123 +447,151 @@ class RentalForm extends Component {
         })
     }
 
-    render() {
-        const {
-            cvc, number, expiry, name, zipcode, cvcError, expiryError, nameError, loading, members, rentalsError,
-            numberError, numparticipantsError, rentalnameError, zipcodeError, waivers, createdIndex, hidenav
-        } = this.state
-        const errorProps = { expiryError, nameError, numberError, numparticipantsError, cvcError, rentalnameError, zipcodeError }
-        const add = this.addParticipant
-        const waiverProps = { waivers, add, loading, members }
-
-        return (
-            <AuthUserContext.Consumer>
-                {authUser => (
-                    <div className="background-static-all">
-                        <Helmet>
-                            <title>US Airsoft Field: Rental Forms</title>
-                        </Helmet>
-                        <Container>
-                            <h2 className="admin-header">Rental Form</h2>
-                            {!hidenav ?
-                                <Breadcrumb className="admin-breadcrumb">
-                                    {authUser && !!authUser.roles[ROLES.ADMIN] ?
-                                        <LinkContainer to="/admin">
-                                            <Breadcrumb.Item>Admin</Breadcrumb.Item>
-                                        </LinkContainer>
-                                        :
-                                        <LinkContainer to="/dashboard">
-                                            <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
-                                        </LinkContainer>
-                                    }
-                                    <Breadcrumb.Item active>Rental Form</Breadcrumb.Item>
-                                </Breadcrumb> : null}
-                            {!hidenav ?
-                                <Row>
-                                    <Col>
-                                        <BottomNavigation
-                                            value={this.state.value}
-                                            onChange={(e, newvalue) => {
-                                                this.setState({value: -1}, () => {
-                                                    this.setState({ value: newvalue, ...INITIAL_STATE })
-                                                })
-                                            }}
-                                            showLabels
-                                            className="navigation-rf"
-                                        >
-                                            <BottomNavigationAction className="bottom-nav-rf" label="New Form" icon={<FontAwesomeIcon icon={faFolderPlus} className="icons-rf" />} />
-                                            <BottomNavigationAction className="bottom-nav-rf" label="Edit Form" icon={<FontAwesomeIcon icon={faFolderOpen} className="icons-rf" />} />
-                                            <BottomNavigationAction className="bottom-nav-rf" label="Return Form" icon={<FontAwesomeIcon icon={faFolderMinus} className="icons-rf" />} />
-                                            <BottomNavigationAction className="bottom-nav-rf" label="Rentals" icon={<FontAwesomeIcon icon={faCog} className="icons-rf" />} />
-                                        </BottomNavigation>
-                                    </Col>
-                                </Row>
-                                : null}
-                            {this.state.value === 0 ?
-                                !loading ?
-                                    <CreateForm cvc={cvc} number={number} expiry={expiry} name={name} zipcode={zipcode} handleInputChange={this.handleInputChange}
-                                        numParticipants={this.state.numParticipants} rentalName={this.state.rentalName} onChange={this.onChange} submit={this.createForm}
-                                        {...errorProps} checked={this.state.checked} showComplete={this.state.showComplete} hideComplete={this.hideComplete}
-                                        options={this.state.options} validate1stPage={this.validate1stPage.bind(this)} authUser={authUser} createdIndex={createdIndex}
-                                        firebase={this.props.firebase} dropNewForm={this.dropNewForm.bind(this)} newForm={this.state.newForm} hideNav={this.hideNav.bind(this)}
-                                        nav={this.state.hidenav} />
-                                    :
-                                    <Row className="spinner-standard">
-                                        <Spinner animation="border" />
-                                    </Row>
-                                : null}
-                            {this.state.value === 1 ?
-                                !loading ?
-                                    <div className="div-edit-rf">
-                                        {/* <EditForm forms={rentalForms} showAP={this.showParticipantBox} setParentIndex={this.setIndex} showAR={this.showRentalBox}
-                                                        authUser={authUser} options={JSON.parse(JSON.stringify(this.state.options))} firebase={this.props.firebase}/> */}
-                                        <EditForm showAP={this.showParticipantBox} setParentIndex={this.setIndex} showAR={this.showRentalBox}
-                                            authUser={authUser} />
-                                    </div>
-                                    :
-                                    <Row className="spinner-standard">
-                                        <Spinner animation="border" />
-                                    </Row>
-                                : null}
-                            {this.state.value === 2 ?
-                                !loading ?
-                                    <div className="div-edit-rf">
-                                        <ReturnForm />
-                                    </div>
-                                    :
-                                    <Row className="spinner-standard">
-                                        <Spinner animation="border" />
-                                    </Row>
-                                : null}
-                            {this.state.value === 3 ?
-                                !loading ?
-                                    <div className="div-edit-rf">
-                                        <RentalOptions />
-                                    </div>
-                                    :
-                                    <Row className="spinner-standard">
-                                        <Spinner animation="border" />
-                                    </Row>
-                                : null}
-                            <Collapse in={this.state.showAddParticipant} timeout="auto" unmountOnExit>
-                                <AddParticipant {...waiverProps} />
-                            </Collapse>
-                            <Snackbar open={rentalsError !== null} autoHideDuration={6000} onClose={() => this.setState({rentalsError: null})}>
-                                <Alert onClose={() => this.setState({rentalsError: null})} severity="error">
-                                    {rentalsError}
-                                </Alert>
-                            </Snackbar>
-                        </Container>
-                    </div>
-                )}
-            </AuthUserContext.Consumer>
-        );
+    componentDidUpdate() {
+        if (this.state.num_waivers_prev !== this.state.num_waivers_cur) {
+            this.props.firebase.waiversList().listAll().then((res) => {
+                var tempWaivers = [];
+                for (let i = 0; i < res.items.length; i++) {
+                    let waiverName = res.items[i].name
+                    let dateObj = (convertDate(waiverName.substr(waiverName.lastIndexOf('(') + 1).split(')')[0]))
+                    let waiver_obj = {
+                        name: waiverName,
+                        date: dateObj,
+                        ref: res.items[i]
+                    }
+                    tempWaivers.push(waiver_obj)
+                }
+                this.setState({ waivers: tempWaivers }, function () {
+                    this.setState({ loading: false })
+                })
+            }).catch(function (error) {
+                // Uh-oh, an error occurred!
+                console.log(error)
+            });
+            this.props.firebase.numWaivers().once('value', snapshot => {
+                let prev = snapshot.val().total_num;
+                this.setState({ num_waivers_prev: prev })
+            })
+        }
     }
-}
+
+        render() {
+            const {
+                cvc, number, expiry, name, zipcode, cvcError, expiryError, nameError, loading, members, rentalsError,
+                numberError, numparticipantsError, rentalnameError, zipcodeError, waivers, createdIndex, hidenav
+            } = this.state
+            const errorProps = { expiryError, nameError, numberError, numparticipantsError, cvcError, rentalnameError, zipcodeError }
+            const add = this.addParticipant
+            const waiverProps = { waivers, add, loading, members }
+
+            return (
+                <AuthUserContext.Consumer>
+                    {authUser => (
+                        <div className="background-static-all">
+                            <Helmet>
+                                <title>US Airsoft Field: Rental Forms</title>
+                            </Helmet>
+                            <Container>
+                                <h2 className="admin-header">Rental Form</h2>
+                                {!hidenav ?
+                                    <Breadcrumb className="admin-breadcrumb">
+                                        {authUser && !!authUser.roles[ROLES.ADMIN] ?
+                                            <LinkContainer to="/admin">
+                                                <Breadcrumb.Item>Admin</Breadcrumb.Item>
+                                            </LinkContainer>
+                                            :
+                                            <LinkContainer to="/dashboard">
+                                                <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
+                                            </LinkContainer>
+                                        }
+                                        <Breadcrumb.Item active>Rental Form</Breadcrumb.Item>
+                                    </Breadcrumb> : null}
+                                {!hidenav ?
+                                    <Row>
+                                        <Col>
+                                            <BottomNavigation
+                                                value={this.state.value}
+                                                onChange={(e, newvalue) => {
+                                                    this.setState({ value: -1 }, () => {
+                                                        this.setState({ value: newvalue, ...INITIAL_STATE })
+                                                    })
+                                                }}
+                                                showLabels
+                                                className="navigation-rf"
+                                            >
+                                                <BottomNavigationAction className="bottom-nav-rf" label="New Form" icon={<FontAwesomeIcon icon={faFolderPlus} className="icons-rf" />} />
+                                                <BottomNavigationAction className="bottom-nav-rf" label="Edit Form" icon={<FontAwesomeIcon icon={faFolderOpen} className="icons-rf" />} />
+                                                <BottomNavigationAction className="bottom-nav-rf" label="Return Form" icon={<FontAwesomeIcon icon={faFolderMinus} className="icons-rf" />} />
+                                                <BottomNavigationAction className="bottom-nav-rf" label="Rentals" icon={<FontAwesomeIcon icon={faCog} className="icons-rf" />} />
+                                            </BottomNavigation>
+                                        </Col>
+                                    </Row>
+                                    : null}
+                                {this.state.value === 0 ?
+                                    !loading ?
+                                        <CreateForm cvc={cvc} number={number} expiry={expiry} name={name} zipcode={zipcode} handleInputChange={this.handleInputChange}
+                                            numParticipants={this.state.numParticipants} rentalName={this.state.rentalName} onChange={this.onChange} submit={this.createForm}
+                                            {...errorProps} checked={this.state.checked} showComplete={this.state.showComplete} hideComplete={this.hideComplete}
+                                            options={this.state.options} validate1stPage={this.validate1stPage.bind(this)} authUser={authUser} createdIndex={createdIndex}
+                                            firebase={this.props.firebase} dropNewForm={this.dropNewForm.bind(this)} newForm={this.state.newForm} hideNav={this.hideNav.bind(this)}
+                                            nav={this.state.hidenav} />
+                                        :
+                                        <Row className="spinner-standard">
+                                            <Spinner animation="border" />
+                                        </Row>
+                                    : null}
+                                {this.state.value === 1 ?
+                                    !loading ?
+                                        <div className="div-edit-rf">
+                                            {/* <EditForm forms={rentalForms} showAP={this.showParticipantBox} setParentIndex={this.setIndex} showAR={this.showRentalBox}
+                                                        authUser={authUser} options={JSON.parse(JSON.stringify(this.state.options))} firebase={this.props.firebase}/> */}
+                                            <EditForm showAP={this.showParticipantBox} setParentIndex={this.setIndex} showAR={this.showRentalBox}
+                                                authUser={authUser} />
+                                        </div>
+                                        :
+                                        <Row className="spinner-standard">
+                                            <Spinner animation="border" />
+                                        </Row>
+                                    : null}
+                                {this.state.value === 2 ?
+                                    !loading ?
+                                        <div className="div-edit-rf">
+                                            <ReturnForm />
+                                        </div>
+                                        :
+                                        <Row className="spinner-standard">
+                                            <Spinner animation="border" />
+                                        </Row>
+                                    : null}
+                                {this.state.value === 3 ?
+                                    !loading ?
+                                        <div className="div-edit-rf">
+                                            <RentalOptions />
+                                        </div>
+                                        :
+                                        <Row className="spinner-standard">
+                                            <Spinner animation="border" />
+                                        </Row>
+                                    : null}
+                                <Collapse in={this.state.showAddParticipant} timeout="auto" unmountOnExit>
+                                    <AddParticipant {...waiverProps} />
+                                </Collapse>
+                                <Snackbar open={rentalsError !== null} autoHideDuration={6000} onClose={() => this.setState({ rentalsError: null })}>
+                                    <Alert onClose={() => this.setState({ rentalsError: null })} severity="error">
+                                        {rentalsError}
+                                    </Alert>
+                                </Snackbar>
+                            </Container>
+                        </div>
+                    )}
+                </AuthUserContext.Consumer>
+            );
+        }
+    }
 
 function CreateForm({ cvc, number, expiry, name, zipcode, handleInputChange, onChange, numParticipants, rentalName, submit, options, validate1stPage,
-    cvcError, expiryError, nameError, numberError, numparticipantsError, rentalnameError, zipcodeError, showComplete, hideComplete, authUser,
-    createdIndex, firebase, dropNewForm, newForm, hideNav, nav }) {
+        cvcError, expiryError, nameError, numberError, numparticipantsError, rentalnameError, zipcodeError, showComplete, hideComplete, authUser,
+        createdIndex, firebase, dropNewForm, newForm, hideNav, nav }) {
 
     const [checked, setChecked] = useState(false)
     const [optionsState, setOptionsState] = useState(JSON.parse(JSON.stringify(options)))
@@ -670,7 +715,7 @@ function CreateForm({ cvc, number, expiry, name, zipcode, handleInputChange, onC
                                         setPage(0)
                                     }}>
                                     Back
-                        </MUIButton>
+                                </MUIButton>
                             </div>
                             <Form noValidate autoComplete="off" onSubmit={(e) => {
                                 if (validateItems(e)) {
@@ -707,10 +752,10 @@ function CreateForm({ cvc, number, expiry, name, zipcode, handleInputChange, onC
                                                 onChange={(e, val) => setChecked(val)}
                                                 color="primary"
                                             />
-                                    By checking here, you agree that you will return back the rental equipment back to US Airsoft. You agree that you will bring the
-                                    equipment back in the same shape they were handed out in. You agree to reimburse US Aisoft for the price of the equipment listed
-                                    on the previous page. If the equipment is damaged, lost, stolen or kept, you will be charged.
-                                </p>
+                                            By checking here, you agree that you will return back the rental equipment back to US Airsoft. You agree that you will bring the
+                                            equipment back in the same shape they were handed out in. You agree to reimburse US Aisoft for the price of the equipment listed
+                                            on the previous page. If the equipment is damaged, lost, stolen or kept, you will be charged.
+                                        </p>
                                     </Col>
                                 </Row>
                             </Form>
@@ -902,7 +947,7 @@ function AddRentals({ setPage, optionsState, setOptionsState, onChange, validate
                             hideNav()
                         }}>
                         Hide Navbar
-                </MUIButton>
+                    </MUIButton>
                 </Row> : null}
             <Row className="justify-content-row">
                 <Col>
@@ -1080,7 +1125,7 @@ function AddParticipant(props) {
                                     />
                                     <FormControlLabel label="Members Search" control={<Checkbox color="primary" />} value={isMember} onChange={(e) => {
                                         setIsMember(!isMember)
-                                    }}/>
+                                    }} />
                                 </Form.Group>
                             </Form>
                         </Card.Header>
@@ -1120,9 +1165,57 @@ function membersConvertRenewal(date) {
         return "N/A"
     else {
         let temp = date.split('-')
-        let newDate = new Date(temp[2]-1, temp[0]-1, temp[1])
-        return `${newDate.getMonth()+1}-${newDate.getDate()}-${newDate.getFullYear()}`
+        let newDate = new Date(temp[2] - 1, temp[0] - 1, temp[1])
+        return `${newDate.getMonth() + 1}-${newDate.getDate()}-${newDate.getFullYear()}`
     }
+}
+
+function returnDay(day) {
+    if (day === 0)
+        return "Sun"
+    else if (day === 1)
+        return "Mon"
+    else if (day === 2)
+        return "Tue"
+    else if (day === 3)
+        return "Wed"
+    else if (day === 4)
+        return "Thu"
+    else if (day === 5)
+        return "Fri"
+    else if (day === 6)
+        return "Sat"
+}
+
+function returnMonth(month) {
+    if (month===0)
+        return "January"
+    else if (month===1)
+        return "February"
+    else if (month === 2)
+        return "March"
+    else if (month === 3)
+        return "April"
+    else if (month === 4)
+        return "May"
+    else if (month === 5)
+        return "June"
+    else if (month === 6)
+        return "July"
+    else if (month === 7)
+        return "August"
+    else if (month === 8)
+        return "September"
+    else if (month === 9)
+        return "October"
+    else if (month === 10)
+        return "November"
+    else if (month === 11)
+        return "December"
+}
+
+function returnDateString(date) {
+    return returnDay(date.getDay()) + ", " + date.getDate() + " " + returnMonth(date.getMonth()) + " " + date.getFullYear()
 }
 
 function WaiverBox(props) {
@@ -1133,25 +1226,23 @@ function WaiverBox(props) {
                 <div className="row-allwaivers-wl">
                     {!loading ?
                         waivers.sort((a, b) =>
-                        (convertDate(b.filename.substr(b.filename.lastIndexOf('(') + 1).split(')')[0]) -
-                            convertDate(a.filename.substr(a.filename.lastIndexOf('(') + 1).split(')')[0])))
-                            .filter(obj => obj.attached === false).map((waiver, i) => (
+                        (b.date) - (a.date)).map((waiver, i) => (
                                 search !== "" ? // Search query case
-                                    waiver.filename.toLowerCase().includes(search.toLowerCase()) ?
+                                    waiver.name.toLowerCase().includes(search.toLowerCase()) ?
                                         i % 2 === 0 ?
                                             <Row className="row-wl" key={i}>
                                                 <Col className="col-name-fg">
                                                     <Card.Text>
-                                                        {"(" + i + ") " + waiver.filename.substr(0, waiver.filename.lastIndexOf('('))}
+                                                        {"(" + i + ") " + waiver.name.substr(0, waiver.name.lastIndexOf('('))}
                                                     </Card.Text>
                                                 </Col>
                                                 <Col>
                                                     <Row>
                                                         <Col className="col-name-fg">
-                                                            {waiver.filename.substr(waiver.filename.lastIndexOf('(') + 1).split(')')[0]}
+                                                            {returnDateString(waiver.date)}
                                                         </Col>
                                                         <Col>
-                                                            <Button className="button-submit-admin2" onClick={() => add(waiver.filename, isMember)}
+                                                            <Button className="button-submit-admin2" onClick={() => add(waiver.name, isMember)}
                                                                 type="submit" id="update" variant="success">
                                                                 Add
                                                             </Button>
@@ -1163,16 +1254,16 @@ function WaiverBox(props) {
                                             <Row className="status-card-offrow-admin-wl" key={i}>
                                                 <Col className="col-name-fg">
                                                     <Card.Text>
-                                                        {"(" + i + ") " + waiver.filename.substr(0, waiver.filename.lastIndexOf('('))}
+                                                        {"(" + i + ") " + waiver.name.substr(0, waiver.name.lastIndexOf('('))}
                                                     </Card.Text>
                                                 </Col>
                                                 <Col>
                                                     <Row>
                                                         <Col className="col-name-fg">
-                                                            {waiver.filename.substr(waiver.filename.lastIndexOf('(') + 1).split(')')[0]}
+                                                            {returnDateString(waiver.date)}
                                                         </Col>
                                                         <Col>
-                                                            <Button className="button-submit-admin2" onClick={() => add(waiver.filename, isMember)}
+                                                            <Button className="button-submit-admin2" onClick={() => add(waiver.name, isMember)}
                                                                 type="submit" id="update" variant="success">
                                                                 Add
                                                             </Button>
@@ -1186,16 +1277,16 @@ function WaiverBox(props) {
                                         <Row className="row-wl" key={i}>
                                             <Col className="col-name-fg">
                                                 <Card.Text>
-                                                    {"(" + i + ") " + waiver.filename.substr(0, waiver.filename.lastIndexOf('('))}
+                                                    {"(" + i + ") " + waiver.name.substr(0, waiver.name.lastIndexOf('('))}
                                                 </Card.Text>
                                             </Col>
                                             <Col>
                                                 <Row>
                                                     <Col className="col-name-fg">
-                                                        {waiver.filename.substr(waiver.filename.lastIndexOf('(') + 1).split(')')[0]}
+                                                        {returnDateString(waiver.date)}
                                                     </Col>
                                                     <Col>
-                                                        <Button className="button-submit-admin2" onClick={() => add(waiver.filename, isMember)}
+                                                        <Button className="button-submit-admin2" onClick={() => add(waiver.name, isMember)}
                                                             type="submit" id="update" variant="success">
                                                             Add
                                                         </Button>
@@ -1207,16 +1298,16 @@ function WaiverBox(props) {
                                         <Row className="status-card-offrow-admin-wl" key={i}>
                                             <Col className="col-name-fg">
                                                 <Card.Text>
-                                                    {"(" + i + ") " + waiver.filename.substr(0, waiver.filename.lastIndexOf('('))}
+                                                    {"(" + i + ") " + waiver.name.substr(0, waiver.name.lastIndexOf('('))}
                                                 </Card.Text>
                                             </Col>
                                             <Col>
                                                 <Row>
                                                     <Col className="col-name-fg">
-                                                        {waiver.filename.substr(waiver.filename.lastIndexOf('(') + 1).split(')')[0]}
+                                                        {returnDateString(waiver.date)}
                                                     </Col>
                                                     <Col>
-                                                        <Button className="button-submit-admin2" onClick={() => add(waiver.filename, isMember)}
+                                                        <Button className="button-submit-admin2" onClick={() => add(waiver.name, isMember)}
                                                             type="submit" id="update" variant="success">
                                                             Add
                                                         </Button>
@@ -1242,9 +1333,9 @@ function MemberBox(props) {
             <Card.Body className="status-card-body-wl-admin">
                 <div className="row-allwaivers-wl">
                     {!loading ?
-                        members.sort((a, b) => 
-                        (membersConvertDate(b.renewal) - membersConvertDate(a.renewal)))
-                        .map((user, i) => (
+                        members.sort((a, b) =>
+                            (membersConvertDate(b.renewal) - membersConvertDate(a.renewal)))
+                            .map((user, i) => (
                                 search !== "" ? // Search query case
                                     user.name.toLowerCase().includes(search.toLowerCase()) ?
                                         i % 2 === 0 ?
