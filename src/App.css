@@ -3815,6 +3815,28 @@ body {
   /* position: absolute; */
 }
 
+.pricing-update-title-h2 {
+  text-align: center;
+  background-color: rgb(168, 0, 0);
+  padding: 16px 32px;
+  font-size: 1rem;
+  color: white;
+}
+
+.pricing-update-inner-div {
+  padding: 16px 32px 24px;
+  color: white;
+}
+
+.justify-content-flex-end-div {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.justify-content-flex-end-div .MuiButton-root {
+  color: white;
+}
+
 .div-parent-admin .MuiListItem-gutters {
   padding-left: 22px;
   padding-right: 22px;
