@@ -3,6 +3,7 @@ import { Container, Row, Col } from 'react-bootstrap/';
 import { Helmet } from 'react-helmet-async';
 import BackgroundVideo from '../constants/backgroundvideo';
 import MUIButton from '@material-ui/core/Button';
+import UpdateInPricing from '../constants/updateInPricing';
 // import countdown_picture from '../../assets/countdown_picture.png';
 // import soldiers from '../../assets/soldiers_picture.png';
 // import Countdown from 'react-countdown';
@@ -80,6 +81,7 @@ const Home = () => {
   <Helmet>
     <title>US Airsoft Field</title>
   </Helmet>
+  <UpdateInPricing />
   <div className="background-static-all">
     {/* {!window.location.hostname.includes("usairsoftfield.com") ?
     <Row>
