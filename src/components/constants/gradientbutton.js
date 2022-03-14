@@ -7,8 +7,8 @@ const useStyles = makeStyles({
   root: {
     background: (props) =>
       props.color === 'black-silver' 
-        ? 'linear-gradient(45deg, #353535 10%, #D7D7D7 90%)'
-        : 'linear-gradient(45deg, #D2CCC4 10%, #2F4353 90%)',
+        ? 'rgb(4, 4, 4)'
+        : 'rgb(8, 37, 68)',
     border: 0,
     borderRadius: 30,
     boxShadow: (props) =>

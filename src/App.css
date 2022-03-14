@@ -3833,6 +3833,54 @@ body {
   justify-content: flex-end;
 }
 
+.form-control-disabled-signup .form-control:disabled {
+  background-color: rgb(157, 157, 157);
+}
+
+.second-page-signup-col {
+  background-color: rgb(73 80 87 / .6);
+  border-radius: 5px;
+  padding: 15px;
+}
+
+.standard-navigation-buttons-row-pricing {
+  padding-bottom: 15px;
+}
+
+.standard-card-header-pricing {
+  background-color: #082544 !important;
+  color: white;
+}
+
+.new-player-card-header {
+  background-color: #082544 !important;
+  color: white;
+}
+
+.non-member-card-header {
+  background-color: #0b3888 !important;
+  color: white;
+}
+
+.weekday-card-header-pricing {
+  background-color: #0b3888 !important;
+  color: white;
+}
+
+.member-card-header {
+  background-color: #a44347 !important;
+  color: white;
+}
+
+.first-row-card-pricing {
+  justify-content: center;
+}
+
+.second-row-card-pricing {
+  margin-top: -18px;
+  justify-content: center;
+}
+
 .justify-content-flex-end-div .MuiButton-root {
   color: white;
 }
