@@ -260,6 +260,9 @@ const NavigationAuth = ({ authUser, profilePic}) => {
                                     <LinkContainer to="/pricing">
                                         <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Pricing</MDBDropdownItem>
                                     </LinkContainer>
+                                    <LinkContainer to="/schedule">
+                                        <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Schedule</MDBDropdownItem>
+                                    </LinkContainer>
                                     <NavDropdown.Divider />
                                     <LinkContainer to="/contact">
                                         <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Contact Us</MDBDropdownItem>
@@ -392,6 +395,9 @@ const NavigationNonAuth = () => {
                                     </LinkContainer>
                                     <LinkContainer to="/pricing">
                                         <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Pricing</MDBDropdownItem>
+                                    </LinkContainer>
+                                    <LinkContainer to="/schedule">
+                                        <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Schedule</MDBDropdownItem>
                                     </LinkContainer>
                                     <NavDropdown.Divider />
                                     <LinkContainer to="/contact">
