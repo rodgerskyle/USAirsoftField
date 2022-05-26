@@ -179,6 +179,12 @@ class Firebase {
 
     calendarEvent = i => this.db.ref(`calendar/${i}`);
 
+    // Schedule API
+
+    schedule = () => this.db.ref(`schedule`);
+
+    scheduleEvent = i => this.db.ref(`schedule/${i}`);
+
 }
 
 export default Firebase;
