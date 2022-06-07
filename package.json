@@ -34,6 +34,7 @@
     "react-big-calendar": "^0.33.2",
     "react-bootstrap": "^1.4.0",
     "react-bootstrap-typeahead": "^5.1.4",
+    "react-calendar": "^3.7.0",
     "react-cookie-consent": "^5.2.0",
     "react-countdown": "^2.3.2",
     "react-credit-cards": "^0.8.3",

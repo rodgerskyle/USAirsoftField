@@ -46,6 +46,7 @@ import Birthday from './components/Pages/Birthday';
 import ScanWaiver from './components/Pages/ScanWaiver';
 import About from './components/Pages/About';
 import Logout from './components/constants/logout';
+import Schedule from './components/Pages/Schedule';
 // import EmailDashboard from './components/Pages/EmailDashboard';
 import { useState } from 'react';
 
@@ -63,6 +64,9 @@ const App = () => (
           <EmailOptOut {...props} />
         )}
       ></Route>
+      <Route exact path="/schedule">
+        <Schedule />
+      </Route>
       <Route exact path="/map">
         <Map />
       </Route>
