@@ -1,7 +1,7 @@
 .react-calendar {
     width: 450px;
     max-width: 100%;
-    background-color: rgb(183 183 183 / 40%);
+    background-color: rgb(236, 236, 236);
     color: #222;
     border-radius: 8px;
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
@@ -10,7 +10,7 @@
 }
 
 .react-calendar__navigation button {
-    color: #fafafa;
+    color: #000000;
     min-width: 44px;
     background: none;
     font-size: 24px;
@@ -20,7 +20,7 @@
 
 .react-calendar__navigation button:enabled:hover,
 .react-calendar__navigation button:enabled:focus {
-    background-color: #383838;
+    background-color: #c9c9c9;
 }
 
 .react-calendar__navigation button[disabled] {
@@ -34,27 +34,39 @@ abbr[title] {
 /* .react-calendar__month-view__days__day--weekend {
     color: #d10000;
    } */
-.react-calendar__tile:enabled:hover,
-.react-calendar__tile:enabled:focus {
-    background: #f8f8fa;
-    background: #a44347;
+
+
+.non-event-calendar-days:enabled:hover,
+.non-event-calendar-days:enabled:focus {
+    background: #979797;
     color: white;
     border-radius: 20px;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Game day hover will be blue */
+.weekend-calendar-games:enabled:hover,
+.weekend-calendar-games:enabled:focus  {
+    background: #104d8d;
+    color: white;
+    border-radius: 20px;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Friday night will be green */
+.friday-night-calendar-games:enabled:hover,
+.friday-night-calendar-games:enabled:focus {
+    background: #53ac41;
+    color: white;
+    border-radius: 20px;
+    transition: all 0.2s ease-in-out;
 }
 
 .react-calendar__tile--now {
-    background: #0c3866 !important;
+    background: #a44347 !important;
     border-radius: 20px;
     font-weight: bold;
     color: white;
-}
-
-.react-calendar__tile--now:enabled:hover,
-.react-calendar__tile--now:enabled:focus {
-    background: #104d8d;
-    border-radius: 20px;
-    font-weight: bold;
-    color: #ffffff;
 }
 
 .react-calendar__tile--hasActive:enabled:hover,
@@ -62,16 +74,30 @@ abbr[title] {
     background: #f8f8fa;
 }
 
-.react-calendar__tile--active {
+.friday-night-calendar-games.react-calendar__tile--rangeEnd,
+.friday-night-calendar-games.react-calendar__tile--range,
+.friday-night-calendar-games.react-calendar__tile:active {
+    background: #53ac41;
     border-radius: 20px;
-    background: #a44347 !important;
     font-weight: bold;
     color: white;
 }
 
-.react-calendar__tile--active:enabled:hover,
-.react-calendar__tile--active:enabled:focus {
-    background: #c25054;
+.weekend-calendar-games.react-calendar__tile--rangeEnd, 
+.weekend-calendar-games:enabled.react-calendar__tile--range,
+.weekend-calendar-games:enabled.react-calendar__tile:active  {
+    background: #104d8d;
+    border-radius: 20px;
+    font-weight: bold;
+    color: white;
+}
+
+.non-event-calendar-days.react-calendar__tile--rangeEnd, 
+.non-event-calendar-days:enabled.react-calendar__tile--range,
+.non-event-calendar-days:enabled.react-calendar__tile:active  {
+    background: #979797;
+    border-radius: 20px;
+    font-weight: bold;
     color: white;
 }
 
@@ -80,28 +106,20 @@ abbr[title] {
 }
 
 .react-calendar__tile--range {
-    background: #a44347;
+    background: #104d8d;
     color: rgb(146, 146, 146);
     border-radius: 0;
 }
 
 .react-calendar__tile--rangeStart {
-    /* border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-    border-top-left-radius: 6px;
-    border-bottom-left-radius: 6px; */
     border-radius: 20px;
-    background: #a44347;
+    background: #104d8d;
     color: white;
 }
 
 .react-calendar__tile--rangeEnd {
-    /* border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    border-top-right-radius: 6px;
-    border-bottom-right-radius: 6px; */
     border-radius: 20px;
-    background: #a44347;
+    background: #104d8d;
     color: white;
 }
 
@@ -117,14 +135,14 @@ abbr[title] {
 }
 
 .react-calendar__tile {
-    background-color: transparent;
+    /* background-color: transparent; */
     border: none;
     padding: 5px;
 }
 
-.react-calendar__month-view__weekdays__weekday {
+.react-calendarWeekendview__weekdays__weekday {
     text-align: center;
-    color: white;
+    color: #000000;
     text-decoration: underline;
 }
 
@@ -133,6 +151,8 @@ abbr[title] {
     font-weight: 300;
     text-align: center;
     color: white;
+    padding-top: 20px;
+    padding-bottom: 20px;
 }
 
 .selected-date-col-schedule {
@@ -166,6 +186,8 @@ abbr[title] {
     padding: 5px;
     margin: 5px;
     border-radius: 20px;
+    font-size: 15px;
+    font-weight: 200;
 }
 
 .deleting-div-element-schedule-box {
@@ -211,12 +233,28 @@ abbr[title] {
     color: rgb(146, 146, 146);
 }
 
-.icon-additional-info-col {
+.row .icon-additional-info-col {
     color: white;
+    width: unset;
 }
 
-.text-event-title-col {
-    margin-left: 5px;
+.row .text-event-title-col {
+    margin-left: -4px;
+    width: unset;
+}
+
+.row .event-element-col-schedule {
+    width: unset;
+}
+
+@media (min-width: 992px) {
+    .row .col-lg-2 {
+        max-width: unset;
+    }
+
+    .row .col-lg-9 {
+        max-width: unset;
+    }
 }
 
 .add-event-row-schedule {

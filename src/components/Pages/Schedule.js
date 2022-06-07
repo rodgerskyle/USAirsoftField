@@ -3,10 +3,9 @@ import { Container, Col, Spinner, Row } from 'react-bootstrap/';
 import { Helmet } from 'react-helmet-async';
 import Calendar from 'react-calendar';
 import "../constants/react-calendar.css";
-import AccessTime from '@material-ui/icons/AccessTime';
 import InfoIcon from '@material-ui/icons/Info';
 import IconButton from '@material-ui/core/IconButton';
-import { Add, Close, Delete, Save, FiberManualRecord, ContactsOutlined, Copyright } from '@material-ui/icons';
+import { Add, Close, Delete, Save, FiberManualRecord } from '@material-ui/icons';
 import { Button, TextField } from '@material-ui/core';
 import { withFirebase } from '../Firebase';
 import * as ROLES from '../constants/roles';
@@ -193,16 +192,21 @@ class Schedule extends Component {
         }
 
         if (days.includes(date.getDay())) {
-            let time = "6pm - 11pm"
+            let time = ""
+            let name = "Weekend Gameplay"
             if (this.checkSeason(date) && date.getDay() !== 5) {
                 time = "8am - 2pm"
             }
             else if (!this.checkSeason(date) && date.getDay() !== 5) {
                 time = "9am - 3pm"
             }
+            else {
+                name = "Friday Night Gameplay"
+                time = "6pm - 11pm"
+            }
             let event = { 
                 date: date,
-                name: "Standard Gameplay",
+                name: name,
                 time: time,
                 additional: "",
                 static: true,
@@ -270,6 +274,10 @@ class Schedule extends Component {
                                 onChange={this.setDate} 
                                 value={date} 
                                 tileContent={({date, view}) => (this.checkTile(date, view))}
+                                tileClassName={({ activeStartDate, date, view }) => (
+                                    view === 'month' && (date.getDay() === 6 || date.getDay() === 0) ? 'weekend-calendar-games' : 
+                                    (date.getDay() === 5 ? "friday-night-calendar-games" : "non-event-calendar-days")
+                                )}
                             />
                         </Col>
                     </Row>
@@ -377,11 +385,11 @@ class Schedule extends Component {
                                     <Row className="justify-content-row">
                                         <Close className="trash-icon-schedule"/>
                                     </Row>
-                                    <Row>
-                                        <Col lg={1}>
-                                            <AccessTime />
+                                    <Row className="event-info-row">
+                                        <Col lg={2} className="icon-additional-info-col">
+                                            Time:
                                         </Col>
-                                        <Col lg={6}>
+                                        <Col lg={9} className="event-element-col-schedule">
                                             {event.time}
                                         </Col>
                                     </Row>
@@ -399,10 +407,10 @@ class Schedule extends Component {
                                 {event.additional !== "" ? 
                                 <div>
                                     <Row className="event-info-row">
-                                        <Col lg={1} className="icon-additional-info-col">
+                                        <Col lg={2} className="icon-additional-info-col">
                                             <InfoIcon/>
                                         </Col>
-                                        <Col lg={10}>
+                                        <Col lg={9} className="text-event-title-col">
                                             {event.additional}
                                         </Col>
                                     </Row>

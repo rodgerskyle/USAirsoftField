@@ -199,6 +199,9 @@ const NavigationAuth = ({ authUser, profilePic}) => {
                             <MDBNavLink as={Link} className="nav-link" to="/leaderboard" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Leaderboard</MDBNavLink>
                         </MDBNavItem>
                         <MDBNavItem>
+                            <MDBNavLink as={Link} className="nav-link" to="/schedule" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Schedule</MDBNavLink>
+                        </MDBNavItem>
+                        <MDBNavItem>
                             <MDBNavLink as={Link} className="nav-link" to="/teams" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Teams</MDBNavLink>
                         </MDBNavItem>
                         {/* <MDBNavItem>
@@ -259,9 +262,6 @@ const NavigationAuth = ({ authUser, profilePic}) => {
                                     </LinkContainer>
                                     <LinkContainer to="/pricing">
                                         <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Pricing</MDBDropdownItem>
-                                    </LinkContainer>
-                                    <LinkContainer to="/schedule">
-                                        <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Schedule</MDBDropdownItem>
                                     </LinkContainer>
                                     <NavDropdown.Divider />
                                     <LinkContainer to="/contact">
@@ -357,6 +357,9 @@ const NavigationNonAuth = () => {
                             <MDBNavLink as={Link} className="nav-link" to="/leaderboard" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Leaderboard</MDBNavLink>
                         </MDBNavItem>
                         <MDBNavItem>
+                            <MDBNavLink as={Link} className="nav-link" to="/schedule" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Schedule</MDBNavLink>
+                        </MDBNavItem>
+                        <MDBNavItem>
                             <MDBNavLink as={Link} className="nav-link" to="/teams" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Teams</MDBNavLink>
                         </MDBNavItem>
                         <MDBNavItem>
@@ -395,9 +398,6 @@ const NavigationNonAuth = () => {
                                     </LinkContainer>
                                     <LinkContainer to="/pricing">
                                         <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Pricing</MDBDropdownItem>
-                                    </LinkContainer>
-                                    <LinkContainer to="/schedule">
-                                        <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Schedule</MDBDropdownItem>
                                     </LinkContainer>
                                     <NavDropdown.Divider />
                                     <LinkContainer to="/contact">
