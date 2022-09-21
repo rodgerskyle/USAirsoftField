@@ -4,9 +4,9 @@ import { Helmet } from 'react-helmet-async';
 import BackgroundVideo from '../constants/backgroundvideo';
 import MUIButton from '@material-ui/core/Button';
 // import UpdateInPricing from '../constants/updateInPricing';
-// import countdown_picture from '../../assets/countdown_picture.png';
-// import soldiers from '../../assets/soldiers_picture.png';
-// import Countdown from 'react-countdown';
+import countdown_picture from '../../assets/countdown_picture.png';
+import soldiers from '../../assets/soldiers_picture.png';
+import Countdown from 'react-countdown';
 
 /* Needs to be added in
 Closed:
@@ -35,47 +35,47 @@ function checkSeason() {
   return ((summerStart.getTime() <= today.getTime()) && (today.getTime() <= summerEnd.getTime()));
 }
 
-// const TimeTitles = () => {
-//   return (
-//       <div className="countdown-titles-row-home">
-//         <Row className="countdown-row-title-home">
-//           <Col className="countdown-col-title-home" xs={4}>
-//             HOURS
-//           </Col>
-//           <Col className="countdown-col-title-home" xs={4}>
-//             MINUTES
-//           </Col>
-//           <Col className="countdown-col-title-home" xs={4}>
-//             SECONDS
-//           </Col>
-//         </Row>
-//       </div>
-//   );
-// }
+const TimeTitles = () => {
+  return (
+      <div className="countdown-titles-row-home">
+        <Row className="countdown-row-title-home">
+          <Col className="countdown-col-title-home" xs={4}>
+            DAYS
+          </Col>
+          <Col className="countdown-col-title-home" xs={4}>
+            HOURS
+          </Col>
+          <Col className="countdown-col-title-home" xs={4}>
+            MINUTES
+          </Col>
+        </Row>
+      </div>
+  );
+}
 
-// // Renderer callback with condition
-// const renderer = ({ hours, minutes, seconds, completed, days }) => {
-//     // Render a countdown
-//     return (
-//       <div className="countdown-row-home">
-//         <Row className="countdown-row-number-home">
-//           <Col className="countdown-col-number-home" xs={4}>
-//             {hours + (days*24)}
-//           </Col>
-//           <Col className="countdown-col-number-home" xs={4}>
-//             {minutes}
-//           </Col>
-//           <Col className="countdown-col-number-home" xs={4}>
-//             {seconds}
-//           </Col>
-//         </Row>
-//       </div>
-//     );
-// };
+// Renderer callback with condition
+const renderer = ({ hours, minutes, seconds, completed, days }) => {
+    // Render a countdown
+    return (
+      <div className="countdown-row-home">
+        <Row className="countdown-row-number-home">
+          <Col className="countdown-col-number-home" xs={4}>
+            {days}
+          </Col>
+          <Col className="countdown-col-number-home" xs={4}>
+            {hours}
+          </Col>
+          <Col className="countdown-col-number-home" xs={4}>
+            {minutes}
+          </Col>
+        </Row>
+      </div>
+    );
+};
 
 const Home = () => {
   const [summer, setSummer] = React.useState(checkSeason());
-  // const launchDate = new Date(2021, 10, 6, 9, 0, 0)
+  const launchDate = new Date(2022, 10, 4, 9, 0, 0)
   return (
   <div>
   <Helmet>
@@ -83,7 +83,6 @@ const Home = () => {
   </Helmet>
   {/* <UpdateInPricing /> */}
   <div className="background-static-all">
-    {/* {!window.location.hostname.includes("usairsoftfield.com") ?
     <Row>
       <div className="countdown-div-home">
         <img src={countdown_picture} className="countdown-img-home" alt="American flag in grayscale"/>
@@ -91,7 +90,7 @@ const Home = () => {
         <Countdown date={launchDate} renderer={renderer} daysInHours={true}/>
         <img src={soldiers} className="soldiers-img-home" alt="Soldiers posing in line"/>
       </div>
-    </Row> : null} */}
+    </Row>
     <BackgroundVideo/>
     <Container fluid={true}>
       {/* <Row className="text-center justify-content-row">
@@ -155,14 +154,14 @@ const Home = () => {
             {summer ?
               <dl style={{textAlign: 'center'}}>
                 {/* <dt className="dt-hours-info">Monday- Closed</dt> */}
-                <dt className="dt-hours-info">MON-THU: 9AM - 5PM</dt>
+                <dt className="dt-hours-info">MON-THU: 9AM - 6PM</dt>
                 <dt className="dt-hours-info">FRI: 9AM - 11PM</dt>
                 <dt className="dt-hours-info">SAT: 8AM - 4PM</dt>
                 <dt className="dt-hours-info">SUN: 8AM - 4PM</dt>
               </dl> : 
               <dl style={{textAlign: 'center'}}>
                 {/* <dt className="dt-hours-info">Monday- Closed</dt> */}
-                <dt className="dt-hours-info">MON-FRI: 9AM - 5PM</dt>
+                <dt className="dt-hours-info">MON-FRI: 9AM - 6PM</dt>
                 <dt className="dt-hours-info">SAT: 9AM - 5PM</dt>
                 <dt className="dt-hours-info">SUN: 9AM - 5PM</dt>
               </dl>
