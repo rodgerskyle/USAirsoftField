@@ -123,6 +123,8 @@ class Firebase {
 
     users = () => this.db.ref('users');
 
+    userCourse = (uid, course) => this.db.ref(`users/${uid}/timedrun/${course}`)
+
     // Email List API
 
     emailList = (email) => this.db.ref(`emaillist/${email}`)
@@ -184,6 +186,14 @@ class Firebase {
     schedule = () => this.db.ref(`schedule`);
 
     scheduleEvent = i => this.db.ref(`schedule/${i}`);
+
+    // Speed Leaderboard Users
+
+    timedRun = () => this.db.ref(`timedrunusers`);
+
+    timedRunUser = (user) => this.db.ref(`timedrunusers/${user}`);
+
+    timedRunUserCourse = (user, course) => this.db.ref(`timedrunusers/${user}/timedrun/${course}`);
 
 }
 

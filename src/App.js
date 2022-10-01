@@ -14,9 +14,11 @@ import SignUpForm from './components/Pages/Signup'
 import WaiverForm from './components/Pages/FillOutWaiver'
 import EnterWins from './components/Pages/enterwins';
 import EnterLosses from './components/Pages/enterlosses';
+import EnterTime from './components/Pages/entertime';
 import FreeGames from './components/Pages/freegames';
 // import Migration from './components/Pages/migrate';
 import Leaderboard from './components/Pages/leaderboard';
+import TimedLeaderboard from './components/Pages/TimedLeaderboard';
 import ProfileLookup from './components/Pages/Profilelookup';
 import Pricing from './components/Pages/Pricing';
 import Teams from './components/Pages/Teams';
@@ -140,6 +142,9 @@ const App = () => (
           <RenewSubscription {...props} />
         )}
       ></Route>
+      <Route exact path="/admin/entertime">
+        <EnterTime />
+      </Route>
       <Route exact path="/admin/enterwins">
         <EnterWins />
       </Route>
@@ -204,6 +209,9 @@ const App = () => (
       </Route>
       <Route exact path="/logout">
         <Logout />
+      </Route>
+      <Route exact path="/timedleaderboard">
+        <TimedLeaderboard />
       </Route>
       <Route exact path="/leaderboard">
         <Leaderboard />
