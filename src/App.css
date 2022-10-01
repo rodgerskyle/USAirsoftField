@@ -540,6 +540,16 @@ body {
   border-bottom-width: 1px !important;
 }
 
+.header-th-tlb {
+  border-bottom: 1px solid rgb(255, 217, 0, .5) !important;
+  border-bottom-width: 1px !important;
+  text-align: left;
+}
+
+.knocked-out-tr-tlb {
+  background-color: rgb(255 0 0 / 20%) !important;
+}
+
 .button-left-lb {
   padding: 10px 15px;
 }
@@ -1196,6 +1206,51 @@ body {
   border-radius: 5px;
   padding: 5px;
   color: white;
+ }
+
+ .admin-row-time {
+  background-color: rgb(108, 117, 125, 0.75);
+  margin-right: 0 !important;
+  margin-left: 0 !important;
+  border-radius: 5px;
+  padding: 10px;
+  color: white;
+ }
+
+ .entertime-toggle-button {
+  margin-right: 5px;
+ }
+ 
+ .entertime-row-toggle-button {
+  justify-content: center;
+ }
+
+ .entertime-row-toggle-button .btn {
+  width: 100%;
+ }
+
+ .entertime-removing-row {
+  padding: 0 15px;
+  padding-top: 20px;
+ }
+
+ .entertime-removing-row button {
+  width: 100%;
+ }
+
+ .entertime-submitting-row {
+  padding: 0 15px;
+ }
+
+ .entertime-submitting-row button {
+  width: 100%;
+ }
+
+ .dropdown-col-tlb {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 15px;
  }
 
  .admin-col-button-points {
