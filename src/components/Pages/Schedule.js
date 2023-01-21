@@ -10,6 +10,7 @@ import { Button, TextField } from '@material-ui/core';
 import { withFirebase } from '../Firebase';
 import * as ROLES from '../constants/roles';
 import staticEvents from '../constants/staticcalendarevents';
+import { onValue, set } from 'firebase/database';
 
 class Schedule extends Component {
     constructor(props) {
@@ -73,7 +74,7 @@ class Schedule extends Component {
             date: this.state.date.toJSON(),
         }
 
-        this.props.firebase.scheduleEvent(this.state.events.length).set(event).then(() => {
+        set(this.props.firebase.scheduleEvent(this.state.events.length), event).then(() => {
             this.setState({ 
                 showCreateEvent: false,
                 loading: true,
@@ -88,7 +89,7 @@ class Schedule extends Component {
         // splice event from object and call setdate function on cur date
         let events = this.state.events
         events.splice(obj.index, 1)
-        this.props.firebase.schedule().set(events).then(() => {
+        set(this.props.firebase.schedule(), events).then(() => {
             this.setState({
                 loading: true,
             }, () => {
@@ -217,7 +218,7 @@ class Schedule extends Component {
     }
 
     componentDidMount() {
-        this.props.firebase.schedule().on('value', obj => {
+        onValue(this.props.firebase.schedule(), obj => {
             let events = obj.val() || [];
 
             let eventsObj = Object.keys(events).map(key => ({
@@ -252,7 +253,7 @@ class Schedule extends Component {
     };
 
     componentWillUnmount() {
-        this.props.firebase.schedule().off()
+        // this.props.firebase.schedule().off()
         this.authSubscription()
     }
 
@@ -288,7 +289,7 @@ class Schedule extends Component {
                                 <div>{date.toDateString().split(" ")[1]}</div>
                             </div>
                         </Col>
-                        <Col xl={3} className="selected-date-events-col">
+                        <Col xl={2} className="selected-date-events-col">
                             {eventsDisplayed.map((event, i) => (
                                 <EventElement event={event} key={i} deleteEvent={this.deleteEvent.bind(this)} deleting={showDeleteEvent}/>
                             ))}

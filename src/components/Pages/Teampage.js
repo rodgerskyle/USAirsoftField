@@ -4,12 +4,16 @@ import { Container, Row, Col } from 'react-bootstrap/';
 
 import { Link } from 'react-router-dom';
 
+import { withRouter } from '../constants/withRouter';
+
 import { withFirebase } from '../Firebase';
 
 import rankimages from '../constants/rankimgs';
 
-import { compose } from 'recompose';
+
 import { Helmet } from 'react-helmet-async';
+import { onValue } from 'firebase/database';
+import { getDownloadURL } from 'firebase/storage';
 
 class Teampage extends Component {
     constructor(props) {
@@ -24,11 +28,18 @@ class Teampage extends Component {
             members: '',
             leader: '',
         };
+
     }
+
+    // function grabParams() {
+    //     const { team } = useParams();
+    //     return team;
+    // }
 
     componentDidMount() {
         //Figure out rank logic here
-        this.props.firebase.team(this.props.match.params.id.toLowerCase()).on('value', snapshot => {
+        console.log(this.props)
+        onValue(this.props.firebase.team(this.props.router.params.team.toLowerCase()), snapshot => {
             const t_Object = snapshot.val();
 
             this.setState({
@@ -36,15 +47,15 @@ class Teampage extends Component {
                 members: typeof t_Object.members !== 'undefined' ? t_Object.members : '',
             }, function () {
                 //After setstate, then grab points and profile
-                this.getPicture(this.props.match.params.id);
-                this.getUsers(this.props.match.params.id);
+                this.getPicture(this.props.router.params.team);
+                this.getUsers(this.props.router.params.team);
             });
         });
     }
 
     componentWillUnmount() {
-        this.props.firebase.team(this.props.match.params.id).off();
-        this.props.firebase.user(this.state.teamObject.leader).off();
+        // this.props.firebase.team(this.props.match.params.id).off();
+        // this.props.firebase.user(this.state.teamObject.leader).off();
     }
 
 
@@ -152,7 +163,7 @@ class Teampage extends Component {
 
     //Get image function for team image = teamname
     getPicture(teamname) {
-        this.props.firebase.teamsPictures(`${teamname.toLowerCase()}.png`).getDownloadURL().then((url) => {
+        getDownloadURL(this.props.firebase.teamsPictures(`${teamname.toLowerCase()}.png`)).then((url) => {
             this.setState({ teamicon: url })
         }).catch((error) => {
             // Handle any errors NOT DONE
@@ -162,7 +173,7 @@ class Teampage extends Component {
 
     //Get users from team
     getUsers() {
-        this.props.firebase.user(this.state.teamObject.leader).on('value', snapshot => {
+        onValue(this.props.firebase.user(this.state.teamObject.leader), snapshot => {
             const userObject = snapshot.val();
 
             this.setState({
@@ -177,12 +188,12 @@ class Teampage extends Component {
         return (
             <div className="background-static-all">
                 <Helmet>
-                    <title>{`US Airsoft Field: ${this.props.match.params.id} Team`}</title>
+                    <title>{`US Airsoft Field: ${this.props.router.params.team} Team`}</title>
                 </Helmet>
                 <Container className="container-teampage">
                     <div className="team-single">
                         <Row className="team-info">
-                            <div>
+                            <div class="team-info-first-div">
                                 <div className="team-single-img padding-2px">
                                     <img className="team-icon-teamspage" src={this.state.teamicon} alt="" />
                                 </div>
@@ -190,7 +201,7 @@ class Teampage extends Component {
                                     <Col md={6} className="col-teampage">
                                         <div className="counter set-width-100">
                                             <i className="fa fa-users fa-2x text-black"></i>
-                                            <h2 className="timer count-title count-number" data-to="100" data-speed="1500">{(this.props.match.params.id).toUpperCase()}</h2>
+                                            <h2 className="timer count-title count-number" data-to="100" data-speed="1500">{(this.props.router.params.team).toUpperCase()}</h2>
                                             <p className="count-text ">Team Name</p>
                                         </div>
                                     </Col>
@@ -248,6 +259,10 @@ class Teampage extends Component {
         </Row>
     );
 
-export default compose(
-    withFirebase,
-    )(Teampage);
+
+export default withRouter(withFirebase(Teampage));
+
+
+// export default composeHooks(
+//     withFirebase,
+//     )(Teampage);

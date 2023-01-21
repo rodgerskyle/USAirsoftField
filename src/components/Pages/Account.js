@@ -3,7 +3,6 @@ import '../../App.css';
 
 import { AuthUserContext, withAuthorization } from '../session';
 import Profile from './Profile';
-import { compose } from 'recompose';
 import { Helmet } from 'react-helmet-async';
 
 const AccountPage = () => (
@@ -21,6 +20,8 @@ const AccountPage = () => (
 
 const condition = authUser => !!authUser;
 
-export default compose(
-  withAuthorization(condition),
-  )(AccountPage);
+export default withAuthorization(condition)(AccountPage)
+
+// export default composeHooks(
+//   withAuthorization(condition),
+//   )(AccountPage);

@@ -3,7 +3,7 @@ import '../../App.css';
 
 import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
-import { compose } from 'recompose';
+import { set, onValue } from "firebase/database";
 
 import { Container, Col, Breadcrumb, Spinner, Row } from 'react-bootstrap/';
 import SaveIcon from '@material-ui/icons/Save';
@@ -84,7 +84,7 @@ class Birthday extends Component {
                         depositAmt,
                         notes,
                     }
-            this.props.firebase.calendarEvent(events.length).set(event).then(() => {
+            set(this.props.firebase.calendarEvent(events.length), (event)).then(() => {
                 this.setState({showDialog: false}, () => {
                     this.setState({
                         title: '',
@@ -116,7 +116,7 @@ class Birthday extends Component {
         event.start = event.start.toJSON()
         event.end = event.end.toJSON()
         // this.setState(events)
-        this.props.firebase.calendarEvent(index).set(event).then(() => {
+        set(this.props.firebase.calendarEvent(index), (event)).then(() => {
             this.handleEditClose()
         })
     }
@@ -125,7 +125,7 @@ class Birthday extends Component {
     handleRemoval = () => {
         let events = this.state.obj
         events.splice(this.state.index, 1)
-        this.props.firebase.calendar().set(events).then(() => {
+        set(this.props.firebase.calendar(), (events)).then(() => {
             this.handleEditClose()
         })
     }
@@ -239,7 +239,7 @@ class Birthday extends Component {
     }
 
     componentDidMount() {
-        this.props.firebase.calendar().on('value', obj => {
+        onValue(this.props.firebase.calendar(), obj => {
             let events = obj.val() || [];
             for (let i=0; i<events.length; i++) {
                 events[i].start = new Date(events[i].start)
@@ -258,7 +258,7 @@ class Birthday extends Component {
     }
 
     componentWillUnmount() {
-        this.props.firebase.calendar().off()
+        // this.props.firebase.calendar().off()
     }
 
     render() {
@@ -763,7 +763,9 @@ class Birthday extends Component {
 const condition = authUser =>
     authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]);
 
-export default compose(
-    withAuthorization(condition),
-    withFirebase,
-)(Birthday);
+export default withAuthorization(condition)(withFirebase(Birthday));
+
+// export default composeHooks(
+//     withAuthorization(condition),
+//     withFirebase,
+// )(Birthday);

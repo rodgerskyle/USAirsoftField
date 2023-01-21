@@ -155,7 +155,7 @@ abbr[title] {
     padding-bottom: 20px;
 }
 
-.selected-date-col-schedule {
+.justify-content-row .selected-date-col-schedule {
     margin-top: 15px;
     display: flex;
     font-size: 1.5rem;
@@ -227,6 +227,13 @@ abbr[title] {
 
 .selected-date-events-col {
     margin-top: 15px;
+    align-items: center;
+    display: flex;
+}
+
+.add-event-row-schedule .justify-content-center-col {
+    display: inline-flex;
+    align-items: center;
 }
 
 .event-info-row {
@@ -258,7 +265,7 @@ abbr[title] {
 }
 
 .add-event-row-schedule {
-    justify-content: center;
+    display: contents;
 }
 
 .add-event-row-schedule .MuiIconButton-root {

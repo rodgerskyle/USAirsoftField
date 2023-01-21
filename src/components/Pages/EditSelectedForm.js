@@ -28,13 +28,14 @@ import Snackbar from '@material-ui/core/Snackbar';
 import Alert from '@material-ui/lab/Alert';
 import * as ROLES from '../constants/roles';
 import { withAuthorization } from '../session';
-import { compose } from 'recompose';
+
 // import uuid from 'uuid/v4';
 import { v4 as uuid } from 'uuid';
 
 import { withFirebase } from '../Firebase';
 
 import '../../App.css';
+import { get, onValue, set, update } from "firebase/database";
 
 // const verify = (item, list) => {
 //     for (let i = 0; i < list.length; i++)
@@ -144,7 +145,7 @@ class EditSelectedForm extends Component {
         // Filter out amounts === 0 and add back original ones taken out
         availableList = availableList.filter(obj => obj.amount > 0)
         availableList.push(...cutout)
-        this.props.firebase.rentalGroup(this.props.index).update({ participants, available: availableList })
+        update(this.props.firebase.rentalGroup(this.props.index), ({ participants, available: availableList }))
     }
 
     // Checks to see if item exists in neighbor array before pushing it in
@@ -224,8 +225,8 @@ class EditSelectedForm extends Component {
                     if (index2) { // Both are p_rental trips
                         let p_index = "p_rentals-" + index
                         let p_index2 = "p_rentals-" + index2
-                        this.props.firebase.participantsRentals(this.props.index, index).update({ rentals: result[p_index] })
-                        this.props.firebase.participantsRentals(this.props.index, index2).update({ rentals: result[p_index2] })
+                        update(this.props.firebase.participantsRentals(this.props.index, index), ({ rentals: result[p_index] }));
+                        update(this.props.firebase.participantsRentals(this.props.index, index2), ({ rentals: result[p_index2] }));
                     }
                 // }
             }
@@ -245,7 +246,7 @@ class EditSelectedForm extends Component {
                             destination,
                         );
                         this.updateAmount(source.index, null)
-                        this.props.firebase.participantsRentals(this.props.index, index).update({ rentals: result[destination.droppableId] })
+                        update(this.props.firebase.participantsRentals(this.props.index, index), ({ rentals: result[destination.droppableId] }));
                     }
                     else {
                         result = copy(
@@ -255,7 +256,7 @@ class EditSelectedForm extends Component {
                             destination
                         )
                         this.updateAmount(source.index, null)
-                        this.props.firebase.participantsRentals(this.props.index, index).update({ rentals: result })
+                        update(this.props.firebase.participantsRentals(this.props.index, index), ({ rentals: result }));
                     }
                 // }
             }
@@ -267,7 +268,7 @@ class EditSelectedForm extends Component {
     };
 
     componentDidMount() {
-        this.props.firebase.rentalOptions().once('value', obj => {
+        get(this.props.firebase.rentalOptions(), obj => {
             const optionsObject = obj.val()
 
             let options = Object.keys(optionsObject).map(key => ({
@@ -276,7 +277,7 @@ class EditSelectedForm extends Component {
             this.setState({options})
         })
 
-        this.props.firebase.rentalGroups().on('value', snapshot => {
+        onValue(this.props.firebase.rentalGroups(), snapshot => {
             const rentalsObject = snapshot.val()
 
             let rentalForms = Object.keys(rentalsObject).map(key => ({
@@ -295,7 +296,7 @@ class EditSelectedForm extends Component {
     }
 
     componentWillUnmount() {
-        this.props.firebase.rentalGroups().off()
+        // this.props.firebase.rentalGroups().off()
     }
 
     // Detaches rental from user
@@ -304,7 +305,7 @@ class EditSelectedForm extends Component {
         // Remove from participants at userIndex and remove rental at rentalIndex
         let rentals = this.state.participants[userIndex].rentals
         let obj = rentals.splice(rentalIndex, 1)
-        this.props.firebase.participantsRentals(this.props.index, userIndex).update({ rentals })
+        update(this.props.firebase.participantsRentals(this.props.index, userIndex), ({ rentals }));
         this.updateAmount(-1, obj[0])
     }
 
@@ -312,20 +313,20 @@ class EditSelectedForm extends Component {
     edit = (rentalIndex, userIndex, value) => {
         let rentals = this.state.participants[userIndex].rentals
         rentals[rentalIndex].number = value
-        this.props.firebase.participantsRentals(this.props.index, userIndex).update({ rentals })
+        update(this.props.firebase.participantsRentals(this.props.index, userIndex), ({ rentals }));
     }
 
     // Marks checked button on rental as opposite of what is on user
     checkin = (rentalIndex, userIndex) => {
         let rentals = this.state.participants[userIndex].rentals
         rentals[rentalIndex].checked = !(rentals[rentalIndex].checked)
-        this.props.firebase.participantsRentals(this.props.index, userIndex).update({ rentals })
+        update(this.props.firebase.participantsRentals(this.props.index, userIndex), ({ rentals }));
     }
 
     // Marks gamepass on selected user
     useGamepass = (userIndex) => {
         let gamepass = !this.state.participants[userIndex].gamepass
-        this.props.firebase.participantsRentals(this.props.index, userIndex).update({ gamepass })
+        update(this.props.firebase.participantsRentals(this.props.index, userIndex), ({ gamepass }));
     }
 
     // Update amount of item in available list 
@@ -341,13 +342,13 @@ class EditSelectedForm extends Component {
             }
             else
                 available[index].amount = available[index].amount += 1
-            this.props.firebase.availableRentals(this.props.index).set(available)
+            set(this.props.firebase.availableRentals(this.props.index), (available));
         }
         else { // Subtract case
             available[rentalIndex].amount -= 1
             if (available[rentalIndex].amount === 0)
                 available.splice(rentalIndex, 1)
-            this.props.firebase.availableRentals(this.props.index).set(available)
+            set(this.props.firebase.availableRentals(this.props.index), (available));
         }
     }
 
@@ -398,7 +399,7 @@ class EditSelectedForm extends Component {
         if (obj.rentals){
             rentalForm.available = available
         }
-        this.props.firebase.rentalGroup(this.props.index).set(rentalForm)
+        set(this.props.firebase.rentalGroup(this.props.index), (rentalForm));
         // this.props.firebase.participantsRentals(this.props.index, i).remove()
         // if (!obj.isMember) {
         //     this.props.firebase.validatedWaiver(obj.name).update({attached: false})
@@ -746,7 +747,17 @@ function MUITableRow(props) {
 const condition = authUser =>
     authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]);
 
-export default compose(
-    withAuthorization(condition),
-    withFirebase,
-)(EditSelectedForm);
+export default withAuthorization(condition)(withFirebase(EditSelectedForm));
+
+// export default composeHooks(
+//     withAuthorization(condition),
+//     withFirebase,
+// )(EditSelectedForm);
+
+
+// export default 
+//     <withFirebase>
+//         <withAuthorization condition={condition}>
+//             <EditSelectedForm/>
+//         </withAuthorization>
+//     </withFirebase>

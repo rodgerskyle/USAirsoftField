@@ -15,6 +15,8 @@ import EditIcon from '@material-ui/icons/Edit';
 
 import Snackbar from '@material-ui/core/Snackbar';
 import Alert from '@material-ui/lab/Alert';
+import { onValue } from 'firebase/database';
+import { getDownloadURL, uploadBytes } from 'firebase/storage';
 
 const createImage = url =>
   new Promise((resolve, reject) => {
@@ -110,7 +112,7 @@ class ImageUpload extends Component {
     componentDidMount() {
         this.authSubscription = this.props.firebase.onAuthUserListener((user) => {
             this.setState({authUser: user})
-            this.props.firebase.user(user.uid).on('value', obj => {
+            onValue(this.props.firebase.user(user.uid), obj => {
                 if (obj.val().profilepic)
                     this.getProfile(`${user.uid}/profilepic`);
                 else
@@ -123,12 +125,12 @@ class ImageUpload extends Component {
 
     componentWillUnmount() {
         this.authSubscription();
-        this.props.firebase.user(this.state.authUser.uid).off()
+        // this.props.firebase.user(this.state.authUser.uid).off()
     }
 
     //Get image function for profile image = uid
     getProfile(uid) {
-        this.props.firebase.pictures(`${uid}.png`).getDownloadURL().then((url) => {
+        getDownloadURL(this.props.firebase.pictures(`${uid}.png`)).then((url) => {
             this.setState({ url })
         }).catch((error) => {
             // Handle any errors
@@ -159,7 +161,7 @@ class ImageUpload extends Component {
     handleUpload = (uid, image) => {
         // const { image } = this.state;
         this.setState({uploading: false})
-        const uploadTask = this.props.firebase.pictures(`${uid}/profilepic.png`).put(image);
+        const uploadTask = uploadBytes(this.props.firebase.pictures(`${uid}/profilepic.png`), (image));
         uploadTask.on(
             "state_changed",
             snapshot => {
@@ -175,10 +177,9 @@ class ImageUpload extends Component {
             },
             () => {
                 // complete function ...
-                this.props.firebase
-                    .pictures(`/${uid}/profilepic.png`)
-                    .getDownloadURL()
-                    .then(url => {
+                getDownloadURL(this.props.firebase
+                    .pictures(`/${uid}/profilepic.png`),
+                    url => {
                         var manage = this.props.firebase.manageProfile();
                         manage({ choice: "profilepic" })
                         this.setState({ url }, function () {

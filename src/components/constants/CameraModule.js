@@ -7,6 +7,9 @@ import Camera, { FACING_MODES } from 'react-html5-camera-photo';
 import 'react-html5-camera-photo/build/css/index.css';
 import ImagePreview from './ImagePreview';
 import { withFirebase } from '../Firebase';
+import { onValue, update } from "firebase/database";
+
+import { uploadBytes } from "firebase/storage";
 
 import Snackbar from '@material-ui/core/Snackbar';
 import Alert from '@material-ui/lab/Alert';
@@ -75,7 +78,7 @@ class CameraModule extends Component {
   }
 
   componentDidMount() {
-    this.props.firebase.rentalGroups().on('value', obj => {
+    onValue(this.props.firebase.rentalGroups(), obj => {
       const groupsObj = obj.val()
 
       let groups = []
@@ -98,7 +101,7 @@ class CameraModule extends Component {
   }
 
   componentWillUnmount() {
-    this.props.firebase.rentalGroups().off()
+    // this.props.firebase.rentalGroups().off()
   }
 
   resizeMe(img) {
@@ -169,21 +172,21 @@ class CameraModule extends Component {
 
     var date = (new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear()) + ":" +
       (new Date().getHours()) + ":" + (new Date().getMinutes()) + ":" + (new Date().getSeconds()) + ":" + (new Date().getMilliseconds());
-    this.props.firebase.nonmembersWaivers(`${fullname}(${date}).pdf`).put(blob).then(() => {
+    uploadBytes(this.props.firebase.nonmembersWaivers(`${fullname}(${date}).pdf`), blob).then(() => {
       if (selectedGroup.length !== 0) {
         if (typeof groupsObject[groupIndex[selectedGroup[0]]].participants === 'undefined') {
           // Push participant into new array and set it
           let participants = []
           let obj = {name: `${fullname}(${date})`, gamepass: false}
           participants.push(obj)
-          this.props.firebase.rentalGroup(groupIndex[selectedGroup[0]]).update({participants})
+          update(this.props.firebase.rentalGroup(groupIndex[selectedGroup[0]]), ({participants}))
         }
         else if (groupsObject[groupIndex[selectedGroup[0]]].participants.length < groupsObject[groupIndex[selectedGroup[0]]].size) {
           // Push participant into existing array and set it
           let participants = groupsObject[groupIndex[selectedGroup[0]]].participants
           let obj = {name: `${fullname}(${date})`, gamepass: false}
           participants.push(obj)
-          this.props.firebase.rentalGroup(groupIndex[selectedGroup[0]]).update({participants})
+          update(this.props.firebase.rentalGroup(groupIndex[selectedGroup[0]]), ({participants}))
         }
         // Make sure length and size are not equal
         // Push new user to participants table

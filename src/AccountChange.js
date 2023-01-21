@@ -8,8 +8,6 @@ import { Modal, Fade, Backdrop } from '@material-ui/core';
 
 import { withFirebase } from './components/Firebase';
 
-import { compose } from 'recompose';
-
 import Verification from "./components/Pages/Verification";
 
 import Snackbar from '@material-ui/core/Snackbar';
@@ -215,6 +213,4 @@ class AccountChangeForm extends Component {
   }
 }
 
-export default compose(
-  withFirebase,
-)(AccountChangeForm);
+export default withFirebase(AccountChangeForm);

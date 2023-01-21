@@ -1,7 +1,6 @@
 import React, { Component } from "react";
-import { withRouter } from "react-router-dom";
+import { withRouter } from './withRouter';
 import { withFirebase } from '../Firebase';
-import { compose } from 'recompose';
 import * as ROLES from "./roles";
 
 class Redirect extends Component {
@@ -45,7 +44,4 @@ class Redirect extends Component {
 	}
 }
 
-    export default compose(
-        withRouter,
-        withFirebase,
-    )(Redirect);
+export default withRouter(withFirebase(Redirect));

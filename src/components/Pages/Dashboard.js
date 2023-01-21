@@ -3,7 +3,6 @@ import '../../App.css';
 
 import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
-import { compose } from 'recompose';
 
 import { Container, Row, Col, Breadcrumb, Card} from 'react-bootstrap/';
 
@@ -250,8 +249,10 @@ class WaiverDashboard extends Component {
     
 const condition = authUser =>
     authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]);
+
+export default withAuthorization(condition)(withFirebase(WaiverDashboard));
  
-export default compose(
-    withAuthorization(condition),
-    withFirebase,
-    )(WaiverDashboard);
+// export default composeHooks(
+//     withAuthorization(condition),
+//     withFirebase,
+//     )(WaiverDashboard);

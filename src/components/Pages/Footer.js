@@ -34,9 +34,7 @@ class Footer extends Component {
 const FooterAuth = () => (
         <div className="topdiv-footer">
             <Container>
-                <Row>
                     <div className="divider-footer"/>
-                </Row>
                 <Row className="justify-content-row" style={{marginTop: 10, marginBottom: 10}}>
                     <Col md={2} className="col-link-footer">
                         <a className="link-footer" href="https://www.usairsoft.com" target="_blank" rel="noopener noreferrer">STORE</a>
@@ -49,18 +47,20 @@ const FooterAuth = () => (
                     </Col>
                 </Row>
                 <Row className="socials-icons-row"> 
-                    <a href="https://www.facebook.com/USAirsoftworld/" target="_blank" rel="noopener noreferrer">
-                        <img src={fblogo} alt="Facebook Logo" className="socials-icons-footer"/>
-                    </a>
-                    <a href="https://www.instagram.com/usairsoftworld/" target="_blank" rel="noopener noreferrer">
-                        <img src={iglogo} alt="Instagram Logo" className="socials-icons-footer"/>
-                    </a>
-                    <a href="https://twitter.com/usairsoftworld" target="_blank" rel="noopener noreferrer">
-                        <img src={twlogo} alt="Twitter Logo" className="socials-icons-footer"/>
-                    </a>
-                    <a href="https://www.youtube.com/user/USAirsoftWorldInc" target="_blank" rel="noopener noreferrer">
-                        <img src={ytlogo} alt="Youtube Logo" className="socials-icons-footer"/>
-                    </a>
+                    <Col className="socials-icons-col">
+                        <a href="https://www.facebook.com/USAirsoftworld/" target="_blank" rel="noopener noreferrer">
+                            <img src={fblogo} alt="Facebook Logo" className="socials-icons-footer"/>
+                        </a>
+                        <a href="https://www.instagram.com/usairsoftworld/" target="_blank" rel="noopener noreferrer">
+                            <img src={iglogo} alt="Instagram Logo" className="socials-icons-footer"/>
+                        </a>
+                        <a href="https://twitter.com/usairsoftworld" target="_blank" rel="noopener noreferrer">
+                            <img src={twlogo} alt="Twitter Logo" className="socials-icons-footer"/>
+                        </a>
+                        <a href="https://www.youtube.com/user/USAirsoftWorldInc" target="_blank" rel="noopener noreferrer">
+                            <img src={ytlogo} alt="Youtube Logo" className="socials-icons-footer"/>
+                        </a>
+                    </Col>
                 </Row>
                 <Row className="justify-content-row">
                     <Col className="col-image-home">
@@ -135,31 +135,31 @@ function FooterNonAuth ({emailMenu}) {
                     value={Value}
                     onChange={(e) => setValue(e.target.value)}
                     />
-                    <InputGroup.Append>
-                        <Button variant="outline-primary" className="footer-text"
-                        onClick={(e) => {
-                                subscribe(e, Value, emailMenu, setStatus)
-                                setValue("");
-                            }
+                    <Button variant="outline-primary" className="footer-text"
+                    onClick={(e) => {
+                            subscribe(e, Value, emailMenu, setStatus)
+                            setValue("");
                         }
-                        >Subscribe</Button>
-                    </InputGroup.Append>
+                    }
+                    >Subscribe</Button>
                 </InputGroup>
             </Row>
             {Status ? <Row className="status-row-footer">{Status}</Row> : null}
             <Row className="socials-icons-row"> 
-                <a href="https://www.facebook.com/USAirsoftworld/" target="_blank" rel="noopener noreferrer">
-                    <img src={fblogo} alt="Facebook Logo" className="socials-icons-footer"/>
-                </a>
-                <a href="https://www.instagram.com/usairsoftworld/" target="_blank" rel="noopener noreferrer">
-                    <img src={iglogo} alt="Instagram Logo" className="socials-icons-footer"/>
-                </a>
-                <a href="https://twitter.com/usairsoftworld" target="_blank" rel="noopener noreferrer">
-                    <img src={twlogo} alt="Twitter Logo" className="socials-icons-footer"/>
-                </a>
-                <a href="https://www.youtube.com/user/USAirsoftWorldInc" target="_blank" rel="noopener noreferrer">
-                    <img src={ytlogo} alt="Youtube Logo" className="socials-icons-footer"/>
-                </a>
+                <Col className="socials-icons-col">
+                    <a href="https://www.facebook.com/USAirsoftworld/" target="_blank" rel="noopener noreferrer">
+                        <img src={fblogo} alt="Facebook Logo" className="socials-icons-footer"/>
+                    </a>
+                    <a href="https://www.instagram.com/usairsoftworld/" target="_blank" rel="noopener noreferrer">
+                        <img src={iglogo} alt="Instagram Logo" className="socials-icons-footer"/>
+                    </a>
+                    <a href="https://twitter.com/usairsoftworld" target="_blank" rel="noopener noreferrer">
+                        <img src={twlogo} alt="Twitter Logo" className="socials-icons-footer"/>
+                    </a>
+                    <a href="https://www.youtube.com/user/USAirsoftWorldInc" target="_blank" rel="noopener noreferrer">
+                        <img src={ytlogo} alt="Youtube Logo" className="socials-icons-footer"/>
+                    </a>
+                </Col>
             </Row>
             <Row className="justify-content-row">
                 <Col className="col-image-home">

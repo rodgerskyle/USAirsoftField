@@ -1,20 +1,16 @@
-import React, { useState, Component } from 'react';
+import React, { useState, Component, useEffect } from 'react';
 import logo from './assets/usairsoft-wide-logo.png';
 import default_profile from './assets/default.png';
-import { NavDropdown } from 'react-bootstrap/';
-import {
-    MDBNavbar, MDBNavbarBrand, MDBNavbarNav, MDBNavItem, MDBNavLink, MDBNavbarToggler, MDBCollapse,
-    MDBDropdown, MDBDropdownToggle, MDBDropdownMenu, MDBDropdownItem
-} from "mdbreact";
-import { compose } from 'recompose';
+import { Nav, Navbar, NavDropdown } from 'react-bootstrap/';
 import MUIButton from '@material-ui/core/Button';
-import { Row } from 'react-bootstrap/';
+import { Row, Col } from 'react-bootstrap/';
 import { Link } from "react-router-dom";
-import { LinkContainer } from "react-router-bootstrap";
 import * as ROLES from './components/constants/roles';
 import { withFirebase } from './components/Firebase';
 import { Collapse } from '@material-ui/core';
 import Preheader from './components/constants/Preheader';
+import { getDownloadURL } from 'firebase/storage';
+import MenuIcon from '@material-ui/icons/Menu';
 
 class Navigation extends Component {
     constructor(props) {
@@ -26,9 +22,10 @@ class Navigation extends Component {
         };
     }
 
+
     //Get image function for profile image = uid
     getProfile(uid) {
-        this.props.firebase.pictures(`${uid}/profilepic.png`).getDownloadURL().then((url) => {
+        getDownloadURL(this.props.firebase.pictures(`${uid}/profilepic.png`)).then((url) => {
             this.setState({profilePic: url})
         })
     }
@@ -71,236 +68,277 @@ const NavigationWaiver = ({ authUser, profilePic }) => {
     const [expanded, setExpanded] = useState(false);
     return (
         <div>
-            <MDBNavbar dark expand={"xl"} className="bg-nav">
-                <MDBNavbarNav left>
-                    <MDBNavbarBrand className="navitem-img">
+            <Navbar expand={"xl"} className="bg-nav">
+                <Nav>
+                    <Navbar.Brand className="navitem-img">
                         <Link to="/dashboard" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
                             <img src={logo} alt="US Airsoft logo" className="img-fluid logo" />
                         </Link>
-                    </MDBNavbarBrand>
-                </MDBNavbarNav>
+                    </Navbar.Brand>
+                </Nav>
                 <Row className="row-nav-auth">
-                    <div className="col-mobile-profile-nav">
+                    <Col className="col-mobile-profile-nav">
                     {/* Mobile only feature*/}
                         {!!authUser.roles[ROLES.STATIC] ? null :
-                            <MDBDropdown className="nav-item-profile-nav">
-                                <MDBDropdownToggle nav>
-                                    <MUIButton
-                                        variant="contained"
-                                        color="primary"
-                                        size="large"
-                                        type="button">
-                                        {<img src={profilePic} alt={"personal profile"}/>}
-                                    </MUIButton>
-                                </MDBDropdownToggle> 
-                                <MDBDropdownMenu className="dropdown-default">
-                                    <LinkContainer to="/logout">
-                                        <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Logout</MDBDropdownItem>
-                                    </LinkContainer>
-                                </MDBDropdownMenu>
-                            </MDBDropdown> }
-                    </div>
-                    <div className="div-hamburger">
-                        <MDBNavbarToggler onClick={() => setTimeout(() => { setExpanded(!expanded) }, 150)} />
-                    </div>
-                </Row>
-                <MDBCollapse isOpen={expanded} navbar>
-                    <MDBNavbarNav left >
-                        <MDBNavItem>
-                            <MDBNavLink as={Link} className="nav-link" to="/dashboard" 
-                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
-                                Dashboard
-                            </MDBNavLink>
-                        </MDBNavItem>
-                    </MDBNavbarNav>
-                    {!!authUser.roles[ROLES.STATIC] ? null :
-                    <MDBNavbarNav right className="mdb-nav-not-mobile-profile">
-                        <MDBNavItem className="nav-item-profile-nav">
-                            <MDBDropdown>
-                                <MDBDropdownToggle nav>
+                            <Nav>
+                                <NavDropdown className="nav-item-profile-nav" title={
                                     <MUIButton
                                         variant="contained"
                                         color="primary"
                                         size="large"
                                         startIcon={<img src={profilePic} alt={"personal profile"}/>}
                                         type="button">
-                                        {authUser.username}
                                     </MUIButton>
-                                </MDBDropdownToggle> 
-                                <MDBDropdownMenu className="dropdown-default">
-                                    <LinkContainer to="/logout">
-                                        <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Logout</MDBDropdownItem>
-                                    </LinkContainer>
-                                </MDBDropdownMenu>
-                            </MDBDropdown>
-                        </MDBNavItem>
-                    </MDBNavbarNav> }
-                </MDBCollapse>
-            </MDBNavbar>
+                                    }>
+                                    <NavDropdown.Item className="NavDropdown-default">
+                                        <Nav.Link as={Link} className="nav-link" to="/logout" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Logout</Nav.Link>
+                                    </NavDropdown.Item>
+                                </NavDropdown>
+                            </Nav> }
+                    </Col>
+                    <Col className="div-hamburger">
+                        <MUIButton
+                            variant="contained"
+                            color="primary"
+                            size="large"
+                            onClick={() => setTimeout(() => { setExpanded(!expanded) }, 150)}
+                            type="button">
+                            <MenuIcon />
+                        </MUIButton>
+                    </Col>
+                </Row>
+                <Collapse isOpen={expanded} navbar>
+                    <Nav>
+                        <Nav.Link as={Link} className="nav-link" to="/dashboard" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Dashboard</Nav.Link>
+                    </Nav>
+                    {!!authUser.roles[ROLES.STATIC] ? null :
+                    <Nav className="mdb-nav-not-mobile-profile">
+                        <NavDropdown className="nav-item-profile-nav" title={
+                                <MUIButton
+                                    variant="contained"
+                                    color="primary"
+                                    size="large"
+                                    startIcon={<img src={profilePic} alt={"personal profile"}/>}
+                                    type="button">
+                                    {authUser.username}
+                                </MUIButton>
+                            }>
+                            <NavDropdown.Item className="NavDropdown-default">
+                                <Nav.Link as={Link} className="nav-link" to="/logout" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Logout</Nav.Link>
+                            </NavDropdown.Item>
+                        </NavDropdown>
+                    </Nav>}
+                </Collapse>
+            </Navbar>
         </div>
     )
 }
 
 const NavigationAuth = ({ authUser, profilePic}) => {
     const [expanded, setExpanded] = useState(false);
+   
+    const [key, setKey] = useState("");
+
+    useEffect(() => {
+        var url = window.location.pathname;
+        if (url === "/" || url === "/home") {
+            setKey(0);
+        }
+        else if (url === "/leaderboard") {
+            setKey(1);
+        }
+        else if (url === "/schedule") {
+            setKey(2);
+        }
+        else if (url === "/teams") {
+            setKey(3);
+        }
+        else if (url === "/admin") {
+            setKey(4);
+        }
+        else if (url === "/media") {
+            setKey(5);
+        }
+        else if (url === "/media/instagram") {
+            setKey(5.1);
+        }
+        else if (url === "/media/youtube") {
+            setKey(5.2);
+        }
+        else if (url === "/waiver") {
+            setKey(6);
+        }
+        else if (url === "/map") {
+            setKey(7);
+        }
+        else if (url === "/information") {
+            setKey(8);
+        }
+        else if (url.includes("/information/rules")) {
+            setKey(8.1);
+        }
+        else if (url.includes("/information/gametypes")) {
+            setKey(8.2);
+        }
+        else if (url.includes("/information/pricing")) {
+            setKey(8.3);
+        }
+        else if (url.includes("/information/contact")) {
+            setKey(8.4);
+        }
+        else if (url === "/account") {
+            setKey(9.1);
+        }
+        else if (url === "/profilesettings") {
+            setKey(9.2)
+        }
+    }, [])
+
+    function handleSelect(key){
+        setKey(key);
+    }
+
+    function checkKey(val) {
+        return (key - val) < 1 && (key - val) > 0 ? true : false;
+    }
 
     return (
         <div>
             <Preheader />
-            <MDBNavbar dark expand={"xl"} className="bg-nav">
-                <MDBNavbarNav left>
-                    <MDBNavbarBrand className="navitem-img">
+            <Navbar collapseOnSelect expand={"xl"} className="bg-nav" variant="dark">
+                <Nav>
+                    <Navbar.Brand className="navitem-img">
                         <Link to="/home" className="link-img-nav"
-                        onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
+                        onClick={() => {
+                                setKey(0); 
+                                setTimeout(() => { setExpanded(false) }, 150);
+                            }
+                        }>
                             <img src={logo} alt="US Airsoft logo" className="img-fluid logo" />
                         </Link>
-                    </MDBNavbarBrand>
-                </MDBNavbarNav>
+                    </Navbar.Brand>
+                </Nav>
                 <Row className="row-nav-auth">
-                    <div className="col-mobile-profile-nav">
-                    {/* Mobile only feature*/}
-                            <MDBDropdown className="nav-item-profile-nav">
-                                <MDBDropdownToggle nav>
-                                    <MUIButton
-                                        variant="contained"
-                                        color="primary"
-                                        size="large"
-                                        type="button">
-                                        {<img src={profilePic} alt={"personal profile"}/>}
-                                    </MUIButton>
-                                </MDBDropdownToggle> 
-                                <MDBDropdownMenu className="dropdown-default">
-                                    <LinkContainer to="/account">
-                                        <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>My Profile</MDBDropdownItem>
-                                    </LinkContainer>
-                                    <LinkContainer to="/profilesettings">
-                                        <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Settings</MDBDropdownItem>
-                                    </LinkContainer>
-                                    <NavDropdown.Divider />
-                                    <LinkContainer to="/logout">
-                                        <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Logout</MDBDropdownItem>
-                                    </LinkContainer>
-                                </MDBDropdownMenu>
-                            </MDBDropdown>
-                    </div>
-                    <div className="div-hamburger">
-                        <MDBNavbarToggler onClick={() => setTimeout(() => { setExpanded(!expanded) }, 150)} />
-                    </div>
-                </Row>
-                <Collapse in={expanded} className="navbar-collapse">
-                    <MDBNavbarNav left >
-                        <MDBNavItem>
-                            <MDBNavLink as={Link} className="nav-link" to="/home" 
-                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
-                                Home
-                            </MDBNavLink>
-                        </MDBNavItem>
-                        <MDBNavItem>
-                            <MDBNavLink as={Link} className="nav-link" to="/leaderboard" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Leaderboard</MDBNavLink>
-                        </MDBNavItem>
-                        <MDBNavItem>
-                            <MDBNavLink as={Link} className="nav-link" to="/schedule" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Schedule</MDBNavLink>
-                        </MDBNavItem>
-                        <MDBNavItem>
-                            <MDBNavLink as={Link} className="nav-link" to="/teams" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Teams</MDBNavLink>
-                        </MDBNavItem>
-                        {/* <MDBNavItem>
-                            <MDBDropdown>
-                                <MDBDropdownToggle nav caret>
-                                    <span>Account</span>
-                                </MDBDropdownToggle> 
-                                <MDBDropdownMenu className="dropdown-default">
-                                    <LinkContainer to="/account">
-                                        <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>My Profile</MDBDropdownItem>
-                                    </LinkContainer>
-                                    <NavDropdown.Divider />
-                                    <LinkContainer to="/profilesettings">
-                                        <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Settings</MDBDropdownItem>
-                                    </LinkContainer>
-                                </MDBDropdownMenu>
-                            </MDBDropdown>
-                        </MDBNavItem> */}
-
-                        {!!authUser.roles[ROLES.ADMIN] && (
-                            <MDBNavItem>
-                                <MDBNavLink as={Link} className="nav-link" to="/admin" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Admin</MDBNavLink>
-                            </MDBNavItem>
-                        )}
-                        <MDBNavItem>
-                            <MDBDropdown>
-                                <MDBDropdownToggle nav caret>
-                                    <span>Media</span>
-                                </MDBDropdownToggle> 
-                                <MDBDropdownMenu className="dropdown-default">
-                                    <LinkContainer to="/media/instagram">
-                                        <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Instagram</MDBDropdownItem>
-                                    </LinkContainer>
-                                    <NavDropdown.Divider />
-                                    <LinkContainer to="/media/videos">
-                                        <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Videos</MDBDropdownItem>
-                                    </LinkContainer>
-                                </MDBDropdownMenu>
-                            </MDBDropdown>
-                        </MDBNavItem>
-                        <MDBNavItem>
-                            <MDBNavLink as={Link} className="nav-link" to="/waiver" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Waiver</MDBNavLink>
-                        </MDBNavItem>
-                        <MDBNavItem>
-                            <MDBNavLink as={Link} className="nav-link" to="/map" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Map</MDBNavLink>
-                        </MDBNavItem>
-                        <MDBNavItem>
-                            <MDBDropdown>
-                                <MDBDropdownToggle nav caret>
-                                    <span>Information</span>
-                                </MDBDropdownToggle> 
-                                <MDBDropdownMenu className="dropdown-default">
-                                    <LinkContainer to="/rules">
-                                        <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Rules</MDBDropdownItem>
-                                    </LinkContainer>
-                                    <LinkContainer to="/gametypes">
-                                        <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Gametypes</MDBDropdownItem>
-                                    </LinkContainer>
-                                    <LinkContainer to="/pricing">
-                                        <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Pricing</MDBDropdownItem>
-                                    </LinkContainer>
-                                    <NavDropdown.Divider />
-                                    <LinkContainer to="/contact">
-                                        <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Contact Us</MDBDropdownItem>
-                                    </LinkContainer>
-                                </MDBDropdownMenu>
-                            </MDBDropdown>
-                        </MDBNavItem>
-                    </MDBNavbarNav>
-                    <MDBNavbarNav right className="mdb-nav-not-mobile-profile">
-                        <MDBNavItem className="nav-item-profile-nav">
-                            <MDBDropdown>
-                                <MDBDropdownToggle nav>
+                        <Col className="col-mobile-profile-nav">
+                        {/* Mobile only feature*/}
+                            <Nav onSelect={handleSelect} activeKey={key}>
+                                <NavDropdown className="nav-item-profile-nav"
+                                title={
                                     <MUIButton
                                         variant="contained"
                                         color="primary"
                                         size="large"
                                         startIcon={<img src={profilePic} alt={"personal profile"}/>}
                                         type="button">
-                                        {authUser.username}
                                     </MUIButton>
-                                </MDBDropdownToggle> 
-                                <MDBDropdownMenu className="dropdown-default">
-                                    <LinkContainer to="/account">
-                                        <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>My Profile</MDBDropdownItem>
-                                    </LinkContainer>
-                                    <LinkContainer to="/profilesettings">
-                                        <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Settings</MDBDropdownItem>
-                                    </LinkContainer>
+                                    }>
+                                    <NavDropdown.Item className="NavDropdown-default" as={Link} to="/account" eventKey={9.1}
+                                    onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
+                                        My Profile
+                                    </NavDropdown.Item>
+                                    <NavDropdown.Item className="NavDropdown-default" as={Link} to="/profilesettings" eventKey={9.2}
+                                    onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
+                                        Settings
+                                    </NavDropdown.Item>
                                     <NavDropdown.Divider />
-                                    <LinkContainer to="/logout">
-                                        <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Logout</MDBDropdownItem>
-                                    </LinkContainer>
-                                </MDBDropdownMenu>
-                            </MDBDropdown>
-                        </MDBNavItem>
-                    </MDBNavbarNav>
-                </Collapse>
-            </MDBNavbar>
+                                    <NavDropdown.Item className="NavDropdown-default" as={Link} to="/logout" eventKey={9.3}
+                                    onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
+                                        Logout
+                                    </NavDropdown.Item>
+                                </NavDropdown>
+                            </Nav>
+                        </Col>
+                        <Col className="div-hamburger">
+                            <MUIButton
+                                variant="contained"
+                                color="primary"
+                                size="large"
+                                onClick={() => setTimeout(() => { setExpanded(!expanded) }, 150)}
+                                type="button">
+                                <MenuIcon />
+                            </MUIButton>
+                        </Col>
+                </Row>
+                <Navbar.Collapse in={expanded} className="navbar-collapse">
+                    <Nav onSelect={handleSelect} activeKey={key}>
+                        <Nav.Link as={Link} className="nav-link" to="/home" eventKey={0}
+                        onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
+                            Home
+                        </Nav.Link>
+                        <Nav.Link as={Link} className="nav-link" to="/leaderboard" eventKey={1}
+                        onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Leaderboard</Nav.Link>
+                        <Nav.Link as={Link} className="nav-link" to="/schedule" eventKey={2}
+                        onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Schedule</Nav.Link>
+                        <Nav.Link as={Link} className="nav-link" to="/teams" eventKey={3}
+                        onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Teams</Nav.Link>
+                        {!!authUser.roles[ROLES.ADMIN] && (
+                            <Nav.Link as={Link} className="nav-link" to="/admin" eventKey={4}
+                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Admin</Nav.Link>
+                        )}
+                        <NavDropdown title="Media" active={checkKey(5)}>
+                            <NavDropdown.Item className="NavDropdown-default" as={Link} to="/media/instagram" eventKey={5.1}
+                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
+                                Instagram
+                            </NavDropdown.Item>
+                            <NavDropdown.Divider />
+                            <NavDropdown.Item className="NavDropdown-default" as={Link} to="/media/youtube" eventKey={5.2}
+                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
+                                Youtube
+                            </NavDropdown.Item>
+                        </NavDropdown>
+                        <Nav.Link as={Link} className="nav-link" to="/waiver" eventKey={6}
+                        onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Waiver</Nav.Link>
+                        <Nav.Link as={Link} className="nav-link" to="/map" eventKey={7}
+                        onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Map</Nav.Link>
+                        <NavDropdown title="Information" active={checkKey(8)}>
+                            <NavDropdown.Item className="NavDropdown-default" as={Link} to="/information/rules" eventKey={8.1}
+                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
+                                Rules
+                            </NavDropdown.Item>
+                            <NavDropdown.Item className="NavDropdown-default" as={Link} to="/information/gametypes" eventKey={8.2}
+                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
+                                Gametypes
+                            </NavDropdown.Item>
+                            <NavDropdown.Item className="NavDropdown-default" as={Link} to="/information/pricing" eventKey={8.3}
+                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
+                                Pricing
+                            </NavDropdown.Item>
+                            <NavDropdown.Divider />
+                            <NavDropdown.Item className="NavDropdown-default" as={Link} to="/information/contact" eventKey={8.4}
+                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
+                                Contact Us
+                            </NavDropdown.Item>
+                        </NavDropdown>
+                    </Nav>
+                    <Nav className="mdb-nav-not-mobile-profile" onSelect={handleSelect} activeKey={key}>
+                        <NavDropdown className="nav-item-profile-nav" 
+                        title={
+                                <MUIButton
+                                    variant="contained"
+                                    color="primary"
+                                    size="large"
+                                    startIcon={<img src={profilePic} alt={"personal profile"}/>}
+                                    type="button">
+                                    {authUser.username}
+                                </MUIButton>
+                            }>
+                            <NavDropdown.Item className="NavDropdown-default" as={Link} to="/account" eventKey={9.1}
+                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
+                                My Profile
+                            </NavDropdown.Item>
+                            <NavDropdown.Item className="NavDropdown-default" as={Link} to="/profilesettings" eventKey={9.2}
+                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
+                                Settings
+                            </NavDropdown.Item>
+                            <NavDropdown.Divider />
+                            <NavDropdown.Item className="NavDropdown-default" as={Link} to="/logout" eventKey={9.3}
+                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
+                                Logout
+                            </NavDropdown.Item>
+                        </NavDropdown>
+                    </Nav>
+                </Navbar.Collapse>
+            </Navbar>
         </div>
     );
 }
@@ -308,131 +346,189 @@ const NavigationAuth = ({ authUser, profilePic}) => {
 const NavigationNonAuth = () => {
     const [expanded, setExpanded] = useState(false);
     const profilePic = default_profile
+
+    const [key, setKey] = useState("");
+
+    useEffect(() => {
+        var url = window.location.pathname;
+        if (url === "/" || url === "/home") {
+            setKey(0);
+        }
+        else if (url === "/leaderboard") {
+            setKey(1);
+        }
+        else if (url === "/schedule") {
+            setKey(2);
+        }
+        else if (url === "/teams") {
+            setKey(3);
+        }
+        else if (url === "/admin") {
+            setKey(4);
+        }
+        else if (url === "/media") {
+            setKey(5);
+        }
+        else if (url === "/media/instagram") {
+            setKey(5.1);
+        }
+        else if (url === "/media/youtube") {
+            setKey(5.2);
+        }
+        else if (url === "/waiver") {
+            setKey(6);
+        }
+        else if (url === "/map") {
+            setKey(7);
+        }
+        else if (url === "/information") {
+            setKey(8);
+        }
+        else if (url.includes("/information/rules")) {
+            setKey(8.1);
+        }
+        else if (url.includes("/information/gametypes")) {
+            setKey(8.2);
+        }
+        else if (url.includes("/information/pricing")) {
+            setKey(8.3);
+        }
+        else if (url.includes("/information/contact")) {
+            setKey(8.4);
+        }
+        else if (url === "/login") {
+            setKey(9.1);
+        }
+    }, [])
+
+    function handleSelect(key){
+        setKey(key);
+    }
+
+    function checkKey(val) {
+        return (key - val) < 1 && (key - val) > 0 ? true : false;
+    }
+
     return (
         <div>
             <Preheader />
-            <MDBNavbar dark expand={"xl"} className="bg-nav">
-                <MDBNavbarNav left>
-                    <MDBNavbarBrand className="navitem-img">
+            <Navbar collapseOnSelect expand={"xl"} className="bg-nav" variant="dark">
+                <Nav>
+                    <Navbar.Brand className="navitem-img">
                         <Link to="/home" className="link-img-nav"
-                        onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
+                        onClick={() => {
+                                setKey(0); 
+                                setTimeout(() => { setExpanded(false) }, 150);
+                            }
+                        }>
                             <img src={logo} alt="US Airsoft logo" className="img-fluid logo" />
                         </Link>
-                    </MDBNavbarBrand>
-                </MDBNavbarNav>
+                    </Navbar.Brand>
+                </Nav>
                 <Row className="row-nav-auth">
-                    <div className="col-mobile-profile-nav">
-                    {/* Mobile only feature*/}
-                            <MDBDropdown className="nav-item-profile-nav">
-                                <MDBDropdownToggle nav>
+                        <Col className="col-mobile-profile-nav">
+                        {/* Mobile only feature*/}
+                            <Nav onSelect={handleSelect} activeKey={key}>
+                                <NavDropdown className="nav-item-profile-nav"
+                                title={
                                     <MUIButton
                                         variant="contained"
                                         color="primary"
                                         size="large"
+                                        startIcon={<img src={profilePic} alt={"personal profile"}/>}
                                         type="button">
-                                        {<img src={profilePic} className="img-profile-pic-nav" alt={"personal profile"}/>}
                                     </MUIButton>
-                                </MDBDropdownToggle> 
-                                <MDBDropdownMenu className="dropdown-default">
-                                    <LinkContainer to="/login">
-                                        <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Login</MDBDropdownItem>
-                                    </LinkContainer>
-                                </MDBDropdownMenu>
-                            </MDBDropdown>
-                    </div>
-                    <div className="div-hamburger">
-                        <MDBNavbarToggler onClick={() => setTimeout(() => { setExpanded(!expanded) }, 150)} />
-                    </div>
+                                    }>
+                                    <NavDropdown.Item className="NavDropdown-default" as={Link} to="/login" eventKey={9.1}
+                                    onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
+                                        Login
+                                    </NavDropdown.Item>
+                                </NavDropdown>
+                            </Nav>
+                    </Col>
+                    <Col className="div-hamburger">
+                        <MUIButton
+                            variant="contained"
+                            color="primary"
+                            size="large"
+                            onClick={() => setTimeout(() => { setExpanded(!expanded) }, 150)}
+                            type="button">
+                            <MenuIcon />
+                        </MUIButton>
+                    </Col>
                 </Row>
-                {/* <MDBNavbarToggler onClick={() => setTimeout(() => { setExpanded(!expanded) }, 150)} /> */}
-                <Collapse in={expanded} className="navbar-collapse">
-                    <MDBNavbarNav left >
-                        <MDBNavItem>
-                            <MDBNavLink as={Link} className="nav-link" to="/home" 
+                <Navbar.Collapse in={expanded} className="navbar-collapse">
+                    <Nav onSelect={handleSelect} activeKey={key}>
+                        <Nav.Link as={Link} className="nav-link" to="/home" eventKey={0}
+                        onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
+                            Home
+                        </Nav.Link>
+                        <Nav.Link as={Link} className="nav-link" to="/leaderboard" eventKey={1}
+                        onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Leaderboard</Nav.Link>
+                        <Nav.Link as={Link} className="nav-link" to="/schedule" eventKey={2}
+                        onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Schedule</Nav.Link>
+                        <Nav.Link as={Link} className="nav-link" to="/teams" eventKey={3}
+                        onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Teams</Nav.Link>
+                        <NavDropdown title="Media" active={checkKey(5)}>
+                            <NavDropdown.Item className="NavDropdown-default" as={Link} to="/media/instagram" eventKey={5.1}
                             onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
-                                Home
-                            </MDBNavLink>
-                        </MDBNavItem>
-                        <MDBNavItem>
-                            <MDBNavLink as={Link} className="nav-link" to="/leaderboard" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Leaderboard</MDBNavLink>
-                        </MDBNavItem>
-                        <MDBNavItem>
-                            <MDBNavLink as={Link} className="nav-link" to="/schedule" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Schedule</MDBNavLink>
-                        </MDBNavItem>
-                        <MDBNavItem>
-                            <MDBNavLink as={Link} className="nav-link" to="/teams" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Teams</MDBNavLink>
-                        </MDBNavItem>
-                        <MDBNavItem>
-                            <MDBDropdown>
-                                <MDBDropdownToggle nav caret>
-                                    <span>Media</span>
-                                </MDBDropdownToggle> 
-                                <MDBDropdownMenu className="dropdown-default">
-                                    <LinkContainer to="/media/instagram">
-                                        <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Instagram</MDBDropdownItem>
-                                    </LinkContainer>
-                                    <NavDropdown.Divider />
-                                    <LinkContainer to="/media/videos">
-                                        <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Videos</MDBDropdownItem>
-                                    </LinkContainer>
-                                </MDBDropdownMenu>
-                            </MDBDropdown>
-                        </MDBNavItem>
-                        <MDBNavItem>
-                            <MDBNavLink as={Link} className="nav-link" to="/waiver" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Waiver</MDBNavLink>
-                        </MDBNavItem>
-                        <MDBNavItem>
-                            <MDBNavLink as={Link} className="nav-link" to="/map" onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Map</MDBNavLink>
-                        </MDBNavItem>
-                        <MDBNavItem>
-                            <MDBDropdown>
-                                <MDBDropdownToggle nav caret>
-                                    <span>Information</span>
-                                </MDBDropdownToggle> 
-                                <MDBDropdownMenu className="dropdown-default">
-                                    <LinkContainer to="/rules">
-                                        <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Rules</MDBDropdownItem>
-                                    </LinkContainer>
-                                    <LinkContainer to="/gametypes">
-                                        <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Gametypes</MDBDropdownItem>
-                                    </LinkContainer>
-                                    <LinkContainer to="/pricing">
-                                        <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Pricing</MDBDropdownItem>
-                                    </LinkContainer>
-                                    <NavDropdown.Divider />
-                                    <LinkContainer to="/contact">
-                                        <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Contact Us</MDBDropdownItem>
-                                    </LinkContainer>
-                                </MDBDropdownMenu>
-                            </MDBDropdown>
-                        </MDBNavItem>
-                    </MDBNavbarNav>
-                    <MDBNavbarNav right className="mdb-nav-not-mobile-profile">
-                        <MDBNavItem className="nav-item-loggedout nav-item-profile-nav">
-                            <MDBDropdown>
-                                <MDBDropdownToggle nav>
-                                    <MUIButton
-                                        variant="contained"
-                                        color="primary"
-                                        size="large"
-                                        startIcon={<img src={profilePic} className="img-profile-pic-nav" alt={"personal profile"}/>}
-                                        type="button">
-                                    </MUIButton>
-                                </MDBDropdownToggle> 
-                                <MDBDropdownMenu className="dropdown-default">
-                                    <LinkContainer to="/login">
-                                        <MDBDropdownItem onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Login</MDBDropdownItem>
-                                    </LinkContainer>
-                                </MDBDropdownMenu>
-                            </MDBDropdown>
-                        </MDBNavItem>
-                    </MDBNavbarNav>
-                </Collapse>
-            </MDBNavbar>
+                                Instagram
+                            </NavDropdown.Item>
+                            <NavDropdown.Divider />
+                            <NavDropdown.Item className="NavDropdown-default" as={Link} to="/media/youtube" eventKey={5.2}
+                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
+                                Youtube
+                            </NavDropdown.Item>
+                        </NavDropdown>
+                        <Nav.Link as={Link} className="nav-link" to="/waiver" eventKey={6}
+                        onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Waiver</Nav.Link>
+                        <Nav.Link as={Link} className="nav-link" to="/map" eventKey={7}
+                        onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Map</Nav.Link>
+                        <NavDropdown title="Information" active={checkKey(8)}>
+                            <NavDropdown.Item className="NavDropdown-default" as={Link} to="/information/rules" eventKey={8.1}
+                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
+                                Rules
+                            </NavDropdown.Item>
+                            <NavDropdown.Item className="NavDropdown-default" as={Link} to="/information/gametypes" eventKey={8.2}
+                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
+                                Gametypes
+                            </NavDropdown.Item>
+                            <NavDropdown.Item className="NavDropdown-default" as={Link} to="/information/pricing" eventKey={8.3}
+                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
+                                Pricing
+                            </NavDropdown.Item>
+                            <NavDropdown.Divider />
+                            <NavDropdown.Item className="NavDropdown-default" as={Link} to="/information/contact" eventKey={8.4}
+                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
+                                Contact Us
+                            </NavDropdown.Item>
+                        </NavDropdown>
+                    </Nav>
+                    <Nav className="mdb-nav-not-mobile-profile" onSelect={handleSelect} activeKey={key}>
+                        <NavDropdown className="nav-item-profile-nav" title={
+                                <MUIButton
+                                    variant="contained"
+                                    color="primary"
+                                    size="large"
+                                    startIcon={<img src={profilePic} alt={"personal profile"}/>}
+                                    type="button">
+                                </MUIButton>
+                            }>
+                            <NavDropdown.Item className="NavDropdown-default" as={Link} to="/login" eventKey={9.1}
+                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
+                                Login
+                            </NavDropdown.Item>
+                        </NavDropdown>
+                        {/* </NavItem> */}
+                    </Nav>
+                </Navbar.Collapse>
+            </Navbar>
         </div>
     );
 }
 
-export default compose(
-    withFirebase,
-    )(Navigation);
+export default withFirebase(Navigation);
+
+// export default composeHooks(
+//     withFirebase,
+//     )(Navigation);

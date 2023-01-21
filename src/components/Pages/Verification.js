@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import { withRouter } from 'react-router-dom';
-import { compose } from 'recompose';
+import { withRouter } from '../constants/withRouter';
+
 import logo from '../../assets/usairsoft-small-logo.png';
 
 import { withFirebase } from '../Firebase';
@@ -133,7 +133,9 @@ class VerificationForm extends Component {
     }
 }
 
-export default compose(
-    withRouter,
-    withFirebase,
-)(VerificationForm);
+export default withRouter(withFirebase(VerificationForm));
+
+// export default composeHooks(
+//     withRouter,
+//     withFirebase,
+// )(VerificationForm);

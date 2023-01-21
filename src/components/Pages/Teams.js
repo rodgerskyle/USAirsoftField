@@ -16,7 +16,7 @@ import { Link } from 'react-router-dom';
 
 import { withFirebase } from '../Firebase';
 
-import { compose } from 'recompose';
+
 import { Helmet } from 'react-helmet-async';
 
 import MUIPagination from '@material-ui/lab/Pagination';
@@ -32,6 +32,8 @@ import TableContainer from '@material-ui/core/TableContainer';
 import TableRow from '@material-ui/core/TableRow';
 import { ButtonGroup, ClickAwayListener, Grow, MenuItem, MenuList, Popper, TableHead } from '@material-ui/core';
 import { LinkContainer } from 'react-router-bootstrap';
+import { getDownloadURL } from 'firebase/storage';
+import { get, onValue, update } from 'firebase/database';
 
 class Teams extends Component {
     constructor(props) {
@@ -58,7 +60,7 @@ class Teams extends Component {
 
     //Get image function for team image = teamname
     getPicture(teamname) {
-        this.props.firebase.teamsPictures(`${teamname}.png`).getDownloadURL().then((url) => {
+        getDownloadURL(this.props.firebase.teamsPictures(`${teamname}.png`)).then((url) => {
             let temp = this.state.teamicon;
             temp[teamname.toString()] = url
             this.setState({ teamicon: temp })
@@ -70,7 +72,7 @@ class Teams extends Component {
 
     //Get image function for profile image = uid
     async getProfile(uid) {
-        return this.props.firebase.pictures(`${uid}/profilepic.png`).getDownloadURL().then((url) => {
+        return getDownloadURL(this.props.firebase.pictures(`${uid}/profilepic.png`)).then((url) => {
             return url
         })
     }
@@ -81,7 +83,7 @@ class Teams extends Component {
         let usericons = {}
         for (let i=0; i<teams.length; i++) {
             // Team leader case
-            this.props.firebase.user(teams[i].leader).once('value', obj => {
+            get(this.props.firebase.user(teams[i].leader), obj => {
                 if (obj.val().profilepic) {
                     this.props.firebase.pictures(`${teams[i].leader}/profilepic.png`).getDownloadURL().then((url) => {
                         usericons[teams[i].leader] = url
@@ -93,9 +95,9 @@ class Teams extends Component {
             // Team members case
              if (teams[i].members) {
                  for (let z=0; z<teams[i].members.length; z++) {
-                    this.props.firebase.user(teams[i].members[z][1]).once('value', obj => {
+                    get(this.props.firebase.user(teams[i].members[z][1]), obj => {
                         if (obj.val().profilepic) {
-                            this.props.firebase.pictures(`${teams[i].members[z][1]}/profilepic.png`).getDownloadURL().then((url) => {
+                            getDownloadURL(this.props.firebase.pictures(`${teams[i].members[z][1]}/profilepic.png`)).then((url) => {
                                 usericons[teams[i].members[z][1]] = url
                             })
                         }
@@ -111,7 +113,7 @@ class Teams extends Component {
     }
 
     componentWillUnmount() {
-        this.props.firebase.teams().off();
+        // this.props.firebase.teams().off();
     }
 
     componentDidMount() {
@@ -124,7 +126,7 @@ class Teams extends Component {
         options[2] = temp3
         this.setState({options})
 
-        this.props.firebase.teams().on('value', snapshot => {
+        onValue(this.props.firebase.teams(), snapshot => {
             const teamObject = snapshot.val();
 
             let teamsList = Object.keys(teamObject).map(key => ({
@@ -470,6 +472,8 @@ const TeamList = ({ teams, teamicon, numPages, teamsPerPage, curPage, usericons,
                     ))} 
                 </tbody> */
 
-export default compose(
-    withFirebase,
-    )(Teams);
+export default withFirebase(Teams);
+
+// export default composeHooks(
+//     withFirebase,
+//     )(Teams);

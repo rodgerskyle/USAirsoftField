@@ -6,7 +6,7 @@ import AccountChangeForm from '../../AccountChange';
 import { AuthUserContext, withAuthentication, withAuthorization } from '../session';
 import ImageUpload from './ImageUpload';
 
-import { compose } from 'recompose';
+
 
 import * as ROLES from '../constants/roles';
 import { Helmet } from 'react-helmet-async';
@@ -63,7 +63,9 @@ const ProfileSettings = () => {
 
 const condition = authUser => !!authUser && !(!!authUser.roles[ROLES.WAIVER]);
 
-export default compose(
-  withAuthorization(condition),
-  withAuthentication,
-  )(ProfileSettings);
+export default withAuthorization(condition)(withAuthentication(ProfileSettings));
+
+// export default composeHooks(
+//   withAuthorization(condition),
+//   withAuthentication,
+//   )(ProfileSettings);

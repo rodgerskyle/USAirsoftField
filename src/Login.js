@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
-import { withRouter } from 'react-router-dom';
-import { compose } from 'recompose';
+import { withRouter } from './components/constants/withRouter';
 import logo from './assets/usairsoft-small-logo.png';
 
+import { get } from 'firebase/database';
 import { withFirebase } from './components/Firebase';
 import { PasswordForgetLink } from './passwordForgot';
 import ReCAPTCHA from 'react-google-recaptcha';
@@ -81,7 +81,7 @@ class SignInFormBase extends Component {
         .doSignInWithEmailAndPassword(email, password)
         .then(() => {
           this.setState({ ...INITIAL_STATE });
-          this.props.firebase.user(this.props.firebase.uid()).once('value', snapshot => {
+          get(this.props.firebase.user(this.props.firebase.uid()), snapshot => {
               const userObject = snapshot.val();
               this.props.history.push("/");
               if (userObject.roles && !!userObject.roles[ROLES.WAIVER]) {
@@ -90,6 +90,7 @@ class SignInFormBase extends Component {
           })
         })
         .catch(error_p => {
+          console.log(error_p);
           this.setState({ error: "The Email or Password is incorrect", robot: true });
         });
       }
@@ -156,10 +157,12 @@ class SignInFormBase extends Component {
   }
 }
 
-const SignInForm = compose(
-  withRouter,
-  withFirebase,
-)(SignInFormBase);
+const SignInForm = withRouter(withFirebase(SignInFormBase))
+
+// const SignInForm = composeHooks(
+//   withRouter,
+//   withFirebase,
+// )(SignInFormBase);
 
 export default SignInPage;
 

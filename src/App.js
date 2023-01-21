@@ -1,6 +1,6 @@
 import React from 'react';
 import './App.css';
-import { BrowserRouter as Router, Route, Switch, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, useLocation } from "react-router-dom";
 import Login from "./Login"
 import Navigation from "./Navigation"
 import Footer from "./components/Pages/Footer";
@@ -55,175 +55,69 @@ const App = () => (
     <ScrollToTop />
     <Redirect />
     <NavigationRoute />
-    <Switch>
+    <Routes>
       {/* <Route exact path="/migrate">
-                <Migration />
-              </Route> */}
+                  <Migration />
+                </Route> */}
       <Route exact path="/emailoptout/:secret"
         render={(props) => (
           <EmailOptOut {...props} />
         )}
       ></Route>
-      <Route exact path="/schedule">
-        <Schedule />
-      </Route>
-      <Route exact path="/map">
-        <Map />
-      </Route>
-      <Route exact path="/waiver">
-        <Waiver />
-      </Route>
-      <Route exact path="/membership">
-        <Membership />
-      </Route>
-      <Route exact path="/contact">
-        <Contact />
-      </Route>
-      <Route exact path="/about">
-        <About />
-      </Route>
-      <Route exact path="/gametypes">
-        <Gametypes />
-      </Route>
-      <Route exact path="/rules">
-        <Rules />
-      </Route>
-      <Route exact path="/media/videos">
-        <Videos />
-      </Route>
-      <Route exact path="/media/instagram">
-        <Instagram />
-      </Route>
-      <Route exact path="/teams">
-        <Teams />
-      </Route>
-      <Route exact path="/teams/:id"
-        render={(props) => (
-          <Teampage {...props} />
-        )}
-      ></Route>
-      <Route exact path="/manageteam">
-        <Teammanage />
-      </Route>
-      <Route exact path="/createteam">
-        <Teamcreate />
-      </Route>
-      <Route exact path="/jointeam">
-        <Teamjoin />
-      </Route>
-      <Route exact path="/profilelookup/:id"
-        render={(props) => (
-          <ProfileLookup {...props} />
-        )}
-      >
-      </Route>
-      <Route exact path="/profilesettings">
-        <ProfileSettings />
-      </Route>
-      <Route exact path="/admin">
-        <Admin />
-      </Route>
-      <Route exact path="/admin/signup">
-        <SignUpForm />
-      </Route>
-      <Route exact path="/admin/waiverform">
-        <WaiverForm />
-      </Route>
-      <Route exact path="/admin/waiverlookup">
-        <WaiverLookup />
-      </Route>
-      <Route exact path="/admin/renewal">
-        <RenewSubscription />
-      </Route>
-      <Route exact path="/admin/renewal/:id"
-        render={(props) => (
-          <RenewSubscription {...props} />
-        )}
-      ></Route>
-      <Route exact path="/admin/enterwins">
-        <EnterWins />
-      </Route>
-      <Route exact path="/admin/enterlosses">
-        <EnterLosses />
-      </Route>
-      <Route exact path="/admin/freegames">
-        <FreeGames />
-      </Route>
-      <Route exact path="/admin/scanwaiver">
-        <ScanWaiver />
-      </Route>
-      <Route exact path="/admin/rentalform">
-        <RentalForm />
-      </Route>
-      <Route exact path="/admin/birthday">
-        <Birthday />
-      </Route>
-      {/* <Route exact path="/admin/sendmail">
-        <EmailDashboard />
-      </Route> */}
-      <Route exact path="/admin/useroptions/:id"
-        render={(props) => (
-          <UserOptions {...props} />
-        )}
-      />
-      <Route exact path="/dashboard">
-        <WaiverDashboard />
-      </Route>
-      <Route exact path="/dashboard/waiverform">
-        <WaiverForm />
-      </Route>
-      <Route exact path="/dashboard/scanwaiver">
-        <ScanWaiver />
-      </Route>
-      <Route exact path="/dashboard/waiverlookup">
-        <WaiverLookup />
-      </Route>
-      <Route exact path="/dashboard/signup">
-        <SignUpForm />
-      </Route>
-      <Route exact path="/dashboard/renewal">
-        <RenewSubscription />
-      </Route>
-      <Route exact path="/dashboard/rentalform">
-        <RentalForm />
-      </Route>
-      <Route exact path="/dashboard/freegames">
-        <FreeGames />
-      </Route>
-      <Route exact path="/dashboard/birthday">
-        <Birthday />
-      </Route>
-      <Route exact path="/account">
-        <AccountPage />
-      </Route>
-      <Route exact path="/forgotpassword">
-        <PasswordForgetForm />
-      </Route>
-      <Route exact path="/login">
-        <LoginRoute />
-      </Route>
-      <Route exact path="/logout">
-        <Logout />
-      </Route>
-      <Route exact path="/leaderboard">
-        <Leaderboard />
-      </Route>
+      <Route exact path="/schedule" element={<Schedule />} />
+      <Route exact path="/map" element={<Map />} />
+      <Route exact path="/waiver" element={<Waiver />} />
+      <Route exact path="/membership" element={<Membership />} />
+      <Route exact path="/information/contact" element={<Contact />} />
+      <Route exact path="/about" element={<About />} />
+      <Route exact path="/information/gametypes" element={<Gametypes />} />
+      <Route exact path="/information/rules" element={<Rules />} />
+      <Route exact path="/media/youtube" element={<Videos />} />
+      <Route exact path="/media/instagram" element={<Instagram />} />
+      <Route exact path="/teams" element={<Teams />} />
+      <Route exact path="/teams/:team" element={<Teampage />} />
+      <Route exact path="/manageteam" element={<Teammanage />} />
+      <Route exact path="/createteam" element={<Teamcreate />} />
+      <Route exact path="/jointeam" element={<Teamjoin />} />
+      <Route exact path="/profilelookup/:id" element={<ProfileLookup />} />
+      <Route exact path="/profilesettings" element={<ProfileSettings />} />
+      <Route exact path="/admin" element={<Admin />} />
+      <Route exact path="/admin/signup" element={<SignUpForm />} />
+      <Route exact path="/admin/waiverform" element={<WaiverForm />} />
+      <Route exact path="/admin/waiverlookup" element={<WaiverLookup />} />
+      <Route exact path="/admin/renewal" element={<RenewSubscription />} />
+      <Route exact path="/admin/renewal/:id" element={<RenewSubscription />} />
+      <Route exact path="/admin/enterwins" element={<EnterWins />} />
+      <Route exact path="/admin/enterlosses" element={<EnterLosses />} />
+      <Route exact path="/admin/freegames" element={<FreeGames />} />
+      <Route exact path="/admin/scanwaiver" element={<ScanWaiver />} />
+      <Route exact path="/admin/rentalform" element={<RentalForm />} />
+      <Route exact path="/admin/birthday" element={<Birthday />} />
+      <Route exact path="/admin/useroptions/:id" element={<UserOptions />} />
+      <Route exact path="/dashboard" element={<WaiverDashboard />} />
+      <Route exact path="/dashboard/waiverform" element={<WaiverForm />} />
+      <Route exact path="/dashboard/scanwaiver" element={<ScanWaiver />} />
+      <Route exact path="/dashboard/waiverlookup" element={<WaiverLookup />} />
+      <Route exact path="/dashboard/signup" element={<SignUpForm />} />
+      <Route exact path="/dashboard/renewal" element={<RenewSubscription />} />
+      <Route exact path="/dashboard/rentalform" element={<RentalForm />} />
+      <Route exact path="/dashboard/freegames" element={<FreeGames />} />
+      <Route exact path="/dashboard/birthday" element={<Birthday />} />
+      <Route exact path="/account" element={<AccountPage />} />
+      <Route exact path="/forgotpassword" element={<PasswordForgetForm />} />
+      <Route exact path="/login" element={<LoginRoute />} />
+      <Route exact path="/logout" element={<Logout />} />
+      <Route exact path="/leaderboard" element={<Leaderboard />} />
       <Route exact path="/leaderboard/query=:query"
         render={(props) => (
           <Leaderboard {...props} />
         )}
       ></Route>
-      <Route exact path="/pricing">
-        <Pricing />
-      </Route>
-      <Route exact path="/home">
-        <Home />
-      </Route>
-      <Route exact path="/">
-        <Home />
-      </Route>
-      <Route component={PageNotFound} />
-    </Switch>
+      <Route exact path="/information/pricing" element={<Pricing />} />
+      <Route exact path="/home" element={<Home />} />
+      <Route exact path="/" element={<Home />} />
+      <Route element={<PageNotFound />} />
+    </Routes>
     <FooterRoute />
     <CookieConsent>This website uses cookies to enhance the user experience.</CookieConsent>
   </Router>

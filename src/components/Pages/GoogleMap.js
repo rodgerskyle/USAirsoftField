@@ -3,7 +3,6 @@ import GoogleMapReact from 'google-map-react'
 import './map.css'
 import { Icon } from '@iconify/react'
 import locationIcon from '@iconify/icons-mdi/map-marker'
-require('dotenv').config();
 
 const GMap = ({ location, zoomLevel }) => (
     <div className="map">

@@ -15,9 +15,11 @@ import ReactLoading from 'react-loading';
 
 import 'react-bootstrap-typeahead/css/Typeahead.css';
 
-import { compose } from 'recompose';
+
 
 import { Helmet } from 'react-helmet-async';
+import { onValue } from 'firebase/database';
+import { getDownloadURL } from 'firebase/storage';
 
 class TeamJoin extends Component {
     constructor(props) {
@@ -40,7 +42,7 @@ class TeamJoin extends Component {
                     this.setState({authUser: user})
                     if (user.team !== null) {
                         //Figure out rank logic here
-                        this.props.firebase.teams().on('value', snapshot => {
+                        onValue(this.props.firebase.teams(), snapshot => {
                             const teamsObject = snapshot.val();
                             const teamsList = Object.keys(teamsObject).map(key => ({
                                 ...teamsObject[key],
@@ -63,7 +65,7 @@ class TeamJoin extends Component {
     }
 
     componentWillUnmount() {
-        this.props.firebase.teams().off();
+        // this.props.firebase.teams().off();
         this.authSubscription()
     }
 
@@ -88,7 +90,7 @@ class TeamJoin extends Component {
 
     //Get image function for team image = teamname
     getPicture(teamname) {
-        this.props.firebase.teamsPictures(`${teamname}.png`).getDownloadURL().then((url) => {
+        getDownloadURL(this.props.firebase.teamsPictures(`${teamname}.png`)).then((url) => {
             this.setState({ teamicon: url })
         }).catch((error) => {
             // Handle any errors NOT DONE
@@ -155,7 +157,9 @@ const Progress = ({ type, color }) => (
 
 const condition = authUser => !!authUser;
 
-export default compose(
-    withFirebase,
-    withAuthorization(condition),
-    )(TeamJoin)
+export default withFirebase(withAuthorization(condition)(TeamJoin));
+
+// export default composeHooks(
+//     withFirebase,
+//     withAuthorization(condition),
+//     )(TeamJoin)

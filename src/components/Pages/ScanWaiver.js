@@ -5,7 +5,7 @@ import '../../App.css';
 
 import { AuthUserContext, withAuthorization } from "../session";
 
-import { compose } from 'recompose';
+
 import CameraModule from '../constants/CameraModule';
 
 import { LinkContainer } from 'react-router-bootstrap';
@@ -57,7 +57,9 @@ class ScanWaiver extends Component {
 const condition = authUser =>
     authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]);
 
-export default compose(
-    withAuthorization(condition),
-    withFirebase,
-)(ScanWaiver);
+export default withAuthorization(condition)(withFirebase(ScanWaiver));
+
+// export default composeHooks(
+//     withAuthorization(condition),
+//     withFirebase,
+// )(ScanWaiver);

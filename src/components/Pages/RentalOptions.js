@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { withFirebase } from '../Firebase';
 import * as ROLES from '../constants/roles';
 import { withAuthorization } from '../session';
-import { compose } from 'recompose';
+
 import { Col, Container, Row, Spinner } from 'react-bootstrap/';
 
 import Paper from '@material-ui/core/Paper';
@@ -15,6 +15,7 @@ import Snackbar from '@material-ui/core/Snackbar';
 import Alert from '@material-ui/lab/Alert';
 
 import '../../App.css';
+import { onValue, set } from 'firebase/database';
 
 class RentalOptions extends Component {
     constructor(props) {
@@ -40,7 +41,7 @@ class RentalOptions extends Component {
         }, () => {
             this.setState({authUser: null})
         })
-        this.props.firebase.rentalOptions().on('value', snapshot => {
+        onValue(this.props.firebase.rentalOptions(), snapshot => {
             const optionsObject = snapshot.val()
 
             let options = Object.keys(optionsObject).map(key => ({
@@ -52,7 +53,7 @@ class RentalOptions extends Component {
     }
 
     componentWillUnmount() {
-        this.props.firebase.rentalOptions().off()
+        // this.props.firebase.rentalOptions().off()
         this.authSubscription()
     }
 
@@ -80,7 +81,7 @@ class RentalOptions extends Component {
                 return;
             }
         }
-        this.props.firebase.rentalOptions().set(options)
+        set(this.props.firebase.rentalOptions(), (options));
         this.setState({rentalsSuccess: "Rental inventory successfully updated."})
     }
 
@@ -90,7 +91,7 @@ class RentalOptions extends Component {
         for (let i=0; i<options.length; i++) {
             options[i].stock = 0;
         }
-        this.props.firebase.rentalOptions().set(options)
+        set(this.props.firebase.rentalOptions(), (options));
         this.setState({rentalsSuccess: "Rental inventory successfully reset."})
     }
 
@@ -236,7 +237,9 @@ const RentalRow = ({ obj, set, i }) => {
 const condition = authUser =>
     authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]);
 
-export default compose(
-    withAuthorization(condition),
-    withFirebase,
-)(RentalOptions);
+export default withAuthorization(condition)(withFirebase(RentalOptions));
+
+// export default composeHooks(
+//     withAuthorization(condition),
+//     withFirebase,
+// )(RentalOptions);

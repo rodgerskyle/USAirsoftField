@@ -3,7 +3,7 @@ import '../../App.css';
 
 import { withFirebase } from '../Firebase';
 import { AuthUserContext, withAuthorization } from '../session';
-import { compose } from 'recompose';
+
 
 import { Button, Form, Container, Card, Row, Col, Breadcrumb, Spinner, Dropdown, Collapse } from 'react-bootstrap/';
 import { LinkContainer } from 'react-router-bootstrap';
@@ -14,6 +14,8 @@ import CustomMenu from '../constants/custommenu'
 import * as ROLES from '../constants/roles';
 
 import { Helmet } from 'react-helmet-async';
+import { listAll } from 'firebase/storage';
+import { get, onValue } from 'firebase/database';
 
 class WaiverLookup extends Component {
     constructor(props) {
@@ -41,7 +43,7 @@ class WaiverLookup extends Component {
 
     componentWillUnmount() {
         //this.props.firebase.waiversList().off();
-        this.props.firebase.numWaivers().off();
+        // this.props.firebase.numWaivers().off();
     }
 
     componentDidMount() {
@@ -73,7 +75,7 @@ class WaiverLookup extends Component {
         months.push("December")
         this.setState({months})
 
-        this.props.firebase.waiversList().listAll().then((res) => {
+        listAll(this.props.firebase.waiversList()).then((res) => {
             var tempWaivers = [];
             for (let i=0; i<res.items.length; i++) {
                 let waiverName = res.items[i].name
@@ -91,11 +93,11 @@ class WaiverLookup extends Component {
               console.log(error)
             });
 
-        this.props.firebase.numWaivers().on('value', snapshot => {
+        onValue(this.props.firebase.numWaivers(), snapshot => {
             let num_waivers = snapshot.val().total_num;
             this.setState({num_waivers_cur: num_waivers, validateArray: snapshot.val().validated})
         })
-        this.props.firebase.numWaivers().once('value', snapshot => {
+        get(this.props.firebase.numWaivers(), snapshot => {
             let prev = snapshot.val().total_num;
             this.setState({num_waivers_prev: prev, loading: false})
         })
@@ -103,7 +105,7 @@ class WaiverLookup extends Component {
 
     componentDidUpdate() {
         if (this.state.num_waivers_prev !== this.state.num_waivers_cur) {
-        this.props.firebase.waiversList().listAll().then((res) => {
+        listAll(this.props.firebase.waiversList()).then((res) => {
             var tempWaivers = [];
             for (let i=0; i<res.items.length; i++) {
                 let waiverName = res.items[i].name
@@ -122,7 +124,7 @@ class WaiverLookup extends Component {
               // Uh-oh, an error occurred!
               console.log(error)
             });
-            this.props.firebase.numWaivers().once('value', snapshot => {
+            get(this.props.firebase.numWaivers(), snapshot => {
                 let prev = snapshot.val().total_num;
                 this.setState({num_waivers_prev: prev})
             })
@@ -524,7 +526,9 @@ function WaiverBox ({waivers, index, search, open, loading, month, day, year, va
 const condition = authUser =>
     authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]);
 
-export default compose(
-    withAuthorization(condition),
-    withFirebase,
-)(WaiverLookup);
+export default withAuthorization(condition)(withFirebase(WaiverLookup));
+
+// export default composeHooks(
+//     withAuthorization(condition),
+//     withFirebase,
+// )(WaiverLookup);

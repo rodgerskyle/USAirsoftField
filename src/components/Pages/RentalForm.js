@@ -8,13 +8,13 @@ import Divider from '@material-ui/core/Divider';
 import Icon from '@material-ui/core/Icon';
 import InputBase from '@material-ui/core/InputBase';
 import Paper from '@material-ui/core/Paper';
-import { makeStyles, withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core/styles';
 import { ArrowBackIos, ArrowForwardIos, VerifiedUser } from '@material-ui/icons';
 import React, { Component, useState } from 'react';
 import { Breadcrumb, Button, Card, Col, Container, Form, Row, Spinner } from 'react-bootstrap/';
 import Collapse from '@material-ui/core/Collapse';
 import { LinkContainer } from 'react-router-bootstrap';
-import { compose } from 'recompose';
+
 import Snackbar from '@material-ui/core/Snackbar';
 import Alert from '@material-ui/lab/Alert';
 
@@ -46,6 +46,8 @@ import {
 import logo from '../../assets/usairsoft-small-logo.png';
 import '../../App.css';
 import RentalOptions from "./RentalOptions";
+import { get, onValue, set, update } from "firebase/database";
+import { listAll } from "firebase/storage";
 
 const TextFieldCreate = withStyles({
     root: {
@@ -235,14 +237,14 @@ class RentalForm extends Component {
 
     // Increments stock of guns selected from the database
     incrementStock(options) {
-        this.props.firebase.rentalOptions().once('value', obj => {
+        get(this.props.firebase.rentalOptions(), obj => {
             let newOptions = obj.val()
             for (let i = 0; i < options.length; i++) {
                 let num = options[i].amount !== "" ? parseInt(options[i].amount) : 0
                 newOptions[i].stock = parseInt(newOptions[i].stock) + num
                 newOptions[i].amount = ""
             }
-            this.props.firebase.rentalOptions().set(newOptions)
+            set(this.props.firebase.rentalOptions(), newOptions);
         })
     }
 
@@ -251,15 +253,15 @@ class RentalForm extends Component {
         e.preventDefault()
         if (this.validateCreateForm()) {
             const { cvc, number, expiry, name, zipcode, rentalName, numParticipants } = this.state
-            this.props.firebase.rentalGroups().once("value", (obj) => {
+            get(this.props.firebase.rentalGroups()).then((obj) => {
                 let group = obj.val() ? obj.val() : []
                 let i = group.length
                 let cc = { cvc, number, expiry, name, zipcode }
                 let available = options.filter(opt => opt.amount > 0);
                 group.push({ name: rentalName, size: numParticipants, cc, available, complete: false })
-                this.props.firebase.rentals().update({ group }, () => {
+                update(this.props.firebase.rentals(), { group }).then(() => {
                     this.grabNewForm(i)
-                })
+                });
                 this.setState({
                     rentalName: '',
                     numParticipants: '',
@@ -273,13 +275,13 @@ class RentalForm extends Component {
                     createdIndex: i
                 })
                 this.incrementStock(options)
-            })
+            });
         }
     }
 
     // Grabs newly created form
     grabNewForm = (i) => {
-        this.props.firebase.rentalGroup(i).on("value", (obj) => {
+        onValue(this.props.firebase.rentalGroup(i), (obj) => {
             const newForm = obj.val()
 
             this.setState({ newForm })
@@ -293,7 +295,7 @@ class RentalForm extends Component {
 
     dropNewForm = () => {
         this.setState({ hidenav: false })
-        this.props.firebase.rentalGroup(this.state.createdIndex).off()
+        // this.props.firebase.rentalGroup(this.state.createdIndex).off()
     }
 
     // Hides complete status
@@ -344,7 +346,7 @@ class RentalForm extends Component {
     // Add to participants
     addParticipant = (name, isMember) => {
         const { index } = this.state
-        this.props.firebase.rentalGroup(index).once(('value'), group => {
+        get(this.props.firebase.rentalGroup(index), group => {
             let participants = Array.from(group.val().participants ? group.val().participants : [])
             if (this.lookupMember(participants, name)) {
                 // Member was found already in the list, possibly write that they are already in the group
@@ -356,7 +358,7 @@ class RentalForm extends Component {
             let obj = { name, rentals, gamepass, isMember }
             // participants.splice(participants.length, 0, obj);
             participants.push(obj)
-            this.props.firebase.rentalGroup(index).update({ participants })
+            update(this.props.firebase.rentalGroup(index), ({ participants }))
             // if (!isMember) {
             //     this.props.firebase.validatedWaiver(name).set({ attached: true })
             // }
@@ -372,16 +374,27 @@ class RentalForm extends Component {
 
     componentWillUnmount() {
         // this.props.firebase.validatedWaivers().off();
-        this.props.firebase.numWaivers().off();
-        this.props.firebase.rentalGroups().off()
-        this.props.firebase.rentalOptions().off()
-        this.props.firebase.users().off()
+        // this.props.firebase.numWaivers().off();
+        // this.props.firebase.rentalGroups().off()
+        // this.props.firebase.rentalOptions().off()
+        // this.props.firebase.users().off()
     }
 
     componentDidMount() {
         this.setState({ loading: true });
 
-        this.props.firebase.waiversList().listAll().then((res) => {
+        // onValue(this.props.firebase.rentalGroups(), (obj) => {
+        //     console.log(obj)
+        // }, {
+        //     onlyOnce: true
+        // });
+
+        // get(this.props.firebase.rentalGroups()).then((snapshot) => {
+        //     if (snapshot.exists())
+        //         console.log(snapshot)
+        // })
+
+        listAll(this.props.firebase.waiversList()).then((res) => {
             var tempWaivers = [];
             for (let i = 0; i < res.items.length; i++) {
                 let waiverName = res.items[i].name
@@ -399,16 +412,16 @@ class RentalForm extends Component {
             console.log(error)
         });
 
-        this.props.firebase.numWaivers().on('value', snapshot => {
+        onValue(this.props.firebase.numWaivers(), snapshot => {
             let num_waivers = snapshot.val().total_num;
             this.setState({ num_waivers_cur: num_waivers, validateArray: snapshot.val().validated })
         })
-        this.props.firebase.numWaivers().once('value', snapshot => {
+        get(this.props.firebase.numWaivers(), snapshot => {
             let prev = snapshot.val().total_num;
             this.setState({ num_waivers_prev: prev })
         })
 
-        this.props.firebase.rentalGroups().on('value', snapshot => {
+        onValue(this.props.firebase.rentalGroups(), snapshot => {
             const rentalsObject = snapshot.val()
 
             let rentalForms = []
@@ -421,7 +434,7 @@ class RentalForm extends Component {
             this.setState({ rentalForms })
         })
 
-        this.props.firebase.users().on('value', snapshot => {
+        onValue(this.props.firebase.users(), snapshot => {
             const usersObject = snapshot.val();
 
             let usersList = Object.keys(usersObject).map(key => ({
@@ -432,7 +445,7 @@ class RentalForm extends Component {
             this.setState({ members: usersList })
         })
 
-        this.props.firebase.rentalOptions().on('value', snapshot => {
+        onValue(this.props.firebase.rentalOptions(), snapshot => {
             const optionsObject = snapshot.val()
 
             // let optionsObjectarr = {};
@@ -449,7 +462,7 @@ class RentalForm extends Component {
 
     componentDidUpdate() {
         if (this.state.num_waivers_prev !== this.state.num_waivers_cur) {
-            this.props.firebase.waiversList().listAll().then((res) => {
+            listAll(this.props.firebase.waiversList()).then((res) => {
                 var tempWaivers = [];
                 for (let i = 0; i < res.items.length; i++) {
                     let waiverName = res.items[i].name
@@ -468,151 +481,136 @@ class RentalForm extends Component {
                 // Uh-oh, an error occurred!
                 console.log(error)
             });
-            this.props.firebase.numWaivers().once('value', snapshot => {
+            get(this.props.firebase.numWaivers(), snapshot => {
                 let prev = snapshot.val().total_num;
                 this.setState({ num_waivers_prev: prev })
             })
         }
     }
 
-        render() {
-            const {
-                cvc, number, expiry, name, zipcode, cvcError, expiryError, nameError, loading, members, rentalsError,
-                numberError, numparticipantsError, rentalnameError, zipcodeError, waivers, createdIndex, hidenav
-            } = this.state
-            const errorProps = { expiryError, nameError, numberError, numparticipantsError, cvcError, rentalnameError, zipcodeError }
-            const add = this.addParticipant
-            const waiverProps = { waivers, add, loading, members }
+    render() {
+        const {
+            cvc, number, expiry, name, zipcode, cvcError, expiryError, nameError, loading, members, rentalsError,
+            numberError, numparticipantsError, rentalnameError, zipcodeError, waivers, createdIndex, hidenav
+        } = this.state
+        const errorProps = { expiryError, nameError, numberError, numparticipantsError, cvcError, rentalnameError, zipcodeError }
+        const add = this.addParticipant
+        const waiverProps = { waivers, add, loading, members }
 
-            return (
-                <AuthUserContext.Consumer>
-                    {authUser => (
-                        <div className="background-static-all">
-                            <Helmet>
-                                <title>US Airsoft Field: Rental Forms</title>
-                            </Helmet>
-                            <Container>
-                                <h2 className="admin-header">Rental Form</h2>
-                                {!hidenav ?
-                                    <Breadcrumb className="admin-breadcrumb">
-                                        {authUser && !!authUser.roles[ROLES.ADMIN] ?
-                                            <LinkContainer to="/admin">
-                                                <Breadcrumb.Item>Admin</Breadcrumb.Item>
-                                            </LinkContainer>
-                                            :
-                                            <LinkContainer to="/dashboard">
-                                                <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
-                                            </LinkContainer>
-                                        }
-                                        <Breadcrumb.Item active>Rental Form</Breadcrumb.Item>
-                                    </Breadcrumb> : null}
-                                {!hidenav ?
-                                    <Row>
-                                        <Col>
-                                            <BottomNavigation
-                                                value={this.state.value}
-                                                onChange={(e, newvalue) => {
-                                                    this.setState({ value: -1 }, () => {
-                                                        this.setState({ value: newvalue, ...INITIAL_STATE })
-                                                    })
-                                                }}
-                                                showLabels
-                                                className="navigation-rf"
-                                            >
-                                                <BottomNavigationAction className="bottom-nav-rf" label="New Form" icon={<FontAwesomeIcon icon={faFolderPlus} className="icons-rf" />} />
-                                                <BottomNavigationAction className="bottom-nav-rf" label="Edit Form" icon={<FontAwesomeIcon icon={faFolderOpen} className="icons-rf" />} />
-                                                <BottomNavigationAction className="bottom-nav-rf" label="Return Form" icon={<FontAwesomeIcon icon={faFolderMinus} className="icons-rf" />} />
-                                                <BottomNavigationAction className="bottom-nav-rf" label="Rentals" icon={<FontAwesomeIcon icon={faCog} className="icons-rf" />} />
-                                            </BottomNavigation>
-                                        </Col>
+        return (
+            <AuthUserContext.Consumer>
+                {authUser => (
+                    <div className="background-static-all">
+                        <Helmet>
+                            <title>US Airsoft Field: Rental Forms</title>
+                        </Helmet>
+                        <Container>
+                            <h2 className="admin-header">Rental Form</h2>
+                            {!hidenav ?
+                                <Breadcrumb className="admin-breadcrumb">
+                                    {authUser && !!authUser.roles[ROLES.ADMIN] ?
+                                        <LinkContainer to="/admin">
+                                            <Breadcrumb.Item>Admin</Breadcrumb.Item>
+                                        </LinkContainer>
+                                        :
+                                        <LinkContainer to="/dashboard">
+                                            <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
+                                        </LinkContainer>
+                                    }
+                                    <Breadcrumb.Item active>Rental Form</Breadcrumb.Item>
+                                </Breadcrumb> : null}
+                            {!hidenav ?
+                                <Row>
+                                    <Col>
+                                        <BottomNavigation
+                                            value={this.state.value}
+                                            onChange={(e, newvalue) => {
+                                                this.setState({ value: -1 }, () => {
+                                                    this.setState({ value: newvalue, ...INITIAL_STATE })
+                                                })
+                                            }}
+                                            showLabels
+                                            className="navigation-rf"
+                                        >
+                                            <BottomNavigationAction className="bottom-nav-rf" label="New Form" icon={<FontAwesomeIcon icon={faFolderPlus} className="icons-rf" />} />
+                                            <BottomNavigationAction className="bottom-nav-rf" label="Edit Form" icon={<FontAwesomeIcon icon={faFolderOpen} className="icons-rf" />} />
+                                            <BottomNavigationAction className="bottom-nav-rf" label="Return Form" icon={<FontAwesomeIcon icon={faFolderMinus} className="icons-rf" />} />
+                                            <BottomNavigationAction className="bottom-nav-rf" label="Rentals" icon={<FontAwesomeIcon icon={faCog} className="icons-rf" />} />
+                                        </BottomNavigation>
+                                    </Col>
+                                </Row>
+                                : null}
+                            {this.state.value === 0 ?
+                                !loading ?
+                                    <CreateForm cvc={cvc} number={number} expiry={expiry} name={name} zipcode={zipcode} handleInputChange={this.handleInputChange}
+                                        numParticipants={this.state.numParticipants} rentalName={this.state.rentalName} onChange={this.onChange} submit={this.createForm}
+                                        {...errorProps} checked={this.state.checked} showComplete={this.state.showComplete} hideComplete={this.hideComplete}
+                                        options={this.state.options} validate1stPage={this.validate1stPage.bind(this)} authUser={authUser} createdIndex={createdIndex}
+                                        firebase={this.props.firebase} dropNewForm={this.dropNewForm.bind(this)} newForm={this.state.newForm} hideNav={this.hideNav.bind(this)}
+                                        nav={this.state.hidenav} />
+                                    :
+                                    <Row className="spinner-standard">
+                                        <Spinner animation="border" />
                                     </Row>
-                                    : null}
-                                {this.state.value === 0 ?
-                                    !loading ?
-                                        <CreateForm cvc={cvc} number={number} expiry={expiry} name={name} zipcode={zipcode} handleInputChange={this.handleInputChange}
-                                            numParticipants={this.state.numParticipants} rentalName={this.state.rentalName} onChange={this.onChange} submit={this.createForm}
-                                            {...errorProps} checked={this.state.checked} showComplete={this.state.showComplete} hideComplete={this.hideComplete}
-                                            options={this.state.options} validate1stPage={this.validate1stPage.bind(this)} authUser={authUser} createdIndex={createdIndex}
-                                            firebase={this.props.firebase} dropNewForm={this.dropNewForm.bind(this)} newForm={this.state.newForm} hideNav={this.hideNav.bind(this)}
-                                            nav={this.state.hidenav} />
-                                        :
-                                        <Row className="spinner-standard">
-                                            <Spinner animation="border" />
-                                        </Row>
-                                    : null}
-                                {this.state.value === 1 ?
-                                    !loading ?
-                                        <div className="div-edit-rf">
-                                            {/* <EditForm forms={rentalForms} showAP={this.showParticipantBox} setParentIndex={this.setIndex} showAR={this.showRentalBox}
+                                : null}
+                            {this.state.value === 1 ?
+                                !loading ?
+                                    <div className="div-edit-rf">
+                                        {/* <EditForm forms={rentalForms} showAP={this.showParticipantBox} setParentIndex={this.setIndex} showAR={this.showRentalBox}
                                                         authUser={authUser} options={JSON.parse(JSON.stringify(this.state.options))} firebase={this.props.firebase}/> */}
-                                            <EditForm showAP={this.showParticipantBox} setParentIndex={this.setIndex} showAR={this.showRentalBox}
-                                                authUser={authUser} />
-                                        </div>
-                                        :
-                                        <Row className="spinner-standard">
-                                            <Spinner animation="border" />
-                                        </Row>
-                                    : null}
-                                {this.state.value === 2 ?
-                                    !loading ?
-                                        <div className="div-edit-rf">
-                                            <ReturnForm />
-                                        </div>
-                                        :
-                                        <Row className="spinner-standard">
-                                            <Spinner animation="border" />
-                                        </Row>
-                                    : null}
-                                {this.state.value === 3 ?
-                                    !loading ?
-                                        <div className="div-edit-rf">
-                                            <RentalOptions />
-                                        </div>
-                                        :
-                                        <Row className="spinner-standard">
-                                            <Spinner animation="border" />
-                                        </Row>
-                                    : null}
-                                <Collapse in={this.state.showAddParticipant} timeout="auto" unmountOnExit>
-                                    <AddParticipant {...waiverProps} />
-                                </Collapse>
-                                <Snackbar open={rentalsError !== null} autoHideDuration={6000} onClose={() => this.setState({ rentalsError: null })}>
-                                    <Alert onClose={() => this.setState({ rentalsError: null })} severity="error">
-                                        {rentalsError}
-                                    </Alert>
-                                </Snackbar>
-                            </Container>
-                        </div>
-                    )}
-                </AuthUserContext.Consumer>
-            );
-        }
+                                        <EditForm showAP={this.showParticipantBox} setParentIndex={this.setIndex} showAR={this.showRentalBox}
+                                            authUser={authUser} />
+                                    </div>
+                                    :
+                                    <Row className="spinner-standard">
+                                        <Spinner animation="border" />
+                                    </Row>
+                                : null}
+                            {this.state.value === 2 ?
+                                !loading ?
+                                    <div className="div-edit-rf">
+                                        <ReturnForm />
+                                    </div>
+                                    :
+                                    <Row className="spinner-standard">
+                                        <Spinner animation="border" />
+                                    </Row>
+                                : null}
+                            {this.state.value === 3 ?
+                                !loading ?
+                                    <div className="div-edit-rf">
+                                        <RentalOptions />
+                                    </div>
+                                    :
+                                    <Row className="spinner-standard">
+                                        <Spinner animation="border" />
+                                    </Row>
+                                : null}
+                            <Collapse in={this.state.showAddParticipant} timeout="auto" unmountOnExit>
+                                <AddParticipant {...waiverProps} />
+                            </Collapse>
+                            <Snackbar open={rentalsError !== null} autoHideDuration={6000} onClose={() => this.setState({ rentalsError: null })}>
+                                <Alert onClose={() => this.setState({ rentalsError: null })} severity="error">
+                                    {rentalsError}
+                                </Alert>
+                            </Snackbar>
+                        </Container>
+                    </div>
+                )}
+            </AuthUserContext.Consumer>
+        );
     }
+}
 
 function CreateForm({ cvc, number, expiry, name, zipcode, handleInputChange, onChange, numParticipants, rentalName, submit, options, validate1stPage,
-        cvcError, expiryError, nameError, numberError, numparticipantsError, rentalnameError, zipcodeError, showComplete, hideComplete, authUser,
-        createdIndex, firebase, dropNewForm, newForm, hideNav, nav }) {
+    cvcError, expiryError, nameError, numberError, numparticipantsError, rentalnameError, zipcodeError, showComplete, hideComplete, authUser,
+    createdIndex, firebase, dropNewForm, newForm, hideNav, nav }) {
 
     const [checked, setChecked] = useState(false)
     const [optionsState, setOptionsState] = useState(JSON.parse(JSON.stringify(options)))
     const [page, setPage] = useState(0)
     const [rentalsError, setRentalsError] = useState(null)
     const [pinError, setPinError] = useState(null)
-
-    const useStyles = makeStyles((theme) => ({
-        modal: {
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-        },
-        paper: {
-            backgroundColor: "rgb(73 80 87 / .9)",
-            border: '2px solid #000',
-            boxShadow: theme.shadows[5],
-            padding: theme.spacing(2, 4, 3),
-            borderRadius: "5px",
-        },
-    }));
 
     function validateItems(e) {
         e.preventDefault()
@@ -640,8 +638,6 @@ function CreateForm({ cvc, number, expiry, name, zipcode, handleInputChange, onC
             }, 4000)
         }
     }
-
-    const classes = useStyles()
 
     const [open, setOpen] = React.useState(false);
 
@@ -673,8 +669,8 @@ function CreateForm({ cvc, number, expiry, name, zipcode, handleInputChange, onC
                     </Row>
 
                     <Modal
+                        className="modal-pincode"
                         aria-labelledby="Pincode"
-                        className={classes.modal}
                         open={open}
                         onClose={() => setOpen(false)}
                         closeAfterTransition
@@ -683,7 +679,7 @@ function CreateForm({ cvc, number, expiry, name, zipcode, handleInputChange, onC
                             timeout: 500,
                         }}>
                         <Fade in={open}>
-                            <div className={classes.paper}>
+                            <div>
                                 <h2 className="h2-modal-rf">Authenticate To Proceed</h2>
                                 <Row className="justify-content-row">
                                     <PinCode completePin={verifyPin} />
@@ -799,18 +795,8 @@ function Summary({ createdIndex, newForm, firebase, setPage }) {
     function updateForm() {
         newForm.complete = true;
         newForm.transaction = transaction
-        firebase.rentalGroup(createdIndex).set(newForm)
+        set(firebase.rentalGroup(createdIndex), (newForm));
     }
-
-    const useStyles = makeStyles({
-        table: {
-            '& > *': {
-                borderBottom: 'unset',
-            },
-        },
-    });
-
-    const classes = useStyles();
 
     return (
         <div className="div-add-rental-rf">
@@ -825,7 +811,7 @@ function Summary({ createdIndex, newForm, firebase, setPage }) {
                         <p className="p-groupname-summary">{`Group: ${newForm.name}`}</p>
                     </div>
                     <TableContainer component={Paper} className="table-edit-rf">
-                        <Table className={classes.table} aria-label="summary table">
+                        <Table aria-label="summary table">
                             <TableHead>
                                 <TableRow>
                                     <TableCell>Rental</TableCell>
@@ -959,7 +945,7 @@ function AddRentals({ setPage, optionsState, setOptionsState, onChange, validate
                     <Row className="margin15-bottom">
                         <Col className="col-notice-rf">
                             <Row className="justify-content-row">
-                                <h5>Notice:</h5>
+                                <h5 className="h5-rentalform">Notice:</h5>
                             </Row>
                             <Row>
                                 <Col>
@@ -1032,46 +1018,15 @@ function AddRentals({ setPage, optionsState, setOptionsState, onChange, validate
         </div>
     )
 }
-const useStyles = makeStyles((theme) => ({
-    root: {
-        padding: '2px 4px',
-        display: 'flex',
-        alignItems: 'center',
-        float: 'right',
-        background: '#424242',
-        margin: '5px',
-        width: 400,
-    },
-    input: {
-        marginLeft: theme.spacing(1),
-        color: 'white',
-        width: "20%",
-    },
-    divider: {
-        height: 28,
-        margin: 4,
-        background: "rgba(255, 255, 255, 0.12)",
-    },
-    label: {
-        color: 'white',
-        fontSize: "1rem",
-        margin: 0,
-        flex: 1,
-        marginRight: 15,
-        marginLeft: 15,
-    }
-}));
 
 // Rows for each rental selection the user will have
 const RentalRow = ({ obj, set, i }) => {
-    const classes = useStyles();
 
     return (
         <Row>
             <Col>
-                <Paper className={classes.root}>
+                <Paper className="paper-rental-row-rf">
                     <InputBase
-                        className={classes.input}
                         placeholder="Amount:"
                         inputProps={{ 'aria-label': 'enter amount' }}
                         type="number"
@@ -1079,8 +1034,8 @@ const RentalRow = ({ obj, set, i }) => {
                         onChange={(e) => set(i, e.target.value)}
                     />
 
-                    <Divider className={classes.divider} orientation="vertical" />
-                    <h5 className={classes.label}>{obj.label}</h5>
+                    <Divider orientation="vertical" />
+                    <h5>{obj.label}</h5>
                 </Paper>
             </Col>
         </Row>
@@ -1188,9 +1143,9 @@ function returnDay(day) {
 }
 
 function returnMonth(month) {
-    if (month===0)
+    if (month === 0)
         return "January"
-    else if (month===1)
+    else if (month === 1)
         return "February"
     else if (month === 2)
         return "March"
@@ -1226,7 +1181,7 @@ function WaiverBox(props) {
                 <div className="row-allwaivers-wl">
                     {!loading ?
                         waivers.sort((a, b) =>
-                        (b.date) - (a.date)).map((waiver, i) => (
+                            (b.date) - (a.date)).map((waiver, i) => (
                                 search !== "" ? // Search query case
                                     waiver.name.toLowerCase().includes(search.toLowerCase()) ?
                                         i % 2 === 0 ?
@@ -1439,7 +1394,9 @@ function MemberBox(props) {
 const condition = authUser =>
     authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]);
 
-export default compose(
-    withAuthorization(condition),
-    withFirebase,
-)(RentalForm);
+export default withAuthorization(condition)(withFirebase(RentalForm));
+
+// export default composeHooks(
+//     withAuthorization(condition),
+//     withFirebase,
+// )(RentalForm);

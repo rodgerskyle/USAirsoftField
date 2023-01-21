@@ -3,11 +3,10 @@ import MUIButton from '@material-ui/core/Button';
 import Divider from '@material-ui/core/Divider';
 import IconButton from '@material-ui/core/IconButton';
 import Paper from '@material-ui/core/Paper';
-import { makeStyles } from '@material-ui/core/styles';
 import { AddRounded, ArrowBackIos, Contacts, RemoveRounded, Edit, VerifiedUser, Warning } from '@material-ui/icons';
 import React, { Component, useState } from 'react';
 import { Col, Row, Spinner } from 'react-bootstrap/';
-import { compose } from 'recompose';
+import { onValue, set, update } from 'firebase/database';
 
 import Accordion from '@material-ui/core/Accordion';
 import AccordionDetails from '@material-ui/core/AccordionDetails';
@@ -54,28 +53,28 @@ class EditForm extends Component {
     }
 
     componentWillUnmount() {
-        this.props.firebase.rentalGroups().off()
-        this.props.firebase.rentalOptions().off()
-        if (this.state.index !== -1)
-            this.props.firebase.rentalGroup(this.state.index).off()
+        // this.props.firebase.rentalGroups().off()
+        // this.props.firebase.rentalOptions().off()
+        // if (this.state.index !== -1)
+        //     this.props.firebase.rentalGroup(this.state.index).off()
     }
 
     componentDidMount() {
-        this.props.firebase.rentalGroups().on('value', snapshot => {
+        onValue(this.props.firebase.rentalGroups(), snapshot => {
             const rentalsObject = snapshot.val()
             let rentalForms = []
             if (rentalsObject) {
                 rentalForms = Object.keys(rentalsObject).map(key => ({
                     ...rentalsObject[key]
                 }))
-                this.setState({rentalForms})
+                this.setState({ rentalForms })
             }
             else {
                 this.setState({ rentalForms })
             }
         })
 
-        this.props.firebase.rentalOptions().on('value', snapshot => {
+        onValue(this.props.firebase.rentalOptions(), snapshot => {
             const optionsObject = snapshot.val()
 
             let options = Object.keys(optionsObject).map(key => ({
@@ -158,7 +157,7 @@ class EditForm extends Component {
             newOptions[i].stock = parseInt(newOptions[i].stock) + num
             newOptions[i].amount = ""
         }
-        this.props.firebase.rentalOptions().set(newOptions)
+        set(this.props.firebase.rentalOptions(), newOptions);
     }
 
     // Changes group max size
@@ -168,7 +167,7 @@ class EditForm extends Component {
         if (add) {
             // Add to max
             size += 1
-            this.props.firebase.rentalGroup(index).update({ size })
+            update(this.props.firebase.rentalGroup(index), ({ size }));
         }
         else {
             // Subtract max amount but verify that the number of participants is less
@@ -182,15 +181,15 @@ class EditForm extends Component {
                 else {
                     this.setState({ rentalsError: `You must remove users in order to decrease the size.` })
                 }
-                this.props.firebase.rentalGroup(index).update({ size })
+                update(this.props.firebase.rentalGroup(index), ({ size }));
             }
         }
     }
 
     // Goes back from summary screen
     goBack = () => {
-        this.props.firebase.rentalGroup(this.state.index).off()
-        this.setState({showSummary: false, index: -1})
+        // this.props.firebase.rentalGroup(this.state.index).off()
+        this.setState({ showSummary: false, index: -1 })
     }
 
     // Saves changes to rentals done
@@ -199,7 +198,7 @@ class EditForm extends Component {
         let available = JSON.parse(JSON.stringify(optionsState)).filter(obj => obj.amount > 0)
         if (this.validateItems(rentalForms[index].available ? rentalForms[index].available : null)) {
             this.incrementStock(rentalForms[index].available ? rentalForms[index].available : null)
-            this.props.firebase.rentalGroup(index).update({ available }, () => {
+            update(this.props.firebase.rentalGroup(index), ({ available }), () => {
                 this.mapOptions(index)
             })
             this.setState({ rentalsSuccess: `The ${rentalForms[index].name} group's available rentals was updated.` })
@@ -209,7 +208,7 @@ class EditForm extends Component {
     render() {
         const editProps = { showAP: this.props.showAP, index: this.state.index }
         const { loading, editting, rentalForms, options, index, authUser, open, expanded, optionsState,
-            rentalsSuccess, rentalsError, rentalForm, showSummary} = this.state
+            rentalsSuccess, rentalsError, rentalForm, showSummary } = this.state
 
         return (
             <div>
@@ -224,7 +223,7 @@ class EditForm extends Component {
                             <List className="list-edit-rf">
                                 {rentalForms && rentalForms.length > 0 ?
                                     rentalForms.map((form, i) => {
-                                        if (form.complete === true) {
+                                        if (form.complete === true && form.size != null) {
                                             return (
                                                 <ListItem key={i}>
                                                     <ListItemAvatar>
@@ -242,8 +241,8 @@ class EditForm extends Component {
                                                                 // setIndex(i)
                                                                 // setEditting(true)
                                                                 this.props.setParentIndex(i)
-                                                                this.props.firebase.rentalGroup(i).on('value', obj => {
-                                                                    this.setState({rentalForm: obj.val(), optionsState: JSON.parse(JSON.stringify(options))}, () => {
+                                                                onValue(this.props.firebase.rentalGroup(i), obj => {
+                                                                    this.setState({ rentalForm: obj.val(), optionsState: JSON.parse(JSON.stringify(options)) }, () => {
                                                                         this.mapOptions(i)
                                                                     })
                                                                 })
@@ -254,8 +253,8 @@ class EditForm extends Component {
                                                     </ListItemSecondaryAction>
                                                 </ListItem>
                                             )
-                                        } else 
-                                        return (
+                                        } else if (form.complete === false) {
+                                            return (
                                                 <ListItem key={i} className="list-item-unfinished-rental-ef">
                                                     <ListItemAvatar>
                                                         <Avatar>
@@ -264,163 +263,179 @@ class EditForm extends Component {
                                                     </ListItemAvatar>
                                                     <ListItemText
                                                         primary={form.name}
-                                                        secondary={`${form.size} Participants`}
+                                                        secondary={`Incomplete Form`}
                                                     />
                                                     <ListItemSecondaryAction>
                                                         <IconButton edge="end" aria-label="complete"
                                                             onClick={() => {
-                                                                this.props.firebase.rentalGroup(i).on('value', obj => {
-                                                                    this.setState({rentalForm: obj.val(), index: i, showSummary: true})
+                                                                onValue(this.props.firebase.rentalGroup(i), obj => {
+                                                                    this.setState({ rentalForm: obj.val(), index: i, showSummary: true })
                                                                 })
                                                             }}>
                                                             <VerifiedUser />
                                                         </IconButton>
                                                     </ListItemSecondaryAction>
                                                 </ListItem>
-                                        )
+                                            );
+                                        }
+                                        else {
+                                            return (
+                                                <ListItem key={i} className="list-item-unfinished-rental-ef">
+                                                    <ListItemAvatar>
+                                                        <Avatar>
+                                                            <Warning />
+                                                        </Avatar>
+                                                    </ListItemAvatar>
+                                                    <ListItemText
+                                                        primary={form.name}
+                                                        secondary={`Corrupted Rental Form`}
+                                                    />
+                                                </ListItem>
+                                            );
+                                        }
                                     }) : <p className="p-empty-rentals-rf">Add Rental Forms to see groups here.</p>}
                             </List>
                         </div> :
                         showSummary ?
-                        <Summary createdIndex={index} newForm={this.state.rentalForm} firebase={this.props.firebase} goBack={this.goBack.bind(this)}/>
-                        :
-                        <div className="div-parent-ef">
-                            <Row className="row-transaction-rf">
-                                <h5 className="h5-transaction-rf">{`Transaction #${rentalForm.transaction}`}</h5>
-                            </Row>
-                            <div className="div-back-button-rf">
-                                <MUIButton
-                                    variant="contained"
-                                    color="primary"
-                                    size="small"
-                                    startIcon={<ArrowBackIos />}
-                                    onClick={() => {
-                                        this.setState({ editting: false, index: -1 })
-                                        this.props.showAP(false)
-                                        this.props.firebase.rentalGroup(index).off()
-                                    }}>
-                                    Back
-                                </MUIButton>
-                            </div>
-                            <Row className="justify-content-row row-group-name-rf">
-                                {!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER] ?
-                                    <IconButton aria-label="edit" style={{ padding: 0, paddingRight: '5px', color: "white" }}
+                            <Summary createdIndex={index} newForm={this.state.rentalForm} firebase={this.props.firebase} goBack={this.goBack.bind(this)} />
+                            :
+                            <div className="div-parent-ef">
+                                <Row className="row-transaction-rf">
+                                    <h5 className="h5-transaction-rf">{`Transaction #${rentalForm.transaction}`}</h5>
+                                </Row>
+                                <div className="div-back-button-rf">
+                                    <MUIButton
+                                        variant="contained"
+                                        color="primary"
+                                        size="small"
+                                        startIcon={<ArrowBackIos />}
                                         onClick={() => {
-                                            this.setState({ open: true })
+                                            this.setState({ editting: false, index: -1 })
+                                            this.props.showAP(false)
+                                            this.props.firebase.rentalGroup(index).off()
                                         }}>
-                                        <Edit />
-                                    </IconButton> : null}
-                                <h5 className="h5-group-name-rf">{`Group: ${rentalForm.name}`}</h5>
-                            </Row>
-                            <EditSelectedForm {...editProps} />
-                            <Modal
-                                aria-labelledby="Rental Settings"
-                                className={"modal-ef"}
-                                open={open}
-                                onClose={() => this.setState({ open: false })}
-                                closeAfterTransition
-                                BackdropComponent={Backdrop}
-                                BackdropProps={{
-                                    timeout: 500,
-                                }}>
-                                <Fade in={open}>
-                                    <div className={"paper-ef"}>
-                                        <div className="div-modal-settings-rf">
-                                            <Accordion expanded={expanded === 'panel1'} onChange={this.handleChange('panel1')}>
-                                                <AccordionSummary
-                                                    expandIcon={<ExpandMoreIcon />}
-                                                    aria-controls="summarypanel-content"
-                                                    id="summarypanel"
-                                                >
-                                                    <Typography className={"heading-ef"}>General settings</Typography>
-                                                </AccordionSummary>
-                                                <AccordionDetails>
-                                                    <Typography>
-                                                        {`Group: ${rentalForm.name}`}<br />
-                                                        {`Transaction: ${rentalForm.transaction}`}
-                                                    </Typography>
-                                                </AccordionDetails>
-                                            </Accordion>
-                                            <Accordion expanded={expanded === 'panel2'} onChange={this.handleChange('panel2')}>
-                                                <AccordionSummary
-                                                    expandIcon={<ExpandMoreIcon />}
-                                                    aria-controls="userspanel-content"
-                                                    id="userspanel"
-                                                >
-                                                    <Typography className={"heading-ef"}>Users</Typography>
-                                                    <Typography className={"secondaryHeading-ef"}>
-                                                        Change number of users
-                                            </Typography>
-                                                </AccordionSummary>
-                                                <AccordionDetails className="accordion-details-rentals-ef">
-                                                    <div>
-                                                        <IconButton aria-label="edit" style={{ padding: 0, paddingRight: '5px', color: "white" }}
-                                                            onClick={() => {
-                                                                this.changeMax(true)
-                                                            }}>
-                                                            <AddRounded />
-                                                        </IconButton>
-                                                        {rentalForm.size}
-                                                        <IconButton aria-label="edit" style={{ padding: 0, paddingLeft: '5px', color: "white" }}
-                                                            onClick={() => {
-                                                                this.changeMax(false)
-                                                            }}>
-                                                            <RemoveRounded />
-                                                        </IconButton>
-                                                    </div>
-                                                </AccordionDetails>
-                                            </Accordion>
-                                            <Accordion expanded={expanded === 'panel3'} onChange={this.handleChange('panel3')}>
-                                                <AccordionSummary
-                                                    expandIcon={<ExpandMoreIcon />}
-                                                    aria-controls="rentalpanel-content"
-                                                    id="rentalpanel"
-                                                >
-                                                    <Typography className={"heading-ef"}>Rentals</Typography>
-                                                    <Typography className={"secondaryHeading-ef"}>
-                                                        Add or remove rentals from group
-                                            </Typography>
-                                                </AccordionSummary>
-                                                <AccordionDetails className="accordion-details-rentals-rf">
-                                                    <div>
-                                                        {optionsState.map((rental, i) => {
-                                                            return (<RentalRow key={i} obj={rental} set={this.setNumber.bind(this)} i={i} />)
-                                                        })}
-                                                    </div>
-                                                </AccordionDetails>
-                                                <Divider />
-                                                <AccordionActions className="accordion-actions-rentals-rf">
-                                                    <MUIButton type="button" onClick={() => {
-                                                        this.saveAvailable()
-                                                    }}>
-                                                        Save
-                                            </MUIButton>
-                                                </AccordionActions>
-                                            </Accordion>
-                                            {!!authUser.roles[ROLES.ADMIN] ?
-                                            <Accordion expanded={expanded === 'panel4'} onChange={this.handleChange('panel4')}>
-                                                <AccordionSummary
-                                                    expandIcon={<ExpandMoreIcon />}
-                                                    aria-controls="creditcardpanel-content"
-                                                    id="creditcardpanel"
-                                                >
-                                                    <Typography className={"heading-ef"}>Credit Card Information</Typography>
-                                                </AccordionSummary>
-                                                <AccordionDetails>
-                                                    <Typography>
-                                                        {`Name on Card: ${rentalForm.cc.name}`}<br />
-                                                        {`Card Number: ${rentalForm.cc.number}`}<br />
-                                                        {`Expiration: ${rentalForm.cc.expiry}`}<br />
-                                                        {`CVC: ${rentalForm.cc.cvc}`}<br />
-                                                        {`Zipcode: ${rentalForm.cc.zipcode}`}
-                                                    </Typography>
-                                                </AccordionDetails>
-                                            </Accordion> : null }
+                                        Back
+                                    </MUIButton>
+                                </div>
+                                <Row className="justify-content-row row-group-name-rf">
+                                    {!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER] ?
+                                        <IconButton aria-label="edit" style={{ padding: 0, paddingRight: '5px', color: "white" }}
+                                            onClick={() => {
+                                                this.setState({ open: true })
+                                            }}>
+                                            <Edit />
+                                        </IconButton> : null}
+                                    <h5 className="h5-group-name-rf">{`Group: ${rentalForm.name}`}</h5>
+                                </Row>
+                                <EditSelectedForm {...editProps} />
+                                <Modal
+                                    aria-labelledby="Rental Settings"
+                                    className={"modal-ef"}
+                                    open={open}
+                                    onClose={() => this.setState({ open: false })}
+                                    closeAfterTransition
+                                    BackdropComponent={Backdrop}
+                                    BackdropProps={{
+                                        timeout: 500,
+                                    }}>
+                                    <Fade in={open}>
+                                        <div className={"paper-ef"}>
+                                            <div className="div-modal-settings-rf">
+                                                <Accordion expanded={expanded === 'panel1'} onChange={this.handleChange('panel1')}>
+                                                    <AccordionSummary
+                                                        expandIcon={<ExpandMoreIcon />}
+                                                        aria-controls="summarypanel-content"
+                                                        id="summarypanel"
+                                                    >
+                                                        <Typography className={"heading-ef"}>General settings</Typography>
+                                                    </AccordionSummary>
+                                                    <AccordionDetails>
+                                                        <Typography>
+                                                            {`Group: ${rentalForm.name}`}<br />
+                                                            {`Transaction: ${rentalForm.transaction}`}
+                                                        </Typography>
+                                                    </AccordionDetails>
+                                                </Accordion>
+                                                <Accordion expanded={expanded === 'panel2'} onChange={this.handleChange('panel2')}>
+                                                    <AccordionSummary
+                                                        expandIcon={<ExpandMoreIcon />}
+                                                        aria-controls="userspanel-content"
+                                                        id="userspanel"
+                                                    >
+                                                        <Typography className={"heading-ef"}>Users</Typography>
+                                                        <Typography className={"secondaryHeading-ef"}>
+                                                            Change number of users
+                                                        </Typography>
+                                                    </AccordionSummary>
+                                                    <AccordionDetails className="accordion-details-rentals-ef">
+                                                        <div>
+                                                            <IconButton aria-label="edit" style={{ padding: 0, paddingRight: '5px', color: "white" }}
+                                                                onClick={() => {
+                                                                    this.changeMax(true)
+                                                                }}>
+                                                                <AddRounded />
+                                                            </IconButton>
+                                                            {rentalForm.size}
+                                                            <IconButton aria-label="edit" style={{ padding: 0, paddingLeft: '5px', color: "white" }}
+                                                                onClick={() => {
+                                                                    this.changeMax(false)
+                                                                }}>
+                                                                <RemoveRounded />
+                                                            </IconButton>
+                                                        </div>
+                                                    </AccordionDetails>
+                                                </Accordion>
+                                                <Accordion expanded={expanded === 'panel3'} onChange={this.handleChange('panel3')}>
+                                                    <AccordionSummary
+                                                        expandIcon={<ExpandMoreIcon />}
+                                                        aria-controls="rentalpanel-content"
+                                                        id="rentalpanel"
+                                                    >
+                                                        <Typography className={"heading-ef"}>Rentals</Typography>
+                                                        <Typography className={"secondaryHeading-ef"}>
+                                                            Add or remove rentals from group
+                                                        </Typography>
+                                                    </AccordionSummary>
+                                                    <AccordionDetails className="accordion-details-rentals-rf">
+                                                        <div>
+                                                            {optionsState.map((rental, i) => {
+                                                                return (<RentalRow key={i} obj={rental} set={this.setNumber.bind(this)} i={i} />)
+                                                            })}
+                                                        </div>
+                                                    </AccordionDetails>
+                                                    <Divider />
+                                                    <AccordionActions className="accordion-actions-rentals-rf">
+                                                        <MUIButton type="button" onClick={() => {
+                                                            this.saveAvailable()
+                                                        }}>
+                                                            Save
+                                                        </MUIButton>
+                                                    </AccordionActions>
+                                                </Accordion>
+                                                {!!authUser.roles[ROLES.ADMIN] ?
+                                                    <Accordion expanded={expanded === 'panel4'} onChange={this.handleChange('panel4')}>
+                                                        <AccordionSummary
+                                                            expandIcon={<ExpandMoreIcon />}
+                                                            aria-controls="creditcardpanel-content"
+                                                            id="creditcardpanel"
+                                                        >
+                                                            <Typography className={"heading-ef"}>Credit Card Information</Typography>
+                                                        </AccordionSummary>
+                                                        <AccordionDetails>
+                                                            <Typography>
+                                                                {`Name on Card: ${rentalForm.cc.name}`}<br />
+                                                                {`Card Number: ${rentalForm.cc.number}`}<br />
+                                                                {`Expiration: ${rentalForm.cc.expiry}`}<br />
+                                                                {`CVC: ${rentalForm.cc.cvc}`}<br />
+                                                                {`Zipcode: ${rentalForm.cc.zipcode}`}
+                                                            </Typography>
+                                                        </AccordionDetails>
+                                                    </Accordion> : null}
+                                            </div>
                                         </div>
-                                    </div>
-                                </Fade>
-                            </Modal>
-                        </div>
+                                    </Fade>
+                                </Modal>
+                            </div>
                 }
                 <Snackbar open={rentalsSuccess !== null} autoHideDuration={6000} onClose={() => this.setState({ rentalsSuccess: null })}>
                     <Alert onClose={() => this.setState({ rentalsSuccess: null })} severity="success">
@@ -447,18 +462,8 @@ function Summary({ createdIndex, newForm, firebase, goBack }) {
     function updateForm() {
         newForm.complete = true;
         newForm.transaction = transaction
-        firebase.rentalGroup(createdIndex).set(newForm)
+        set(firebase.rentalGroup(createdIndex), newForm)
     }
-
-    const useStyles = makeStyles({
-        table: {
-            '& > *': {
-                borderBottom: 'unset',
-            },
-        },
-    });
-
-    const classes = useStyles();
 
     return (
         <div className="div-add-rental-rf">
@@ -485,7 +490,7 @@ function Summary({ createdIndex, newForm, firebase, goBack }) {
                         <p className="p-groupname-summary">{`Group: ${newForm.name}`}</p>
                     </div>
                     <TableContainer component={Paper} className="table-edit-rf">
-                        <Table className={classes.table} aria-label="summary table">
+                        <Table aria-label="summary table">
                             <TableHead>
                                 <TableRow>
                                     <TableCell>Rental</TableCell>
@@ -552,50 +557,17 @@ function Summary({ createdIndex, newForm, firebase, goBack }) {
 
 }
 
-const useStyles = makeStyles((theme) => ({
-    root: {
-        padding: '2px 4px',
-        display: 'flex',
-        alignItems: 'center',
-        float: 'right',
-        background: '#424242',
-        margin: '5px',
-        width: 400,
-    },
-    input: {
-        marginLeft: theme.spacing(1),
-        color: 'white',
-        width: "20%",
-    },
-    divider: {
-        marginLeft: 15,
-        height: 28,
-        margin: 4,
-        background: "rgba(255, 255, 255, 0.12)",
-    },
-    label: {
-        color: 'white',
-        fontSize: "1rem",
-        margin: 0,
-        flex: 1,
-        marginRight: 15,
-        marginLeft: 15,
-    }
-}));
-
-
 // Rows for each rental selection the user will have
 const RentalRow = ({ obj, set, i }) => {
-    const classes = useStyles()
 
     return (
         <Row>
             <Col>
-                <Paper className={classes.root}>
+                <Paper>
                     <IconButton aria-label="edit" style={{ padding: 0, paddingRight: '5px', color: "white" }}
                         onClick={() => {
                             if (obj.amount !== "")
-                                set(i, +obj.amount+1)
+                                set(i, +obj.amount + 1)
                             else
                                 set(i, 1)
                         }}>
@@ -605,12 +577,12 @@ const RentalRow = ({ obj, set, i }) => {
                     <IconButton aria-label="edit" style={{ padding: 0, paddingLeft: '5px', color: "white" }}
                         onClick={() => {
                             if (obj.amount !== "")
-                                set(i, +obj.amount-1)
+                                set(i, +obj.amount - 1)
                         }}>
                         <RemoveRounded />
                     </IconButton>
-                    <Divider className={classes.divider} orientation="vertical" />
-                    <h5 className={classes.label}>{obj.label}</h5>
+                    <Divider orientation="vertical" />
+                    <h5>{obj.label}</h5>
                 </Paper>
             </Col>
         </Row>
@@ -622,7 +594,9 @@ const RentalRow = ({ obj, set, i }) => {
 const condition = authUser =>
     authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]);
 
-export default compose(
-    withAuthorization(condition),
-    withFirebase,
-)(EditForm);
+export default withAuthorization(condition)(withFirebase(EditForm));
+
+// export default composeHooks(
+//     withAuthorization(condition),
+//     withFirebase,
+// )(EditForm);

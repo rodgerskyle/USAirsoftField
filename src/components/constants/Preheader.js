@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Col } from 'react-bootstrap';
+import { Row, Col } from 'react-bootstrap';
 import '../../App.css';
 
 class Preheader extends Component {
@@ -13,11 +13,13 @@ class Preheader extends Component {
     render() {
         return (
             <div className="preheader-parent-div">
-                <Col>
-                    <a className="preheader-link" href="https://www.usairsoft.com" target="_blank" rel="noopener noreferrer">
-                        COME CHECK OUT THE ONLINE STORE!
-                    </a>
-                </Col>
+                <Row>
+                    <Col>
+                        <a className="preheader-link" href="https://www.usairsoft.com" target="_blank" rel="noopener noreferrer">
+                            COME CHECK OUT THE ONLINE STORE!
+                        </a>
+                    </Col>
+                </Row>
             </div>
         );
     }

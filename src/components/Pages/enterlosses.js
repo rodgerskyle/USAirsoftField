@@ -3,7 +3,7 @@ import '../../App.css';
 
 import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
-import { compose } from 'recompose';
+
 
 import { Button, Form, Container, Card, Row, Col, Breadcrumb, Spinner } from 'react-bootstrap/';
 
@@ -11,6 +11,7 @@ import { LinkContainer } from 'react-router-bootstrap';
 
 import * as ROLES from '../constants/roles';
 import { Helmet } from 'react-helmet-async';
+import { onValue, update } from 'firebase/database';
  
 class EnterLosses extends Component {
     constructor(props) {
@@ -30,7 +31,7 @@ class EnterLosses extends Component {
     }
 
     componentWillUnmount() {
-        this.props.firebase.users().off();
+        // this.props.firebase.users().off();
     }
 
     componentDidMount(){
@@ -39,7 +40,7 @@ class EnterLosses extends Component {
             (tmp) => this.handleKeypress(tmp))
         this.setState({ loading: true });
 
-        this.props.firebase.users().on('value', snapshot => {
+        onValue(this.props.firebase.users(), snapshot => {
             const usersObject = snapshot.val();
 
             const usersList = Object.keys(usersObject).map(key => ({
@@ -111,9 +112,9 @@ class EnterLosses extends Component {
         }
         points+=3;
         losses+=1;
-        this.props.firebase.user(uid).update({
+        update(this.props.firebase.user(uid), ({
             points, losses, freegames, games
-        });
+        }));
         temp = this.state.statusBox;
         temp.unshift("User " + lc_value + " was updated successfully.")
         this.setState({statusBox: temp})
@@ -191,7 +192,9 @@ const StatusBox = ({updates}) => (
 const condition = authUser =>
     authUser && !!authUser.roles[ROLES.ADMIN];
 
-export default compose(
-    withAuthorization(condition),
-    withFirebase,
-    )(EnterLosses);
+export default withAuthorization(condition)(withFirebase(EnterLosses));
+
+// export default composeHooks(
+//     withAuthorization(condition),
+//     withFirebase,
+//     )(EnterLosses);

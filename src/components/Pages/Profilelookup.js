@@ -12,7 +12,7 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
 
-import { compose } from 'recompose';
+import { withRouter } from '../constants/withRouter';
 
 import { Helmet } from 'react-helmet-async';
 
@@ -32,6 +32,8 @@ import { makeStyles } from '@material-ui/core/styles';
 
 import { CircularProgress, Slide } from '@material-ui/core';
 import { isMobile } from 'react-device-detect';
+import { onValue } from 'firebase/database';
+import { getDownloadURL } from 'firebase/storage';
 
 class ProfileLookup extends Component {
     constructor(props) {
@@ -53,16 +55,16 @@ class ProfileLookup extends Component {
 
     componentDidMount() {
         //Figure out rank logic here
-        this.props.firebase.user(this.props.match.params.id).on('value', snapshot => {
+        onValue(this.props.firebase.user(this.props.router.params.id), snapshot => {
             const user = snapshot.val();
-            user.uid = this.props.match.params.id
+            user.uid = this.props.router.params.id
 
             this.getMatchHistory(user)
         });
     }
 
     componentWillUnmount() {
-        this.props.firebase.user(this.props.match.params.id).off();
+        // this.props.firebase.user(this.props.match.params.id).off();
     }
 
     // grabs match history for the user and returns the object with the necessary information
@@ -87,7 +89,7 @@ class ProfileLookup extends Component {
 
     //Get image function for profile image = uid
     getProfile(uid) {
-        this.props.firebase.pictures(`${uid}.png`).getDownloadURL().then((url) => {
+        getDownloadURL(this.props.firebase.pictures(`${uid}.png`)).then((url) => {
             this.setState({ profileicon: url })
         })
     }
@@ -285,7 +287,7 @@ class ProfileLookup extends Component {
                                                     </div>
                                                 </Col>
                                                 <Col md={4} className="col-rank-box-profile">
-                                                    <img style={{ width: '100%' }} src={images[rankindex]}
+                                                    <img src={images[rankindex]}
                                                         alt="Players rank" className="img-xlarge-rank"/>
                                                 </Col>
                                                 <Col md={4}>
@@ -322,8 +324,8 @@ class ProfileLookup extends Component {
                                                 <Col md={4}>
                                                     <Row className="justify-content-row row-rank-progress-profile" style={{ alignItems: 'center' }}>
                                                         <CircularProgress value={100} variant={"determinate"} size={200} className="cp-static-profile" />
-                                                        <CircularProgress value={rankprogress * 100} variant={"determinate"} size={200} />
-                                                        <div style={{ position: 'absolute' }}>
+                                                        <CircularProgress value={rankprogress * 100} variant={"determinate"} size={200} className="cp2-static-profile"/>
+                                                        <Col style={{ position: 'absolute' }}>
                                                             <Row className="justify-content-row">
                                                                 <img src={images.length !== 0 ? images[rankindex] : null}
                                                                     alt="Players rank" className="img-large-rank"/>
@@ -331,7 +333,7 @@ class ProfileLookup extends Component {
                                                             <Row className="justify-content-row">
                                                                 <p className="p-rank-title-rp">{ranks[rankindex]}</p>
                                                             </Row>
-                                                        </div>
+                                                        </Col>
                                                     </Row>
                                                     <Row className="justify-content-row" style={{ marginTop: '1rem' }}>
                                                         <p className="p-title-stats-box-profile">{`${rankindex+1 < images.length ? 
@@ -428,22 +430,12 @@ function RankList({ images, ranks, rankincs, page, rankindex }) {
 
 // Shows the users match history
 function MatchHistory({ matches }) {
-    const useStyles = makeStyles({
-        table: {
-            padding: '2px 4px',
-        },
-        container: {
-            maxHeight: 365,
-        },
-    })
 
     function convert(date) {
         let array = date.split('-')
         array[1] = +array[1] + 1
         return array.join('-')
     }
-
-    const classes = useStyles();
 
     return (
         <div>
@@ -455,8 +447,8 @@ function MatchHistory({ matches }) {
                         </p>
                     </Row>
                     <Row className="row-table-match-history-rp">
-                        <TableContainer component={Paper} className={classes.container}>
-                            <Table stickyHeader className={classes.table} aria-label="match history table">
+                        <TableContainer component={Paper} className="container">
+                            <Table stickyHeader className="table" aria-label="match history table">
                                 <TableHead>
                                     <TableRow>
                                         <TableCell>Date</TableCell>
@@ -491,6 +483,8 @@ function MatchHistory({ matches }) {
     )
 }
 
-export default compose(
-    withFirebase,
-    )(ProfileLookup);
+export default withRouter(withFirebase(ProfileLookup));
+
+// export default composeHooks(
+//     withFirebase,
+//     )(ProfileLookup);

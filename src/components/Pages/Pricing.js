@@ -31,50 +31,58 @@ class Pricing extends Component {
                 <h2 className="page-header">{this.state.title}</h2>
                 <Container>
                     <Row className="justify-content-row standard-navigation-buttons-row-pricing">
-                        <GradientButton color={this.state.showArray[0] ? "silver-black" : "black-silver"}
-                        onClick={() => {
-                            let showArray = this.state.showArray;
-                            showArray.fill(false)
-                            this.setState({showArray}, () => {
-                                showArray[0] = true;
-                                setTimeout(() => { 
-                                    this.setState({showArray, title: "Membership Pricing"})
-                                }, 150)
-                            })
-                        }}>Membership</GradientButton>
-                        <GradientButton color={this.state.showArray[1] ? "silver-black" : "black-silver"}
-                        onClick={() => {
-                            let showArray = this.state.showArray;
-                            showArray.fill(false)
-                            this.setState({showArray}, () => {
-                                showArray[1] = true;
-                                setTimeout(() => { 
-                                    this.setState({showArray, title: "Admission Pricing"})
-                                }, 150)
-                            })
-                        }}>Admission</GradientButton>
-                        <GradientButton color={this.state.showArray[2] ? "silver-black" : "black-silver"}
-                        onClick={() => {
-                            let showArray = this.state.showArray;
-                            showArray.fill(false)
-                            this.setState({showArray}, () => {
-                                showArray[2] = true;
-                                setTimeout(() => { 
-                                    this.setState({showArray, title: "Rental Pricing"})
-                                }, 150)
-                            })
-                        }}>Rental</GradientButton>
-                        <GradientButton color={this.state.showArray[3] ? "silver-black" : "black-silver"}
-                        onClick={() => {
-                            let showArray = this.state.showArray;
-                            showArray.fill(false)
-                            this.setState({showArray}, () => {
-                                showArray[3] = true;
-                                setTimeout(() => { 
-                                    this.setState({showArray, title: "Birthday Pricing"})
-                                }, 150)
-                            })
-                        }}>Birthday</GradientButton>
+                        <Col md={2}>
+                            <GradientButton color={this.state.showArray[0] ? "silver-black" : "black-silver"}
+                            onClick={() => {
+                                let showArray = this.state.showArray;
+                                showArray.fill(false)
+                                this.setState({showArray}, () => {
+                                    showArray[0] = true;
+                                    setTimeout(() => { 
+                                        this.setState({showArray, title: "Membership Pricing"})
+                                    }, 150)
+                                })
+                            }}>Membership</GradientButton>
+                        </Col>
+                        <Col md={2}>
+                            <GradientButton color={this.state.showArray[1] ? "silver-black" : "black-silver"}
+                            onClick={() => {
+                                let showArray = this.state.showArray;
+                                showArray.fill(false)
+                                this.setState({showArray}, () => {
+                                    showArray[1] = true;
+                                    setTimeout(() => { 
+                                        this.setState({showArray, title: "Admission Pricing"})
+                                    }, 150)
+                                })
+                            }}>Admission</GradientButton>
+                        </Col>
+                        <Col md={2}>
+                            <GradientButton color={this.state.showArray[2] ? "silver-black" : "black-silver"}
+                            onClick={() => {
+                                let showArray = this.state.showArray;
+                                showArray.fill(false)
+                                this.setState({showArray}, () => {
+                                    showArray[2] = true;
+                                    setTimeout(() => { 
+                                        this.setState({showArray, title: "Rental Pricing"})
+                                    }, 150)
+                                })
+                            }}>Rental</GradientButton>
+                        </Col>
+                        <Col md={2}>
+                            <GradientButton color={this.state.showArray[3] ? "silver-black" : "black-silver"}
+                            onClick={() => {
+                                let showArray = this.state.showArray;
+                                showArray.fill(false)
+                                this.setState({showArray}, () => {
+                                    showArray[3] = true;
+                                    setTimeout(() => { 
+                                        this.setState({showArray, title: "Birthday Pricing"})
+                                    }, 150)
+                                })
+                            }}>Birthday</GradientButton>
+                        </Col>
                     </Row>
                     <Fade in={this.state.showArray[0]} unmountOnExit={true}>
                         <div>
