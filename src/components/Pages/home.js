@@ -83,14 +83,14 @@ const Home = () => {
   </Helmet>
   {/* <UpdateInPricing /> */}
   <div className="background-static-all">
-    <Row>
+    /*<Row>
       <div className="countdown-div-home">
         <img src={countdown_picture} className="countdown-img-home" alt="American flag in grayscale"/>
         <TimeTitles />
         <Countdown date={launchDate} renderer={renderer} daysInHours={true}/>
         <img src={soldiers} className="soldiers-img-home" alt="Soldiers posing in line"/>
       </div>
-    </Row>
+    </Row>*/
     <BackgroundVideo/>
     <Container fluid={true}>
       {/* <Row className="text-center justify-content-row">
