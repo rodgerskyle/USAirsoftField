@@ -1,31 +1,29 @@
 import { faCheckSquare, faSquare } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Avatar, Checkbox, Chip } from '@material-ui/core';
-import Box from '@material-ui/core/Box';
-import MUIButton from '@material-ui/core/Button';
-import Collapse from '@material-ui/core/Collapse';
-import Divider from '@material-ui/core/Divider';
-import IconButton from '@material-ui/core/IconButton';
-import InputBase from '@material-ui/core/InputBase';
-import Paper from '@material-ui/core/Paper';
+import { Avatar, Checkbox, Chip } from '@mui/material';
+import Box from '@mui/material/Box';
+import MUIButton from '@mui/material/Button';
+import Collapse from '@mui/material/Collapse';
+import Divider from '@mui/material/Divider';
+import IconButton from '@mui/material/IconButton';
+import InputBase from '@mui/material/InputBase';
+import Paper from '@mui/material/Paper';
 // Imports for MUI Table
-import { makeStyles } from '@material-ui/core/styles';
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
-import TableContainer from '@material-ui/core/TableContainer';
-import TableFooter from '@material-ui/core/TableFooter';
-import TableHead from '@material-ui/core/TableHead';
-import TableRow from '@material-ui/core/TableRow';
-import Typography from '@material-ui/core/Typography';
-import { Add, Cancel, CheckCircle, Delete, Edit, Remove, RemoveCircleOutline } from '@material-ui/icons';
-import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown';
-import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
+import { makeStyles, useTheme } from '@mui/styles';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableFooter from '@mui/material/TableFooter';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Typography from '@mui/material/Typography';
+import { Add, Cancel, CheckCircle, Delete, Edit, Remove, RemoveCircleOutline, KeyboardArrowDown, KeyboardArrowUp } from '@mui/icons-material';
 import React, { Component } from 'react';
 import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
 import { Col, Row, Spinner } from 'react-bootstrap/';
-import Snackbar from '@material-ui/core/Snackbar';
-import Alert from '@material-ui/lab/Alert';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/lab/Alert';
 import * as ROLES from '../constants/roles';
 import { withAuthorization } from '../session';
 
@@ -52,7 +50,7 @@ const copy = (source, destination, droppableSource, droppableDestination) => {
     // Make sure it doesn't exist at destination
 
     // if (verify(item, destClone))
-        destClone.splice(droppableDestination.index, 0, { ...item, id: uuid() });
+    destClone.splice(droppableDestination.index, 0, { ...item, id: uuid() });
     return destClone;
 };
 
@@ -152,7 +150,7 @@ class EditSelectedForm extends Component {
     itemExists = (source_arr, destination_arr, source_index) => {
         let rentalVal = source_arr[source_index].value
         if (destination_arr) {
-            for (let i=0; i<destination_arr.length; i++) {
+            for (let i = 0; i < destination_arr.length; i++) {
                 if (destination_arr[i].value === rentalVal)
                     return true
             }
@@ -162,10 +160,10 @@ class EditSelectedForm extends Component {
 
     // Checks to see if the rental number already exists in the rental group
     rentalNumCheck = (num, val) => {
-        const {participants} = this.state
-        for (let i=0; i<participants.length; i++) {
+        const { participants } = this.state
+        for (let i = 0; i < participants.length; i++) {
             if (participants[i].rentals) {
-                for (let z=0; z<participants[i].rentals.length; z++) {
+                for (let z = 0; z < participants[i].rentals.length; z++) {
                     if (participants[i].rentals[z].number === num && participants[i].rentals[z].value === val) {
                         this.setState({
                             error: `Rental number: ${num} is already in use by ${participants[i].name.substr(0, participants[i].name.lastIndexOf('('))}`
@@ -215,19 +213,19 @@ class EditSelectedForm extends Component {
                 }
                 // Check here if it exists in the list
                 // if (!this.itemExists(source_arr, destination_arr, source.index)) {
-                    const result = move(
-                        source_arr,
-                        destination_arr,
-                        source,
-                        destination,
-                    );
+                const result = move(
+                    source_arr,
+                    destination_arr,
+                    source,
+                    destination,
+                );
 
-                    if (index2) { // Both are p_rental trips
-                        let p_index = "p_rentals-" + index
-                        let p_index2 = "p_rentals-" + index2
-                        update(this.props.firebase.participantsRentals(this.props.index, index), ({ rentals: result[p_index] }));
-                        update(this.props.firebase.participantsRentals(this.props.index, index2), ({ rentals: result[p_index2] }));
-                    }
+                if (index2) { // Both are p_rental trips
+                    let p_index = "p_rentals-" + index
+                    let p_index2 = "p_rentals-" + index2
+                    update(this.props.firebase.participantsRentals(this.props.index, index), ({ rentals: result[p_index] }));
+                    update(this.props.firebase.participantsRentals(this.props.index, index2), ({ rentals: result[p_index2] }));
+                }
                 // }
             }
             else { // Available case as source
@@ -238,26 +236,26 @@ class EditSelectedForm extends Component {
 
                 // if (!this.itemExists(source_arr, destination_arr, source.index)) {
                 // Move instead of copy if 1 is left
-                    if (source_arr[source.index].amount === 1) {
-                        result = move(
-                            source_arr,
-                            destination_arr,
-                            source,
-                            destination,
-                        );
-                        this.updateAmount(source.index, null)
-                        update(this.props.firebase.participantsRentals(this.props.index, index), ({ rentals: result[destination.droppableId] }));
-                    }
-                    else {
-                        result = copy(
-                            source_arr,
-                            destination_arr,
-                            source,
-                            destination
-                        )
-                        this.updateAmount(source.index, null)
-                        update(this.props.firebase.participantsRentals(this.props.index, index), ({ rentals: result }));
-                    }
+                if (source_arr[source.index].amount === 1) {
+                    result = move(
+                        source_arr,
+                        destination_arr,
+                        source,
+                        destination,
+                    );
+                    this.updateAmount(source.index, null)
+                    update(this.props.firebase.participantsRentals(this.props.index, index), ({ rentals: result[destination.droppableId] }));
+                }
+                else {
+                    result = copy(
+                        source_arr,
+                        destination_arr,
+                        source,
+                        destination
+                    )
+                    this.updateAmount(source.index, null)
+                    update(this.props.firebase.participantsRentals(this.props.index, index), ({ rentals: result }));
+                }
                 // }
             }
 
@@ -274,7 +272,7 @@ class EditSelectedForm extends Component {
             let options = Object.keys(optionsObject).map(key => ({
                 ...optionsObject[key],
             }))
-            this.setState({options})
+            this.setState({ options })
         })
 
         onValue(this.props.firebase.rentalGroups(), snapshot => {
@@ -382,8 +380,8 @@ class EditSelectedForm extends Component {
         // Also move rentals back to original
         if (obj.rentals) {
             available = this.state.availableList
-            for (let i=0; i<obj.rentals.length; i++) {
-                let index = available.findIndex(x => x.value === obj.rentals[i].value) 
+            for (let i = 0; i < obj.rentals.length; i++) {
+                let index = available.findIndex(x => x.value === obj.rentals[i].value)
                 if (index !== -1)
                     available[index].amount += 1
                 else {
@@ -396,7 +394,7 @@ class EditSelectedForm extends Component {
         }
         let rentalForm = this.state.rentalForms[this.props.index]
         rentalForm.participants.splice(i, 1)
-        if (obj.rentals){
+        if (obj.rentals) {
             rentalForm.available = available
         }
         set(this.props.firebase.rentalGroup(this.props.index), (rentalForm));
@@ -404,7 +402,7 @@ class EditSelectedForm extends Component {
         // if (!obj.isMember) {
         //     this.props.firebase.validatedWaiver(obj.name).update({attached: false})
         // }
-        if (i === 0) this.setState({removing: false})
+        if (i === 0) this.setState({ removing: false })
     }
 
 
@@ -437,9 +435,9 @@ class EditSelectedForm extends Component {
                                         participants && typeof participants !== 'undefined' ?
                                             participants.map((row, i) => (
                                                 <MUITableRow key={row.name} row={row} index={i} removing={removing}
-                                                    detach={this.detach} edit={this.edit} checkin={this.checkin} 
+                                                    detach={this.detach} edit={this.edit} checkin={this.checkin}
                                                     remove={this.remove.bind(this)} gamepass={this.useGamepass.bind(this)}
-                                                    checkNum={this.rentalNumCheck.bind(this)}/>
+                                                    checkNum={this.rentalNumCheck.bind(this)} />
                                             )) :
                                             <TableRow>
                                                 <TableCell align="left" colSpan={6} className="tc-notice-rf">
@@ -470,7 +468,7 @@ class EditSelectedForm extends Component {
                                                 disabled={!participants}
                                                 startIcon={<Remove />}
                                                 onClick={() => {
-                                                    this.setState({removing: !removing})
+                                                    this.setState({ removing: !removing })
                                                 }}>
                                                 {!removing ? "Remove Participant" : "Removing"}
                                             </MUIButton>
@@ -483,47 +481,47 @@ class EditSelectedForm extends Component {
                             </Table>
                         </TableContainer>
                         {availableList ?
-                        <Droppable droppableId="available" isDropDisabled={true}>
-                            {(provided, snapshot) => (
-                                <Row>
-                                    <Col
-                                        ref={provided.innerRef} className="col-rentals-esf"
-                                        style={getListStyle(snapshot.isDraggingOver)}>
-                                        {availableList.map((item, index) => (
-                                            <Draggable
-                                                key={item.id}
-                                                draggableId={item.id}
-                                                index={index}>
-                                                {(provided, snapshot) => (
-                                                    <React.Fragment key={item.id}>
-                                                        <Chip avatar={<Avatar>{item.amount}</Avatar>} label={item.label}
-                                                            ref={provided.innerRef}
-                                                            {...provided.draggableProps}
-                                                            {...provided.dragHandleProps}
-                                                            style={getItemStyle(
-                                                                snapshot.isDragging,
-                                                                provided.draggableProps.style
-                                                            )}
-                                                        />
-                                                    </React.Fragment>
-                                                )}
-                                            </Draggable>
-                                        ))}
-                                    </Col>
-                                    {provided.placeholder}
-                                    <Col md={4} className="col-applyall-rf">
-                                        <MUIButton disabled={!(participants) || (availableList.length === 0)}
-                                        onClick={() => this.applyAll()}>
-                                            Apply To All
-                                        </MUIButton>
-                                    </Col>
-                                </Row>
-                            )}
-                        </Droppable>
-                         : null}
+                            <Droppable droppableId="available" isDropDisabled={true}>
+                                {(provided, snapshot) => (
+                                    <Row>
+                                        <Col
+                                            ref={provided.innerRef} className="col-rentals-esf"
+                                            style={getListStyle(snapshot.isDraggingOver)}>
+                                            {availableList.map((item, index) => (
+                                                <Draggable
+                                                    key={item.id}
+                                                    draggableId={item.id}
+                                                    index={index}>
+                                                    {(provided, snapshot) => (
+                                                        <React.Fragment key={item.id}>
+                                                            <Chip avatar={<Avatar>{item.amount}</Avatar>} label={item.label}
+                                                                ref={provided.innerRef}
+                                                                {...provided.draggableProps}
+                                                                {...provided.dragHandleProps}
+                                                                style={getItemStyle(
+                                                                    snapshot.isDragging,
+                                                                    provided.draggableProps.style
+                                                                )}
+                                                            />
+                                                        </React.Fragment>
+                                                    )}
+                                                </Draggable>
+                                            ))}
+                                        </Col>
+                                        {provided.placeholder}
+                                        <Col md={4} className="col-applyall-rf">
+                                            <MUIButton disabled={!(participants) || (availableList.length === 0)}
+                                                onClick={() => this.applyAll()}>
+                                                Apply To All
+                                            </MUIButton>
+                                        </Col>
+                                    </Row>
+                                )}
+                            </Droppable>
+                            : null}
                     </DragDropContext>}
-                <Snackbar open={this.state.error !== null} autoHideDuration={6000} onClose={() => this.setState({error: null})}>
-                    <Alert onClose={() => this.setState({error: null})} severity="error">
+                <Snackbar open={this.state.error !== null} autoHideDuration={6000} onClose={() => this.setState({ error: null })}>
+                    <Alert onClose={() => this.setState({ error: null })} severity="error">
                         {this.state.error}
                     </Alert>
                 </Snackbar>
@@ -531,6 +529,7 @@ class EditSelectedForm extends Component {
         );
     }
 }
+
 
 const useRowStyles = makeStyles({
     root: {
@@ -582,14 +581,14 @@ function MUITableRow(props) {
             <TableRow className={classes.root}>
                 <TableCell onClick={() => setOpen(!open)}>
                     <IconButton aria-label="expand row" size="small" onClick={() => setOpen(!open)}>
-                        {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                        {open ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
                     </IconButton>
                 </TableCell>
                 <TableCell component="th" scope="row" className="tc-name-esf">
                     <MUIButton disabled={!removing} onClick={() => {
-                        remove(index, row) 
-                    }} 
-                    startIcon={removing ? <Delete /> : null }>
+                        remove(index, row)
+                    }}
+                        startIcon={removing ? <Delete /> : null}>
                         {row.name.substr(0, row.name.lastIndexOf('('))}
                     </MUIButton>
                 </TableCell>

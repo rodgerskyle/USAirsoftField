@@ -4,6 +4,8 @@ import {
   useParams,
 } from "react-router-dom";
 
+import React from 'react';
+
 export function withRouter(Component) {
   function ComponentWithRouterProp(props) {
     let location = useLocation();

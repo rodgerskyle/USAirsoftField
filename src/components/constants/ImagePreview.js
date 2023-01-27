@@ -3,10 +3,10 @@ import PropTypes from 'prop-types';
 
 import '../../App.css';
 import './ImagePreview.css';
-import HighlightOffIcon from '@material-ui/icons/HighlightOff';
-import CheckCircleOutlineIcon from '@material-ui/icons/CheckCircleOutline';
+import HighlightOffIcon from '@mui/icons-material/HighlightOff';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
-import MUIButton from '@material-ui/core/Button';
+import MUIButton from '@mui/material/Button';
 import { Col, Row, Form } from 'react-bootstrap';
 
 import { Typeahead } from 'react-bootstrap-typeahead';
@@ -16,7 +16,7 @@ export const ImagePreview = ({ dataUri, handleRetakePhoto, handleAcceptPhoto, se
 
   return (
     <div>
-      <Row style={{color: 'white', paddingBottom: 15}} className="justify-content-row">
+      <Row style={{ color: 'white', paddingBottom: 15 }} className="justify-content-row">
         <Col md={6}>
           Preview:
         </Col>

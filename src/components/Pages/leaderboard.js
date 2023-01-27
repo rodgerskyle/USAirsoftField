@@ -15,9 +15,9 @@ import CustomMenu from '../constants/custommenu'
 
 import { withFirebase } from '../Firebase';
 import { AuthUserContext } from '../session';
-import { onValue} from "firebase/database";
+import { onValue } from "firebase/database";
 
-import MUIPagination from '@material-ui/lab/Pagination';
+import MUIPagination from '@mui/lab/Pagination';
 import { isMobile } from 'react-device-detect';
 import { Helmet } from 'react-helmet-async';
 
@@ -48,16 +48,16 @@ class Leaderboards extends Component {
         this.findRanking = this.findRanking.bind(this);
     }
 
-  static getDerivedStateFromError(error) {
-    // Update state so the next render will show the fallback UI.
-    return { hasError: true };
-  }
+    static getDerivedStateFromError(error) {
+        // Update state so the next render will show the fallback UI.
+        return { hasError: true };
+    }
 
-  componentDidCatch(error, errorInfo) {
-    // You can also log the error to an error reporting service
-    console.log(error);
-    console.log(errorInfo);
-  }
+    componentDidCatch(error, errorInfo) {
+        // You can also log the error to an error reporting service
+        console.log(error);
+        console.log(errorInfo);
+    }
 
 
     //Figuring out rank logic

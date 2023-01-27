@@ -7,7 +7,7 @@ import SignatureCanvas from 'react-signature-canvas';
 import SignedWaiver from './SignedWaiver';
 import '../../App.css';
 import { encode } from 'firebase-encode';
-import { Checkbox, FormControlLabel } from '@material-ui/core';
+import { Checkbox, FormControlLabel } from '@mui/material';
 
 import waiver from '../../assets/Waiver-cutoff.png'
 

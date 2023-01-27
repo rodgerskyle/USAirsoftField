@@ -1,12 +1,12 @@
 import React from 'react';
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from '@mui/styles';
 import PropTypes from 'prop-types';
-import Button from '@material-ui/core/Button';
+import Button from '@mui/material/Button';
 
 const useStyles = makeStyles({
   root: {
     background: (props) =>
-      props.color === 'black-silver' 
+      props.color === 'black-silver'
         ? 'rgb(4, 4, 4)'
         : 'rgb(8, 37, 68)',
     border: 0,

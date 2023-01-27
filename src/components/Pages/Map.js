@@ -4,7 +4,7 @@ import '../../App.css';
 import map from '../../assets/MapHigherRes.jpg';
 import lowmap from '../../assets/MapLowerRes.jpg'
 
-import { SideBySideMagnifier, TOUCH_ACTIVATION } from "react-image-magnifiers";
+import { SideBySideMagnifier, TOUCH_ACTIVATION } from "@datobs/react-image-magnifiers";
 
 import { Container, Row, Col } from 'react-bootstrap/';
 import { Helmet } from 'react-helmet-async';
@@ -28,7 +28,7 @@ class Map extends Component {
                     <Container>
                         <Row>
                             <Col>
-                                <SideBySideMagnifier 
+                                <SideBySideMagnifier
                                     imageSrc={lowmap}
                                     className="img-map"
                                     imageAlt="Field Map"

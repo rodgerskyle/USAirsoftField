@@ -3,10 +3,10 @@ import { Container, Col, Spinner, Row } from 'react-bootstrap/';
 import { Helmet } from 'react-helmet-async';
 import Calendar from 'react-calendar';
 import "../constants/react-calendar.css";
-import InfoIcon from '@material-ui/icons/Info';
-import IconButton from '@material-ui/core/IconButton';
-import { Add, Close, Delete, Save, FiberManualRecord } from '@material-ui/icons';
-import { Button, TextField } from '@material-ui/core';
+import InfoIcon from '@mui/icons-material/Info';
+import IconButton from '@mui/material/IconButton';
+import { Add, Close, Delete, Save, FiberManualRecord } from '@mui/icons-material';
+import { Button, TextField } from '@mui/material';
 import { withFirebase } from '../Firebase';
 import * as ROLES from '../constants/roles';
 import staticEvents from '../constants/staticcalendarevents';
@@ -33,7 +33,7 @@ class Schedule extends Component {
         let EventList = this.state.events.filter(event => this.compareDate(val, new Date(event.date), false))
         this.addStaticEvents(EventList, val);
         this.setState({
-            date: val, 
+            date: val,
             eventsDisplayed: EventList,
             showCreateEvent: false,
             showDeleteEvent: false,
@@ -55,14 +55,14 @@ class Schedule extends Component {
         let comparedDay = date2.getDate();
 
         if (!reoccuring)
-            return selectedYear === comparedYear && selectedMonth === comparedMonth && selectedDay === comparedDay 
+            return selectedYear === comparedYear && selectedMonth === comparedMonth && selectedDay === comparedDay
         else
-            return selectedMonth === comparedMonth && selectedDay === comparedDay 
+            return selectedMonth === comparedMonth && selectedDay === comparedDay
     }
 
     // Show create Event tab so you can add more events
     showCreateEvent = (val) => {
-        this.setState({showCreateEvent: val})
+        this.setState({ showCreateEvent: val })
     };
 
     // Add newly created event to list of events
@@ -75,7 +75,7 @@ class Schedule extends Component {
         }
 
         set(this.props.firebase.scheduleEvent(this.state.events.length), event).then(() => {
-            this.setState({ 
+            this.setState({
                 showCreateEvent: false,
                 loading: true,
             }, () => {
@@ -101,7 +101,7 @@ class Schedule extends Component {
     // Checks if the events array contains the date object
     checkForDate = (date) => {
         const { events } = this.state;
-        for (let i=0; i<events.length; i++ ) {
+        for (let i = 0; i < events.length; i++) {
             if (this.compareDate(date, new Date(events[i].date), false))
                 return true;
         }
@@ -109,7 +109,7 @@ class Schedule extends Component {
     };
 
     checkTile = (date, view) => {
-        if (view === "month" ) {
+        if (view === "month") {
             // Pass in events to check if it exists
             // this.compareDate(date, this.state.date)
             if (this.checkForDate(date)) {
@@ -143,7 +143,7 @@ class Schedule extends Component {
     // This function will return true or false depending on if the date
     // meets the conditions of the static events hosted on at US Airsoft
     checkForStaticEvent(date) {
-        for (let i=0; i<staticEvents.length; i++) {
+        for (let i = 0; i < staticEvents.length; i++) {
             if (this.compareDate(date, new Date(staticEvents[i].date), false))
                 return true;
         }
@@ -175,7 +175,7 @@ class Schedule extends Component {
     // This function will add static events into existing events array
     // if the date matches with the date in the static event
     addStaticEvents(events, date) {
-        for (let i=0; i<staticEvents.length; i++) {
+        for (let i = 0; i < staticEvents.length; i++) {
             if (this.compareDate(date, new Date(staticEvents[i].date), staticEvents[i].reoccuring)) {
                 events.push(staticEvents[i]);
                 return; // Set so it only adds the first event found in static events
@@ -205,13 +205,13 @@ class Schedule extends Component {
                 name = "Friday Night Gameplay"
                 time = "6pm - 11pm"
             }
-            let event = { 
+            let event = {
                 date: date,
                 name: name,
                 time: time,
                 additional: "",
                 static: true,
-                reoccuring: false, 
+                reoccuring: false,
             };
             events.push(event)
         }
@@ -234,22 +234,22 @@ class Schedule extends Component {
             }
 
             this.setState({
-                events: eventsObj, 
+                events: eventsObj,
                 obj: obj.val(),
                 eventsDisplayed: EventList,
             })
         })
 
-        this.authSubscription = 
+        this.authSubscription =
             this.props.firebase.onAuthUserListener((user) => {
                 if (user) {
-                    this.setState({authUser: user, loading: false})
-            }
-        }, 
-        () => {
-                this.setState({authUser: null, loading: false})
+                    this.setState({ authUser: user, loading: false })
+                }
             },
-        )
+                () => {
+                    this.setState({ authUser: null, loading: false })
+                },
+            )
     };
 
     componentWillUnmount() {
@@ -259,7 +259,7 @@ class Schedule extends Component {
 
     render() {
         const { date, eventsDisplayed, showCreateEvent, showDeleteEvent, loading, authUser } = this.state;
- 
+
         return (
             <div className="background-static-all">
                 <Helmet>
@@ -268,162 +268,162 @@ class Schedule extends Component {
                 <h2 className="page-header-schedule">US Airsoft Schedule</h2>
                 {loading ?
                     <Row className="justify-content-row padding-5px"><Spinner animation="border" /></Row> :
-                <Container className="calendar-container">
-                    <Row>
-                        <Col className="justify-content-center-col">
-                            <Calendar 
-                                onChange={this.setDate} 
-                                value={date} 
-                                tileContent={({date, view}) => (this.checkTile(date, view))}
-                                tileClassName={({ activeStartDate, date, view }) => (
-                                    view === 'month' && (date.getDay() === 6 || date.getDay() === 0) ? 'weekend-calendar-games' : 
-                                    (date.getDay() === 5 ? "friday-night-calendar-games" : "non-event-calendar-days")
-                                )}
-                            />
-                        </Col>
-                    </Row>
-                    <Row className="justify-content-row">
-                        <Col xl={2} className="selected-date-col-schedule">
-                            <div className="selected-date-div">
-                                <div className="selected-date-div-number">{date.getDate()}</div>
-                                <div>{date.toDateString().split(" ")[1]}</div>
-                            </div>
-                        </Col>
-                        <Col xl={2} className="selected-date-events-col">
-                            {eventsDisplayed.map((event, i) => (
-                                <EventElement event={event} key={i} deleteEvent={this.deleteEvent.bind(this)} deleting={showDeleteEvent}/>
-                            ))}
-                            {showCreateEvent ? 
-                            <CreateEventElement createEvent={this.createEvent.bind(this)} close={this.showCreateEvent.bind(this)}/>
-                            : null}
-                            {/* only show if user is admin */}
-                            {authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]) ? 
-                            <Row className="add-event-row-schedule">
-                                {!showDeleteEvent ?
-                                <Col className="justify-content-center-col">
-                                    <IconButton onClick={() => {this.setState({showCreateEvent: !showCreateEvent})}}>
-                                        <Add />
-                                    </IconButton>
-                                </Col> : null}
-                                {!showCreateEvent ?
-                                <Col className="justify-content-center-col">
-                                    <IconButton onClick={() => {this.setState({showDeleteEvent: !showDeleteEvent})}}>
-                                        <Delete />
-                                    </IconButton>
-                                </Col> : null}
-                            </Row> : null}
-                        </Col>
-                    </Row>
-                </Container>}
+                    <Container className="calendar-container">
+                        <Row>
+                            <Col className="justify-content-center-col">
+                                <Calendar
+                                    onChange={this.setDate}
+                                    value={date}
+                                    tileContent={({ date, view }) => (this.checkTile(date, view))}
+                                    tileClassName={({ activeStartDate, date, view }) => (
+                                        view === 'month' && (date.getDay() === 6 || date.getDay() === 0) ? 'weekend-calendar-games' :
+                                            (date.getDay() === 5 ? "friday-night-calendar-games" : "non-event-calendar-days")
+                                    )}
+                                />
+                            </Col>
+                        </Row>
+                        <Row className="justify-content-row">
+                            <Col xl={2} className="selected-date-col-schedule">
+                                <div className="selected-date-div">
+                                    <div className="selected-date-div-number">{date.getDate()}</div>
+                                    <div>{date.toDateString().split(" ")[1]}</div>
+                                </div>
+                            </Col>
+                            <Col xl={2} className="selected-date-events-col">
+                                {eventsDisplayed.map((event, i) => (
+                                    <EventElement event={event} key={i} deleteEvent={this.deleteEvent.bind(this)} deleting={showDeleteEvent} />
+                                ))}
+                                {showCreateEvent ?
+                                    <CreateEventElement createEvent={this.createEvent.bind(this)} close={this.showCreateEvent.bind(this)} />
+                                    : null}
+                                {/* only show if user is admin */}
+                                {authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]) ?
+                                    <Row className="add-event-row-schedule">
+                                        {!showDeleteEvent ?
+                                            <Col className="justify-content-center-col">
+                                                <IconButton onClick={() => { this.setState({ showCreateEvent: !showCreateEvent }) }}>
+                                                    <Add />
+                                                </IconButton>
+                                            </Col> : null}
+                                        {!showCreateEvent ?
+                                            <Col className="justify-content-center-col">
+                                                <IconButton onClick={() => { this.setState({ showDeleteEvent: !showDeleteEvent }) }}>
+                                                    <Delete />
+                                                </IconButton>
+                                            </Col> : null}
+                                    </Row> : null}
+                            </Col>
+                        </Row>
+                    </Container>}
             </div>
         );
 
-            function CreateEventElement({createEvent, close}) {
-                const [time, setTime] = useState("");
-                const [event, setEvent] = useState("");
-                const [additional, setAdditional] = useState("");
-                return(
-                        <Row>
-                            <Col>
-                                <div className="div-element-schedule-box">
-                                    <div>
-                                        <Row className="event-create-row">
-                                            <Col lg={10}>
-                                                <TextField
-                                                    label="Time Slot*"
-                                                    type="text"
-                                                    autoComplete={null}
-                                                    onChange={(e) => setTime(e.target.value)}
-                                                    variant="standard" />
-                                            </Col>
-                                        </Row>
-                                    </div>
-                                    <div>
-                                        <Row className="event-create-row">
-                                            <Col lg={10}>
-                                                <TextField
-                                                    label="Event Name*"
-                                                    type="text"
-                                                    autoComplete={null}
-                                                    onChange={(e) => setEvent(e.target.value)}
-                                                    variant="standard" />
-                                            </Col>
-                                        </Row>
-                                    </div>
-                                    <div>
-                                        <Row className="event-create-row">
-                                            <Col lg={10}>
-                                                <TextField
-                                                    label="Additional Info"
-                                                    type="text"
-                                                    autoComplete={null}
-                                                    onChange={(e) => setAdditional(e.target.value)}
-                                                    variant="standard" />
-                                            </Col>
-                                        </Row>
-                                    </div> 
-                                    <Row className="save-button-row-schedule">
-                                        <Button variant="outlined" startIcon={<Save />} onClick={() => {createEvent(event, additional, time)}}>
-                                            Save
-                                        </Button>
-                                        <IconButton onClick={() => {close(false)}}>
-                                            <Close />
-                                        </IconButton>
-                                    </Row>
-                                </div>
-                            </Col>
-                        </Row>
-                );
-            }
+        function CreateEventElement({ createEvent, close }) {
+            const [time, setTime] = useState("");
+            const [event, setEvent] = useState("");
+            const [additional, setAdditional] = useState("");
+            return (
+                <Row>
+                    <Col>
+                        <div className="div-element-schedule-box">
+                            <div>
+                                <Row className="event-create-row">
+                                    <Col lg={10}>
+                                        <TextField
+                                            label="Time Slot*"
+                                            type="text"
+                                            autoComplete={null}
+                                            onChange={(e) => setTime(e.target.value)}
+                                            variant="standard" />
+                                    </Col>
+                                </Row>
+                            </div>
+                            <div>
+                                <Row className="event-create-row">
+                                    <Col lg={10}>
+                                        <TextField
+                                            label="Event Name*"
+                                            type="text"
+                                            autoComplete={null}
+                                            onChange={(e) => setEvent(e.target.value)}
+                                            variant="standard" />
+                                    </Col>
+                                </Row>
+                            </div>
+                            <div>
+                                <Row className="event-create-row">
+                                    <Col lg={10}>
+                                        <TextField
+                                            label="Additional Info"
+                                            type="text"
+                                            autoComplete={null}
+                                            onChange={(e) => setAdditional(e.target.value)}
+                                            variant="standard" />
+                                    </Col>
+                                </Row>
+                            </div>
+                            <Row className="save-button-row-schedule">
+                                <Button variant="outlined" startIcon={<Save />} onClick={() => { createEvent(event, additional, time) }}>
+                                    Save
+                                </Button>
+                                <IconButton onClick={() => { close(false) }}>
+                                    <Close />
+                                </IconButton>
+                            </Row>
+                        </div>
+                    </Col>
+                </Row>
+            );
+        }
 
-            function EventElement({event, deleteEvent, deleting}) {
-                return (
-                    <Row md={12}>
-                        <Col>
-                            <div className={deleting && !('static' in event) ? "deleting-div-element-schedule-box" : "div-element-schedule-box"} 
-                                onClick={() => {if (deleting && !('static' in event)) deleteEvent(event)}}>
+        function EventElement({ event, deleteEvent, deleting }) {
+            return (
+                <Row md={12}>
+                    <Col>
+                        <div className={deleting && !('static' in event) ? "deleting-div-element-schedule-box" : "div-element-schedule-box"}
+                            onClick={() => { if (deleting && !('static' in event)) deleteEvent(event) }}>
+                            <div>
+                                <Row className="justify-content-row">
+                                    <Close className="trash-icon-schedule" />
+                                </Row>
+                                <Row className="event-info-row">
+                                    <Col lg={2} className="icon-additional-info-col">
+                                        Time:
+                                    </Col>
+                                    <Col lg={9} className="event-element-col-schedule">
+                                        {event.time}
+                                    </Col>
+                                </Row>
+                            </div>
+                            <div>
+                                <Row className="event-info-row">
+                                    <Col lg={2} className="icon-additional-info-col">
+                                        Event:
+                                    </Col>
+                                    <Col lg={9} className="text-event-title-col">
+                                        {event.name}
+                                    </Col>
+                                </Row>
+                            </div>
+                            {event.additional !== "" ?
                                 <div>
-                                    <Row className="justify-content-row">
-                                        <Close className="trash-icon-schedule"/>
-                                    </Row>
                                     <Row className="event-info-row">
                                         <Col lg={2} className="icon-additional-info-col">
-                                            Time:
-                                        </Col>
-                                        <Col lg={9} className="event-element-col-schedule">
-                                            {event.time}
-                                        </Col>
-                                    </Row>
-                                </div>
-                                <div>
-                                    <Row className="event-info-row">
-                                        <Col lg={2} className="icon-additional-info-col">
-                                            Event:
-                                        </Col>
-                                        <Col lg={9} className="text-event-title-col">
-                                            {event.name}
-                                        </Col>
-                                    </Row>
-                                </div>
-                                {event.additional !== "" ? 
-                                <div>
-                                    <Row className="event-info-row">
-                                        <Col lg={2} className="icon-additional-info-col">
-                                            <InfoIcon/>
+                                            <InfoIcon />
                                         </Col>
                                         <Col lg={9} className="text-event-title-col">
                                             {event.additional}
                                         </Col>
                                     </Row>
-                                </div> 
+                                </div>
                                 : null}
-                            </div>
-                        </Col>
-                    </Row>
-                );
-            }
-        };
-    }
-    
+                        </div>
+                    </Col>
+                </Row>
+            );
+        }
+    };
+}
+
 
 export default withFirebase(Schedule);

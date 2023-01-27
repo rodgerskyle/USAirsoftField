@@ -1,29 +1,28 @@
-import { Avatar, List, ListItem, ListItemAvatar, ListItemSecondaryAction, ListItemText, Modal, Fade, Backdrop, AccordionActions } from '@material-ui/core';
-import MUIButton from '@material-ui/core/Button';
-import Divider from '@material-ui/core/Divider';
-import IconButton from '@material-ui/core/IconButton';
-import Paper from '@material-ui/core/Paper';
-import { AddRounded, ArrowBackIos, Contacts, RemoveRounded, Edit, VerifiedUser, Warning } from '@material-ui/icons';
+import { Avatar, List, ListItem, ListItemAvatar, ListItemSecondaryAction, ListItemText, Modal, Fade, Backdrop, AccordionActions } from '@mui/material';
+import MUIButton from '@mui/material/Button';
+import Divider from '@mui/material/Divider';
+import IconButton from '@mui/material/IconButton';
+import Paper from '@mui/material/Paper';
+import { AddRounded, ArrowBackIos, Contacts, RemoveRounded, Edit, VerifiedUser, Warning, ExpandMore } from '@mui/icons-material';
 import React, { Component, useState } from 'react';
 import { Col, Row, Spinner } from 'react-bootstrap/';
 import { onValue, set, update } from 'firebase/database';
 
-import Accordion from '@material-ui/core/Accordion';
-import AccordionDetails from '@material-ui/core/AccordionDetails';
-import AccordionSummary from '@material-ui/core/AccordionSummary';
-import Typography from '@material-ui/core/Typography';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import Snackbar from '@material-ui/core/Snackbar';
-import Alert from '@material-ui/lab/Alert';
+import Accordion from '@mui/material/Accordion';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import Typography from '@mui/material/Typography';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/lab/Alert';
 
-import TextField from '@material-ui/core/TextField';
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
-import TableContainer from '@material-ui/core/TableContainer';
-import TableFooter from '@material-ui/core/TableFooter';
-import TableHead from '@material-ui/core/TableHead';
-import TableRow from '@material-ui/core/TableRow';
+import TextField from '@mui/material/TextField';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableFooter from '@mui/material/TableFooter';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
 
 import * as ROLES from '../constants/roles';
 import { withFirebase } from '../Firebase';
@@ -343,7 +342,7 @@ class EditForm extends Component {
                                             <div className="div-modal-settings-rf">
                                                 <Accordion expanded={expanded === 'panel1'} onChange={this.handleChange('panel1')}>
                                                     <AccordionSummary
-                                                        expandIcon={<ExpandMoreIcon />}
+                                                        expandIcon={<ExpandMore />}
                                                         aria-controls="summarypanel-content"
                                                         id="summarypanel"
                                                     >
@@ -358,7 +357,7 @@ class EditForm extends Component {
                                                 </Accordion>
                                                 <Accordion expanded={expanded === 'panel2'} onChange={this.handleChange('panel2')}>
                                                     <AccordionSummary
-                                                        expandIcon={<ExpandMoreIcon />}
+                                                        expandIcon={<ExpandMore />}
                                                         aria-controls="userspanel-content"
                                                         id="userspanel"
                                                     >
@@ -387,7 +386,7 @@ class EditForm extends Component {
                                                 </Accordion>
                                                 <Accordion expanded={expanded === 'panel3'} onChange={this.handleChange('panel3')}>
                                                     <AccordionSummary
-                                                        expandIcon={<ExpandMoreIcon />}
+                                                        expandIcon={<ExpandMore />}
                                                         aria-controls="rentalpanel-content"
                                                         id="rentalpanel"
                                                     >
@@ -415,7 +414,7 @@ class EditForm extends Component {
                                                 {!!authUser.roles[ROLES.ADMIN] ?
                                                     <Accordion expanded={expanded === 'panel4'} onChange={this.handleChange('panel4')}>
                                                         <AccordionSummary
-                                                            expandIcon={<ExpandMoreIcon />}
+                                                            expandIcon={<ExpandMore />}
                                                             aria-controls="creditcardpanel-content"
                                                             id="creditcardpanel"
                                                         >

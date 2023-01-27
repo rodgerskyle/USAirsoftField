@@ -1,32 +1,31 @@
 import { faCog, faFolderMinus, faFolderOpen, faFolderPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Checkbox, TextField, Modal, Fade, Backdrop, FormControlLabel } from '@material-ui/core';
-import BottomNavigation from '@material-ui/core/BottomNavigation';
-import BottomNavigationAction from '@material-ui/core/BottomNavigationAction';
-import MUIButton from '@material-ui/core/Button';
-import Divider from '@material-ui/core/Divider';
-import Icon from '@material-ui/core/Icon';
-import InputBase from '@material-ui/core/InputBase';
-import Paper from '@material-ui/core/Paper';
-import { withStyles } from '@material-ui/core/styles';
-import { ArrowBackIos, ArrowForwardIos, VerifiedUser } from '@material-ui/icons';
+import { Checkbox, TextField, Modal, Fade, Backdrop, FormControlLabel } from '@mui/material';
+import BottomNavigation from '@mui/material/BottomNavigation';
+import BottomNavigationAction from '@mui/material/BottomNavigationAction';
+import MUIButton from '@mui/material/Button';
+import Divider from '@mui/material/Divider';
+import Icon from '@mui/material/Icon';
+import InputBase from '@mui/material/InputBase';
+import Paper from '@mui/material/Paper';
+import { ArrowBackIos, ArrowForwardIos, VerifiedUser } from '@mui/icons-material';
 import React, { Component, useState } from 'react';
 import { Breadcrumb, Button, Card, Col, Container, Form, Row, Spinner } from 'react-bootstrap/';
-import Collapse from '@material-ui/core/Collapse';
+import Collapse from '@mui/material/Collapse';
 import { LinkContainer } from 'react-router-bootstrap';
 
-import Snackbar from '@material-ui/core/Snackbar';
-import Alert from '@material-ui/lab/Alert';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/lab/Alert';
 
 import PinCode from '../constants/pincode'
 
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
-import TableContainer from '@material-ui/core/TableContainer';
-import TableFooter from '@material-ui/core/TableFooter';
-import TableHead from '@material-ui/core/TableHead';
-import TableRow from '@material-ui/core/TableRow';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableFooter from '@mui/material/TableFooter';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
 
 import PaymentForm from '../constants/creditcard';
 import * as ROLES from '../constants/roles';
@@ -48,41 +47,6 @@ import '../../App.css';
 import RentalOptions from "./RentalOptions";
 import { get, onValue, set, update } from "firebase/database";
 import { listAll } from "firebase/storage";
-
-const TextFieldCreate = withStyles({
-    root: {
-        '& label.Mui-focused': {
-            color: 'white',
-        },
-        '& .MuiInput-underline:after': {
-            borderBottomColor: 'white',
-        },
-        '& .MuiOutlinedInput-root': {
-            '& fieldset': {
-                borderColor: 'white',
-            },
-            '&:hover fieldset': {
-                borderColor: 'white',
-            },
-            '&.Mui-focused fieldset': {
-                borderColor: 'white',
-            },
-        },
-        '& .MuiInputBase-input': {
-            color: 'white',
-            borderColor: 'white',
-        },
-        '&.MuiInputBase-root': {
-            color: 'white',
-        },
-        '& .MuiFormLabel-root': {
-            color: 'white',
-        },
-        '& .MuiOutlinedInput-root.Mui-disabled .MuiOutlinedInput-notchedOutline': {
-            borderColor: 'white',
-        },
-    },
-})(TextField);
 
 const INITIAL_STATE = {
     search: "",
@@ -1000,12 +964,12 @@ function AddRentals({ setPage, optionsState, setOptionsState, onChange, validate
                 <Col md="auto" className="col-rental-rows-rf">
                     <Row className="row-rf">
                         <Col md={7} className="col-textfield-rf col-textfield-left-rf">
-                            <TextFieldCreate id="name" label="Group Name" variant="outlined" required
+                            <TextField id="name" label="Group Name" variant="outlined" required
                                 onChange={onChange} value={rentalName} name="rentalName"
                                 error={rentalnameError !== null} helperText={rentalnameError} />
                         </Col>
                         <Col md={5} className="col-textfield-rf col-textfield-right-rf">
-                            <TextFieldCreate id="participants" label="# Participants" variant="outlined"
+                            <TextField id="participants" label="# Participants" variant="outlined"
                                 type="number" required onChange={onChange} value={numParticipants} name="numParticipants"
                                 error={numparticipantsError !== null} helperText={numparticipantsError} />
                         </Col>

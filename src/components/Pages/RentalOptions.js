@@ -5,14 +5,13 @@ import { withAuthorization } from '../session';
 
 import { Col, Container, Row, Spinner } from 'react-bootstrap/';
 
-import Paper from '@material-ui/core/Paper';
-import { makeStyles } from '@material-ui/core/styles';
-import MUIButton from '@material-ui/core/Button';
-import InputBase from '@material-ui/core/InputBase';
-import Divider from '@material-ui/core/Divider';
+import Paper from '@mui/material/Paper';
+import MUIButton from '@mui/material/Button';
+import InputBase from '@mui/material/InputBase';
+import Divider from '@mui/material/Divider';
 
-import Snackbar from '@material-ui/core/Snackbar';
-import Alert from '@material-ui/lab/Alert';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/lab/Alert';
 
 import '../../App.css';
 import { onValue, set } from 'firebase/database';
@@ -33,14 +32,14 @@ class RentalOptions extends Component {
 
     componentDidMount() {
 
-        this.authSubscription = 
+        this.authSubscription =
             this.props.firebase.onAuthUserListener((user) => {
                 if (user) {
-                    this.setState({authUser: user})
-            }
-        }, () => {
-            this.setState({authUser: null})
-        })
+                    this.setState({ authUser: user })
+                }
+            }, () => {
+                this.setState({ authUser: null })
+            })
         onValue(this.props.firebase.rentalOptions(), snapshot => {
             const optionsObject = snapshot.val()
 
@@ -63,16 +62,16 @@ class RentalOptions extends Component {
         const { options } = this.state
         // val = Math.floor(val)
         // if (val >= 0 && options[i].stock <= val) {
-            let opt = [...options]
-            opt[i].max = parseInt(val)
-            this.setState({ options: opt })
+        let opt = [...options]
+        opt[i].max = parseInt(val)
+        this.setState({ options: opt })
         // }
     }
 
     // Submit the saved changes if it passes validation
     submit() {
         const { options } = this.state
-        for (let i=0; i<options.length; i++) {
+        for (let i = 0; i < options.length; i++) {
             if (options[i].stock > options[i].max) {
                 //error case
                 this.setState({
@@ -82,21 +81,21 @@ class RentalOptions extends Component {
             }
         }
         set(this.props.firebase.rentalOptions(), (options));
-        this.setState({rentalsSuccess: "Rental inventory successfully updated."})
+        this.setState({ rentalsSuccess: "Rental inventory successfully updated." })
     }
 
     // Resets the numbers for rental options temporarily for bug reasons
     resetNums() {
         const { options } = this.state
-        for (let i=0; i<options.length; i++) {
+        for (let i = 0; i < options.length; i++) {
             options[i].stock = 0;
         }
         set(this.props.firebase.rentalOptions(), (options));
-        this.setState({rentalsSuccess: "Rental inventory successfully reset."})
+        this.setState({ rentalsSuccess: "Rental inventory successfully reset." })
     }
 
     render() {
-        const {loading, rentalsSuccess, rentalsError, authUser} = this.state
+        const { loading, rentalsSuccess, rentalsError, authUser } = this.state
         return (
             <Container>
                 {loading ?
@@ -115,17 +114,17 @@ class RentalOptions extends Component {
                                 <Col className="col-header-ro" md={3}>
                                     <p className="header1-ro">
                                         In Use:
-                            </p>
+                                    </p>
                                 </Col>
                                 <Col className="col-header-ro" md={3}>
                                     <p className="header2-ro">
                                         Max:
-                            </p>
+                                    </p>
                                 </Col>
                                 <Col className="col-header-ro" md={6}>
                                     <p className="header3-ro">
                                         Rental:
-                            </p>
+                                    </p>
                                 </Col>
                             </div>
                         </Row>
@@ -144,22 +143,22 @@ class RentalOptions extends Component {
                                     Save
                                 </MUIButton>
                                 {authUser && !!authUser.roles[ROLES.SUPER] ?
-                                <MUIButton type="button" onClick={() => {
-                                    this.resetNums()
-                                }}>
-                                    Reset
-                                </MUIButton> : null}
+                                    <MUIButton type="button" onClick={() => {
+                                        this.resetNums()
+                                    }}>
+                                        Reset
+                                    </MUIButton> : null}
                             </Col>
                         </Row>
                     </div>
                 }
-                <Snackbar open={rentalsSuccess !== null} autoHideDuration={6000} onClose={() => this.setState({rentalsSuccess: null})}>
-                    <Alert onClose={() => this.setState({rentalsSuccess: null})} severity="success">
+                <Snackbar open={rentalsSuccess !== null} autoHideDuration={6000} onClose={() => this.setState({ rentalsSuccess: null })}>
+                    <Alert onClose={() => this.setState({ rentalsSuccess: null })} severity="success">
                         {rentalsSuccess}
                     </Alert>
                 </Snackbar>
-                <Snackbar open={rentalsError !== null} autoHideDuration={6000} onClose={() => this.setState({rentalsError: null})}>
-                    <Alert onClose={() => this.setState({rentalsError: null})} severity="error">
+                <Snackbar open={rentalsError !== null} autoHideDuration={6000} onClose={() => this.setState({ rentalsError: null })}>
+                    <Alert onClose={() => this.setState({ rentalsError: null })} severity="error">
                         {rentalsError}
                     </Alert>
                 </Snackbar>
@@ -168,46 +167,14 @@ class RentalOptions extends Component {
     }
 }
 
-const useStyles = makeStyles((theme) => ({
-    root: {
-        padding: '2px 4px',
-        display: 'flex',
-        alignItems: 'center',
-        float: 'right',
-        background: '#424242',
-        margin: '5px',
-        width: 600,
-    },
-    input: {
-        marginLeft: theme.spacing(1),
-        color: 'white',
-        width: "20%",
-    },
-    divider: {
-        height: 28,
-        margin: 4,
-        background: "rgba(255, 255, 255, 0.12)",
-    },
-    label: {
-        color: 'white',
-        fontSize: "1rem",
-        margin: 0,
-        flex: 1,
-        marginRight: 15,
-        marginLeft: 15,
-    }
-}));
 
 // Rows for each rental selection the user will have
 const RentalRow = ({ obj, set, i }) => {
-    const classes = useStyles();
-
     return (
         <Row>
             <Col className="col-rentals-ro">
-                <Paper className={classes.root}>
+                <Paper>
                     <InputBase
-                        className={classes.input}
                         placeholder="Stock:"
                         inputProps={{ 'aria-label': 'stock' }}
                         type="number"
@@ -215,10 +182,9 @@ const RentalRow = ({ obj, set, i }) => {
                         disabled
                     />
 
-                    <Divider className={classes.divider} orientation="vertical" />
+                    <Divider orientation="vertical" />
 
                     <InputBase
-                        className={classes.input}
                         placeholder="Max:"
                         inputProps={{ 'aria-label': 'enter max' }}
                         type="number"
@@ -226,8 +192,8 @@ const RentalRow = ({ obj, set, i }) => {
                         onChange={(e) => set(i, e.target.value)}
                     />
 
-                    <Divider className={classes.divider} orientation="vertical" />
-                    <h5 className={classes.label}>{obj.label}</h5>
+                    <Divider orientation="vertical" />
+                    <h5>{obj.label}</h5>
                 </Paper>
             </Col>
         </Row>

@@ -2,7 +2,7 @@ import React from 'react';
 import { Container, Row, Col } from 'react-bootstrap/';
 import { Helmet } from 'react-helmet-async';
 import BackgroundVideo from '../constants/backgroundvideo';
-import MUIButton from '@material-ui/core/Button';
+import MUIButton from '@mui/material/Button';
 // import UpdateInPricing from '../constants/updateInPricing';
 // import countdown_picture from '../../assets/countdown_picture.png';
 // import soldiers from '../../assets/soldiers_picture.png';
@@ -77,13 +77,13 @@ const Home = () => {
   const [summer, setSummer] = React.useState(checkSeason());
   // const launchDate = new Date(2021, 10, 6, 9, 0, 0)
   return (
-  <div>
-  <Helmet>
-    <title>US Airsoft Field</title>
-  </Helmet>
-  {/* <UpdateInPricing /> */}
-  <div className="background-static-all">
-    {/* {!window.location.hostname.includes("usairsoftfield.com") ?
+    <div>
+      <Helmet>
+        <title>US Airsoft Field</title>
+      </Helmet>
+      {/* <UpdateInPricing /> */}
+      <div className="background-static-all">
+        {/* {!window.location.hostname.includes("usairsoftfield.com") ?
     <Row>
       <div className="countdown-div-home">
         <img src={countdown_picture} className="countdown-img-home" alt="American flag in grayscale"/>
@@ -92,9 +92,9 @@ const Home = () => {
         <img src={soldiers} className="soldiers-img-home" alt="Soldiers posing in line"/>
       </div>
     </Row> : null} */}
-    <BackgroundVideo/>
-    <Container fluid={true}>
-      {/* <Row className="text-center justify-content-row">
+        <BackgroundVideo />
+        <Container fluid={true}>
+          {/* <Row className="text-center justify-content-row">
         <Col className="col-settings" md={8}>
           <div className="counter boxes-home boxes-home-nopadbot about-div-home">
             <h2 className="header-about-us">About Us:</h2>
@@ -106,70 +106,70 @@ const Home = () => {
           </div>
         </Col>
       </Row> */}
-      <div>
+          <div>
 
-      <Row className="justify-content-row" style={{marginTop: '3rem'}}>
-        <h2 className="header-about-us">Hours of Operation</h2>
-      </Row>
-      <Row className="season-button-row justify-content-center">
-        <Col lg={1} className="justify-content-flex-end-col">
-          <MUIButton variant="outlined" className={summer ? "season-button-active" : null} onClick={() => {
-            setSummer(true)
-            }}>Summer</MUIButton>
-        </Col>
-        <Col lg={1}>
-          <MUIButton variant="outlined" className={!summer ? "season-button-active" : null} onClick={() => {
-            setSummer(false)
-            }}>Winter</MUIButton>
-        </Col>
-      </Row>
-      <Row className="justify-content-row">
-        <Col md={2}>
-          <Row className="justify-content-row">
-            <h5 className="h5-hours-subheader">
-              Arena / Field<br/>
-            </h5>
-          </Row>
-          <Row className="justify-content-row">
-            {summer ?
-            <dl className="dl-hours-info">
-              <dt className="dt-hours-info">FRI: 6PM - 11PM</dt>
-              <dt className="dt-hours-info">SAT: 8AM - 2PM</dt>
-              <dt className="dt-hours-info">SUN: 8AM - 2PM</dt>
-            </dl> :
-            <dl className="dl-hours-info">
-              <dt className="dt-hours-info">FRI: CLOSED</dt>
-              <dt className="dt-hours-info">SAT: 9AM - 3PM</dt>
-              <dt className="dt-hours-info">SUN: 9AM - 3PM</dt>
-            </dl>
-            }
-          </Row>
-        </Col>
-        <Col md={2}>
-          <Row className="justify-content-row">
-            <h5 className="h5-hours-subheader">
-              Tactical Store<br/>
-            </h5>
-          </Row>
-          <Row className="justify-content-row">
-            {summer ?
-              <dl style={{textAlign: 'center'}}>
-                {/* <dt className="dt-hours-info">Monday- Closed</dt> */}
-                <dt className="dt-hours-info">MON-THU: 9AM - 5PM</dt>
-                <dt className="dt-hours-info">FRI: 9AM - 11PM</dt>
-                <dt className="dt-hours-info">SAT: 8AM - 4PM</dt>
-                <dt className="dt-hours-info">SUN: 8AM - 4PM</dt>
-              </dl> : 
-              <dl style={{textAlign: 'center'}}>
-                {/* <dt className="dt-hours-info">Monday- Closed</dt> */}
-                <dt className="dt-hours-info">MON-FRI: 9AM - 5PM</dt>
-                <dt className="dt-hours-info">SAT: 9AM - 5PM</dt>
-                <dt className="dt-hours-info">SUN: 9AM - 5PM</dt>
-              </dl>
-              }
-          </Row>
-        </Col>
-        {/* <div className="counter hours-home boxes-home boxes-home-nopadbot">
+            <Row className="justify-content-row" style={{ marginTop: '3rem' }}>
+              <h2 className="header-about-us">Hours of Operation</h2>
+            </Row>
+            <Row className="season-button-row justify-content-center">
+              <Col lg={1} className="justify-content-flex-end-col">
+                <MUIButton variant="outlined" className={summer ? "season-button-active" : null} onClick={() => {
+                  setSummer(true)
+                }}>Summer</MUIButton>
+              </Col>
+              <Col lg={1}>
+                <MUIButton variant="outlined" className={!summer ? "season-button-active" : null} onClick={() => {
+                  setSummer(false)
+                }}>Winter</MUIButton>
+              </Col>
+            </Row>
+            <Row className="justify-content-row">
+              <Col md={2}>
+                <Row className="justify-content-row">
+                  <h5 className="h5-hours-subheader">
+                    Arena / Field<br />
+                  </h5>
+                </Row>
+                <Row className="justify-content-row">
+                  {summer ?
+                    <dl className="dl-hours-info">
+                      <dt className="dt-hours-info">FRI: 6PM - 11PM</dt>
+                      <dt className="dt-hours-info">SAT: 8AM - 2PM</dt>
+                      <dt className="dt-hours-info">SUN: 8AM - 2PM</dt>
+                    </dl> :
+                    <dl className="dl-hours-info">
+                      <dt className="dt-hours-info">FRI: CLOSED</dt>
+                      <dt className="dt-hours-info">SAT: 9AM - 3PM</dt>
+                      <dt className="dt-hours-info">SUN: 9AM - 3PM</dt>
+                    </dl>
+                  }
+                </Row>
+              </Col>
+              <Col md={2}>
+                <Row className="justify-content-row">
+                  <h5 className="h5-hours-subheader">
+                    Tactical Store<br />
+                  </h5>
+                </Row>
+                <Row className="justify-content-row">
+                  {summer ?
+                    <dl style={{ textAlign: 'center' }}>
+                      {/* <dt className="dt-hours-info">Monday- Closed</dt> */}
+                      <dt className="dt-hours-info">MON-THU: 9AM - 5PM</dt>
+                      <dt className="dt-hours-info">FRI: 9AM - 11PM</dt>
+                      <dt className="dt-hours-info">SAT: 8AM - 4PM</dt>
+                      <dt className="dt-hours-info">SUN: 8AM - 4PM</dt>
+                    </dl> :
+                    <dl style={{ textAlign: 'center' }}>
+                      {/* <dt className="dt-hours-info">Monday- Closed</dt> */}
+                      <dt className="dt-hours-info">MON-FRI: 9AM - 5PM</dt>
+                      <dt className="dt-hours-info">SAT: 9AM - 5PM</dt>
+                      <dt className="dt-hours-info">SUN: 9AM - 5PM</dt>
+                    </dl>
+                  }
+                </Row>
+              </Col>
+              {/* <div className="counter hours-home boxes-home boxes-home-nopadbot">
           <Row className="justify-content-row">
             <h2 className="header-about-us">Hours of Operation:</h2>
           </Row>
@@ -235,14 +235,14 @@ const Home = () => {
             </Row>
               <img src={logo} alt="US Airsoft logo" className="small-logo-home2 hours-logo-home"/>
           </div> */}
-        </Row>
-        <Row className="justify-content-row">
-          <p className="p-notice-text-home">{summer ? "01 May - 01 Nov" : "02 Nov - 30 Apr"}</p>
-        </Row>
+            </Row>
+            <Row className="justify-content-row">
+              <p className="p-notice-text-home">{summer ? "01 May - 01 Nov" : "02 Nov - 30 Apr"}</p>
+            </Row>
+          </div>
+        </Container>
       </div>
-      </Container>
     </div>
-  </div>
   )
 }
 

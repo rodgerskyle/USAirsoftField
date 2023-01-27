@@ -1,16 +1,16 @@
 import React, { Component } from 'react';
 
-import { Container, Row, Col, Spinner } from 'react-bootstrap/';
+import { Col, Container, Row, Spinner } from 'react-bootstrap/';
 
 import logo from '../../assets/usairsoft-small-logo.png';
 
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
-import TableContainer from '@material-ui/core/TableContainer';
-import TableHead from '@material-ui/core/TableHead';
-import TableRow from '@material-ui/core/TableRow';
-import Paper from '@material-ui/core/Paper';
+import Paper from '@mui/material/Paper';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
 
 import { withRouter } from '../constants/withRouter';
 
@@ -28,12 +28,11 @@ import ranks from '../constants/ranks';
 
 import rankincrements from '../constants/rankincrements';
 
-import { makeStyles } from '@material-ui/core/styles';
 
-import { CircularProgress, Slide } from '@material-ui/core';
-import { isMobile } from 'react-device-detect';
+import { CircularProgress, Slide } from '@mui/material';
 import { onValue } from 'firebase/database';
 import { getDownloadURL } from 'firebase/storage';
+import { isMobile } from 'react-device-detect';
 
 class ProfileLookup extends Component {
     constructor(props) {
@@ -230,7 +229,7 @@ class ProfileLookup extends Component {
                                             })
                                         }, 150)}>
                                         PROFILE
-                                        </p>
+                                    </p>
                                     <p className={activePage === 1 ? "p-nav-profile-active" : "p-nav-profile"}
                                         onClick={() => setTimeout(() => {
                                             this.setState({ activePage: 1 }, () => {
@@ -238,7 +237,7 @@ class ProfileLookup extends Component {
                                             })
                                         }, 150)}>
                                         PROGRESSION
-                                        </p>
+                                    </p>
                                     <p className={activePage === 2 ? "p-nav-profile-active" : "p-nav-profile"}
                                         onClick={() => setTimeout(() => {
                                             this.setState({ activePage: 2 }, () => {
@@ -246,7 +245,7 @@ class ProfileLookup extends Component {
                                             })
                                         }, 150)}>
                                         GAME FEED
-                                        </p>
+                                    </p>
                                     <p className={activePage === 3 ? "p-nav-profile-active" : "p-nav-profile"}
                                         onClick={() => setTimeout(() => {
                                             this.setState({ activePage: 3 }, () => {
@@ -254,7 +253,7 @@ class ProfileLookup extends Component {
                                             })
                                         }, 150)}>
                                         BADGES
-                                        </p>
+                                    </p>
                                 </Row>
                                 <div style={{ paddingTop: 10 }}>
                                     {activePage === 0 ?
@@ -288,7 +287,7 @@ class ProfileLookup extends Component {
                                                 </Col>
                                                 <Col md={4} className="col-rank-box-profile">
                                                     <img src={images[rankindex]}
-                                                        alt="Players rank" className="img-xlarge-rank"/>
+                                                        alt="Players rank" className="img-xlarge-rank" />
                                                 </Col>
                                                 <Col md={4}>
                                                     <div className="div-stats-box-profile">
@@ -320,15 +319,15 @@ class ProfileLookup extends Component {
                                         </Slide> : null}
                                     {activePage === 1 ?
                                         <Slide direction={prevPage < 1 ? "left" : "right"} in={true} mountOnEnter unmountOnExit>
-                                            <Row style={{paddingTop: '1rem'}}>
+                                            <Row style={{ paddingTop: '1rem' }}>
                                                 <Col md={4}>
                                                     <Row className="justify-content-row row-rank-progress-profile" style={{ alignItems: 'center' }}>
                                                         <CircularProgress value={100} variant={"determinate"} size={200} className="cp-static-profile" />
-                                                        <CircularProgress value={rankprogress * 100} variant={"determinate"} size={200} className="cp2-static-profile"/>
+                                                        <CircularProgress value={rankprogress * 100} variant={"determinate"} size={200} className="cp2-static-profile" />
                                                         <Col style={{ position: 'absolute' }}>
                                                             <Row className="justify-content-row">
                                                                 <img src={images.length !== 0 ? images[rankindex] : null}
-                                                                    alt="Players rank" className="img-large-rank"/>
+                                                                    alt="Players rank" className="img-large-rank" />
                                                             </Row>
                                                             <Row className="justify-content-row">
                                                                 <p className="p-rank-title-rp">{ranks[rankindex]}</p>
@@ -336,7 +335,7 @@ class ProfileLookup extends Component {
                                                         </Col>
                                                     </Row>
                                                     <Row className="justify-content-row" style={{ marginTop: '1rem' }}>
-                                                        <p className="p-title-stats-box-profile">{`${rankindex+1 < images.length ? 
+                                                        <p className="p-title-stats-box-profile">{`${rankindex + 1 < images.length ?
                                                             (rankprogress * 100).toFixed(2) : 100}% | ${authUser.points -
                                                             (rankindex + 1 < images.length ? curRankPoints : 0)} points`}</p>
                                                     </Row>
@@ -345,7 +344,7 @@ class ProfileLookup extends Component {
                                                     </div>
                                                     <Row className="justify-content-row">
                                                         <img src={images[rankindex + 1 < images.length ? rankindex + 1 : rankindex]}
-                                                            alt="Players rank" className="img-large-rank"/>
+                                                            alt="Players rank" className="img-large-rank" />
                                                     </Row>
                                                     <Row className="justify-content-row">
                                                         <p className="p-next-rank-title-rp">{ranks[rankindex + 1 < images.length ? rankindex + 1 : rankindex]}</p>
@@ -413,7 +412,7 @@ function RankList({ images, ranks, rankincs, page, rankindex }) {
                 {images.map((image, i) => (
                     <Col md={2} className={rankindex === i + (page * 6) ? "col-your-rank-rp" : "col-rank-icon-rp"} key={i}>
                         <Row className="justify-content-row">
-                            <img src={image} alt={ranks[i + (page * 6)]} className="img-normal-rank"/>
+                            <img src={image} alt={ranks[i + (page * 6)]} className="img-normal-rank" />
                         </Row>
                         <Row className="justify-content-row">
                             <p className="p-ranks-rp">{rankincs[i + (page * 6)]}</p>

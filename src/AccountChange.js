@@ -2,16 +2,16 @@ import React, { Component } from 'react';
 
 import { Form, Row, Col } from 'react-bootstrap/';
 
-import { Button } from '@material-ui/core';
+import { Button } from '@mui/material';
 
-import { Modal, Fade, Backdrop } from '@material-ui/core';
+import { Modal, Fade, Backdrop } from '@mui/material';
 
 import { withFirebase } from './components/Firebase';
 
 import Verification from "./components/Pages/Verification";
 
-import Snackbar from '@material-ui/core/Snackbar';
-import Alert from '@material-ui/lab/Alert';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/lab/Alert';
 
 const INITIAL_STATE = {
   passwordOne: '',
@@ -34,8 +34,8 @@ class AccountChangeForm extends Component {
 
   // Function to test email input with regex
   validateEmail(email) {
-      const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-      return re.test(String(email).toLowerCase());
+    const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(String(email).toLowerCase());
   }
 
   verifyInputs = () => {
@@ -44,45 +44,45 @@ class AccountChangeForm extends Component {
     if (email !== "") {
       if (email === this.props.authUser.email) {
         error = true;
-        this.setState({error: {message: "Email cannot be the same as the original."}})
+        this.setState({ error: { message: "Email cannot be the same as the original." } })
       }
       else if (!this.validateEmail) {
         error = true;
-        this.setState({error: {message: "Email must be a valid email (example@example.com)."}})
+        this.setState({ error: { message: "Email must be a valid email (example@example.com)." } })
       }
     }
     if (passwordOne !== "") {
       if (passwordOne !== passwordTwo) {
         error = true;
-        this.setState({error: {message: "The new password in both input boxes must match."}})
+        this.setState({ error: { message: "The new password in both input boxes must match." } })
       }
       else if (passwordOne.length < 8) {
         error = true;
-        this.setState({error: {message: "The password must be greater than 8 characters."}})
+        this.setState({ error: { message: "The password must be greater than 8 characters." } })
       }
     }
 
     if (email === "" && passwordOne === "") {
       error = true;
-      this.setState({error: {message: "No changes were made, nothing to update."}})
+      this.setState({ error: { message: "No changes were made, nothing to update." } })
     }
 
     // Check if error has occurred
     if (!error)
-      this.setState({updating: true})
+      this.setState({ updating: true })
   }
 
   onSubmit = () => {
     const { passwordOne, email } = this.state;
-    this.setState({updating: false})
+    this.setState({ updating: false })
 
     if (passwordOne !== "") {
       this.props.firebase
         .doPasswordUpdate(passwordOne)
         .then(() => {
-          this.setState({ 
-            status: "Successfully Updated.", error: null, 
-            passwordOne: "", passwordTwo: "" 
+          this.setState({
+            status: "Successfully Updated.", error: null,
+            passwordOne: "", passwordTwo: ""
           });
         })
         .catch(error => {
@@ -93,15 +93,15 @@ class AccountChangeForm extends Component {
       this.props.firebase
         .doEmailUpdate(email)
         .then(() => {
-          this.setState({ 
+          this.setState({
             status: "Please check your current email for further instruction.", error: null,
-            email: "" 
+            email: ""
           });
         })
         .catch(error => {
           this.setState({ error });
         });
-      }
+    }
 
   };
 
@@ -204,7 +204,7 @@ class AccountChangeForm extends Component {
           }}>
           <Fade in={this.state.updating}>
             <div className={"paper-ef"}>
-              <Verification verify={verify}/>
+              <Verification verify={verify} />
             </div>
           </Fade>
         </Modal>
