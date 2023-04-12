@@ -205,7 +205,7 @@ class Pricing extends Component {
                     </Fade>
                     <Fade in={this.state.showArray[1]} unmountOnExit={true}>
                         <div>
-                            <Row className="justify-content-row">
+                        {/*<Row className="justify-content-row">
                                 <Col sm={4} className="col-pricing">
                                     <Card>
                                         <Card.Header className="text-align-center new-player-card-header">NEW PLAYER PACKAGE</Card.Header>
@@ -224,7 +224,7 @@ class Pricing extends Component {
                                         </Card.Body>
                                     </Card>
                                 </Col>
-                            </Row>
+                            </Row>*/}
                             <Row className="first-row-card-pricing">
                                 <Col sm={4} className="col-pricing">
                                     <Card className="card-pricing">
