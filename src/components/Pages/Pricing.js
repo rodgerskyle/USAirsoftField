@@ -81,9 +81,9 @@ class Pricing extends Component {
                             <Row className="justify-content-row">
                                 <Col sm={6} className="col-pricing">
                                     <Card>
-                                        <Card.Header className="text-align-center standard-card-header-pricing">NEW MEMBERSHIP</Card.Header>
+                                        <Card.Header className="text-align-center standard-card-header-pricing">MEMBERSHIP</Card.Header>
                                         <Card.Body>
-                                            <Card.Title className="text-align-center">$40.00*</Card.Title>
+                                            <Card.Title className="text-align-center">$60.00</Card.Title>
                                                 <dl>
                                                     <dd>
                                                         <i className="fa fa-check fa-1x text-green dd-text-pricing"></i>
@@ -131,7 +131,7 @@ class Pricing extends Component {
                                                     </dd> */}
                                                 </dl>
                                                 <p className="text-align-center">
-                                                    *$30 annually after the initial $40.
+                                                    Memberships last a year and will be $60 on renewal.
                                                 </p>
                                                 <p className="text-align-center">
                                                     Please contact us to further inquire about signing up for a membership.
