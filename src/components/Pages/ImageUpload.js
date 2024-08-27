@@ -207,7 +207,7 @@ class ImageUpload extends Component {
                                 <p className="p-picture-label-settings">Current Picture:</p>
                             </Row>
                             <Row className="justify-content-row">
-                                <label htmlFor="upload-button">
+                                <label htmlFor="upload-button" className="upload-button-label">
                                     <div className="div-img-settings">
                                         <img
                                             src={this.state.url || default_profile}

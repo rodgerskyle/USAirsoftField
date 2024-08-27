@@ -17,9 +17,9 @@ import { withFirebase } from '../Firebase';
 import { AuthUserContext } from '../session';
 import { onValue } from "firebase/database";
 
-import MUIPagination from '@mui/lab/Pagination';
 import { isMobile } from 'react-device-detect';
 import { Helmet } from 'react-helmet-async';
+import { Pagination } from '@mui/material';
 
 class Leaderboards extends Component {
     constructor(props) {
@@ -185,6 +185,7 @@ class Leaderboards extends Component {
     }
 
     componentDidMount() {
+        console.log(this.props.match?.params.query)
         if (this.props.match?.params.query === "monthly") {
             this.setState({ monthly: true, tv: true, })
         }
@@ -364,7 +365,7 @@ class Leaderboards extends Component {
                             </Row>
                             <Row className="row-pagination-lb">
                                 <Col className="pagination-col-lb">
-                                    <MUIPagination count={numPages} page={curPage} onChange={(e, val) => this.handleClick(val)}
+                                    <Pagination count={numPages} page={curPage} onChange={(e, val) => this.handleClick(val)}
                                         showFirstButton showLastButton color="primary" variant="outlined" shape="rounded" size={isMobile ? 'small' : 'medium'} />
                                 </Col>
                             </Row>
@@ -381,7 +382,7 @@ class Leaderboards extends Component {
                             {!loading ?
                                 <Row className="row-bottom">
                                     <Col className="pagination-col-lb">
-                                        <MUIPagination count={numPages} page={curPage} onChange={(e, val) => this.handleClick(val)}
+                                        <Pagination count={numPages} page={curPage} onChange={(e, val) => this.handleClick(val)}
                                             showFirstButton showLastButton color="primary" variant="outlined" shape="rounded" size={isMobile ? 'small' : 'medium'} />
                                     </Col>
                                 </Row> : null}

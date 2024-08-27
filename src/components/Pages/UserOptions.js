@@ -460,7 +460,7 @@ class UserOptions extends Component {
 const condition = authUser =>
     authUser && !!authUser.roles[ROLES.ADMIN];
 
-export default withRouter(withAuthorization(condition)(withFirebase(UserOptions)));
+export default withAuthorization(condition)(UserOptions);
 
 // export default composeHooks(
 //     withAuthorization(condition),

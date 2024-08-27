@@ -15,6 +15,7 @@ import Alert from '@mui/lab/Alert';
 
 import '../../App.css';
 import { onValue, set } from 'firebase/database';
+import { makeStyles } from '@mui/styles';
 
 class RentalOptions extends Component {
     constructor(props) {
@@ -167,14 +168,45 @@ class RentalOptions extends Component {
     }
 }
 
+const useStyles = makeStyles((theme) => ({
+    root: {
+        padding: '2px 4px',
+        display: 'flex',
+        alignItems: 'center',
+        float: 'right',
+        background: '#424242',
+        margin: '5px',
+        width: 600,
+    },
+    input: {
+        color: 'white',
+        width: "20%",
+    },
+    divider: {
+        height: 28,
+        margin: 4,
+        background: "rgba(255, 255, 255, 0.12)",
+    },
+    label: {
+        color: 'white',
+        fontSize: "1rem",
+        margin: 0,
+        flex: 1,
+        marginRight: 15,
+        marginLeft: 15,
+    }
+}));
+
 
 // Rows for each rental selection the user will have
 const RentalRow = ({ obj, set, i }) => {
+    const classes = useStyles();
     return (
         <Row>
             <Col className="col-rentals-ro">
-                <Paper>
+                <Paper className={classes.root}>
                     <InputBase
+                        className={classes.input}
                         placeholder="Stock:"
                         inputProps={{ 'aria-label': 'stock' }}
                         type="number"
@@ -182,9 +214,10 @@ const RentalRow = ({ obj, set, i }) => {
                         disabled
                     />
 
-                    <Divider orientation="vertical" />
+                    <Divider className={classes.divider} orientation="vertical" />
 
                     <InputBase
+                        className={classes.input}
                         placeholder="Max:"
                         inputProps={{ 'aria-label': 'enter max' }}
                         type="number"
@@ -192,8 +225,8 @@ const RentalRow = ({ obj, set, i }) => {
                         onChange={(e) => set(i, e.target.value)}
                     />
 
-                    <Divider orientation="vertical" />
-                    <h5>{obj.label}</h5>
+                    <Divider className={classes.divider} orientation="vertical" />
+                    <h5 className={classes.label}>{obj.label}</h5>
                 </Paper>
             </Col>
         </Row>

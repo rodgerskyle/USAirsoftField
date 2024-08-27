@@ -3,7 +3,7 @@ import '../../App.css';
 
 import { Container, Row, Col, Spinner } from 'react-bootstrap/';
 
-import { makeStyles, useTheme } from '@mui/styles';
+import { makeStyles } from '@mui/styles';
 import Paper from '@mui/material/Paper';
 import InputBase from '@mui/material/InputBase';
 import Button from '@mui/material/Button';
@@ -33,7 +33,7 @@ import TableRow from '@mui/material/TableRow';
 import { ButtonGroup, ClickAwayListener, Grow, MenuItem, MenuList, Popper, TableHead } from '@mui/material';
 import { LinkContainer } from 'react-router-bootstrap';
 import { getDownloadURL } from 'firebase/storage';
-import { get, onValue, update } from 'firebase/database';
+import { get, onValue } from 'firebase/database';
 
 class Teams extends Component {
     constructor(props) {

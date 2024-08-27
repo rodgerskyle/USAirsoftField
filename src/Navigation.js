@@ -7,7 +7,7 @@ import { Row, Col } from 'react-bootstrap/';
 import { Link } from "react-router-dom";
 import * as ROLES from './components/constants/roles';
 import { withFirebase } from './components/Firebase';
-import { Collapse, Menu } from '@mui/material';
+import { Collapse, IconButton } from '@mui/material';
 import Preheader from './components/constants/Preheader';
 import { getDownloadURL } from 'firebase/storage';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -98,14 +98,14 @@ const NavigationWaiver = ({ authUser, profilePic }) => {
                             </Nav>}
                     </Col>
                     <Col className="div-hamburger">
-                        <MUIButton
+                        <IconButton
                             variant="contained"
                             color="primary"
                             size="large"
                             onClick={() => setTimeout(() => { setExpanded(!expanded) }, 150)}
                             type="button">
                             <MenuIcon />
-                        </MUIButton>
+                        </IconButton>
                     </Col>
                 </Row>
                 <Collapse isOpen={expanded} navbar>
@@ -250,14 +250,14 @@ const NavigationAuth = ({ authUser, profilePic }) => {
                         </Nav>
                     </Col>
                     <Col className="div-hamburger">
-                        <MUIButton
+                        <IconButton
                             variant="contained"
                             color="primary"
                             size="large"
                             onClick={() => setTimeout(() => { setExpanded(!expanded) }, 150)}
                             type="button">
-                            <Menu />
-                        </MUIButton>
+                            <MenuIcon />
+                        </IconButton>
                     </Col>
                 </Row>
                 <Navbar.Collapse in={expanded} className="navbar-collapse">
@@ -448,14 +448,14 @@ const NavigationNonAuth = () => {
                         </Nav>
                     </Col>
                     <Col className="div-hamburger">
-                        <MUIButton
+                        <IconButton
                             variant="contained"
                             color="primary"
                             size="large"
                             onClick={() => setTimeout(() => { setExpanded(!expanded) }, 150)}
                             type="button">
                             <MenuIcon />
-                        </MUIButton>
+                        </IconButton>
                     </Col>
                 </Row>
                 <Navbar.Collapse in={expanded} className="navbar-collapse">

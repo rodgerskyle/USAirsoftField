@@ -87,9 +87,9 @@ class TeamCreate extends Component {
 
         const { image, uploaded, previous, imgError, error, teamname } = this.state;
 
-        if (image !== null && imgError === false && error === null && team === "" ) {
+        if (image !== null && imgError === false && error === null && team === "") {
 
-            var t_name = teamname.toString().toLowerCase();
+            var t_name = teamname.toString().toLowerCase().trim();
 
             //Handling the case if a user had previously uploaded an image
             if (uploaded === true) {
@@ -102,7 +102,7 @@ class TeamCreate extends Component {
             //Create message to show they were removed and reset input box
             var createTeam = this.props.firebase.createTeam();
             createTeam({
-                teamname: this.state.teamname, description: this.state.description, user_team: team
+                teamname: this.state.teamname.trim(), description: this.state.description, user_team: team
             }).then((result) => {
                 // Read result of the Cloud Function.
                 var update = result.data.message;
@@ -120,7 +120,7 @@ class TeamCreate extends Component {
                         },
                         error => {
                             // Error function ...
-                            this.setState({error})
+                            this.setState({ error })
                         },
                         () => {
                             // complete function ...
@@ -138,7 +138,7 @@ class TeamCreate extends Component {
                             })
                         })
                 }
-            }).catch(function(error) {
+            }).catch(function (error) {
                 console.log(error)
             })
         }
@@ -203,11 +203,11 @@ class TeamCreate extends Component {
                                             <p className="notice-text">You already have a team, you must quit your team first.</p>
                                         </Row>
                                         <Row className="row-notice">
-                                            <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>
+                                            <img src={logo} alt="US Airsoft logo" className="small-logo-home" />
                                         </Row>
                                     </Col>
                                 </Row>
-                            </Container> 
+                            </Container>
                             : (page ?
                                 <Container>
                                     <h2 className="header-teamc">Create your team!</h2>
@@ -236,7 +236,7 @@ class TeamCreate extends Component {
                                             <Button className="next-button" variant="primary" type="submit"
                                             >
                                                 Next
-                                        </Button>
+                                            </Button>
                                         </Form.Group>
                                     </Form>
                                     <Row>
@@ -260,18 +260,18 @@ class TeamCreate extends Component {
                                             <div className="input-field img-input-teamc">
                                                 <Form.Group>
                                                     <Form.File id="team-image-input" onChange={this.handleChange}
-                                                    label="Attach Image" accept="image/*" custom data-browse="Upload"/>
+                                                        label="Attach Image" accept="image/*" custom data-browse="Upload" />
                                                 </Form.Group>
                                             </div>
                                         </Col>
                                     </Row>
-                                    {this.state.progress !== 0 ? 
-                                    <Row>
-                                        <Col md={3}>
-                                            <ProgressBar animated striped now={this.state.progress} label={`${this.state.progress}%`} />
-                                        </Col>
-                                    </Row>
-                                    : null}
+                                    {this.state.progress !== 0 ?
+                                        <Row>
+                                            <Col md={3}>
+                                                <ProgressBar animated striped now={this.state.progress} label={`${this.state.progress}%`} />
+                                            </Col>
+                                        </Row>
+                                        : null}
                                     <Row className="row-buttons-teamc">
                                         <Button className="previous-button" variant="primary" onClick={((e) => this.previousPage(e))}
                                         >

@@ -9,7 +9,7 @@ import IconButton from '@mui/material/IconButton';
 import InputBase from '@mui/material/InputBase';
 import Paper from '@mui/material/Paper';
 // Imports for MUI Table
-import { makeStyles, useTheme } from '@mui/styles';
+import { makeStyles } from '@mui/styles';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -549,7 +549,6 @@ const useStyles = makeStyles((theme) => ({
         background: '#424242'
     },
     input: {
-        marginLeft: theme.spacing(1),
         flex: 1,
         color: 'white',
     },

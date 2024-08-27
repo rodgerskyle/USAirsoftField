@@ -27,8 +27,6 @@ import ranks from '../constants/ranks';
 
 import rankincrements from '../constants/rankincrements';
 
-import { makeStyles } from '@mui/styles';
-
 import { CircularProgress, Slide } from '@mui/material';
 import { isMobile } from 'react-device-detect';
 import { getDownloadURL } from 'firebase/storage';

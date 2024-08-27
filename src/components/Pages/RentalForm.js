@@ -358,6 +358,10 @@ class RentalForm extends Component {
         //         console.log(snapshot)
         // })
 
+        onValue(this.props.firebase.numWaivers(), snapshot => {
+            let num_waivers = snapshot.val().total_num;
+            this.setState({ num_waivers_cur: num_waivers, validateArray: snapshot.val().validated })
+        })
         listAll(this.props.firebase.waiversList()).then((res) => {
             var tempWaivers = [];
             for (let i = 0; i < res.items.length; i++) {
@@ -375,11 +379,6 @@ class RentalForm extends Component {
             // Uh-oh, an error occurred!
             console.log(error)
         });
-
-        onValue(this.props.firebase.numWaivers(), snapshot => {
-            let num_waivers = snapshot.val().total_num;
-            this.setState({ num_waivers_cur: num_waivers, validateArray: snapshot.val().validated })
-        })
         get(this.props.firebase.numWaivers(), snapshot => {
             let prev = snapshot.val().total_num;
             this.setState({ num_waivers_prev: prev })
@@ -426,29 +425,29 @@ class RentalForm extends Component {
 
     componentDidUpdate() {
         if (this.state.num_waivers_prev !== this.state.num_waivers_cur) {
-            listAll(this.props.firebase.waiversList()).then((res) => {
-                var tempWaivers = [];
-                for (let i = 0; i < res.items.length; i++) {
-                    let waiverName = res.items[i].name
-                    let dateObj = (convertDate(waiverName.substr(waiverName.lastIndexOf('(') + 1).split(')')[0]))
-                    let waiver_obj = {
-                        name: waiverName,
-                        date: dateObj,
-                        ref: res.items[i]
-                    }
-                    tempWaivers.push(waiver_obj)
-                }
-                this.setState({ waivers: tempWaivers }, function () {
-                    this.setState({ loading: false })
-                })
-            }).catch(function (error) {
-                // Uh-oh, an error occurred!
-                console.log(error)
-            });
-            get(this.props.firebase.numWaivers(), snapshot => {
-                let prev = snapshot.val().total_num;
-                this.setState({ num_waivers_prev: prev })
-            })
+            // listAll(this.props.firebase.waiversList()).then((res) => {
+            //     var tempWaivers = [];
+            //     for (let i = 0; i < res.items.length; i++) {
+            //         let waiverName = res.items[i].name
+            //         let dateObj = (convertDate(waiverName.substr(waiverName.lastIndexOf('(') + 1).split(')')[0]))
+            //         let waiver_obj = {
+            //             name: waiverName,
+            //             date: dateObj,
+            //             ref: res.items[i]
+            //         }
+            //         tempWaivers.push(waiver_obj)
+            //     }
+            //     this.setState({ waivers: tempWaivers }, function () {
+            //         this.setState({ loading: false })
+            //     })
+            // }).catch(function (error) {
+            //     // Uh-oh, an error occurred!
+            //     console.log(error)
+            // });
+            // get(this.props.firebase.numWaivers(), snapshot => {
+            //     let prev = snapshot.val().total_num;
+            //     this.setState({ num_waivers_prev: prev })
+            // })
         }
     }
 

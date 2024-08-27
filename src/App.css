@@ -1719,6 +1719,8 @@ p.error-text-rp {
 
 .pagination-col-lb .MuiPaginationItem-ellipsis {
   color: white;
+  border: unset;
+  background-color: unset;
 }
 
 .div-team-leader-teams {
@@ -1776,6 +1778,67 @@ p.error-text-rp {
 
 .col-options-dropdown-teams .MuiButton-root {
   font-family: unset;
+  font-size: 20px;
+  font-weight: 300;
+}
+
+.pagination-row-user-table .MuiTablePagination-selectLabel {
+  color: white;
+  margin-bottom: unset;
+}
+
+.pagination-row-user-table .MuiTablePagination-displayedRows {
+  color: white;
+  margin-bottom: unset;
+}
+
+.pagination-row-user-table .MuiNativeSelect-select {
+  color: white;
+}
+
+svg.MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium.MuiNativeSelect-icon.MuiTablePagination-selectIcon.MuiNativeSelect-iconStandard.css-10bey84-MuiSvgIcon-root-MuiNativeSelect-icon {
+  color: white;
+}
+
+.pagination-row-user-table .MuiTablePagination-menuItem {
+  color: black;
+}
+
+.col-textfield-left-rf .MuiFormLabel-root {
+  color: white !important;
+}
+
+.col-textfield-right-rf .MuiFormLabel-root {
+  color: white !important;
+}
+
+.col-textfield-left-rf .MuiOutlinedInput-notchedOutline {
+  border-color: white !important;
+}
+
+.col-textfield-right-rf .MuiOutlinedInput-notchedOutline {
+  border-color: white !important;
+}
+
+.col-textfield-left-rf .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: white;
+}
+
+.col-textfield-right-rf .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: white;
+}
+
+.col-textfield-rf .MuiOutlinedInput-input {
+  color: white;
+}
+
+.col-textfield-left-rf .MuiFocused {
+  color: white;
+  border-color: white;
+}
+
+.table-cell-button-rf .MuiButton-containedSecondary {
+  background-color: #f50057;
 }
 
 .col-options-dropdown-teams .MuiButtonGroup-groupedContainedPrimary:not(:last-child) {
@@ -2670,6 +2733,8 @@ a.nav-link:hover {
   min-width: 47px;
   min-height: 47px;
   border-radius: 20px;
+  display: flex;
+  align-items: center;
 }
 
 .div-hamburger .MuiButtonBase-root:hover {
@@ -3751,11 +3816,12 @@ a.nav-link:hover {
   margin-top: 15px;
 }
 
-.p-picture-label-settings {
+p.p-picture-label-settings {
   margin: none;
   font-size: 16px;
   font-weight: 300;
   color: white;
+  width: unset;
 }
 
 .container-settings .MuiTab-textColorPrimary.Mui-selected {
@@ -3961,6 +4027,28 @@ a.nav-link:hover {
 .season-button-row .MuiButton-root {
   width: 100%;
   border-radius: unset;
+  color: rgba(0, 0, 0, 0.87);
+  font-size: 0.875rem;
+  font-weight: 700;
+  border: unset;
+}
+
+.season-button-row .MuiButton-root:hover {
+  border: unset;
+}
+
+.selected-date-col-schedule {
+  display: flex;
+  justify-content: center;
+}
+
+.selected-date-events-col {
+  display: flex;
+  justify-content: center;
+}
+
+label.upload-button-label {
+  width: unset;
 }
 
 .season-button-row .MuiButton-outlined {

@@ -38,10 +38,10 @@ class Teampage extends Component {
 
     componentDidMount() {
         //Figure out rank logic here
-        console.log(this.props)
         onValue(this.props.firebase.team(this.props.router.params.team.toLowerCase()), snapshot => {
             const t_Object = snapshot.val();
-
+            // Need to strip space at the end of team name
+            // Need to strip space at the end during team creation
             this.setState({
                 teamObject: t_Object,
                 members: typeof t_Object.members !== 'undefined' ? t_Object.members : '',
@@ -193,7 +193,7 @@ class Teampage extends Component {
                 <Container className="container-teampage">
                     <div className="team-single">
                         <Row className="team-info">
-                            <div class="team-info-first-div">
+                            <div className="team-info-first-div">
                                 <div className="team-single-img padding-2px">
                                     <img className="team-icon-teamspage" src={this.state.teamicon} alt="" />
                                 </div>
@@ -219,7 +219,7 @@ class Teampage extends Component {
                                     <div className="counter description-teamspage">
                                         <i className="fa fa-info-circle fa-2x text-black"></i>
                                         <h2 className="timer count-title count-number h2-description-team" data-to="100" data-speed="1500">{
-                                        typeof this.state.teamObject.description !== 'undefined' ? this.state.teamObject.description : "N/A"
+                                            typeof this.state.teamObject.description !== 'undefined' ? this.state.teamObject.description : "N/A"
                                         }</h2>
                                         <p className="count-text ">Team Description</p>
                                     </div>
@@ -231,8 +231,8 @@ class Teampage extends Component {
                                         </h2>
                                     </div>
                                 </Row>
-                                { this.state.members !== '' ?
-                                    <TeamUserlist users={this.state.members}/> : ""
+                                {this.state.members !== "" ?
+                                    <TeamUserlist users={this.state.members} /> : ""
                                 }
                             </div>
                         </Row>
@@ -243,21 +243,21 @@ class Teampage extends Component {
     }
 }
 
-    const TeamUserlist = ({ users }) => (
-        <Row className="row-members-teams row-teams">
-            {users.map(user => (
-                <Col md={4} key={user[0]} className="col-team-user">
-                    <div className="counter team-member-list">
-                        <i className="fa fa-users fa-2x text-black"></i>
-                        <Link className="profilelink-tm" to={"/profilelookup/" + user[1]}>
-                            <h2 className="timer count-title count-number" data-to="100" data-speed="1500">{user[0]}</h2>
-                        </Link>
-                        <p className="count-text ">Member</p>
-                    </div>
-                </Col>
-            ))}
-        </Row>
-    );
+const TeamUserlist = ({ users }) => (
+    <Row className="row-members-teams row-teams">
+        {users.map(user => (
+            <Col md={4} key={user[0]} className="col-team-user">
+                <div className="counter team-member-list">
+                    <i className="fa fa-users fa-2x text-black"></i>
+                    <Link className="profilelink-tm" to={"/profilelookup/" + user[1]}>
+                        <h2 className="timer count-title count-number" data-to="100" data-speed="1500">{user[0]}</h2>
+                    </Link>
+                    <p className="count-text ">Member</p>
+                </div>
+            </Col>
+        ))}
+    </Row>
+);
 
 
 export default withRouter(withFirebase(Teampage));

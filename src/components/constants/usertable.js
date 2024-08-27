@@ -104,7 +104,7 @@ export default function UserTable({ users, index, search, length }) {
           )}
         </TableBody>
         <TableFooter className="user-table-footer">
-          <TableRow>
+          <TableRow className="pagination-row-user-table">
             <TablePagination
               rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
               colSpan={6}
@@ -157,7 +157,7 @@ export default function UserTable({ users, index, search, length }) {
           <TableCell component="th" scope="row">
             {`(${(index + 1) + (page * rowsPerPage)}) ${user.name}`}
           </TableCell>
-          <TableCell align="right">{user.username}</TableCell>
+          <TableCell align="right" >{user.username}</TableCell>
           <TableCell align="right">{user.email}</TableCell>
         </TableRow>
         <TableRow className={!open ? null : "selected-row-admin-users"}>
