@@ -19,7 +19,20 @@ import { withFirebase } from '../Firebase';
 import * as ROLES from '../constants/roles';
 import { Helmet } from 'react-helmet-async';
 import { uploadBytes } from 'firebase/storage';
-import { get, onValue, set, update } from 'firebase/database';
+import { get, onValue, set, update, ref, push } from 'firebase/database';
+
+// Helper function to convert dataURL to Blob
+const dataURLtoBlob = (dataURL) => {
+  const arr = dataURL.split(',');
+  const mime = arr[0].match(/:(.*?);/)[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new Blob([u8arr], { type: mime });
+};
 
 const WaiverPage = () => (
   <AuthUserContext.Consumer>
@@ -88,36 +101,65 @@ class WaiverPageFormBase extends Component {
     this.state = { ...INITIAL_STATE, num_waivers: null, groups: null, loading: true, groupIndex: null, groupsObject: null };
   }
 
-  async completeWaiver(myProps) {
-    const { fname, lname, selectedGroup, groupsObject, groupIndex } = this.state;
-    const blob = await pdf((
-      <SignedWaiver {...myProps} />
-    )).toBlob();
-    var date = (new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear()) + ":" +
-      (new Date().getHours()) + ":" + (new Date().getMinutes()) + ":" + (new Date().getSeconds()) + ":" + (new Date().getMilliseconds());
-    uploadBytes(this.props.firebase.nonmembersWaivers(`${fname} ${lname}(${date}).pdf`), (blob)).then(() => {
-      if (selectedGroup.length !== 0) {
-        if (typeof groupsObject[groupIndex[selectedGroup[0]]].participants === 'undefined') {
-          // Push participant into new array and set it
-          let participants = []
-          let obj = { name: `${fname} ${lname}(${date})`, gamepass: false }
-          participants.push(obj)
-          update(this.props.firebase.rentalGroup(groupIndex[selectedGroup[0]]), ({ participants }))
-        }
-        else if (groupsObject[groupIndex[selectedGroup[0]]].participants.length < groupsObject[groupIndex[selectedGroup[0]]].size) {
-          // Push participant into existing array and set it
-          let participants = groupsObject[groupIndex[selectedGroup[0]]].participants
-          let obj = { name: `${fname} ${lname}(${date})`, gamepass: false }
-          participants.push(obj)
-          update(this.props.firebase.rentalGroup(groupIndex[selectedGroup[0]]), ({ participants }));
-        }
-        // Make sure length and size are not equal
-        // Push new user to participants table
+  async completeWaiver() {
+    try {
+      const waiverData = {
+        name: `${this.state.fname} ${this.state.lname}`,
+        email: this.state.email,
+        phone: this.state.phone,
+        address: this.state.address,
+        city: this.state.city,
+        state: this.state.state,
+        zipcode: this.state.zipcode,
+        dob: this.state.dob,
+        age: this.state.age,
+        participantSignature: this.state.participantImg,
+        timestamp: Date.now(),
+        acceptEmailSubscription: this.state.acceptEmailSubscription
+      };
+
+      // Add guardian info if exists
+      if (this.state.age < 18 && this.state.pgImg) {
+        waiverData.guardian = {
+          name: this.state.pgname,
+          phone: this.state.pgphone,
+          signature: this.state.pgImg
+        };
       }
-      this.setState({ showLander: true, loading: false })
-      let total_num = this.state.num_waivers + 1
-      update(this.props.firebase.numWaivers(), ({ total_num }));
-    })
+
+      // Push to digital_waivers
+      const digitalWaiversRef = this.props.firebase.digitalWaivers();
+      const newWaiverRef = push(digitalWaiversRef);
+      await set(newWaiverRef, waiverData);
+
+      // Handle email subscription
+      if (this.state.acceptEmailSubscription) {
+        const secret = 'm' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5).toUpperCase();
+        const emailRef = ref(this.props.firebase.db, `emaillist/${this.state.email.replace(/\./g, ',')}`);
+        await set(emailRef, { secret });
+      }
+
+      // If this is part of a rental group, update the group
+      if (this.props.groupId) {
+        const groupRef = ref(this.props.firebase.db, `rental_groups/${this.props.groupId}/participants`);
+        const groupSnapshot = await get(groupRef);
+        const currentParticipants = groupSnapshot.val() || [];
+
+        await set(groupRef, [...currentParticipants, {
+          name: `${this.state.fname} ${this.state.lname}`,
+          waiverId: newWaiverRef.key,
+          timestamp: Date.now()
+        }]);
+      }
+
+      this.setState({ showSuccessScreen: true });
+    } catch (error) {
+      console.error('Error submitting waiver:', error);
+      this.setState({
+        errorWaiver: 'Failed to submit waiver. Please try again.',
+        loading: false
+      });
+    }
   }
 
   // Will Check duplicates in list
@@ -265,7 +307,7 @@ class WaiverPageFormBase extends Component {
                     <Form className="waiver-form-rp">
                       <Row>
                         <Col>
-                          <p className="p-groupname-rp">Rental Group Name: (If Applicable)</p>
+                          <p className="p-groupname-rp">Party Name: (If Applicable)</p>
                         </Col>
                       </Row>
                       <Row className="row-typeahead-rp">

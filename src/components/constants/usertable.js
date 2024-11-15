@@ -1,71 +1,148 @@
 import React from 'react';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableFooter from '@mui/material/TableFooter';
-import TablePagination from '@mui/material/TablePagination';
-import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
-import IconButton from '@mui/material/IconButton';
-import FirstPageIcon from '@mui/icons-material/FirstPage';
-import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft';
-import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
-import LastPageIcon from '@mui/icons-material/LastPage';
-import Box from '@mui/material/Box';
-import Collapse from '@mui/material/Collapse';
-import TableHead from '@mui/material/TableHead';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import { Button } from '@mui/material';
+import {
+  Table, TableBody, TableCell, TableContainer, TableFooter,
+  TablePagination, TableRow, Paper, Box, Collapse,
+  TableHead, Button
+} from '@mui/material';
 import { Link } from 'react-router-dom';
+import {
+  FontAwesomeIcon
+} from '@fortawesome/react-fontawesome';
+import {
+  faChevronDown,
+  faChevronUp,
+  faChevronLeft,
+  faChevronRight,
+  faAnglesLeft,
+  faAnglesRight,
+  faCircleCheck,
+  faCircleXmark,
+  faCircleInfo
+} from '@fortawesome/free-solid-svg-icons';
+import './admin-table.css';
 
 function TablePaginationActions(props) {
-
   const { count, page, rowsPerPage, onPageChange } = props;
 
-  const handleFirstPageButtonClick = (event) => {
-    onPageChange(event, 0);
-  };
-
-  const handleBackButtonClick = (event) => {
-    onPageChange(event, page - 1);
-  };
-
-  const handleNextButtonClick = (event) => {
-    onPageChange(event, page + 1);
-  };
-
-  const handleLastPageButtonClick = (event) => {
-    onPageChange(event, Math.max(0, Math.ceil(count / rowsPerPage) - 1));
-  };
   return (
-    <div className="usertable-pagination-navigation-admin">
-      <IconButton
-        onClick={handleFirstPageButtonClick}
+    <Box sx={{ display: 'flex', gap: 1 }}>
+      <Button
+        onClick={(e) => onPageChange(e, 0)}
         disabled={page === 0}
         aria-label="first page"
+        sx={{ minWidth: '40px', color: 'white' }}
       >
-        {"" === 'rtl' ? <LastPageIcon /> : <FirstPageIcon />}
-      </IconButton>
-      <IconButton onClick={handleBackButtonClick} disabled={page === 0} aria-label="previous page">
-        {"" === 'rtl' ? <KeyboardArrowRight /> : <KeyboardArrowLeft />}
-      </IconButton>
-      <IconButton
-        onClick={handleNextButtonClick}
+        <FontAwesomeIcon icon={faAnglesLeft} />
+      </Button>
+      <Button
+        onClick={(e) => onPageChange(e, page - 1)}
+        disabled={page === 0}
+        aria-label="previous page"
+        sx={{ minWidth: '40px', color: 'white' }}
+      >
+        <FontAwesomeIcon icon={faChevronLeft} />
+      </Button>
+      <Button
+        onClick={(e) => onPageChange(e, page + 1)}
         disabled={page >= Math.ceil(count / rowsPerPage) - 1}
         aria-label="next page"
+        sx={{ minWidth: '40px', color: 'white' }}
       >
-        {"" === 'rtl' ? <KeyboardArrowLeft /> : <KeyboardArrowRight />}
-      </IconButton>
-      <IconButton
-        onClick={handleLastPageButtonClick}
+        <FontAwesomeIcon icon={faChevronRight} />
+      </Button>
+      <Button
+        onClick={(e) => onPageChange(e, Math.max(0, Math.ceil(count / rowsPerPage) - 1))}
         disabled={page >= Math.ceil(count / rowsPerPage) - 1}
         aria-label="last page"
+        sx={{ minWidth: '40px', color: 'white' }}
       >
-        {"" === 'rtl' ? <FirstPageIcon /> : <LastPageIcon />}
-      </IconButton>
-    </div>
+        <FontAwesomeIcon icon={faAnglesRight} />
+      </Button>
+    </Box>
+  );
+}
+
+function UserRow({ user, page, rowsPerPage, index }) {
+  const [open, setOpen] = React.useState(false);
+  const expired = checkDate(user.renewal);
+
+  return (
+    <>
+      <TableRow
+        sx={{
+          '& > *': { borderBottom: 'unset' },
+          backgroundColor: open ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
+          transition: 'background-color 0.2s',
+          '&:hover': {
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          }
+        }}
+      >
+        <TableCell sx={{ width: 50, color: 'white' }}>
+          <Button
+            size="small"
+            onClick={() => setOpen(!open)}
+            sx={{ minWidth: '40px', color: 'white' }}
+          >
+            <FontAwesomeIcon icon={open ? faChevronUp : faChevronDown} />
+          </Button>
+        </TableCell>
+        <TableCell sx={{ color: 'white' }}>
+          {`(${(index + 1) + (page * rowsPerPage)}) ${user.name}`}
+        </TableCell>
+        <TableCell align="right" sx={{ color: 'white' }}>{user.username}</TableCell>
+        <TableCell align="right" sx={{ color: 'white' }}>{user.email}</TableCell>
+      </TableRow>
+
+      <TableRow>
+        <TableCell colSpan={6} sx={{ py: 0 }}>
+          <Collapse in={open} timeout="auto" unmountOnExit>
+            <Box sx={{ py: 2 }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ color: 'white', width: 120 }}>Renewal</TableCell>
+                    <TableCell sx={{ color: 'white', width: 120 }}>Warnings</TableCell>
+                    <TableCell align="right" />
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  <TableRow>
+                    <TableCell sx={{ color: expired ? '#ff4444' : '#4CAF50' }}>
+                      <FontAwesomeIcon
+                        icon={expired ? faCircleXmark : faCircleCheck}
+                        className="me-2"
+                      />
+                      {expired ? 'Expired' : 'Clear'}
+                    </TableCell>
+                    <TableCell sx={{ color: '#4CAF50' }}>
+                      <FontAwesomeIcon icon={faCircleCheck} className="me-2" />
+                      Clean
+                    </TableCell>
+                    <TableCell align="right">
+                      <Button
+                        component={Link}
+                        to={`/admin/useroptions/${user.uid}`}
+                        variant="contained"
+                        sx={{
+                          backgroundColor: '#51585e',
+                          '&:hover': {
+                            backgroundColor: '#636c74',
+                          }
+                        }}
+                      >
+                        <FontAwesomeIcon icon={faCircleInfo} className="me-2" />
+                        More Info
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </Box>
+          </Collapse>
+        </TableCell>
+      </TableRow>
+    </>
   );
 }
 
@@ -73,28 +150,30 @@ export default function UserTable({ users, index, search, length }) {
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
 
-  // let checker = (arr, target) => target.every(v => arr.includes(v));
-
   const emptyRows = rowsPerPage - Math.min(rowsPerPage, length - page * rowsPerPage);
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
   return (
-    <TableContainer component={Paper} className="main-admin-users-table-container">
-      <Table aria-label="custom pagination table" className="main-admin-users-table">
+    <TableContainer
+      component={Paper}
+      sx={{
+        backgroundColor: '#51585e',
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+        borderRadius: '8px',
+      }}
+    >
+      <Table>
         <TableBody>
           {(rowsPerPage > 0
             ? users.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
             : users
           ).map((user, i) => (
-            <MUITableRow user={user} rowsPerPage={rowsPerPage} page={page} index={i} key={user.uid} />
+            <UserRow
+              key={user.uid}
+              user={user}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              index={i}
+            />
           ))}
 
           {emptyRows > 0 && (
@@ -103,8 +182,8 @@ export default function UserTable({ users, index, search, length }) {
             </TableRow>
           )}
         </TableBody>
-        <TableFooter className="user-table-footer">
-          <TableRow className="pagination-row-user-table">
+        <TableFooter>
+          <TableRow>
             <TablePagination
               rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
               colSpan={6}
@@ -114,83 +193,36 @@ export default function UserTable({ users, index, search, length }) {
               SelectProps={{
                 inputProps: { 'aria-label': 'rows per page' },
                 native: true,
+                sx: { color: 'white' }
               }}
-              onPageChange={handleChangePage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
+              onPageChange={(e, newPage) => setPage(newPage)}
+              onRowsPerPageChange={(e) => {
+                setRowsPerPage(parseInt(e.target.value, 10));
+                setPage(0);
+              }}
               ActionsComponent={TablePaginationActions}
+              sx={{
+                color: 'white',
+                '& .MuiTablePagination-select': {
+                  color: 'white'
+                },
+                '& .MuiTablePagination-selectIcon': {
+                  color: 'white'
+                }
+              }}
             />
           </TableRow>
         </TableFooter>
       </Table>
     </TableContainer>
-  )
+  );
+}
 
-
-  // Checks if given date is expired or not
-  function checkDate(dt) {
-    if (dt === 'N/A')
-      return false
-    const dateArray = dt.split('-')
-    const date = new Date(dateArray[2], dateArray[0] - 1, dateArray[1])
-    const today = new Date()
-    if (date < today)
-      return true // expired
-    else
-      return false // not expired
-  }
-
-
-
-  function MUITableRow({ user, page, rowsPerPage, index }) {
-    const [open, setOpen] = React.useState(false);
-
-    const expired = checkDate(user.renewal)
-
-    return (
-      <React.Fragment>
-        <TableRow className={!open ? null : "selected-row-admin-users"}>
-          <TableCell>
-            <IconButton aria-label="expand row" size="small" onClick={() => setOpen(!open)}>
-              {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-            </IconButton>
-          </TableCell>
-          <TableCell component="th" scope="row">
-            {`(${(index + 1) + (page * rowsPerPage)}) ${user.name}`}
-          </TableCell>
-          <TableCell align="right" >{user.username}</TableCell>
-          <TableCell align="right">{user.email}</TableCell>
-        </TableRow>
-        <TableRow className={!open ? null : "selected-row-admin-users"}>
-          <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
-            <Collapse in={open} timeout="auto" unmountOnExit>
-              <Box margin={1}>
-                {/* <Typography variant="h6" gutterBottom component="div">
-                Quick Info
-              </Typography> */}
-                <Table size="small" aria-label="user info">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell style={{ width: 120 }}>Renewal</TableCell>
-                      <TableCell style={{ width: 120 }}>Warnings</TableCell>
-                      <TableCell align="right"></TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    <TableRow className="paper-shadow">
-                      <TableCell style={{ width: 120 }}><p className={expired ? "expired-p-usertable" : null}>{expired ? 'Expired' : 'Clear'}</p></TableCell>
-                      <TableCell style={{ width: 120 }}><p className={false ? null : null}>{false ? 'Banned' : 'Clean'}</p></TableCell>
-                      <TableCell align="right">
-                        <Button className="more-info-button-user-table" component={Link} to={"/admin/useroptions/" + user.uid} target="_blank" variant="outlined">More info</Button>
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </Box>
-            </Collapse>
-          </TableCell>
-        </TableRow>
-      </React.Fragment>
-    );
-  }
-
-};
+// Helper function to check if date is expired
+function checkDate(dt) {
+  if (dt === 'N/A') return false;
+  const dateArray = dt.split('-');
+  const date = new Date(dateArray[2], dateArray[0] - 1, dateArray[1]);
+  const today = new Date();
+  return date < today;
+}

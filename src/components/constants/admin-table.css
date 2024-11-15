@@ -1,0 +1,144 @@
+/* Table Container Styles */
+.MuiTableContainer-root {
+    margin: 1rem 0;
+    overflow-x: auto;
+}
+
+/* Table Header Styles */
+.MuiTableHead-root {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.MuiTableHead-root .MuiTableCell-root {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.875rem;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Table Body Styles */
+.MuiTableBody-root .MuiTableRow-root:not(:last-child) {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.MuiTableCell-root {
+    padding: 16px;
+    border: none;
+}
+
+/* Expanded Row Content */
+.MuiCollapse-root {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.MuiCollapse-root .MuiTable-root {
+    /* margin: 0 1rem; */
+}
+
+.MuiCollapse-root .MuiTableCell-root {
+    padding: 12px 16px;
+}
+
+/* Pagination Styles */
+.MuiTablePagination-root {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.MuiTablePagination-selectLabel,
+.MuiTablePagination-displayedRows {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.MuiTablePagination-select {
+    padding: 8px 32px 8px 12px !important;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Button Styles */
+.MuiButton-contained {
+    text-transform: none;
+    font-weight: 500;
+    padding: 6px 16px;
+    border-radius: 4px;
+    box-shadow: none;
+}
+
+/* Status Indicators */
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.status-expired {
+    background-color: rgba(255, 68, 68, 0.1);
+    color: #ff4444;
+}
+
+.status-clear {
+    background-color: rgba(76, 175, 80, 0.1);
+    color: #4CAF50;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 600px) {
+    .MuiTableCell-root {
+        padding: 12px;
+    }
+
+    .MuiTableCell-root:last-child {
+        padding-right: 12px;
+    }
+
+    .MuiButton-contained {
+        padding: 4px 12px;
+        font-size: 0.875rem;
+    }
+}
+
+/* Animation for row expansion */
+.MuiCollapse-root {
+    transition: height 300ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Table Row Hover Effect */
+.MuiTableRow-root.hoverable {
+    transition: background-color 0.2s ease;
+}
+
+.MuiTableRow-root.hoverable:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Icon Button Styles */
+.MuiIconButton-root {
+    padding: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.MuiIconButton-root:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Empty Row Styles */
+.empty-row {
+    height: 53px;
+    background-color: transparent;
+}
+
+.card-header {
+    color: white !important;
+}
+
+p.MuiTablePagination-displayedRows.css-levciy-MuiTablePagination-displayedRows {
+    margin-bottom: unset;
+}
+
+.MuiToolbar-root .MuiTablePagination-selectLabel {
+    margin-bottom: unset;
+}

@@ -112,6 +112,8 @@ class Firebase {
 
     sendReceipt = () => httpsCallable(this.func, 'sendReceipt');
 
+    submitWaiver = () => httpsCallable(this.func, 'submitWaiver');
+
     // Storage Database API
 
     membersWaivers = pdf => st_ref(this.st, `waivers/members/${pdf}`);
@@ -125,6 +127,8 @@ class Firebase {
     teamsPictures = img => st_ref(this.st, `teams/${img}`);
 
     emailAttachment = () => st_ref(this.st, 'email/emailattachment.png');
+
+    signature = (filename) => st_ref(this.st, 'signatures/' + filename);
 
     // User API
 
@@ -182,6 +186,10 @@ class Firebase {
 
     validatedWaivers = () => db_ref(this.db, 'waivers/validated');
 
+    digitalWaivers = () => db_ref(this.db, 'digital_waivers');
+
+    digitalWaiver = (ref) => db_ref(this.db, `digital_waivers/${ref}`);
+
     // Calendar API
 
     calendar = () => db_ref(this.db, `calendar`);
@@ -193,6 +201,8 @@ class Firebase {
     schedule = () => db_ref(this.db, `schedule`);
 
     scheduleEvent = i => db_ref(this.db, `schedule/${i}`);
+
+    waivers = () => db_ref(this.db, 'waivers/validated');
 
 }
 

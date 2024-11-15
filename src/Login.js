@@ -19,7 +19,7 @@ const SignInPage = () => (
     <Container className="login-container">
       <Col className="login-col">
         <Row className="header-rp">
-          <img src={logo} alt="US Airsoft logo" className="small-logo-login"/>
+          <img src={logo} alt="US Airsoft logo" className="small-logo-login" />
         </Row>
         <SignInForm />
       </Col>
@@ -46,7 +46,7 @@ class SignInFormBase extends Component {
   //Recaptcha stuff
   handleCaptchaResponseChange(response) {
     let checkRecaptcha = this.props.firebase.checkRecaptcha();
-    checkRecaptcha({response}).then((result) => {
+    checkRecaptcha({ response }).then((result) => {
       if (result.data && result.data.status === "success.") {
         this.setState({
           robot: false, error: null
@@ -57,13 +57,13 @@ class SignInFormBase extends Component {
         this.setState({ error: "Please retry the ReCAPTCHA." })
       }
     })
-    .catch((error) => {
-    // Getting the Error details.
-    var code = error.code;
-    var message = error.message;
-    console.log (code + " " + message)
-    // ...
-    })
+      .catch((error) => {
+        // Getting the Error details.
+        var code = error.code;
+        var message = error.message;
+        console.log(code + " " + message)
+        // ...
+      })
   }
 
   //Recaptcha Expired
@@ -82,18 +82,18 @@ class SignInFormBase extends Component {
         .then(() => {
           this.setState({ ...INITIAL_STATE });
           get(this.props.firebase.user(this.props.firebase.uid()), snapshot => {
-              const userObject = snapshot.val();
-              this.props.history.push("/");
-              if (userObject.roles && !!userObject.roles[ROLES.WAIVER]) {
-                this.props.history.push("/dashboard");
-              }
+            const userObject = snapshot.val();
+            this.props.history.push("/");
+            if (userObject.roles && !!userObject.roles[ROLES.WAIVER]) {
+              this.props.history.push("/dashboard");
+            }
           })
         })
         .catch(error_p => {
           console.log(error_p);
           this.setState({ error: "The Email or Password is incorrect", robot: true });
         });
-      }
+    }
   };
 
   onChange = event => {
@@ -135,8 +135,8 @@ class SignInFormBase extends Component {
           </Form.Group>
           <Button disabled={isInvalid} type="submit" block>
             Sign In
-        </Button>
-        <PasswordForgetLink />
+          </Button>
+          <PasswordForgetLink />
           {error && <p>{error.message}</p>}
           <p className="text-align-center">{this.state.error}</p>
         </Form>
@@ -145,9 +145,9 @@ class SignInFormBase extends Component {
             <Col className="recap">
               <ReCAPTCHA
                 ref={(el) => { this.recaptcha = el; }}
-                sitekey="6Lc0JPsUAAAAAGfLV1lzptnyO2V1dTU7GfR5_5h5"
+                sitekey={process.env.REACT_APP_RECAPTCHA_V2_SITE_KEY}
                 theme={'dark'}
-                onChange={this.handleCaptchaResponseChange} 
+                onChange={this.handleCaptchaResponseChange}
                 onExpired={this.expireCaptcha} />
             </Col>
           </Row>

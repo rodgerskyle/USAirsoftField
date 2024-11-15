@@ -4,7 +4,7 @@ import React from 'react';
 import Cards from './ccmodule';
 import './cc-styles.scss';
 
-import '../../App.css';
+import '../../../../App.css';
 
 import { withStyles } from '@mui/styles';
 
@@ -28,14 +28,14 @@ const TextFieldCard = withStyles({
             },
         },
         '& .MuiInputBase-input': {
-            color: 'white',
+            color: 'black',
             borderColor: 'white',
         },
         '&.MuiInputBase-root': {
-            color: 'white',
+            color: 'black',
         },
         '& .MuiFormLabel-root': {
-            color: 'white',
+            color: 'black',
         },
     },
 })(TextField);
@@ -111,6 +111,7 @@ export default class PaymentForm extends React.Component {
                                         label="Name On Card"
                                         variant="outlined"
                                         required
+                                        autoComplete="new-password"
                                         value={this.props.name}
                                         error={nameError !== null}
                                         helperText={nameError}
@@ -126,6 +127,7 @@ export default class PaymentForm extends React.Component {
                                         variant="outlined"
                                         required
                                         value={this.props.number}
+                                        autoComplete="new-password"
                                         pattern="[\d| ]{16,22}"
                                         // value={this.props.number.length === 16 ? this.props.number.replace(/\d(?=\d{4})/g, "*") : this.props.number}
                                         error={numberError !== null}
@@ -145,6 +147,7 @@ export default class PaymentForm extends React.Component {
                                         required
                                         value={this.props.expiry}
                                         pattern="\d\d/\d\d"
+                                        autoComplete="new-password"
                                         error={expiryError !== null}
                                         helperText={expiryError}
                                         onChange={this.props.handleInputChange}
@@ -160,6 +163,7 @@ export default class PaymentForm extends React.Component {
                                         required
                                         value={this.props.cvc}
                                         pattern="\d{3,4}"
+                                        autoComplete="new-password"
                                         error={cvcError !== null}
                                         helperText={cvcError}
                                         onChange={this.props.handleInputChange}
@@ -177,6 +181,7 @@ export default class PaymentForm extends React.Component {
                                         className="textfield-zip-cc"
                                         required
                                         value={this.props.zipcode}
+                                        autoComplete="new-password"
                                         error={zipcodeError !== null}
                                         helperText={zipcodeError}
                                         onChange={this.props.handleInputChange}

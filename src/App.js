@@ -41,7 +41,6 @@ import ScrollToTop from './components/constants/scrolltotop';
 import Redirect from './components/constants/redirect';
 import CookieConsent from "react-cookie-consent";
 import PageNotFound from './components/Pages/PageNotFound';
-import RentalForm from './components/Pages/RentalForm';
 import Birthday from './components/Pages/Birthday';
 import ScanWaiver from './components/Pages/ScanWaiver';
 import About from './components/Pages/About';
@@ -49,6 +48,7 @@ import Logout from './components/constants/logout';
 import Schedule from './components/Pages/Schedule';
 // import EmailDashboard from './components/Pages/EmailDashboard';
 import { useState } from 'react';
+import RentalsManagement from './components/Pages/RentalsManagement';
 
 const App = () => (
   <Router>
@@ -68,6 +68,7 @@ const App = () => (
       <Route exact path="/map" element={<Map />} />
       <Route exact path="/waiver" element={<Waiver />} />
       <Route exact path="/membership" element={<Membership />} />
+      <Route exact path="/contact" element={<Contact />} />
       <Route exact path="/information/contact" element={<Contact />} />
       <Route exact path="/about" element={<About />} />
       <Route exact path="/information/gametypes" element={<Gametypes />} />
@@ -91,7 +92,7 @@ const App = () => (
       <Route exact path="/admin/enterlosses" element={<EnterLosses />} />
       <Route exact path="/admin/freegames" element={<FreeGames />} />
       <Route exact path="/admin/scanwaiver" element={<ScanWaiver />} />
-      <Route exact path="/admin/rentalform" element={<RentalForm />} />
+      <Route exact path="/admin/rentalform" element={<RentalsManagement />} />
       <Route exact path="/admin/birthday" element={<Birthday />} />
       <Route exact path="/admin/useroptions/:id" element={<UserOptions />} />
       <Route exact path="/dashboard" element={<WaiverDashboard />} />
@@ -100,7 +101,7 @@ const App = () => (
       <Route exact path="/dashboard/waiverlookup" element={<WaiverLookup />} />
       <Route exact path="/dashboard/signup" element={<SignUpForm />} />
       <Route exact path="/dashboard/renewal" element={<RenewSubscription />} />
-      <Route exact path="/dashboard/rentalform" element={<RentalForm />} />
+      <Route exact path="/dashboard/rentalform" element={<RentalsManagement />} />
       <Route exact path="/dashboard/freegames" element={<FreeGames />} />
       <Route exact path="/dashboard/birthday" element={<Birthday />} />
       <Route exact path="/account" element={<AccountPage />} />

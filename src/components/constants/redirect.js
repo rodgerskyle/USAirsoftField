@@ -1,47 +1,45 @@
-import React, { Component } from "react";
-import { withRouter } from './withRouter';
+import React, { useEffect, useState } from "react";
+import { useNavigate, useLocation } from 'react-router-dom';
 import { withFirebase } from '../Firebase';
 import * as ROLES from "./roles";
 
-class Redirect extends Component {
+const Redirect = ({ firebase }) => {
+    const [user, setUser] = useState(null);
+    const navigate = useNavigate();
+    const location = useLocation();
 
-    constructor(props) {
-        super(props);
-        this.state = { 
-            user: null,
-            waiverlocations: [
-                "/dashboard", "/dashboard/signup", "/dashboard/renewal", "/dashboard/waiverform", "/dashboard/waiverlookup", 
-                "/dashboard/rentalform", "/dashboard/scanwaiver", "/signout", "/login", "/dashboard/freegames", "/dashboard/birthday"
-            ],
-            staticlocations: [
-                "/dashboard/waiverform", "/signout", "/login"
-            ]
-         };
+    const waiverlocations = [
+        "/dashboard", "/dashboard/signup", "/dashboard/renewal",
+        "/dashboard/waiverform", "/dashboard/waiverlookup",
+        "/dashboard/rentalform", "/dashboard/scanwaiver",
+        "/signout", "/login", "/dashboard/freegames",
+        "/dashboard/birthday"
+    ];
 
-    }
+    const staticlocations = [
+        "/dashboard/waiverform", "/signout", "/login"
+    ];
 
-    componentDidMount() {
-        this.authSubscription = 
-            this.props.firebase.onAuthUserListener((user) => {
-                this.setState({user})
-            }, () => {this.setState({user: null})});
-    }
-    componentWillUnmount() {
-        this.authSubscription()
-    }
-	componentDidUpdate(prevProps) {
-        let { user, waiverlocations, staticlocations } = this.state
-        if (user && !!user.roles[ROLES.WAIVER]) {
-            if (!!user.roles[ROLES.STATIC] && !staticlocations.includes(this.props.location.pathname))
-                this.props.history.push("/dashboard/waiverform")
-            else if (!waiverlocations.includes(this.props.location.pathname))
-                this.props.history.push("/dashboard");
+    useEffect(() => {
+        const unsubscribe = firebase.onAuthUserListener(
+            (user) => setUser(user),
+            () => setUser(null)
+        );
+
+        return () => unsubscribe();
+    }, [firebase]);
+
+    useEffect(() => {
+        if (user && user.roles[ROLES.WAIVER]) {
+            if (user.roles[ROLES.STATIC] && !staticlocations.includes(location.pathname)) {
+                navigate("/dashboard/waiverform");
+            } else if (!waiverlocations.includes(location.pathname)) {
+                navigate("/dashboard");
+            }
         }
-	}
+    }, [user, location.pathname, navigate]);
 
-	render() {
-		return <React.Fragment />
-	}
-}
+    return null;
+};
 
-export default withRouter(withFirebase(Redirect));
+export default withFirebase(Redirect);
