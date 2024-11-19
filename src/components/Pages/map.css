@@ -24,34 +24,41 @@
   position: relative;
   display: flex;
   align-items: center;
+  flex-direction: row;
   background: #1a1a1a;
-  color: #dadada;
-  padding: 0.75rem 1.25rem;
-  border-radius: 25px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  transform: translate(-50%, -100%);
-  transition: all 0.3s ease;
   border: 2px solid #3498db;
+  border-radius: 25px;
+  box-shadow: 0 2px 8px #00000026;
+  color: #dadada;
+  display: flex;
+  padding: .75rem 1.25rem;
+  position: relative;
+  transform: translate(-6%, -6%);
+  transition: all .3s ease;
+  min-width: 250px;
 }
 
 .pin:hover {
-  transform: translate(-50%, -105%);
+  transform: translate(-6%, -11%);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .pin-icon {
   color: #3498db;
   font-size: 1.2rem;
-  margin-right: 0.75rem;
+  margin-right: .75rem;
+  flex-shrink: 0;
 }
 
 .pin-text {
   margin: 0;
   font-size: 0.9rem;
-  white-space: nowrap;
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  line-height: 1.2;
 }
 
 /* Tablet Styles */
