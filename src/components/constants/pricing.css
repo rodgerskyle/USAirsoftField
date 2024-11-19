@@ -64,7 +64,11 @@
     box-shadow: var(--card-shadow);
 }
 
-.pricing-card::before {
+.pricing-card p {
+    color: white;
+}
+
+.pricing-card .pricing-card::before {
     content: '';
     position: absolute;
     top: 0;
@@ -117,6 +121,14 @@
 
 .birthday-card-header {
     background: linear-gradient(135deg, #1a237e, var(--accent-blue));
+}
+
+.weekend-card-header {
+    background: linear-gradient(135deg, #1a237e, var(--accent-blue));
+}
+
+.weekday-card-header {
+    background: linear-gradient(135deg, var(--navy-blue), var(--accent-red));
 }
 
 .card-body {
@@ -172,7 +184,7 @@
 .contact-button {
     background: var(--accent-blue);
     border: none;
-    width: 100%;
+    width: 25%;
     padding: 1rem 2rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -250,6 +262,10 @@
         width: 100%;
     }
 
+    .pricing-nav .col-md-3 button {
+        margin: unset;
+    }
+
     .price-title {
         font-size: 2rem;
     }
@@ -261,6 +277,10 @@
     .card-header {
         padding: 1.5rem 1rem;
         font-size: 1.1rem;
+    }
+
+    .contact-button {
+        width: 100%;
     }
 }
 

@@ -185,7 +185,6 @@ class Leaderboards extends Component {
     }
 
     componentDidMount() {
-        console.log(this.props.match?.params.query)
         if (this.props.match?.params.query === "monthly") {
             this.setState({ monthly: true, tv: true, })
         }

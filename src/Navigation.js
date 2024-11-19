@@ -4,7 +4,7 @@ import default_profile from './assets/default.png';
 import { Nav, Navbar, NavDropdown } from 'react-bootstrap/';
 import MUIButton from '@mui/material/Button';
 import { Row, Col } from 'react-bootstrap/';
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import * as ROLES from './components/constants/roles';
 import { withFirebase } from './components/Firebase';
 import { Collapse, IconButton } from '@mui/material';
@@ -139,9 +139,10 @@ const NavigationAuth = ({ authUser, profilePic }) => {
     const [expanded, setExpanded] = useState(false);
 
     const [key, setKey] = useState("");
+    const location = useLocation();
 
     useEffect(() => {
-        var url = window.location.pathname;
+        var url = location.pathname;
         if (url === "/" || url === "/home") {
             setKey(0);
         }
@@ -184,7 +185,7 @@ const NavigationAuth = ({ authUser, profilePic }) => {
         else if (url.includes("/information/pricing")) {
             setKey(8.3);
         }
-        else if (url.includes("/information/contact")) {
+        else if (url.includes("/information/contact") || url.includes("/contact")) {
             setKey(8.4);
         }
         else if (url === "/account") {
@@ -193,7 +194,7 @@ const NavigationAuth = ({ authUser, profilePic }) => {
         else if (url === "/profilesettings") {
             setKey(9.2)
         }
-    }, [])
+    }, [location.pathname])
 
     function handleSelect(key) {
         setKey(key);
@@ -347,11 +348,12 @@ const NavigationAuth = ({ authUser, profilePic }) => {
 const NavigationNonAuth = () => {
     const [expanded, setExpanded] = useState(false);
     const profilePic = default_profile
+    const location = useLocation();
 
     const [key, setKey] = useState("");
 
     useEffect(() => {
-        var url = window.location.pathname;
+        var url = location.pathname;
         if (url === "/" || url === "/home") {
             setKey(0);
         }
@@ -394,13 +396,13 @@ const NavigationNonAuth = () => {
         else if (url.includes("/information/pricing")) {
             setKey(8.3);
         }
-        else if (url.includes("/information/contact")) {
+        else if (url.includes("/information/contact") || url.includes("/contact")) {
             setKey(8.4);
         }
         else if (url === "/login") {
             setKey(9.1);
         }
-    }, [])
+    }, [location.pathname])
 
     function handleSelect(key) {
         setKey(key);

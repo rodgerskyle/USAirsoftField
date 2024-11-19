@@ -61,6 +61,13 @@
     text-align: center;
 }
 
+.react-calendar__year-view__months {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    padding: 0 2px;
+}
+
 .react-calendar__month-view__days {
     display: grid !important;
     grid-template-columns: repeat(7, 1fr);
@@ -81,6 +88,19 @@
     border-radius: 50%;
     transition: all 0.2s ease;
     aspect-ratio: 1;
+}
+
+button.react-calendar__tile.react-calendar__century-view__decades__decade,
+button.react-calendar__tile.react-calendar__decade-view__years__year,
+button.react-calendar__tile.react-calendar__year-view__months__month {
+    background-color: unset;
+    width: 100%;
+}
+
+button.react-calendar__tile.react-calendar__century-view__decades__decade:hover,
+button.react-calendar__tile.react-calendar__decade-view__years__year:hover,
+button.react-calendar__tile.react-calendar__year-view__months__month:hover {
+    background-color: rgba(114, 175, 233, 0.219);
 }
 
 /* Game Day Styles - More distinct */
@@ -163,8 +183,13 @@
     transition: all 0.2s ease;
 }
 
-.react-calendar__tile .MuiSvgIcon-root {
-    display: none;
+@media (max-width: 768px) {
+    .react-calendar__tile .MuiSvgIcon-root {
+        margin-top: 7px;
+        width: 5px;
+        height: 5px;
+        font-size: 5px;
+    }
 }
 
 /* Responsive Adjustments */
