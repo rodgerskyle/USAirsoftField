@@ -1,10 +1,12 @@
-import React from 'react'
+import React, { useState } from 'react'
 import GoogleMapReact from 'google-map-react'
 import './map.css'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faMapMarkerAlt } from '@fortawesome/free-solid-svg-icons'
 
 const GMap = ({ location, zoomLevel }) => {
+  const [zoom, setZoom] = useState(zoomLevel);
+
   const mapOptions = {
     styles: [
       {
@@ -55,6 +57,10 @@ const GMap = ({ location, zoomLevel }) => {
     ]
   };
 
+  const handleZoomChange = (newZoom) => {
+    setZoom(newZoom);
+  };
+
   return (
     <div className="map">
       <div className="google-map">
@@ -63,11 +69,13 @@ const GMap = ({ location, zoomLevel }) => {
           defaultCenter={location}
           defaultZoom={zoomLevel}
           options={mapOptions}
+          onZoomChange={handleZoomChange}
         >
           <LocationPin
             lat={location.lat}
             lng={location.lng}
             text={location.address}
+            zoom={zoom}
           />
         </GoogleMapReact>
       </div>
@@ -75,10 +83,10 @@ const GMap = ({ location, zoomLevel }) => {
   )
 }
 
-const LocationPin = ({ text }) => (
-  <div className="pin">
+const LocationPin = ({ text, zoom }) => (
+  <div className={`pin ${zoom < 12 ? 'pin-small' : ''}`}>
     <FontAwesomeIcon icon={faMapMarkerAlt} className="pin-icon" />
-    <p className="pin-text">{text}</p>
+    {zoom >= 12 && <p className="pin-text">{text}</p>}
   </div>
 )
 

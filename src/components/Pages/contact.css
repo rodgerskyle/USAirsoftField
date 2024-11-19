@@ -27,9 +27,16 @@
 }
 
 .contact-card {
+    background-color: unset;
     border: none;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease;
+}
+
+.contact-card .card-body {
+    background-color: #242424;
+    border: 1px solid rgba(0, 0, 0, .175);
+    border-radius: 5px;
 }
 
 .contact-card:hover {

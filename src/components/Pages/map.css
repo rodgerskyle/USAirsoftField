@@ -38,9 +38,35 @@
   min-width: 250px;
 }
 
+/* Small pin style when zoomed out */
+.pin-small {
+  min-width: unset;
+  width: 40px;
+  height: 40px;
+  padding: 0.5rem;
+  border-radius: 50%;
+  justify-content: center;
+  transform: translate(-6%, -6%);
+  display: flex;
+  align-items: center;
+}
+
+.pin-small .pin-icon {
+  margin-right: 0;
+  font-size: 1.5rem;
+}
+
+.pin-small .pin-text {
+  display: none;
+}
+
 .pin:hover {
   transform: translate(-6%, -11%);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.pin-small:hover {
+  transform: translate(-6%, -11%);
 }
 
 .pin-icon {
@@ -100,6 +126,15 @@
     font-size: 0.8rem;
     max-width: 150px;
   }
+
+  .pin-small {
+    width: 32px;
+    height: 32px;
+  }
+
+  .pin-small .pin-icon {
+    font-size: 1.2rem;
+  }
 }
 
 /* Small Mobile Devices */
@@ -122,4 +157,9 @@
   .google-map {
     height: 200px;
   }
+}
+
+/* Animation for pin size transition */
+.pin {
+  transition: all 0.3s ease-in-out;
 }
