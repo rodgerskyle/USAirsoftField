@@ -152,7 +152,7 @@ const NavigationAuth = ({ authUser, profilePic }) => {
         else if (url === "/schedule") {
             setKey(2);
         }
-        else if (url === "/teams") {
+        else if (url === "/events") {
             setKey(3);
         }
         else if (url === "/admin") {
@@ -269,10 +269,12 @@ const NavigationAuth = ({ authUser, profilePic }) => {
                         </Nav.Link>
                         <Nav.Link as={Link} className="nav-link" to="/leaderboard" eventKey={1}
                             onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Leaderboard</Nav.Link>
+                        <Nav.Link as={Link} className="nav-link" to="/events" eventKey={3}
+                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Parties & Events</Nav.Link>
                         <Nav.Link as={Link} className="nav-link" to="/schedule" eventKey={2}
                             onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Schedule</Nav.Link>
-                        <Nav.Link as={Link} className="nav-link" to="/teams" eventKey={3}
-                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Teams</Nav.Link>
+                        {/* <Nav.Link as={Link} className="nav-link" to="/teams" eventKey={3}
+                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Teams</Nav.Link> */}
                         {!!authUser.roles[ROLES.ADMIN] && (
                             <Nav.Link as={Link} className="nav-link" to="/admin" eventKey={4}
                                 onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Admin</Nav.Link>
@@ -363,9 +365,12 @@ const NavigationNonAuth = () => {
         else if (url === "/schedule") {
             setKey(2);
         }
-        else if (url === "/teams") {
+        else if (url === "/events") {
             setKey(3);
         }
+        // else if (url === "/teams") {
+        //     setKey(3);
+        // }
         else if (url === "/admin") {
             setKey(4);
         }
@@ -468,10 +473,12 @@ const NavigationNonAuth = () => {
                         </Nav.Link>
                         <Nav.Link as={Link} className="nav-link" to="/leaderboard" eventKey={1}
                             onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Leaderboard</Nav.Link>
+                        <Nav.Link as={Link} className="nav-link" to="/events" eventKey={3}
+                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Parties & Events</Nav.Link>
                         <Nav.Link as={Link} className="nav-link" to="/schedule" eventKey={2}
                             onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Schedule</Nav.Link>
-                        <Nav.Link as={Link} className="nav-link" to="/teams" eventKey={3}
-                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Teams</Nav.Link>
+                        {/* <Nav.Link as={Link} className="nav-link" to="/teams" eventKey={3}
+                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Teams</Nav.Link> */}
                         <NavDropdown title="Media" active={checkKey(5)}>
                             <NavDropdown.Item className="NavDropdown-default" as={Link} to="/media/instagram" eventKey={5.1}
                                 onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>

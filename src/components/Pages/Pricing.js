@@ -11,14 +11,12 @@ const PRICING_SECTIONS = {
     MEMBERSHIP: 0,
     ADMISSION: 1,
     RENTAL: 2,
-    BIRTHDAY: 3
 };
 
 const SECTION_TITLES = {
     [PRICING_SECTIONS.MEMBERSHIP]: "Membership Pricing",
     [PRICING_SECTIONS.ADMISSION]: "Admission Pricing",
     [PRICING_SECTIONS.RENTAL]: "Rental Pricing",
-    [PRICING_SECTIONS.BIRTHDAY]: "Birthday Pricing"
 };
 
 const MembershipSection = () => (
@@ -394,8 +392,6 @@ const Pricing = () => {
                 return <AdmissionSection />;
             case PRICING_SECTIONS.RENTAL:
                 return <RentalSection />;
-            case PRICING_SECTIONS.BIRTHDAY:
-                return <BirthdaySection />;
             default:
                 return <MembershipSection />;
         }

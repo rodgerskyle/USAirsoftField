@@ -46,6 +46,7 @@ import ScanWaiver from './components/Pages/ScanWaiver';
 import About from './components/Pages/About';
 import Logout from './components/constants/logout';
 import Schedule from './components/Pages/Schedule';
+import PartiesAndEvents from './components/Pages/PartiesAndEvents';
 // import EmailDashboard from './components/Pages/EmailDashboard';
 import { useState } from 'react';
 import RentalsManagement from './components/Pages/RentalsManagement';
@@ -64,6 +65,7 @@ const App = () => (
           <EmailOptOut {...props} />
         )}
       ></Route>
+      <Route exact path="/events" element={<PartiesAndEvents />} />
       <Route exact path="/schedule" element={<Schedule />} />
       <Route exact path="/map" element={<Map />} />
       <Route exact path="/waiver" element={<Waiver />} />

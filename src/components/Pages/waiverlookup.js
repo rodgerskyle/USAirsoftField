@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import '../../App.css';
+import './waiverlookup.css';
 
 import { withFirebase } from '../Firebase';
 import { AuthUserContext, withAuthorization } from '../session';
@@ -26,45 +27,15 @@ import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import SignedWaiver from './SignedWaiver';
 import { pdf } from '@react-pdf/renderer';
 
-const StyledToggle = styled(FormControlLabel)({
-    marginLeft: '10px',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    padding: '4px 12px',
-    borderRadius: '20px',
-    '& .MuiFormControlLabel-label': {
-        color: '#fff',
-        fontSize: '0.9rem',
-        marginLeft: '8px'
-    },
-    '& .MuiSwitch-root': {
-        '& .MuiSwitch-track': {
-            backgroundColor: '#666'
-        },
-        '& .MuiSwitch-thumb': {
-            backgroundColor: '#fff'
-        }
-    }
-});
+const formatDate = (date) => {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
 
-const StyledDropdown = styled(Dropdown)({
-    '& .dropdown-toggle': {
-        backgroundColor: '#f8f9fa',
-        border: '1px solid #ced4da',
-        color: '#495057',
-        padding: '6px 12px',
-        borderRadius: '4px',
-        minWidth: '120px',
-        textAlign: 'left',
-        '&:hover, &:focus': {
-            backgroundColor: '#e9ecef',
-            borderColor: '#adb5bd'
-        }
-    },
-    '& .dropdown-menu': {
-        maxHeight: '300px',
-        overflowY: 'auto'
-    }
-});
+    return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+};
 
 class WaiverLookup extends Component {
     constructor(props) {
@@ -87,6 +58,9 @@ class WaiverLookup extends Component {
             useLegacy: false,
             showPdfModal: false,
             pdfUrl: null,
+            currentPage: 1,
+            itemsPerPage: 50,
+            totalPages: 1,
         };
         // this.validate = this.validate.bind(this)
         this.lookup = this.lookup.bind(this)
@@ -153,22 +127,51 @@ class WaiverLookup extends Component {
 
     loadLegacyWaivers = () => {
         listAll(this.props.firebase.waiversList()).then((res) => {
-            var tempWaivers = [];
-            for (let i = 0; i < res.items.length; i++) {
-                let waiverName = res.items[i].name;
-                let dateObj = convertDate(waiverName.substr(waiverName.lastIndexOf('(') + 1).split(')')[0]);
-                let waiver_obj = {
-                    name: waiverName,
-                    date: dateObj,
-                    ref: res.items[i],
-                    isDigital: false
-                };
-                tempWaivers.push(waiver_obj);
-            }
-            this.setState({ waivers: tempWaivers, loading: false });
+            const tempWaivers = res.items.map(item => {
+                try {
+                    const waiverName = item.name;
+                    // Extract date from filename
+                    const dateMatch = waiverName.match(/\((.*?)\)/);
+                    let dateObj;
+
+                    if (dateMatch && dateMatch[1]) {
+                        dateObj = this.parseLegacyDate(dateMatch[1]);
+                    } else {
+                        dateObj = new Date();
+                    }
+
+                    return {
+                        name: waiverName,
+                        date: dateObj,
+                        ref: item.fullPath,
+                        isDigital: false
+                    };
+                } catch (error) {
+                    console.error('Error processing waiver:', item.name, error);
+                    return {
+                        name: item.name,
+                        date: new Date(),
+                        ref: item.fullPath,
+                        isDigital: false
+                    };
+                }
+            });
+
+            const validWaivers = tempWaivers.filter(waiver =>
+                waiver && waiver.name && waiver.date && waiver.ref
+            );
+
+            this.setState({
+                waivers: validWaivers,
+                loading: false,
+                totalPages: Math.ceil(validWaivers.length / this.state.itemsPerPage)
+            });
         }).catch(error => {
-            console.log(error);
-            this.setState({ loading: false });
+            console.error('Error loading legacy waivers:', error);
+            this.setState({
+                waivers: [],
+                loading: false
+            });
         });
     }
 
@@ -222,42 +225,23 @@ class WaiverLookup extends Component {
     // Opens User's waiver
     openWaiver = async (ref, isDigital) => {
         if (isDigital) {
-            const waiver = this.state.waivers.find(w => w.ref === ref);
-
-            if (waiver && waiver.data) {
-                try {
-                    // Generate and display PDF
-                    const blob = await pdf((
-                        <SignedWaiver
-                            name={waiver.data.name}
-                            email={waiver.data.email}
-                            phone={waiver.data.phone}
-                            address={waiver.data.address}
-                            city={waiver.data.city}
-                            state={waiver.data.state}
-                            zipcode={waiver.data.zipcode}
-                            dob={waiver.data.dob}
-                            age={waiver.data.age}
-                            participantSignature={waiver.data.participantSignature}
-                            guardian={waiver.data.guardian}
-                        />
-                    )).toBlob();
-
-                    const pdfUrl = URL.createObjectURL(blob);
-                    window.open(pdfUrl, '_blank');
-
-                    // Clean up URL after a short delay
-                    setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
-                } catch (error) {
-                    console.error('Error generating waiver:', error);
-                    alert('Failed to generate waiver. Please try again.');
-                }
+            // Handle digital waiver viewing
+            this.setState({ showPdfModal: true });
+            try {
+                const pdfBlob = await pdf(<SignedWaiver data={this.state.waivers.find(w => w.ref === ref).data} />).toBlob();
+                const pdfUrl = URL.createObjectURL(pdfBlob);
+                this.setState({ pdfUrl });
+            } catch (error) {
+                console.error('Error generating PDF:', error);
             }
         } else {
-            // Legacy waiver handling
-            ref.getDownloadURL().then(url => {
-                window.open(url);
-            });
+            // Handle legacy waiver opening
+            try {
+                const url = await getDownloadURL(this.props.firebase.waiver(ref));
+                window.open(url, '_blank');
+            } catch (error) {
+                console.error('Error opening legacy waiver:', error);
+            }
         }
     }
 
@@ -275,153 +259,211 @@ class WaiverLookup extends Component {
         });
     }
 
+    // Add this method to parse complex date formats
+    parseLegacyDate = (dateString) => {
+        try {
+            // Handle format: 1-23-2022:9:1:38:752
+            if (dateString.includes(':')) {
+                const [datePart] = dateString.split(':');
+                const [month, day, year] = datePart.split('-');
+                return new Date(year, month - 1, day);
+            }
+            // Handle other formats using existing convertDate
+            return convertDate(dateString);
+        } catch (error) {
+            console.error('Date parsing error:', dateString, error);
+            return new Date();
+        }
+    }
+
+    // Add pagination controls
+    handlePageChange = (pageNumber) => {
+        this.setState({ currentPage: pageNumber });
+    }
+
     render() {
-        const { loading, waivers, search, activeMonth, activeDay, activeYear, useLegacy, showPdfModal, pdfUrl } = this.state;
-        let index = 0;
+        const { loading, waivers, search, activeMonth, activeDay, activeYear, currentPage, itemsPerPage } = this.state;
+        let index = ((currentPage - 1) * itemsPerPage) + 1;
+
+        // Get current waivers
+        const filteredWaivers = waivers
+            .sort((a, b) => b.date - a.date)
+            .filter(waiver => {
+                if (search !== "" && !waiver.name.toLowerCase().includes(search.toLowerCase())) {
+                    return false;
+                }
+                if (!search && !compareDate(activeMonth, activeDay, activeYear, waiver.date)) {
+                    return false;
+                }
+                return true;
+            });
+
+        const indexOfLastItem = currentPage * itemsPerPage;
+        const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+        const currentWaivers = filteredWaivers.slice(indexOfFirstItem, indexOfLastItem);
 
         return (
             <AuthUserContext.Consumer>
                 {authUser => (
-                    <div className="background-static-all">
-                        <Helmet>
-                            <title>US Airsoft Field: Waiver Lookup</title>
-                        </Helmet>
-                        <Container>
-                            <Row className="align-items-center mb-3">
-                                <Col>
-                                    <h2 className="admin-header">Waiver Lookup</h2>
-                                </Col>
-                                <Col xs="auto">
-                                    <StyledToggle
-                                        control={
-                                            <Switch
-                                                checked={useLegacy}
-                                                onChange={this.toggleWaiverType}
-                                                color="primary"
-                                                sx={{
-                                                    '& .MuiSwitch-switchBase.Mui-checked': {
-                                                        color: '#90caf9'
-                                                    },
-                                                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                                                        backgroundColor: '#90caf9'
-                                                    }
-                                                }}
-                                            />
-                                        }
-                                        label="Legacy Waivers"
-                                    />
-                                </Col>
-                            </Row>
-                            <Breadcrumb className="admin-breadcrumb">
-                                {authUser && !!authUser.roles[ROLES.ADMIN] ?
-                                    <LinkContainer to="/admin">
-                                        <Breadcrumb.Item>Admin</Breadcrumb.Item>
-                                    </LinkContainer>
-                                    :
-                                    <LinkContainer to="/dashboard">
-                                        <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
-                                    </LinkContainer>
-                                }
+                    <div className="usa-waiver-container">
+                        <div className="usa-waiver-breadcrumb">
+                            <Breadcrumb>
+                                <LinkContainer to="/">
+                                    <Breadcrumb.Item>Home</Breadcrumb.Item>
+                                </LinkContainer>
+                                <LinkContainer to="/admin">
+                                    <Breadcrumb.Item>Admin</Breadcrumb.Item>
+                                </LinkContainer>
                                 <Breadcrumb.Item active>Waiver Lookup</Breadcrumb.Item>
                             </Breadcrumb>
-                            <Row>
-                                <Col>
-                                    <Card className="admin-cards">
-                                        <Card.Header>
-                                            <Form onSubmit={e => { e.preventDefault(); }}>
-                                                <Form.Group controlId="input1">
-                                                    <Form.Label className="search-label-admin">Search by Name:</Form.Label>
-                                                    <Form.Control
-                                                        type="name"
-                                                        autoComplete="off"
-                                                        placeholder="ex: John Doe"
-                                                        value={this.state.search}
-                                                        onChange={(e) => {
-                                                            this.onChange(e);
-                                                        }}
-                                                    />
-                                                </Form.Group>
-                                            </Form>
-                                            <Collapse in={this.state.search === ""}>
-                                                <Row className="align-items-center mt-3">
-                                                    <Col md="auto">
-                                                        <StyledDropdown>
-                                                            <Dropdown.Toggle as={CustomToggle} id="dropdown-month">
-                                                                Month: {this.state.activeMonth !== 13 ?
-                                                                    returnMonth(this.state.activeMonth - 1) : "None"}
-                                                            </Dropdown.Toggle>
-                                                            <Dropdown.Menu as={CustomMenu} className="dropdown-waiverlookup">
-                                                                <Dropdown.Item eventKey={13} active={13 === this.state.activeMonth}
-                                                                    onClick={() => this.setState({ activeMonth: 13 })}>
-                                                                    {"None"}
-                                                                </Dropdown.Item>
-                                                                {this.state.months.map((month, i) => (
-                                                                    <Dropdown.Item key={i} eventKey={i} active={i === this.state.activeMonth - 1}
-                                                                        onClick={() => this.setState({ activeMonth: i + 1 })}>
-                                                                        {i + 1}
-                                                                    </Dropdown.Item>
-                                                                ))}
-                                                            </Dropdown.Menu>
-                                                        </StyledDropdown>
-                                                    </Col>
-                                                    <Col md="auto">
-                                                        <StyledDropdown>
-                                                            <Dropdown.Toggle as={CustomToggle} id="dropdown-day">
-                                                                Day: {this.state.activeDay !== 32 ?
-                                                                    this.state.activeDay : "None"}
-                                                            </Dropdown.Toggle>
-                                                            <Dropdown.Menu as={CustomMenu} className="dropdown-waiverlookup">
-                                                                <Dropdown.Item eventKey={32} active={32 === this.state.activeDay}
-                                                                    onClick={() => this.setState({ activeDay: 32 })}>
-                                                                    {"None"}
-                                                                </Dropdown.Item>
-                                                                {this.state.days.map((day, i) => (
-                                                                    <Dropdown.Item key={i} eventKey={i} active={i + 1 === this.state.activeDay}
-                                                                        onClick={() => this.setState({ activeDay: i + 1 })}>
-                                                                        {i + 1}
-                                                                    </Dropdown.Item>
-                                                                ))}
-                                                            </Dropdown.Menu>
-                                                        </StyledDropdown>
-                                                    </Col>
-                                                    <Col md="auto">
-                                                        <StyledDropdown>
-                                                            <Dropdown.Toggle as={CustomToggle} id="dropdown-year">
-                                                                Year: {this.state.activeYear !== new Date().getFullYear() + 1 ?
-                                                                    this.state.activeYear : "None"}
-                                                            </Dropdown.Toggle>
-                                                            <Dropdown.Menu as={CustomMenu} className="dropdown-waiverlookup">
-                                                                <Dropdown.Item eventKey={this.state.years.length + 1}
-                                                                    active={new Date().getFullYear() + 1 === this.state.activeYear}
-                                                                    onClick={() => this.setState({ activeYear: new Date().getFullYear() + 1 })}>
-                                                                    {"None"}
-                                                                </Dropdown.Item>
-                                                                {this.state.years.map((year, i) => (
-                                                                    <Dropdown.Item eventKey={i} key={i} active={year === this.state.activeYear}
-                                                                        onClick={() => this.setState({ activeYear: year })}>
-                                                                        {year}
-                                                                    </Dropdown.Item>
-                                                                ))}
-                                                            </Dropdown.Menu>
-                                                        </StyledDropdown>
-                                                    </Col>
-                                                </Row>
-                                            </Collapse>
-                                        </Card.Header>
-                                        <WaiverBox
-                                            waivers={waivers}
-                                            index={index}
-                                            search={search}
-                                            open={this.openWaiver}
-                                            loading={loading}
-                                            month={activeMonth}
-                                            day={activeDay}
-                                            year={activeYear}
+                        </div>
+
+                        <Card className="usa-waiver-card">
+                            <Card.Header className="usa-waiver-header">
+                                <Form.Control
+                                    type="text"
+                                    placeholder="Search by name..."
+                                    value={search}
+                                    onChange={(e) => this.setState({ search: e.target.value })}
+                                    className="usa-waiver-search"
+                                />
+
+                                {/* Date Filters */}
+                                <div className="usa-waiver-date-filters">
+                                    <Dropdown className="usa-waiver-date-dropdown">
+                                        <Dropdown.Toggle as={CustomToggle}>
+                                            Month: {activeMonth !== 13 ? this.state.months[activeMonth - 1] : "All"}
+                                        </Dropdown.Toggle>
+                                        <Dropdown.Menu as={CustomMenu}>
+                                            <Dropdown.Item onClick={() => this.setState({ activeMonth: 13 })}>
+                                                All Months
+                                            </Dropdown.Item>
+                                            {this.state.months.map((month, index) => (
+                                                <Dropdown.Item
+                                                    key={month}
+                                                    onClick={() => this.setState({ activeMonth: index + 1 })}
+                                                >
+                                                    {month}
+                                                </Dropdown.Item>
+                                            ))}
+                                        </Dropdown.Menu>
+                                    </Dropdown>
+
+                                    <Dropdown className="usa-waiver-date-dropdown">
+                                        <Dropdown.Toggle as={CustomToggle}>
+                                            Day: {activeDay !== 32 ? activeDay : "All"}
+                                        </Dropdown.Toggle>
+                                        <Dropdown.Menu as={CustomMenu}>
+                                            <Dropdown.Item onClick={() => this.setState({ activeDay: 32 })}>
+                                                All Days
+                                            </Dropdown.Item>
+                                            {this.state.days.map((day, index) => (
+                                                <Dropdown.Item
+                                                    key={day}
+                                                    onClick={() => this.setState({ activeDay: index + 1 })}
+                                                >
+                                                    {index + 1}
+                                                </Dropdown.Item>
+                                            ))}
+                                        </Dropdown.Menu>
+                                    </Dropdown>
+
+                                    <Dropdown className="usa-waiver-date-dropdown">
+                                        <Dropdown.Toggle as={CustomToggle}>
+                                            Year: {activeYear !== new Date().getFullYear() + 1 ? activeYear : "All"}
+                                        </Dropdown.Toggle>
+                                        <Dropdown.Menu as={CustomMenu}>
+                                            <Dropdown.Item
+                                                onClick={() => this.setState({ activeYear: new Date().getFullYear() + 1 })}
+                                            >
+                                                All Years
+                                            </Dropdown.Item>
+                                            {this.state.years.map(year => (
+                                                <Dropdown.Item
+                                                    key={year}
+                                                    onClick={() => this.setState({ activeYear: year })}
+                                                >
+                                                    {year}
+                                                </Dropdown.Item>
+                                            ))}
+                                        </Dropdown.Menu>
+                                    </Dropdown>
+                                </div>
+
+                                <FormControlLabel
+                                    control={
+                                        <Switch
+                                            checked={this.state.useLegacy}
+                                            onChange={this.toggleWaiverType}
+                                            color="primary"
                                         />
-                                    </Card>
-                                </Col>
-                            </Row>
-                        </Container>
+                                    }
+                                    label="Use Legacy Waivers"
+                                    className="usa-waiver-switch"
+                                />
+                            </Card.Header>
+
+                            <Card.Body className="usa-waiver-body">
+                                {loading ? (
+                                    <div className="usa-waiver-loading">
+                                        <Spinner animation="border" role="status">
+                                            <span className="visually-hidden">Loading...</span>
+                                        </Spinner>
+                                    </div>
+                                ) : (
+                                    <>
+                                        {filteredWaivers.length > 0 ? (
+                                            <>
+                                                <div className="usa-waiver-list">
+                                                    {currentWaivers.map((waiver) => (
+                                                        <div
+                                                            className={`usa-waiver-row ${index++ % 2 === 0 ? 'usa-waiver-row-even' : 'usa-waiver-row-odd'}`}
+                                                            key={waiver.ref}
+                                                        >
+                                                            <div className="usa-waiver-row-content">
+                                                                <div className="usa-waiver-info">
+                                                                    <span className="usa-waiver-index">#{index}</span>
+                                                                    <span className="usa-waiver-name">
+                                                                        {waiver.isDigital ?
+                                                                            waiver.name :
+                                                                            waiver.name.substr(0, waiver.name.lastIndexOf('('))}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="usa-waiver-date">
+                                                                    {formatDate(waiver.date)}
+                                                                </div>
+                                                                <Button
+                                                                    className={`usa-waiver-button ${waiver.isDigital ? 'usa-waiver-button-view' : 'usa-waiver-button-open'}`}
+                                                                    onClick={() => this.openWaiver(waiver.ref, waiver.isDigital)}
+                                                                >
+                                                                    {waiver.isDigital ? 'View' : 'Open'}
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <div className="usa-waiver-pagination">
+                                                    {Array.from({ length: Math.ceil(filteredWaivers.length / itemsPerPage) }, (_, i) => (
+                                                        <Button
+                                                            key={i + 1}
+                                                            onClick={() => this.handlePageChange(i + 1)}
+                                                            className={`usa-waiver-page-button ${currentPage === i + 1 ? 'active' : ''}`}
+                                                        >
+                                                            {i + 1}
+                                                        </Button>
+                                                    ))}
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="usa-waiver-no-results">
+                                                <p>No waivers found matching your search criteria.</p>
+                                                <p>Try broadening your search or adjusting the date filters.</p>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </Card.Body>
+                        </Card>
                     </div>
                 )}
             </AuthUserContext.Consumer>
@@ -446,116 +488,6 @@ function compareDate(month, day, year, date2) {
         && day === date2.getDate())
         return true;
     return false;
-}
-
-function returnDay(day) {
-    if (day === 0)
-        return "Sun"
-    else if (day === 1)
-        return "Mon"
-    else if (day === 2)
-        return "Tue"
-    else if (day === 3)
-        return "Wed"
-    else if (day === 4)
-        return "Thu"
-    else if (day === 5)
-        return "Fri"
-    else if (day === 6)
-        return "Sat"
-}
-
-function returnMonth(month) {
-    if (month === 0)
-        return "January"
-    else if (month === 1)
-        return "February"
-    else if (month === 2)
-        return "March"
-    else if (month === 3)
-        return "April"
-    else if (month === 4)
-        return "May"
-    else if (month === 5)
-        return "June"
-    else if (month === 6)
-        return "July"
-    else if (month === 7)
-        return "August"
-    else if (month === 8)
-        return "September"
-    else if (month === 9)
-        return "October"
-    else if (month === 10)
-        return "November"
-    else if (month === 11)
-        return "December"
-}
-
-function WaiverBox({ waivers, index, search, open, loading, month, day, year, validate, lookup }) {
-    return (
-        <Card.Body className="status-card-body-wl-admin">
-            {!loading ? (
-                <>
-                    <Row className="card-header-wl">
-                        <Col md={3}>
-                            <Card.Text>Name:</Card.Text>
-                        </Col>
-                        <Col md={4}>
-                            <Card.Text>Date Created:</Card.Text>
-                        </Col>
-                        <Col md={2}></Col>
-                    </Row>
-                    <div className="row-allwaivers-wl">
-                        {waivers.sort((a, b) => (b.date - a.date))
-                            .map((waiver, i) => {
-                                if (search !== "" && !waiver.name.toLowerCase().includes(search.toLowerCase())) {
-                                    return null;
-                                }
-
-                                if (!search && !compareDate(month, day, year, waiver.date)) {
-                                    return null;
-                                }
-
-                                const rowClass = index++ % 2 === 0 ? "row-wl" : "status-card-offrow-admin-wl";
-
-                                return (
-                                    <Row className={rowClass} key={index}>
-                                        <Col className="col-name-fg" md={3}>
-                                            <Card.Text>
-                                                {"(" + index + ") " + (waiver.isDigital ? waiver.name : waiver.name.substr(0, waiver.name.lastIndexOf('(')))}
-                                            </Card.Text>
-                                        </Col>
-                                        <Col className="col-name-fg" md={7}>
-                                            {returnDay(waiver.date.getDay()) + ", " +
-                                                waiver.date.getDate() + " " + returnMonth(waiver.date.getMonth()) +
-                                                " " + waiver.date.getFullYear()}
-                                        </Col>
-                                        <Col md={2}>
-                                            <Button
-                                                className="button-submit-admin2"
-                                                onClick={() => open(waiver.ref, waiver.isDigital)}
-                                                type="button"
-                                                variant="success"
-                                            >
-                                                {waiver.isDigital ? 'View' : 'Open'}
-                                            </Button>
-                                        </Col>
-                                    </Row>
-                                );
-                            })
-                        }
-                    </div>
-                </>
-            ) : (
-                <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '200px' }}>
-                    <Spinner animation="border" role="status">
-                        <span className="visually-hidden">Loading...</span>
-                    </Spinner>
-                </div>
-            )}
-        </Card.Body>
-    );
 }
 
 const condition = authUser =>

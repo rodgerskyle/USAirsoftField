@@ -299,133 +299,131 @@ class CreateRentalForm extends Component {
         return (
             <Container>
                 <Row className="justify-content-center">
-                    <Col md={12}>
-                        <Card className="card-rental-form">
-                            <Card.Body>
-                                <h1 className="rental-form-header">New Rental Form</h1>
-                                <Form onSubmit={(e) => this.createForm(e, options)} className="rental-form">
-                                    <div className="rental-form-fields">
-                                        <TextField
-                                            className="rental-form-input"
-                                            label="Rental Name"
-                                            value={rentalName}
-                                            onChange={(e) => this.setState({ rentalName: e.target.value })}
-                                            error={!!rentalnameError}
-                                            helperText={rentalnameError}
-                                            required
-                                            sx={{
-                                                backgroundColor: '#fff',
-                                                borderRadius: '4px',
-                                                marginBottom: '1rem'
-                                            }}
-                                        />
-                                        <TextField
-                                            className="rental-form-input"
-                                            label="Number of Participants"
-                                            type="number"
-                                            value={numParticipants}
-                                            onChange={(e) => this.setState({ numParticipants: e.target.value })}
-                                            error={!!numparticipantsError}
-                                            helperText={numparticipantsError}
-                                            required
-                                            sx={{
-                                                backgroundColor: '#fff',
-                                                borderRadius: '4px',
-                                                marginBottom: '1rem'
-                                            }}
-                                        />
-                                        <Paper elevation={3} className="rental-options-section">
-                                            <Typography variant="h6" className="rental-options-header">
-                                                Select Rental Equipment
-                                            </Typography>
-                                            <FormControl component="fieldset" className="rental-options-group">
-                                                <FormGroup>
-                                                    {options && options.map((option) => (
-                                                        <div key={option.id} className="rental-option-item">
-                                                            <FormControlLabel
-                                                                control={
-                                                                    <Checkbox
-                                                                        checked={!!selectedRentals[option.id]}
-                                                                        onChange={() => this.handleRentalSelect(option, 1)}
-                                                                        disabled={option.stock >= option.max}
-                                                                    />
-                                                                }
-                                                                label={
-                                                                    <div className="rental-option-label">
-                                                                        <span>{option.label}</span>
-                                                                        <span className="rental-option-price">
-                                                                            ${option.cost.toFixed(2)}
-                                                                        </span>
-                                                                    </div>
-                                                                }
-                                                            />
-                                                            {selectedRentals[option.id] && (
-                                                                <div className="rental-quantity-controls">
-                                                                    <IconButton
-                                                                        size="small"
-                                                                        onClick={() => this.handleRentalSelect(option, -1)}
-                                                                    >
-                                                                        <Remove />
-                                                                    </IconButton>
-                                                                    <Typography variant="body1">
-                                                                        {rentalQuantities[option.id] || 0}
-                                                                    </Typography>
-                                                                    <IconButton
-                                                                        size="small"
-                                                                        onClick={() => this.handleRentalSelect(option, 1)}
-                                                                        disabled={
-                                                                            rentalQuantities[option.id] >= option.max
-                                                                        }
-                                                                    >
-                                                                        <Add />
-                                                                    </IconButton>
+                    <Card className="card-rental-form">
+                        <Card.Body>
+                            <h1 className="rental-form-header">New Rental Form</h1>
+                            <Form onSubmit={(e) => this.createForm(e, options)} className="rental-form">
+                                <div className="rental-form-fields">
+                                    <TextField
+                                        className="rental-form-input"
+                                        label="Rental Name"
+                                        value={rentalName}
+                                        onChange={(e) => this.setState({ rentalName: e.target.value })}
+                                        error={!!rentalnameError}
+                                        helperText={rentalnameError}
+                                        required
+                                        sx={{
+                                            backgroundColor: '#fff',
+                                            borderRadius: '4px',
+                                            marginBottom: '1rem'
+                                        }}
+                                    />
+                                    <TextField
+                                        className="rental-form-input"
+                                        label="Number of Participants"
+                                        type="number"
+                                        value={numParticipants}
+                                        onChange={(e) => this.setState({ numParticipants: e.target.value })}
+                                        error={!!numparticipantsError}
+                                        helperText={numparticipantsError}
+                                        required
+                                        sx={{
+                                            backgroundColor: '#fff',
+                                            borderRadius: '4px',
+                                            marginBottom: '1rem'
+                                        }}
+                                    />
+                                    <Paper elevation={3} className="rental-options-section">
+                                        <Typography variant="h6" className="rental-options-header">
+                                            Select Rental Equipment
+                                        </Typography>
+                                        <FormControl component="fieldset" className="rental-options-group">
+                                            <FormGroup>
+                                                {options && options.map((option) => (
+                                                    <div key={option.id} className="rental-option-item">
+                                                        <FormControlLabel
+                                                            control={
+                                                                <Checkbox
+                                                                    checked={!!selectedRentals[option.id]}
+                                                                    onChange={() => this.handleRentalSelect(option, 1)}
+                                                                    disabled={option.stock >= option.max}
+                                                                />
+                                                            }
+                                                            label={
+                                                                <div className="rental-option-label">
+                                                                    <span>{option.label}</span>
+                                                                    <span className="rental-option-price">
+                                                                        ${option.cost.toFixed(2)}
+                                                                    </span>
                                                                 </div>
-                                                            )}
-                                                            <Typography variant="caption" color="textSecondary">
-                                                                {option.stock >= option.max
-                                                                    ? 'Out of stock'
-                                                                    : `${option.max - option.stock} available`}
-                                                            </Typography>
-                                                        </div>
-                                                    ))}
-                                                </FormGroup>
-                                            </FormControl>
-                                            <div className="rental-total">
-                                                <Typography variant="h6">
-                                                    Total: ${totalPrice.toFixed(2)}
-                                                </Typography>
-                                            </div>
-                                        </Paper>
-                                        <PaymentForm
-                                            handleInputChange={this.handleInputChange}
-                                            cvc={cvc}
-                                            expiry={expiry}
-                                            name={name}
-                                            number={number}
-                                            zipcode={zipcode}
-                                            cvcError={cvcError}
-                                            expiryError={expiryError}
-                                            nameError={nameError}
-                                            numberError={numberError}
-                                            zipcodeError={zipcodeError}
-                                        />
-                                        <div className="rental-form-submit">
-                                            <MUIButton
-                                                type="submit"
-                                                variant="contained"
-                                                color="primary"
-                                                endIcon={<VerifiedUser />}
-                                                className="submit-button"
-                                                disabled={totalPrice === 0}
-                                            >
-                                                Create Rental (${totalPrice.toFixed(2)})
-                                            </MUIButton>
+                                                            }
+                                                        />
+                                                        {selectedRentals[option.id] && (
+                                                            <div className="rental-quantity-controls">
+                                                                <IconButton
+                                                                    size="small"
+                                                                    onClick={() => this.handleRentalSelect(option, -1)}
+                                                                >
+                                                                    <Remove />
+                                                                </IconButton>
+                                                                <Typography variant="body1">
+                                                                    {rentalQuantities[option.id] || 0}
+                                                                </Typography>
+                                                                <IconButton
+                                                                    size="small"
+                                                                    onClick={() => this.handleRentalSelect(option, 1)}
+                                                                    disabled={
+                                                                        rentalQuantities[option.id] >= option.max
+                                                                    }
+                                                                >
+                                                                    <Add />
+                                                                </IconButton>
+                                                            </div>
+                                                        )}
+                                                        <Typography variant="caption" color="textSecondary">
+                                                            {option.stock >= option.max
+                                                                ? 'Out of stock'
+                                                                : `${option.max - option.stock} available`}
+                                                        </Typography>
+                                                    </div>
+                                                ))}
+                                            </FormGroup>
+                                        </FormControl>
+                                        <div className="rental-total">
+                                            <Typography variant="h6">
+                                                Total: ${totalPrice.toFixed(2)}
+                                            </Typography>
                                         </div>
+                                    </Paper>
+                                    <PaymentForm
+                                        handleInputChange={this.handleInputChange}
+                                        cvc={cvc}
+                                        expiry={expiry}
+                                        name={name}
+                                        number={number}
+                                        zipcode={zipcode}
+                                        cvcError={cvcError}
+                                        expiryError={expiryError}
+                                        nameError={nameError}
+                                        numberError={numberError}
+                                        zipcodeError={zipcodeError}
+                                    />
+                                    <div className="rental-form-submit">
+                                        <MUIButton
+                                            type="submit"
+                                            variant="contained"
+                                            color="primary"
+                                            endIcon={<VerifiedUser />}
+                                            className="submit-button"
+                                            disabled={totalPrice === 0}
+                                        >
+                                            Create Rental (${totalPrice.toFixed(2)})
+                                        </MUIButton>
                                     </div>
-                                </Form>
-                            </Card.Body>
-                        </Card>
-                    </Col>
+                                </div>
+                            </Form>
+                        </Card.Body>
+                    </Card>
                 </Row>
 
                 <Snackbar

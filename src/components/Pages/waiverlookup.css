@@ -1,0 +1,338 @@
+.usa-waiver-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    overflow: visible !important;
+}
+
+.usa-waiver-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: visible !important;
+}
+
+.usa-waiver-header {
+    padding: 20px;
+    border-bottom: 1px solid #dee2e6;
+    position: relative;
+    overflow: visible !important;
+}
+
+.usa-waiver-search {
+    margin-bottom: 15px;
+}
+
+.usa-waiver-switch {
+    margin: 0;
+}
+
+.usa-waiver-body {
+    padding: 20px;
+}
+
+.usa-waiver-loading {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    color: white;
+}
+
+.usa-waiver-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.usa-waiver-row {
+    padding: 12px;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+}
+
+.usa-waiver-row-even {
+    background-color: #f8f9fa;
+}
+
+.usa-waiver-row-odd {
+    background-color: white;
+}
+
+.usa-waiver-row:hover {
+    background-color: #e9ecef;
+}
+
+.usa-waiver-row-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.usa-waiver-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.usa-waiver-index {
+    color: #6c757d;
+    font-size: 14px;
+    min-width: 40px;
+}
+
+.usa-waiver-name {
+    font-weight: 500;
+}
+
+.usa-waiver-date {
+    color: #6c757d;
+    font-size: 14px;
+    min-width: 200px;
+}
+
+.usa-waiver-button {
+    min-width: 100px;
+}
+
+.usa-waiver-button-view {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+}
+
+.usa-waiver-button-open {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+@media (max-width: 768px) {
+    .usa-waiver-date {
+        display: none;
+    }
+
+    .usa-waiver-row-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .usa-waiver-button {
+        align-self: stretch;
+    }
+}
+
+.usa-waiver-breadcrumb {
+    margin-bottom: 20px;
+}
+
+.usa-waiver-breadcrumb .breadcrumb {
+    background: transparent;
+    padding: 0;
+    margin: 0;
+}
+
+.usa-waiver-breadcrumb .breadcrumb-item {
+    font-size: 14px;
+}
+
+.usa-waiver-breadcrumb .breadcrumb-item.active {
+    color: #6c757d;
+}
+
+.usa-waiver-breadcrumb .breadcrumb-item+.breadcrumb-item::before {
+    content: ">";
+    color: #6c757d;
+}
+
+.usa-waiver-breadcrumb a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.usa-waiver-breadcrumb a:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+.usa-waiver-date-dropdown {
+    min-width: 140px;
+    position: relative;
+}
+
+.usa-waiver-date-dropdown .dropdown-toggle {
+    width: 100%;
+    text-align: left;
+    background: white;
+    border: 1px solid #dee2e6;
+    color: #495057;
+    padding: 8px 12px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.usa-waiver-date-dropdown .dropdown-toggle:hover,
+.usa-waiver-date-dropdown .dropdown-toggle:focus {
+    background-color: #f8f9fa;
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
+}
+
+.usa-waiver-date-dropdown .dropdown-menu {
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 8px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    position: absolute;
+    z-index: 1000;
+    transform: none !important;
+}
+
+.usa-waiver-date-dropdown .dropdown-item {
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+
+.usa-waiver-date-dropdown .dropdown-item:hover {
+    background-color: #f8f9fa;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .usa-waiver-date-filters {
+        flex-direction: column;
+    }
+
+    .usa-waiver-date-dropdown {
+        width: 100%;
+    }
+}
+
+/* Update existing header styles */
+.usa-waiver-header {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+/* Custom Menu Search Input */
+.usa-waiver-date-dropdown .dropdown-menu .form-control {
+    margin: 8px 0;
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+
+.usa-waiver-date-dropdown .dropdown-menu .form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
+}
+
+/* Add these new styles */
+.usa-waiver-header {
+    padding: 20px;
+    border-bottom: 1px solid #dee2e6;
+    position: relative;
+    overflow: visible !important;
+}
+
+.usa-waiver-card {
+    background: #242424 !important;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: visible !important;
+}
+
+/* Add this to ensure dropdowns appear above other content */
+.dropdown-menu.show {
+    display: block;
+    position: absolute;
+    transform: none !important;
+    top: 100% !important;
+    left: 0 !important;
+}
+
+/* Ensure the container doesn't clip the dropdowns */
+.usa-waiver-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    overflow: visible !important;
+}
+
+/* Ensure the date filters container doesn't clip dropdowns */
+.usa-waiver-date-filters {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    position: relative;
+    overflow: visible !important;
+}
+
+/* Pagination Styles */
+.usa-waiver-pagination {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.usa-waiver-page-button {
+    min-width: 40px;
+    height: 40px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    color: #495057;
+}
+
+.usa-waiver-page-button:hover {
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+    color: #212529;
+}
+
+.usa-waiver-page-button.active {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .usa-waiver-pagination {
+        gap: 4px;
+    }
+
+    .usa-waiver-page-button {
+        min-width: 36px;
+        height: 36px;
+        font-size: 14px;
+    }
+}
+
+.usa-waiver-no-results {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6c757d;
+}
+
+.usa-waiver-no-results p {
+    margin: 0;
+    line-height: 1.5;
+}
+
+.usa-waiver-no-results p:first-child {
+    font-size: 18px;
+    margin-bottom: 8px;
+}
+
+.usa-waiver-no-results p:last-child {
+    font-size: 14px;
+}

@@ -330,7 +330,6 @@ const Schedule = ({ firebase }) => {
                                     value={state.date}
                                     tileContent={renderTileContent}
                                     tileClassName={({ date }) => {
-                                        console.log(date)
                                         const day = date.getDay();
                                         if (day === 6 || day === 0) return 'weekend-calendar-games';
                                         if (day === 5) return 'friday-night-calendar-games';
