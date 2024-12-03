@@ -5,8 +5,6 @@ import logo from './assets/usairsoft-small-logo.png';
 import { withFirebase } from './components/Firebase';
 import { Container, Row, Col, Form, Button, InputGroup, FormControl } from 'react-bootstrap/';
 
-import { compose } from 'recompose';
-
 import ReCAPTCHA from 'react-google-recaptcha';
 import { Helmet } from 'react-helmet-async';
  
@@ -132,9 +130,11 @@ const PasswordForgetLink = () => (
     <Link to="/forgotpassword">Password?</Link>
   </p>
 );
+
+const PasswordForgetForm = withFirebase(PasswordForgetFormBase);
  
-const PasswordForgetForm = compose(
-  withFirebase,
-  )(PasswordForgetFormBase);
+// const PasswordForgetForm = composeHooks(
+//   withFirebase,
+//   )(PasswordForgetFormBase);
  
 export { PasswordForgetForm, PasswordForgetLink };

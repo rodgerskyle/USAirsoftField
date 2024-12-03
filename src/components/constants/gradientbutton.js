@@ -1,33 +1,63 @@
 import React from 'react';
-import { makeStyles } from '@material-ui/core/styles';
+import { styled } from '@mui/material/styles';
+import MuiButton from '@mui/material/Button';
 import PropTypes from 'prop-types';
-import Button from '@material-ui/core/Button';
 
-const useStyles = makeStyles({
-  root: {
-    background: (props) =>
-      props.color === 'black-silver' 
-        ? 'rgb(4, 4, 4)'
-        : 'rgb(8, 37, 68)',
-    border: 0,
-    borderRadius: 30,
-    boxShadow: (props) =>
-      props.color === 'black-silver'
-        ? '0 1px 1px 1px rgba(192, 192, 192, .3)'
-        : '0 1px 1px 1px rgba(192, 192, 192, .3)',
-    color: 'white',
-    height: 48,
-    padding: '0 20px',
-    margin: 8,
-  },
+// Create a base button component without MUI's default styles
+const BaseButton = styled('button')({
+  border: 0,
+  cursor: 'pointer',
+  borderRadius: '8px',
+  height: 48,
+  margin: '8px',
+  textTransform: 'uppercase',
+  fontWeight: 600,
+  fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+  fontSize: '0.875rem',
+  letterSpacing: '1px',
+  transition: 'all 0.3s ease-in-out',
 });
 
-export default function MyButton(props) {
-  const { color, ...other } = props;
-  const classes = useStyles(props);
-  return <Button className={classes.root} {...other} />;
-}
+// Style the button with our gradient styles
+const StyledButton = styled(BaseButton)(({ colortype }) => ({
+  background: colortype === 'black-silver'
+    ? 'linear-gradient(45deg, #0A1929 30%, #1A2C43 90%)'
+    : 'linear-gradient(45deg, #1A2C43 30%, #1976d2 90%)',
+  boxShadow: '0 3px 5px rgba(0, 0, 0, 0.3)',
+  color: 'white',
+  border: '1px solid rgba(255, 255, 255, 0.1)',
 
-MyButton.propTypes = {
+  '&:hover': {
+    background: colortype === 'black-silver'
+      ? 'linear-gradient(45deg, #1A2C43 30%, #0A1929 90%)'
+      : 'linear-gradient(45deg, #1976d2 30%, #1A2C43 90%)',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.4)',
+    transform: 'translateY(-2px)',
+    border: '1px solid #1976d2',
+  },
+
+  '&:active': {
+    transform: 'translateY(1px)',
+  },
+
+  '&:disabled': {
+    background: '#1A2C43',
+    color: '#4A5568',
+    boxShadow: 'none',
+    cursor: 'default',
+    border: '1px solid rgba(255, 255, 255, 0.05)',
+  },
+}));
+
+const GradientButton = ({ color, children, ...props }) => (
+  <StyledButton colortype={color} {...props}>
+    {children}
+  </StyledButton>
+);
+
+GradientButton.propTypes = {
   color: PropTypes.oneOf(['silver-black', 'black-silver']).isRequired,
+  children: PropTypes.node.isRequired,
 };
+
+export default GradientButton;

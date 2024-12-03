@@ -13,7 +13,7 @@ import cardimages from '../constants/cardimgs';
 import waiver from '../../assets/Waiver-cutoff.png'
 
 import { AuthUserContext, withAuthorization } from '../session';
-import { compose } from 'recompose';
+
 import { withFirebase } from '../Firebase';
 import * as ROLES from '../constants/roles';
 
@@ -21,9 +21,10 @@ import PinCode from '../constants/pincode'
 
 
 //For creating a second reference to Firebase
-import app from 'firebase/app';
+import { initializeApp } from 'firebase/app';
 import { Helmet } from 'react-helmet-async';
-require('dotenv').config();
+import { get, onValue, set } from 'firebase/database';
+import { uploadBytes } from 'firebase/storage';
 const config = {
     apiKey: process.env.REACT_APP_API_KEY,
     authDomain: process.env.REACT_APP_AUTH_DOMAIN,
@@ -82,7 +83,7 @@ const INITIAL_STATE = {
     //isAdmin: false,
     error: null,
     errorWaiver: null,
-    secondaryApp: app.initializeApp(config, "Secondary"),
+    secondaryApp: initializeApp(config, "Secondary"),
     cards: cardimages,
     index: 0,
     pageIndex: 0,
@@ -115,7 +116,7 @@ class SignUpFormBase extends Component {
 
   // Will Check duplicates in list
   checkDuplicates(email) {
-      this.props.firebase.emailList(encode(email.toLowerCase())).once("value", object => {
+      get(this.props.firebase.emailList(encode(email.toLowerCase())), object => {
         if (object.val() !== null) {
           return true;
         }
@@ -131,7 +132,7 @@ class SignUpFormBase extends Component {
     if (!this.checkDuplicates(email)) {
       // Use below to generate random uid for signing up and filling out waivers
       var secret = 'm' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5).toUpperCase();
-      this.props.firebase.emailList(encode(email)).set({secret})
+      set(this.props.firebase.emailList(encode(email)), ({secret}));
     }
     this.setState({emailAdded: true})
   }
@@ -242,13 +243,13 @@ class SignUpFormBase extends Component {
     const blob = await pdf((
       <SignedWaiver {...myProps}/>
       )).toBlob();
-    this.props.firebase.membersWaivers(`${this.state.uid}.pdf`).put(blob).then(() => {
+    uploadBytes(this.props.firebase.membersWaivers(`${this.state.uid}.pdf`), blob).then(() => {
       this.setState({submitted: false, showLander: true, loading: false})
     })
   }
 
   componentDidMount() {
-    this.props.firebase.users().on('value', snapshot => {
+    onValue(this.props.firebase.users(), snapshot => {
         const usersObject = snapshot.val();
 
         const usersList = Object.keys(usersObject).map(key => ({
@@ -269,7 +270,7 @@ class SignUpFormBase extends Component {
   }
 
   componentWillUnmount() {
-    this.props.firebase.users().off()
+    // this.props.firebase.users().off()
   }
 
   // Remaps user array to map to usernames rather than key
@@ -850,10 +851,12 @@ const SignUpLink = () => (
 const condition = authUser =>
   authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]);
 
-const SignUpForm = compose(
-    withAuthorization(condition),
-    withFirebase,
-    )(SignUpFormBase);
+const SignUpForm = withAuthorization(condition)(withFirebase(SignUpFormBase));
+
+// const SignUpForm = composeHooks(
+//     withAuthorization(condition),
+//     withFirebase,
+//     )(SignUpFormBase);
 
 export default SignUpPage;
  

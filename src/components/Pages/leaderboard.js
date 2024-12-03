@@ -15,12 +15,11 @@ import CustomMenu from '../constants/custommenu'
 
 import { withFirebase } from '../Firebase';
 import { AuthUserContext } from '../session';
+import { onValue } from "firebase/database";
 
-import { compose } from 'recompose';
-
-import MUIPagination from '@material-ui/lab/Pagination';
 import { isMobile } from 'react-device-detect';
 import { Helmet } from 'react-helmet-async';
+import { Pagination } from '@mui/material';
 
 class Leaderboards extends Component {
     constructor(props) {
@@ -48,6 +47,18 @@ class Leaderboards extends Component {
         this.handleFirstClick = this.handleFirstClick.bind(this);
         this.findRanking = this.findRanking.bind(this);
     }
+
+    static getDerivedStateFromError(error) {
+        // Update state so the next render will show the fallback UI.
+        return { hasError: true };
+    }
+
+    componentDidCatch(error, errorInfo) {
+        // You can also log the error to an error reporting service
+        console.log(error);
+        console.log(errorInfo);
+    }
+
 
     //Figuring out rank logic
     getRank(points) {
@@ -202,7 +213,7 @@ class Leaderboards extends Component {
         }
         this.setState({ years, currentYear: date.getFullYear() })
 
-        this.props.firebase.users().on('value', snapshot => {
+        onValue(this.props.firebase.users(), snapshot => {
             const usersObject = snapshot.val();
 
             let usersList = Object.keys(usersObject).map(key => ({
@@ -232,7 +243,7 @@ class Leaderboards extends Component {
     }
 
     componentWillUnmount() {
-        this.props.firebase.users().off();
+        // this.props.firebase.users().off();
     }
 
     findRanking(uid) {
@@ -307,7 +318,7 @@ class Leaderboards extends Component {
                                     </Row>
                                 </Col>
                                 {this.state.monthly === true && !tv ?
-                                    <Col className="col-dropdown-months-lb" md={5}>
+                                    <Col className="col-dropdown-months-lb" md={6}>
                                         <Row className="row-dropdown-months-lb">
                                             <Col xs={"auto"}>
                                                 <Dropdown className="dropdown-lb">
@@ -353,7 +364,7 @@ class Leaderboards extends Component {
                             </Row>
                             <Row className="row-pagination-lb">
                                 <Col className="pagination-col-lb">
-                                    <MUIPagination count={numPages} page={curPage} onChange={(e, val) => this.handleClick(val)}
+                                    <Pagination count={numPages} page={curPage} onChange={(e, val) => this.handleClick(val)}
                                         showFirstButton showLastButton color="primary" variant="outlined" shape="rounded" size={isMobile ? 'small' : 'medium'} />
                                 </Col>
                             </Row>
@@ -370,7 +381,7 @@ class Leaderboards extends Component {
                             {!loading ?
                                 <Row className="row-bottom">
                                     <Col className="pagination-col-lb">
-                                        <MUIPagination count={numPages} page={curPage} onChange={(e, val) => this.handleClick(val)}
+                                        <Pagination count={numPages} page={curPage} onChange={(e, val) => this.handleClick(val)}
                                             showFirstButton showLastButton color="primary" variant="outlined" shape="rounded" size={isMobile ? 'small' : 'medium'} />
                                     </Col>
                                 </Row> : null}
@@ -405,7 +416,6 @@ function UserList({ users, getRank, monthly, currentMonth, currentYear, start, f
                             {rank + 1}</p></Td>
                         <Td cl={tv ? "td-tv-lb" : "td-lb"}>
                             <OverlayTrigger
-                                transition={false}
                                 key='top'
                                 placement='top'
                                 overlay={
@@ -509,6 +519,8 @@ function countLosses(obj, month, year) {
     return losses
 }
 
-export default compose(
-    withFirebase,
-    )(Leaderboards);
+export default withFirebase(Leaderboards);
+
+// export default composeHooks(
+//     withFirebase,
+//     )(Leaderboards);

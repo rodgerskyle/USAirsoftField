@@ -1,10 +1,20 @@
-import app from 'firebase/app';
-import 'firebase/auth';
-import 'firebase/database';
-import 'firebase/storage';
-import 'firebase/functions';
-import 'firebase/analytics'
-require('dotenv').config();
+import { initializeApp } from 'firebase/app';
+import {
+    getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+    signOut, sendPasswordResetEmail, updatePassword, updateEmail,
+    reauthenticateWithCredential
+} from 'firebase/auth';
+import { ref as db_ref } from 'firebase/database';
+import { get, getDatabase } from 'firebase/database';
+import { ref as st_ref } from 'firebase/storage';
+import { getStorage } from 'firebase/storage';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+
+// import 'firebase/compat/auth';
+// import 'firebase/compat/database';
+// import 'firebase/compat/storage';
+// import 'firebase/compat/functions';
+// import 'firebase/compat/analytics'
 
 const config = {
     apiKey: process.env.REACT_APP_API_KEY,
@@ -19,42 +29,41 @@ const config = {
 
 class Firebase {
     constructor() {
-        app.initializeApp(config);
-        app.analytics()
+        const app = initializeApp(config)
+        // app.analytics()
 
-        this.auth = app.auth();
-        this.db = app.database();
-        this.st = app.storage();
-        this.func = app.functions();
-        this.ns_auth = app.auth;
+        this.auth = getAuth(app);
+        this.db = getDatabase(app);
+        this.st = getStorage(app);
+        this.func = getFunctions(app);
+        this.ns_auth = getAuth(app);
     }
     // *** Auth API ***
     doCreateUserWithEmailAndPassword = (email, password) =>
-        this.auth.createUserWithEmailAndPassword(email, password);
+        createUserWithEmailAndPassword(this.auth, email, password);
 
     doSignInWithEmailAndPassword = (email, password) =>
-        this.auth.signInWithEmailAndPassword(email, password);
+        signInWithEmailAndPassword(this.auth, email, password);
 
-    doSignOut = () => this.auth.signOut();
+    doSignOut = () => signOut(this.auth);
 
-    doPasswordReset = email => this.auth.sendPasswordResetEmail(email);
+    doPasswordReset = email => sendPasswordResetEmail(this.auth, email);
 
     doPasswordUpdate = password =>
-        this.auth.currentUser.updatePassword(password);
-    
-    doEmailUpdate = email => 
-        this.auth.currentUser.updateEmail(email)
+        updatePassword(this.auth.currentUser, password);
+
+    doEmailUpdate = email =>
+        updateEmail(this.auth.currentUser, email)
 
     doReauthenticate = (email, password) =>
-        this.auth.currentUser.reauthenticateWithCredential(this.ns_auth.EmailAuthProvider.credential(email, password));
+        reauthenticateWithCredential(this.auth.currentUser, this.ns_auth.EmailAuthProvider.credential(email, password));
 
     // *** Merge Auth and DB User API *** //
     onAuthUserListener = (next, fallback) =>
         this.auth.onAuthStateChanged(authUser => {
             if (authUser) {
-                this.user(authUser.uid)
-                    .once('value')
-                    .then(snapshot => {
+                get(this.user(authUser.uid))
+                    .then((snapshot) => {
                         const dbUser = snapshot.val();
                         // default empty roles
                         if (!dbUser.roles) {
@@ -75,93 +84,95 @@ class Firebase {
 
     // Functions API
 
-    createTeam = () => this.func.httpsCallable('createTeam');
+    createTeam = () => httpsCallable(this.func, 'createTeam');
 
-    manageTeam = () => this.func.httpsCallable('manageTeam');
+    manageTeam = () => httpsCallable(this.func, 'manageTeam');
 
-    acceptRequest = () => this.func.httpsCallable('acceptRequest');
+    acceptRequest = () => httpsCallable(this.func, 'acceptRequest');
 
-    kickMember = () => this.func.httpsCallable('kickMember');
+    kickMember = () => httpsCallable(this.func, 'kickMember');
 
-    quitTeam = () => this.func.httpsCallable('quitTeam');
+    quitTeam = () => httpsCallable(this.func, 'quitTeam');
 
-    disbandTeam = () => this.func.httpsCallable('disbandTeam');
+    disbandTeam = () => httpsCallable(this.func, 'disbandTeam');
 
-    requestTeam = () => this.func.httpsCallable('requestTeam');
+    requestTeam = () => httpsCallable(this.func, 'requestTeam');
 
-    mergeUsers = () => this.func.httpsCallable('mergeUsers');
+    mergeUsers = () => httpsCallable(this.func, 'mergeUsers');
 
-    sendMail = () => this.func.httpsCallable('sendMail');
+    sendMail = () => httpsCallable(this.func, 'sendMail');
 
-    createPrivilegedUser = () => this.func.httpsCallable('createPrivilegedUser');
+    createPrivilegedUser = () => httpsCallable(this.func, 'createPrivilegedUser');
 
-    emailOptMenu = () => this.func.httpsCallable('emailOptMenu');
+    emailOptMenu = () => httpsCallable(this.func, 'emailOptMenu');
 
-    manageProfile = () => this.func.httpsCallable('manageProfile');
+    manageProfile = () => httpsCallable(this.func, 'manageProfile');
 
-    checkRecaptcha = () => this.func.httpsCallable('checkRecaptcha');
+    checkRecaptcha = () => httpsCallable(this.func, 'checkRecaptcha');
 
-    sendReceipt = () => this.func.httpsCallable('sendReceipt');
+    sendReceipt = () => httpsCallable(this.func, 'sendReceipt');
+
+    submitWaiver = () => httpsCallable(this.func, 'submitWaiver');
 
     // Storage Database API
 
-    membersWaivers = pdf => this.st.ref().child(`waivers/members/${pdf}`);
+    membersWaivers = pdf => st_ref(this.st, `waivers/members/${pdf}`);
 
-    nonmembersWaivers = pdf => this.st.ref().child(`waivers/non-members/${pdf}`);
+    nonmembersWaivers = pdf => st_ref(this.st, `waivers/non-members/${pdf}`);
 
-    waiversList = () => this.st.ref().child(`waivers/non-members`);
+    waiversList = () => st_ref(this.st, `waivers/non-members`);
 
-    pictures = img => this.st.ref().child(`images/${img}`);
+    pictures = img => st_ref(this.st, `images/${img}`);
 
-    teamsPictures = img => this.st.ref().child(`teams/${img}`);
+    teamsPictures = img => st_ref(this.st, `teams/${img}`);
 
-    emailAttachment = () => this.st.ref().child('email/emailattachment.png');
+    emailAttachment = () => st_ref(this.st, 'email/emailattachment.png');
+
+    signature = (filename) => st_ref(this.st, 'signatures/' + filename);
 
     // User API
 
-    user = uid => this.db.ref(`users/${uid}`);
+    user = uid => db_ref(this.db, `users/${uid}`);
 
-    users = () => this.db.ref('users');
-
-    userCourse = (uid, course) => this.db.ref(`users/${uid}/timedrun/${course}`)
+    users = () => db_ref(this.db, 'users');
 
     // Email List API
 
-    emailList = (email) => this.db.ref(`emaillist/${email}`)
+    emailList = (email) => db_ref(this.db, `emaillist/${email}`)
 
-    emails = () => this.db.ref(`emaillist`)
+    emails = () => db_ref(this.db, `emaillist`)
 
     // Email Templates
 
-    emailTemplateDefault = () => this.db.ref(`emailtemplates/default`)
+    emailTemplateDefault = () => db_ref(this.db, `emailtemplates/default`)
 
-    emailTemplate = (template) => this.db.ref(`emailtemplates/list/${template}`)
+    emailTemplate = (template) => db_ref(this.db, `emailtemplates/list/${template}`)
 
-    emailTemplates = () => this.db.ref(`emailtemplates`)
+    emailTemplates = () => db_ref(this.db, `emailtemplates`)
 
     // Videos API
 
-    videos = () => this.db.ref('videos/')
+    videos = () => db_ref(this.db, 'videos/')
 
     // Rental Forms API
 
-    rentals = () => this.db.ref('rentals/')
+    rentals = () => db_ref(this.db, 'rentals/')
 
-    rentalOptions = () => this.db.ref('rentals/options/')
+    rentalOptions = () => db_ref(this.db, 'rentals/options/')
 
-    rentalGroups = () => this.db.ref('rentals/group/')
+    rentalGroups = () => db_ref(this.db, 'rentals/group/')
 
-    rentalGroup = (i) => this.db.ref('rentals/group/' + i)
+    rentalGroup = (i) => db_ref(this.db, 'rentals/group/' + i)
 
-    participantsRentals = (i, id) => this.db.ref('rentals/group/' + i + '/participants/' + id)
+    participantsRentals = (i, id) => db_ref(this.db, 'rentals/group/' + i + '/participants/' + id)
 
-    availableRentals = (i) => this.db.ref('rentals/group/' + i + '/available/')
+    availableRentals = (i) => db_ref(this.db, 'rentals/group/' + i + '/available/')
 
     // Team API
 
-    team = name => this.db.ref(`teams/${name}`);
+    team = name => db_ref(this.db, `teams/${name}`);
 
-    teams = () => this.db.ref(`teams`);
+    teams = () => db_ref(this.db, `teams`);
 
     // UID API
 
@@ -169,31 +180,29 @@ class Firebase {
 
     // Waivers Amount API and validation
 
-    numWaivers = () => this.db.ref('waivers');
+    numWaivers = () => db_ref(this.db, 'waivers');
 
-    validatedWaiver = file => this.db.ref(`waivers/validated/${file}`);
+    validatedWaiver = file => db_ref(this.db, `waivers/validated/${file}`);
 
-    validatedWaivers = () => this.db.ref('waivers/validated');
+    validatedWaivers = () => db_ref(this.db, 'waivers/validated');
+
+    digitalWaivers = () => db_ref(this.db, 'digital_waivers');
+
+    digitalWaiver = (ref) => db_ref(this.db, `digital_waivers/${ref}`);
 
     // Calendar API
 
-    calendar = () => this.db.ref(`calendar`);
+    calendar = () => db_ref(this.db, `calendar`);
 
-    calendarEvent = i => this.db.ref(`calendar/${i}`);
+    calendarEvent = i => db_ref(this.db, `calendar/${i}`);
 
     // Schedule API
 
-    schedule = () => this.db.ref(`schedule`);
+    schedule = () => db_ref(this.db, `schedule`);
 
-    scheduleEvent = i => this.db.ref(`schedule/${i}`);
+    scheduleEvent = i => db_ref(this.db, `schedule/${i}`);
 
-    // Speed Leaderboard Users
-
-    timedRun = () => this.db.ref(`timedrunusers`);
-
-    timedRunUser = (user) => this.db.ref(`timedrunusers/${user}`);
-
-    timedRunUserCourse = (user, course) => this.db.ref(`timedrunusers/${user}/timedrun/${course}`);
+    waivers = () => db_ref(this.db, 'waivers/validated');
 
 }
 

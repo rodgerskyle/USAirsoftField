@@ -1,330 +1,224 @@
 .react-calendar {
-    width: 450px;
-    max-width: 100%;
-    background-color: rgb(236, 236, 236);
-    color: #222;
-    border-radius: 8px;
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
-    padding: 10px;
-    font-weight: 300;
+    width: 100%;
+    background-color: #ffffff;
+    color: #1a1a1a;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+/* Navigation Styles - Improved alignment */
+.react-calendar__navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 0;
+    height: 44px;
 }
 
 .react-calendar__navigation button {
-    color: #000000;
+    color: #1a1a1a;
     min-width: 44px;
     background: none;
-    font-size: 24px;
+    font-size: 1.25rem;
+    font-weight: 500;
     border: none;
-    border-bottom: 2px solid black;
+    padding: 8px;
+    margin: 0;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    touch-action: manipulation;
 }
 
 .react-calendar__navigation button:enabled:hover,
 .react-calendar__navigation button:enabled:focus {
-    background-color: #c9c9c9;
+    background-color: rgba(0, 0, 0, 0.05);
 }
 
-.react-calendar__navigation button[disabled] {
-    background-color: #f0f0f0;
+/* Month View Styles - Better alignment */
+.react-calendar__month-view {
+    padding: 0;
 }
 
-abbr[title] {
-    text-decoration: none !important;
-}
-
-/* .react-calendar__month-view__days__day--weekend {
-    color: #d10000;
-   } */
-
-
-.non-event-calendar-days:enabled:hover,
-.non-event-calendar-days:enabled:focus {
-    background: #979797;
-    color: white;
-    border-radius: 20px;
-    transition: all 0.2s ease-in-out;
-}
-
-/* Game day hover will be blue */
-.weekend-calendar-games:enabled:hover,
-.weekend-calendar-games:enabled:focus  {
-    background: #104d8d;
-    color: white;
-    border-radius: 20px;
-    transition: all 0.2s ease-in-out;
-}
-
-/* Friday night will be green */
-.friday-night-calendar-games:enabled:hover,
-.friday-night-calendar-games:enabled:focus {
-    background: #53ac41;
-    color: white;
-    border-radius: 20px;
-    transition: all 0.2s ease-in-out;
-}
-
-.react-calendar__tile--now {
-    background: #a44347 !important;
-    border-radius: 20px;
-    font-weight: bold;
-    color: white;
-}
-
-.react-calendar__tile--hasActive:enabled:hover,
-.react-calendar__tile--hasActive:enabled:focus {
-    background: #f8f8fa;
-}
-
-.friday-night-calendar-games.react-calendar__tile--rangeEnd,
-.friday-night-calendar-games.react-calendar__tile--range,
-.friday-night-calendar-games.react-calendar__tile:active {
-    background: #53ac41;
-    border-radius: 20px;
-    font-weight: bold;
-    color: white;
-}
-
-.weekend-calendar-games.react-calendar__tile--rangeEnd, 
-.weekend-calendar-games:enabled.react-calendar__tile--range,
-.weekend-calendar-games:enabled.react-calendar__tile:active  {
-    background: #104d8d;
-    border-radius: 20px;
-    font-weight: bold;
-    color: white;
-}
-
-.non-event-calendar-days.react-calendar__tile--rangeEnd, 
-.non-event-calendar-days:enabled.react-calendar__tile--range,
-.non-event-calendar-days:enabled.react-calendar__tile:active  {
-    background: #979797;
-    border-radius: 20px;
-    font-weight: bold;
-    color: white;
-}
-
-.react-calendar--selectRange .react-calendar__tile--hover {
-    background-color: #f8f8fa;
-}
-
-.react-calendar__tile--range {
-    background: #104d8d;
-    color: rgb(146, 146, 146);
-    border-radius: 0;
-}
-
-.react-calendar__tile--rangeStart {
-    border-radius: 20px;
-    background: #104d8d;
-    color: white;
-}
-
-.react-calendar__tile--rangeEnd {
-    border-radius: 20px;
-    background: #104d8d;
-    color: white;
-}
-
-.react-calendar__navigation {
+.react-calendar__month-view__weekdays {
+    text-align: center;
+    text-transform: uppercase;
+    font-weight: 600;
+    font-size: 0.75rem;
+    padding: 8px 0;
+    background-color: rgba(0, 0, 0, 0.02);
+    border-radius: 8px;
+    margin-bottom: 8px;
     display: flex;
-    border: none;
+    justify-content: space-around;
 }
 
-.react-calendar__month-view__days__day--neighboringMonth {
-    color: rgb(146, 146, 146);
-    background-color: transparent;
-    border: none;
+.react-calendar__month-view__weekdays__weekday {
+    flex: 1;
+    padding: 8px 0;
+    text-align: center;
 }
 
+.react-calendar__year-view__months {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    padding: 0 2px;
+}
+
+.react-calendar__month-view__days {
+    display: grid !important;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    padding: 0 2px;
+}
+
+/* Tile base styles - Improved grid alignment */
 .react-calendar__tile {
-    /* background-color: transparent; */
-    border: none;
-    padding: 5px;
-}
-
-.react-calendarWeekendview__weekdays__weekday {
-    text-align: center;
-    color: #000000;
-    text-decoration: underline;
-}
-
-.page-header-schedule {
-    font-size: 2rem;
-    font-weight: 300;
-    text-align: center;
-    color: white;
-    padding-top: 20px;
-    padding-bottom: 20px;
-}
-
-.selected-date-col-schedule {
-    margin-top: 15px;
+    position: relative;
+    height: 70px;
     display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 1.5rem;
-    font-weight: 300;
-    color: white;
+    padding: 0 !important;
+    margin: 2px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    aspect-ratio: 1;
 }
 
-.selected-date-div {
-    background: #a44347;
-    color: white;
-    font-size: 1.7rem;
-    font-weight: 300;
-    width: 400px;
-    text-align: center;
-    padding: 20px;
-    max-height: 110px;
+button.react-calendar__tile.react-calendar__century-view__decades__decade,
+button.react-calendar__tile.react-calendar__decade-view__years__year,
+button.react-calendar__tile.react-calendar__year-view__months__month {
+    background-color: unset;
+    width: 100%;
 }
 
-.selected-date-div-number {
-    font-size: 50px;
-    margin: -20px;
+button.react-calendar__tile.react-calendar__century-view__decades__decade:hover,
+button.react-calendar__tile.react-calendar__decade-view__years__year:hover,
+button.react-calendar__tile.react-calendar__year-view__months__month:hover {
+    background-color: rgba(114, 175, 233, 0.219);
 }
 
-.div-element-schedule-box {
-    background-color: #0c3866;
-    color: white;
-    width: -webkit-fill-available;
-    padding: 5px;
-    margin: 5px;
-    border-radius: 20px;
-    font-size: 15px;
-    font-weight: 200;
+/* Game Day Styles - More distinct */
+.weekend-calendar-games {
+    background-color: rgba(25, 118, 210, 0.1);
 }
 
-.deleting-div-element-schedule-box {
-    background-color: rgb(136, 33, 33, .5);
-    color: white;
-    width: -webkit-fill-available;
-    padding: 5px;
-    margin: 5px;
-    border-radius: 20px;
+.friday-night-calendar-games {
+    background-color: rgba(46, 125, 50, 0.425);
 }
 
-.deleting-div-element-schedule-box:hover {
-    background-color: rgba(243, 61, 61, 0.5);
-    color: rgb(110, 110, 110, .5);
-    transition: all 0.2s ease-in-out;
+.weekend-calendar-games:enabled:hover {
+    background-color: rgba(25, 118, 210, 0.2);
 }
 
-.deleting-div-element-schedule-box:hover .icon-additional-info-col {
-    color: rgb(110, 110, 110, .5);
-    transition: all 0.2s ease-in-out;
+.friday-night-calendar-games:enabled:hover {
+    background-color: rgba(46, 125, 50, 0.2);
 }
 
-.deleting-div-element-schedule-box .MuiSvgIcon-root.trash-icon-schedule {
-    color: white;
-    font-size: 50px;
+/* Today's Date Styles */
+.react-calendar__tile--now {
+    background: rgba(239, 83, 80, 0.322) !important;
+    border-radius: 50%;
+}
+
+.react-calendar__tile--now:enabled:hover {
+    background: rgba(239, 83, 80, 0.3) !important;
+}
+
+/* Event Indicator Dot */
+.event-indicator {
+    width: 6px;
+    height: 6px;
+    background-color: #1976d2;
+    border-radius: 50%;
     position: absolute;
-    display: none;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
-.div-element-schedule-box .MuiSvgIcon-root.trash-icon-schedule {
-    display: none;
+/* Selected Date Styles */
+.react-calendar__tile--active {
+    background: #1976d2 !important;
+    color: white !important;
+    border-radius: 50%;
 }
 
-.deleting-div-element-schedule-box:hover .MuiSvgIcon-root.trash-icon-schedule{
-    display: unset;
+/* Neighboring Month Days */
+.react-calendar__month-view__days__day--neighboringMonth {
+    color: #bdbdbd;
 }
 
-.selected-date-events-col {
-    margin-top: 15px;
+/* Event List Styles - More modern look */
+.event-card {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.event-info-row {
-    color: rgb(146, 146, 146);
+.event-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.row .icon-additional-info-col {
-    color: white;
-    width: unset;
-}
-
-.row .text-event-title-col {
-    margin-left: -4px;
-    width: unset;
-}
-
-.row .event-element-col-schedule {
-    width: unset;
-}
-
-@media (min-width: 992px) {
-    .row .col-lg-2 {
-        max-width: unset;
-    }
-
-    .row .col-lg-9 {
-        max-width: unset;
-    }
-}
-
-.add-event-row-schedule {
-    justify-content: center;
-}
-
-.add-event-row-schedule .MuiIconButton-root {
-    color: white;
-    border: 2px solid white;
-    margin-top: 5px;
-}
-
-.add-event-row-schedule .MuiIconButton-root:hover {
-    background-color: rgb(146, 146, 146, .2);
-}
-
-.event-create-row {
-    margin-top: 5px;
-    justify-content: center;
-}
-
-.event-create-row .MuiFormLabel-root {
-    color: white;
-    font-weight: 300;
-}
-
-.event-create-row .MuiFormLabel-root.Mui-focused {
-    color: white;
-}
-
-.event-create-row .MuiInput-underline:after {
-    border-color: white;
-}
-
-.event-create-row .col-lg-10 {
-    justify-content: center;
+/* Admin Controls */
+.admin-controls {
     display: flex;
-}
-
-.save-button-row-schedule {
-    margin-top: 5px;
+    gap: 8px;
     justify-content: center;
+    margin-top: 16px;
 }
 
-.save-button-row-schedule .MuiButton-root {
-    color: white;
+.admin-controls button {
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
 }
 
-.save-button-row-schedule .MuiButton-outlined {
-    border: 1px solid white;
-    border: unset;
+@media (max-width: 768px) {
+    .react-calendar__tile .MuiSvgIcon-root {
+        margin-top: 7px;
+        width: 5px;
+        height: 5px;
+        font-size: 5px;
+    }
 }
 
-.save-button-row-schedule .MuiIconButton-root {
-    color: #a44347;
-}
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .react-calendar {
+        padding: 12px;
+        margin-bottom: 20px;
+    }
 
-.event-create-row .MuiInputBase-input {
-    color: rgb(146, 146, 146);
-}
+    .react-calendar__tile {
+        height: 30px;
+        margin: 2px;
+        font-size: 0.8rem;
+    }
 
-.react-calendar__tile.react-calendar__month-view__days__day abbr {
-    display: none;
-}
+    .react-calendar__navigation button {
+        padding: 4px;
+    }
 
-.dot-row-schedule {
-    justify-content: center;
-}
+    .react-calendar__month-view__weekdays {
+        padding: 8px 0;
+        font-size: 0.7rem;
+    }
 
-.dot-row-schedule .MuiSvgIcon-root {
-    font-size: .5rem;
-    margin: -4px;
+    /* Improve touch targets */
+    .weekend-calendar-games,
+    .friday-night-calendar-games,
+    .non-event-calendar-days {
+        min-width: 30px;
+        min-height: 30px;
+    }
 }

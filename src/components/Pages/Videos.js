@@ -6,9 +6,10 @@ import ytlogo from '../../assets/SocialMedia/youtube.png';
 
 import { withFirebase } from '../Firebase';
 
-import { compose } from 'recompose';
+
 
 import { Helmet } from 'react-helmet-async';
+import { onValue } from 'firebase/database';
 
 class Videos extends Component {
     constructor(props) {
@@ -24,7 +25,7 @@ class Videos extends Component {
     }
 
     componentDidMount() {
-        this.props.firebase.videos().on('value', snapshot => {
+        onValue(this.props.firebase.videos(), snapshot => {
             const videosObject = snapshot.val();
 
             this.setState({videos: videosObject, selectedVideo: videosObject[0]})
@@ -32,7 +33,7 @@ class Videos extends Component {
     }
 
     componentWillUnmount() {
-        this.props.firebase.videos().off()
+        // this.props.firebase.videos().off()
     }
 
     handleVideoSelect = (video, index) => {
@@ -119,6 +120,8 @@ function VideoDetail({video}) {
     )
 }
 
-export default compose(
-    withFirebase,
-    )(Videos);
+export default withFirebase(Videos);
+
+// export default composeHooks(
+//     withFirebase,
+//     )(Videos);

@@ -1,7 +1,6 @@
 import React, {Component} from 'react';
-import { withRouter } from "react-router-dom";
+import { withRouter } from './withRouter';
 import { withFirebase } from '../Firebase';
-import { compose } from 'recompose';
 import { Helmet } from 'react-helmet-async';
 
 class Logout extends Component {
@@ -22,8 +21,9 @@ class Logout extends Component {
     );
   }
 }
+  export default withRouter(withFirebase(Logout));
 
-  export default compose(
-      withRouter,
-      withFirebase,
-  )(Logout);
+  // export default composeHooks(
+  //     withRouter,
+  //     withFirebase,
+  // )(Logout);

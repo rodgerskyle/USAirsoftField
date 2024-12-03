@@ -1,48 +1,79 @@
-import React, { Component, useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Container, Col, Spinner, Row } from 'react-bootstrap/';
 import { Helmet } from 'react-helmet-async';
 import Calendar from 'react-calendar';
 import "../constants/react-calendar.css";
-import InfoIcon from '@material-ui/icons/Info';
-import IconButton from '@material-ui/core/IconButton';
-import { Add, Close, Delete, Save, FiberManualRecord } from '@material-ui/icons';
-import { Button, TextField } from '@material-ui/core';
+import {
+    Add,
+    Delete,
+    FiberManualRecord,
+    Event as EventIcon
+} from '@mui/icons-material';
+import {
+    IconButton,
+    Card,
+    Typography,
+    Box,
+    Paper
+} from '@mui/material';
 import { withFirebase } from '../Firebase';
 import * as ROLES from '../constants/roles';
 import staticEvents from '../constants/staticcalendarevents';
+import { onValue, set } from 'firebase/database';
 
-class Schedule extends Component {
-    constructor(props) {
-        super(props);
+const Schedule = ({ firebase }) => {
+    const [state, setState] = useState({
+        date: new Date(),
+        events: [],
+        eventsDisplayed: [],
+        showCreateEvent: false,
+        showDeleteEvent: false,
+        loading: true,
+        authUser: null,
+    });
 
-        this.state = {
-            date: new Date(),
-            events: [],
-            eventsDisplayed: [],
-            showCreateEvent: false,
-            showDeleteEvent: false,
-            loading: true,
-            authUser: null,
-        };
-    }
+    // Simplified state updates using custom hook
+    const updateState = (updates) => {
+        setState(prev => ({ ...prev, ...updates }));
+    };
 
-    // Sets the selcted date and filters out list based on chosen date
-    setDate = (val) => {
-        // Create events in here based on date chosen
-        let EventList = this.state.events.filter(event => this.compareDate(val, new Date(event.date), false))
-        this.addStaticEvents(EventList, val);
-        this.setState({
-            date: val, 
+    // Modernized setDate function
+    const setDate = useCallback((val) => {
+        const EventList = state.events.filter(event =>
+            compareDate(val, new Date(event.date), false)
+        );
+        addStaticEvents(EventList, val);
+
+        updateState({
+            date: val,
             eventsDisplayed: EventList,
             showCreateEvent: false,
             showDeleteEvent: false,
             loading: false,
-        })
+        });
+    }, [state.events]);
+
+    // Modernized createEvent function
+    const createEvent = async (title, additional, time) => {
+        const event = {
+            name: title,
+            time,
+            additional,
+            date: state.date.toJSON(),
+        };
+
+        try {
+            await set(firebase.scheduleEvent(state.events.length), event);
+            updateState({ showCreateEvent: false, loading: true });
+            setDate(state.date);
+        } catch (error) {
+            console.error('Error creating event:', error);
+        }
     };
 
     // Compares the dates to check if they are the same day, month and year
     // Unless the paramter for reoccuring yearly is set, it will not check year
-    compareDate = (date1, date2, reoccuring) => {
+    const compareDate = (date1, date2, reoccuring) => {
         // Date 1 is the selected date
         let selectedYear = date1.getFullYear();
         let selectedMonth = date1.getMonth();
@@ -54,86 +85,39 @@ class Schedule extends Component {
         let comparedDay = date2.getDate();
 
         if (!reoccuring)
-            return selectedYear === comparedYear && selectedMonth === comparedMonth && selectedDay === comparedDay 
+            return selectedYear === comparedYear && selectedMonth === comparedMonth && selectedDay === comparedDay
         else
-            return selectedMonth === comparedMonth && selectedDay === comparedDay 
+            return selectedMonth === comparedMonth && selectedDay === comparedDay
     }
 
     // Show create Event tab so you can add more events
-    showCreateEvent = (val) => {
-        this.setState({showCreateEvent: val})
-    };
-
-    // Add newly created event to list of events
-    createEvent = (title, additional, time) => {
-        let event = {
-            name: title,
-            time: time,
-            additional: additional,
-            date: this.state.date.toJSON(),
-        }
-
-        this.props.firebase.scheduleEvent(this.state.events.length).set(event).then(() => {
-            this.setState({ 
-                showCreateEvent: false,
-                loading: true,
-            }, () => {
-                this.setDate(this.state.date);
-            })
-        })
+    const showCreateEvent = (val) => {
+        updateState({ showCreateEvent: val })
     };
 
     // Deletes selected event from events list
-    deleteEvent = (obj) => {
+    const deleteEvent = (obj) => {
         // splice event from object and call setdate function on cur date
-        let events = this.state.events
+        let events = state.events
         events.splice(obj.index, 1)
-        this.props.firebase.schedule().set(events).then(() => {
-            this.setState({
+        set(firebase.schedule(), events).then(() => {
+            updateState({
                 loading: true,
             }, () => {
-                this.setDate(new Date(obj.date))
+                setDate(new Date(obj.date))
             })
         })
     }
 
     // Checks if the events array contains the date object
-    checkForDate = (date) => {
-        const { events } = this.state;
-        for (let i=0; i<events.length; i++ ) {
-            if (this.compareDate(date, new Date(events[i].date), false))
+    const checkForDate = (date) => {
+        const { events } = state;
+        for (let i = 0; i < events.length; i++) {
+            if (compareDate(date, new Date(events[i].date), false))
                 return true;
         }
-        return this.checkForStaticEvent(date);
+        return checkForStaticEvent(date);
     };
-
-    checkTile = (date, view) => {
-        if (view === "month" ) {
-            // Pass in events to check if it exists
-            // this.compareDate(date, this.state.date)
-            if (this.checkForDate(date)) {
-                return (
-                    <div>
-                        <Row className="justify-content-row">
-                            {date.getDate()}
-                        </Row>
-                        <Row className="dot-row-schedule">
-                            <FiberManualRecord />
-                        </Row>
-                    </div>
-                )
-            }
-            else {
-                return (
-                    <div>
-                        <Row className="justify-content-row">
-                            {date.getDate()}
-                        </Row>
-                    </div>
-                )
-            }
-        }
-    }
 
     // Function to add event if there is not one on the given tile, this will be for 
     // Saturday, Sunday and Friday night games
@@ -141,14 +125,14 @@ class Schedule extends Component {
 
     // This function will return true or false depending on if the date
     // meets the conditions of the static events hosted on at US Airsoft
-    checkForStaticEvent(date) {
-        for (let i=0; i<staticEvents.length; i++) {
-            if (this.compareDate(date, new Date(staticEvents[i].date), false))
+    const checkForStaticEvent = (date) => {
+        for (let i = 0; i < staticEvents.length; i++) {
+            if (compareDate(date, new Date(staticEvents[i].date), false))
                 return true;
         }
 
         const days = [];
-        if (this.checkSeason(date)) {
+        if (checkSeason(date)) {
             // Summer condition
             days.push(5, 6, 0)
         }
@@ -165,7 +149,7 @@ class Schedule extends Component {
     }
 
     // Checks date to check for season if it is summer or not
-    checkSeason(date) {
+    const checkSeason = (date) => {
         const summerStart = new Date(date.getFullYear(), 4, 1)
         const summerEnd = new Date(date.getFullYear(), 10, 1)
         return ((summerStart.getTime() <= date.getTime()) && (date.getTime() <= summerEnd.getTime()));
@@ -173,16 +157,16 @@ class Schedule extends Component {
 
     // This function will add static events into existing events array
     // if the date matches with the date in the static event
-    addStaticEvents(events, date) {
-        for (let i=0; i<staticEvents.length; i++) {
-            if (this.compareDate(date, new Date(staticEvents[i].date), staticEvents[i].reoccuring)) {
+    const addStaticEvents = (events, date) => {
+        for (let i = 0; i < staticEvents.length; i++) {
+            if (compareDate(date, new Date(staticEvents[i].date), staticEvents[i].reoccuring)) {
                 events.push(staticEvents[i]);
                 return; // Set so it only adds the first event found in static events
             }
         }
 
         const days = [];
-        if (this.checkSeason(date)) {
+        if (checkSeason(date)) {
             // Summer condition
             days.push(5, 6, 0)
         }
@@ -194,235 +178,229 @@ class Schedule extends Component {
         if (days.includes(date.getDay())) {
             let time = ""
             let name = "Weekend Gameplay"
-            if (this.checkSeason(date) && date.getDay() !== 5) {
+            if (checkSeason(date) && date.getDay() !== 5) {
                 time = "8am - 2pm"
             }
-            else if (!this.checkSeason(date) && date.getDay() !== 5) {
+            else if (!checkSeason(date) && date.getDay() !== 5) {
                 time = "9am - 3pm"
             }
             else {
                 name = "Friday Night Gameplay"
                 time = "6pm - 11pm"
             }
-            let event = { 
+            let event = {
                 date: date,
                 name: name,
                 time: time,
                 additional: "",
                 static: true,
-                reoccuring: false, 
+                reoccuring: false,
             };
             events.push(event)
         }
     }
 
-    componentDidMount() {
-        this.props.firebase.schedule().on('value', obj => {
-            let events = obj.val() || [];
-
-            let eventsObj = Object.keys(events).map(key => ({
+    useEffect(() => {
+        const unsubscribeEvents = onValue(firebase.schedule(), obj => {
+            const events = obj.val() || [];
+            const eventsObj = Object.keys(events).map(key => ({
                 ...events[key],
                 index: key,
             }));
 
             const today = new Date();
+            const EventList = events.length !== 0
+                ? events.filter(event => compareDate(today, new Date(event.date), false))
+                : [];
 
-            let EventList = [];
-            if (events.length !== 0) {
-                EventList = events.filter(event => this.compareDate(today, new Date(event.date), false))
-            }
-
-            this.setState({
-                events: eventsObj, 
+            updateState({
+                events: eventsObj,
                 obj: obj.val(),
                 eventsDisplayed: EventList,
-            })
-        })
+            });
+        });
 
-        this.authSubscription = 
-            this.props.firebase.onAuthUserListener((user) => {
-                if (user) {
-                    this.setState({authUser: user, loading: false})
-            }
-        }, 
-        () => {
-                this.setState({authUser: null, loading: false})
-            },
-        )
-    };
-
-    componentWillUnmount() {
-        this.props.firebase.schedule().off()
-        this.authSubscription()
-    }
-
-    render() {
-        const { date, eventsDisplayed, showCreateEvent, showDeleteEvent, loading, authUser } = this.state;
- 
-        return (
-            <div className="background-static-all">
-                <Helmet>
-                    <title>US Airsoft Field: Schedule</title>
-                </Helmet>
-                <h2 className="page-header-schedule">US Airsoft Schedule</h2>
-                {loading ?
-                    <Row className="justify-content-row padding-5px"><Spinner animation="border" /></Row> :
-                <Container className="calendar-container">
-                    <Row>
-                        <Col className="justify-content-center-col">
-                            <Calendar 
-                                onChange={this.setDate} 
-                                value={date} 
-                                tileContent={({date, view}) => (this.checkTile(date, view))}
-                                tileClassName={({ activeStartDate, date, view }) => (
-                                    view === 'month' && (date.getDay() === 6 || date.getDay() === 0) ? 'weekend-calendar-games' : 
-                                    (date.getDay() === 5 ? "friday-night-calendar-games" : "non-event-calendar-days")
-                                )}
-                            />
-                        </Col>
-                    </Row>
-                    <Row className="justify-content-row">
-                        <Col xl={2} className="selected-date-col-schedule">
-                            <div className="selected-date-div">
-                                <div className="selected-date-div-number">{date.getDate()}</div>
-                                <div>{date.toDateString().split(" ")[1]}</div>
-                            </div>
-                        </Col>
-                        <Col xl={3} className="selected-date-events-col">
-                            {eventsDisplayed.map((event, i) => (
-                                <EventElement event={event} key={i} deleteEvent={this.deleteEvent.bind(this)} deleting={showDeleteEvent}/>
-                            ))}
-                            {showCreateEvent ? 
-                            <CreateEventElement createEvent={this.createEvent.bind(this)} close={this.showCreateEvent.bind(this)}/>
-                            : null}
-                            {/* only show if user is admin */}
-                            {authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]) ? 
-                            <Row className="add-event-row-schedule">
-                                {!showDeleteEvent ?
-                                <Col className="justify-content-center-col">
-                                    <IconButton onClick={() => {this.setState({showCreateEvent: !showCreateEvent})}}>
-                                        <Add />
-                                    </IconButton>
-                                </Col> : null}
-                                {!showCreateEvent ?
-                                <Col className="justify-content-center-col">
-                                    <IconButton onClick={() => {this.setState({showDeleteEvent: !showDeleteEvent})}}>
-                                        <Delete />
-                                    </IconButton>
-                                </Col> : null}
-                            </Row> : null}
-                        </Col>
-                    </Row>
-                </Container>}
-            </div>
+        const unsubscribeAuth = firebase.onAuthUserListener(
+            (user) => updateState({ authUser: user, loading: false }),
+            () => updateState({ authUser: null, loading: false })
         );
 
-            function CreateEventElement({createEvent, close}) {
-                const [time, setTime] = useState("");
-                const [event, setEvent] = useState("");
-                const [additional, setAdditional] = useState("");
-                return(
+        return () => {
+            unsubscribeEvents();
+            unsubscribeAuth();
+        };
+    }, [firebase]);
+
+    // Modernized calendar tile content
+    const renderTileContent = useCallback(({ date, view }) => {
+        if (view !== "month") return null;
+
+        const hasEvent = checkForDate(date);
+
+        return hasEvent ? (
+            <Box sx={{
+                position: 'absolute',
+                bottom: '0px',
+                left: '50%',
+                transform: 'translateX(-50%)'
+            }}>
+                <FiberManualRecord
+                    sx={{
+                        fontSize: '10px',
+                        color: 'black'
+                    }}
+                />
+            </Box>
+        ) : null;
+    }, []);
+
+    // Modernized event display component
+    const EventElement = ({ event, deleteEvent, deleting }) => (
+        <Card
+            sx={{
+                mb: 2,
+                backgroundColor: event.static ? 'action.selected' : 'background.paper',
+                position: 'relative'
+            }}
+        >
+            <Box sx={{ p: 2 }}>
+                <Typography variant="h6" gutterBottom>
+                    {event.name}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                    {event.time}
+                </Typography>
+                {event.additional && (
+                    <Typography variant="body2" sx={{ mt: 1 }}>
+                        {event.additional}
+                    </Typography>
+                )}
+                {deleting && !event.static && (
+                    <IconButton
+                        onClick={deleteEvent}
+                        sx={{
+                            position: 'absolute',
+                            top: 8,
+                            right: 8
+                        }}
+                    >
+                        <Delete color="error" />
+                    </IconButton>
+                )}
+            </Box>
+        </Card>
+    );
+
+    return (
+        <Box className="background-static-all" sx={{ minHeight: '100vh' }}>
+            <Helmet>
+                <title>US Airsoft Field: Schedule</title>
+            </Helmet>
+
+            <Typography
+                variant="h4"
+                component="h2"
+                sx={{
+                    textAlign: 'center',
+                    py: 3,
+                    color: 'white'
+                }}
+            >
+                US Airsoft Schedule
+            </Typography>
+
+            {state.loading ? (
+                <Box display="flex" justifyContent="center" p={5}>
+                    <Spinner animation="border" />
+                </Box>
+            ) : (
+                <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3 } }}>
+                    <Paper
+                        elevation={3}
+                        sx={{
+                            p: { xs: 2, sm: 3 },
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            borderRadius: { xs: '12px', sm: '16px' }
+                        }}
+                    >
                         <Row>
-                            <Col>
-                                <div className="div-element-schedule-box">
-                                    <div>
-                                        <Row className="event-create-row">
-                                            <Col lg={10}>
-                                                <TextField
-                                                    label="Time Slot*"
-                                                    type="text"
-                                                    autoComplete={null}
-                                                    onChange={(e) => setTime(e.target.value)}
-                                                    variant="standard" />
-                                            </Col>
-                                        </Row>
-                                    </div>
-                                    <div>
-                                        <Row className="event-create-row">
-                                            <Col lg={10}>
-                                                <TextField
-                                                    label="Event Name*"
-                                                    type="text"
-                                                    autoComplete={null}
-                                                    onChange={(e) => setEvent(e.target.value)}
-                                                    variant="standard" />
-                                            </Col>
-                                        </Row>
-                                    </div>
-                                    <div>
-                                        <Row className="event-create-row">
-                                            <Col lg={10}>
-                                                <TextField
-                                                    label="Additional Info"
-                                                    type="text"
-                                                    autoComplete={null}
-                                                    onChange={(e) => setAdditional(e.target.value)}
-                                                    variant="standard" />
-                                            </Col>
-                                        </Row>
-                                    </div> 
-                                    <Row className="save-button-row-schedule">
-                                        <Button variant="outlined" startIcon={<Save />} onClick={() => {createEvent(event, additional, time)}}>
-                                            Save
-                                        </Button>
-                                        <IconButton onClick={() => {close(false)}}>
-                                            <Close />
-                                        </IconButton>
-                                    </Row>
-                                </div>
+                            <Col xs={12} md={8} className="mb-4 mb-md-0">
+                                <Calendar
+                                    onChange={setDate}
+                                    value={state.date}
+                                    tileContent={renderTileContent}
+                                    tileClassName={({ date }) => {
+                                        const day = date.getDay();
+                                        if (day === 6 || day === 0) return 'weekend-calendar-games';
+                                        if (day === 5) return 'friday-night-calendar-games';
+                                        return 'non-event-calendar-days';
+                                    }}
+                                />
+                            </Col>
+                            <Col xs={12} md={4}>
+                                <Box sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    mb: 3
+                                }}>
+                                    <EventIcon sx={{ mr: 1 }} />
+                                    <Typography variant="h6">
+                                        {state.date.toLocaleDateString('en-US', {
+                                            month: 'long',
+                                            day: 'numeric',
+                                            year: 'numeric'
+                                        })}
+                                    </Typography>
+                                </Box>
+
+                                {/* Events List */}
+                                <Box sx={{ mb: 3 }}>
+                                    {state.eventsDisplayed.map((event, i) => (
+                                        <EventElement
+                                            key={i}
+                                            event={event}
+                                            deleteEvent={() => deleteEvent(event)}
+                                            deleting={state.showDeleteEvent}
+                                        />
+                                    ))}
+                                </Box>
+
+                                {/* Admin Controls */}
+                                {state.authUser?.roles[ROLES.ADMIN] && (
+                                    <Box sx={{
+                                        display: 'flex',
+                                        justifyContent: 'center',
+                                        gap: 2
+                                    }}>
+                                        {!state.showDeleteEvent && (
+                                            <IconButton
+                                                onClick={() => updateState({
+                                                    showCreateEvent: !state.showCreateEvent
+                                                })}
+                                                color="primary"
+                                            >
+                                                <Add />
+                                            </IconButton>
+                                        )}
+                                        {!state.showCreateEvent && (
+                                            <IconButton
+                                                onClick={() => updateState({
+                                                    showDeleteEvent: !state.showDeleteEvent
+                                                })}
+                                                color="error"
+                                            >
+                                                <Delete />
+                                            </IconButton>
+                                        )}
+                                    </Box>
+                                )}
                             </Col>
                         </Row>
-                );
-            }
-
-            function EventElement({event, deleteEvent, deleting}) {
-                return (
-                    <Row md={12}>
-                        <Col>
-                            <div className={deleting && !('static' in event) ? "deleting-div-element-schedule-box" : "div-element-schedule-box"} 
-                                onClick={() => {if (deleting && !('static' in event)) deleteEvent(event)}}>
-                                <div>
-                                    <Row className="justify-content-row">
-                                        <Close className="trash-icon-schedule"/>
-                                    </Row>
-                                    <Row className="event-info-row">
-                                        <Col lg={2} className="icon-additional-info-col">
-                                            Time:
-                                        </Col>
-                                        <Col lg={9} className="event-element-col-schedule">
-                                            {event.time}
-                                        </Col>
-                                    </Row>
-                                </div>
-                                <div>
-                                    <Row className="event-info-row">
-                                        <Col lg={2} className="icon-additional-info-col">
-                                            Event:
-                                        </Col>
-                                        <Col lg={9} className="text-event-title-col">
-                                            {event.name}
-                                        </Col>
-                                    </Row>
-                                </div>
-                                {event.additional !== "" ? 
-                                <div>
-                                    <Row className="event-info-row">
-                                        <Col lg={2} className="icon-additional-info-col">
-                                            <InfoIcon/>
-                                        </Col>
-                                        <Col lg={9} className="text-event-title-col">
-                                            {event.additional}
-                                        </Col>
-                                    </Row>
-                                </div> 
-                                : null}
-                            </div>
-                        </Col>
-                    </Row>
-                );
-            }
-        };
-    }
-    
+                    </Paper>
+                </Container>
+            )}
+        </Box>
+    );
+};
 
 export default withFirebase(Schedule);

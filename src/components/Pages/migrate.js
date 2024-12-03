@@ -3,7 +3,7 @@ import '../../App.css';
 
 import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
-import { compose } from 'recompose';
+
 
 import { Container, Row, Col, Breadcrumb } from 'react-bootstrap/';
 
@@ -110,7 +110,9 @@ class Migration extends Component {
 const condition = authUser =>
     authUser && !!authUser.roles[ROLES.SUPER];
 
-export default compose(
-    withAuthorization(condition),
-    withFirebase,
-)(Migration);
+export default withAuthorization(condition)(withFirebase(Migration));
+
+// export default composeHooks(
+//     withAuthorization(condition),
+//     withFirebase,
+// )(Migration);

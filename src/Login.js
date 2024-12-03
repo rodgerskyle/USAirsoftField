@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
-import { withRouter } from 'react-router-dom';
-import { compose } from 'recompose';
+import { withRouter } from './components/constants/withRouter';
 import logo from './assets/usairsoft-small-logo.png';
 
+import { get } from 'firebase/database';
 import { withFirebase } from './components/Firebase';
 import { PasswordForgetLink } from './passwordForgot';
 import ReCAPTCHA from 'react-google-recaptcha';
@@ -19,7 +19,7 @@ const SignInPage = () => (
     <Container className="login-container">
       <Col className="login-col">
         <Row className="header-rp">
-          <img src={logo} alt="US Airsoft logo" className="small-logo-login"/>
+          <img src={logo} alt="US Airsoft logo" className="small-logo-login" />
         </Row>
         <SignInForm />
       </Col>
@@ -46,7 +46,7 @@ class SignInFormBase extends Component {
   //Recaptcha stuff
   handleCaptchaResponseChange(response) {
     let checkRecaptcha = this.props.firebase.checkRecaptcha();
-    checkRecaptcha({response}).then((result) => {
+    checkRecaptcha({ response }).then((result) => {
       if (result.data && result.data.status === "success.") {
         this.setState({
           robot: false, error: null
@@ -57,13 +57,13 @@ class SignInFormBase extends Component {
         this.setState({ error: "Please retry the ReCAPTCHA." })
       }
     })
-    .catch((error) => {
-    // Getting the Error details.
-    var code = error.code;
-    var message = error.message;
-    console.log (code + " " + message)
-    // ...
-    })
+      .catch((error) => {
+        // Getting the Error details.
+        var code = error.code;
+        var message = error.message;
+        console.log(code + " " + message)
+        // ...
+      })
   }
 
   //Recaptcha Expired
@@ -81,18 +81,19 @@ class SignInFormBase extends Component {
         .doSignInWithEmailAndPassword(email, password)
         .then(() => {
           this.setState({ ...INITIAL_STATE });
-          this.props.firebase.user(this.props.firebase.uid()).once('value', snapshot => {
-              const userObject = snapshot.val();
-              this.props.history.push("/");
-              if (userObject.roles && !!userObject.roles[ROLES.WAIVER]) {
-                this.props.history.push("/dashboard");
-              }
+          get(this.props.firebase.user(this.props.firebase.uid()), snapshot => {
+            const userObject = snapshot.val();
+            this.props.history.push("/");
+            if (userObject.roles && !!userObject.roles[ROLES.WAIVER]) {
+              this.props.history.push("/dashboard");
+            }
           })
         })
         .catch(error_p => {
+          console.log(error_p);
           this.setState({ error: "The Email or Password is incorrect", robot: true });
         });
-      }
+    }
   };
 
   onChange = event => {
@@ -134,8 +135,8 @@ class SignInFormBase extends Component {
           </Form.Group>
           <Button disabled={isInvalid} type="submit" block>
             Sign In
-        </Button>
-        <PasswordForgetLink />
+          </Button>
+          <PasswordForgetLink />
           {error && <p>{error.message}</p>}
           <p className="text-align-center">{this.state.error}</p>
         </Form>
@@ -144,9 +145,9 @@ class SignInFormBase extends Component {
             <Col className="recap">
               <ReCAPTCHA
                 ref={(el) => { this.recaptcha = el; }}
-                sitekey="6Lc0JPsUAAAAAGfLV1lzptnyO2V1dTU7GfR5_5h5"
+                sitekey={process.env.REACT_APP_RECAPTCHA_V2_SITE_KEY}
                 theme={'dark'}
-                onChange={this.handleCaptchaResponseChange} 
+                onChange={this.handleCaptchaResponseChange}
                 onExpired={this.expireCaptcha} />
             </Col>
           </Row>
@@ -156,10 +157,12 @@ class SignInFormBase extends Component {
   }
 }
 
-const SignInForm = compose(
-  withRouter,
-  withFirebase,
-)(SignInFormBase);
+const SignInForm = withRouter(withFirebase(SignInFormBase))
+
+// const SignInForm = composeHooks(
+//   withRouter,
+//   withFirebase,
+// )(SignInFormBase);
 
 export default SignInPage;
 

@@ -4,13 +4,13 @@ import { Container, Row, Col, Spinner } from 'react-bootstrap/';
 
 import logo from '../../assets/usairsoft-small-logo.png';
 
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
-import TableContainer from '@material-ui/core/TableContainer';
-import TableHead from '@material-ui/core/TableHead';
-import TableRow from '@material-ui/core/TableRow';
-import Paper from '@material-ui/core/Paper';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper';
 
 import { Link } from 'react-router-dom';
 
@@ -27,10 +27,9 @@ import ranks from '../constants/ranks';
 
 import rankincrements from '../constants/rankincrements';
 
-import { makeStyles } from '@material-ui/core/styles';
-
-import { CircularProgress, Slide } from '@material-ui/core';
+import { CircularProgress, Slide } from '@mui/material';
 import { isMobile } from 'react-device-detect';
+import { getDownloadURL } from 'firebase/storage';
 
 class Profile extends Component {
     constructor(props) {
@@ -55,7 +54,7 @@ class Profile extends Component {
         this.authSubscription = this.props.firebase.onAuthUserListener((user) => {
             // grab points and profile
             this.getMatchHistory(user)
-        });
+        }, () => { });
     }
 
     componentWillUnmount() {
@@ -66,27 +65,27 @@ class Profile extends Component {
 
     // grabs match history for the user and returns the object with the necessary information
     getMatchHistory(user) {
-            if (user.profilepic)
-                this.getProfile(`${user.uid}/profilepic`);
-            else
-                this.setState({ profileicon: default_profile })
-            const matchObj = user.games
-            let matches = null;
-            if (matchObj) {
-                matches = Object.keys(matchObj).map((key) => ({
-                    ...matchObj[key],
-                    date: key,
-                })).reverse()
-            }
-            this.setState({ matches, authUser: user }, () => {
-                this.getRank();
-            })
+        if (user.profilepic)
+            this.getProfile(`${user.uid}/profilepic`);
+        else
+            this.setState({ profileicon: default_profile })
+        const matchObj = user.games
+        let matches = null;
+        if (matchObj) {
+            matches = Object.keys(matchObj).map((key) => ({
+                ...matchObj[key],
+                date: key,
+            })).reverse()
+        }
+        this.setState({ matches, authUser: user }, () => {
+            this.getRank();
+        })
     }
 
 
     //Get image function for profile image = uid
     getProfile(uid) {
-        this.props.firebase.pictures(`${uid}.png`).getDownloadURL().then((url) => {
+        getDownloadURL(this.props.firebase.pictures(`${uid}.png`)).then((url) => {
             this.setState({ profileicon: url })
         })
     }
@@ -182,7 +181,7 @@ class Profile extends Component {
                         <Spinner animation="border" />
                     </Row>
                     :
-                    <div style={{overflowX: 'hidden'}}>
+                    <div style={{ overflowX: 'hidden' }}>
                         <Container>
                             <div>
                                 <div className="div-profile-main-p">
@@ -222,7 +221,7 @@ class Profile extends Component {
                                             })
                                         }, 150)}>
                                         PROFILE
-                                        </p>
+                                    </p>
                                     <p className={activePage === 1 ? "p-nav-profile-active" : "p-nav-profile"}
                                         onClick={() => setTimeout(() => {
                                             this.setState({ activePage: 1 }, () => {
@@ -230,7 +229,7 @@ class Profile extends Component {
                                             })
                                         }, 150)}>
                                         PROGRESSION
-                                        </p>
+                                    </p>
                                     <p className={activePage === 2 ? "p-nav-profile-active" : "p-nav-profile"}
                                         onClick={() => setTimeout(() => {
                                             this.setState({ activePage: 2 }, () => {
@@ -238,7 +237,7 @@ class Profile extends Component {
                                             })
                                         }, 150)}>
                                         GAME FEED
-                                        </p>
+                                    </p>
                                     <p className={activePage === 3 ? "p-nav-profile-active" : "p-nav-profile"}
                                         onClick={() => setTimeout(() => {
                                             this.setState({ activePage: 3 }, () => {
@@ -246,7 +245,7 @@ class Profile extends Component {
                                             })
                                         }, 150)}>
                                         BADGES
-                                        </p>
+                                    </p>
                                 </Row>
                                 <div style={{ paddingTop: 10 }}>
                                     {activePage === 0 ?
@@ -279,8 +278,8 @@ class Profile extends Component {
                                                     </div>
                                                 </Col>
                                                 <Col md={4} className="col-rank-box-profile">
-                                                    <img style={{width: '100%'}}src={images.length !== 0 ? images[rankindex] : null}
-                                                        alt="Players rank" className="img-xlarge-rank"/>
+                                                    <img style={{ width: '100%' }} src={images.length !== 0 ? images[rankindex] : null}
+                                                        alt="Players rank" className="img-xlarge-rank" />
                                                 </Col>
                                                 <Col md={4}>
                                                     <div className="div-stats-box-profile">
@@ -299,7 +298,7 @@ class Profile extends Component {
                                                             <p className="p-stats-box-profile">{"Coming soon..."}</p>
                                                         </Row>
                                                     </div>
-                                                    <div className="div-stats-box-profile" style={{marginBottom: '1rem'}}>
+                                                    <div className="div-stats-box-profile" style={{ marginBottom: '1rem' }}>
                                                         <Row className="justify-content-row">
                                                             <p className="p-title-stats-box-profile">{"Free Games:"}</p>
                                                         </Row>
@@ -312,23 +311,23 @@ class Profile extends Component {
                                         </Slide> : null}
                                     {activePage === 1 ?
                                         <Slide direction={prevPage < 1 ? "left" : "right"} in={true} mountOnEnter unmountOnExit>
-                                            <Row style={{paddingTop: '1rem'}}>
+                                            <Row style={{ paddingTop: '1rem' }}>
                                                 <Col md={4}>
                                                     <Row className="justify-content-row row-rank-progress-profile" style={{ alignItems: 'center' }}>
-                                                        <CircularProgress value={100} variant={"determinate"} size={200} className="cp-static-profile"/>
-                                                        <CircularProgress value={rankprogress * 100} variant={"determinate"} size={200} />
+                                                        <CircularProgress value={100} variant={"determinate"} size={200} className="cp-static-profile" />
+                                                        <CircularProgress value={rankprogress * 100} variant={"determinate"} size={200} className="cp2-static-profile" />
                                                         <div style={{ position: 'absolute' }}>
                                                             <Row className="justify-content-row">
                                                                 <img src={images.length !== 0 ? images[rankindex] : null}
-                                                                    alt="Players rank" className="img-large-rank"/>
+                                                                    alt="Players rank" className="img-large-rank" />
                                                             </Row>
                                                             <Row className="justify-content-row">
                                                                 <p className="p-rank-title-rp">{ranks[rankindex]}</p>
                                                             </Row>
                                                         </div>
                                                     </Row>
-                                                    <Row className="justify-content-row" style={{marginTop: '1rem'}}>
-                                                        <p className="p-title-stats-box-profile">{`${rankindex+1 < images.length ? 
+                                                    <Row className="justify-content-row" style={{ marginTop: '1rem' }}>
+                                                        <p className="p-title-stats-box-profile">{`${rankindex + 1 < images.length ?
                                                             (rankprogress * 100).toFixed(2) : 100}% | ${authUser.points -
                                                             (rankindex + 1 < images.length ? curRankPoints : 0)} points`}</p>
                                                     </Row>
@@ -336,18 +335,18 @@ class Profile extends Component {
                                                         <p className="p-rank-title-profile">Next Rank</p>
                                                     </div>
                                                     <Row className="justify-content-row">
-                                                        <img src={images.length !== 0 ? images[rankindex+1 < images.length ? rankindex + 1 : rankindex] : null}
-                                                            alt="Players rank" className="img-large-rank"/>
+                                                        <img src={images.length !== 0 ? images[rankindex + 1 < images.length ? rankindex + 1 : rankindex] : null}
+                                                            alt="Players rank" className="img-large-rank" />
                                                     </Row>
                                                     <Row className="justify-content-row">
-                                                        <p className="p-next-rank-title-rp">{ranks[rankindex+1 < images.length ? rankindex + 1 : rankindex]}</p>
+                                                        <p className="p-next-rank-title-rp">{ranks[rankindex + 1 < images.length ? rankindex + 1 : rankindex]}</p>
                                                     </Row>
                                                     {rankindex + 1 < images.length ?
-                                                    <Row className="justify-content-row">
-                                                        <p className="p-rank-progress-rp">
-                                                            {`Points Needed: ${(nextRankPoints - curRankPoints) - (authUser.points - curRankPoints)} `}
-                                                        </p>
-                                                    </Row> : null}
+                                                        <Row className="justify-content-row">
+                                                            <p className="p-rank-progress-rp">
+                                                                {`Points Needed: ${(nextRankPoints - curRankPoints) - (authUser.points - curRankPoints)} `}
+                                                            </p>
+                                                        </Row> : null}
                                                 </Col>
                                                 <Col md={8} className="col-center-middle">
                                                     <div>
@@ -356,19 +355,19 @@ class Profile extends Component {
                                                                 ENLISTED RANKS
                                                             </p>
                                                         </Row>
-                                                        <RankList images={images.slice((0) * 6, ((0) * 6) + 6 )} ranks={ranks} page={0}
-                                                        rankincs={rankincrements} rankindex={rankindex}/>
-                                                        <RankList images={images.slice((1) * 6, ((1) * 6) + 6 )} ranks={ranks} page={1}
-                                                        rankincs={rankincrements} rankindex={rankindex}/>
+                                                        <RankList images={images.slice((0) * 6, ((0) * 6) + 6)} ranks={ranks} page={0}
+                                                            rankincs={rankincrements} rankindex={rankindex} />
+                                                        <RankList images={images.slice((1) * 6, ((1) * 6) + 6)} ranks={ranks} page={1}
+                                                            rankincs={rankincrements} rankindex={rankindex} />
                                                         <Row className="row-officer-rank-category-title">
                                                             <p className="p-rank-category-title">
                                                                 OFFICER RANKS
                                                             </p>
                                                         </Row>
-                                                        <RankList images={images.slice((2) * 6, ((2) * 6) + 6 )} ranks={ranks} page={2}
-                                                        rankincs={rankincrements} rankindex={rankindex}/>
-                                                        <RankList images={images.slice((3) * 6, ((3) * 6) + 6 )} ranks={ranks} page={3}
-                                                        rankincs={rankincrements} rankindex={rankindex}/>
+                                                        <RankList images={images.slice((2) * 6, ((2) * 6) + 6)} ranks={ranks} page={2}
+                                                            rankincs={rankincrements} rankindex={rankindex} />
+                                                        <RankList images={images.slice((3) * 6, ((3) * 6) + 6)} ranks={ranks} page={3}
+                                                            rankincs={rankincrements} rankindex={rankindex} />
                                                     </div>
                                                 </Col>
                                             </Row>
@@ -384,7 +383,7 @@ class Profile extends Component {
                                             <Row>
                                                 <Col className="col-center-middle">
                                                     <p className="p-stats-box-profile">{"Coming soon..."}</p>
-                                                    <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>
+                                                    <img src={logo} alt="US Airsoft logo" className="small-logo-home" />
                                                 </Col>
                                             </Row>
                                         </Slide> : null}
@@ -405,7 +404,7 @@ function RankList({ images, ranks, rankincs, page, rankindex }) {
                 {images.map((image, i) => (
                     <Col md={2} className={rankindex === i + (page * 6) ? "col-your-rank-rp" : "col-rank-icon-rp"} key={i}>
                         <Row className="justify-content-row">
-                            <img src={image} alt={ranks[i + (page * 6)]} className="img-normal-rank"/>
+                            <img src={image} alt={ranks[i + (page * 6)]} className="img-normal-rank" />
                         </Row>
                         <Row className="justify-content-row">
                             <p className="p-ranks-rp">{rankincs[i + (page * 6)]}</p>
@@ -422,14 +421,6 @@ function RankList({ images, ranks, rankincs, page, rankindex }) {
 
 // Shows the users match history
 function MatchHistory({ matches }) {
-    const useStyles = makeStyles({
-        table: {
-            padding: '2px 4px',
-        },
-        container: {
-            maxHeight: 365,
-        },
-    })
 
     function convert(date) {
         let array = date.split('-')
@@ -437,11 +428,9 @@ function MatchHistory({ matches }) {
         return array.join('-')
     }
 
-    const classes = useStyles();
-
     return (
         <div>
-            <Row style={{paddingRight: 15, paddingLeft: 15}}>
+            <Row style={{ paddingRight: 15, paddingLeft: 15 }}>
                 <Col className="col-match-history-rp">
                     <Row className="justify-content-row">
                         <p className="p-match-history-title-rp">
@@ -449,8 +438,8 @@ function MatchHistory({ matches }) {
                         </p>
                     </Row>
                     <Row className="row-table-match-history-rp">
-                        <TableContainer component={Paper} className={classes.container}>
-                            <Table stickyHeader className={classes.table} aria-label="match history table">
+                        <TableContainer component={Paper} className="container">
+                            <Table stickyHeader className="table" aria-label="match history table">
                                 <TableHead>
                                     <TableRow>
                                         <TableCell>Date</TableCell>

@@ -7,7 +7,7 @@ import { encode } from 'firebase-encode';
 
 import { withFirebase } from '../Firebase';
 
-import { compose } from 'recompose';
+
 
 import { Helmet } from 'react-helmet-async';
 
@@ -93,7 +93,8 @@ class emailOptOut extends Component {
     }
 }
 
+export default withFirebase(emailOptOut);
 
-export default compose(
-    withFirebase,
-    )(emailOptOut)
+// export default composeHooks(
+//     withFirebase,
+//     )(emailOptOut)

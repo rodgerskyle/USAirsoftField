@@ -12,8 +12,10 @@ import alticon from '../../assets/team-img-placeholder.png';
 
 import 'react-bootstrap-typeahead/css/Typeahead.css';
 
-import { compose } from 'recompose';
+
 import { Helmet } from 'react-helmet-async';
+import { deleteObject, getDownloadURL, uploadBytes } from 'firebase/storage';
+import { get } from 'firebase/database';
 
 class TeamCreate extends Component {
     constructor(props) {
@@ -44,7 +46,7 @@ class TeamCreate extends Component {
     componentWillUnmount() {
         if (this.state.complete === false) {
             if (this.state.uploaded === true) {
-                this.props.firebase.teamsPictures(`${this.state.previous}.png`).delete().then(function () {
+                deleteObject(this.props.firebase.teamsPictures(`${this.state.previous}.png`)).then(function () {
                     // File deleted successfully
                 }).catch(function (error) {
                     // Uh-oh, an error occurred!
@@ -58,7 +60,7 @@ class TeamCreate extends Component {
         const { page } = this.state;
         e.preventDefault();
         if (this.state.teamname !== "") {
-            this.props.firebase.team(this.state.teamname.toString().toLowerCase()).ref.once("value", (data) => {
+            get(this.props.firebase.team(this.state.teamname.toString().toLowerCase()), (data) => {
                 //Check for existance
                 if (data.val() === null) {
                     this.setState({ page: !page, error: "" })
@@ -85,13 +87,13 @@ class TeamCreate extends Component {
 
         const { image, uploaded, previous, imgError, error, teamname } = this.state;
 
-        if (image !== null && imgError === false && error === null && team === "" ) {
+        if (image !== null && imgError === false && error === null && team === "") {
 
-            var t_name = teamname.toString().toLowerCase();
+            var t_name = teamname.toString().toLowerCase().trim();
 
             //Handling the case if a user had previously uploaded an image
             if (uploaded === true) {
-                this.props.firebase.teamsPictures(`${previous}.png`).delete().then(function () {
+                deleteObject(this.props.firebase.teamsPictures(`${previous}.png`)).then(function () {
                     // File deleted successfully
                 }).catch(function (error) {
                     // Uh-oh, an error occurred!
@@ -100,13 +102,13 @@ class TeamCreate extends Component {
             //Create message to show they were removed and reset input box
             var createTeam = this.props.firebase.createTeam();
             createTeam({
-                teamname: this.state.teamname, description: this.state.description, user_team: team
+                teamname: this.state.teamname.trim(), description: this.state.description, user_team: team
             }).then((result) => {
                 // Read result of the Cloud Function.
                 var update = result.data.message;
                 if (update === "Complete") {
                     //If team was created without issue set completion to true
-                    const uploadTask = this.props.firebase.teamsPictures(`${t_name}.png`).put(image);
+                    const uploadTask = uploadBytes(this.props.firebase.teamsPictures(`${t_name}.png`), (image));
                     uploadTask.on(
                         "state_changed",
                         snapshot => {
@@ -118,13 +120,12 @@ class TeamCreate extends Component {
                         },
                         error => {
                             // Error function ...
-                            this.setState({error})
+                            this.setState({ error })
                         },
                         () => {
                             // complete function ...
-                            this.props.firebase
-                                .teamsPictures(`${t_name}.png`)
-                                .getDownloadURL()
+                            getDownloadURL(this.props.firebase
+                                .teamsPictures(`${t_name}.png`))
                                 .then(url => {
                                     this.setState({ url });
                                 });
@@ -137,7 +138,7 @@ class TeamCreate extends Component {
                             })
                         })
                 }
-            }).catch(function(error) {
+            }).catch(function (error) {
                 console.log(error)
             })
         }
@@ -202,11 +203,11 @@ class TeamCreate extends Component {
                                             <p className="notice-text">You already have a team, you must quit your team first.</p>
                                         </Row>
                                         <Row className="row-notice">
-                                            <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>
+                                            <img src={logo} alt="US Airsoft logo" className="small-logo-home" />
                                         </Row>
                                     </Col>
                                 </Row>
-                            </Container> 
+                            </Container>
                             : (page ?
                                 <Container>
                                     <h2 className="header-teamc">Create your team!</h2>
@@ -235,7 +236,7 @@ class TeamCreate extends Component {
                                             <Button className="next-button" variant="primary" type="submit"
                                             >
                                                 Next
-                                        </Button>
+                                            </Button>
                                         </Form.Group>
                                     </Form>
                                     <Row>
@@ -259,18 +260,18 @@ class TeamCreate extends Component {
                                             <div className="input-field img-input-teamc">
                                                 <Form.Group>
                                                     <Form.File id="team-image-input" onChange={this.handleChange}
-                                                    label="Attach Image" accept="image/*" custom data-browse="Upload"/>
+                                                        label="Attach Image" accept="image/*" custom data-browse="Upload" />
                                                 </Form.Group>
                                             </div>
                                         </Col>
                                     </Row>
-                                    {this.state.progress !== 0 ? 
-                                    <Row>
-                                        <Col md={3}>
-                                            <ProgressBar animated striped now={this.state.progress} label={`${this.state.progress}%`} />
-                                        </Col>
-                                    </Row>
-                                    : null}
+                                    {this.state.progress !== 0 ?
+                                        <Row>
+                                            <Col md={3}>
+                                                <ProgressBar animated striped now={this.state.progress} label={`${this.state.progress}%`} />
+                                            </Col>
+                                        </Row>
+                                        : null}
                                     <Row className="row-buttons-teamc">
                                         <Button className="previous-button" variant="primary" onClick={((e) => this.previousPage(e))}
                                         >
@@ -295,7 +296,9 @@ class TeamCreate extends Component {
 
 const condition = authUser => !!authUser;
 
-export default compose(
-    withFirebase,
-    withAuthorization(condition),
-    )(TeamCreate);
+export default withFirebase(withAuthorization(condition)(TeamCreate));
+
+// export default composeHooks(
+//     withFirebase,
+//     withAuthorization(condition),
+//     )(TeamCreate);

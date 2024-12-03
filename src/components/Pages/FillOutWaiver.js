@@ -7,17 +7,32 @@ import SignatureCanvas from 'react-signature-canvas';
 import SignedWaiver from './SignedWaiver';
 import '../../App.css';
 import { encode } from 'firebase-encode';
-import { Checkbox, FormControlLabel } from '@material-ui/core';
+import { Checkbox, FormControlLabel } from '@mui/material';
 
 import waiver from '../../assets/Waiver-cutoff.png'
 
 import { Typeahead } from 'react-bootstrap-typeahead';
 
 import { AuthUserContext, withAuthorization } from '../session';
-import { compose } from 'recompose';
+
 import { withFirebase } from '../Firebase';
 import * as ROLES from '../constants/roles';
 import { Helmet } from 'react-helmet-async';
+import { uploadBytes } from 'firebase/storage';
+import { get, onValue, set, update, ref, push } from 'firebase/database';
+
+// Helper function to convert dataURL to Blob
+const dataURLtoBlob = (dataURL) => {
+  const arr = dataURL.split(',');
+  const mime = arr[0].match(/:(.*?);/)[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new Blob([u8arr], { type: mime });
+};
 
 const WaiverPage = () => (
   <AuthUserContext.Consumer>
@@ -86,52 +101,81 @@ class WaiverPageFormBase extends Component {
     this.state = { ...INITIAL_STATE, num_waivers: null, groups: null, loading: true, groupIndex: null, groupsObject: null };
   }
 
-  async completeWaiver(myProps) {
-    const { fname, lname, selectedGroup, groupsObject, groupIndex } = this.state;
-    const blob = await pdf((
-      <SignedWaiver {...myProps} />
-    )).toBlob();
-    var date = (new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear()) + ":" +
-      (new Date().getHours()) + ":" + (new Date().getMinutes()) + ":" + (new Date().getSeconds()) + ":" + (new Date().getMilliseconds());
-    this.props.firebase.nonmembersWaivers(`${fname} ${lname}(${date}).pdf`).put(blob).then(() => {
-      if (selectedGroup.length !== 0) {
-        if (typeof groupsObject[groupIndex[selectedGroup[0]]].participants === 'undefined') {
-          // Push participant into new array and set it
-          let participants = []
-          let obj = { name: `${fname} ${lname}(${date})`, gamepass: false }
-          participants.push(obj)
-          this.props.firebase.rentalGroup(groupIndex[selectedGroup[0]]).update({ participants })
-        }
-        else if (groupsObject[groupIndex[selectedGroup[0]]].participants.length < groupsObject[groupIndex[selectedGroup[0]]].size) {
-          // Push participant into existing array and set it
-          let participants = groupsObject[groupIndex[selectedGroup[0]]].participants
-          let obj = { name: `${fname} ${lname}(${date})`, gamepass: false }
-          participants.push(obj)
-          this.props.firebase.rentalGroup(groupIndex[selectedGroup[0]]).update({ participants })
-        }
-        // Make sure length and size are not equal
-        // Push new user to participants table
+  async completeWaiver() {
+    try {
+      const waiverData = {
+        name: `${this.state.fname} ${this.state.lname}`,
+        email: this.state.email,
+        phone: this.state.phone,
+        address: this.state.address,
+        city: this.state.city,
+        state: this.state.state,
+        zipcode: this.state.zipcode,
+        dob: this.state.dob,
+        age: this.state.age,
+        participantSignature: this.state.participantImg,
+        timestamp: Date.now(),
+        acceptEmailSubscription: this.state.acceptEmailSubscription
+      };
+
+      // Add guardian info if exists
+      if (this.state.age < 18 && this.state.pgImg) {
+        waiverData.guardian = {
+          name: this.state.pgname,
+          phone: this.state.pgphone,
+          signature: this.state.pgImg
+        };
       }
-      this.setState({ showLander: true, loading: false })
-      let total_num = this.state.num_waivers + 1
-      this.props.firebase.numWaivers().update({ total_num })
-    })
+
+      // Push to digital_waivers
+      const digitalWaiversRef = this.props.firebase.digitalWaivers();
+      const newWaiverRef = push(digitalWaiversRef);
+      await set(newWaiverRef, waiverData);
+
+      // Handle email subscription
+      if (this.state.acceptEmailSubscription) {
+        const secret = 'm' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5).toUpperCase();
+        const emailRef = ref(this.props.firebase.db, `emaillist/${this.state.email.replace(/\./g, ',')}`);
+        await set(emailRef, { secret });
+      }
+
+      // If this is part of a rental group, update the group
+      if (this.props.groupId) {
+        const groupRef = ref(this.props.firebase.db, `rental_groups/${this.props.groupId}/participants`);
+        const groupSnapshot = await get(groupRef);
+        const currentParticipants = groupSnapshot.val() || [];
+
+        await set(groupRef, [...currentParticipants, {
+          name: `${this.state.fname} ${this.state.lname}`,
+          waiverId: newWaiverRef.key,
+          timestamp: Date.now()
+        }]);
+      }
+
+      this.setState({ showSuccessScreen: true });
+    } catch (error) {
+      console.error('Error submitting waiver:', error);
+      this.setState({
+        errorWaiver: 'Failed to submit waiver. Please try again.',
+        loading: false
+      });
+    }
   }
 
   // Will Check duplicates in list
   checkDuplicates(email) {
-    return this.props.firebase.emailList(encode(email)).once("value", object => {
+    return get(this.props.firebase.emailList(encode(email)), object => {
     }).then((object) => {
       return object.val() === null ? false : true
     })
   }
 
   componentDidMount() {
-    this.props.firebase.numWaivers().on('value', snapshot => {
+    onValue(this.props.firebase.numWaivers(), snapshot => {
       let num_waivers = snapshot.val().total_num;
       this.setState({ num_waivers })
     })
-    this.props.firebase.rentalGroups().on('value', obj => {
+    onValue(this.props.firebase.rentalGroups(), obj => {
       const groupsObj = obj.val()
 
       let groups = []
@@ -144,8 +188,10 @@ class WaiverPageFormBase extends Component {
           index: key,
         }))
         for (let i = 0; i < groupsObj.length; i++) {
-          groups[i] = groupsObj[i].name
-          groupIndex[groupsObj[i].name] = i
+          if (groupsObj[i].name != null) {
+            groups[i] = groupsObj[i].name
+            groupIndex[groupsObj[i].name] = i
+          }
         }
       }
 
@@ -154,8 +200,8 @@ class WaiverPageFormBase extends Component {
   }
 
   componentWillUnmount() {
-    this.props.firebase.numWaivers().off();
-    this.props.firebase.rentalGroups().off()
+    // this.props.firebase.numWaivers().off();
+    // this.props.firebase.rentalGroups().off()
   }
 
   onChangeCheckbox = event => {
@@ -192,7 +238,7 @@ class WaiverPageFormBase extends Component {
       if (response === false) {
         // Use below to generate random uid for signing up and filling out waivers
         var secret = 'n' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5).toUpperCase();
-        this.props.firebase.emailList(encode(email.toLowerCase())).set({ secret })
+        set(this.props.firebase.emailList(encode(email.toLowerCase())), ({ secret }));
       }
       this.setState({ emailAdded: true })
     })
@@ -236,7 +282,7 @@ class WaiverPageFormBase extends Component {
 
     return (
       <div>
-        { !showLander ?
+        {!showLander ?
           !loading ?
             <div>
               <Row className="justify-content-row">
@@ -255,13 +301,13 @@ class WaiverPageFormBase extends Component {
                   <Row className={!hideWaiver ? "row-rp" : "row-rp waiver-input-rp"}>
                     <h2 className="waiver-header-rp">
                       Participant Information:
-              </h2>
+                    </h2>
                   </Row>
                   <Row className="row-rp">
                     <Form className="waiver-form-rp">
                       <Row>
                         <Col>
-                          <p className="p-groupname-rp">Rental Group Name: (If Applicable)</p>
+                          <p className="p-groupname-rp">Party Name: (If Applicable)</p>
                         </Col>
                       </Row>
                       <Row className="row-typeahead-rp">
@@ -406,7 +452,7 @@ class WaiverPageFormBase extends Component {
                         <Col>
                           <p className="header-sig-rp">
                             Participant Signature:
-                  </p>
+                          </p>
                         </Col>
                       </Row>
                       <Row className="sig-row-rp">
@@ -427,7 +473,7 @@ class WaiverPageFormBase extends Component {
                             this.setState({ saveButton: true })
                           }}>
                           Clear
-                </Button>
+                        </Button>
                         <Button variant="secondary" type="button" className="save-button-rp" disabled={!saveButton}
                           onClick={() => {
                             if (!this.sigRef.isEmpty()) {
@@ -437,7 +483,7 @@ class WaiverPageFormBase extends Component {
                             }
                           }}>
                           Save
-                </Button>
+                        </Button>
                       </Row>
                       {!agecheck ?
                         <div>
@@ -478,7 +524,7 @@ class WaiverPageFormBase extends Component {
                             <Col>
                               <p className="header-sig-rp">
                                 Parent/Guardian Signature:
-                  </p>
+                              </p>
                             </Col>
                           </Row>
                           <Row className="row-rp sig-row-rp">
@@ -499,7 +545,7 @@ class WaiverPageFormBase extends Component {
                                 this.setState({ saveButton2: true })
                               }}>
                               Clear
-                </Button>
+                            </Button>
                             <Button variant="secondary" type="button" className="save-button-rp" disabled={!saveButton2}
                               onClick={() => {
                                 if (!this.sigRef2.isEmpty()) {
@@ -509,20 +555,20 @@ class WaiverPageFormBase extends Component {
                                 }
                               }}>
                               Save
-                </Button>
+                            </Button>
                           </Row>
                         </div>
                         : null}
-                          <Row className="row-subscribe-email-rp">
-                            <Col>
-                              <Form.Group>
-                                  <FormControlLabel label="Subscribe to US Airsoft Newsletter" control={<Checkbox color="primary" checked={acceptEmailSubscription}/>} 
-                                  onChange={(e) => {
-                                      this.setState({acceptEmailSubscription: !acceptEmailSubscription})
-                                  }}/>
-                              </Form.Group>
-                            </Col>
-                          </Row>
+                      <Row className="row-subscribe-email-rp">
+                        <Col>
+                          <Form.Group>
+                            <FormControlLabel label="Subscribe to US Airsoft Newsletter" control={<Checkbox color="primary" checked={acceptEmailSubscription} />}
+                              onChange={(e) => {
+                                this.setState({ acceptEmailSubscription: !acceptEmailSubscription })
+                              }} />
+                          </Form.Group>
+                        </Col>
+                      </Row>
                     </Form>
                   </Row>
                   {loading ?
@@ -536,44 +582,44 @@ class WaiverPageFormBase extends Component {
                 </Col>
               </Row>
               {!loading ?
-              <div>
-                <Row className="nav-row-rp">
-                  <Button className="next-button-rp" variant="info" type="button" disabled={submitted}
-                    onClick={() => {
-                      if (address === "" || fname === "" || lname === "" || email === "" || address === "" ||
-                        city === "" || state === "" || zipcode === "" || phone === "" || dob === "") {
-                        this.setState({ errorWaiver: "Please fill out all boxes with your information." })
-                      }
-                      else if ((pgname === "" || pgphone === "") && age < 18) {
-                        this.setState({ errorWaiver: "Please fill out all boxes with your information." })
-                      }
-                      else if (this.state.participantImg === null || (this.state.pgImg === null && age < 18)) {
-                        this.setState({ errorWaiver: "Please sign and save the signature in the box." })
-                      }
-                      else if (age < 8) {
-                        this.setState({ errorWaiver: "Participant must be older than 8 years." })
-                      }
-                      else if (age > 85) {
-                        this.setState({ errorWaiver: "Participant must be younger than 85 years." })
-                      }
-                      else if (!this.validateEmail(email)) {
-                        this.setState({ errorWaiver: "Email must be a valid email." })
-                      }
-                      else {
-                        this.setState({ submitted: true })
-                        if (acceptEmailSubscription)
-                          this.emailSignUp();
-                        this.completeWaiver(myProps)
-                      }
-                    }}>
-                    Submit
-                  </Button>
-                </Row>
-                {submitted ?
-                  <Row className="spinner-standard">
-                    <Spinner animation="border" />
-                  </Row> 
-                : null}
+                <div>
+                  <Row className="nav-row-rp">
+                    <Button className="next-button-rp" variant="info" type="button" disabled={submitted}
+                      onClick={() => {
+                        if (address === "" || fname === "" || lname === "" || email === "" || address === "" ||
+                          city === "" || state === "" || zipcode === "" || phone === "" || dob === "") {
+                          this.setState({ errorWaiver: "Please fill out all boxes with your information." })
+                        }
+                        else if ((pgname === "" || pgphone === "") && age < 18) {
+                          this.setState({ errorWaiver: "Please fill out all boxes with your information." })
+                        }
+                        else if (this.state.participantImg === null || (this.state.pgImg === null && age < 18)) {
+                          this.setState({ errorWaiver: "Please sign and save the signature in the box." })
+                        }
+                        else if (age < 8) {
+                          this.setState({ errorWaiver: "Participant must be older than 8 years." })
+                        }
+                        else if (age > 85) {
+                          this.setState({ errorWaiver: "Participant must be younger than 85 years." })
+                        }
+                        else if (!this.validateEmail(email)) {
+                          this.setState({ errorWaiver: "Email must be a valid email." })
+                        }
+                        else {
+                          this.setState({ submitted: true })
+                          if (acceptEmailSubscription)
+                            this.emailSignUp();
+                          this.completeWaiver(myProps)
+                        }
+                      }}>
+                      Submit
+                    </Button>
+                  </Row>
+                  {submitted ?
+                    <Row className="spinner-standard">
+                      <Spinner animation="border" />
+                    </Row>
+                    : null}
                 </div>
                 : null}
             </div> :
@@ -624,10 +670,12 @@ class WaiverPageFormBase extends Component {
 const condition = authUser =>
   authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]);
 
-const WaiverForm = compose(
-  withAuthorization(condition),
-  withFirebase,
-)(WaiverPageFormBase);
+const WaiverForm = withAuthorization(condition)(withFirebase(WaiverPageFormBase));
+
+// const WaiverForm = composeHooks(
+//   withAuthorization(condition),
+//   withFirebase,
+// )(WaiverPageFormBase);
 
 export default WaiverPage;
 

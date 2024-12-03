@@ -12,9 +12,11 @@ import 'react-bootstrap-typeahead/css/Typeahead.css';
 
 import ReactLoading from 'react-loading';
 
-import { compose } from 'recompose';
+
 
 import { Helmet } from 'react-helmet-async';
+import { getDownloadURL } from 'firebase/storage';
+import { onValue, update } from 'firebase/database';
 
 class TeamManage extends Component {
     constructor(props) {
@@ -54,14 +56,13 @@ class TeamManage extends Component {
     }
 
     componentDidMount() {
-
         this.authSubscription = 
             this.props.firebase.onAuthUserListener((user) => {
                 if (user) {
                     this.setState({authUser: user})
                     if (user.team !== "" && this.state.deleting === false) {
                         //Figure out rank logic here
-                        this.props.firebase.team(user.team.toLowerCase()).on('value', snapshot => {
+                        onValue(this.props.firebase.team(user.team.toLowerCase()), snapshot => {
                             const Object = snapshot.val();
             
                             this.setState({
@@ -84,13 +85,14 @@ class TeamManage extends Component {
 
     componentWillUnmount() {
         this.authSubscription()
-        if (this.state.authUser.team !== null)
-            this.props.firebase.team(this.state.authUser.team.toLowerCase()).off();
+        if (this.state.authUser && this.state.authUser.team !== null) {
+            // this.props.firebase.team(this.state.authUser.team.toLowerCase()).off();
+        }
     }
 
     //Get image function for team image = teamname
     getPicture(teamname) {
-        this.props.firebase.teamsPictures(`${teamname}.png`).getDownloadURL().then((url) => {
+        getDownloadURL(this.props.firebase.teamsPictures(`${teamname}.png`)).then((url) => {
             this.setState({ teamicon: url, loading: false })
         }).catch((error) => {
             // Handle any errors NOT DONE
@@ -168,7 +170,7 @@ class TeamManage extends Component {
 
             // Get rid of person off the request list
             requests.splice(index, 1)
-            this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({ requests }).then(() => {
+            update(this.props.firebase.team(this.state.authUser.team.toLowerCase()), ({ requests })).then(() => {
                 this.setState({ requestError: "Request Declined.", requestLoading: false}, function() {
                     setTimeout( () => {
                         this.setState({requestError: null })
@@ -256,7 +258,7 @@ class TeamManage extends Component {
             let member = [this.state.authUser.name, this.state.authUser.uid];
             members.splice(index, 1);
             members.push(member)
-            this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({ members, leader }).then(() => {
+            update(this.props.firebase.team(this.state.authUser.team.toLowerCase()), ({ members, leader })).then(() => {
                 this.setState({memberError: "Promotion successful.", memberLoading: false}, function() {
                     window.location.href = "/teams";
                 })
@@ -304,7 +306,7 @@ class TeamManage extends Component {
         let description = this.state.description
        
         if (description.length <= 400) {
-            this.props.firebase.team(this.state.authUser.team.toLowerCase()).update({description}).then(() => {
+            update(this.props.firebase.team(this.state.authUser.team.toLowerCase()), ({description})).then(() => {
                 this.setState({ descriptionError: "Successful update.", descriptionLoading: false}, function() {
                     setTimeout( () => {
                         this.setState({descriptionError: null })
@@ -495,7 +497,9 @@ const Progress = ({ type, color }) => (
 
 const condition = authUser => !!authUser;
 
-export default compose(
-    withFirebase,
-    withAuthorization(condition),
-    )(TeamManage);
+export default withFirebase(withAuthorization(condition)(TeamManage));
+
+// export default composeHooks(
+//     withFirebase,
+//     withAuthorization(condition),
+//     )(TeamManage);

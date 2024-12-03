@@ -1,0 +1,132 @@
+.admin-container {
+    min-height: 100vh;
+    background: rgba(4, 4, 4, 0.4);
+}
+
+.admin-content {
+    padding: 2rem;
+}
+
+.modern-card {
+    background: #51585e !important;
+    border: none;
+    border-radius: 12px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    height: 100%;
+}
+
+.modern-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+}
+
+.card-link {
+    text-decoration: none;
+    color: white;
+}
+
+.card-link:hover {
+    color: white;
+}
+
+.card-icon {
+    color: white !important;
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+    width: 100%;
+    /* Ensures icon takes full width */
+    text-align: center;
+}
+
+.card-title {
+    color: white !important;
+    font-size: 1.1rem;
+    text-align: center;
+    margin: 0;
+}
+
+.users-card {
+    background: #51585e;
+}
+
+.search-form input {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 0.75rem;
+}
+
+.search-form input:focus {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: white;
+    box-shadow: none;
+}
+
+.search-form input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.action-cards-grid {
+    margin: -0.5rem;
+}
+
+.action-cards-grid>[class*='col-'] {
+    padding: 0.5rem;
+}
+
+.admin-layout {
+    min-height: 100vh;
+    background: rgba(4, 4, 4, 0.4);
+}
+
+.admin-navbar {
+    background: #51585e;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 0.5rem 1rem;
+}
+
+.admin-nav-logo {
+    height: 35px;
+    width: auto;
+}
+
+.admin-main-content {
+    padding-top: 70px;
+    /* Navbar height + some spacing */
+    min-height: calc(100vh - 56px);
+}
+
+.nav-link-light {
+    color: rgba(255, 255, 255, 0.8) !important;
+    transition: color 0.2s;
+}
+
+.nav-link-light:hover {
+    color: white !important;
+}
+
+/* Add these new styles */
+.admin-content {
+    padding: 2rem;
+    max-width: 1400px;
+    /* Adjust this value based on your preference */
+    margin: 0 auto;
+}
+
+/* Update the existing grid styles */
+.action-cards-grid {
+    margin: -0.5rem;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.action-cards-grid>[class*='col-'] {
+    padding: 0.5rem;
+}
+
+/* Center the users list card */
+.users-card-container {
+    justify-content: center;
+}

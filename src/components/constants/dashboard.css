@@ -1,0 +1,52 @@
+.admin-top {
+    background-color: #343a40;
+    padding: 20px 0;
+    margin-bottom: 30px;
+}
+
+.admin-container {
+    padding: 20px;
+}
+
+.admin-cards-container {
+    width: 100%;
+}
+
+.admin-row {
+    margin-bottom: 30px;
+}
+
+.admin-col {
+    margin-bottom: 20px;
+}
+
+.admin-link {
+    text-decoration: none;
+}
+
+.admin-card {
+    background-color: #343a40;
+    border: none;
+    transition: transform 0.2s;
+}
+
+.admin-card:hover {
+    transform: translateY(-5px);
+}
+
+.admin-card-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+    padding: 15px;
+}
+
+.admin-card-title {
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+.admin-card-icon {
+    font-size: 1.5rem;
+}

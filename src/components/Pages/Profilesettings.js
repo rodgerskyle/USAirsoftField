@@ -6,11 +6,11 @@ import AccountChangeForm from '../../AccountChange';
 import { AuthUserContext, withAuthentication, withAuthorization } from '../session';
 import ImageUpload from './ImageUpload';
 
-import { compose } from 'recompose';
+
 
 import * as ROLES from '../constants/roles';
 import { Helmet } from 'react-helmet-async';
-import { Paper, Tab, Tabs } from '@material-ui/core';
+import { Paper, Tab, Tabs } from '@mui/material';
 
 const ProfileSettings = () => {
 
@@ -36,34 +36,36 @@ const ProfileSettings = () => {
                 textColor="primary"
                 onChange={handleChange}
               >
-              <Tab label="Account" />
-              <Tab label="Information" />
+                <Tab label="Account" />
+                <Tab label="Information" />
               </Tabs>
             </Paper>
-            {value === 0 ? 
-                <Row className="row-parent-settings">
-                  <Col md={4}>
-                    <ImageUpload />
-                  </Col>
-                  <Col md={8}>
-                    <AccountChangeForm authUser={authUser}/>
-                  </Col>
-                </Row>
-            : null}
-            {value === 1 ? 
-            <div>
-            </div>
-            : null}
+            {value === 0 ?
+              <Row className="row-parent-settings">
+                <Col md={4}>
+                  <ImageUpload />
+                </Col>
+                <Col md={8}>
+                  <AccountChangeForm authUser={authUser} />
+                </Col>
+              </Row>
+              : null}
+            {value === 1 ?
+              <div>
+              </div>
+              : null}
           </Container>
         </div>
       )}
     </AuthUserContext.Consumer>
-    );
-  }
+  );
+}
 
 const condition = authUser => !!authUser && !(!!authUser.roles[ROLES.WAIVER]);
 
-export default compose(
-  withAuthorization(condition),
-  withAuthentication,
-  )(ProfileSettings);
+export default withAuthorization(condition)(withAuthentication(ProfileSettings));
+
+// export default composeHooks(
+//   withAuthorization(condition),
+//   withAuthentication,
+//   )(ProfileSettings);

@@ -3,74 +3,75 @@ import React, { Component } from 'react';
 import { AuthUserContext, withAuthorization } from '../session';
 
 import { Row, Col, ProgressBar } from 'react-bootstrap/';
-import Slider from '@material-ui/core/Slider'
+import Slider from '@mui/material/Slider'
 import Cropper from 'react-easy-crop'
-import { Modal, Fade, Backdrop } from '@material-ui/core';
-import CancelIcon from '@material-ui/icons/Cancel';
+import { Modal, Fade, Backdrop } from '@mui/material';
+import { Cancel, Edit } from '@mui/icons-material';
 import default_profile from '../../assets/default.png';
 
 import { withFirebase } from '../Firebase';
-import { Button } from '@material-ui/core';
-import EditIcon from '@material-ui/icons/Edit';
+import { Button } from '@mui/material';
 
-import Snackbar from '@material-ui/core/Snackbar';
-import Alert from '@material-ui/lab/Alert';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/lab/Alert';
+import { onValue } from 'firebase/database';
+import { getDownloadURL, uploadBytes } from 'firebase/storage';
 
 const createImage = url =>
-  new Promise((resolve, reject) => {
-    const image = new Image()
-    image.addEventListener('load', () => resolve(image))
-    image.addEventListener('error', error => reject(error))
-    image.setAttribute('crossOrigin', 'anonymous') // needed to avoid cross-origin issues on CodeSandbox
-    image.src = url
-  })
+    new Promise((resolve, reject) => {
+        const image = new Image()
+        image.addEventListener('load', () => resolve(image))
+        image.addEventListener('error', error => reject(error))
+        image.setAttribute('crossOrigin', 'anonymous') // needed to avoid cross-origin issues on CodeSandbox
+        image.src = url
+    })
 
 async function getCroppedImg(imageSrc, pixelCrop, rotation = 0) {
-  const image = await createImage(imageSrc)
-  const canvas = document.createElement('canvas')
-  const ctx = canvas.getContext('2d')
+    const image = await createImage(imageSrc)
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
 
-  const maxSize = Math.max(image.width, image.height)
-  const safeArea = 2 * ((maxSize / 2) * Math.sqrt(2))
+    const maxSize = Math.max(image.width, image.height)
+    const safeArea = 2 * ((maxSize / 2) * Math.sqrt(2))
 
-  // set each dimensions to double largest dimension to allow for a safe area for the
-  // image to rotate in without being clipped by canvas context
-  canvas.width = safeArea
-  canvas.height = safeArea
+    // set each dimensions to double largest dimension to allow for a safe area for the
+    // image to rotate in without being clipped by canvas context
+    canvas.width = safeArea
+    canvas.height = safeArea
 
-  // translate canvas context to a central location on image to allow rotating around the center.
-  ctx.translate(safeArea / 2, safeArea / 2)
-//   ctx.rotate(getRadianAngle(rotation))
-  ctx.translate(-safeArea / 2, -safeArea / 2)
+    // translate canvas context to a central location on image to allow rotating around the center.
+    ctx.translate(safeArea / 2, safeArea / 2)
+    //   ctx.rotate(getRadianAngle(rotation))
+    ctx.translate(-safeArea / 2, -safeArea / 2)
 
-  // draw rotated image and store data.
-  ctx.drawImage(
-    image,
-    safeArea / 2 - image.width * 0.5,
-    safeArea / 2 - image.height * 0.5
-  )
-  const data = ctx.getImageData(0, 0, safeArea, safeArea)
+    // draw rotated image and store data.
+    ctx.drawImage(
+        image,
+        safeArea / 2 - image.width * 0.5,
+        safeArea / 2 - image.height * 0.5
+    )
+    const data = ctx.getImageData(0, 0, safeArea, safeArea)
 
-  // set canvas width to final desired crop size - this will clear existing context
-  canvas.width = pixelCrop.width
-  canvas.height = pixelCrop.height
+    // set canvas width to final desired crop size - this will clear existing context
+    canvas.width = pixelCrop.width
+    canvas.height = pixelCrop.height
 
-  // paste generated rotate image with correct offsets for x,y crop values.
-  ctx.putImageData(
-    data,
-    Math.round(0 - safeArea / 2 + image.width * 0.5 - pixelCrop.x),
-    Math.round(0 - safeArea / 2 + image.height * 0.5 - pixelCrop.y)
-  )
+    // paste generated rotate image with correct offsets for x,y crop values.
+    ctx.putImageData(
+        data,
+        Math.round(0 - safeArea / 2 + image.width * 0.5 - pixelCrop.x),
+        Math.round(0 - safeArea / 2 + image.height * 0.5 - pixelCrop.y)
+    )
 
-  // As Base64 string
-//   return canvas.toDataURL('image/jpeg');
+    // As Base64 string
+    //   return canvas.toDataURL('image/jpeg');
 
-  // As a blob
-  return new Promise(resolve => {
-    canvas.toBlob(file => {
-      resolve((file))
-    }, 'image/jpeg')
-  })
+    // As a blob
+    return new Promise(resolve => {
+        canvas.toBlob(file => {
+            resolve((file))
+        }, 'image/jpeg')
+    })
 }
 class ImageUpload extends Component {
     constructor(props) {
@@ -100,7 +101,7 @@ class ImageUpload extends Component {
 
     onCropComplete = (croppedArea, croppedAreaPixels) => {
         // console.log(croppedAreaPixels.width / croppedAreaPixels.height)
-        this.setState({croppedAreaPixels})
+        this.setState({ croppedAreaPixels })
     }
 
     onZoomChange = zoom => {
@@ -109,26 +110,26 @@ class ImageUpload extends Component {
 
     componentDidMount() {
         this.authSubscription = this.props.firebase.onAuthUserListener((user) => {
-            this.setState({authUser: user})
-            this.props.firebase.user(user.uid).on('value', obj => {
+            this.setState({ authUser: user })
+            onValue(this.props.firebase.user(user.uid), obj => {
                 if (obj.val().profilepic)
                     this.getProfile(`${user.uid}/profilepic`);
                 else
                     this.setState({ url: "" })
             })
         }, () => {
-            this.setState({authUser: null})
+            this.setState({ authUser: null })
         });
     }
 
     componentWillUnmount() {
         this.authSubscription();
-        this.props.firebase.user(this.state.authUser.uid).off()
+        // this.props.firebase.user(this.state.authUser.uid).off()
     }
 
     //Get image function for profile image = uid
     getProfile(uid) {
-        this.props.firebase.pictures(`${uid}.png`).getDownloadURL().then((url) => {
+        getDownloadURL(this.props.firebase.pictures(`${uid}.png`)).then((url) => {
             this.setState({ url })
         }).catch((error) => {
             // Handle any errors
@@ -158,8 +159,8 @@ class ImageUpload extends Component {
     // Handles uploading to firebase
     handleUpload = (uid, image) => {
         // const { image } = this.state;
-        this.setState({uploading: false})
-        const uploadTask = this.props.firebase.pictures(`${uid}/profilepic.png`).put(image);
+        this.setState({ uploading: false })
+        const uploadTask = uploadBytes(this.props.firebase.pictures(`${uid}/profilepic.png`), (image));
         uploadTask.on(
             "state_changed",
             snapshot => {
@@ -175,10 +176,9 @@ class ImageUpload extends Component {
             },
             () => {
                 // complete function ...
-                this.props.firebase
-                    .pictures(`/${uid}/profilepic.png`)
-                    .getDownloadURL()
-                    .then(url => {
+                getDownloadURL(this.props.firebase
+                    .pictures(`/${uid}/profilepic.png`),
+                    url => {
                         var manage = this.props.firebase.manageProfile();
                         manage({ choice: "profilepic" })
                         this.setState({ url }, function () {
@@ -207,7 +207,7 @@ class ImageUpload extends Component {
                                 <p className="p-picture-label-settings">Current Picture:</p>
                             </Row>
                             <Row className="justify-content-row">
-                                <label htmlFor="upload-button">
+                                <label htmlFor="upload-button" className="upload-button-label">
                                     <div className="div-img-settings">
                                         <img
                                             src={this.state.url || default_profile}
@@ -217,7 +217,7 @@ class ImageUpload extends Component {
                                             className="profile-img-settings"
                                         />
                                         <div className="div-img-button-settings">
-                                            <EditIcon />
+                                            <Edit />
                                         </div>
                                         <div className="div-img-text-settings">
                                             {`CHANGE\nPICTURE`}
@@ -256,12 +256,12 @@ class ImageUpload extends Component {
                                     <div className="div-crop-image-settings">
                                         <div className="div-cancel-button-settings">
                                             <Button
-                                                onClick={() => {this.setState({uploading: false})}}
+                                                onClick={() => { this.setState({ uploading: false }) }}
                                                 variant="contained"
                                                 color="secondary"
-                                                >
-                                                    <CancelIcon />
-                                                </Button>
+                                            >
+                                                <Cancel />
+                                            </Button>
                                         </div>
                                         <div className="crop-container-settings">
                                             <Cropper
@@ -277,33 +277,34 @@ class ImageUpload extends Component {
                                             />
                                         </div>
                                         <div className="controls-settings">
-                                                <Slider
-                                                    value={this.state.zoom}
-                                                    min={1}
-                                                    max={3}
-                                                    step={0.1}
-                                                    aria-labelledby="Zoom"
-                                                    onChange={(e, zoom) => this.onZoomChange(zoom)}
-                                                />
-                                                <Button
-                                                    onClick={(() => {
-                                                        this.setState({submitting: true})
-                                                        this.createCroppedImage(authUser.uid)})
-                                                    }
-                                                    variant="contained"
-                                                    color="primary"
-                                                    className="imgUpload-submit"
-                                                    disabled={this.state.submitting}
-                                                >
-                                                    Save
-                                                </Button>
+                                            <Slider
+                                                value={this.state.zoom}
+                                                min={1}
+                                                max={3}
+                                                step={0.1}
+                                                aria-labelledby="Zoom"
+                                                onChange={(e, zoom) => this.onZoomChange(zoom)}
+                                            />
+                                            <Button
+                                                onClick={(() => {
+                                                    this.setState({ submitting: true })
+                                                    this.createCroppedImage(authUser.uid)
+                                                })
+                                                }
+                                                variant="contained"
+                                                color="primary"
+                                                className="imgUpload-submit"
+                                                disabled={this.state.submitting}
+                                            >
+                                                Save
+                                            </Button>
                                         </div>
                                     </div>
                                 </div>
                             </Fade>
                         </Modal>
-                        <Snackbar open={this.state.img_status !== null} autoHideDuration={6000} onClose={() => this.setState({img_status: null})}>
-                            <Alert onClose={() => this.setState({img_status: null})} severity="success">
+                        <Snackbar open={this.state.img_status !== null} autoHideDuration={6000} onClose={() => this.setState({ img_status: null })}>
+                            <Alert onClose={() => this.setState({ img_status: null })} severity="success">
                                 {this.state.img_status}
                             </Alert>
                         </Snackbar>

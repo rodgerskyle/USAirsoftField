@@ -3,35 +3,37 @@ import '../../App.css';
 
 import { Container, Row, Col, Spinner } from 'react-bootstrap/';
 
-import { makeStyles } from '@material-ui/core/styles';
-import Paper from '@material-ui/core/Paper';
-import InputBase from '@material-ui/core/InputBase';
-import Button from '@material-ui/core/Button';
-import IconButton from '@material-ui/core/IconButton';
-import Tune from '@material-ui/icons/Tune';
-import SearchIcon from '@material-ui/icons/Search';
+import { makeStyles } from '@mui/styles';
+import Paper from '@mui/material/Paper';
+import InputBase from '@mui/material/InputBase';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Tune from '@mui/icons-material/Tune';
+import SearchIcon from '@mui/icons-material/Search';
 
 import default_profile from '../../assets/default.png';
 import { Link } from 'react-router-dom';
 
 import { withFirebase } from '../Firebase';
 
-import { compose } from 'recompose';
+
 import { Helmet } from 'react-helmet-async';
 
-import MUIPagination from '@material-ui/lab/Pagination';
+import MUIPagination from '@mui/lab/Pagination';
 import { isMobile } from 'react-device-detect';
 
-import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
-import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
-import TableContainer from '@material-ui/core/TableContainer';
-import TableRow from '@material-ui/core/TableRow';
-import { ButtonGroup, ClickAwayListener, Grow, MenuItem, MenuList, Popper, TableHead } from '@material-ui/core';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableRow from '@mui/material/TableRow';
+import { ButtonGroup, ClickAwayListener, Grow, MenuItem, MenuList, Popper, TableHead } from '@mui/material';
 import { LinkContainer } from 'react-router-bootstrap';
+import { getDownloadURL } from 'firebase/storage';
+import { get, onValue } from 'firebase/database';
 
 class Teams extends Component {
     constructor(props) {
@@ -58,7 +60,7 @@ class Teams extends Component {
 
     //Get image function for team image = teamname
     getPicture(teamname) {
-        this.props.firebase.teamsPictures(`${teamname}.png`).getDownloadURL().then((url) => {
+        getDownloadURL(this.props.firebase.teamsPictures(`${teamname}.png`)).then((url) => {
             let temp = this.state.teamicon;
             temp[teamname.toString()] = url
             this.setState({ teamicon: temp })
@@ -70,7 +72,7 @@ class Teams extends Component {
 
     //Get image function for profile image = uid
     async getProfile(uid) {
-        return this.props.firebase.pictures(`${uid}/profilepic.png`).getDownloadURL().then((url) => {
+        return getDownloadURL(this.props.firebase.pictures(`${uid}/profilepic.png`)).then((url) => {
             return url
         })
     }
@@ -79,52 +81,52 @@ class Teams extends Component {
     getUserPictures() {
         const { teams } = this.state;
         let usericons = {}
-        for (let i=0; i<teams.length; i++) {
+        for (let i = 0; i < teams.length; i++) {
             // Team leader case
-            this.props.firebase.user(teams[i].leader).once('value', obj => {
+            get(this.props.firebase.user(teams[i].leader), obj => {
                 if (obj.val().profilepic) {
                     this.props.firebase.pictures(`${teams[i].leader}/profilepic.png`).getDownloadURL().then((url) => {
                         usericons[teams[i].leader] = url
                     })
                 }
-                else 
+                else
                     usericons[teams[i].leader] = default_profile
             })
             // Team members case
-             if (teams[i].members) {
-                 for (let z=0; z<teams[i].members.length; z++) {
-                    this.props.firebase.user(teams[i].members[z][1]).once('value', obj => {
+            if (teams[i].members) {
+                for (let z = 0; z < teams[i].members.length; z++) {
+                    get(this.props.firebase.user(teams[i].members[z][1]), obj => {
                         if (obj.val().profilepic) {
-                            this.props.firebase.pictures(`${teams[i].members[z][1]}/profilepic.png`).getDownloadURL().then((url) => {
+                            getDownloadURL(this.props.firebase.pictures(`${teams[i].members[z][1]}/profilepic.png`)).then((url) => {
                                 usericons[teams[i].members[z][1]] = url
                             })
                         }
-                        else 
+                        else
                             usericons[teams[i].members[z][1]] = default_profile
                     })
-                 }
-             }
+                }
+            }
         }
-        this.setState({usericons}, () => {
-            this.setState({loading: false})
+        this.setState({ usericons }, () => {
+            this.setState({ loading: false })
         })
     }
 
     componentWillUnmount() {
-        this.props.firebase.teams().off();
+        // this.props.firebase.teams().off();
     }
 
     componentDidMount() {
         let options = []
-        let temp = {link: '/createteam', label: 'Create Team'}
+        let temp = { link: '/createteam', label: 'Create Team' }
         options[0] = temp;
-        let temp2 = {link: '/jointeam', label: 'Join Team'}
+        let temp2 = { link: '/jointeam', label: 'Join Team' }
         options[1] = temp2
-        let temp3 = {link: '/manageteam', label: 'Manage Team'}
+        let temp3 = { link: '/manageteam', label: 'Manage Team' }
         options[2] = temp3
-        this.setState({options})
+        this.setState({ options })
 
-        this.props.firebase.teams().on('value', snapshot => {
+        onValue(this.props.firebase.teams(), snapshot => {
             const teamObject = snapshot.val();
 
             let teamsList = Object.keys(teamObject).map(key => ({
@@ -135,7 +137,7 @@ class Teams extends Component {
 
             let teams = [];
             for (var i = 0; i < teamsList.length; i++) {
-                teams.push({index: i, ...teamsList[i]})
+                teams.push({ index: i, ...teamsList[i] })
             }
 
             this.setState({
@@ -145,7 +147,7 @@ class Teams extends Component {
                 for (var i = 0; i < this.state.teams.length; i++) {
                     this.getPicture(this.state.teams[i].teamname);
                 }
-                this.setState({loading: false})
+                this.setState({ loading: false })
                 // this.getUserPictures()
             });
         });
@@ -153,7 +155,7 @@ class Teams extends Component {
 
     // Toggles dropdown to open or not
     handleToggle = () => {
-        this.setState({open: !this.state.open})
+        this.setState({ open: !this.state.open })
     }
 
     // Handles closing of dropdown menu
@@ -161,7 +163,7 @@ class Teams extends Component {
         if (this.state.anchor.current && this.state.anchor.current.contains(event.target)) {
             return
         }
-        this.setState({open: false})
+        this.setState({ open: false })
     }
 
     // Handles clicking on item in dropdown
@@ -176,7 +178,7 @@ class Teams extends Component {
             curPage: val,
         }, () => {
             setTimeout(() => {
-                this.setState({loadingTeams: false}) 
+                this.setState({ loadingTeams: false })
             }, 200);
         });
     }
@@ -185,43 +187,43 @@ class Teams extends Component {
     handleSearch(val) {
         let teamObj = this.state.teamObj;
         teamObj = this.state.teams.filter(obj => obj.teamname.includes(val.toLowerCase()))
-        this.setState({search: val, teamObj})
+        this.setState({ search: val, teamObj })
     }
 
     render() {
-        const { anchor, open, options, selected, loading, usericons, curPage, 
+        const { anchor, open, options, selected, loading, usericons, curPage,
             teamsPerPage, loadingTeams, teamObj } = this.state
         return (
             <div className="background-static-all">
                 <Helmet>
                     <title>US Airsoft Field: Teams</title>
                 </Helmet>
-                {loading ? 
-                <Row className="justify-content-row padding-5px"><Spinner animation="border" /></Row> : 
-                <Container className="position-relative">
-                    <Row className="row-header-teams">
-                        <Col xs={"auto"} className="col-center-middle">
-                            <p className="p-header-teams">
-                                TEAMS
-                            </p>
-                        </Col>
-                        <Col className="col-options-dropdown-teams">
-                            <ButtonGroup variant="contained" color="primary" ref={anchor}>
-                                <LinkContainer to={options[selected].link}><Button>{options[selected].label}</Button></LinkContainer>
-                                <Button
-                                    color="primary"
-                                    size="small"
-                                    onClick={this.handleToggle}>
-                                        {open ? <ArrowDropDownIcon /> : <ArrowDropUpIcon /> }
-                                </Button>
-                            </ButtonGroup>
-                            <Popper open={open} anchorEl={anchor.current} transition disablePortal style={{zIndex: 1}}>
-                                {({ TransitionProps, placement}) => (
-                                    <Grow
-                                        {...TransitionProps}
-                                        style={{
-                                            transformOrigin: placement === 'bottom' ? 'center top' : 'center bottom',
-                                        }}>
+                {loading ?
+                    <Row className="justify-content-row padding-5px"><Spinner animation="border" /></Row> :
+                    <Container className="position-relative">
+                        <Row className="row-header-teams">
+                            <Col xs={"auto"} className="col-center-middle">
+                                <p className="p-header-teams">
+                                    TEAMS
+                                </p>
+                            </Col>
+                            <Col className="col-options-dropdown-teams">
+                                <ButtonGroup variant="contained" color="primary" ref={anchor}>
+                                    <LinkContainer to={options[selected].link}><Button>{options[selected].label}</Button></LinkContainer>
+                                    <Button
+                                        color="primary"
+                                        size="small"
+                                        onClick={this.handleToggle}>
+                                        {open ? <ArrowDropDownIcon /> : <ArrowDropUpIcon />}
+                                    </Button>
+                                </ButtonGroup>
+                                <Popper open={open} anchorEl={anchor.current} transition disablePortal style={{ zIndex: 1 }}>
+                                    {({ TransitionProps, placement }) => (
+                                        <Grow
+                                            {...TransitionProps}
+                                            style={{
+                                                transformOrigin: placement === 'bottom' ? 'center top' : 'center bottom',
+                                            }}>
                                             <Paper>
                                                 <ClickAwayListener onClickAway={this.handleClose}>
                                                     <MenuList>
@@ -236,22 +238,22 @@ class Teams extends Component {
                                                     </MenuList>
                                                 </ClickAwayListener>
                                             </Paper>
-                                    </Grow>
-                                )}
-                            </Popper>
-                        </Col>
-                    </Row>
-                    <TeamList teams={teamObj.slice((curPage - 1) * teamsPerPage, ((curPage - 1) * teamsPerPage) + teamsPerPage)} teamsPerPage={teamsPerPage} loading={loadingTeams}
-                    teamicon={this.state.teamicon} numPages={Math.ceil(teamObj.length / teamsPerPage)} curPage={curPage} usericons={usericons} handleClick={this.handleClick}
-                    search={this.state.search} handleSearch={this.handleSearch}/>
-                    <Row className="row-bottom"></Row>
-                </Container> }
+                                        </Grow>
+                                    )}
+                                </Popper>
+                            </Col>
+                        </Row>
+                        <TeamList teams={teamObj.slice((curPage - 1) * teamsPerPage, ((curPage - 1) * teamsPerPage) + teamsPerPage)} teamsPerPage={teamsPerPage} loading={loadingTeams}
+                            teamicon={this.state.teamicon} numPages={Math.ceil(teamObj.length / teamsPerPage)} curPage={curPage} usericons={usericons} handleClick={this.handleClick}
+                            search={this.state.search} handleSearch={this.handleSearch} />
+                        <Row className="row-bottom"></Row>
+                    </Container>}
             </div>
         );
     }
 }
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles(() => ({
     root: {
         padding: '2px 4px',
         display: 'flex',
@@ -263,7 +265,6 @@ const useStyles = makeStyles((theme) => ({
         },
     },
     input: {
-        marginLeft: theme.spacing(1),
         flex: 1,
         color: 'white',
     },
@@ -348,7 +349,7 @@ const TeamList = ({ teams, teamicon, numPages, teamsPerPage, curPage, usericons,
         <div>
             <Row className="row-navigation-teams">
                 <Col md={8}>
-                    <Paper component="form" className={classes.root} onSubmit={(e) => {e.preventDefault()}}>
+                    <Paper component="form" className={classes.root} onSubmit={(e) => { e.preventDefault() }}>
                         <IconButton type="button" className={classes.iconButton} aria-label="search">
                             <SearchIcon />
                         </IconButton>
@@ -381,29 +382,29 @@ const TeamList = ({ teams, teamicon, numPages, teamsPerPage, curPage, usericons,
                                 <TableCell className={classes.tableHCell} align="center">Points</TableCell>
                             </TableRow>
                         </TableHead>
-                            <TableBody className={loading ? classes.tableBodyLoading : null}>
-                                {teams.map((team, i) => {
-                                        return (
-                                            <TableRow key={i}>
-                                                <TableCell className={classes.tableCellIndex}>{team.index+1}</TableCell>
-                                                {/* <Td to={"/teams/" + team.teamname.toString()} ct={"link-team-name"}
+                        <TableBody className={loading ? classes.tableBodyLoading : null}>
+                            {teams.map((team, i) => {
+                                return (
+                                    <TableRow key={i}>
+                                        <TableCell className={classes.tableCellIndex}>{team.index + 1}</TableCell>
+                                        {/* <Td to={"/teams/" + team.teamname.toString()} ct={"link-team-name"}
                                                 cl={classes.tableTeamNameCell}>{team.teamname.toUpperCase()}</Td> */}
-                                                <TableCell className="td-team-imgname-teams">
-                                                    <Row>
-                                                        <Col xl={10} className="col-team-picture-teams">
-                                                            <Link to={"/teams/" + team.teamname.toString()}>
-                                                                <img className="team-pictures"
-                                                                    src={teamicon[team.teamname.toString()]} alt={"Team " + team.teamname}></img>
-                                                            </Link>
-                                                        </Col>
-                                                        <Col className="col-team-name-teams" xl={2}>
-                                                            <Link to={"/teams/" + team.teamname.toString()}>
-                                                                {team.teamname.toUpperCase()}
-                                                            </Link>
-                                                        </Col>
-                                                    </Row>
-                                                </TableCell>
-                                                {/* <TableCell className={classes.tableCell}>
+                                        <TableCell className="td-team-imgname-teams">
+                                            <Row>
+                                                <Col xl={10} className="col-team-picture-teams">
+                                                    <Link to={"/teams/" + team.teamname.toString()}>
+                                                        <img className="team-pictures"
+                                                            src={teamicon[team.teamname.toString()]} alt={"Team " + team.teamname}></img>
+                                                    </Link>
+                                                </Col>
+                                                <Col className="col-team-name-teams" xl={2}>
+                                                    <Link to={"/teams/" + team.teamname.toString()}>
+                                                        {team.teamname.toUpperCase()}
+                                                    </Link>
+                                                </Col>
+                                            </Row>
+                                        </TableCell>
+                                        {/* <TableCell className={classes.tableCell}>
                                                     <div>
                                                         <div className="div-team-leader-teams">
                                                             <img className="img-crown-teams" src={crown} alt="crown"/>
@@ -418,21 +419,21 @@ const TeamList = ({ teams, teamicon, numPages, teamsPerPage, curPage, usericons,
                                                     : null }
                                                     </div>
                                                 </TableCell> */}
-                                                <TableCell className={classes.tableCellPoints} align="center">{team.points}</TableCell>
-                                            </TableRow>
-                                    )
-                                })}
-                            </TableBody>
+                                        <TableCell className={classes.tableCellPoints} align="center">{team.points}</TableCell>
+                                    </TableRow>
+                                )
+                            })}
+                        </TableBody>
                     </Table>
                 </TableContainer>
                 {loading ?
-                <Row className="justify-content-row spinner-table-teams">
-                    <Spinner animation="border" />
-                </Row> : null}
+                    <Row className="justify-content-row spinner-table-teams">
+                        <Spinner animation="border" />
+                    </Row> : null}
             </div>
             <Row className="row-pagination-bot-teams">
                 <Col md={4} className="pagination-col-teams">
-                <MUIPagination count={numPages} page={curPage} onChange={(e, val) => handleClick(val)}
+                    <MUIPagination count={numPages} page={curPage} onChange={(e, val) => handleClick(val)}
                         showFirstButton showLastButton color="primary" variant="outlined" shape="rounded" size={isMobile ? 'small' : 'medium'} />
                 </Col>
             </Row>
@@ -456,20 +457,22 @@ const TeamList = ({ teams, teamicon, numPages, teamsPerPage, curPage, usericons,
 //     )
 // }
 
-                /* <tbody>
-                    {/* {teams.map((team, i) => (
-                        <tr key={team.teamname}>
-                            <Td to={"/teams/" + team.teamname.toString()}>
-                                <img className="team-pictures"
-                                    src={teamicon[team.teamname.toString()]} alt={"Team " + team.teamname}></img>
-                            </Td>
-                            <Td cl="team-name" to={"/teams/" + team.teamname} ct={"link-team-name"}>
-                                <strong>{(team.teamname).toUpperCase()}</strong>
-                            </Td>
-                        </tr>
-                    ))} 
-                </tbody> */
+/* <tbody>
+    {/* {teams.map((team, i) => (
+        <tr key={team.teamname}>
+            <Td to={"/teams/" + team.teamname.toString()}>
+                <img className="team-pictures"
+                    src={teamicon[team.teamname.toString()]} alt={"Team " + team.teamname}></img>
+            </Td>
+            <Td cl="team-name" to={"/teams/" + team.teamname} ct={"link-team-name"}>
+                <strong>{(team.teamname).toUpperCase()}</strong>
+            </Td>
+        </tr>
+    ))} 
+</tbody> */
 
-export default compose(
-    withFirebase,
-    )(Teams);
+export default withFirebase(Teams);
+
+// export default composeHooks(
+//     withFirebase,
+//     )(Teams);

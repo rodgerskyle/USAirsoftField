@@ -3,12 +3,9 @@ import '../../App.css';
 
 import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
-import { compose } from 'recompose';
+import { set, onValue } from "firebase/database";
 
 import { Container, Col, Breadcrumb, Spinner, Row } from 'react-bootstrap/';
-import SaveIcon from '@material-ui/icons/Save';
-import AddIcon from '@material-ui/icons/Add';
-import DeleteIcon from '@material-ui/icons/Delete';
 
 import { Calendar, Views, momentLocalizer } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -18,9 +15,11 @@ import { LinkContainer } from 'react-router-bootstrap';
 
 import * as ROLES from '../constants/roles';
 import { Helmet } from 'react-helmet-async';
-import { Dialog, DialogActions, DialogContent, DialogTitle, Button, 
-    TextField, Checkbox, Select, MenuItem, InputLabel, FormControl } from '@material-ui/core';
-import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
+import {
+    Dialog, DialogActions, DialogContent, DialogTitle, Button,
+    TextField, Checkbox, Select, MenuItem, InputLabel, FormControl
+} from '@mui/material';
+import { Add, ArrowForward, Delete, Save } from '@mui/icons-material';
 
 class Birthday extends Component {
     constructor(props) {
@@ -58,14 +57,14 @@ class Birthday extends Component {
     // Handles the logic on click for existing event
     handleEdit = (event) => {
         // need to set all the states to the items in the event
-        this.setState({ 
+        this.setState({
             startTimeHours: event.start.getHours(),
             startTimeMinutes: event.start.getMinutes(),
             endTimeHours: event.end.getHours(),
             endTimeMinutes: event.end.getMinutes()
         })
         this.setState(event)
-        this.setState({editDialog: true})
+        this.setState({ editDialog: true })
     }
 
     // Handles the creation of event on selected calendar date
@@ -75,17 +74,17 @@ class Birthday extends Component {
         if (title) {
             // Update database here
             let event = {
-                        start: start.toJSON(),
-                        end: end.toJSON(),
-                        title,
-                        size,
-                        receipt,
-                        deposit,
-                        depositAmt,
-                        notes,
-                    }
-            this.props.firebase.calendarEvent(events.length).set(event).then(() => {
-                this.setState({showDialog: false}, () => {
+                start: start.toJSON(),
+                end: end.toJSON(),
+                title,
+                size,
+                receipt,
+                deposit,
+                depositAmt,
+                notes,
+            }
+            set(this.props.firebase.calendarEvent(events.length), (event)).then(() => {
+                this.setState({ showDialog: false }, () => {
                     this.setState({
                         title: '',
                         size: '',
@@ -116,7 +115,7 @@ class Birthday extends Component {
         event.start = event.start.toJSON()
         event.end = event.end.toJSON()
         // this.setState(events)
-        this.props.firebase.calendarEvent(index).set(event).then(() => {
+        set(this.props.firebase.calendarEvent(index), (event)).then(() => {
             this.handleEditClose()
         })
     }
@@ -125,7 +124,7 @@ class Birthday extends Component {
     handleRemoval = () => {
         let events = this.state.obj
         events.splice(this.state.index, 1)
-        this.props.firebase.calendar().set(events).then(() => {
+        set(this.props.firebase.calendar(), (events)).then(() => {
             this.handleEditClose()
         })
     }
@@ -239,9 +238,9 @@ class Birthday extends Component {
     }
 
     componentDidMount() {
-        this.props.firebase.calendar().on('value', obj => {
+        onValue(this.props.firebase.calendar(), obj => {
             let events = obj.val() || [];
-            for (let i=0; i<events.length; i++) {
+            for (let i = 0; i < events.length; i++) {
                 events[i].start = new Date(events[i].start)
                 events[i].end = new Date(events[i].end)
             }
@@ -251,20 +250,20 @@ class Birthday extends Component {
                 index: key,
             }));
 
-            this.setState({events: eventsObj, obj: obj.val()}, () => {
+            this.setState({ events: eventsObj, obj: obj.val() }, () => {
                 this.setState({ loading: false, })
             })
         })
     }
 
     componentWillUnmount() {
-        this.props.firebase.calendar().off()
+        // this.props.firebase.calendar().off()
     }
 
     render() {
         const localizer = momentLocalizer(moment)
-        const { 
-            events, loading, showDialog, start, deposit, 
+        const {
+            events, loading, showDialog, start, deposit,
             notes, editDialog, title, size, receipt, depositAmt,
             startTimeHours, startTimeMinutes, endTimeHours, endTimeMinutes
         } = this.state
@@ -279,14 +278,14 @@ class Birthday extends Component {
                     <Container>
                         <h2 className="admin-header">Calendar - Birthday</h2>
                         <Breadcrumb className="admin-breadcrumb">
-                            {window.location.href.indexOf("admin") > -1 ? 
-                            <LinkContainer to="/admin">
-                                <Breadcrumb.Item>Admin</Breadcrumb.Item>
-                            </LinkContainer>
-                            :
-                            <LinkContainer to="/dashboard">
-                                <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
-                            </LinkContainer> 
+                            {window.location.href.indexOf("admin") > -1 ?
+                                <LinkContainer to="/admin">
+                                    <Breadcrumb.Item>Admin</Breadcrumb.Item>
+                                </LinkContainer>
+                                :
+                                <LinkContainer to="/dashboard">
+                                    <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
+                                </LinkContainer>
                             }
                             <Breadcrumb.Item active>Calendar</Breadcrumb.Item>
                         </Breadcrumb>
@@ -300,7 +299,7 @@ class Birthday extends Component {
                                 defaultDate={new Date()}
                                 onSelectEvent={event => this.handleEdit(event)}
                                 onSelectSlot={this.handleSelect}
-                                titleAccessor={event => {return  `(${event.size}) ${event.title}`}}
+                                titleAccessor={event => { return `(${event.size}) ${event.title}` }}
                                 startAccessor="start"
                                 endAccessor="end"
                                 popup
@@ -327,14 +326,14 @@ class Birthday extends Component {
                                         {/* Start time hours */}
                                         <Col md={2}>
                                             <FormControl fullWidth className="tester-test">
-                                                <InputLabel style={{fontSize: 12}} id="time-start-hours-label">Hour</InputLabel>
+                                                <InputLabel style={{ fontSize: 12 }} id="time-start-hours-label">Hour</InputLabel>
                                                 <Select
                                                     labelId='time-start-hours-label'
                                                     id='time-start-hours-label'
                                                     value={startTimeHours}
                                                     label="Start Time Hour"
                                                     onChange={(e) => this.handleStartHour(e.target.value)}
-                                                    MenuProps={{ style: { maxHeight: 'calc(50% - 96px)'}}}
+                                                    MenuProps={{ style: { maxHeight: 'calc(50% - 96px)' } }}
                                                 >
                                                     <MenuItem value={0}>0</MenuItem>
                                                     <MenuItem value={1}>1</MenuItem>
@@ -365,7 +364,7 @@ class Birthday extends Component {
                                         </Col>
                                         <Col md={3}>
                                             <FormControl fullWidth>
-                                                <InputLabel style={{fontSize: 12}} id="time-start-minutes-label">Minutes</InputLabel>
+                                                <InputLabel style={{ fontSize: 12 }} id="time-start-minutes-label">Minutes</InputLabel>
                                                 <Select
                                                     labelId='time-start-minutes-label'
                                                     id='time-start-minutes-label'
@@ -383,12 +382,12 @@ class Birthday extends Component {
                                             </FormControl>
                                         </Col>
                                         <Col md={2} className="col-center-middle">
-                                            <ArrowForwardIcon />
+                                            <ArrowForward />
                                         </Col>
                                         {/* End time hours */}
                                         <Col md={2}>
                                             <FormControl fullWidth>
-                                                <InputLabel style={{fontSize: 12}} id="time-start-hours-label">Hour</InputLabel>
+                                                <InputLabel style={{ fontSize: 12 }} id="time-start-hours-label">Hour</InputLabel>
                                                 <Select
                                                     labelId='time-start-hours-label'
                                                     id='time-start-hours-label'
@@ -396,7 +395,7 @@ class Birthday extends Component {
                                                     label="Start Time Hour"
                                                     className="hour-select-birthday"
                                                     onChange={(e) => this.handleEndHour(e.target.value)}
-                                                    MenuProps={{ style: { maxHeight: 'calc(50% - 96px)'}}}
+                                                    MenuProps={{ style: { maxHeight: 'calc(50% - 96px)' } }}
                                                 >
                                                     <MenuItem value={0}>0</MenuItem>
                                                     <MenuItem value={1}>1</MenuItem>
@@ -427,7 +426,7 @@ class Birthday extends Component {
                                         </Col>
                                         <Col md={3}>
                                             <FormControl fullWidth>
-                                                <InputLabel style={{fontSize: 12}} id="time-start-minutes-label">Minutes</InputLabel>
+                                                <InputLabel style={{ fontSize: 12 }} id="time-start-minutes-label">Minutes</InputLabel>
                                                 <Select
                                                     labelId='time-end-minutes-label'
                                                     id='time-end-minutes-label'
@@ -514,7 +513,7 @@ class Birthday extends Component {
                                 <DialogActions className="actions-create-birthday">
                                     <Col md={8}>
                                         <Button onClick={this.createEvent} type="button" color="primary"
-                                        endIcon={<AddIcon />}>
+                                            endIcon={<Add />}>
                                             Create
                                         </Button>
                                     </Col>
@@ -547,14 +546,14 @@ class Birthday extends Component {
                                         {/* Start time hours */}
                                         <Col md={2}>
                                             <FormControl fullWidth>
-                                                <InputLabel style={{fontSize: 12}} id="time-start-hours-label">Hour</InputLabel>
+                                                <InputLabel style={{ fontSize: 12 }} id="time-start-hours-label">Hour</InputLabel>
                                                 <Select
                                                     labelId='time-start-hours-label'
                                                     id='time-start-hours-label'
                                                     value={startTimeHours}
                                                     label="Start Time Hour"
                                                     onChange={(e) => this.handleStartHour(e.target.value)}
-                                                    MenuProps={{ style: { maxHeight: 'calc(50% - 96px)'}}}
+                                                    MenuProps={{ style: { maxHeight: 'calc(50% - 96px)' } }}
                                                 >
                                                     <MenuItem value={0}>0</MenuItem>
                                                     <MenuItem value={1}>1</MenuItem>
@@ -585,7 +584,7 @@ class Birthday extends Component {
                                         </Col>
                                         <Col md={3}>
                                             <FormControl fullWidth>
-                                                <InputLabel style={{fontSize: 12}} id="time-start-minutes-label">Minutes</InputLabel>
+                                                <InputLabel style={{ fontSize: 12 }} id="time-start-minutes-label">Minutes</InputLabel>
                                                 <Select
                                                     labelId='time-start-minutes-label'
                                                     id='time-start-minutes-label'
@@ -603,19 +602,19 @@ class Birthday extends Component {
                                             </FormControl>
                                         </Col>
                                         <Col md={2} className="col-center-middle">
-                                            <ArrowForwardIcon />
+                                            <ArrowForward />
                                         </Col>
                                         {/* End time hours */}
                                         <Col md={2}>
                                             <FormControl fullWidth>
-                                                <InputLabel style={{fontSize: 12}} id="time-start-hours-label">Hour</InputLabel>
+                                                <InputLabel style={{ fontSize: 12 }} id="time-start-hours-label">Hour</InputLabel>
                                                 <Select
                                                     labelId='time-start-hours-label'
                                                     id='time-start-hours-label'
                                                     value={endTimeHours}
                                                     label="Start Time Hour"
                                                     onChange={(e) => this.handleEndHour(e.target.value)}
-                                                    MenuProps={{ style: { maxHeight: 'calc(50% - 96px)'}}}
+                                                    MenuProps={{ style: { maxHeight: 'calc(50% - 96px)' } }}
                                                 >
                                                     <MenuItem value={0}>0</MenuItem>
                                                     <MenuItem value={1}>1</MenuItem>
@@ -646,7 +645,7 @@ class Birthday extends Component {
                                         </Col>
                                         <Col md={3}>
                                             <FormControl fullWidth>
-                                                <InputLabel style={{fontSize: 12}} id="time-start-minutes-label">Minutes</InputLabel>
+                                                <InputLabel style={{ fontSize: 12 }} id="time-start-minutes-label">Minutes</InputLabel>
                                                 <Select
                                                     labelId='time-end-minutes-label'
                                                     id='time-end-minutes-label'
@@ -738,11 +737,11 @@ class Birthday extends Component {
                                 <DialogActions className="actions-create-birthday">
                                     <Col md={8}>
                                         <Button onClick={this.handleUpdate} type="button" color="primary"
-                                        endIcon={<SaveIcon />}>
+                                            endIcon={<Save />}>
                                             Update
                                         </Button>
                                         <Button onClick={this.handleRemoval} color="primary"
-                                        endIcon={<DeleteIcon />}>
+                                            endIcon={<Delete />}>
                                             Remove
                                         </Button>
                                     </Col>
@@ -763,7 +762,9 @@ class Birthday extends Component {
 const condition = authUser =>
     authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]);
 
-export default compose(
-    withAuthorization(condition),
-    withFirebase,
-)(Birthday);
+export default withAuthorization(condition)(withFirebase(Birthday));
+
+// export default composeHooks(
+//     withAuthorization(condition),
+//     withFirebase,
+// )(Birthday);

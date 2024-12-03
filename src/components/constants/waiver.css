@@ -1,0 +1,180 @@
+.text-danger {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.form-control.is-invalid {
+    border-color: #dc3545;
+    padding-right: calc(1.5em + 0.75rem);
+    background-image: url("data:image/svg+xml,...");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+/* Form Container Styling */
+.waiver-form-container {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    margin: 2rem 0;
+}
+
+.waiver-section-header {
+    color: #2c3e50;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 1.5rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #3498db;
+}
+
+/* Form Fields Styling */
+.waiver-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.waiver-form-label {
+    color: #34495e;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.waiver-form-control {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.waiver-form-control:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.waiver-form-control.is-invalid {
+    border-color: #e74c3c;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23dc3545' viewBox='0 0 16 16'%3E%3Cpath d='M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z'/%3E%3C/svg%3E");
+    padding-right: 2.5rem;
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1rem;
+}
+
+/* Signature Pad Styling */
+.waiver-signature-container {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1rem;
+    margin: 1.5rem 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.waiver-signature-pad {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    background: #fff;
+    margin-bottom: 1rem;
+}
+
+.waiver-signature-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+/* Error Messages */
+.waiver-error-text {
+    color: #e74c3c;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Success Screen */
+.waiver-success-screen {
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
+    margin: 2rem 0;
+}
+
+.waiver-success-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    animation: pulse 2s infinite;
+}
+
+/* Checkbox Styling */
+.waiver-checkbox-container {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+/* Submit Button */
+.waiver-submit-button {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    width: 100%;
+    max-width: 300px;
+    margin: 1.5rem auto;
+}
+
+.waiver-submit-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
+}
+
+.waiver-submit-button:disabled {
+    background: #bdc3c7;
+    transform: none;
+}
+
+/* Loading Spinner */
+.waiver-spinner {
+    margin-right: 0.5rem;
+}
+
+/* Animations */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .waiver-form-container {
+        padding: 1rem;
+    }
+
+    .waiver-signature-buttons {
+        flex-direction: column;
+    }
+
+    .waiver-submit-button {
+        width: 100%;
+    }
+}

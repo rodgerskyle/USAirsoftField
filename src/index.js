@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { render } from 'react-dom';
 import './index.css';
 import App from './App';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -7,7 +7,8 @@ import * as serviceWorker from './serviceWorker';
 import Firebase, { FirebaseContext } from './components/Firebase';
 import { HelmetProvider } from 'react-helmet-async';
 
-ReactDOM.render(
+//const root = createRoot(document.getElementById("root"));
+render(
   <React.StrictMode>
     <FirebaseContext.Provider value={new Firebase()}>
       <HelmetProvider>
@@ -15,7 +16,7 @@ ReactDOM.render(
       </HelmetProvider>
     </FirebaseContext.Provider>
   </React.StrictMode>,
-  document.getElementById('root')
+  document.getElementById("root")
 );
 
 // If you want your app to work offline and load faster, you can change
