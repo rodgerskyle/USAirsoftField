@@ -143,7 +143,7 @@ class WaiverLookup extends Component {
                     return {
                         name: waiverName,
                         date: dateObj,
-                        ref: item.fullPath,
+                        ref: item,
                         isDigital: false
                     };
                 } catch (error) {
@@ -228,8 +228,9 @@ class WaiverLookup extends Component {
             // Handle digital waiver viewing
             this.setState({ showPdfModal: true });
             try {
-                const pdfBlob = await pdf(<SignedWaiver data={this.state.waivers.find(w => w.ref === ref).data} />).toBlob();
+                const pdfBlob = await pdf(<SignedWaiver {...this.state.waivers.find(w => w.ref === ref).data} />).toBlob();
                 const pdfUrl = URL.createObjectURL(pdfBlob);
+                window.open(pdfUrl, '_blank');
                 this.setState({ pdfUrl });
             } catch (error) {
                 console.error('Error generating PDF:', error);
@@ -237,7 +238,7 @@ class WaiverLookup extends Component {
         } else {
             // Handle legacy waiver opening
             try {
-                const url = await getDownloadURL(this.props.firebase.waiver(ref));
+                const url = await getDownloadURL(ref);
                 window.open(url, '_blank');
             } catch (error) {
                 console.error('Error opening legacy waiver:', error);

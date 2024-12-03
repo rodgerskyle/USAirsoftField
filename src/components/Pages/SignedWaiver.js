@@ -88,26 +88,29 @@ class SignedWaiver extends Component {
             Phone Number: <Text style={styles.signed}>{phone + " "}</Text><Text style={styles.spacing}>{"________"}</Text>
             E-Mail: <Text style={styles.signed}>{email}</Text>
           </Text>
-          <Text style={styles.text}>
-            PLAYERS AGES 8-17 MUST HAVE PARENT OR GUARDIAN SIGN BELOW AND CONSENT TO THE RELEASE OF LIABILITY, WAIVER OF CLAIM, EXPRESS ASSUMPTION OF RISK AND INDEMNITY AS OUTLINED ABOVE.
-          </Text>
-          <Text style={styles.text}>
-            Print Parent or Guardian Name: <Text style={styles.signed}>{guardian?.name}</Text><Text style={styles.spacing}>{"________"}</Text>
-            Signature: {isValidImageData(guardian?.signature) && (
-              <Image
-                src={guardian.signature}
-                style={{
-                  width: '200px',  // Set fixed dimensions
-                  height: '50px',
-                  marginBottom: 10
-                }}
-              />
-            )}
-          </Text>
-          <Text style={styles.text}>
-            Emergency Phone Number: <Text style={styles.text}>{guardian?.phone + " "}</Text><Text style={styles.spacing}>{"________"}</Text>
-            Date: <Text style={styles.signed}>{(new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear())}</Text>
-          </Text>
+          {age <= 17 &&
+            <>
+              <Text style={styles.text}>
+                PLAYERS AGES 8-17 MUST HAVE PARENT OR GUARDIAN SIGN BELOW AND CONSENT TO THE RELEASE OF LIABILITY, WAIVER OF CLAIM, EXPRESS ASSUMPTION OF RISK AND INDEMNITY AS OUTLINED ABOVE.
+              </Text>
+              <Text style={styles.text}>
+                Print Parent or Guardian Name: <Text style={styles.signed}>{guardian?.name}</Text><Text style={styles.spacing}>{"________"}</Text>
+                Signature: {isValidImageData(guardian?.signature) && (
+                  <Image
+                    src={guardian.signature}
+                    style={{
+                      width: '200px',  // Set fixed dimensions
+                      height: '50px',
+                      marginBottom: 10
+                    }}
+                  />
+                )}
+              </Text>
+              <Text style={styles.text}>
+                Emergency Phone Number: <Text style={styles.text}>{guardian?.phone ? `${guardian?.phone} ` : null}</Text><Text style={styles.spacing}>{"________"}</Text>
+                Date: <Text style={styles.signed}>{(new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear())}</Text>
+              </Text>
+            </>}
         </Page>
       </Document>
     )
