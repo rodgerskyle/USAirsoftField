@@ -63,7 +63,7 @@ const ReturnForm = (props) => {
         if (selectedForm?.participants) {
             const combined = [];
             selectedForm.participants.forEach(participant => {
-                participant.rentals?.forEach(rental => {
+                participant.rentals && participant?.rentals?.forEach(rental => {
                     const existingRental = combined.find(r => r.value === rental.value);
                     if (existingRental) {
                         if (rental.number) {
@@ -161,7 +161,7 @@ const ReturnForm = (props) => {
 
             // Process each participant's rentals
             form.participants?.forEach(participant => {
-                participant.rentals?.forEach(rental => {
+                participant?.rentals?.forEach(rental => {
                     // Find the matching option in the array by id
                     const optionIndex = options.findIndex(option => option.value === rental.value);
 
