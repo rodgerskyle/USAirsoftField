@@ -50,8 +50,9 @@ class Birthday extends Component {
     // Handles the logic on click for each day on the Calendar
     handleSelect = ({ start, end }) => {
         let temp = new Date(start.setHours(6))
+        let tempEnd = new Date(start.setHours(20))
         end.setHours(20)
-        this.setState({ start: temp, end, showDialog: true })
+        this.setState({ start: temp, end: tempEnd, showDialog: true })
     }
 
     // Handles the logic on click for existing event
@@ -444,7 +445,7 @@ class Birthday extends Component {
                                             </FormControl>
                                         </Col>
                                     </Row>
-                                    <Row>
+                                    <Row className='mb-2'>
                                         <Col>
                                             <TextField
                                                 label="Group Name"
