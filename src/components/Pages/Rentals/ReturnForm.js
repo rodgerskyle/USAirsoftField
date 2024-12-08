@@ -138,10 +138,12 @@ const ReturnForm = (props) => {
                 setIndex(-1);
                 setComplete(false);
                 setEmail('');
+                setLoading(false);
             }, 2000);
 
         } catch (err) {
             setError('Failed to complete form');
+            setLoading(false);
             console.error(err);
         }
     };
