@@ -138,10 +138,12 @@ const ReturnForm = (props) => {
                 setIndex(-1);
                 setComplete(false);
                 setEmail('');
+                setLoading(false);
             }, 2000);
 
         } catch (err) {
             setError('Failed to complete form');
+            setLoading(false);
             console.error(err);
         }
     };
@@ -182,7 +184,7 @@ const ReturnForm = (props) => {
 
             // Process available rentals
             const availableRentals = form.available;
-            availableRentals.forEach(rental => {
+            availableRentals?.forEach(rental => {
                 const optionIndex = options.findIndex(option => option.value === rental.value);
                 if (optionIndex !== -1) {
                     optionsObject[optionIndex].stock = optionsObject[optionIndex].stock - 1;
@@ -205,30 +207,33 @@ const ReturnForm = (props) => {
         try {
             const form = rentalForms[index];
             const updatedParticipants = form.participants.map(participant => {
-                const updatedRentals = participant.rentals?.map(rental => {
-                    if (rental.value === rentalValue && rental.number === number) {
-                        return {
-                            ...rental,
-                            checked: isChecked
-                        };
-                    }
-                    return {
-                        ...rental,
-                        checked: rental.checked
-                    };
-                });
+                // Only update rentals if they exist
+                const updatedRentals = participant.rentals?.map(rental => ({
+                    ...rental,
+                    checked: rental.value === rentalValue && rental.number === number
+                        ? isChecked
+                        : rental.checked || false
+                }));
 
+                // Maintain the original participant structure
                 return {
-                    name: participant.name,
-                    rentals: updatedRentals,
-                    ref: participant.ref
+                    ...participant, // Keep all original participant properties
+                    rentals: updatedRentals || [], // Ensure rentals is at least an empty array
                 };
             });
 
-            // Update database
-            await update(firebase.rentalGroup(formKey), {
-                participants: updatedParticipants
-            });
+            // Create a clean update object
+            const updateObject = {
+                participants: updatedParticipants.map(participant => ({
+                    name: participant.name || '',
+                    rentals: participant.rentals || [],
+                    ref: participant.ref || null, // Ensure ref is null if not present
+                    // Add any other required participant fields here
+                }))
+            };
+
+            // Update database with clean object
+            await update(firebase.rentalGroup(formKey), updateObject);
 
             // Update combined list state
             setCombinedList(prev => prev.map(rental => {

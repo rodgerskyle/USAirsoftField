@@ -71,6 +71,7 @@ class WaiverLookup extends Component {
         // this.props.firebase.numWaivers().off();
     }
 
+
     componentDidMount() {
         this.setState({ loading: true });
         this.initializeDates();
@@ -80,8 +81,11 @@ class WaiverLookup extends Component {
     initializeDates = () => {
         let date = new Date();
         this.setState({
-            activeMonth: date.getMonth() + 1,
-            activeDay: date.getDate(),
+            // activeMonth: date.getMonth() + 1,
+            // activeDay: date.getDate(),
+            // activeYear: date.getFullYear()
+            activeMonth: 13,
+            activeDay: 32,
             activeYear: date.getFullYear()
         });
 
