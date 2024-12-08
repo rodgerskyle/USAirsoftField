@@ -854,6 +854,16 @@ p.error-text-rp {
   border-bottom-width: 1px !important;
 }
 
+.header-th-tlb {
+  border-bottom: 1px solid rgb(255, 217, 0, .5) !important;
+  border-bottom-width: 1px !important;
+  text-align: left;
+}
+
+.knocked-out-tr-tlb {
+  background-color: rgb(255 0 0 / 20%) !important;
+}
+
 .button-left-lb {
   padding: 10px 15px;
 }
@@ -5715,4 +5725,8 @@ div .p-nav-profile-active {
   .status-card-body-main-admin {
     max-height: 40vh;
   }
+}
+
+.add-participant-modal p.MuiTablePagination-displayedRows.css-levciy-MuiTablePagination-displayedRows {
+  color: black;
 }
