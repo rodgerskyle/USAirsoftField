@@ -1,29 +1,14 @@
-import { faCheckSquare, faSquare } from "@fortawesome/free-regular-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Avatar, Checkbox, Chip, Switch, FormControlLabel, CircularProgress } from '@mui/material';
+import { Chip, CircularProgress } from '@mui/material';
 import Box from '@mui/material/Box';
 import MUIButton from '@mui/material/Button';
 import Collapse from '@mui/material/Collapse';
-import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import InputBase from '@mui/material/InputBase';
 import Paper from '@mui/material/Paper';
-// Imports for MUI Table
-import { makeStyles } from '@mui/styles';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableFooter from '@mui/material/TableFooter';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
-import { Add, Cancel, CheckCircle, Delete, Edit, Remove, RemoveCircleOutline, KeyboardArrowDown, KeyboardArrowUp, Close, AutoAwesome } from '@mui/icons-material';
-import React, { Component, useState } from 'react';
-import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
-import { Button, Col, Row, Spinner } from 'react-bootstrap/';
-import Snackbar from '@mui/material/Snackbar';
-import Alert from '@mui/lab/Alert';
+import { Add, Cancel, CheckCircle, Delete, Edit, Close, AutoAwesome } from '@mui/icons-material';
+import React, { Component, useState, useEffect } from 'react';
+import { Button, Spinner } from 'react-bootstrap/';
 import * as ROLES from '../../constants/roles';
 import { withAuthorization } from '../../session';
 import { listAll } from 'firebase/storage';
@@ -35,14 +20,13 @@ import { v4 as uuid } from 'uuid';
 import { withFirebase } from '../../Firebase';
 
 import '../../../App.css';
-import { get, onValue, set, update } from "firebase/database";
+import { get, update, onValue, set } from "firebase/database";
 import TablePagination from '@mui/material/TablePagination';
 import Modal from '@mui/material/Modal';
 import TextField from '@mui/material/TextField';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
-import ListItemSecondaryAction from '@mui/material/ListItemSecondaryAction';
 
 const AddParticipantModal = ({
     open,
@@ -241,84 +225,6 @@ const TransactionDialog = ({ open, onClose, onSubmit, error, value, onChange }) 
     );
 };
 
-function returnDay(day) {
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    return days[day];
-}
-
-function returnMonth(month) {
-    const months = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    return months[month];
-}
-
-// const verify = (item, list) => {
-//     for (let i = 0; i < list.length; i++)
-//         if (list[i].value === item.value) return false;
-//     return true // Verified that it's safe
-// }
-
-// Copies over item to another list, verifies it doesn't exist
-const copy = (source, destination, droppableSource, droppableDestination) => {
-    const sourceClone = Array.from(source);
-    const destClone = typeof destination === 'object' ? Array.from(destination) : [];
-    const item = sourceClone[droppableSource.index];
-
-    // Make sure it doesn't exist at destination
-
-    // if (verify(item, destClone))
-    destClone.splice(droppableDestination.index, 0, { ...item, id: uuid() });
-    return destClone;
-};
-
-/**
- * Moves an item from one list to another list.
- */
-const move = (source, destination, droppableSource, droppableDestination) => {
-    const sourceClone = Array.from(source);
-    const destClone = typeof destination === 'object' ? Array.from(destination) : [];
-
-    const [removed] = sourceClone.splice(droppableSource.index, 1);
-    destClone.splice(droppableDestination.index, 0, removed);
-
-    const result = {};
-    result[droppableSource.droppableId] = sourceClone;
-    result[droppableDestination.droppableId] = destClone;
-
-    return result;
-};
-
-const grid = 8;
-
-const getItemStyle = (isDragging, draggableStyle) => ({
-    // some basic styles to make the items look a bit nicer
-    userSelect: 'none',
-    paddingtop: 10,
-    paddingbottom: 10,
-    paddingleft: 20,
-    paddingright: 20,
-    margin: 5,
-
-    // change background colour if dragging
-    background: isDragging ? 'transparent' : 'grey',
-    border: isDragging ? '1px solid lightgreen' : 'none',
-
-    // styles we need to apply on draggables
-    ...draggableStyle
-});
-
-const getCellStyle = (isDragging) => ({
-    // change background colour if dragging
-    width: isDragging ? '100%' : 'initial',
-});
-
-const getListStyle = isDraggingOver => ({
-    background: isDraggingOver ? 'rgb(4,4,4, .2)' : 'transparent',
-    padding: grid,
-});
-
 const ParticipantCard = ({ participant, index, onDelete, onRemoveRental, onAddRental, availableRentals, onEditRentalNumber }) => {
     const [showRentalMenu, setShowRentalMenu] = useState(false);
     const [editingRental, setEditingRental] = useState(null);
@@ -455,6 +361,154 @@ const ParticipantCard = ({ participant, index, onDelete, onRemoveRental, onAddRe
     );
 };
 
+const SizeEditModal = ({ open, onClose, currentSize, onSave }) => {
+    const [newSize, setNewSize] = useState(currentSize);
+
+    return (
+        <Modal open={open} onClose={onClose}>
+            <Paper className="size-edit-modal" sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: '300px',
+                p: 3
+            }}>
+                <Typography variant="h6" mb={2}>Edit Group Size</Typography>
+                <TextField
+                    fullWidth
+                    type="number"
+                    label="Maximum Participants"
+                    value={newSize}
+                    onChange={(e) => setNewSize(e.target.value)}
+                    sx={{ mb: 2 }}
+                />
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                    <MUIButton onClick={onClose}>Cancel</MUIButton>
+                    <MUIButton
+                        variant="contained"
+                        onClick={() => onSave(newSize)}
+                        disabled={newSize < 1}
+                    >
+                        Save
+                    </MUIButton>
+                </Box>
+            </Paper>
+        </Modal>
+    );
+};
+
+const InventoryEditModal = ({ open, onClose, available, onSave, currentOptions }) => {
+    const [inventory, setInventory] = useState({});
+    const [originalCounts, setOriginalCounts] = useState({});
+
+    useEffect(() => {
+        // Group available items by type
+        const grouped = available.reduce((acc, item) => {
+            acc[item.value] = (acc[item.value] || 0) + 1;
+            return acc;
+        }, {});
+        setInventory(grouped);
+        setOriginalCounts(grouped); // Store original counts for comparison
+    }, [available]);
+
+    const handleSave = () => {
+        // Calculate only the changes in inventory
+        const inventoryChanges = {};
+        const stockUpdates = {};
+
+        Object.entries(inventory).forEach(([value, count]) => {
+            const originalCount = originalCounts[value] || 0;
+            const difference = count - originalCount;
+
+            // Only include items that have changed
+            if (difference !== 0) {
+                inventoryChanges[value] = count;
+                stockUpdates[value] = difference;
+            }
+        });
+
+        // Only update options that have changes
+        const updatedOptions = currentOptions.map(option => {
+            if (stockUpdates.hasOwnProperty(option.value)) {
+                return {
+                    ...option,
+                    stock: (option.stock || 0) + stockUpdates[option.value]
+                };
+            }
+            return option; // Return unchanged option if no updates
+        });
+
+        // Convert only changed inventory numbers back to array items
+        const newAvailable = Object.entries(inventory).flatMap(([value, count]) => {
+            // Only create new items for values that changed
+            if (inventoryChanges.hasOwnProperty(value)) {
+                return Array(parseInt(count)).fill().map(() => ({
+                    value,
+                    label: available.find(item => item.value === value)?.label || value,
+                    id: uuid(),
+                    number: '',
+                    checked: false
+                }));
+            }
+            // Keep existing items for unchanged values
+            return available.filter(item => item.value === value);
+        });
+
+        onSave(newAvailable, updatedOptions, stockUpdates);
+    };
+
+    return (
+        <Modal open={open} onClose={onClose}>
+            <Paper className="inventory-edit-modal" sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: '400px',
+                p: 3
+            }}>
+                <Typography variant="h6" mb={2}>Edit Available Inventory</Typography>
+                {Object.entries(inventory).map(([value, count]) => {
+                    const originalCount = originalCounts[value] || 0;
+                    const difference = count - originalCount;
+
+                    return (
+                        <Box key={value} sx={{ mb: 2 }}>
+                            <Typography variant="subtitle2">
+                                {available.find(item => item.value === value)?.label || value}
+                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <TextField
+                                    fullWidth
+                                    type="number"
+                                    value={count}
+                                    onChange={(e) => setInventory(prev => ({
+                                        ...prev,
+                                        [value]: parseInt(e.target.value) || 0
+                                    }))}
+                                    InputProps={{ inputProps: { min: 0 } }}
+                                />
+                                {difference !== 0 && (
+                                    <Typography variant="caption" color={difference > 0 ? "success" : "error"}>
+                                        {difference > 0 ? `+${difference}` : difference}
+                                    </Typography>
+                                )}
+                            </Box>
+                        </Box>
+                    );
+                })}
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                    <MUIButton onClick={onClose}>Cancel</MUIButton>
+                    <MUIButton variant="contained" onClick={handleSave}>
+                        Save Changes
+                    </MUIButton>
+                </Box>
+            </Paper>
+        </Modal>
+    );
+};
+
 class EditSelectedForm extends Component {
     constructor(props) {
         super(props);
@@ -488,31 +542,71 @@ class EditSelectedForm extends Component {
             digitalPage: 0,
             digitalPerPage: 50,
             totalDigital: 0,
+            showSizeEdit: false,
+            showInventoryEdit: false,
+            rentalOptions: [], // Add this to track rental options
         };
     }
 
-    componentDidMount = async () => {
+    componentDidMount = () => {
         try {
-            // Get form data
-            const formSnapshot = await get(this.props.firebase.rentalGroup(this.props.index));
-            const form = formSnapshot.val();
-            if (form) {
-                this.setState({
-                    participants: form.participants || [],
-                    availableList: form.available || [],
-                    isComplete: form.complete || false,
-                    transaction: form.transaction || ''
-                });
-            }
+            // Set up real-time listener for form data
+            this.formListener = onValue(this.props.firebase.rentalGroup(this.props.index),
+                (snapshot) => {
+                    const form = snapshot.val();
+                    if (form) {
+                        this.setState({
+                            participants: form.participants || [],
+                            availableList: form.available || [],
+                            isComplete: form.complete || false,
+                            transaction: form.transaction || '',
+                            size: form.size || 0,
+                            name: form.name || '',
+                            loading: false
+                        });
+                    } else {
+                        this.setState({
+                            loading: false,
+                            error: 'Form not found'
+                        });
+                    }
+                },
+                (error) => {
+                    console.error('Error loading form data:', error);
+                    this.setState({
+                        error: 'Failed to load form data',
+                        loading: false
+                    });
+                }
+            );
 
             // Load digital waivers
-            await this.loadDigitalWaivers();
+            this.loadDigitalWaivers();
+
+            // Add listener for rental options
+            this.optionsListener = onValue(this.props.firebase.rentalOptions(),
+                (snapshot) => {
+                    if (snapshot.exists()) {
+                        this.setState({ rentalOptions: snapshot.val() });
+                    }
+                }
+            );
         } catch (error) {
             console.error('Error in componentDidMount:', error);
             this.setState({
                 error: 'Failed to load initial data',
                 loading: false
             });
+        }
+    };
+
+    componentWillUnmount = () => {
+        // Remove the listener when component unmounts
+        if (this.formListener) {
+            this.formListener();
+        }
+        if (this.optionsListener) {
+            this.optionsListener();
         }
     };
 
@@ -738,7 +832,7 @@ class EditSelectedForm extends Component {
                 showTransactionDialog: false,
                 isComplete: true
             });
-        }).catch(error => {
+        }).catch(() => {
             this.setState({ transactionError: 'Failed to update transaction' });
         });
     }
@@ -849,10 +943,21 @@ class EditSelectedForm extends Component {
         });
     }
 
-    handleRemoveRental = (participantIndex, rentalIndex) => {
-        const { participants, availableList } = this.state;
+    handleRemoveRental = async (participantIndex, rentalIndex) => {
+        const { participants, availableList, rentalOptions } = this.state;
         const updatedParticipants = [...participants];
         const removedRental = updatedParticipants[participantIndex].rentals[rentalIndex];
+
+        // Update rental options stock
+        const updatedOptions = rentalOptions.map(option => {
+            if (option.value === removedRental.value) {
+                return {
+                    ...option,
+                    stock: Math.max(0, (option.stock || 0) - 1)
+                };
+            }
+            return option;
+        });
 
         // Remove rental from participant
         updatedParticipants[participantIndex].rentals.splice(rentalIndex, 1);
@@ -867,16 +972,23 @@ class EditSelectedForm extends Component {
 
         const updatedAvailableList = [...availableList, returnedRental];
 
-        // Update state and firebase
-        this.setState({
-            participants: updatedParticipants,
-            availableList: updatedAvailableList
-        });
+        try {
+            await Promise.all([
+                update(this.props.firebase.rentalGroup(this.props.index), {
+                    participants: updatedParticipants,
+                    available: updatedAvailableList
+                }),
+                set(this.props.firebase.rentalOptions(), updatedOptions)
+            ]);
 
-        update(this.props.firebase.rentalGroup(this.props.index), {
-            participants: updatedParticipants,
-            available: updatedAvailableList
-        });
+            this.setState({
+                participants: updatedParticipants,
+                availableList: updatedAvailableList
+            });
+        } catch (error) {
+            console.error('Error removing rental:', error);
+            this.setState({ error: 'Failed to remove rental' });
+        }
     };
 
     handleEditRentalNumber = (participantIndex, rentalIndex, number) => {
@@ -914,19 +1026,17 @@ class EditSelectedForm extends Component {
         return summary;
     };
 
-    handleAddRental = (participantIndex, rental) => {
-        const { participants, availableList } = this.state;
+    handleAddRental = async (participantIndex, rental) => {
+        const { participants, availableList, rentalOptions } = this.state;
 
         // Create updated participants array
         const updatedParticipants = [...participants];
         const participant = updatedParticipants[participantIndex];
 
-        // Initialize rentals array if it doesn't exist
         if (!participant.rentals) {
             participant.rentals = [];
         }
 
-        // Create updated available list
         const updatedAvailableList = [...availableList];
         const similarItems = updatedAvailableList.filter(item => item.value === rental.value);
 
@@ -935,7 +1045,18 @@ class EditSelectedForm extends Component {
             const removeIndex = updatedAvailableList.findIndex(item => item.value === rental.value);
             const [removedRental] = updatedAvailableList.splice(removeIndex, 1);
 
-            // Add to participant's rentals with a new ID
+            // Update rental options stock
+            const updatedOptions = rentalOptions.map(option => {
+                if (option.value === rental.value) {
+                    return {
+                        ...option,
+                        stock: (option.stock || 0) + 1
+                    };
+                }
+                return option;
+            });
+
+            // Add to participant's rentals
             participant.rentals.push({
                 ...removedRental,
                 id: uuid(),
@@ -943,16 +1064,24 @@ class EditSelectedForm extends Component {
                 checked: false
             });
 
-            // Update state and firebase
-            this.setState({
-                participants: updatedParticipants,
-                availableList: updatedAvailableList
-            });
+            try {
+                // Update both rental form and options
+                await Promise.all([
+                    update(this.props.firebase.rentalGroup(this.props.index), {
+                        participants: updatedParticipants,
+                        available: updatedAvailableList
+                    }),
+                    set(this.props.firebase.rentalOptions(), updatedOptions)
+                ]);
 
-            update(this.props.firebase.rentalGroup(this.props.index), {
-                participants: updatedParticipants,
-                available: updatedAvailableList
-            });
+                this.setState({
+                    participants: updatedParticipants,
+                    availableList: updatedAvailableList
+                });
+            } catch (error) {
+                console.error('Error updating rental:', error);
+                this.setState({ error: 'Failed to update rental' });
+            }
         }
     };
 
@@ -1027,6 +1156,41 @@ class EditSelectedForm extends Component {
         this.setState({ digitalPage: newPage });
     };
 
+    handleSizeUpdate = async (newSize) => {
+        try {
+            await update(this.props.firebase.rentalGroup(this.props.index), {
+                size: newSize
+            });
+            this.setState({
+                size: newSize,
+                showSizeEdit: false
+            });
+        } catch (error) {
+            console.error('Error updating size:', error);
+            this.setState({ error: 'Failed to update group size' });
+        }
+    };
+
+    handleInventoryUpdate = async (newAvailable, updatedOptions) => {
+        try {
+            // Update both the rental form and the global rental options
+            await Promise.all([
+                update(this.props.firebase.rentalGroup(this.props.index), {
+                    available: newAvailable
+                }),
+                set(this.props.firebase.rentalOptions(), updatedOptions)
+            ]);
+
+            this.setState({
+                availableList: newAvailable,
+                showInventoryEdit: false
+            });
+        } catch (error) {
+            console.error('Error updating inventory:', error);
+            this.setState({ error: 'Failed to update inventory' });
+        }
+    };
+
     render() {
         const {
             loading,
@@ -1050,6 +1214,28 @@ class EditSelectedForm extends Component {
 
         return (
             <div className="rental-management">
+                <Paper className="form-header">
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                        <Typography variant="h6" style={{ marginLeft: '1rem' }}>
+                            Rental Form
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                            <MUIButton
+                                startIcon={<Edit />}
+                                onClick={() => this.setState({ showSizeEdit: true })}
+                            >
+                                Edit Size ({this.state.size})
+                            </MUIButton>
+                            <MUIButton
+                                startIcon={<Edit />}
+                                onClick={() => this.setState({ showInventoryEdit: true })}
+                            >
+                                Edit Inventory
+                            </MUIButton>
+                        </Box>
+                    </Box>
+                </Paper>
+
                 {/* Summary of Available Items */}
                 <Paper className="available-rentals-summary">
                     <Typography variant="h6">Available Rentals</Typography>
@@ -1148,222 +1334,26 @@ class EditSelectedForm extends Component {
                     value={this.state.transaction}
                     onChange={(value) => this.setState({ transaction: value })}
                 />
+
+                <SizeEditModal
+                    open={this.state.showSizeEdit}
+                    onClose={() => this.setState({ showSizeEdit: false })}
+                    currentSize={this.state.size}
+                    onSave={this.handleSizeUpdate}
+                />
+
+                <InventoryEditModal
+                    open={this.state.showInventoryEdit}
+                    onClose={() => this.setState({ showInventoryEdit: false })}
+                    available={this.state.availableList}
+                    onSave={this.handleInventoryUpdate}
+                    currentOptions={this.state.rentalOptions}
+                />
             </div>
         );
     }
 }
 
-
-const useRowStyles = makeStyles({
-    root: {
-        '& > *': {
-            borderBottom: 'unset',
-        },
-    },
-})
-
-const useStyles = makeStyles((theme) => ({
-    root: {
-        padding: '2px 4px',
-        display: 'flex',
-        alignItems: 'center',
-        width: 300,
-        float: 'right',
-        background: '#424242'
-    },
-    input: {
-        flex: 1,
-        color: 'white',
-    },
-    iconButton: {
-        padding: 10,
-        color: '#b1f48f !important',
-    },
-    cancelButton: {
-        padding: 10,
-        color: '#f48fb1 !important',
-    },
-    divider: {
-        height: 28,
-        margin: 4,
-    },
-}));
-
-function MUITableRow(props) {
-    const { row, index, detach, edit, checkin, removing, remove, gamepass, checkNum } = props;
-
-    const [open, setOpen] = React.useState(false);
-    const [editArray, setEditArray] = React.useState(new Array(typeof row.rentals === 'object' ? (row.rentals.length) : []).fill(false));
-    const [editArrayValue, setEditArrayValue] = React.useState(new Array(typeof row.rentals === 'object' ? (row.rentals.length) : []).fill(""));
-    const classes = useRowStyles();
-    const classes2 = useStyles()
-
-    return (
-        <React.Fragment>
-            <TableRow className={classes.root}>
-                <TableCell onClick={() => setOpen(!open)}>
-                    <IconButton aria-label="expand row" size="small" onClick={() => setOpen(!open)}>
-                        {open ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
-                    </IconButton>
-                </TableCell>
-                <TableCell component="th" scope="row" className="tc-name-esf">
-                    <MUIButton disabled={!removing} onClick={() => {
-                        remove(index, row)
-                    }}
-                        startIcon={removing ? <Delete /> : null}>
-                        {row.name}
-                    </MUIButton>
-                </TableCell>
-                <TableCell align="right">{row.rentals ? row?.rentals.length : 0}</TableCell>
-                <TableCell></TableCell>
-                <TableCell></TableCell>
-                <TableCell align="right">
-                    <div className="div-checkbox-esf">
-                        <Checkbox
-                            checked={row.gamepass}
-                            color="primary"
-                            onClick={() => gamepass(index)}
-                        />
-                    </div>
-                </TableCell>
-            </TableRow>
-            <TableRow className="collapse-table-row-rf" >
-                <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
-                    <Collapse in={open} timeout="auto" unmountOnExit>
-                        <Box margin={1}>
-                            <Typography variant="h6" gutterBottom component="div">
-                                {`Rentals for ${row.name}`}
-                            </Typography>
-                            <Droppable droppableId={"p_rentals-" + index}>
-                                {(provided, snapshot) => (
-                                    <Table size="small" aria-label="participants-rentals" ref={provided.innerRef} style={getListStyle(snapshot.isDraggingOver)}
-                                        className="table-collapse-esf">
-                                        <TableHead>
-                                            <TableRow>
-                                                <TableCell>Rental</TableCell>
-                                                <TableCell align="right">Number</TableCell>
-                                                <TableCell align="right">Returned</TableCell>
-                                            </TableRow>
-                                        </TableHead>
-                                        <TableBody>
-                                            {typeof row.rentals === 'object' ?
-                                                row.rentals.map((rental, i) => (
-                                                    <Draggable
-                                                        isDragDisabled={true}
-                                                        key={rental.id}
-                                                        draggableId={rental.id}
-                                                        index={i}>
-                                                        {(provided, snapshot) => (
-                                                            <TableRow key={rental.id}
-                                                                ref={provided.innerRef}
-                                                                {...provided.draggableProps}
-                                                                {...provided.dragHandleProps}
-                                                                style={getItemStyle(
-                                                                    snapshot.isDragging,
-                                                                    provided.draggableProps.style
-                                                                )}>
-                                                                <TableCell component="th" scope="row" className="th-esf"
-                                                                    style={getCellStyle(
-                                                                        snapshot.isDragging,
-                                                                    )}>
-                                                                    <IconButton aria-label="unlink" onClick={() => detach(i, index)}>
-                                                                        <RemoveCircleOutline />
-                                                                    </IconButton>
-                                                                    {rental.label}
-                                                                </TableCell>
-                                                                {!editArray[i] ?
-                                                                    <TableCell align="right"
-                                                                        style={getCellStyle(
-                                                                            snapshot.isDragging,
-                                                                        )}>
-                                                                        <IconButton aria-label="edit" onClick={() => {
-                                                                            let tempArray = [...editArray];
-                                                                            if (tempArray[i] !== true)
-                                                                                tempArray.fill(false)
-                                                                            tempArray[i] = !tempArray[i]
-                                                                            setEditArray(tempArray)
-                                                                        }}>
-                                                                            <Edit />
-                                                                        </IconButton>
-                                                                        {rental.number}
-                                                                    </TableCell>
-                                                                    :
-                                                                    <TableCell align="right"
-                                                                        style={getCellStyle(
-                                                                            snapshot.isDragging,
-                                                                        )}>
-                                                                        <Paper component="form" className={classes2.root} onSubmit={(e) => {
-                                                                            e.preventDefault()
-                                                                            if (checkNum(editArrayValue[i], rental.value)) {
-                                                                                edit(i, index, editArrayValue[i])
-                                                                                let tempArray = [...editArray];
-                                                                                tempArray.fill(false)
-                                                                                setEditArray(tempArray)
-                                                                                let editArrayVal = [...editArrayValue]
-                                                                                editArrayVal[i] = ""
-                                                                                setEditArrayValue(editArrayVal)
-                                                                            }
-                                                                        }}>
-                                                                            <InputBase
-                                                                                className={classes2.input}
-                                                                                placeholder="Enter Rental Number"
-                                                                                inputProps={{ 'aria-label': 'enter rental number' }}
-                                                                                autoFocus
-                                                                                type="number"
-                                                                                value={editArrayValue[i]}
-                                                                                onChange={(e) => {
-                                                                                    let tempArray = [...editArrayValue]
-                                                                                    tempArray[i] = e.target.value
-                                                                                    setEditArrayValue(tempArray)
-                                                                                }}
-                                                                            />
-                                                                            <IconButton type="submit" className={classes2.iconButton} aria-label="confirm">
-                                                                                <CheckCircle />
-                                                                            </IconButton>
-                                                                            <Divider className={classes2.divider} orientation="vertical" />
-                                                                            <IconButton className={classes2.cancelButton} aria-label="cancel"
-                                                                                onClick={() => {
-                                                                                    let tempArray = [...editArray];
-                                                                                    tempArray.fill(false)
-                                                                                    setEditArray(tempArray)
-                                                                                    let editArrayVal = [...editArrayValue]
-                                                                                    editArrayVal[i] = ""
-                                                                                    setEditArrayValue(editArrayVal)
-                                                                                }}>
-                                                                                <Cancel />
-                                                                            </IconButton>
-                                                                        </Paper>
-                                                                    </TableCell>
-                                                                }
-                                                                <TableCell align="right"
-                                                                    style={getCellStyle(
-                                                                        snapshot.isDragging,
-                                                                    )}>
-                                                                    {!rental.checked ?
-                                                                        <IconButton onClick={() => checkin(i, index)}>
-                                                                            <FontAwesomeIcon icon={faSquare} className="icon-checked-rf" />
-                                                                        </IconButton>
-                                                                        :
-                                                                        <IconButton onClick={() => checkin(i, index)}>
-                                                                            <FontAwesomeIcon icon={faCheckSquare} className="icon-checked-rf" />
-                                                                        </IconButton>
-                                                                    }</TableCell>
-                                                            </TableRow>
-                                                        )}
-                                                    </Draggable>
-                                                )) : null}
-                                        </TableBody>
-                                        {provided.placeholder}
-                                    </Table>
-                                )}
-                            </Droppable>
-                        </Box>
-                    </Collapse>
-                </TableCell>
-            </TableRow>
-        </React.Fragment>
-    );
-}
 
 const condition = authUser =>
     authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]);
