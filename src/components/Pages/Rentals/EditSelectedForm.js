@@ -27,6 +27,7 @@ import TextField from '@mui/material/TextField';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
+import MenuItem from '@mui/material/MenuItem';
 
 const AddParticipantModal = ({
     open,
@@ -232,6 +233,11 @@ const ParticipantCard = ({ participant, index, onDelete, onRemoveRental, onAddRe
 
     // Get unique rentals with counts
     const getUniqueRentals = () => {
+        // Return empty array if availableRentals is null/undefined or not an array
+        if (!availableRentals || !Array.isArray(availableRentals)) {
+            return [];
+        }
+
         return availableRentals.reduce((acc, rental) => {
             const existingRental = acc.find(item => item.value === rental.value);
             if (existingRental) {
@@ -400,109 +406,121 @@ const SizeEditModal = ({ open, onClose, currentSize, onSave }) => {
 
 const InventoryEditModal = ({ open, onClose, available, onSave, currentOptions }) => {
     const [inventory, setInventory] = useState({});
-    const [originalCounts, setOriginalCounts] = useState({});
+    const [selectedRental, setSelectedRental] = useState('');
 
     useEffect(() => {
         // Group available items by type
+        if (!available || !Array.isArray(available)) {
+            setInventory([])
+            return;
+        }
+
         const grouped = available.reduce((acc, item) => {
             acc[item.value] = (acc[item.value] || 0) + 1;
             return acc;
         }, {});
         setInventory(grouped);
-        setOriginalCounts(grouped); // Store original counts for comparison
     }, [available]);
 
-    const handleSave = () => {
-        // Calculate only the changes in inventory
-        const inventoryChanges = {};
-        const stockUpdates = {};
+    // Get rental options that aren't in inventory
+    const getAvailableOptions = () => {
+        return currentOptions.filter(option =>
+            !inventory.hasOwnProperty(option.value)
+        );
+    };
 
-        Object.entries(inventory).forEach(([value, count]) => {
-            const originalCount = originalCounts[value] || 0;
-            const difference = count - originalCount;
+    const handleAddRental = () => {
+        if (!selectedRental) return;
 
-            // Only include items that have changed
-            if (difference !== 0) {
-                inventoryChanges[value] = count;
-                stockUpdates[value] = difference;
-            }
-        });
+        // Add new rental type with initial count of 1
+        setInventory(prev => ({
+            ...prev,
+            [selectedRental]: 1
+        }));
 
-        // Only update options that have changes
-        const updatedOptions = currentOptions.map(option => {
-            if (stockUpdates.hasOwnProperty(option.value)) {
-                return {
-                    ...option,
-                    stock: (option.stock || 0) + stockUpdates[option.value]
-                };
-            }
-            return option; // Return unchanged option if no updates
-        });
+        setSelectedRental('');
+    };
 
-        // Convert only changed inventory numbers back to array items
-        const newAvailable = Object.entries(inventory).flatMap(([value, count]) => {
-            // Only create new items for values that changed
-            if (inventoryChanges.hasOwnProperty(value)) {
-                return Array(parseInt(count)).fill().map(() => ({
-                    value,
-                    label: available.find(item => item.value === value)?.label || value,
-                    id: uuid(),
-                    number: '',
-                    checked: false
-                }));
-            }
-            // Keep existing items for unchanged values
-            return available.filter(item => item.value === value);
-        });
-
-        onSave(newAvailable, updatedOptions, stockUpdates);
+    const handleDeleteRental = (value) => {
+        const { [value]: _, ...rest } = inventory;
+        setInventory(rest);
     };
 
     return (
         <Modal open={open} onClose={onClose}>
-            <Paper className="inventory-edit-modal" sx={{
+            <Paper sx={{
                 position: 'absolute',
                 top: '50%',
                 left: '50%',
                 transform: 'translate(-50%, -50%)',
                 width: '400px',
-                p: 3
+                p: 3,
+                maxHeight: '90vh',
+                overflow: 'auto'
             }}>
                 <Typography variant="h6" mb={2}>Edit Available Inventory</Typography>
+
+                {/* Add New Rental Type */}
+                <Box sx={{ mb: 3, display: 'flex', gap: 1 }}>
+                    <TextField
+                        select
+                        fullWidth
+                        value={selectedRental}
+                        onChange={(e) => setSelectedRental(e.target.value)}
+                        label="Add Rental Type"
+                        size="small"
+                    >
+                        {getAvailableOptions().map((option) => (
+                            <MenuItem key={option.value} value={option.value}>
+                                {option.label}
+                            </MenuItem>
+                        ))}
+                    </TextField>
+                    <IconButton
+                        onClick={handleAddRental}
+                        disabled={!selectedRental}
+                        color="primary"
+                    >
+                        <Add />
+                    </IconButton>
+                </Box>
+
+                {/* Inventory List */}
                 {Object.entries(inventory).map(([value, count]) => {
-                    const originalCount = originalCounts[value] || 0;
-                    const difference = count - originalCount;
+                    const label = currentOptions.find(opt => opt.value === value)?.label || value;
 
                     return (
                         <Box key={value} sx={{ mb: 2 }}>
-                            <Typography variant="subtitle2">
-                                {available.find(item => item.value === value)?.label || value}
-                            </Typography>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <TextField
-                                    fullWidth
-                                    type="number"
-                                    value={count}
-                                    onChange={(e) => setInventory(prev => ({
-                                        ...prev,
-                                        [value]: parseInt(e.target.value) || 0
-                                    }))}
-                                    InputProps={{ inputProps: { min: 0 } }}
-                                />
-                                {difference !== 0 && (
-                                    <Typography variant="caption" color={difference > 0 ? "success" : "error"}>
-                                        {difference > 0 ? `+${difference}` : difference}
-                                    </Typography>
-                                )}
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                                <Typography variant="subtitle2">
+                                    {label}
+                                </Typography>
+                                <IconButton
+                                    size="small"
+                                    onClick={() => handleDeleteRental(value)}
+                                    color="error"
+                                >
+                                    <Delete fontSize="small" />
+                                </IconButton>
                             </Box>
+                            <TextField
+                                fullWidth
+                                type="number"
+                                value={count}
+                                onChange={(e) => setInventory(prev => ({
+                                    ...prev,
+                                    [value]: Math.max(0, parseInt(e.target.value) || 0)
+                                }))}
+                                InputProps={{ inputProps: { min: 0 } }}
+                                size="small"
+                            />
                         </Box>
                     );
                 })}
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                    <MUIButton onClick={onClose}>Cancel</MUIButton>
-                    <MUIButton variant="contained" onClick={handleSave}>
-                        Save Changes
-                    </MUIButton>
+
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 2 }}>
+                    <Button onClick={onClose}>Cancel</Button>
+                    <Button variant="contained" onClick={() => onSave(inventory)}>Save Changes</Button>
                 </Box>
             </Paper>
         </Modal>
@@ -1008,6 +1026,11 @@ class EditSelectedForm extends Component {
     getAvailableItemsSummary = () => {
         const { availableList } = this.state;
 
+        // Return empty array if availableList is null/undefined
+        if (!availableList || !Array.isArray(availableList)) {
+            return [];
+        }
+
         // Create a summary of available items by counting occurrences
         const summary = availableList.reduce((acc, item) => {
             const existingItem = acc.find(i => i.value === item.value);
@@ -1171,18 +1194,54 @@ class EditSelectedForm extends Component {
         }
     };
 
-    handleInventoryUpdate = async (newAvailable, updatedOptions) => {
+    handleInventoryUpdate = async (newInventory) => {
         try {
+            const { availableList, rentalOptions } = this.state;
+            let updatedAvailableList = [];
+            if (availableList?.length >= 0) {
+                updatedAvailableList = [...availableList]
+            }
+
+            // For each rental type in the new inventory
+            Object.entries(newInventory).forEach(([value, count]) => {
+                // Find the rental option for this value
+                const rentalOption = rentalOptions.find(opt => opt.value === value);
+                if (!rentalOption) return;
+
+                // Count current items of this type
+                const currentCount = availableList && Array.isArray(availableList) ? availableList?.filter(item => item.value === value).length : 0;
+
+                if (count > currentCount) {
+                    // Add new items
+                    const itemsToAdd = count - currentCount;
+                    for (let i = 0; i < itemsToAdd; i++) {
+                        updatedAvailableList.push({
+                            value: value,
+                            label: rentalOption.label,
+                            id: uuid(),
+                            number: '',
+                            checked: false
+                        });
+                    }
+                } else if (count < currentCount) {
+                    // Remove items
+                    const itemsToRemove = currentCount - count;
+                    for (let i = 0; i < itemsToRemove; i++) {
+                        const removeIndex = updatedAvailableList.findIndex(item => item.value === value);
+                        if (removeIndex !== -1) {
+                            updatedAvailableList.splice(removeIndex, 1);
+                        }
+                    }
+                }
+            });
+
             // Update both the rental form and the global rental options
-            await Promise.all([
-                update(this.props.firebase.rentalGroup(this.props.index), {
-                    available: newAvailable
-                }),
-                set(this.props.firebase.rentalOptions(), updatedOptions)
-            ]);
+            await update(this.props.firebase.rentalGroup(this.props.index), {
+                available: updatedAvailableList
+            });
 
             this.setState({
-                availableList: newAvailable,
+                availableList: updatedAvailableList,
                 showInventoryEdit: false
             });
         } catch (error) {
