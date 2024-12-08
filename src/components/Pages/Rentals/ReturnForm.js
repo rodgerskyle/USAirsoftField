@@ -184,7 +184,7 @@ const ReturnForm = (props) => {
 
             // Process available rentals
             const availableRentals = form.available;
-            availableRentals.forEach(rental => {
+            availableRentals?.forEach(rental => {
                 const optionIndex = options.findIndex(option => option.value === rental.value);
                 if (optionIndex !== -1) {
                     optionsObject[optionIndex].stock = optionsObject[optionIndex].stock - 1;

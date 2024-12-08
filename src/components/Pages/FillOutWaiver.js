@@ -42,10 +42,10 @@ const WaiverPage = () => (
           <title>US Airsoft Field: Fill Out Waiver</title>
         </Helmet>
         <Container>
-          <Row className="header-rp">
+          {/* <Row className="header-rp">
             <img src={logo} alt="US Airsoft logo" className="small-logo-home" />
             <h2 className="page-header">Waiver Form</h2>
-          </Row>
+          </Row> */}
           {authUser && !!authUser.roles[ROLES.ADMIN] ?
             <Breadcrumb className="admin-breadcrumb">
               <LinkContainer to="/admin">
@@ -85,7 +85,6 @@ const INITIAL_STATE = {
   uid: null,
   saveButton: true,
   saveButton2: true,
-  showLander: false,
   emailAdded: false,
   acceptEmailSubscription: true,
   loading: false,
@@ -271,7 +270,7 @@ class WaiverPageFormBase extends Component {
       age,
       saveButton,
       saveButton2,
-      showLander,
+      showSuccessScreen,
       emailAdded,
       loading,
       acceptEmailSubscription,
@@ -282,7 +281,7 @@ class WaiverPageFormBase extends Component {
 
     return (
       <div>
-        {!showLander ?
+        {!showSuccessScreen ?
           !loading ?
             <div>
               <Row className="justify-content-row">
@@ -584,7 +583,7 @@ class WaiverPageFormBase extends Component {
               {!loading ?
                 <div>
                   <Row className="nav-row-rp">
-                    <Button className="next-button-rp" variant="info" type="button" disabled={submitted}
+                    <Button className="next-button-rp mt-1" variant="info" type="button" disabled={submitted}
                       onClick={() => {
                         if (address === "" || fname === "" || lname === "" || email === "" || address === "" ||
                           city === "" || state === "" || zipcode === "" || phone === "" || dob === "") {
@@ -615,7 +614,7 @@ class WaiverPageFormBase extends Component {
                       Submit
                     </Button>
                   </Row>
-                  {submitted ?
+                  {loading ?
                     <Row className="spinner-standard">
                       <Spinner animation="border" />
                     </Row>
@@ -639,7 +638,7 @@ class WaiverPageFormBase extends Component {
                 <Row className="justify-content-row">
                   <Button className="next-button-rp" variant="info" type="button"
                     disabled={!emailAdded} onClick={() => {
-                      this.setState({ showLander: false })
+                      this.setState({ showSuccessScreen: false })
                       this.setState({ ...INITIAL_STATE, status: "Completed" });
                     }}>Sign Another</Button>
                 </Row>
