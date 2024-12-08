@@ -205,30 +205,33 @@ const ReturnForm = (props) => {
         try {
             const form = rentalForms[index];
             const updatedParticipants = form.participants.map(participant => {
-                const updatedRentals = participant.rentals?.map(rental => {
-                    if (rental.value === rentalValue && rental.number === number) {
-                        return {
-                            ...rental,
-                            checked: isChecked
-                        };
-                    }
-                    return {
-                        ...rental,
-                        checked: rental.checked
-                    };
-                });
+                // Only update rentals if they exist
+                const updatedRentals = participant.rentals?.map(rental => ({
+                    ...rental,
+                    checked: rental.value === rentalValue && rental.number === number
+                        ? isChecked
+                        : rental.checked || false
+                }));
 
+                // Maintain the original participant structure
                 return {
-                    name: participant.name,
-                    rentals: updatedRentals,
-                    ref: participant.ref
+                    ...participant, // Keep all original participant properties
+                    rentals: updatedRentals || [], // Ensure rentals is at least an empty array
                 };
             });
 
-            // Update database
-            await update(firebase.rentalGroup(formKey), {
-                participants: updatedParticipants
-            });
+            // Create a clean update object
+            const updateObject = {
+                participants: updatedParticipants.map(participant => ({
+                    name: participant.name || '',
+                    rentals: participant.rentals || [],
+                    ref: participant.ref || null, // Ensure ref is null if not present
+                    // Add any other required participant fields here
+                }))
+            };
+
+            // Update database with clean object
+            await update(firebase.rentalGroup(formKey), updateObject);
 
             // Update combined list state
             setCombinedList(prev => prev.map(rental => {
