@@ -110,6 +110,7 @@ class EditForm extends Component {
                         </div>
                         <EditSelectedForm
                             index={index}
+                            form={this.state.rentalForm}
                             firebase={this.props.firebase}
                             showAP={this.props.showAP}
                         />

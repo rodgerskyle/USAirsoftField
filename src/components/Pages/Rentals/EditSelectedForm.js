@@ -51,6 +51,15 @@ const AddParticipantModal = ({
     digitalPerPage,
     totalDigital,
     onDigitalPageChange,
+    activeMonth,
+    activeDay,
+    activeYear,
+    months,
+    days,
+    years,
+    onMonthChange,
+    onDayChange,
+    onYearChange,
 }) => (
     <Modal open={open} onClose={onClose}>
         <Paper className="add-participant-modal" sx={{
@@ -119,21 +128,58 @@ const AddParticipantModal = ({
                 </Box>
             ) : (
                 <>
-                    {isLegacyMode && (
-                        <Box sx={{ mb: 2 }}>
-                            <TextField
-                                type="month"
-                                label="Select Month"
-                                value={legacyStartDate.toISOString().slice(0, 7)}
-                                onChange={(e) => {
-                                    const date = new Date(e.target.value);
-                                    onLegacyDateChange(date);
-                                }}
-                                fullWidth
-                            />
-                        </Box>
-                    )}
+                    {/* Add date filters */}
+                    <Box sx={{
+                        display: 'flex',
+                        gap: 2,
+                        justifyContent: 'center',
+                        mb: 2
+                    }}>
+                        <TextField
+                            select
+                            label="Month"
+                            value={activeMonth}
+                            onChange={(e) => onMonthChange(e.target.value)}
+                            sx={{ minWidth: 120 }}
+                        >
+                            <MenuItem value={13}>All Months</MenuItem>
+                            {months.map((month, index) => (
+                                <MenuItem key={month} value={index + 1}>
+                                    {month}
+                                </MenuItem>
+                            ))}
+                        </TextField>
 
+                        <TextField
+                            select
+                            label="Day"
+                            value={activeDay}
+                            onChange={(e) => onDayChange(e.target.value)}
+                            sx={{ minWidth: 100 }}
+                        >
+                            <MenuItem value={32}>All Days</MenuItem>
+                            {days.map((_, index) => (
+                                <MenuItem key={index} value={index + 1}>
+                                    {index + 1}
+                                </MenuItem>
+                            ))}
+                        </TextField>
+
+                        <TextField
+                            select
+                            label="Year"
+                            value={activeYear}
+                            onChange={(e) => onYearChange(e.target.value)}
+                            sx={{ minWidth: 100 }}
+                        >
+                            <MenuItem value={new Date().getFullYear() + 1}>All Years</MenuItem>
+                            {years.map((year) => (
+                                <MenuItem key={year} value={year}>
+                                    {year}
+                                </MenuItem>
+                            ))}
+                        </TextField>
+                    </Box>
                     <List sx={{
                         maxHeight: '50vh',
                         overflow: 'auto',
@@ -530,6 +576,7 @@ const InventoryEditModal = ({ open, onClose, available, onSave, currentOptions }
 class EditSelectedForm extends Component {
     constructor(props) {
         super(props);
+        console.log(props)
         this.state = {
             loading: true,
             participants: [],
@@ -563,43 +610,163 @@ class EditSelectedForm extends Component {
             showSizeEdit: false,
             showInventoryEdit: false,
             rentalOptions: [], // Add this to track rental options
+            form: this.props.form,
+            activeMonth: 13, // 13 represents "All Months"
+            activeDay: 32,  // 32 represents "All Days" 
+            activeYear: new Date().getFullYear(),
+            days: [...Array(31).keys()].map(String),
+            years: [],
+            months: [
+                "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"
+            ],
         };
+    };
+
+
+    // Add this method after constructor
+    initializeDates = () => {
+        let date = new Date();
+        let years = [];
+        for (let i = 2020; i < date.getFullYear() + 1; i++) {
+            years.push(i);
+        }
+        this.setState({ years });
+    }
+
+    // Modify getFilteredWaivers method
+    getFilteredWaivers = () => {
+        const {
+            waivers,
+            legacyWaivers,
+            members,
+            searchQuery,
+            isMemberMode,
+            isLegacyMode,
+            membersPage,
+            membersPerPage,
+            digitalPage,
+            digitalPerPage,
+            activeMonth,
+            activeDay,
+            activeYear
+        } = this.state;
+
+        let filtered;
+
+        if (isMemberMode) {
+            filtered = members.filter(member =>
+                member.name.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+            const startIndex = membersPage * membersPerPage;
+            return filtered.slice(startIndex, startIndex + membersPerPage);
+        } else if (isLegacyMode) {
+            filtered = legacyWaivers.filter(waiver => {
+                const matchesSearch = waiver.name.toLowerCase().includes(searchQuery.toLowerCase());
+                const matchesDate = this.compareDate(activeMonth, activeDay, activeYear, waiver.date);
+                return matchesSearch && (searchQuery || matchesDate);
+            });
+            return filtered;
+        } else {
+            filtered = waivers.filter(waiver => {
+                const matchesSearch = waiver.name.toLowerCase().includes(searchQuery.toLowerCase());
+                const matchesDate = this.compareDate(activeMonth, activeDay, activeYear, waiver.date);
+                return matchesSearch && (searchQuery || matchesDate);
+            });
+            const startIndex = digitalPage * digitalPerPage;
+            return filtered.slice(startIndex, startIndex + digitalPerPage);
+        }
+    };
+
+    // Add this helper method
+    compareDate = (month, day, year, date2) => {
+        let originalYear = new Date().getFullYear() + 1;
+
+        if (year === originalYear)
+            year = date2.getFullYear();
+        if (month === 13)
+            month = date2.getMonth() + 1;
+        if (day === 32)
+            day = date2.getDate();
+
+        return year === date2.getFullYear() &&
+            month === date2.getMonth() + 1 &&
+            day === date2.getDate();
     }
 
     componentDidMount = () => {
         try {
+            this.setState({ loading: true });
+            this.initializeDates();
             // Set up real-time listener for form data
-            this.formListener = onValue(this.props.firebase.rentalGroup(this.props.index),
+            // this.formListener = onValue(this.props.firebase.rentalGroup(this.props.index),
+            //     (snapshot) => {
+            //         const form = snapshot.val();
+            //         console.log(form)
+            //         if (form) {
+            //             console.log(form)
+            //             this.setState({
+            //                 participants: form.participants || [],
+            //                 availableList: form.available || [],
+            //                 isComplete: form.complete || false,
+            //                 transaction: form.transaction || '',
+            //                 size: form.size || 0,
+            //                 name: form.name || '',
+            //                 loading: false
+            //             });
+            //         } else {
+            //             this.setState({
+            //                 loading: false,
+            //                 error: 'Form not found'
+            //             });
+            //         }
+            //     },
+            //     (error) => {
+            //         console.error('Error loading form data:', error);
+            //         this.setState({
+            //             error: 'Failed to load form data',
+            //             loading: false
+            //         });
+            //     }
+            // );
+
+            // Add real-time listener for digital waivers
+            this.waiversListener = onValue(this.props.firebase.digitalWaivers(),
                 (snapshot) => {
-                    const form = snapshot.val();
-                    if (form) {
+                    if (snapshot.exists()) {
+                        const waiversObject = snapshot.val();
+                        const waivers = Object.entries(waiversObject).map(([key, value]) => ({
+                            name: value.name,
+                            date: new Date(value.timestamp),
+                            ref: key,
+                            isDigital: true,
+                            data: value
+                        }));
+
+                        // Sort by date, newest first
+                        waivers.sort((a, b) => b.date - a.date);
+
                         this.setState({
-                            participants: form.participants || [],
-                            availableList: form.available || [],
-                            isComplete: form.complete || false,
-                            transaction: form.transaction || '',
-                            size: form.size || 0,
-                            name: form.name || '',
+                            waivers,
+                            totalDigital: waivers.length,
                             loading: false
                         });
                     } else {
                         this.setState({
-                            loading: false,
-                            error: 'Form not found'
+                            waivers: [],
+                            totalDigital: 0,
+                            loading: false
                         });
                     }
                 },
                 (error) => {
-                    console.error('Error loading form data:', error);
+                    console.error('Error loading digital waivers:', error);
                     this.setState({
-                        error: 'Failed to load form data',
+                        error: 'Failed to load digital waivers',
                         loading: false
                     });
                 }
             );
-
-            // Load digital waivers
-            this.loadDigitalWaivers();
 
             // Add listener for rental options
             this.optionsListener = onValue(this.props.firebase.rentalOptions(),
@@ -609,6 +776,8 @@ class EditSelectedForm extends Component {
                     }
                 }
             );
+
+            this.setState({ loading: false })
         } catch (error) {
             console.error('Error in componentDidMount:', error);
             this.setState({
@@ -623,45 +792,11 @@ class EditSelectedForm extends Component {
         if (this.formListener) {
             this.formListener();
         }
+        if (this.waiversListener) {
+            this.waiversListener();
+        }
         if (this.optionsListener) {
             this.optionsListener();
-        }
-    };
-
-    loadDigitalWaivers = async () => {
-        try {
-            const snapshot = await get(this.props.firebase.digitalWaivers());
-            if (snapshot.exists()) {
-                const waiversObject = snapshot.val();
-                const waivers = Object.entries(waiversObject).map(([key, value]) => ({
-                    name: value.name,
-                    date: new Date(value.timestamp),
-                    ref: key,
-                    isDigital: true,
-                    data: value
-                }));
-
-                // Sort by date, newest first
-                waivers.sort((a, b) => b.date - a.date);
-
-                this.setState({
-                    waivers,
-                    totalDigital: waivers.length,
-                    loading: false
-                });
-            } else {
-                this.setState({
-                    waivers: [],
-                    totalDigital: 0,
-                    loading: false
-                });
-            }
-        } catch (error) {
-            console.error('Error loading digital waivers:', error);
-            this.setState({
-                error: 'Failed to load digital waivers',
-                loading: false
-            });
         }
     };
 
@@ -790,7 +925,7 @@ class EditSelectedForm extends Component {
             return;
         }
 
-        const { participants, availableList } = this.state;
+        const { participants, availableList } = this.props.form;
 
         // Moving from available list to participant
         if (source.droppableId === 'options') {
@@ -848,7 +983,6 @@ class EditSelectedForm extends Component {
         }).then(() => {
             this.setState({
                 showTransactionDialog: false,
-                isComplete: true
             });
         }).catch(() => {
             this.setState({ transactionError: 'Failed to update transaction' });
@@ -1024,7 +1158,7 @@ class EditSelectedForm extends Component {
     };
 
     getAvailableItemsSummary = () => {
-        const { availableList } = this.state;
+        const availableList = this.state.form.available;
 
         // Return empty array if availableList is null/undefined
         if (!availableList || !Array.isArray(availableList)) {
@@ -1255,7 +1389,6 @@ class EditSelectedForm extends Component {
             loading,
             participants,
             availableList,
-            isComplete,
             showAddParticipant,
             searchQuery,
             isLegacyMode,
@@ -1283,7 +1416,7 @@ class EditSelectedForm extends Component {
                                 startIcon={<Edit />}
                                 onClick={() => this.setState({ showSizeEdit: true })}
                             >
-                                Edit Size ({this.state.size})
+                                Edit Size ({this.props.form.size})
                             </MUIButton>
                             <MUIButton
                                 startIcon={<Edit />}
@@ -1312,7 +1445,7 @@ class EditSelectedForm extends Component {
 
                 {/* Action Buttons */}
                 <div className="edit-form-actions">
-                    {!isComplete ? (
+                    {!this.props.form.complete ? (
                         <MUIButton
                             variant="contained"
                             color="success"
@@ -1335,7 +1468,7 @@ class EditSelectedForm extends Component {
                                 color="secondary"
                                 startIcon={<AutoAwesome />}
                                 onClick={this.handleApplyToAll}
-                                disabled={!availableList.length || !participants.length}
+                                disabled={!this.props.form.available.length || !this.props.form.participants.length}
                             >
                                 Apply to All
                             </MUIButton>
@@ -1345,7 +1478,7 @@ class EditSelectedForm extends Component {
 
                 {/* Participants Grid */}
                 <div className="participant-grid">
-                    {participants.map((participant, index) => (
+                    {this.props.form.participants.map((participant, index) => (
                         <ParticipantCard
                             key={index}
                             participant={participant}
@@ -1382,6 +1515,15 @@ class EditSelectedForm extends Component {
                     digitalPerPage={this.state.digitalPerPage}
                     totalDigital={this.state.totalDigital}
                     onDigitalPageChange={this.handleDigitalPageChange}
+                    activeMonth={this.state.activeMonth}
+                    activeDay={this.state.activeDay}
+                    activeYear={this.state.activeYear}
+                    months={this.state.months}
+                    days={this.state.days}
+                    years={this.state.years}
+                    onMonthChange={(value) => this.setState({ activeMonth: value })}
+                    onDayChange={(value) => this.setState({ activeDay: value })}
+                    onYearChange={(value) => this.setState({ activeYear: value })}
                 />
 
                 {/* Transaction Dialog */}
@@ -1397,14 +1539,14 @@ class EditSelectedForm extends Component {
                 <SizeEditModal
                     open={this.state.showSizeEdit}
                     onClose={() => this.setState({ showSizeEdit: false })}
-                    currentSize={this.state.size}
+                    currentSize={this.props.form.size}
                     onSave={this.handleSizeUpdate}
                 />
 
                 <InventoryEditModal
                     open={this.state.showInventoryEdit}
                     onClose={() => this.setState({ showInventoryEdit: false })}
-                    available={this.state.availableList}
+                    available={this.props.form.available}
                     onSave={this.handleInventoryUpdate}
                     currentOptions={this.state.rentalOptions}
                 />
