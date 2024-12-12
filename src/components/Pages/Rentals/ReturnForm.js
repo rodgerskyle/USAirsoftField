@@ -55,6 +55,31 @@ const ReturnForm = (props) => {
     const [checkedRentals, setCheckedRentals] = useState({});
     const [loading, setLoading] = useState(false);
 
+    useEffect(() => {
+        if (index !== -1 && rentalForms[index]?.participants) {
+            const selectedForm = rentalForms[index];
+            const combined = [];
+            selectedForm.participants.forEach(participant => {
+                participant.rentals && participant?.rentals?.forEach(rental => {
+                    const existingRental = combined.find(r => r.value === rental.value);
+                    if (existingRental) {
+                        if (rental.number) {
+                            existingRental.numbers.push(rental.number);
+                            existingRental.checkedStates[rental.number] = rental.checked || false;
+                        }
+                    } else {
+                        combined.push({
+                            ...rental,
+                            numbers: rental.number ? [rental.number] : [],
+                            checkedStates: rental.number ? { [rental.number]: rental.checked || false } : {}
+                        });
+                    }
+                });
+            });
+            setCombinedList(combined);
+        }
+    }, [index, rentalForms]);
+
     const handleFormSelect = (selectedIndex) => {
         setIndex(selectedIndex);
         const selectedForm = rentalForms[selectedIndex];
