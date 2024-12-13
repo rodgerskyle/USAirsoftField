@@ -129,57 +129,58 @@ const AddParticipantModal = ({
             ) : (
                 <>
                     {/* Add date filters */}
-                    <Box sx={{
-                        display: 'flex',
-                        gap: 2,
-                        justifyContent: 'center',
-                        mb: 2
-                    }}>
-                        <TextField
-                            select
-                            label="Month"
-                            value={activeMonth}
-                            onChange={(e) => onMonthChange(e.target.value)}
-                            sx={{ minWidth: 120 }}
-                        >
-                            <MenuItem value={13}>All Months</MenuItem>
-                            {months.map((month, index) => (
-                                <MenuItem key={month} value={index + 1}>
-                                    {month}
-                                </MenuItem>
-                            ))}
-                        </TextField>
+                    {!isMemberMode && (
+                        <Box sx={{
+                            display: 'flex',
+                            gap: 2,
+                            justifyContent: 'center',
+                            mb: 2
+                        }}>
+                            <TextField
+                                select
+                                label="Month"
+                                value={activeMonth}
+                                onChange={(e) => onMonthChange(e.target.value)}
+                                sx={{ minWidth: 120 }}
+                            >
+                                <MenuItem value={13}>All Months</MenuItem>
+                                {months.map((month, index) => (
+                                    <MenuItem key={month} value={index + 1}>
+                                        {month}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
 
-                        <TextField
-                            select
-                            label="Day"
-                            value={activeDay}
-                            onChange={(e) => onDayChange(e.target.value)}
-                            sx={{ minWidth: 100 }}
-                        >
-                            <MenuItem value={32}>All Days</MenuItem>
-                            {days.map((_, index) => (
-                                <MenuItem key={index} value={index + 1}>
-                                    {index + 1}
-                                </MenuItem>
-                            ))}
-                        </TextField>
+                            <TextField
+                                select
+                                label="Day"
+                                value={activeDay}
+                                onChange={(e) => onDayChange(e.target.value)}
+                                sx={{ minWidth: 100 }}
+                            >
+                                <MenuItem value={32}>All Days</MenuItem>
+                                {days.map((_, index) => (
+                                    <MenuItem key={index} value={index + 1}>
+                                        {index + 1}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
 
-                        <TextField
-                            select
-                            label="Year"
-                            value={activeYear}
-                            onChange={(e) => onYearChange(e.target.value)}
-                            sx={{ minWidth: 100 }}
-                        >
-                            <MenuItem value={new Date().getFullYear() + 1}>All Years</MenuItem>
-                            {years.map((year) => (
-                                <MenuItem key={year} value={year}>
-                                    {year}
-                                </MenuItem>
-                            ))}
-                        </TextField>
-                    </Box>
+                            <TextField
+                                select
+                                label="Year"
+                                value={activeYear}
+                                onChange={(e) => onYearChange(e.target.value)}
+                                sx={{ minWidth: 100 }}
+                            >
+                                <MenuItem value={new Date().getFullYear() + 1}>All Years</MenuItem>
+                                {years.map((year) => (
+                                    <MenuItem key={year} value={year}>
+                                        {year}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
+                        </Box>)}
                     <List sx={{
                         maxHeight: '50vh',
                         overflow: 'auto',
@@ -576,7 +577,6 @@ const InventoryEditModal = ({ open, onClose, available, onSave, currentOptions }
 class EditSelectedForm extends Component {
     constructor(props) {
         super(props);
-        console.log(props)
         this.state = {
             loading: true,
             participants: [],
@@ -634,7 +634,6 @@ class EditSelectedForm extends Component {
         this.setState({ years });
     }
 
-    // Modify getFilteredWaivers method
     getFilteredWaivers = () => {
         const {
             waivers,
@@ -652,47 +651,49 @@ class EditSelectedForm extends Component {
             activeYear
         } = this.state;
 
-        let filtered;
-
         if (isMemberMode) {
-            filtered = members.filter(member =>
+            // Members don't need date filtering
+            const filtered = members.filter(member =>
                 member.name.toLowerCase().includes(searchQuery.toLowerCase())
             );
             const startIndex = membersPage * membersPerPage;
             return filtered.slice(startIndex, startIndex + membersPerPage);
         } else if (isLegacyMode) {
-            filtered = legacyWaivers.filter(waiver => {
-                const matchesSearch = waiver.name.toLowerCase().includes(searchQuery.toLowerCase());
+            // Filter legacy waivers by both search and date
+            const filtered = legacyWaivers.filter(waiver => {
+                const matchesSearch = !searchQuery ||
+                    waiver.name.toLowerCase().includes(searchQuery.toLowerCase());
                 const matchesDate = this.compareDate(activeMonth, activeDay, activeYear, waiver.date);
-                return matchesSearch && (searchQuery || matchesDate);
+                return matchesSearch && (searchQuery !== "" || matchesDate);
             });
             return filtered;
         } else {
-            filtered = waivers.filter(waiver => {
-                const matchesSearch = waiver.name.toLowerCase().includes(searchQuery.toLowerCase());
+            // Filter digital waivers by both search and date
+            const filtered = waivers.filter(waiver => {
+                const matchesSearch = !searchQuery ||
+                    waiver.name.toLowerCase().includes(searchQuery.toLowerCase());
                 const matchesDate = this.compareDate(activeMonth, activeDay, activeYear, waiver.date);
-                return matchesSearch && (searchQuery || matchesDate);
+                return matchesSearch && (searchQuery !== "" || matchesDate);
             });
             const startIndex = digitalPage * digitalPerPage;
             return filtered.slice(startIndex, startIndex + digitalPerPage);
         }
     };
 
-    // Add this helper method
+    // Update the compareDate helper method to be more robust
     compareDate = (month, day, year, date2) => {
-        let originalYear = new Date().getFullYear() + 1;
+        if (!date2) return false;
 
-        if (year === originalYear)
-            year = date2.getFullYear();
-        if (month === 13)
-            month = date2.getMonth() + 1;
-        if (day === 32)
-            day = date2.getDate();
+        // Convert date2 to local timezone to ensure consistent comparison
+        const localDate = new Date(date2);
 
-        return year === date2.getFullYear() &&
-            month === date2.getMonth() + 1 &&
-            day === date2.getDate();
-    }
+        // If any filter is set to "All", it matches automatically
+        const matchesYear = year === new Date().getFullYear() + 1 || year === localDate.getFullYear();
+        const matchesMonth = month === 13 || month === localDate.getMonth() + 1;
+        const matchesDay = day === 32 || day === localDate.getDate();
+
+        return matchesYear && matchesMonth && matchesDay;
+    };
 
     componentDidMount = () => {
         try {
@@ -918,58 +919,6 @@ class EditSelectedForm extends Component {
         }
     };
 
-    onDragEnd = result => {
-        const { source, destination } = result;
-
-        if (!destination) {
-            return;
-        }
-
-        const { participants, availableList } = this.props.form;
-
-        // Moving from available list to participant
-        if (source.droppableId === 'options') {
-            const participantIndex = parseInt(destination.droppableId.split('-')[1]);
-            const sourceItem = availableList[source.index];
-
-            // Create a new array with one less item of the same type
-            const updatedAvailableList = [...availableList];
-            const similarItems = updatedAvailableList.filter(item => item.value === sourceItem.value);
-
-            if (similarItems.length > 1) {
-                // Remove just one instance of this rental type
-                const removeIndex = updatedAvailableList.findIndex(item => item.id === sourceItem.id);
-                updatedAvailableList.splice(removeIndex, 1);
-            } else {
-                // Remove the only instance
-                updatedAvailableList.splice(source.index, 1);
-            }
-
-            // Add to participant's rentals
-            const updatedParticipants = [...participants];
-            if (!updatedParticipants[participantIndex].rentals) {
-                updatedParticipants[participantIndex].rentals = [];
-            }
-
-            updatedParticipants[participantIndex].rentals.push({
-                ...sourceItem,
-                id: uuid(),
-                number: '', // Reset rental number if needed
-                checked: false // Reset checked status if needed
-            });
-
-            this.setState({
-                participants: updatedParticipants,
-                availableList: updatedAvailableList
-            });
-
-            update(this.props.firebase.rentalGroup(this.props.index), {
-                participants: updatedParticipants,
-                available: updatedAvailableList
-            });
-        }
-    };
-
     handleTransactionSubmit = () => {
         const { transaction } = this.state;
         if (!transaction.trim()) {
@@ -977,7 +926,7 @@ class EditSelectedForm extends Component {
             return;
         }
 
-        update(this.props.firebase.rentalGroup(this.props.index), {
+        update(this.props.firebase.rentalGroup(this.props.form.key), {
             complete: true,
             transaction: transaction.trim()
         }).then(() => {
@@ -989,43 +938,11 @@ class EditSelectedForm extends Component {
         });
     }
 
-    getFilteredWaivers = () => {
-        const {
-            waivers,
-            legacyWaivers,
-            members,
-            searchQuery,
-            isMemberMode,
-            isLegacyMode,
-            membersPage,
-            membersPerPage,
-            digitalPage,
-            digitalPerPage
-        } = this.state;
-
-        if (isMemberMode) {
-            const filtered = members.filter(member =>
-                member.name.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-            const startIndex = membersPage * membersPerPage;
-            return filtered.slice(startIndex, startIndex + membersPerPage);
-        } else if (isLegacyMode) {
-            return legacyWaivers;
-        } else {
-            // Digital waivers
-            const filtered = waivers.filter(waiver =>
-                waiver.name.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-            const startIndex = digitalPage * digitalPerPage;
-            return filtered.slice(startIndex, startIndex + digitalPerPage);
-        }
-    };
-
     addParticipant = async (person) => {
-        const { participants } = this.state;
+        const { participants } = this.props.form;
 
         // Check if participant already exists
-        const exists = participants.some(p => p.ref === person.ref);
+        const exists = participants?.some(p => p.ref === person.ref);
         if (exists) {
             this.setState({ error: 'Participant already added to this form' });
             return;
@@ -1042,9 +959,9 @@ class EditSelectedForm extends Component {
         };
 
         // Update state and firebase
-        const updatedParticipants = [...participants, newParticipant];
+        const updatedParticipants = [...participants ?? [], newParticipant];
         try {
-            await update(this.props.firebase.rentalGroup(this.props.index), {
+            await update(this.props.firebase.rentalGroup(this.props.form.key), {
                 participants: updatedParticipants
             });
 
@@ -1077,14 +994,14 @@ class EditSelectedForm extends Component {
 
         // Return all rentals back to availableList
         const updatedAvailableList = [...availableList];
-        if (removedParticipant.rentals && removedParticipant.rentals.length > 0) {
+        if (removedParticipant?.rentals && removedParticipant?.rentals?.length > 0) {
             updatedAvailableList.push(...removedParticipant.rentals);
         }
 
         // Remove the participant
         updatedParticipants.splice(index, 1);
 
-        update(this.props.firebase.rentalGroup(this.props.index), {
+        update(this.props.firebase.rentalGroup(this.props.form.key), {
             participants: updatedParticipants,
             available: updatedAvailableList
         }).then(() => {
@@ -1126,7 +1043,7 @@ class EditSelectedForm extends Component {
 
         try {
             await Promise.all([
-                update(this.props.firebase.rentalGroup(this.props.index), {
+                update(this.props.firebase.rentalGroup(this.props.form.key), {
                     participants: updatedParticipants,
                     available: updatedAvailableList
                 }),
@@ -1144,7 +1061,7 @@ class EditSelectedForm extends Component {
     };
 
     handleEditRentalNumber = (participantIndex, rentalIndex, number) => {
-        const { participants } = this.state;
+        const { participants } = this.props.form;
         const updatedParticipants = [...participants];
 
         // Update the rental number
@@ -1152,13 +1069,13 @@ class EditSelectedForm extends Component {
 
         // Update state and firebase
         this.setState({ participants: updatedParticipants });
-        update(this.props.firebase.rentalGroup(this.props.index), {
+        update(this.props.firebase.rentalGroup(this.props.form.key), {
             participants: updatedParticipants
         });
     };
 
     getAvailableItemsSummary = () => {
-        const availableList = this.state.form.available;
+        const availableList = this.props.form.available;
 
         // Return empty array if availableList is null/undefined
         if (!availableList || !Array.isArray(availableList)) {
@@ -1184,7 +1101,8 @@ class EditSelectedForm extends Component {
     };
 
     handleAddRental = async (participantIndex, rental) => {
-        const { participants, availableList, rentalOptions } = this.state;
+        const { rentalOptions } = this.state;
+        const { participants, available } = this.props.form;
 
         // Create updated participants array
         const updatedParticipants = [...participants];
@@ -1194,7 +1112,7 @@ class EditSelectedForm extends Component {
             participant.rentals = [];
         }
 
-        const updatedAvailableList = [...availableList];
+        const updatedAvailableList = [...available];
         const similarItems = updatedAvailableList.filter(item => item.value === rental.value);
 
         if (similarItems.length > 0) {
@@ -1224,7 +1142,7 @@ class EditSelectedForm extends Component {
             try {
                 // Update both rental form and options
                 await Promise.all([
-                    update(this.props.firebase.rentalGroup(this.props.index), {
+                    update(this.props.firebase.rentalGroup(this.props.form.key), {
                         participants: updatedParticipants,
                         available: updatedAvailableList
                     }),
@@ -1243,7 +1161,7 @@ class EditSelectedForm extends Component {
     };
 
     handleApplyToAll = () => {
-        const { participants, availableList } = this.state;
+        const { participants, availableList } = this.props.form;
         if (!participants.length || !availableList.length) return;
 
         const updatedParticipants = [...participants];
@@ -1284,17 +1202,10 @@ class EditSelectedForm extends Component {
             availableList: updatedAvailableList
         });
 
-        update(this.props.firebase.rentalGroup(this.props.index), {
+        update(this.props.firebase.rentalGroup(this.props.form.key), {
             participants: updatedParticipants,
             available: updatedAvailableList
         });
-    };
-
-    // Get current page of members
-    getCurrentMembers = () => {
-        const { members, membersPage, membersPerPage } = this.state;
-        const start = membersPage * membersPerPage;
-        return members.slice(start, start + membersPerPage);
     };
 
     // Handle member page change
@@ -1315,7 +1226,7 @@ class EditSelectedForm extends Component {
 
     handleSizeUpdate = async (newSize) => {
         try {
-            await update(this.props.firebase.rentalGroup(this.props.index), {
+            await update(this.props.firebase.rentalGroup(this.props.form.key), {
                 size: newSize
             });
             this.setState({
@@ -1370,7 +1281,7 @@ class EditSelectedForm extends Component {
             });
 
             // Update both the rental form and the global rental options
-            await update(this.props.firebase.rentalGroup(this.props.index), {
+            await update(this.props.firebase.rentalGroup(this.props.form.key), {
                 available: updatedAvailableList
             });
 
@@ -1468,7 +1379,7 @@ class EditSelectedForm extends Component {
                                 color="secondary"
                                 startIcon={<AutoAwesome />}
                                 onClick={this.handleApplyToAll}
-                                disabled={!this.props.form.available.length || !this.props.form.participants.length}
+                                disabled={!this.props.form?.available?.length || !this.props.form?.participants?.length}
                             >
                                 Apply to All
                             </MUIButton>
@@ -1478,7 +1389,7 @@ class EditSelectedForm extends Component {
 
                 {/* Participants Grid */}
                 <div className="participant-grid">
-                    {this.props.form.participants.map((participant, index) => (
+                    {this.props.form?.participants?.map((participant, index) => (
                         <ParticipantCard
                             key={index}
                             participant={participant}
@@ -1487,7 +1398,7 @@ class EditSelectedForm extends Component {
                             onRemoveRental={this.handleRemoveRental}
                             onAddRental={this.handleAddRental}
                             onEditRentalNumber={this.handleEditRentalNumber}
-                            availableRentals={availableList}
+                            availableRentals={this.props.form?.available}
                         />
                     ))}
                 </div>
@@ -1560,18 +1471,3 @@ const condition = authUser =>
     authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]);
 
 export default withAuthorization(condition)(withFirebase(EditSelectedForm));
-
-// export default composeHooks(
-//     withAuthorization(condition),
-//     withFirebase,
-// )(EditSelectedForm);
-
-
-// export default 
-//     <withFirebase>
-//         <withAuthorization condition={condition}>
-//             <EditSelectedForm/>
-//         </withAuthorization>
-//     </withFirebase>
-//         </withAuthorization>
-//     </withFirebase>
