@@ -36,6 +36,15 @@ class EditForm extends Component {
         };
     }
 
+    componentDidUpdate = (prevProps) => {
+        if (prevProps.rentalForms !== this.props.rentalForms) {
+            this.setState({
+                rentalForms: this.props.rentalForms,
+                rentalForm: this.props.rentalForms.find(form => form.key === this.state.index)
+            })
+        }
+    }
+
     handleEditForm = (index, form) => {
         this.setState({
             editting: true,
@@ -83,7 +92,7 @@ class EditForm extends Component {
                                             <MUIButton
                                                 size="small"
                                                 color="primary"
-                                                onClick={() => this.handleEditForm(i, form)}
+                                                onClick={() => this.handleEditForm(form.key, form)}
                                                 startIcon={<Edit />}
                                             >
                                                 Edit Form
@@ -93,7 +102,7 @@ class EditForm extends Component {
                                 ))}
                             </Paper>
                         )}
-                        {!rentalForms || rentalForms.length === 0 && <EmptyState />}
+                        {(!rentalForms || rentalForms.length === 0) && <EmptyState />}
                     </div>
                 ) : (
                     <div>
@@ -106,7 +115,7 @@ class EditForm extends Component {
                             >
                                 Back to Forms
                             </MUIButton>
-                            <h3 style={{ color: '#fff' }}>Editing: {this.state.rentalForm.name}</h3>
+                            <h3 style={{ color: '#fff' }}>Editing: {this.state.rentalForm?.name}</h3>
                         </div>
                         <EditSelectedForm
                             index={index}
