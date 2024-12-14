@@ -90,7 +90,7 @@ class WaiverDashboard extends Component {
                       </Link>
                     </Col>
                     <Col lg={3} md={6} sm={12} className="admin-col">
-                      <Link to={"/dashboard/renew"} className="admin-link">
+                      <Link to={"/dashboard/renewal"} className="admin-link">
                         <Card className="admin-card">
                           <Card.Body>
                             <div className="admin-card-content">
