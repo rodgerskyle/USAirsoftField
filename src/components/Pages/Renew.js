@@ -640,7 +640,7 @@ function UserBox({ users, index, search, update, loading, convert, pad }) {
                                             {"(" + index + ") " + user.name}
                                         </Card.Text>
                                     </Col>
-                                    <Col className="col-name-fg" md={5}>
+                                    <Col className="col-name-fg" md={5} style={{ color: 'white' }}>
                                         {"Renewal Date: " + pad(user.renewal)}
                                     </Col>
                                     <Col md={2}>
