@@ -110,7 +110,6 @@ class SignUpFormBase extends Component {
     super(props);
 
     //this.completeWaiver = this.completeWaiver.bind(this);
-    console.log(this.props)
     this.state = {
       ...INITIAL_STATE, users: [], authorized: true,
     };
