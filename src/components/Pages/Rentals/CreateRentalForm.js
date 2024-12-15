@@ -108,8 +108,16 @@ class CreateRentalForm extends Component {
             const { cvc, number, expiry, name, zipcode, rentalName, numParticipants, rentalQuantities } = this.state;
             get(this.props.firebase.rentalGroups()).then(async (obj) => {
                 try {
-                    let group = obj.val() ? obj.val() : [];
-                    let i = group.length;
+                    let group = obj.val() || {};
+
+                    // Convert group to array if it's an object
+                    let groupArray = Object.values(group);
+
+                    // Get next index (either array length or max key + 1)
+                    let nextIndex = Object.keys(group).length > 0
+                        ? Math.max(...Object.keys(group).map(Number)) + 1
+                        : 0;
+
                     let cc = { cvc, number, expiry, name, zipcode };
 
                     // Create available array with proper quantities
@@ -117,7 +125,7 @@ class CreateRentalForm extends Component {
                         const quantity = rentalQuantities[opt.id] || 0;
                         const items = Array(quantity).fill({
                             ...opt,
-                            id: uuid() // Give each item a unique ID
+                            id: uuid()
                         });
                         return [...acc, ...items];
                     }, []);
@@ -126,7 +134,7 @@ class CreateRentalForm extends Component {
                     const optionsSnapshot = await get(this.props.firebase.rentalOptions());
                     const currentOptions = optionsSnapshot.val();
 
-                    // Update stock numbers for each rental option and convert to object
+                    // Update stock numbers
                     const updatedOptions = currentOptions.reduce((acc, option, index) => {
                         const rentedQuantity = rentalQuantities[option.id] || 0;
                         acc[index] = {
@@ -136,14 +144,17 @@ class CreateRentalForm extends Component {
                         return acc;
                     }, {});
 
-                    // Create new form
-                    group.push({
+                    // Create new form entry
+                    const newForm = {
                         name: rentalName,
                         size: numParticipants,
                         cc,
                         available,
                         complete: false
-                    });
+                    };
+
+                    // Add new form to group object with numeric index
+                    group[nextIndex] = newForm;
 
                     // Update both rental groups and rental options
                     await Promise.all([
@@ -155,7 +166,7 @@ class CreateRentalForm extends Component {
                         ...INITIAL_STATE,
                         success: true,
                         successMessage: 'Rental form created successfully! Please let a US Airsoft staff member know that you are done.',
-                        createdIndex: i
+                        createdIndex: nextIndex
                     });
                 } catch (error) {
                     console.error('Error creating rental form:', error);
