@@ -1013,47 +1013,40 @@ class EditSelectedForm extends Component {
     }
 
     handleRemoveRental = async (participantIndex, rentalIndex) => {
-        const { participants, availableList, rentalOptions } = this.state;
-        const updatedParticipants = [...participants];
-        const removedRental = updatedParticipants[participantIndex].rentals[rentalIndex];
+        const { participants, available } = this.props.form;
+        const { rentalOptions } = this.state;
 
-        // Update rental options stock
-        const updatedOptions = rentalOptions.map(option => {
-            if (option.value === removedRental.value) {
-                return {
-                    ...option,
-                    stock: Math.max(0, (option.stock || 0) - 1)
-                };
-            }
-            return option;
-        });
-
-        // Remove rental from participant
-        updatedParticipants[participantIndex].rentals.splice(rentalIndex, 1);
-
-        // Reset rental properties and add back to available list
-        const returnedRental = {
-            ...removedRental,
-            id: uuid(), // Generate new ID
-            number: '', // Reset number
-            checked: false // Reset checked status
-        };
-
-        const updatedAvailableList = [...availableList, returnedRental];
+        if (!participants?.[participantIndex]?.rentals?.[rentalIndex]) {
+            console.error('Invalid rental removal attempt');
+            return;
+        }
 
         try {
-            await Promise.all([
-                update(this.props.firebase.rentalGroup(this.props.form.key), {
-                    participants: updatedParticipants,
-                    available: updatedAvailableList
-                }),
-                set(this.props.firebase.rentalOptions(), updatedOptions)
-            ]);
+            const updatedParticipants = [...participants];
+            let updatedAvailableList = available ? [...available] : [];
 
-            this.setState({
+            // Get the rental to be removed
+            const removedRental = updatedParticipants[participantIndex].rentals[rentalIndex];
+
+            // Remove rental from participant
+            updatedParticipants[participantIndex].rentals.splice(rentalIndex, 1);
+
+            // Reset rental properties and add back to available list
+            const returnedRental = {
+                ...removedRental,
+                id: uuid(), // Generate new ID
+                number: '', // Reset number
+                checked: false // Reset checked status
+            };
+
+            updatedAvailableList.push(returnedRental);
+
+            // Update firebase
+            await update(this.props.firebase.rentalGroup(this.props.form.key), {
                 participants: updatedParticipants,
-                availableList: updatedAvailableList
+                available: updatedAvailableList
             });
+
         } catch (error) {
             console.error('Error removing rental:', error);
             this.setState({ error: 'Failed to remove rental' });
