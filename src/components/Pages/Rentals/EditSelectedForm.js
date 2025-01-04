@@ -1160,52 +1160,78 @@ class EditSelectedForm extends Component {
         }
     };
 
-    handleApplyToAll = () => {
-        const { participants, availableList } = this.props.form;
-        if (!participants.length || !availableList.length) return;
+    handleApplyToAll = async () => {
+        const { participants, available } = this.props.form;
+        const { rentalOptions } = this.state;
 
-        const updatedParticipants = [...participants];
-        const updatedAvailableList = [...availableList];
+        if (!participants || !available || participants.length === 0 || available.length === 0) {
+            console.log('No participants or available rentals to distribute');
+            return;
+        }
 
-        // Get unique rental types
-        const uniqueRentals = Array.from(new Set(availableList.map(item => item.value)))
-            .map(value => availableList.find(item => item.value === value));
+        try {
+            const updatedParticipants = [...participants];
+            let updatedAvailableList = [...available];
 
-        // Try to assign one of each type to each participant
-        updatedParticipants.forEach(participant => {
-            if (!participant.rentals) {
-                participant.rentals = [];
+            // Group available items by type
+            const availableByType = updatedAvailableList.reduce((acc, item) => {
+                if (!acc[item.value]) {
+                    acc[item.value] = [];
+                }
+                acc[item.value].push(item);
+                return acc;
+            }, {});
+
+            // For each type of rental
+            for (const [rentalType, items] of Object.entries(availableByType)) {
+                // For each available item of this type
+                for (const item of items) {
+                    // Find first participant without this type of rental
+                    const participantIndex = updatedParticipants.findIndex(participant => {
+                        const hasThisRentalType = participant.rentals?.some(rental =>
+                            rental.value === rentalType
+                        );
+                        return !hasThisRentalType;
+                    });
+
+                    // If we found a participant who needs this rental
+                    if (participantIndex !== -1) {
+                        // Remove item from available list
+                        const removeIndex = updatedAvailableList.findIndex(available =>
+                            available.id === item.id
+                        );
+                        const [removedRental] = updatedAvailableList.splice(removeIndex, 1);
+
+                        // Initialize rentals array if needed
+                        if (!updatedParticipants[participantIndex].rentals) {
+                            updatedParticipants[participantIndex].rentals = [];
+                        }
+
+                        // Add to participant's rentals
+                        updatedParticipants[participantIndex].rentals.push({
+                            ...removedRental,
+                            id: uuid(),
+                            number: '',
+                            checked: false
+                        });
+
+                        console.log(`Added ${rentalType} to participant ${participantIndex + 1}`);
+                    }
+                }
             }
 
-            uniqueRentals.forEach(rentalType => {
-                // Find first available item of this type
-                const availableIndex = updatedAvailableList.findIndex(item =>
-                    item.value === rentalType.value
-                );
-
-                if (availableIndex !== -1) {
-                    // Remove from available list and add to participant
-                    const [removedRental] = updatedAvailableList.splice(availableIndex, 1);
-                    participant.rentals.push({
-                        ...removedRental,
-                        id: uuid(),
-                        number: '',
-                        checked: false
-                    });
-                }
+            // Update firebase
+            await update(this.props.firebase.rentalGroup(this.props.form.key), {
+                participants: updatedParticipants,
+                available: updatedAvailableList
             });
-        });
 
-        // Update state and firebase
-        this.setState({
-            participants: updatedParticipants,
-            availableList: updatedAvailableList
-        });
+            console.log('Successfully distributed rentals to participants');
 
-        update(this.props.firebase.rentalGroup(this.props.form.key), {
-            participants: updatedParticipants,
-            available: updatedAvailableList
-        });
+        } catch (error) {
+            console.error('Error applying rentals to all:', error);
+            this.setState({ error: 'Failed to apply rentals to all participants' });
+        }
     };
 
     // Handle member page change
