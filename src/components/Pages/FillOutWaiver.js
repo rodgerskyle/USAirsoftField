@@ -138,17 +138,23 @@ class WaiverPageFormBase extends Component {
         await set(emailRef, { secret });
       }
 
-      // If this is part of a rental group, update the group
-      if (this.props.groupId) {
-        const groupRef = ref(this.props.firebase.db, `rental_groups/${this.props.groupId}/participants`);
-        const groupSnapshot = await get(groupRef);
-        const currentParticipants = groupSnapshot.val() || [];
+      // If there's a selected group, update the group with the participant
+      if (this.state.selectedGroup && this.state.selectedGroup.length > 0) {
+        const groupName = this.state.selectedGroup[0];
+        const groupIndex = this.state.groupIndex?.[groupName];
 
-        await set(groupRef, [...currentParticipants, {
-          name: `${this.state.fname} ${this.state.lname}`,
-          waiverId: newWaiverRef.key,
-          timestamp: Date.now()
-        }]);
+        if (groupIndex !== undefined) {
+          const groupRef = ref(this.props.firebase.db, `rental_groups/${groupIndex}/participants`);
+          const groupSnapshot = await get(groupRef);
+          const currentParticipants = groupSnapshot.val() || [];
+
+          await set(groupRef, [...currentParticipants, {
+            name: `${this.state.fname} ${this.state.lname}`,
+            waiverId: newWaiverRef.key,
+            timestamp: Date.now(),
+            rentals: []
+          }]);
+        }
       }
 
       this.setState({ showSuccessScreen: true });
@@ -170,32 +176,43 @@ class WaiverPageFormBase extends Component {
   }
 
   componentDidMount() {
+    // Listen for waiver numbers
     onValue(this.props.firebase.numWaivers(), snapshot => {
-      let num_waivers = snapshot.val().total_num;
+      let num_waivers = snapshot.val()?.total_num || 0;
       this.setState({ num_waivers })
     })
+
+    // Listen for rental groups
     onValue(this.props.firebase.rentalGroups(), obj => {
-      const groupsObj = obj.val()
+      const groupsObj = obj.val() || {};
 
-      let groups = []
-      let groupsObject;
-      let groupIndex = {}
+      let groups = [];
+      let groupsObject = [];
+      let groupIndex = {};
 
-      if (groupsObj) {
+      // Only process if we have groups
+      if (Object.keys(groupsObj).length > 0) {
         groupsObject = Object.keys(groupsObj).map(key => ({
           ...groupsObj[key],
           index: key,
-        }))
-        for (let i = 0; i < groupsObj.length; i++) {
-          if (groupsObj[i].name != null) {
-            groups[i] = groupsObj[i].name
-            groupIndex[groupsObj[i].name] = i
+        }));
+
+        // Build groups array and index
+        Object.entries(groupsObj).forEach(([index, group]) => {
+          if (group?.name) {  // Only add if group has a name
+            groups.push(group.name);
+            groupIndex[group.name] = index;
           }
-        }
+        });
       }
 
-      this.setState({ groups, loading: false, groupsObject, groupIndex })
-    })
+      this.setState({
+        groups,
+        loading: false,
+        groupsObject,
+        groupIndex
+      });
+    });
   }
 
   componentWillUnmount() {
