@@ -679,7 +679,8 @@ class WaiverPageFormBase extends Component {
               {!loading ?
                 <div>
                   <Row className="nav-row-rp">
-                    <Button className="next-button-rp mt-1" variant="info" type="button" disabled={submitted}
+                    <Button className="next-button-rp mt-1" variant="info" type="button"
+                      disabled={loading}
                       onClick={() => {
                         if (address === "" || fname === "" || lname === "" || email === "" || address === "" ||
                           city === "" || state === "" || zipcode === "" || phone === "" || dob === "") {
@@ -701,7 +702,6 @@ class WaiverPageFormBase extends Component {
                           this.setState({ errorWaiver: "Email must be a valid email." })
                         }
                         else {
-                          this.setState({ submitted: true })
                           if (acceptEmailSubscription)
                             this.emailSignUp();
                           this.completeWaiver(myProps)
