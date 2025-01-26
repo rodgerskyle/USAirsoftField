@@ -102,10 +102,44 @@ class WaiverPageFormBase extends Component {
 
   async completeWaiver() {
     try {
+      this.setState({ loading: true }); // Only set loading initially
+
+      // More flexible phone validation - strip non-digits and check length
+      const cleanPhone = this.state.phone.replace(/\D/g, '');
+      if (cleanPhone.length !== 10) {
+        this.setState({
+          errorWaiver: "Please enter a valid 10-digit phone number",
+          loading: false
+        });
+        return;
+      }
+
+      // Format phone number consistently for storage (optional)
+      const formattedPhone = cleanPhone.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+
+      // Validate zipcode
+      const zipcodeRegex = /(^\d{5}$)|(^\d{5}-\d{4}$)/;
+      if (!zipcodeRegex.test(this.state.zipcode)) {
+        this.setState({
+          errorWaiver: "Please enter a valid 5-digit zipcode",
+          loading: false
+        });
+        return;
+      }
+
+      // Validate state
+      if (this.state.state.length !== 2) {
+        this.setState({
+          errorWaiver: "Please enter a valid 2-letter state code (e.g. CO)",
+          loading: false
+        });
+        return;
+      }
+
       const waiverData = {
         name: `${this.state.fname} ${this.state.lname}`,
         email: this.state.email,
-        phone: this.state.phone,
+        phone: formattedPhone,
         address: this.state.address,
         city: this.state.city,
         state: this.state.state,
@@ -119,9 +153,20 @@ class WaiverPageFormBase extends Component {
 
       // Add guardian info if exists
       if (this.state.age < 18 && this.state.pgImg) {
+        const cleanGuardianPhone = this.state.pgphone.replace(/\D/g, '');
+        if (cleanGuardianPhone.length !== 10) {
+          this.setState({
+            errorWaiver: "Please enter a valid 10-digit guardian phone number",
+            loading: false
+          });
+          return;
+        }
+
+        const formattedGuardianPhone = cleanGuardianPhone.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+
         waiverData.guardian = {
           name: this.state.pgname,
-          phone: this.state.pgphone,
+          phone: formattedGuardianPhone,
           signature: this.state.pgImg
         };
       }
@@ -144,20 +189,54 @@ class WaiverPageFormBase extends Component {
         const groupIndex = this.state.groupIndex?.[groupName];
 
         if (groupIndex !== undefined) {
-          const groupRef = ref(this.props.firebase.db, `rental_groups/${groupIndex}/participants`);
+          const groupRef = ref(this.props.firebase.db, `rentals/group/${groupIndex}`);
           const groupSnapshot = await get(groupRef);
-          const currentParticipants = groupSnapshot.val() || [];
+          const groupData = groupSnapshot.val();
 
-          await set(groupRef, [...currentParticipants, {
+          if (!groupData) {
+            this.setState({
+              errorWaiver: "Selected group not found",
+              loading: false
+            });
+            return;
+          }
+
+          // Check if group is at capacity
+          const currentParticipants = groupData.participants || [];
+          if (groupData.size && currentParticipants.length >= groupData.size) {
+            this.setState({
+              errorWaiver: "Selected group is at maximum capacity",
+              loading: false
+            });
+            return;
+          }
+
+          // Add participant to group
+          const newParticipant = {
             name: `${this.state.fname} ${this.state.lname}`,
-            waiverId: newWaiverRef.key,
-            timestamp: Date.now(),
+            ref: newWaiverRef.key,
+            date: Date.now(),
             rentals: []
-          }]);
+          };
+
+          await update(groupRef, {
+            participants: [...currentParticipants, newParticipant]
+          });
+        } else {
+          this.setState({
+            errorWaiver: "Selected group not found",
+            loading: false
+          });
+          return;
         }
       }
 
-      this.setState({ showSuccessScreen: true });
+      // Only set submitted and show success screen after everything is complete
+      this.setState({
+        showSuccessScreen: true,
+        submitted: true,
+        loading: false
+      });
     } catch (error) {
       console.error('Error submitting waiver:', error);
       this.setState({

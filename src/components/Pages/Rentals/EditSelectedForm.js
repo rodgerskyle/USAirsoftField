@@ -264,7 +264,7 @@ const TransactionDialog = ({ open, onClose, onSubmit, error, value, onChange }) 
                             variant="contained"
                             color="primary"
                         >
-                            Complete Form
+                            Activate Form
                         </MUIButton>
                     </div>
                 </form>
