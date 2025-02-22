@@ -49,11 +49,24 @@ class FreeGames extends Component {
 
     // Updates User's free game
     updateUser = (user) => {
-        get(this.props.firebase.user(user), object => {
-            var freegames = object.val().freegames;
-            freegames--;
-            update(this.props.firebase.user(user), ({ freegames }));
-        })
+        get(this.props.firebase.user(user)).then(snapshot => {
+            if (snapshot.exists()) {
+                const userData = snapshot.val();
+                const freegames = Math.max(0, userData.freegames - 1);
+                update(this.props.firebase.user(user), { freegames })
+                    .then(() => {
+                        // Update local state to reflect the change
+                        this.setState(prevState => ({
+                            users: prevState.users.map(u =>
+                                u.uid === user ? { ...u, freegames } : u
+                            )
+                        }));
+                    })
+                    .catch(error => {
+                        console.error("Error updating free games:", error);
+                    });
+            }
+        });
     }
 
     onChange = event => {
@@ -115,225 +128,97 @@ class FreeGames extends Component {
 function UserBox({ users, index, search, update, length }) {
     const [ButtonArray, setButtonArray] = useState(new Array(length).fill(false));
 
+    const handleConfirm = (user, i) => {
+        if (user.freegames > 0) {
+            update(user.uid);
+            let tempArray = [...ButtonArray];
+            tempArray[i] = false;
+            setButtonArray(tempArray);
+        }
+    };
+
+    const renderUserRow = (user, i, rowIndex, isEven) => {
+        const rowClass = isEven ? "row-fg" : "status-card-offrow-admin-fg";
+
+        return (
+            <Row className={rowClass} key={rowIndex}>
+                <Col className="col-name-fg">
+                    <Card.Text>
+                        {"(" + rowIndex + ") " + user.name}
+                    </Card.Text>
+                </Col>
+                <Col>
+                    <Row>
+                        <Col className="col-name-fg" style={{ color: "white" }}>
+                            {user.freegames + " Free Game(s)"}
+                        </Col>
+                        {ButtonArray[i] === false ? (
+                            <Col xs={4}>
+                                <Button
+                                    className="button-submit-admin2"
+                                    onClick={() => {
+                                        let tempArray = [...ButtonArray];
+                                        tempArray.fill(false);
+                                        tempArray[i] = true;
+                                        setButtonArray(tempArray);
+                                    }}
+                                    disabled={user.freegames <= 0}
+                                    type="submit"
+                                    variant={user.freegames > 0 ? "success" : "secondary"}
+                                >
+                                    Use 1
+                                </Button>
+                            </Col>
+                        ) : (
+                            <Col xs={4}>
+                                <Row>
+                                    <Col>
+                                        <Button
+                                            className="button-submit-admin2"
+                                            onClick={() => handleConfirm(user, i)}
+                                            type="submit"
+                                            variant="success"
+                                            size="sm"
+                                        >
+                                            Confirm
+                                        </Button>
+                                    </Col>
+                                    <Col>
+                                        <Button
+                                            className="button-submit-admin2"
+                                            onClick={() => {
+                                                let tempArray = [...ButtonArray];
+                                                tempArray[i] = false;
+                                                setButtonArray(tempArray);
+                                            }}
+                                            type="submit"
+                                            variant="danger"
+                                            size="sm"
+                                        >
+                                            Cancel
+                                        </Button>
+                                    </Col>
+                                </Row>
+                            </Col>
+                        )}
+                    </Row>
+                </Col>
+            </Row>
+        );
+    };
+
     return (
         <Card.Body className="status-card-body-fg-admin">
-            {users.map((user, i) => (
-                search !== "" ? // Search query case
-                    user.username.toLowerCase().includes(search.toLowerCase()) ?
-                        index++ % 2 === 0 ?
-                            <Row className="row-fg" key={index}>
-                                <Col className="col-name-fg">
-                                    <Card.Text>
-                                        {"(" + index + ") " + user.name}
-                                    </Card.Text>
-                                </Col>
-                                <Col>
-                                    <Row>
-                                        <Col className="col-name-fg">
-                                            {user.freegames + " Free Game(s)"}
-                                        </Col>
-                                        {ButtonArray[i] === false ?
-                                            <Col>
-                                                <Button className="button-submit-admin2" onClick={() => {
-                                                    let tempArray = [...ButtonArray];
-                                                    tempArray.fill(false)
-                                                    tempArray[i] = true
-                                                    setButtonArray(tempArray)
-                                                }}
-                                                    type="submit" id="update" variant="success">
-                                                    Use 1
-                                                </Button>
-                                            </Col>
-                                            :
-                                            <Row className="confirm-buttons-admin">
-                                                <Col>
-                                                    <Button className="button-submit-admin2" onClick={function () {
-                                                        update(user.uid)
-                                                        let tempArray = [...ButtonArray];
-                                                        tempArray[i] = false
-                                                        setButtonArray(tempArray)
-                                                    }}
-                                                        type="submit" id="update" variant="success">
-                                                        Confirm
-                                                    </Button>
-                                                </Col>
-                                                <Col>
-                                                    <Button className="button-submit-admin2" onClick={() => {
-                                                        let tempArray = [...ButtonArray];
-                                                        tempArray[i] = false
-                                                        setButtonArray(tempArray)
-                                                    }}
-                                                        type="submit" id="update" variant="danger">
-                                                        Cancel
-                                                    </Button>
-                                                </Col>
-                                            </Row>
-                                        }
-                                    </Row>
-                                </Col>
-                            </Row>
-                            :
-                            <Row className="status-card-offrow-admin-fg" key={index}>
-                                <Col className="col-name-fg">
-                                    <Card.Text>
-                                        {"(" + index + ") " + user.name}
-                                    </Card.Text>
-                                </Col>
-                                <Col>
-                                    <Row>
-                                        <Col className="col-name-fg">
-                                            {user.freegames + " Free Game(s)"}
-                                        </Col>
-                                        {ButtonArray[i] === false ?
-                                            <Col>
-                                                <Button className="button-submit-admin2" onClick={() => {
-                                                    let tempArray = [...ButtonArray];
-                                                    tempArray.fill(false)
-                                                    tempArray[i] = true
-                                                    setButtonArray(tempArray)
-                                                }}
-                                                    type="submit" id="update" variant="success">
-                                                    Use 1
-                                                </Button>
-                                            </Col>
-                                            :
-                                            <Row className="confirm-buttons-admin">
-                                                <Col>
-                                                    <Button className="button-submit-admin2" onClick={function () {
-                                                        update(user.uid)
-                                                        let tempArray = [...ButtonArray];
-                                                        tempArray[i] = false
-                                                        setButtonArray(tempArray)
-                                                    }}
-                                                        type="submit" id="update" variant="success">
-                                                        Confirm
-                                                    </Button>
-                                                </Col>
-                                                <Col>
-                                                    <Button className="button-submit-admin2" onClick={() => {
-                                                        let tempArray = [...ButtonArray];
-                                                        tempArray[i] = false
-                                                        setButtonArray(tempArray)
-                                                    }}
-                                                        type="submit" id="update" variant="danger">
-                                                        Cancel
-                                                    </Button>
-                                                </Col>
-                                            </Row>
-                                        }
-                                    </Row>
-                                </Col>
-                            </Row>
-                        : ""
-                    :
-                    index++ % 2 === 0 ?
-                        <Row className="row-fg" key={index}>
-                            <Col className="col-name-fg">
-                                <Card.Text>
-                                    {"(" + index + ") " + user.name}
-                                </Card.Text>
-                            </Col>
-                            <Col>
-                                <Row>
-                                    <Col className="col-name-fg">
-                                        {user.freegames + " Free Game(s)"}
-                                    </Col>
-                                    {ButtonArray[i] === false ?
-                                        <Col>
-                                            <Button className="button-submit-admin2" onClick={() => {
-                                                let tempArray = [...ButtonArray];
-                                                tempArray.fill(false)
-                                                tempArray[i] = true
-                                                setButtonArray(tempArray)
-                                            }}
-                                                type="submit" id="update" variant="success">
-                                                Use 1
-                                            </Button>
-                                        </Col>
-                                        :
-                                        <Row className="confirm-buttons-admin">
-                                            <Col>
-                                                <Button className="button-submit-admin2" onClick={function () {
-                                                    update(user.uid)
-                                                    let tempArray = [...ButtonArray];
-                                                    tempArray[i] = false
-                                                    setButtonArray(tempArray)
-                                                }}
-                                                    type="submit" id="update" variant="success">
-                                                    Confirm
-                                                </Button>
-                                            </Col>
-                                            <Col>
-                                                <Button className="button-submit-admin2" onClick={() => {
-                                                    let tempArray = [...ButtonArray];
-                                                    tempArray[i] = false
-                                                    setButtonArray(tempArray)
-                                                }}
-                                                    type="submit" id="update" variant="danger">
-                                                    Cancel
-                                                </Button>
-                                            </Col>
-                                        </Row>
-                                    }
-                                </Row>
-                            </Col>
-                        </Row>
-                        :
-                        <Row className="status-card-offrow-admin-fg" key={index}>
-                            <Col className="col-name-fg">
-                                <Card.Text>
-                                    {"(" + index + ") " + user.name}
-                                </Card.Text>
-                            </Col>
-                            <Col>
-                                <Row>
-                                    <Col className="col-name-fg">
-                                        {user.freegames + " Free Game(s)"}
-                                    </Col>
-                                    {ButtonArray[i] === false ?
-                                        <Col>
-                                            <Button className="button-submit-admin2" onClick={() => {
-                                                let tempArray = [...ButtonArray];
-                                                tempArray.fill(false)
-                                                tempArray[i] = true
-                                                setButtonArray(tempArray)
-                                            }}
-                                                type="submit" id="update" variant="success">
-                                                Use 1
-                                            </Button>
-                                        </Col>
-                                        :
-                                        <Row className="confirm-buttons-admin">
-                                            <Col>
-                                                <Button className="button-submit-admin2" onClick={function () {
-                                                    update(user.uid)
-                                                    let tempArray = [...ButtonArray];
-                                                    tempArray[i] = false
-                                                    setButtonArray(tempArray)
-                                                }}
-                                                    type="submit" id="update" variant="success">
-                                                    Confirm
-                                                </Button>
-                                            </Col>
-                                            <Col>
-                                                <Button className="button-submit-admin2" onClick={() => {
-                                                    let tempArray = [...ButtonArray];
-                                                    tempArray[i] = false
-                                                    setButtonArray(tempArray)
-                                                }}
-                                                    type="submit" id="update" variant="danger">
-                                                    Cancel
-                                                </Button>
-                                            </Col>
-                                        </Row>
-                                    }
-                                </Row>
-                            </Col>
-                        </Row>
-            ))}
+            {users.map((user, i) => {
+                if (search !== "" && !user.username.toLowerCase().includes(search.toLowerCase())) {
+                    return null;
+                }
+                index++;
+                return renderUserRow(user, i, index, index % 2 === 0);
+            })}
         </Card.Body>
-    )
-};
+    );
+}
 
 const condition = authUser =>
     authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]);
