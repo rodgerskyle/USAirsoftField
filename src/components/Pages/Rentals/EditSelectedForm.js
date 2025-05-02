@@ -988,27 +988,34 @@ class EditSelectedForm extends Component {
     };
 
     handleDeleteParticipant = (index) => {
-        const { participants, availableList } = this.state;
+        // Use props.form instead of state to get the latest data
+        const { participants, available } = this.props.form;
         const updatedParticipants = [...participants];
         const removedParticipant = updatedParticipants[index];
 
         // Return all rentals back to availableList
-        const updatedAvailableList = [...availableList];
+        const updatedAvailableList = available ? [...available] : [];
         if (removedParticipant?.rentals && removedParticipant?.rentals?.length > 0) {
-            updatedAvailableList.push(...removedParticipant.rentals);
+            // Add removed participant's rentals to the available list
+            removedParticipant.rentals.forEach(rental => {
+                updatedAvailableList.push({
+                    ...rental,
+                    id: uuid(), // Generate new ID to avoid conflicts
+                    number: '', // Reset number
+                    checked: false // Reset checked status
+                });
+            });
         }
 
         // Remove the participant
         updatedParticipants.splice(index, 1);
 
+        // Update Firebase with the changes
         update(this.props.firebase.rentalGroup(this.props.form.key), {
             participants: updatedParticipants,
             available: updatedAvailableList
-        }).then(() => {
-            this.setState({
-                participants: updatedParticipants,
-                availableList: updatedAvailableList
-            });
+        }).catch(error => {
+            console.error("Error deleting participant:", error);
         });
     }
 
