@@ -20,7 +20,7 @@ import { v4 as uuid } from 'uuid';
 import { withFirebase } from '../../Firebase';
 
 import '../../../App.css';
-import { get, update, onValue, set } from "firebase/database";
+import { get, update, onValue, set, query, orderByKey, startAt, endAt, orderByChild } from "firebase/database";
 import TablePagination from '@mui/material/TablePagination';
 import Modal from '@mui/material/Modal';
 import TextField from '@mui/material/TextField';
@@ -611,7 +611,7 @@ class EditSelectedForm extends Component {
             showInventoryEdit: false,
             rentalOptions: [], // Add this to track rental options
             form: this.props.form,
-            activeMonth: 13, // 13 represents "All Months"
+            activeMonth: new Date().getMonth() + 1, // Current month (1-12)
             activeDay: 32,  // 32 represents "All Days" 
             activeYear: new Date().getFullYear(),
             days: [...Array(31).keys()].map(String),
@@ -668,12 +668,11 @@ class EditSelectedForm extends Component {
             });
             return filtered;
         } else {
-            // Filter digital waivers by both search and date
+            // Digital waivers are already filtered by date server-side, only filter by search
             const filtered = waivers.filter(waiver => {
                 const matchesSearch = !searchQuery ||
                     waiver.name.toLowerCase().includes(searchQuery.toLowerCase());
-                const matchesDate = this.compareDate(activeMonth, activeDay, activeYear, waiver.date);
-                return matchesSearch && (searchQuery !== "" || matchesDate);
+                return matchesSearch;
             });
             const startIndex = digitalPage * digitalPerPage;
             return filtered.slice(startIndex, startIndex + digitalPerPage);
@@ -695,7 +694,7 @@ class EditSelectedForm extends Component {
         return matchesYear && matchesMonth && matchesDay;
     };
 
-    componentDidMount = () => {
+    componentDidMount = async () => {
         try {
             this.setState({ loading: true });
             this.initializeDates();
@@ -731,43 +730,10 @@ class EditSelectedForm extends Component {
             //     }
             // );
 
-            // Add real-time listener for digital waivers
-            this.waiversListener = onValue(this.props.firebase.digitalWaivers(),
-                (snapshot) => {
-                    if (snapshot.exists()) {
-                        const waiversObject = snapshot.val();
-                        const waivers = Object.entries(waiversObject).map(([key, value]) => ({
-                            name: value.name,
-                            date: new Date(value.timestamp),
-                            ref: key,
-                            isDigital: true,
-                            data: value
-                        }));
-
-                        // Sort by date, newest first
-                        waivers.sort((a, b) => b.date - a.date);
-
-                        this.setState({
-                            waivers,
-                            totalDigital: waivers.length,
-                            loading: false
-                        });
-                    } else {
-                        this.setState({
-                            waivers: [],
-                            totalDigital: 0,
-                            loading: false
-                        });
-                    }
-                },
-                (error) => {
-                    console.error('Error loading digital waivers:', error);
-                    this.setState({
-                        error: 'Failed to load digital waivers',
-                        loading: false
-                    });
-                }
-            );
+            // Load digital waivers with current date filters
+            const { activeMonth, activeDay, activeYear } = this.state;
+            const dateRange = this.calculateDateRange(activeMonth, activeDay, activeYear);
+            await this.loadDigitalWaivers(dateRange.startDate, dateRange.endDate);
 
             // Add listener for rental options
             this.optionsListener = onValue(this.props.firebase.rentalOptions(),
@@ -798,6 +764,99 @@ class EditSelectedForm extends Component {
         }
         if (this.optionsListener) {
             this.optionsListener();
+        }
+    };
+
+    loadDigitalWaivers = async (startDate = null, endDate = null) => {
+        try {
+            // Default to current month if no dates provided
+            if (!startDate || !endDate) {
+                const now = new Date();
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1); // First day of current month
+                endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999); // Last day of current month
+            }
+
+            // Convert dates to timestamps for Firebase query
+            const startTimestamp = startDate.getTime();
+            const endTimestamp = endDate.getTime();
+
+            try {
+                // Try to create a query with date range filtering
+                const waiversQuery = query(
+                    this.props.firebase.digitalWaivers(),
+                    orderByChild('timestamp'),
+                    startAt(startTimestamp),
+                    endAt(endTimestamp)
+                );
+
+                const snapshot = await get(waiversQuery);
+
+                if (snapshot.exists()) {
+                    const waiversObject = snapshot.val();
+                    const waivers = Object.entries(waiversObject).map(([key, value]) => ({
+                        name: value.name,
+                        date: new Date(value.timestamp),
+                        ref: key,
+                        isDigital: true,
+                        data: value
+                    }));
+
+                    // Sort by date, newest first
+                    waivers.sort((a, b) => b.date - a.date);
+
+                    this.setState({
+                        waivers,
+                        totalDigital: waivers.length
+                    });
+                } else {
+                    this.setState({
+                        waivers: [],
+                        totalDigital: 0
+                    });
+                }
+            } catch (indexError) {
+                console.warn('Index not found, falling back to client-side filtering:', indexError.message);
+
+                // Fallback: Load all waivers and filter client-side
+                const snapshot = await get(this.props.firebase.digitalWaivers());
+
+                if (snapshot.exists()) {
+                    const waiversObject = snapshot.val();
+                    const allWaivers = Object.entries(waiversObject).map(([key, value]) => ({
+                        name: value.name,
+                        date: new Date(value.timestamp),
+                        ref: key,
+                        isDigital: true,
+                        data: value
+                    }));
+
+                    // Filter by date range client-side
+                    const filteredWaivers = allWaivers.filter(waiver => {
+                        const waiverTimestamp = waiver.date.getTime();
+                        return waiverTimestamp >= startTimestamp && waiverTimestamp <= endTimestamp;
+                    });
+
+                    // Sort by date, newest first
+                    filteredWaivers.sort((a, b) => b.date - a.date);
+
+                    this.setState({
+                        waivers: filteredWaivers,
+                        totalDigital: filteredWaivers.length
+                    });
+                } else {
+                    this.setState({
+                        waivers: [],
+                        totalDigital: 0
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Error loading digital waivers:', error);
+            this.setState({
+                error: 'Failed to load digital waivers',
+                waivers: [],
+                totalDigital: 0
+            });
         }
     };
 
@@ -908,6 +967,11 @@ class EditSelectedForm extends Component {
             } else if (mode === 'legacy' && this.state.legacyWaivers.length === 0) {
                 this.setState({ isLoadingLegacy: true });
                 await this.loadLegacyWaivers();
+            } else if (mode === 'digital' && this.state.waivers.length === 0) {
+                // Load digital waivers with current date filters
+                const { activeMonth, activeDay, activeYear } = this.state;
+                const dateRange = this.calculateDateRange(activeMonth, activeDay, activeYear);
+                await this.loadDigitalWaivers(dateRange.startDate, dateRange.endDate);
             }
         } catch (error) {
             console.error('Error toggling mode:', error);
@@ -1250,6 +1314,51 @@ class EditSelectedForm extends Component {
         this.setState({ digitalPage: newPage });
     };
 
+    // Handle date filter changes and reload waivers
+    handleDateFilterChange = async (type, value) => {
+        const newState = {};
+        newState[`active${type.charAt(0).toUpperCase() + type.slice(1)}`] = value;
+
+        await this.setState(newState);
+
+        // Reload digital waivers with new date range
+        if (!this.state.isMemberMode && !this.state.isLegacyMode) {
+            const { activeMonth, activeDay, activeYear } = this.state;
+            const dateRange = this.calculateDateRange(activeMonth, activeDay, activeYear);
+            await this.loadDigitalWaivers(dateRange.startDate, dateRange.endDate);
+        }
+    };
+
+    // Calculate date range based on selected filters
+    calculateDateRange = (month, day, year) => {
+        const now = new Date();
+        let startDate, endDate;
+
+        if (year === now.getFullYear() + 1) {
+            // All years - use a very wide range
+            startDate = new Date(2020, 0, 1);
+            endDate = new Date(now.getFullYear() + 1, 11, 31);
+        } else {
+            if (month === 13) {
+                // All months in selected year
+                startDate = new Date(year, 0, 1);
+                endDate = new Date(year, 11, 31);
+            } else {
+                if (day === 32) {
+                    // All days in selected month/year
+                    startDate = new Date(year, month - 1, 1);
+                    endDate = new Date(year, month, 0); // Last day of the month
+                } else {
+                    // Specific date
+                    startDate = new Date(year, month - 1, day);
+                    endDate = new Date(year, month - 1, day, 23, 59, 59, 999);
+                }
+            }
+        }
+
+        return { startDate, endDate };
+    };
+
     handleSizeUpdate = async (newSize) => {
         try {
             await update(this.props.firebase.rentalGroup(this.props.form.key), {
@@ -1458,9 +1567,9 @@ class EditSelectedForm extends Component {
                     months={this.state.months}
                     days={this.state.days}
                     years={this.state.years}
-                    onMonthChange={(value) => this.setState({ activeMonth: value })}
-                    onDayChange={(value) => this.setState({ activeDay: value })}
-                    onYearChange={(value) => this.setState({ activeYear: value })}
+                    onMonthChange={(value) => this.handleDateFilterChange('month', value)}
+                    onDayChange={(value) => this.handleDateFilterChange('day', value)}
+                    onYearChange={(value) => this.handleDateFilterChange('year', value)}
                 />
 
                 {/* Transaction Dialog */}
