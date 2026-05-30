@@ -271,13 +271,13 @@
     left: 50%;
     transform: translate(-50%, -50%);
     width: 90%;
-    max-width: 600px;
-    max-height: 80vh;
+    max-width: 820px;
+    max-height: 86vh;
     display: flex;
     flex-direction: column;
     background: white;
-    border-radius: 8px;
-    padding: 24px;
+    border-radius: 12px;
+    padding: 20px;
 }
 
 .participant-grid {
@@ -288,8 +288,9 @@
 }
 
 .participant-card {
-    padding: 16px;
+    padding: 18px;
     transition: all 0.2s ease !important;
+    border-radius: 10px !important;
 }
 
 .participant-card:hover {
@@ -309,25 +310,47 @@
     gap: 8px;
 }
 
+.participant-actions .MuiIconButton-root {
+    width: 44px;
+    height: 44px;
+}
+
 .participant-rentals-list {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    min-height: 40px;
-    padding: 8px;
+    min-height: 48px;
+    padding: 10px;
     background: #f5f5f5;
-    border-radius: 4px;
+    border-radius: 8px;
 }
 
 .modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    background: #fff;
+    padding-bottom: 8px;
 }
 
 .search-controls {
-    margin-bottom: 16px;
+    margin-bottom: 12px;
+    position: sticky;
+    top: 56px;
+    z-index: 3;
+    background: #fff;
+    padding: 8px 0 12px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.search-status-text {
+    margin-top: -4px;
+    margin-bottom: 8px;
+    color: #4a5568;
 }
 
 .waivers-list {
@@ -341,6 +364,59 @@
     display: flex;
     gap: 16px;
     margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.edit-form-actions .MuiButton-root {
+    min-height: 44px;
+    padding-left: 16px;
+    padding-right: 16px;
+    text-transform: none;
+}
+
+.add-participant-modal .MuiList-root {
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    background: #fff;
+}
+
+.add-participant-modal .MuiListItem-root {
+    min-height: 52px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.add-participant-modal .MuiListItem-root:last-child {
+    border-bottom: none;
+}
+
+.add-participant-modal .MuiListItem-root:hover {
+    background: rgba(25, 118, 210, 0.06);
+}
+
+.search-results-meta {
+    display: block;
+    padding: 8px 2px 2px;
+    color: #4a5568;
+}
+
+.add-participant-modal .MuiButton-root {
+    min-height: 42px;
+    text-transform: none;
+}
+
+.add-participant-modal .MuiInputBase-input {
+    font-size: 16px;
+}
+
+.add-participant-modal .MuiTablePagination-root {
+    min-height: 56px;
+}
+
+.add-participant-modal .MuiTablePagination-actions .MuiIconButton-root {
+    width: 42px;
+    height: 42px;
 }
 
 /* Available Rentals Summary */
@@ -763,4 +839,22 @@ button.btn-pin-code-link {
 .col-cc .MuiInputBase-formControl {
     box-shadow: 0px 3px 3px -2px rgba(0, 0, 0, 0.2), 0px 3px 4px 0px rgba(0, 0, 0, 0.14), 0px 1px 8px 0px rgba(0, 0, 0, 0.12);
     border-radius: 10px;
+}
+
+@media (max-width: 1024px) {
+    .add-participant-modal {
+        width: 94%;
+        max-width: 94%;
+        padding: 16px;
+        max-height: 90vh;
+    }
+
+    .participant-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .search-controls {
+        top: 52px;
+    }
 }
