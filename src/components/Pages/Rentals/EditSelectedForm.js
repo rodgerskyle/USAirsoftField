@@ -11,7 +11,6 @@ import React, { Component, useState, useEffect } from 'react';
 import { Button, Spinner } from 'react-bootstrap/';
 import * as ROLES from '../../constants/roles';
 import { withAuthorization } from '../../session';
-import { listAll } from 'firebase/storage';
 import convertDate from '../../utils/convertDate';
 
 // import uuid from 'uuid/v4';
@@ -20,7 +19,7 @@ import { v4 as uuid } from 'uuid';
 import { withFirebase } from '../../Firebase';
 
 import '../../../App.css';
-import { get, update, onValue, set, query, orderByKey, startAt, endAt, orderByChild } from "firebase/database";
+import { get, update, onValue, set, query, orderByKey, startAt, endAt, orderByChild, limitToFirst, limitToLast, ref as dbRef } from "firebase/database";
 import TablePagination from '@mui/material/TablePagination';
 import Modal from '@mui/material/Modal';
 import TextField from '@mui/material/TextField';
@@ -28,6 +27,7 @@ import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import MenuItem from '@mui/material/MenuItem';
+import InputAdornment from '@mui/material/InputAdornment';
 
 const AddParticipantModal = ({
     open,
@@ -36,20 +36,18 @@ const AddParticipantModal = ({
     waivers,
     searchQuery,
     onSearchChange,
-    isLegacyMode,
     isMemberMode,
     onToggleMode,
     isLoadingMembers,
-    isLoadingLegacy,
+    isLoadingDigital,
     membersPage,
     membersPerPage,
     totalMembers,
     onMemberPageChange,
-    legacyStartDate,
-    onLegacyDateChange,
     digitalPage,
     digitalPerPage,
     totalDigital,
+    digitalTotalKnown,
     onDigitalPageChange,
     activeMonth,
     activeDay,
@@ -67,11 +65,13 @@ const AddParticipantModal = ({
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
-            width: '90%',
-            maxWidth: 600,
-            maxHeight: '90vh',
+            width: '94%',
+            maxWidth: 860,
+            maxHeight: '92vh',
             overflow: 'auto',
-            p: 3
+            p: 3,
+            border: '1px solid rgba(15, 23, 42, 0.08)',
+            boxShadow: '0 18px 40px rgba(15, 23, 42, 0.18)'
         }}>
             <div className="modal-header">
                 <Typography variant="h6">Add Participant</Typography>
@@ -87,8 +87,30 @@ const AddParticipantModal = ({
                     placeholder={isMemberMode ? "Search members..." : "Search waivers..."}
                     value={searchQuery}
                     onChange={(e) => onSearchChange(e.target.value)}
+                    InputProps={{
+                        endAdornment: searchQuery.trim() ? (
+                            <InputAdornment position="end">
+                                <IconButton
+                                    size="small"
+                                    onClick={() => onSearchChange('')}
+                                    aria-label="Clear search"
+                                >
+                                    <Close fontSize="small" />
+                                </IconButton>
+                            </InputAdornment>
+                        ) : null
+                    }}
                     sx={{ mb: 2 }}
                 />
+                <Typography variant="body2" className="search-status-text">
+                    {searchQuery.trim()
+                        ? (isMemberMode
+                            ? `Searching members for "${searchQuery.trim()}".`
+                            : `Searching all waivers in selected dates for "${searchQuery.trim()}".`)
+                        : (isMemberMode
+                            ? 'Type to search members.'
+                            : 'Tap a waiver to add participant.')}
+                </Typography>
                 <Box sx={{
                     display: 'flex',
                     gap: 2,
@@ -96,97 +118,86 @@ const AddParticipantModal = ({
                     mb: 2
                 }}>
                     <MUIButton
-                        variant={!isLegacyMode && !isMemberMode ? "contained" : "outlined"}
+                        variant={!isMemberMode ? "contained" : "outlined"}
                         onClick={() => onToggleMode('digital')}
                         size="small"
-                        disabled={isLoadingMembers || isLoadingLegacy}
+                        disabled={isLoadingMembers || isLoadingDigital}
                     >
                         Digital Waivers
-                    </MUIButton>
-                    <MUIButton
-                        variant={isLegacyMode ? "contained" : "outlined"}
-                        onClick={() => onToggleMode('legacy')}
-                        size="small"
-                        disabled={isLoadingMembers || isLoadingLegacy}
-                    >
-                        Legacy Waivers
                     </MUIButton>
                     <MUIButton
                         variant={isMemberMode ? "contained" : "outlined"}
                         onClick={() => onToggleMode('member')}
                         size="small"
-                        disabled={isLoadingMembers || isLoadingLegacy}
+                        disabled={isLoadingMembers || isLoadingDigital}
                     >
                         Members
                     </MUIButton>
                 </Box>
             </div>
 
-            {isLoadingMembers || isLoadingLegacy ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-                    <CircularProgress />
-                </Box>
-            ) : (
-                <>
-                    {/* Add date filters */}
-                    {!isMemberMode && (
-                        <Box sx={{
-                            display: 'flex',
-                            gap: 2,
-                            justifyContent: 'center',
-                            mb: 2
-                        }}>
-                            <TextField
-                                select
-                                label="Month"
-                                value={activeMonth}
-                                onChange={(e) => onMonthChange(e.target.value)}
-                                sx={{ minWidth: 120 }}
-                            >
-                                <MenuItem value={13}>All Months</MenuItem>
-                                {months.map((month, index) => (
-                                    <MenuItem key={month} value={index + 1}>
-                                        {month}
-                                    </MenuItem>
-                                ))}
-                            </TextField>
-
-                            <TextField
-                                select
-                                label="Day"
-                                value={activeDay}
-                                onChange={(e) => onDayChange(e.target.value)}
-                                sx={{ minWidth: 100 }}
-                            >
-                                <MenuItem value={32}>All Days</MenuItem>
-                                {days.map((_, index) => (
-                                    <MenuItem key={index} value={index + 1}>
-                                        {index + 1}
-                                    </MenuItem>
-                                ))}
-                            </TextField>
-
-                            <TextField
-                                select
-                                label="Year"
-                                value={activeYear}
-                                onChange={(e) => onYearChange(e.target.value)}
-                                sx={{ minWidth: 100 }}
-                            >
-                                <MenuItem value={new Date().getFullYear() + 1}>All Years</MenuItem>
-                                {years.map((year) => (
-                                    <MenuItem key={year} value={year}>
-                                        {year}
-                                    </MenuItem>
-                                ))}
-                            </TextField>
-                        </Box>)}
-                    <List sx={{
-                        maxHeight: '50vh',
-                        overflow: 'auto',
+            <Box sx={{ position: 'relative', minHeight: 440 }}>
+                {/* Add date filters */}
+                {!isMemberMode && (
+                    <Box sx={{
+                        display: 'flex',
+                        gap: 2,
+                        justifyContent: 'center',
                         mb: 2
                     }}>
-                        {waivers.map((person) => (
+                        <TextField
+                            select
+                            label="Month"
+                            value={activeMonth}
+                            onChange={(e) => onMonthChange(e.target.value)}
+                            sx={{ minWidth: 120 }}
+                        >
+                            <MenuItem value={13}>All Months</MenuItem>
+                            {months.map((month, index) => (
+                                <MenuItem key={month} value={index + 1}>
+                                    {month}
+                                </MenuItem>
+                            ))}
+                        </TextField>
+
+                        <TextField
+                            select
+                            label="Day"
+                            value={activeDay}
+                            onChange={(e) => onDayChange(e.target.value)}
+                            sx={{ minWidth: 100 }}
+                        >
+                            <MenuItem value={32}>All Days</MenuItem>
+                            {days.map((_, index) => (
+                                <MenuItem key={index} value={index + 1}>
+                                    {index + 1}
+                                </MenuItem>
+                            ))}
+                        </TextField>
+
+                        <TextField
+                            select
+                            label="Year"
+                            value={activeYear}
+                            onChange={(e) => onYearChange(e.target.value)}
+                            sx={{ minWidth: 100 }}
+                        >
+                            <MenuItem value={new Date().getFullYear() + 1}>All Years</MenuItem>
+                            {years.map((year) => (
+                                <MenuItem key={year} value={year}>
+                                    {year}
+                                </MenuItem>
+                            ))}
+                        </TextField>
+                    </Box>)}
+                <List sx={{
+                    maxHeight: '50vh',
+                    minHeight: '38vh',
+                    overflow: 'auto',
+                    mb: 2
+                }}>
+                    {waivers.length > 0 ? (
+                        waivers.map((person) => (
                             <ListItem
                                 key={person.ref}
                                 button
@@ -197,29 +208,66 @@ const AddParticipantModal = ({
                                     secondary={person.isMember ? 'Member' : convertDate(person.date)}
                                 />
                             </ListItem>
-                        ))}
-                    </List>
-
-                    {(isMemberMode || !isLegacyMode) && (
-                        <Box sx={{
-                            position: 'sticky',
-                            bottom: 0,
-                            bgcolor: 'background.paper',
-                            borderTop: 1,
-                            borderColor: 'divider'
-                        }}>
-                            <TablePagination
-                                component="div"
-                                count={isMemberMode ? totalMembers : totalDigital}
-                                page={isMemberMode ? membersPage : digitalPage}
-                                onPageChange={isMemberMode ? onMemberPageChange : onDigitalPageChange}
-                                rowsPerPage={isMemberMode ? membersPerPage : digitalPerPage}
-                                rowsPerPageOptions={[50]}
+                        ))
+                    ) : (
+                        <ListItem>
+                            <ListItemText
+                                primary={searchQuery.trim()
+                                    ? `No matches for "${searchQuery.trim()}".`
+                                    : 'No records found for current filters.'}
+                                secondary={searchQuery.trim()
+                                    ? 'Try fewer characters or check spelling.'
+                                    : 'Try adjusting month/day/year filters.'}
                             />
-                        </Box>
+                        </ListItem>
                     )}
-                </>
-            )}
+                </List>
+
+                {!searchQuery.trim() ? (
+                    <Box sx={{
+                        position: 'sticky',
+                        bottom: 0,
+                        bgcolor: 'background.paper',
+                        borderTop: 1,
+                        borderColor: 'divider'
+                    }}>
+                        <TablePagination
+                            component="div"
+                            count={isMemberMode ? totalMembers : (digitalTotalKnown ? totalDigital : -1)}
+                            page={isMemberMode ? membersPage : digitalPage}
+                            onPageChange={isMemberMode ? onMemberPageChange : onDigitalPageChange}
+                            rowsPerPage={isMemberMode ? membersPerPage : digitalPerPage}
+                            rowsPerPageOptions={[50]}
+                        />
+                    </Box>
+                ) : (
+                    <Typography variant="caption" className="search-results-meta">
+                        Showing {waivers.length} search result{waivers.length === 1 ? '' : 's'}
+                    </Typography>
+                )}
+
+                {(isLoadingMembers || isLoadingDigital) && (
+                    <Box
+                        sx={{
+                            position: 'absolute',
+                            inset: 0,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            background: 'rgba(255,255,255,0.72)',
+                            backdropFilter: 'blur(1px)',
+                            zIndex: 5,
+                            borderRadius: 1
+                        }}
+                    >
+                        <CircularProgress size={28} />
+                        <Typography variant="caption" sx={{ mt: 1 }}>
+                            Updating results...
+                        </Typography>
+                    </Box>
+                )}
+            </Box>
         </Paper>
     </Modal>
 );
@@ -591,22 +639,24 @@ class EditSelectedForm extends Component {
             transactionError: null,
             showAddParticipant: false,
             waivers: [],
-            legacyWaivers: [],
-            isLegacyMode: false,
             searchQuery: '',
             members: [],
             isMemberMode: false,
             isLoadingMembers: false,
-            isLoadingLegacy: false,
+            isLoadingDigital: false,
             membersPage: 0,
             membersPerPage: 50,
-            legacyStartDate: new Date(), // Start with current date
-            legacyPageSize: 50,
             totalMembers: 0,
             filteredMembers: [],
             digitalPage: 0,
             digitalPerPage: 50,
             totalDigital: 0,
+            digitalTotalKnown: false,
+            digitalAggregateCountApplied: false,
+            digitalPages: [],
+            digitalHasNextPage: false,
+            digitalRangeStart: null,
+            digitalRangeEnd: null,
             showSizeEdit: false,
             showInventoryEdit: false,
             rentalOptions: [], // Add this to track rental options
@@ -637,45 +687,19 @@ class EditSelectedForm extends Component {
     getFilteredWaivers = () => {
         const {
             waivers,
-            legacyWaivers,
             members,
             searchQuery,
             isMemberMode,
-            isLegacyMode,
             membersPage,
-            membersPerPage,
-            digitalPage,
-            digitalPerPage,
-            activeMonth,
-            activeDay,
-            activeYear
+            membersPerPage
         } = this.state;
 
         if (isMemberMode) {
-            // Members don't need date filtering
-            const filtered = members.filter(member =>
-                member.name.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-            const startIndex = membersPage * membersPerPage;
-            return filtered.slice(startIndex, startIndex + membersPerPage);
-        } else if (isLegacyMode) {
-            // Filter legacy waivers by both search and date
-            const filtered = legacyWaivers.filter(waiver => {
-                const matchesSearch = !searchQuery ||
-                    waiver.name.toLowerCase().includes(searchQuery.toLowerCase());
-                const matchesDate = this.compareDate(activeMonth, activeDay, activeYear, waiver.date);
-                return matchesSearch && (searchQuery !== "" || matchesDate);
-            });
-            return filtered;
+            // Members are fetched server-side based on the search query
+            return members;
         } else {
-            // Digital waivers are already filtered by date server-side, only filter by search
-            const filtered = waivers.filter(waiver => {
-                const matchesSearch = !searchQuery ||
-                    waiver.name.toLowerCase().includes(searchQuery.toLowerCase());
-                return matchesSearch;
-            });
-            const startIndex = digitalPage * digitalPerPage;
-            return filtered.slice(startIndex, startIndex + digitalPerPage);
+            // Digital waivers are filtered and paged server-side.
+            return waivers;
         }
     };
 
@@ -765,10 +789,14 @@ class EditSelectedForm extends Component {
         if (this.optionsListener) {
             this.optionsListener();
         }
+        if (this.memberSearchDebounce) {
+            clearTimeout(this.memberSearchDebounce);
+        }
     };
 
     loadDigitalWaivers = async (startDate = null, endDate = null) => {
         try {
+            this.setState({ isLoadingDigital: true });
             // Default to current month if no dates provided
             if (!startDate || !endDate) {
                 const now = new Date();
@@ -779,142 +807,216 @@ class EditSelectedForm extends Component {
             // Convert dates to timestamps for Firebase query
             const startTimestamp = startDate.getTime();
             const endTimestamp = endDate.getTime();
+            const searchTerm = this.state.searchQuery.trim().toLowerCase();
+            const monthKey = this.getMonthKeyIfSpecific();
 
-            try {
-                // Try to create a query with date range filtering
-                const waiversQuery = query(
-                    this.props.firebase.digitalWaivers(),
-                    orderByChild('timestamp'),
-                    startAt(startTimestamp),
-                    endAt(endTimestamp)
-                );
-
-                const snapshot = await get(waiversQuery);
-
-                if (snapshot.exists()) {
-                    const waiversObject = snapshot.val();
-                    const waivers = Object.entries(waiversObject).map(([key, value]) => ({
-                        name: value.name,
-                        date: new Date(value.timestamp),
-                        ref: key,
-                        isDigital: true,
-                        data: value
-                    }));
-
-                    // Sort by date, newest first
-                    waivers.sort((a, b) => b.date - a.date);
-
-                    this.setState({
-                        waivers,
-                        totalDigital: waivers.length
-                    });
-                } else {
-                    this.setState({
-                        waivers: [],
-                        totalDigital: 0
-                    });
-                }
-            } catch (indexError) {
-                console.warn('Index not found, falling back to client-side filtering:', indexError.message);
-
-                // Fallback: Load all waivers and filter client-side
-                const snapshot = await get(this.props.firebase.digitalWaivers());
-
-                if (snapshot.exists()) {
-                    const waiversObject = snapshot.val();
-                    const allWaivers = Object.entries(waiversObject).map(([key, value]) => ({
-                        name: value.name,
-                        date: new Date(value.timestamp),
-                        ref: key,
-                        isDigital: true,
-                        data: value
-                    }));
-
-                    // Filter by date range client-side
-                    const filteredWaivers = allWaivers.filter(waiver => {
-                        const waiverTimestamp = waiver.date.getTime();
-                        return waiverTimestamp >= startTimestamp && waiverTimestamp <= endTimestamp;
-                    });
-
-                    // Sort by date, newest first
-                    filteredWaivers.sort((a, b) => b.date - a.date);
-
-                    this.setState({
-                        waivers: filteredWaivers,
-                        totalDigital: filteredWaivers.length
-                    });
-                } else {
-                    this.setState({
-                        waivers: [],
-                        totalDigital: 0
-                    });
-                }
+            if (searchTerm && monthKey) {
+                const searchedWaivers = await this.fetchDigitalSearchResults(monthKey, searchTerm, startTimestamp, endTimestamp);
+                this.setState({
+                    waivers: searchedWaivers,
+                    totalDigital: searchedWaivers.length,
+                    digitalTotalKnown: true,
+                    digitalAggregateCountApplied: false,
+                    digitalPage: 0,
+                    digitalPages: [{ waivers: searchedWaivers, hasMore: false, oldestTimestamp: null }],
+                    digitalHasNextPage: false,
+                    digitalRangeStart: startTimestamp,
+                    digitalRangeEnd: endTimestamp,
+                    isLoadingDigital: false
+                });
+                return;
             }
+
+            const pageResult = await this.fetchDigitalPage(startTimestamp, endTimestamp);
+            const initialPages = [pageResult];
+            const monthlyCount = await this.getMonthlyDigitalCountIfApplicable();
+            const hasExactAggregate = monthlyCount !== null;
+            this.setState({
+                waivers: pageResult.waivers,
+                totalDigital: hasExactAggregate ? monthlyCount : pageResult.waivers.length,
+                digitalTotalKnown: hasExactAggregate || !pageResult.hasMore,
+                digitalAggregateCountApplied: hasExactAggregate,
+                digitalPage: 0,
+                digitalPages: initialPages,
+                digitalHasNextPage: pageResult.hasMore,
+                digitalRangeStart: startTimestamp,
+                digitalRangeEnd: endTimestamp,
+                isLoadingDigital: false
+            });
         } catch (error) {
             console.error('Error loading digital waivers:', error);
             this.setState({
-                error: 'Failed to load digital waivers',
+                error: 'Failed to load digital waivers. Please verify the digital_waivers timestamp index and data.',
                 waivers: [],
-                totalDigital: 0
+                totalDigital: 0,
+                digitalTotalKnown: false,
+                digitalAggregateCountApplied: false,
+                isLoadingDigital: false
             });
         }
     };
 
-    loadLegacyWaivers = async () => {
-        this.setState({ isLoadingLegacy: true });
-        try {
-            const result = await listAll(this.props.firebase.waiversList());
-            const endDate = this.state.legacyStartDate;
-            const startDate = new Date(endDate);
-            startDate.setMonth(startDate.getMonth() - 1); // Load 1 month at a time
-
-            const tempWaivers = [];
-
-            for (const item of result.items) {
-                const waiverName = item.name;
-                const dateStr = waiverName.substr(waiverName.lastIndexOf('(') + 1).split(')')[0];
-                const [datePart, timePart] = dateStr.split(':');
-                const [month, day, year] = datePart.split('-');
-                const [hour, minute] = [timePart, dateStr.split(':')[2]];
-
-                const dateObj = new Date(year, month - 1, day, hour, minute);
-
-                // Only include waivers within the date range
-                if (dateObj >= startDate && dateObj <= endDate) {
-                    tempWaivers.push({
-                        name: waiverName.substring(0, waiverName.lastIndexOf('(')).trim(),
-                        date: dateObj,
-                        ref: item,
-                        isDigital: false,
-                        fullName: waiverName
-                    });
-                }
-            }
-
-            // Sort by date, newest first
-            tempWaivers.sort((a, b) => b.date - a.date);
-
-            this.setState({
-                legacyWaivers: tempWaivers,
-                isLoadingLegacy: false
-            });
-        } catch (error) {
-            console.error('Error loading legacy waivers:', error);
-            this.setState({
-                error: 'Failed to load legacy waivers',
-                isLoadingLegacy: false
-            });
+    getMonthKeyIfSpecific = () => {
+        const { activeMonth, activeYear } = this.state;
+        const allYearsValue = new Date().getFullYear() + 1;
+        if (activeMonth === 13 || activeYear === allYearsValue) {
+            return null;
         }
+        const monthKey = String(activeMonth).padStart(2, '0');
+        return `${activeYear}-${monthKey}`;
+    };
+
+    getMonthlyDigitalCountIfApplicable = async () => {
+        const { activeMonth, activeDay, activeYear } = this.state;
+        const allYearsValue = new Date().getFullYear() + 1;
+        const isSpecificMonth = activeMonth !== 13;
+        const isSpecificYear = activeYear !== allYearsValue;
+        const isWholeMonth = activeDay === 32;
+
+        if (!isSpecificMonth || !isSpecificYear || !isWholeMonth) {
+            return null;
+        }
+
+        const monthKey = String(activeMonth).padStart(2, '0');
+        const ym = `${activeYear}-${monthKey}`;
+        const countSnap = await get(dbRef(this.props.firebase.db, `digital_waiver_counts/${ym}/count`));
+
+        if (!countSnap.exists()) {
+            return 0;
+        }
+
+        const countValue = Number(countSnap.val());
+        return Number.isFinite(countValue) ? countValue : 0;
+    };
+
+    fetchDigitalPage = async (startTimestamp, endTimestamp, upperBoundTimestamp = null) => {
+        const queryEnd = upperBoundTimestamp == null ? endTimestamp : upperBoundTimestamp;
+        const waiversQuery = query(
+            this.props.firebase.digitalWaivers(),
+            orderByChild('timestamp'),
+            startAt(startTimestamp),
+            endAt(queryEnd),
+            limitToLast(this.state.digitalPerPage + 1)
+        );
+        const snapshot = await get(waiversQuery);
+
+        if (!snapshot.exists()) {
+            return { waivers: [], hasMore: false, oldestTimestamp: null };
+        }
+
+        const mapped = Object.entries(snapshot.val())
+            .map(([key, value]) => {
+                const timestamp = Number(value.timestamp);
+                return {
+                    name: value.name,
+                    date: new Date(timestamp),
+                    timestamp,
+                    ref: key,
+                    isDigital: true,
+                    data: value
+                };
+            })
+            .filter(waiver => Number.isFinite(waiver.timestamp));
+
+        mapped.sort((a, b) => b.timestamp - a.timestamp);
+
+        const hasMore = mapped.length > this.state.digitalPerPage;
+        const waivers = hasMore ? mapped.slice(0, this.state.digitalPerPage) : mapped;
+        const oldestTimestamp = waivers.length > 0 ? waivers[waivers.length - 1].timestamp : null;
+
+        return { waivers, hasMore, oldestTimestamp };
+    };
+
+    fetchDigitalSearchResults = async (monthKey, searchTerm, startTimestamp, endTimestamp) => {
+        const searchRef = dbRef(this.props.firebase.db, `digital_waiver_search/${monthKey}`);
+        const searchQuery = query(
+            searchRef,
+            orderByChild('nameLower'),
+            startAt(searchTerm),
+            endAt(`${searchTerm}\uf8ff`),
+            limitToFirst(500)
+        );
+        const snapshot = await get(searchQuery);
+        if (!snapshot.exists()) {
+            return [];
+        }
+
+        const matches = Object.entries(snapshot.val())
+            .map(([waiverId, value]) => ({
+                ref: waiverId,
+                name: value.name || '',
+                timestamp: Number(value.timestamp),
+                isDigital: true,
+                data: value.data || {}
+            }))
+            .filter(item => Number.isFinite(item.timestamp))
+            .filter(item => item.timestamp >= startTimestamp && item.timestamp <= endTimestamp)
+            .sort((a, b) => b.timestamp - a.timestamp)
+            .map(item => ({
+                ref: item.ref,
+                name: item.name,
+                date: new Date(item.timestamp),
+                isDigital: true,
+                data: item.data
+            }));
+
+        return matches;
     };
 
     loadMembers = async (searchTerm = '') => {
+        const runFallbackMemberSearch = async (normalizedSearch) => {
+            const fullSnapshot = await get(this.props.firebase.users());
+            if (!fullSnapshot.exists()) {
+                this.setState({
+                    members: [],
+                    totalMembers: 0,
+                    isLoadingMembers: false
+                });
+                return;
+            }
+
+            const allMembers = Object.entries(fullSnapshot.val())
+                .map(([key, value]) => ({
+                    name: value.username,
+                    date: new Date(),
+                    ref: key,
+                    isMember: true,
+                    data: value
+                }))
+                .filter(member =>
+                    member.name &&
+                    (!normalizedSearch || member.name.toLowerCase().includes(normalizedSearch)))
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .slice(0, this.state.membersPerPage);
+
+            this.setState({
+                members: allMembers,
+                totalMembers: allMembers.length,
+                isLoadingMembers: false
+            });
+        };
+
         try {
             this.setState({ isLoadingMembers: true });
-            const snapshot = await get(this.props.firebase.users());
+            const normalizedSearch = searchTerm.trim().toLowerCase();
+            const membersQuery = normalizedSearch
+                ? query(
+                    this.props.firebase.users(),
+                    orderByChild('usernameLower'),
+                    startAt(normalizedSearch),
+                    endAt(`${normalizedSearch}\uf8ff`),
+                    limitToFirst(this.state.membersPerPage)
+                )
+                : query(
+                    this.props.firebase.users(),
+                    orderByChild('usernameLower'),
+                    limitToFirst(this.state.membersPerPage)
+                );
+            const snapshot = await get(membersQuery);
 
             if (snapshot.exists()) {
                 const membersObject = snapshot.val();
-                const allMembers = Object.entries(membersObject)
+                const members = Object.entries(membersObject)
                     .map(([key, value]) => ({
                         name: value.username,
                         date: new Date(),
@@ -923,24 +1025,35 @@ class EditSelectedForm extends Component {
                         data: value
                     }));
 
-                // Filter by search term
-                const filtered = searchTerm
-                    ? allMembers.filter(member =>
-                        member.name.toLowerCase().includes(searchTerm.toLowerCase()))
-                    : allMembers;
-
                 // Sort by name
-                filtered.sort((a, b) => a.name.localeCompare(b.name));
+                members.sort((a, b) => a.name.localeCompare(b.name));
 
                 this.setState({
-                    members: filtered,
-                    totalMembers: filtered.length,
+                    members,
+                    totalMembers: members.length,
                     isLoadingMembers: false
                 });
+            } else {
+                this.setState({
+                    members: [],
+                    totalMembers: 0,
+                    isLoadingMembers: false
+                });
+
+                // Fallback for legacy user records that may not have usernameLower
+                if (normalizedSearch) {
+                    await runFallbackMemberSearch(normalizedSearch);
+                }
             }
         } catch (error) {
             console.error('Error loading members:', error);
             console.log(error)
+            const normalizedSearch = searchTerm.trim().toLowerCase();
+            const message = (error && error.message) || '';
+            if (message.includes('Index not defined')) {
+                await runFallbackMemberSearch(normalizedSearch);
+                return;
+            }
             this.setState({
                 error: 'Failed to load members',
                 isLoadingMembers: false
@@ -948,15 +1061,33 @@ class EditSelectedForm extends Component {
         }
     };
 
+    handleSearchChange = (value) => {
+        this.setState({ searchQuery: value, membersPage: 0, digitalPage: 0 });
+
+        if (this.memberSearchDebounce) {
+            clearTimeout(this.memberSearchDebounce);
+        }
+
+        this.memberSearchDebounce = setTimeout(() => {
+            if (this.state.isMemberMode) {
+                this.loadMembers(value);
+                return;
+            }
+
+            const { activeMonth, activeDay, activeYear } = this.state;
+            const dateRange = this.calculateDateRange(activeMonth, activeDay, activeYear);
+            this.loadDigitalWaivers(dateRange.startDate, dateRange.endDate);
+        }, 300);
+    };
+
     toggleMode = async (mode) => {
         // Don't allow toggle if currently loading
-        if (this.state.isLoadingMembers || this.state.isLoadingLegacy) {
+        if (this.state.isLoadingMembers || this.state.isLoadingDigital) {
             return;
         }
 
         this.setState({
             isMemberMode: mode === 'member',
-            isLegacyMode: mode === 'legacy',
             searchQuery: ''
         });
 
@@ -964,9 +1095,6 @@ class EditSelectedForm extends Component {
             if (mode === 'member' && this.state.members.length === 0) {
                 this.setState({ isLoadingMembers: true });
                 await this.loadMembers();
-            } else if (mode === 'legacy' && this.state.legacyWaivers.length === 0) {
-                this.setState({ isLoadingLegacy: true });
-                await this.loadLegacyWaivers();
             } else if (mode === 'digital' && this.state.waivers.length === 0) {
                 // Load digital waivers with current date filters
                 const { activeMonth, activeDay, activeYear } = this.state;
@@ -978,7 +1106,7 @@ class EditSelectedForm extends Component {
             this.setState({
                 error: 'Failed to load data',
                 isLoadingMembers: false,
-                isLoadingLegacy: false
+                isLoadingDigital: false
             });
         }
     };
@@ -1303,26 +1431,90 @@ class EditSelectedForm extends Component {
         this.setState({ membersPage: newPage });
     };
 
-    // Handle legacy date change
-    handleLegacyDateChange = async (date) => {
-        await this.setState({ legacyStartDate: date });
-        this.loadLegacyWaivers();
-    };
-
     // Add handler for digital waiver pagination
-    handleDigitalPageChange = (event, newPage) => {
-        this.setState({ digitalPage: newPage });
+    handleDigitalPageChange = async (event, newPage) => {
+        const { digitalPage, digitalPages, digitalRangeStart, isLoadingDigital, digitalAggregateCountApplied, totalDigital } = this.state;
+        if (isLoadingDigital || newPage === digitalPage) return;
+
+        if (newPage < digitalPage && digitalPages[newPage]) {
+            const pageData = digitalPages[newPage];
+            const digitalTotalKnown = !pageData.hasMore;
+            const computedTotalDigital = digitalTotalKnown
+                ? (newPage * this.state.digitalPerPage) + pageData.waivers.length
+                : 0;
+
+            this.setState({
+                digitalPage: newPage,
+                waivers: pageData.waivers,
+                digitalHasNextPage: digitalPages[newPage + 1] ? true : pageData.hasMore,
+                totalDigital: digitalAggregateCountApplied ? totalDigital : computedTotalDigital,
+                digitalTotalKnown: digitalAggregateCountApplied ? true : digitalTotalKnown
+            });
+            return;
+        }
+
+        if (newPage === digitalPage + 1) {
+            if (digitalPages[newPage]) {
+                const pageData = digitalPages[newPage];
+                const digitalTotalKnown = !pageData.hasMore;
+                const computedTotalDigital = digitalTotalKnown
+                    ? (newPage * this.state.digitalPerPage) + pageData.waivers.length
+                    : 0;
+
+                this.setState({
+                    digitalPage: newPage,
+                    waivers: pageData.waivers,
+                    digitalHasNextPage: pageData.hasMore,
+                    totalDigital: digitalAggregateCountApplied ? totalDigital : computedTotalDigital,
+                    digitalTotalKnown: digitalAggregateCountApplied ? true : digitalTotalKnown
+                });
+                return;
+            }
+
+            const currentPageData = digitalPages[digitalPage];
+            const oldest = currentPageData?.oldestTimestamp;
+            if (!oldest || !digitalRangeStart) return;
+
+            this.setState({ isLoadingDigital: true });
+            try {
+                const nextPageData = await this.fetchDigitalPage(digitalRangeStart, oldest - 1);
+                const updatedPages = [...digitalPages];
+                updatedPages[newPage] = nextPageData;
+
+                const digitalTotalKnown = !nextPageData.hasMore;
+                const computedTotalDigital = digitalTotalKnown
+                    ? (newPage * this.state.digitalPerPage) + nextPageData.waivers.length
+                    : 0;
+
+                this.setState({
+                    digitalPage: newPage,
+                    waivers: nextPageData.waivers,
+                    digitalPages: updatedPages,
+                    digitalHasNextPage: nextPageData.hasMore,
+                    totalDigital: digitalAggregateCountApplied ? totalDigital : computedTotalDigital,
+                    digitalTotalKnown: digitalAggregateCountApplied ? true : digitalTotalKnown,
+                    isLoadingDigital: false
+                });
+            } catch (error) {
+                console.error('Error loading next digital waivers page:', error);
+                this.setState({
+                    error: 'Failed to load more digital waivers',
+                    isLoadingDigital: false
+                });
+            }
+        }
     };
 
     // Handle date filter changes and reload waivers
     handleDateFilterChange = async (type, value) => {
         const newState = {};
         newState[`active${type.charAt(0).toUpperCase() + type.slice(1)}`] = value;
+        newState.digitalPage = 0;
 
         await this.setState(newState);
 
         // Reload digital waivers with new date range
-        if (!this.state.isMemberMode && !this.state.isLegacyMode) {
+        if (!this.state.isMemberMode) {
             const { activeMonth, activeDay, activeYear } = this.state;
             const dateRange = this.calculateDateRange(activeMonth, activeDay, activeYear);
             await this.loadDigitalWaivers(dateRange.startDate, dateRange.endDate);
@@ -1437,7 +1629,6 @@ class EditSelectedForm extends Component {
             availableList,
             showAddParticipant,
             searchQuery,
-            isLegacyMode,
             membersPage,
             membersPerPage,
             totalMembers,
@@ -1545,21 +1736,19 @@ class EditSelectedForm extends Component {
                     onAdd={this.addParticipant}
                     waivers={filteredWaivers}
                     searchQuery={searchQuery}
-                    onSearchChange={(value) => this.setState({ searchQuery: value })}
-                    isLegacyMode={isLegacyMode}
+                    onSearchChange={this.handleSearchChange}
                     isMemberMode={isMemberMode}
                     onToggleMode={this.toggleMode}
                     isLoadingMembers={this.state.isLoadingMembers}
-                    isLoadingLegacy={this.state.isLoadingLegacy}
+                    isLoadingDigital={this.state.isLoadingDigital}
                     membersPage={membersPage}
                     membersPerPage={membersPerPage}
                     totalMembers={totalMembers}
                     onMemberPageChange={this.handleMemberPageChange}
-                    legacyStartDate={this.state.legacyStartDate}
-                    onLegacyDateChange={this.handleLegacyDateChange}
                     digitalPage={this.state.digitalPage}
                     digitalPerPage={this.state.digitalPerPage}
                     totalDigital={this.state.totalDigital}
+                    digitalTotalKnown={this.state.digitalTotalKnown}
                     onDigitalPageChange={this.handleDigitalPageChange}
                     activeMonth={this.state.activeMonth}
                     activeDay={this.state.activeDay}
