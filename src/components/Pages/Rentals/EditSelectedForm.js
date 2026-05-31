@@ -60,6 +60,17 @@ const AddParticipantModal = ({
     onYearChange,
 }) => (
     <Modal open={open} onClose={onClose}>
+        {(() => {
+            const trimmedSearch = searchQuery.trim();
+            const isDigitalShortSearch = !isMemberMode && trimmedSearch.length > 0 && trimmedSearch.length < 2;
+            const hasActiveSearch = isMemberMode ? trimmedSearch.length > 0 : trimmedSearch.length >= 2;
+            const loadingLabel = isLoadingMembers
+                ? 'Loading members...'
+                : (hasActiveSearch && !isMemberMode
+                    ? 'Searching waivers across selected dates...'
+                    : 'Updating results...');
+
+            return (
         <Paper className="add-participant-modal" sx={{
             position: 'absolute',
             top: '50%',
@@ -103,10 +114,12 @@ const AddParticipantModal = ({
                     sx={{ mb: 2 }}
                 />
                 <Typography variant="body2" className="search-status-text">
-                    {searchQuery.trim()
+                    {isDigitalShortSearch
+                        ? 'Type at least 2 characters to search digital waivers by name.'
+                        : trimmedSearch
                         ? (isMemberMode
-                            ? `Searching members for "${searchQuery.trim()}".`
-                            : `Searching all waivers in selected dates for "${searchQuery.trim()}".`)
+                            ? `Searching members for "${trimmedSearch}".`
+                            : `Searching all waivers in selected dates for "${trimmedSearch}".`)
                         : (isMemberMode
                             ? 'Type to search members.'
                             : 'Tap a waiver to add participant.')}
@@ -212,10 +225,10 @@ const AddParticipantModal = ({
                     ) : (
                         <ListItem>
                             <ListItemText
-                                primary={searchQuery.trim()
-                                    ? `No matches for "${searchQuery.trim()}".`
+                                primary={hasActiveSearch
+                                    ? `No matches for "${trimmedSearch}".`
                                     : 'No records found for current filters.'}
-                                secondary={searchQuery.trim()
+                                secondary={hasActiveSearch
                                     ? 'Try fewer characters or check spelling.'
                                     : 'Try adjusting month/day/year filters.'}
                             />
@@ -223,7 +236,7 @@ const AddParticipantModal = ({
                     )}
                 </List>
 
-                {!searchQuery.trim() ? (
+                {!hasActiveSearch ? (
                     <Box sx={{
                         position: 'sticky',
                         bottom: 0,
@@ -263,12 +276,14 @@ const AddParticipantModal = ({
                     >
                         <CircularProgress size={28} />
                         <Typography variant="caption" sx={{ mt: 1 }}>
-                            Updating results...
+                            {loadingLabel}
                         </Typography>
                     </Box>
                 )}
             </Box>
         </Paper>
+            );
+        })()}
     </Modal>
 );
 
@@ -808,10 +823,23 @@ class EditSelectedForm extends Component {
             const startTimestamp = startDate.getTime();
             const endTimestamp = endDate.getTime();
             const searchTerm = this.state.searchQuery.trim().toLowerCase();
-            const monthKey = this.getMonthKeyIfSpecific();
+            const monthKeysForSearch = this.getSearchMonthKeysForRange();
 
-            if (searchTerm && monthKey) {
-                const searchedWaivers = await this.fetchDigitalSearchResults(monthKey, searchTerm, startTimestamp, endTimestamp);
+            if (searchTerm.length >= 2 && monthKeysForSearch.length > 0) {
+                const searchResultsByMonth = await Promise.all(
+                    monthKeysForSearch.map((key) =>
+                        this.fetchDigitalSearchResults(key, searchTerm, startTimestamp, endTimestamp)
+                    )
+                );
+                const mergedResults = searchResultsByMonth.flat();
+                const uniqueByRef = new Map();
+                mergedResults.forEach((item) => {
+                    if (!uniqueByRef.has(item.ref)) {
+                        uniqueByRef.set(item.ref, item);
+                    }
+                });
+                const searchedWaivers = Array.from(uniqueByRef.values())
+                    .sort((a, b) => b.date.getTime() - a.date.getTime());
                 this.setState({
                     waivers: searchedWaivers,
                     totalDigital: searchedWaivers.length,
@@ -864,6 +892,25 @@ class EditSelectedForm extends Component {
         }
         const monthKey = String(activeMonth).padStart(2, '0');
         return `${activeYear}-${monthKey}`;
+    };
+
+    getSearchMonthKeysForRange = () => {
+        const { activeMonth, activeYear } = this.state;
+        const allYearsValue = new Date().getFullYear() + 1;
+
+        if (activeYear === allYearsValue) {
+            // Avoid fanning out across many years for now; use non-indexed fallback path.
+            return [];
+        }
+
+        if (activeMonth === 13) {
+            return Array.from({ length: 12 }, (_, index) =>
+                `${activeYear}-${String(index + 1).padStart(2, '0')}`
+            );
+        }
+
+        const monthKey = String(activeMonth).padStart(2, '0');
+        return [`${activeYear}-${monthKey}`];
     };
 
     getMonthlyDigitalCountIfApplicable = async () => {
