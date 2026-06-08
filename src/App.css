@@ -1420,6 +1420,108 @@ p.error-text-rp {
   max-width: none !important;
 }
 
+.map-page-shell {
+  padding-bottom: 3rem;
+}
+
+.map-intro-card,
+.map-viewer-card {
+  background: linear-gradient(180deg, #12171d 0%, #0f141a 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  color: #f4f7fb;
+}
+
+.map-intro-card {
+  padding: 1.5rem 1.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.map-intro-copy {
+  max-width: 820px;
+}
+
+.map-eyebrow {
+  margin-bottom: 0.45rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.78rem;
+  color: #78afff;
+}
+
+.map-title {
+  margin-bottom: 0.75rem;
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  color: #f4f7fb;
+}
+
+.map-lead {
+  margin: 0;
+  font-size: 1.02rem;
+  line-height: 1.7;
+  color: #b5c0ce;
+}
+
+.map-viewer-card {
+  padding: 1.25rem;
+}
+
+.map-viewer-header {
+  margin-bottom: 1rem;
+}
+
+.map-card-title {
+  margin-bottom: 0.35rem;
+  color: #f4f7fb;
+}
+
+.map-card-copy {
+  margin: 0;
+  color: #9fb0c4;
+}
+
+.map-magnifier-shell {
+  background: #0b0d10;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 0.75rem;
+}
+
+.map-magnifier-shell .img-map {
+  border-radius: 12px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.map-magnifier-shell .img-map > div {
+  background: #0b0d10 !important;
+}
+
+.map-magnifier-shell .img-map > div:first-child {
+  width: 100% !important;
+}
+
+.map-magnifier-shell .img-map img {
+  display: block;
+  border-radius: 12px;
+}
+
+.map-magnifier-shell .img-map img:first-of-type {
+  width: 100%;
+  height: auto;
+}
+
+@media (max-width: 991px) {
+  .map-intro-card {
+    padding: 1.25rem 1.35rem;
+  }
+
+  .map-viewer-card {
+    padding: 1rem;
+  }
+}
+
 .waiver-intro-card,
 .waiver-agreement-card,
 .waiver-form-shell,
