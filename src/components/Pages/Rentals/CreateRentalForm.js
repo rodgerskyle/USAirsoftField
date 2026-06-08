@@ -324,7 +324,7 @@ class CreateRentalForm extends Component {
                                         helperText={rentalnameError}
                                         required
                                         sx={{
-                                            backgroundColor: '#fff',
+                                            backgroundColor: 'transparent',
                                             borderRadius: '4px',
                                             marginBottom: '1rem'
                                         }}
@@ -339,7 +339,7 @@ class CreateRentalForm extends Component {
                                         helperText={numparticipantsError}
                                         required
                                         sx={{
-                                            backgroundColor: '#fff',
+                                            backgroundColor: 'transparent',
                                             borderRadius: '4px',
                                             marginBottom: '1rem'
                                         }}
@@ -462,7 +462,9 @@ const SuccessScreen = ({ message }) => (
             textAlign: 'center',
             maxWidth: 600,
             margin: '40px auto',
-            backgroundColor: 'rgba(255, 255, 255, 0.9)'
+            backgroundColor: '#12171d',
+            color: '#f4f7fb',
+            border: '1px solid rgba(255,255,255,0.08)'
         }}
     >
         <CheckCircle
@@ -476,7 +478,7 @@ const SuccessScreen = ({ message }) => (
             variant="h5"
             sx={{
                 mb: 2,
-                color: 'text.primary',
+                color: '#f4f7fb',
                 fontWeight: 500
             }}
         >
@@ -486,7 +488,7 @@ const SuccessScreen = ({ message }) => (
             variant="body1"
             sx={{
                 mb: 3,
-                color: 'text.secondary'
+                color: '#9fb0c4'
             }}
         >
             {message}

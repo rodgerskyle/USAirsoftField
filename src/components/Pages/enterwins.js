@@ -127,51 +127,55 @@ class EnterWins extends Component {
 
     render() {
         return (
-            <div className="background-static-all">
+            <div className="admin-container admin-compact-page">
                 <Helmet>
                     <title>US Airsoft Field: Enter Wins</title>
                 </Helmet>
                 {!this.state.loading ?
-                <Container>
-                    <h2 className="admin-header">Enter Wins</h2>
-                    <Breadcrumb className="admin-breadcrumb">
-                        <LinkContainer to="/admin">
-                            <Breadcrumb.Item>Admin</Breadcrumb.Item>
-                        </LinkContainer>
-                        <Breadcrumb.Item active>Enter Wins</Breadcrumb.Item>
-                    </Breadcrumb>
-                    <Row className="admin-row-points">
-                        <Form id="formBox">
-                            <Col>
-                                <Form.Group controlId="usernameBox">
-                                    <Form.Label>Username</Form.Label>
-                                    <Form.Control onChange={this.handleChange}
-                                        value={this.state.value}
-                                        autoFocus={true}
-                                        autoComplete="off"
-                                        className="form-input-admin"
-                                        placeholder="Enter username to add points to" />
-                                    </Form.Group>
-                                </Col>
-                            </Form>
-                            <Col className="admin-col-button-points">
-                                <Button className="button-submit-admin" type="button" id="register" variant="outline-success" 
-                                onClick={(e) => {
-                                    this.updateUser(e);
-                                }}>
-                                    Submit
-                                </Button>
-                            </Col>
-                    </Row>
-                    <Row>
-                        <Col>
-                            <Card className="status-card-admin admin-cards">
+                <Container fluid className="admin-content">
+                    <div className="admin-page-header">
+                        <h2 className="admin-header">Enter Wins</h2>
+                        <Breadcrumb className="admin-breadcrumb admin-page-breadcrumb">
+                            <LinkContainer to="/admin">
+                                <Breadcrumb.Item>Admin</Breadcrumb.Item>
+                            </LinkContainer>
+                            <Breadcrumb.Item active>Enter Wins</Breadcrumb.Item>
+                        </Breadcrumb>
+                    </div>
+                    <Row className="g-3">
+                        <Col lg={12}>
+                            <Card className="admin-panel-card admin-points-card">
+                                <Card.Body>
+                                    <Form id="formBox" className="admin-points-form">
+                                        <Form.Group controlId="usernameBox" className="admin-points-field">
+                                            <Form.Label>Username</Form.Label>
+                                            <Form.Control onChange={this.handleChange}
+                                                value={this.state.value}
+                                                autoFocus={true}
+                                                autoComplete="off"
+                                                className="form-input-admin"
+                                                placeholder="Enter username to add points to" />
+                                        </Form.Group>
+                                        <div className="admin-submit-row">
+                                            <Button className="button-submit-admin" type="button" id="register" variant="outline-success"
+                                            onClick={(e) => {
+                                                this.updateUser(e);
+                                            }}>
+                                                Submit
+                                            </Button>
+                                        </div>
+                                    </Form>
+                                </Card.Body>
+                            </Card>
+                        </Col>
+                        <Col lg={12}>
+                            <Card className="status-card-admin admin-panel-card admin-status-card">
                                 <Card.Header>Status Box</Card.Header>
                                 <StatusBox updates={this.state.statusBox}/>
                             </Card>
                         </Col>
                     </Row>
-                    </Container>
+                </Container>
                 : <Row className="justify-content-row padding-5px"><Spinner animation="border" /></Row>}
             </div>
         );

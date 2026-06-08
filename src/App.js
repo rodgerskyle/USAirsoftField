@@ -1,6 +1,6 @@
 import React from 'react';
 import './App.css';
-import { BrowserRouter as Router, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from "react-router-dom";
 import Login from "./Login"
 import Navigation from "./Navigation"
 import Footer from "./components/Pages/Footer";
@@ -65,7 +65,7 @@ const App = () => (
           <EmailOptOut {...props} />
         )}
       ></Route>
-      <Route exact path="/events" element={<PartiesAndEvents />} />
+      <Route exact path="/events" element={<Navigate to="/pricing" replace />} />
       <Route exact path="/schedule" element={<Schedule />} />
       <Route exact path="/map" element={<Map />} />
       <Route exact path="/waiver" element={<Waiver />} />
@@ -116,7 +116,8 @@ const App = () => (
           <Leaderboard {...props} />
         )}
       ></Route>
-      <Route exact path="/information/pricing" element={<Pricing />} />
+      <Route exact path="/pricing" element={<Pricing />} />
+      <Route exact path="/information/pricing" element={<Navigate to="/pricing" replace />} />
       <Route exact path="/home" element={<Home />} />
       <Route exact path="/" element={<Home />} />
       <Route element={<PageNotFound />} />

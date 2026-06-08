@@ -3,7 +3,6 @@ import { Table } from 'react-bootstrap/';
 import '../../App.css';
 
 import { Container, Row, Col, OverlayTrigger, Tooltip, Spinner, Dropdown } from 'react-bootstrap/';
-import BootstrapSwitchButton from 'bootstrap-switch-button-react';
 
 import ranks from '../constants/ranks';
 import rankimages from '../constants/rankimgs';
@@ -279,6 +278,8 @@ class Leaderboards extends Component {
 
     render() {
         const { users, loading, getRankState, numPages, curPage, currentMonth, usersPerPage, currentYear, months, years, tv, usersObject } = this.state;
+        const pagedUsers = users.slice((curPage - 1) * usersPerPage, ((curPage - 1) * usersPerPage) + usersPerPage);
+        const currentUser = authUserSafe => authUserSafe ? usersObject?.[authUserSafe.uid] : null;
 
         return (
             <AuthUserContext.Consumer>
@@ -287,104 +288,142 @@ class Leaderboards extends Component {
                         <Helmet>
                             <title>US Airsoft Field: Leaderboards</title>
                         </Helmet>
-                        <Container className="leaderboard-page">
-                            <Row className={tv ? "row-header-tv-lb" : "row-header-lb"}>
-                                <Col xs={"auto"} className="col-header-lb vertical-divider-col-lb">
-                                    <h2 className="page-header-lb">Leaderboards</h2>
-                                </Col>
-                                <Col xs={4}>
-                                    <Row className={this.state.monthly ? "button-right-lb toggled-lb" : "button-right-lb not-toggled-lb"}>
-                                        <BootstrapSwitchButton
-                                            checked={!this.state.monthly}
-                                            onstyle="dark"
-                                            width={120}
-                                            onlabel='All Time'
-                                            offlabel='Monthly'
-                                            onChange={() => {
-                                                if (this.state.monthly) {
-                                                    this.setState({
-                                                        monthly: !this.state.monthly,
-                                                        users: users.sort((a, b) => (a.points < b.points ? 1 : -1))
-                                                    })
-                                                }
-                                                else
-                                                    this.setState({
-                                                        monthly: !this.state.monthly,
-                                                        currentMonth: new Date().getMonth(),
-                                                        users: users.sort((a, b) => this.sortArray(a, b, new Date().getMonth(), currentYear))
-                                                    })
-                                            }}
-                                        />
-                                    </Row>
-                                </Col>
-                                {this.state.monthly === true && !tv ?
-                                    <Col className="col-dropdown-months-lb" md={6}>
-                                        <Row className="row-dropdown-months-lb">
-                                            <Col xs={"auto"}>
-                                                <Dropdown className="dropdown-lb">
-                                                    <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components">
-                                                        Month: {months[currentMonth]}
-                                                    </Dropdown.Toggle>
-                                                    <Dropdown.Menu as={CustomMenu} className="dropdown-waiverlookup">
-                                                        {months.map((month, i) => (
-                                                            <Dropdown.Item key={i} eventKey={i} active={i === currentMonth}
-                                                                onClick={() => {
-                                                                    this.setState({
-                                                                        currentMonth: i,
-                                                                        users: users.sort((a, b) => this.sortArray(a, b, i, currentYear))
-                                                                    })
-                                                                }
-                                                                }>
-                                                                {month}
-                                                            </Dropdown.Item>
-                                                        ))}
-                                                    </Dropdown.Menu>
-                                                </Dropdown>
-                                            </Col>
-                                            <Col xs={"auto"}>
-                                                <Dropdown className="dropdown-lb">
-                                                    <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components">
-                                                        Year: {currentYear}
-                                                    </Dropdown.Toggle>
-                                                    <Dropdown.Menu as={CustomMenu} className="dropdown-waiverlookup">
-                                                        {years.map((year, i) => (
-                                                            <Dropdown.Item eventKey={i} key={i} active={year === currentYear}
-                                                                onClick={() => this.setState({
-                                                                    currentYear: year,
-                                                                    users: users.sort((a, b) => this.sortArray(a, b, currentMonth, year))
-                                                                })}>
-                                                                {year}
-                                                            </Dropdown.Item>
-                                                        ))}
-                                                    </Dropdown.Menu>
-                                                </Dropdown>
-                                            </Col>
-                                        </Row>
-                                    </Col> : null}
-                            </Row>
-                            <Row className="row-pagination-lb">
-                                <Col className="pagination-col-lb">
-                                    <Pagination count={numPages} page={curPage} onChange={(e, val) => this.handleClick(val)}
-                                        showFirstButton showLastButton color="primary" variant="outlined" shape="rounded" size={isMobile ? 'small' : 'medium'} />
-                                </Col>
-                            </Row>
+                        <Container className="leaderboard-page leaderboard-modern-page">
+                            <div className="leaderboard-modern-hero leaderboard-modern-hero-compact">
+                                <div className="leaderboard-hero-copy">
+                                    <p className="leaderboard-eyebrow">Competitive Rankings</p>
+                                    <h2 className="page-header-lb leaderboard-title-modern">Leaderboards</h2>
+                                    <p className="leaderboard-hero-text">
+                                        Track all-time standings, compare monthly performance, and see where you rank at US Airsoft.
+                                    </p>
+                                </div>
+                                <div className="leaderboard-filter-card leaderboard-filter-card-compact">
+                                    <div className="leaderboard-filter-top">
+                                        <span className="leaderboard-filter-label">View</span>
+                                        <div className="leaderboard-view-toggle">
+                                            <button
+                                                type="button"
+                                                className={`leaderboard-view-button ${!this.state.monthly ? 'active' : ''}`}
+                                                onClick={() => {
+                                                    if (this.state.monthly) {
+                                                        this.setState({
+                                                            monthly: false,
+                                                            users: users.sort((a, b) => (a.points < b.points ? 1 : -1))
+                                                        })
+                                                    }
+                                                }}
+                                            >
+                                                All Time
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className={`leaderboard-view-button ${this.state.monthly ? 'active' : ''}`}
+                                                onClick={() => {
+                                                    if (!this.state.monthly) {
+                                                        this.setState({
+                                                            monthly: true,
+                                                            currentMonth: new Date().getMonth(),
+                                                            users: users.sort((a, b) => this.sortArray(a, b, new Date().getMonth(), currentYear))
+                                                        })
+                                                    }
+                                                }}
+                                            >
+                                                Monthly
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {this.state.monthly === true && !tv ?
+                                        <div className="leaderboard-filter-row">
+                                            <Dropdown className="dropdown-lb leaderboard-modern-dropdown">
+                                                <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components">
+                                                    Month: {months[currentMonth]}
+                                                </Dropdown.Toggle>
+                                                <Dropdown.Menu as={CustomMenu} className="dropdown-waiverlookup">
+                                                    {months.map((month, i) => (
+                                                        <Dropdown.Item key={i} eventKey={i} active={i === currentMonth}
+                                                            onClick={() => {
+                                                                this.setState({
+                                                                    currentMonth: i,
+                                                                    users: users.sort((a, b) => this.sortArray(a, b, i, currentYear))
+                                                                })
+                                                            }
+                                                            }>
+                                                            {month}
+                                                        </Dropdown.Item>
+                                                    ))}
+                                                </Dropdown.Menu>
+                                            </Dropdown>
+                                            <Dropdown className="dropdown-lb leaderboard-modern-dropdown">
+                                                <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components">
+                                                    Year: {currentYear}
+                                                </Dropdown.Toggle>
+                                                <Dropdown.Menu as={CustomMenu} className="dropdown-waiverlookup">
+                                                    {years.map((year, i) => (
+                                                        <Dropdown.Item eventKey={i} key={i} active={year === currentYear}
+                                                            onClick={() => this.setState({
+                                                                currentYear: year,
+                                                                users: users.sort((a, b) => this.sortArray(a, b, currentMonth, year))
+                                                            })}>
+                                                            {year}
+                                                        </Dropdown.Item>
+                                                    ))}
+                                                </Dropdown.Menu>
+                                            </Dropdown>
+                                        </div> : null}
+                                </div>
+                            </div>
+
+                            {!loading && (
+                                <>
+                                    <div className="leaderboard-compact-bar">
+                                        <div className="leaderboard-compact-metrics">
+                                            <div className="leaderboard-compact-pill">
+                                                <span className="leaderboard-compact-label">Players</span>
+                                                <strong>{users.length}</strong>
+                                            </div>
+                                            <div className="leaderboard-compact-pill">
+                                                <span className="leaderboard-compact-label">Mode</span>
+                                                <strong>{this.state.monthly ? `${months[currentMonth]} ${currentYear}` : 'All Time'}</strong>
+                                            </div>
+                                            {authUser && currentUser(authUser) && !currentUser(authUser).roles && (
+                                                <div className="leaderboard-compact-pill leaderboard-compact-pill-highlight">
+                                                    <span className="leaderboard-compact-label">Your Rank</span>
+                                                    <strong>#{(this.findRanking(authUser.uid) ?? -1) + 1}</strong>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="leaderboard-table-shell">
+                                        <div className="leaderboard-table-header">
+                                            <div>
+                                                <h3 className="leaderboard-table-title">Full Standings</h3>
+                                                <p className="leaderboard-table-copy">
+                                                    {this.state.monthly ? `Showing ${months[currentMonth]} ${currentYear} results.` : 'Showing all-time player rankings.'}
+                                                </p>
+                                            </div>
+                                            <div className="leaderboard-pagination-top">
+                                                <Pagination count={numPages} page={curPage} onChange={(e, val) => this.handleClick(val)}
+                                                    showFirstButton showLastButton color="primary" variant="outlined" shape="rounded" size={isMobile ? 'small' : 'medium'} />
+                                            </div>
+                                        </div>
+                                        <UserList users={pagedUsers} getRank={getRankState}
+                                            monthly={this.state.monthly} currentMonth={currentMonth} currentYear={currentYear} start={usersPerPage * (curPage - 1)}
+                                            findRanking={this.findRanking} personalUser={authUser ? usersObject[authUser.uid] : null} personalUid={authUser?.uid} tv={tv} />
+                                    </div>
+                                </>
+                            )}
+
                             {loading ?
                                 <Row className="justify-content-row">
                                     <Spinner animation="border" />
                                 </Row> :
-                                <Row>
-                                    <UserList users={users.slice((curPage - 1) * usersPerPage, ((curPage - 1) * usersPerPage) + usersPerPage)} getRank={getRankState}
-                                        monthly={this.state.monthly} currentMonth={currentMonth} currentYear={currentYear} start={usersPerPage * (curPage - 1)}
-                                        findRanking={this.findRanking} personalUser={authUser ? usersObject[authUser.uid] : null} personalUid={authUser?.uid} tv={tv} />
-                                </Row>
-                            }
-                            {!loading ?
-                                <Row className="row-bottom">
+                                <Row className="row-bottom leaderboard-pagination-bottom">
                                     <Col className="pagination-col-lb">
                                         <Pagination count={numPages} page={curPage} onChange={(e, val) => this.handleClick(val)}
                                             showFirstButton showLastButton color="primary" variant="outlined" shape="rounded" size={isMobile ? 'small' : 'medium'} />
                                     </Col>
-                                </Row> : null}
+                                </Row>}
                         </Container>
                     </div>
                 )}
@@ -397,7 +436,7 @@ class Leaderboards extends Component {
 function UserList({ users, getRank, monthly, currentMonth, currentYear, start, findRanking, personalUser, personalUid, tv }) {
     const rank = findRanking(personalUid)
     return (
-        <Table className="table table-striped table-dark table-lb">
+        <Table className="table table-striped table-dark table-lb leaderboard-modern-table">
             <thead className="header-lb">
                 <tr>
                     <th scope="col" className="header-th-lb">#</th>
@@ -475,7 +514,6 @@ function UserList({ users, getRank, monthly, currentMonth, currentYear, start, f
         </Table>
     )
 }
-
 
 // Count points given object, for match history
 function countPoints(obj, month, year) {

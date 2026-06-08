@@ -41,23 +41,25 @@ const config = {
 const SignUpPage = () => (
   <AuthUserContext.Consumer>
     {authUser => (
-      <div className="background-static-all">
+      <div className="admin-container admin-compact-page admin-signup-page">
         <Helmet>
           <title>US Airsoft Field: Account Signup</title>
         </Helmet>
-        <Container>
-          <Row className="header-rp">
-            <img src={logo} alt="US Airsoft logo" className="small-logo-home" />
-            <h2 className="page-header">New Member</h2>
-          </Row>
-          {authUser && !!authUser.roles[ROLES.ADMIN] ?
-            <Breadcrumb className="admin-breadcrumb">
-              <LinkContainer to="/admin">
-                <Breadcrumb.Item>Admin</Breadcrumb.Item>
-              </LinkContainer>
-              <Breadcrumb.Item active>New Member</Breadcrumb.Item>
-            </Breadcrumb>
-            : null}
+        <Container className="admin-content">
+          <div className="admin-page-header admin-signup-header">
+            <div className="admin-signup-heading">
+              <img src={logo} alt="US Airsoft logo" className="small-logo-home admin-signup-logo" />
+              <h2 className="page-header admin-header">New Member</h2>
+            </div>
+            {authUser && !!authUser.roles[ROLES.ADMIN] ?
+              <Breadcrumb className="admin-breadcrumb admin-page-breadcrumb">
+                <LinkContainer to="/admin">
+                  <Breadcrumb.Item>Admin</Breadcrumb.Item>
+                </LinkContainer>
+                <Breadcrumb.Item active>New Member</Breadcrumb.Item>
+              </Breadcrumb>
+              : null}
+          </div>
           <SignUpForm />
         </Container>
       </div>
@@ -363,31 +365,51 @@ class SignUpFormBase extends Component {
 
 
     return (
-      <div>
+      <div className="admin-signup-flow">
         {authorized || showLander ?
           !showLander ?
-            <div>
+            <div className="admin-signup-stage">
+              <div className="admin-signup-stepbar">
+                <div className={`admin-signup-step ${this.state.pageIndex === 0 ? 'active' : 'complete'}`}>
+                  <span className="admin-signup-step-number">1</span>
+                  <span className="admin-signup-step-label">Waiver</span>
+                </div>
+                <div className={`admin-signup-step ${this.state.pageIndex === 1 ? 'active' : ''}`}>
+                  <span className="admin-signup-step-number">2</span>
+                  <span className="admin-signup-step-label">Profile</span>
+                </div>
+              </div>
               <Row className="justify-content-row">
                 {this.state.pageIndex === 0 ?
                   <Col className="col-waiver">
-                    <Row className="justify-content-row waiver-row-rp">
-                      <img src={waiver} alt="US Airsoft waiver" className={!hideWaiver ? "waiver-rp" : "waiver-hidden-rp"} />
-                      <Row className="text-block-waiver-rp">
-                        <Button variant="outline-secondary" type="button" className={hideWaiver ? "button-hidden-rp" : ""}
-                          onClick={() => {
-                            this.setState({ hideWaiver: !hideWaiver })
-                          }}>
-                          {hideWaiver ? "Show Agreement" : "Hide Agreement"}
-                        </Button>
-                      </Row>
-                    </Row>
-                    <Row className={!hideWaiver ? "row-rp" : "row-rp waiver-input-rp"}>
-                      <h2 className="waiver-header-rp">
-                        Participant Information:
-                      </h2>
-                    </Row>
-                    <Row className="row-rp">
-                      <Form className="waiver-form-rp" autoComplete="off" onSubmit={e => { e.preventDefault(); }}>
+                    <div className="admin-signup-waiver-layout">
+                      <div className="admin-signup-panel admin-signup-preview-panel">
+                        <div className="admin-signup-panel-header">
+                          <div>
+                            <h3 className="admin-signup-panel-title">Waiver Agreement</h3>
+                            <p className="admin-signup-panel-copy">Review the waiver, then complete the participant information and signatures below.</p>
+                          </div>
+                          <Button variant="outline-secondary" type="button" className="button-hidden-rp admin-signup-toggle"
+                            onClick={() => {
+                              this.setState({ hideWaiver: !hideWaiver })
+                            }}>
+                            {hideWaiver ? "Show Agreement" : "Hide Agreement"}
+                          </Button>
+                        </div>
+                        {!hideWaiver ?
+                          <div className="admin-signup-waiver-image-shell">
+                            <img src={waiver} alt="US Airsoft waiver" className="waiver-rp" />
+                          </div>
+                          : null}
+                      </div>
+                      <div className="admin-signup-panel admin-signup-form-panel">
+                        <div className="admin-signup-panel-header">
+                          <div>
+                            <h2 className="waiver-header-rp admin-signup-panel-title">Participant Information</h2>
+                            <p className="admin-signup-panel-copy">This step collects the waiver details we need before creating the member profile.</p>
+                          </div>
+                        </div>
+                        <Form className="waiver-form-rp admin-signup-form-grid" autoComplete="off" onSubmit={e => { e.preventDefault(); }}>
                         <Row>
                           <Col>
                             <Form.Group>
@@ -551,9 +573,9 @@ class SignUpFormBase extends Component {
                           </Button>
                         </Row>
                         {!agecheck ?
-                          <div>
+                          <div className="admin-signup-guardian-section">
                             <Row className="justify-content-row">
-                              <h2 className="waiver-header-rp">
+                              <h2 className="waiver-header-rp admin-signup-panel-title">
                                 {"Guardian/Parent Information:"}
                               </h2>
                             </Row>
@@ -624,14 +646,23 @@ class SignUpFormBase extends Component {
                             </Row>
                           </div>
                           : null}
-                      </Form>
-                    </Row>
-                    <Row className="row-rp">
-                      {errorWaiver && <p className="error-text-rp">{errorWaiver}</p>}
-                    </Row>
+                        </Form>
+                        <Row className="row-rp">
+                          {errorWaiver && <p className="error-text-rp">{errorWaiver}</p>}
+                        </Row>
+                      </div>
+                    </div>
                   </Col>
                   :
-                  <Form className="form-rp" onSubmit={(e) => this.onSubmit(e, myProps)}>
+                  <div className="admin-signup-profile-layout">
+                    <div className="admin-signup-panel admin-signup-profile-panel">
+                      <div className="admin-signup-panel-header">
+                        <div>
+                          <h3 className="admin-signup-panel-title">Profile Setup</h3>
+                          <p className="admin-signup-panel-copy">Finish account creation with a password after the waiver information is complete.</p>
+                        </div>
+                      </div>
+                  <Form className="form-rp admin-signup-profile-form" onSubmit={(e) => this.onSubmit(e, myProps)}>
                     <Row>
                       {/* <Col> */}
                       {/* <Row className="cardpreview-row-rp">
@@ -750,47 +781,54 @@ class SignUpFormBase extends Component {
                       </Col>
                     </Row>
                   </Form>
+                  </div>
+                  </div>
                 }
               </Row>
-              <Row className="nav-row-rp">
-                <Button className="prev-button-rp" variant="info" type="button" disabled={this.state.pageIndex === 0}
-                  onClick={() => {
-                    if (this.state.pageIndex !== 0)
-                      this.setState({ pageIndex: this.state.pageIndex - 1, })
-                  }}>
-                  Previous
-                </Button>
-                <Button className="next-button-rp" variant="info" type="button" disabled={this.state.pageIndex === 1}
-                  onClick={() => {
-                    if (address === "" || fname === "" || lname === "" || email === "" || address === "" ||
-                      city === "" || state === "" || zipcode === "" || phone === "" || dob === "") {
-                      this.setState({ errorWaiver: "Please fill out all boxes with your information." })
-                    }
-                    else if ((pgname === "" || pgphone === "") && age < 18) {
-                      this.setState({ errorWaiver: "Please fill out all boxes with your information." })
-                    }
-                    else if (this.state.participantImg === null || (this.state.pgImg === null && age < 18)) {
-                      this.setState({ errorWaiver: "Please sign and save the signature in the box." })
-                    }
-                    else if (age < 8) {
-                      this.setState({ errorWaiver: "Participant must be older than 8 years." })
-                    }
-                    else if (age > 85) {
-                      this.setState({ errorWaiver: "Participant must be younger than 85 years." })
-                    }
-                    else if (this.state.pageIndex !== 1)
-                      this.setState({
-                        pageIndex: this.state.pageIndex + 1,
-                        errorWaiver: ""
-                      })
-                  }}>
-                  Next
-                </Button>
+              <Row className="nav-row-rp admin-signup-nav">
+                {this.state.pageIndex > 0 ?
+                  <Button className="prev-button-rp admin-signup-nav-button" variant="info" type="button"
+                    onClick={() => {
+                      this.setState({ pageIndex: this.state.pageIndex - 1 })
+                    }}>
+                    Back
+                  </Button>
+                  : <div className="admin-signup-nav-spacer" />
+                }
+                {this.state.pageIndex === 0 ?
+                  <Button className="next-button-rp admin-signup-nav-button" variant="info" type="button"
+                    onClick={() => {
+                      if (address === "" || fname === "" || lname === "" || email === "" || address === "" ||
+                        city === "" || state === "" || zipcode === "" || phone === "" || dob === "") {
+                        this.setState({ errorWaiver: "Please fill out all boxes with your information." })
+                      }
+                      else if ((pgname === "" || pgphone === "") && age < 18) {
+                        this.setState({ errorWaiver: "Please fill out all boxes with your information." })
+                      }
+                      else if (this.state.participantImg === null || (this.state.pgImg === null && age < 18)) {
+                        this.setState({ errorWaiver: "Please sign and save the signature in the box." })
+                      }
+                      else if (age < 8) {
+                        this.setState({ errorWaiver: "Participant must be older than 8 years." })
+                      }
+                      else if (age > 85) {
+                        this.setState({ errorWaiver: "Participant must be younger than 85 years." })
+                      }
+                      else {
+                        this.setState({
+                          pageIndex: this.state.pageIndex + 1,
+                          errorWaiver: ""
+                        })
+                      }
+                    }}>
+                    Continue to Profile
+                  </Button>
+                  : null}
               </Row>
             </div> :
-            <Container className="notice-text-container">
-              <Row className="row-success-rp">
-                <Col className="col-rp">
+            <Container className="admin-content">
+              <Row className="row-success-rp admin-signup-success-shell">
+                <Col className="col-rp admin-signup-success-card">
                   <Row className="row-notice">
                     <h2 className="page-header">Successful Member Registration.</h2>
                   </Row>
@@ -798,7 +836,7 @@ class SignUpFormBase extends Component {
                     <p className="notice-text-g">Please let your U.S. Airsoft employee know that you have finished.</p>
                   </Row>
                   <Row className="justify-content-row">
-                    <Button className="next-button-rp" variant="info" type="button"
+                    <Button className="next-button-rp admin-signup-nav-button" variant="info" type="button"
                       disabled={!emailAdded} onClick={() => {
                         this.setState({ showLander: false })
                         this.setState({ ...INITIAL_STATE, status: "Completed", authorized: false, });
@@ -811,8 +849,8 @@ class SignUpFormBase extends Component {
               </Row>
             </Container>
           :
-          <div className="div-pin-code-dashboard">
-            <Container className="container-pin-code-dashboard">
+          <div className="admin-pin-shell">
+            <Container className="admin-pin-panel">
               <Row className="justify-content-row row-img-logo-dashboard">
                 <img src={logo} alt="US Airsoft logo" className="img-logo-dashboard" />
               </Row>

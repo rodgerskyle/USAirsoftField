@@ -225,21 +225,23 @@ class UserOptions extends Component {
         return (
             <AuthUserContext.Consumer>
                 {authUser =>
-                    <div className="background-static-all">
+                    <div className="admin-container admin-compact-page">
                         <Helmet>
                             <title>{`US Airsoft Field: ${this.state.username} Options`}</title>
                         </Helmet>
                         {!this.state.loading ?
-                            <Container>
+                            <Container className="admin-content">
+                                <div className="admin-page-header">
                                 <h2 className="admin-header">User Options</h2>
-                                <Breadcrumb className="admin-breadcrumb">
+                                <Breadcrumb className="admin-breadcrumb admin-page-breadcrumb">
                                     <LinkContainer to="/admin">
                                         <Breadcrumb.Item>Admin</Breadcrumb.Item>
                                     </LinkContainer>
                                     <Breadcrumb.Item active>User Options</Breadcrumb.Item>
                                 </Breadcrumb>
-                                <Row className="row-uo">
-                                    <Col md={4}>
+                                </div>
+                                <Row className="row-uo admin-user-options-card">
+                                    <Col md={4} className="admin-user-options-sidebar">
                                         <div className="team-single-img">
                                             <img className="profile-pic" src={this.state.profileicon} alt="" />
                                         </div>
@@ -249,7 +251,7 @@ class UserOptions extends Component {
                                             Remove
                                         </Button>
                                     </Col>
-                                    <Col>
+                                    <Col className="admin-user-options-main">
                                         <Row>
                                             <Col>
                                                 <Form>
@@ -386,7 +388,7 @@ class UserOptions extends Component {
                                         </Row>
                                     </Col>
                                 </Row>
-                                <Row className="row-buttons-uo">
+                                <Row className="row-buttons-uo admin-user-options-actions">
                                     <Button variant="outline-info" onClick={() => this.openWaiver()}>
                                         Open Waiver
                                     </Button>
@@ -406,7 +408,7 @@ class UserOptions extends Component {
                                         <p className="status-uo-admin">{this.state.status}</p>
                                         : null}
                                 </Row>
-                                {authUser && !!authUser.roles[ROLES.SUPER] ? <Row className="row-priv-buttons-uo">
+                                {authUser && !!authUser.roles[ROLES.SUPER] ? <Row className="row-priv-buttons-uo admin-user-options-actions">
                                     <Col md="auto">
                                         <Button className="button-options-style-admin"
                                             type="button" id="update" variant="primary" onClick={() => {

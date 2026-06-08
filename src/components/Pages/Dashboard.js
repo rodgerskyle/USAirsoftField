@@ -58,68 +58,65 @@ class WaiverDashboard extends Component {
 
   render() {
     return (
-      <div className="background-static-all">
+      <div className="admin-container admin-compact-page waiver-dashboard-shell">
         <Helmet>
           <title>US Airsoft Field: Waiver Dashboard</title>
         </Helmet>
         {this.state.authorized ?
-          <div>
-            <div className="admin-top">
-              <Container>
+          <Container className="admin-content waiver-dashboard-content">
+              <div className="admin-page-header">
                 <h2 className="admin-header">Waiver Dashboard</h2>
-                <Breadcrumb className="admin-breadcrumb">
+                <Breadcrumb className="admin-breadcrumb admin-page-breadcrumb">
                   <Breadcrumb.Item active>Dashboard</Breadcrumb.Item>
                 </Breadcrumb>
-              </Container>
-            </div>
-            <Container className="admin-container">
+              </div>
               <Row>
-                <Col className="admin-cards-container">
+                <Col className="waiver-dashboard-grid">
                   {/* First Row of Cards */}
-                  <Row className="admin-row">
-                    <Col lg={3} md={6} sm={12} className="admin-col">
-                      <Link to={"/dashboard/signup"} className="admin-link">
-                        <Card className="admin-card">
+                  <Row className="waiver-dashboard-row">
+                    <Col lg={3} md={6} sm={12} className="waiver-dashboard-col">
+                      <Link to={"/dashboard/signup"} className="waiver-dashboard-link">
+                        <Card className="waiver-dashboard-card">
                           <Card.Body>
-                            <div className="admin-card-content">
-                              <span className="admin-card-title">New Member</span>
-                              <i className="fa fa-angle-double-right admin-card-icon"></i>
+                            <div className="waiver-dashboard-card-content">
+                              <span className="waiver-dashboard-card-title">New Member</span>
+                              <i className="fa fa-angle-double-right waiver-dashboard-card-icon"></i>
                             </div>
                           </Card.Body>
                         </Card>
                       </Link>
                     </Col>
-                    <Col lg={3} md={6} sm={12} className="admin-col">
-                      <Link to={"/dashboard/renewal"} className="admin-link">
-                        <Card className="admin-card">
+                    <Col lg={3} md={6} sm={12} className="waiver-dashboard-col">
+                      <Link to={"/dashboard/renewal"} className="waiver-dashboard-link">
+                        <Card className="waiver-dashboard-card">
                           <Card.Body>
-                            <div className="admin-card-content">
-                              <span className="admin-card-title">Renew Member</span>
-                              <i className="fa fa-angle-double-right admin-card-icon"></i>
+                            <div className="waiver-dashboard-card-content">
+                              <span className="waiver-dashboard-card-title">Renew Member</span>
+                              <i className="fa fa-angle-double-right waiver-dashboard-card-icon"></i>
                             </div>
                           </Card.Body>
                         </Card>
                       </Link>
                     </Col>
-                    <Col lg={3} md={6} sm={12} className="admin-col">
-                      <Link to={"/dashboard/rentalform"} className="admin-link">
-                        <Card className="admin-card">
+                    <Col lg={3} md={6} sm={12} className="waiver-dashboard-col">
+                      <Link to={"/dashboard/rentalform"} className="waiver-dashboard-link">
+                        <Card className="waiver-dashboard-card">
                           <Card.Body>
-                            <div className="admin-card-content">
-                              <span className="admin-card-title">Rental Forms</span>
-                              <i className="fa fa-angle-double-right admin-card-icon"></i>
+                            <div className="waiver-dashboard-card-content">
+                              <span className="waiver-dashboard-card-title">Rental Forms</span>
+                              <i className="fa fa-angle-double-right waiver-dashboard-card-icon"></i>
                             </div>
                           </Card.Body>
                         </Card>
                       </Link>
                     </Col>
-                    <Col lg={3} md={6} sm={12} className="admin-col">
-                      <Link to={"/dashboard/birthday"} className="admin-link">
-                        <Card className="admin-card">
+                    <Col lg={3} md={6} sm={12} className="waiver-dashboard-col">
+                      <Link to={"/dashboard/birthday"} className="waiver-dashboard-link">
+                        <Card className="waiver-dashboard-card">
                           <Card.Body>
-                            <div className="admin-card-content">
-                              <span className="admin-card-title">Calendar</span>
-                              <i className="fa fa-angle-double-right admin-card-icon"></i>
+                            <div className="waiver-dashboard-card-content">
+                              <span className="waiver-dashboard-card-title">Calendar</span>
+                              <i className="fa fa-angle-double-right waiver-dashboard-card-icon"></i>
                             </div>
                           </Card.Body>
                         </Card>
@@ -127,50 +124,50 @@ class WaiverDashboard extends Component {
                     </Col>
                   </Row>
                   {/* Second Row of Cards */}
-                  <Row className="admin-row">
-                    <Col lg={3} md={6} sm={12} className="admin-col">
-                      <Link to={"/dashboard/waiverform"} className="admin-link">
-                        <Card className="admin-card">
+                  <Row className="waiver-dashboard-row">
+                    <Col lg={3} md={6} sm={12} className="waiver-dashboard-col">
+                      <Link to={"/dashboard/waiverform"} className="waiver-dashboard-link">
+                        <Card className="waiver-dashboard-card">
                           <Card.Body>
-                            <div className="admin-card-content">
-                              <span className="admin-card-title">Sign Waiver</span>
-                              <i className="fa fa-angle-double-right admin-card-icon"></i>
+                            <div className="waiver-dashboard-card-content">
+                              <span className="waiver-dashboard-card-title">Sign Waiver</span>
+                              <i className="fa fa-angle-double-right waiver-dashboard-card-icon"></i>
                             </div>
                           </Card.Body>
                         </Card>
                       </Link>
                     </Col>
-                    <Col lg={3} md={6} sm={12} className="admin-col">
-                      <Link to={"/dashboard/waiverlookup"} className="admin-link">
-                        <Card className="admin-card">
+                    <Col lg={3} md={6} sm={12} className="waiver-dashboard-col">
+                      <Link to={"/dashboard/waiverlookup"} className="waiver-dashboard-link">
+                        <Card className="waiver-dashboard-card">
                           <Card.Body>
-                            <div className="admin-card-content">
-                              <span className="admin-card-title">Search Waiver</span>
-                              <i className="fa fa-angle-double-right admin-card-icon"></i>
+                            <div className="waiver-dashboard-card-content">
+                              <span className="waiver-dashboard-card-title">Search Waiver</span>
+                              <i className="fa fa-angle-double-right waiver-dashboard-card-icon"></i>
                             </div>
                           </Card.Body>
                         </Card>
                       </Link>
                     </Col>
-                    <Col lg={3} md={6} sm={12} className="admin-col">
-                      <Link to={"/dashboard/scanwaiver"} className="admin-link">
-                        <Card className="admin-card">
+                    <Col lg={3} md={6} sm={12} className="waiver-dashboard-col">
+                      <Link to={"/dashboard/scanwaiver"} className="waiver-dashboard-link">
+                        <Card className="waiver-dashboard-card">
                           <Card.Body>
-                            <div className="admin-card-content">
-                              <span className="admin-card-title">Scan Waiver</span>
-                              <i className="fa fa-angle-double-right admin-card-icon"></i>
+                            <div className="waiver-dashboard-card-content">
+                              <span className="waiver-dashboard-card-title">Scan Waiver</span>
+                              <i className="fa fa-angle-double-right waiver-dashboard-card-icon"></i>
                             </div>
                           </Card.Body>
                         </Card>
                       </Link>
                     </Col>
-                    <Col lg={3} md={6} sm={12} className="admin-col">
-                      <Link to={"/dashboard/freegames"} className="admin-link">
-                        <Card className="admin-card">
+                    <Col lg={3} md={6} sm={12} className="waiver-dashboard-col">
+                      <Link to={"/dashboard/freegames"} className="waiver-dashboard-link">
+                        <Card className="waiver-dashboard-card">
                           <Card.Body>
-                            <div className="admin-card-content">
-                              <span className="admin-card-title">Check Free Games</span>
-                              <i className="fa fa-angle-double-right admin-card-icon"></i>
+                            <div className="waiver-dashboard-card-content">
+                              <span className="waiver-dashboard-card-title">Check Free Games</span>
+                              <i className="fa fa-angle-double-right waiver-dashboard-card-icon"></i>
                             </div>
                           </Card.Body>
                         </Card>
@@ -179,11 +176,10 @@ class WaiverDashboard extends Component {
                   </Row>
                 </Col>
               </Row>
-            </Container>
-          </div>
+          </Container>
           :
-          <div className="div-pin-code-dashboard">
-            <Container className="container-pin-code-dashboard">
+          <div className="admin-pin-shell">
+            <Container className="admin-pin-panel">
               <Row className="justify-content-row row-img-logo-dashboard">
                 <img src={logo} alt="US Airsoft logo" className="img-logo-dashboard" />
               </Row>

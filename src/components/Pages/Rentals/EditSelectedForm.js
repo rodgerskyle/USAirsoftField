@@ -81,8 +81,10 @@ const AddParticipantModal = ({
             maxHeight: '92vh',
             overflow: 'auto',
             p: 3,
-            border: '1px solid rgba(15, 23, 42, 0.08)',
-            boxShadow: '0 18px 40px rgba(15, 23, 42, 0.18)'
+            bgcolor: '#111821',
+            color: '#f4f7fb',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            boxShadow: '0 18px 40px rgba(0, 0, 0, 0.32)'
         }}>
             <div className="modal-header">
                 <Typography variant="h6">Add Participant</Typography>
@@ -240,9 +242,9 @@ const AddParticipantModal = ({
                     <Box sx={{
                         position: 'sticky',
                         bottom: 0,
-                        bgcolor: 'background.paper',
+                        bgcolor: '#111821',
                         borderTop: 1,
-                        borderColor: 'divider'
+                        borderColor: 'rgba(255,255,255,0.08)'
                     }}>
                         <TablePagination
                             component="div"
@@ -268,7 +270,7 @@ const AddParticipantModal = ({
                             flexDirection: 'column',
                             justifyContent: 'center',
                             alignItems: 'center',
-                            background: 'rgba(255,255,255,0.72)',
+                            background: 'rgba(11,13,16,0.72)',
                             backdropFilter: 'blur(1px)',
                             zIndex: 5,
                             borderRadius: 1
@@ -294,7 +296,7 @@ const TransactionDialog = ({ open, onClose, onSubmit, error, value, onChange }) 
             onClose={onClose}
             aria-labelledby="transaction-dialog"
         >
-            <Paper className="add-participant-modal">
+            <Paper className="add-participant-modal" sx={{ bgcolor: '#111821', color: '#f4f7fb' }}>
                 <div className="modal-header">
                     <Typography variant="h6">Complete Rental Form</Typography>
                     <IconButton onClick={onClose}>
@@ -488,7 +490,9 @@ const SizeEditModal = ({ open, onClose, currentSize, onSave }) => {
                 left: '50%',
                 transform: 'translate(-50%, -50%)',
                 width: '300px',
-                p: 3
+                p: 3,
+                bgcolor: '#111821',
+                color: '#f4f7fb'
             }}>
                 <Typography variant="h6" mb={2}>Edit Group Size</Typography>
                 <TextField
@@ -558,7 +562,7 @@ const InventoryEditModal = ({ open, onClose, available, onSave, currentOptions }
 
     return (
         <Modal open={open} onClose={onClose}>
-            <Paper sx={{
+            <Paper className="inventory-edit-modal" sx={{
                 position: 'absolute',
                 top: '50%',
                 left: '50%',
@@ -566,7 +570,9 @@ const InventoryEditModal = ({ open, onClose, available, onSave, currentOptions }
                 width: '400px',
                 p: 3,
                 maxHeight: '90vh',
-                overflow: 'auto'
+                overflow: 'auto',
+                bgcolor: '#111821',
+                color: '#f4f7fb'
             }}>
                 <Typography variant="h6" mb={2}>Edit Available Inventory</Typography>
 
