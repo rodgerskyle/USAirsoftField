@@ -1420,10 +1420,6 @@ p.error-text-rp {
   max-width: none !important;
 }
 
-.waiver-experience {
-  margin-bottom: 2rem;
-}
-
 .waiver-intro-card,
 .waiver-agreement-card,
 .waiver-form-shell,
@@ -1478,7 +1474,6 @@ p.error-text-rp {
 
 .waiver-agreement-card {
   padding: 1.25rem;
-  margin-bottom: 2rem;
 }
 
 .waiver-agreement-header {
@@ -1500,12 +1495,17 @@ p.error-text-rp {
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 1rem;
+  display: flex;
+  justify-content: center;
 }
 
 .waiver-agreement-image {
   display: block;
-  width: 100%;
+  width: min(100%, 920px);
   height: auto;
+  margin: 0 auto;
+  border-radius: 10px;
 }
 
 .waiver-form-shell {
@@ -4719,8 +4719,8 @@ a.nav-link:hover {
   transform: translate(14px, -6px) scale(0.85);
 }
 
-.dialog-create-birthday .content-create-birthday .MuiFormControl-root .MuiOutlinedInput-root textarea + fieldset legend,
-.dialog-edit-birthday .content-create-birthday .MuiFormControl-root .MuiOutlinedInput-root textarea + fieldset legend {
+.dialog-create-birthday .content-create-birthday .MuiFormControl-root .MuiOutlinedInput-root textarea+fieldset legend,
+.dialog-edit-birthday .content-create-birthday .MuiFormControl-root .MuiOutlinedInput-root textarea+fieldset legend {
   max-width: 1000px;
 }
 
@@ -4746,6 +4746,7 @@ a.nav-link:hover {
 }
 
 @media (max-width: 767px) {
+
   .dialog-create-birthday .MuiDialogTitle-root,
   .dialog-edit-birthday .MuiDialogTitle-root {
     padding: 16px 18px 14px;
@@ -7050,8 +7051,8 @@ a.nav-link:hover,
 }
 
 .public-footer-subscribe {
-  width: min(560px, 100%);
-  margin: 0 auto 1.25rem;
+  display: flex;
+  justify-content: center;
 }
 
 .public-footer-subscribe .form-control,

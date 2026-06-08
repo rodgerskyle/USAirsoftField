@@ -231,11 +231,11 @@ const Waiver = (props) => {
                                 <Col xl={10}>
                                     <div className="waiver-intro-card">
                                         <div className="waiver-intro-copy">
-                                            <p className="waiver-eyebrow">Digital Waiver</p>
-                                            <h1 className="waiver-title">Complete your waiver before you play.</h1>
+                                            <p className="waiver-eyebrow">Online Waiver</p>
+                                            <h1 className="waiver-title">Fill out your waiver before you arrive.</h1>
                                             <p className="waiver-lead">
-                                                This form works well on in-store iPads and at home. Review the agreement,
-                                                fill out your information, and save your signature before submitting.
+                                                You can complete this waiver at home or on one of our iPads in the store.
+                                                Review the agreement, fill in your information, and sign before submitting.
                                             </p>
                                         </div>
                                         <div className="waiver-intro-actions">
@@ -262,7 +262,7 @@ const Waiver = (props) => {
                                                 <div>
                                                     <h2 className="waiver-card-title">Agreement Preview</h2>
                                                     <p className="waiver-card-copy">
-                                                        Customers can review the agreement here, and staff can open the full PDF if needed.
+                                                        Review the waiver here, or open the full printable version if you need it.
                                                     </p>
                                                 </div>
                                             </div>
@@ -338,7 +338,7 @@ const Waiver = (props) => {
                                     <div className="waiver-form-section">
                                         <div className="waiver-section-heading">
                                             <h2 className="waiver-section-title">Participant Information</h2>
-                                            <p className="waiver-section-copy">Enter the player’s contact and address information exactly as needed for check-in.</p>
+                                            <p className="waiver-section-copy">Enter the player’s contact and address information.</p>
                                         </div>
                                         <Row>
                                             <Col md={6}>
