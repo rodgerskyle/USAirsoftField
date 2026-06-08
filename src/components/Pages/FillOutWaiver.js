@@ -37,23 +37,25 @@ const dataURLtoBlob = (dataURL) => {
 const WaiverPage = () => (
   <AuthUserContext.Consumer>
     {authUser => (
-      <div className="background-static-all">
+      <div className="admin-container admin-compact-page admin-sign-waiver-page">
         <Helmet>
           <title>US Airsoft Field: Fill Out Waiver</title>
         </Helmet>
-        <Container>
-          {/* <Row className="header-rp">
-            <img src={logo} alt="US Airsoft logo" className="small-logo-home" />
-            <h2 className="page-header">Waiver Form</h2>
-          </Row> */}
-          {authUser && !!authUser.roles[ROLES.ADMIN] ?
-            <Breadcrumb className="admin-breadcrumb">
-              <LinkContainer to="/admin">
-                <Breadcrumb.Item>Admin</Breadcrumb.Item>
-              </LinkContainer>
-              <Breadcrumb.Item active>Fill Out Waiver</Breadcrumb.Item>
-            </Breadcrumb>
-            : null}
+        <Container className="admin-content">
+          <div className="admin-page-header admin-signup-header">
+            <div className="admin-signup-heading">
+              <img src={logo} alt="US Airsoft logo" className="small-logo-home admin-signup-logo" />
+              <h2 className="page-header admin-header">Sign Waiver</h2>
+            </div>
+            {authUser && !!authUser.roles[ROLES.ADMIN] ?
+              <Breadcrumb className="admin-breadcrumb admin-page-breadcrumb">
+                <LinkContainer to="/admin">
+                  <Breadcrumb.Item>Admin</Breadcrumb.Item>
+                </LinkContainer>
+                <Breadcrumb.Item active>Fill Out Waiver</Breadcrumb.Item>
+              </Breadcrumb>
+              : null}
+          </div>
           <WaiverForm />
         </Container>
       </div>

@@ -13,17 +13,24 @@ class Rules extends Component {
 
     render() {
         return (
-            <div className="background-static-all">
+            <div className="public-page-shell">
                 <Helmet>
                     <title>US Airsoft Field: Rules</title>
                 </Helmet>
-                <h2 className="page-header">Game and Safety Rules</h2>
-                <Container>
-                    <Row className="row-update-rules"><p>Last Updated: 1/1/2020</p></Row>
+                <section className="public-section public-reference-section">
+                <div className="public-section-heading">
+                    <p className="public-section-kicker">Game Info</p>
+                    <h1 className="public-section-title">Game and Safety Rules</h1>
+                    <p className="public-section-copy">
+                        Review field rules, safety requirements, and arena procedures before you arrive so everyone has a smoother day.
+                    </p>
+                </div>
+                <Container fluid>
+                    <Row className="row-update-rules public-meta-row"><p>Last Updated: 1/1/2020</p></Row>
                     <Tab.Container id="rules-list-group-tabs" defaultActiveKey="#link1">
-                        <Row>
-                            <Col sm={4}>
-                            <ListGroup>
+                        <Row className="public-tab-layout">
+                            <Col lg={4} className="mb-4 mb-lg-0">
+                            <ListGroup className="public-tab-nav">
                                 <ListGroup.Item action href="#link1">
                                 Facility Rules
                                 </ListGroup.Item>
@@ -47,7 +54,8 @@ class Rules extends Component {
                                 </ListGroup.Item>
                             </ListGroup>
                             </Col>
-                            <Col sm={8}>
+                            <Col lg={8}>
+                            <div className="public-tab-panel">
                             <Tab.Content>
                                 <Tab.Pane eventKey="#link1">
                                     <FacilityRules />
@@ -71,10 +79,12 @@ class Rules extends Component {
                                     <MembershipPointsRanking />
                                 </Tab.Pane>
                             </Tab.Content>
+                            </div>
                             </Col>
                         </Row>
                         </Tab.Container>
                 </Container>
+                </section>
             </div>
         );
     }

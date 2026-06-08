@@ -13,7 +13,7 @@ import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import waivercutoff from '../../assets/Waiver-cutoff.png'
 
 const FormField = React.memo(({ label, name, value, onChange, type = "text", placeholder, error }) => (
-    <Form.Group>
+    <Form.Group className="waiver-field">
         <Form.Label>{label}:</Form.Label>
         <Form.Control
             name={name}
@@ -65,6 +65,7 @@ const Waiver = (props) => {
     const recaptchaRef = useRef();
     const [recaptchaToken, setRecaptchaToken] = useState(null);
     const [showSuccessScreen, setShowSuccessScreen] = useState(false);
+    const isMinor = age !== null && parseInt(age) < 18;
 
     const handleSetDob = (value) => {
         setFormState(prev => ({
@@ -225,38 +226,63 @@ const Waiver = (props) => {
             <div className="pdfStyle">
                 <Container>
                     {!showSuccessScreen && (
-                        <>
-                            {/* <Row className="align-items-center mt-2">
-                                <Col>
-                                    <a href={waiver} target='_blank' rel="noopener noreferrer">
-                                        <i className="fa fa-print fa-2x text-white"></i>
-                                    </a>
-                                </Col>
-                            </Row> */}
-                            <Row className="align-items-center row-bottom mt-5">
-                                <Col className="pdfFile">
-                                    <Row className="justify-content-row waiver-row-rp">
-                                        <img src={waivercutoff} alt="US Airsoft waiver" className={!hideWaiver ? "waiver-rp" : "waiver-hidden-rp"} />
-                                        <Row className="text-block-waiver-rp">
+                        <div className="waiver-experience">
+                            <Row className="justify-content-center mt-4">
+                                <Col xl={10}>
+                                    <div className="waiver-intro-card">
+                                        <div className="waiver-intro-copy">
+                                            <p className="waiver-eyebrow">Online Waiver</p>
+                                            <h1 className="waiver-title">Fill out your waiver before you arrive.</h1>
+                                            <p className="waiver-lead">
+                                                You can complete this waiver at home or on one of our iPads in the store.
+                                                Review the agreement, fill in your information, and sign before submitting.
+                                            </p>
+                                        </div>
+                                        <div className="waiver-intro-actions">
+                                            <Button
+                                                variant="primary"
+                                                type="button"
+                                                onClick={(e) => handlePrint(e)}
+                                            >
+                                                Open Printable Waiver
+                                            </Button>
                                             <Button
                                                 variant="outline-secondary"
                                                 type="button"
-                                                className={hideWaiver ? "button-hidden-rp" : ""}
-                                                onClick={(e) => handlePrint(e)}
+                                                onClick={() => setHideWaiver(!hideWaiver)}
                                             >
-                                                Print Waiver
-                                                {/* {hideWaiver ? "Show Agreement" : "Hide Agreement"} */}
+                                                {hideWaiver ? 'Show Agreement Preview' : 'Hide Agreement Preview'}
                                             </Button>
-                                        </Row>
-                                    </Row>
+                                        </div>
+                                    </div>
+
+                                    {!hideWaiver && (
+                                        <div className="waiver-agreement-card">
+                                            <div className="waiver-agreement-header">
+                                                <div>
+                                                    <h2 className="waiver-card-title">Agreement Preview</h2>
+                                                    <p className="waiver-card-copy">
+                                                        Review the waiver here, or open the full printable version if you need it.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="waiver-agreement-preview">
+                                                <img
+                                                    src={waivercutoff}
+                                                    alt="US Airsoft waiver preview"
+                                                    className="waiver-agreement-image"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
                                 </Col>
                             </Row>
-                        </>
+                        </div>
                     )}
                     {showSuccessScreen ? (
                         <Row className="justify-content-center">
-                            <Col md={8} className="text-center">
-                                <div className="success-screen p-4 mt-4">
+                            <Col md={8} lg={7} className="text-center">
+                                <div className="success-screen waiver-success-screen p-4 mt-4">
                                     <FontAwesomeIcon icon={faCheckCircle} style={{ fontSize: '32px' }} />
                                     <h3 className="mb-3">Waiver Submitted Successfully!</h3>
                                     <p>Thank you for submitting your waiver. You're now ready to play at US Airsoft Field!</p>
@@ -307,213 +333,156 @@ const Waiver = (props) => {
                         </Row>
                     ) : (
                         <Row className="justify-content-center form-container">
-                            <Col md={10} lg={8}>
-                                {/* Personal Information */}
-                                <h4 className="section-header">Participant Information</h4>
-                                <Row>
-                                    <Col md={6}>
-                                        <FormField
-                                            label="First Name"
-                                            name="fname"
-                                            value={formState.values.fname}
-                                            onChange={(value) => updateForm('fname', value)}
-                                            error={formState.errors.fname}
-                                        />
-                                    </Col>
-                                    <Col md={6}>
-                                        <FormField
-                                            label="Last Name"
-                                            name="lname"
-                                            value={formState.values.lname}
-                                            onChange={(value) => updateForm('lname', value)}
-                                            error={formState.errors.lname}
-                                        />
-                                    </Col>
-                                </Row>
-
-                                <Row>
-                                    <Col md={6}>
-                                        <FormField
-                                            label="Email"
-                                            name="email"
-                                            value={formState.values.email}
-                                            onChange={(value) => updateForm('email', value)}
-                                            type="email"
-                                            error={formState.errors.email}
-                                        />
-                                    </Col>
-                                    <Col md={6}>
-                                        <FormField
-                                            label="Phone Number"
-                                            name="phone"
-                                            value={formState.values.phone}
-                                            onChange={(value) => updateForm('phone', value)}
-                                            type="tel"
-                                            error={formState.errors.phone}
-                                        />
-                                    </Col>
-                                </Row>
-
-                                {/* Address Information */}
-                                <Row>
-                                    <Col md={12}>
-                                        <FormField
-                                            label="Street Address"
-                                            name="address"
-                                            value={formState.values.address}
-                                            onChange={(value) => updateForm('address', value)}
-                                            error={formState.errors.address}
-                                        />
-                                    </Col>
-                                </Row>
-
-                                <Row>
-                                    <Col md={4}>
-                                        <FormField
-                                            label="City"
-                                            name="city"
-                                            value={formState.values.city}
-                                            onChange={(value) => updateForm('city', value)}
-                                            error={formState.errors.city}
-                                        />
-                                    </Col>
-                                    <Col md={4}>
-                                        <FormField
-                                            label="State"
-                                            name="state"
-                                            value={formState.values.state}
-                                            onChange={(value) => updateForm('state', value)}
-                                            error={formState.errors.state}
-                                        />
-                                    </Col>
-                                    <Col md={4}>
-                                        <FormField
-                                            label="Zip Code"
-                                            name="zipcode"
-                                            value={formState.values.zipcode}
-                                            onChange={(value) => updateForm('zipcode', value)}
-                                            error={formState.errors.zipcode}
-                                        />
-                                    </Col>
-                                </Row>
-
-                                {/* Date of Birth */}
-                                <Row>
-                                    <Col md={12}>
-                                        <FormField
-                                            label="Date of Birth"
-                                            name="dob"
-                                            value={formState.values.dob}
-                                            onChange={handleSetDob}
-                                            type="date"
-                                            error={formState.errors.dob}
-                                        />
-                                    </Col>
-                                    {/* <Col md={6}>
-                                        <FormField
-                                            label="Age"
-                                            name="age"
-                                            value={age}
-                                            onChange={setAge}
-                                            type="number"
-                                        />
-                                    </Col> */}
-                                </Row>
-
-                                {/* Parent/Guardian Information (shown if under 18) */}
-                                {age && parseInt(age) < 18 && (
-                                    <>
-                                        <h4 className="section-header mt-4">Parent/Guardian Information</h4>
+                            <Col xl={10}>
+                                <Form onSubmit={handleSubmit} className="waiver-form-shell">
+                                    <div className="waiver-form-section">
+                                        <div className="waiver-section-heading">
+                                            <h2 className="waiver-section-title">Participant Information</h2>
+                                            <p className="waiver-section-copy">Enter the player’s contact and address information.</p>
+                                        </div>
                                         <Row>
                                             <Col md={6}>
                                                 <FormField
-                                                    label="Parent/Guardian Name"
-                                                    name="pgname"
-                                                    value={formState.values.pgname}
-                                                    onChange={(value) => updateForm('pgname', value)}
-                                                    error={formState.errors.pgname}
+                                                    label="First Name"
+                                                    name="fname"
+                                                    value={formState.values.fname}
+                                                    onChange={(value) => updateForm('fname', value)}
+                                                    error={formState.errors.fname}
                                                 />
                                             </Col>
                                             <Col md={6}>
                                                 <FormField
-                                                    label="Parent/Guardian Phone"
-                                                    name="pgphone"
-                                                    value={formState.values.pgphone}
-                                                    onChange={(value) => updateForm('pgphone', value)}
-                                                    type="tel"
-                                                    error={formState.errors.pgphone}
+                                                    label="Last Name"
+                                                    name="lname"
+                                                    value={formState.values.lname}
+                                                    onChange={(value) => updateForm('lname', value)}
+                                                    error={formState.errors.lname}
                                                 />
                                             </Col>
                                         </Row>
-                                    </>
-                                )}
 
-                                {/* Signature Sections */}
-                                <h4 className="section-header mt-4">Participant Signature</h4>
-                                <div className="signature-container">
-                                    {participantImg ? (
-                                        <div className="saved-signature">
-                                            <img src={participantImg} alt="Participant Signature" style={{ maxWidth: '100%', height: 'auto' }} />
-                                            <Button
-                                                variant="secondary"
-                                                onClick={() => {
-                                                    setParticipantImg(null);
-                                                    setSaveButton2(true);
-                                                }}
-                                                className="mt-2"
-                                            >
-                                                Clear Saved Signature
-                                            </Button>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <div className="signature-pad-container">
-                                                <SignaturePad
-                                                    ref={participantSigRef}
-                                                    options={{
-                                                        penColor: 'black',
-                                                        backgroundColor: 'rgb(255, 255, 255)',
-                                                        minWidth: 1,
-                                                        maxWidth: 2.5,
-                                                    }}
+                                        <Row>
+                                            <Col md={6}>
+                                                <FormField
+                                                    label="Email"
+                                                    name="email"
+                                                    value={formState.values.email}
+                                                    onChange={(value) => updateForm('email', value)}
+                                                    type="email"
+                                                    error={formState.errors.email}
                                                 />
-                                            </div>
-                                            {formState.errors.participantSignature && (
-                                                <div className="text-danger mt-2">
-                                                    {formState.errors.participantSignature}
-                                                </div>
-                                            )}
-                                            <div className="signature-buttons">
-                                                <Button
-                                                    variant="secondary"
-                                                    onClick={() => participantSigRef.current?.clear()}
-                                                    className="me-2"
-                                                >
-                                                    Clear
-                                                </Button>
-                                                <Button
-                                                    variant="primary"
-                                                    onClick={() => handleSignatureSave('participant')}
-                                                >
-                                                    Save Signature
-                                                </Button>
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
+                                            </Col>
+                                            <Col md={6}>
+                                                <FormField
+                                                    label="Phone Number"
+                                                    name="phone"
+                                                    value={formState.values.phone}
+                                                    onChange={(value) => updateForm('phone', value)}
+                                                    type="tel"
+                                                    error={formState.errors.phone}
+                                                />
+                                            </Col>
+                                        </Row>
 
-                                {/* Guardian Signature */}
-                                {age && parseInt(age) < 18 && (
-                                    <>
-                                        <h4 className="section-header mt-4">Parent/Guardian Signature</h4>
-                                        <div className="signature-container">
-                                            {pgImg ? (
+                                        <Row>
+                                            <Col md={12}>
+                                                <FormField
+                                                    label="Street Address"
+                                                    name="address"
+                                                    value={formState.values.address}
+                                                    onChange={(value) => updateForm('address', value)}
+                                                    error={formState.errors.address}
+                                                />
+                                            </Col>
+                                        </Row>
+
+                                        <Row>
+                                            <Col md={4}>
+                                                <FormField
+                                                    label="City"
+                                                    name="city"
+                                                    value={formState.values.city}
+                                                    onChange={(value) => updateForm('city', value)}
+                                                    error={formState.errors.city}
+                                                />
+                                            </Col>
+                                            <Col md={4}>
+                                                <FormField
+                                                    label="State"
+                                                    name="state"
+                                                    value={formState.values.state}
+                                                    onChange={(value) => updateForm('state', value)}
+                                                    error={formState.errors.state}
+                                                />
+                                            </Col>
+                                            <Col md={4}>
+                                                <FormField
+                                                    label="Zip Code"
+                                                    name="zipcode"
+                                                    value={formState.values.zipcode}
+                                                    onChange={(value) => updateForm('zipcode', value)}
+                                                    error={formState.errors.zipcode}
+                                                />
+                                            </Col>
+                                        </Row>
+
+                                        <Row>
+                                            <Col md={12}>
+                                                <FormField
+                                                    label="Date of Birth"
+                                                    name="dob"
+                                                    value={formState.values.dob}
+                                                    onChange={handleSetDob}
+                                                    type="date"
+                                                    error={formState.errors.dob}
+                                                />
+                                            </Col>
+                                        </Row>
+                                    </div>
+
+                                    {isMinor && (
+                                        <div className="waiver-form-section">
+                                            <div className="waiver-section-heading">
+                                                <h2 className="waiver-section-title">Parent / Guardian Information</h2>
+                                                <p className="waiver-section-copy">Required for participants under 18.</p>
+                                            </div>
+                                            <Row>
+                                                <Col md={6}>
+                                                    <FormField
+                                                        label="Parent / Guardian Name"
+                                                        name="pgname"
+                                                        value={formState.values.pgname}
+                                                        onChange={(value) => updateForm('pgname', value)}
+                                                        error={formState.errors.pgname}
+                                                    />
+                                                </Col>
+                                                <Col md={6}>
+                                                    <FormField
+                                                        label="Parent / Guardian Phone"
+                                                        name="pgphone"
+                                                        value={formState.values.pgphone}
+                                                        onChange={(value) => updateForm('pgphone', value)}
+                                                        type="tel"
+                                                        error={formState.errors.pgphone}
+                                                    />
+                                                </Col>
+                                            </Row>
+                                        </div>
+                                    )}
+
+                                    <div className="waiver-form-section">
+                                        <div className="waiver-section-heading">
+                                            <h2 className="waiver-section-title">Participant Signature</h2>
+                                            <p className="waiver-section-copy">Sign inside the box, then tap save.</p>
+                                        </div>
+                                        <div className="signature-container waiver-signature-card">
+                                            {participantImg ? (
                                                 <div className="saved-signature">
-                                                    <img src={pgImg} alt="Guardian Signature" style={{ maxWidth: '100%', height: 'auto' }} />
+                                                    <img src={participantImg} alt="Participant Signature" style={{ maxWidth: '100%', height: 'auto' }} />
                                                     <Button
                                                         variant="secondary"
                                                         onClick={() => {
-                                                            setPgImg(null);
+                                                            setParticipantImg(null);
                                                             setSaveButton2(true);
                                                         }}
                                                         className="mt-2"
@@ -525,7 +494,7 @@ const Waiver = (props) => {
                                                 <>
                                                     <div className="signature-pad-container">
                                                         <SignaturePad
-                                                            ref={guardianSigRef}
+                                                            ref={participantSigRef}
                                                             options={{
                                                                 penColor: 'black',
                                                                 backgroundColor: 'rgb(255, 255, 255)',
@@ -534,75 +503,131 @@ const Waiver = (props) => {
                                                             }}
                                                         />
                                                     </div>
-                                                    {formState.errors.guardianSignature && (
+                                                    {formState.errors.participantSignature && (
                                                         <div className="text-danger mt-2">
-                                                            {formState.errors.guardianSignature}
+                                                            {formState.errors.participantSignature}
                                                         </div>
                                                     )}
                                                     <div className="signature-buttons">
                                                         <Button
                                                             variant="secondary"
-                                                            onClick={() => guardianSigRef.current?.clear()}
+                                                            onClick={() => participantSigRef.current?.clear()}
                                                             className="me-2"
                                                         >
                                                             Clear
                                                         </Button>
                                                         <Button
                                                             variant="primary"
-                                                            onClick={() => handleSignatureSave('guardian')}
+                                                            onClick={() => handleSignatureSave('participant')}
                                                         >
-                                                            Save Guardian Signature
+                                                            Save Signature
                                                         </Button>
                                                     </div>
                                                 </>
                                             )}
                                         </div>
-                                    </>
-                                )}
+                                    </div>
 
-                                {/* Email Subscription Checkbox */}
-                                <Row className="mt-4">
-                                    <Col>
-                                        <FormControlLabel
-                                            control={
-                                                <Checkbox
-                                                    checked={acceptEmailSubscription}
-                                                    onChange={(e) => setAcceptEmailSubscription(e.target.checked)}
-                                                    color="primary"
+                                    {isMinor && (
+                                        <div className="waiver-form-section">
+                                            <div className="waiver-section-heading">
+                                                <h2 className="waiver-section-title">Parent / Guardian Signature</h2>
+                                                <p className="waiver-section-copy">Required for minors before submitting.</p>
+                                            </div>
+                                            <div className="signature-container waiver-signature-card">
+                                                {pgImg ? (
+                                                    <div className="saved-signature">
+                                                        <img src={pgImg} alt="Guardian Signature" style={{ maxWidth: '100%', height: 'auto' }} />
+                                                        <Button
+                                                            variant="secondary"
+                                                            onClick={() => {
+                                                                setPgImg(null);
+                                                                setSaveButton2(true);
+                                                            }}
+                                                            className="mt-2"
+                                                        >
+                                                            Clear Saved Signature
+                                                        </Button>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <div className="signature-pad-container">
+                                                            <SignaturePad
+                                                                ref={guardianSigRef}
+                                                                options={{
+                                                                    penColor: 'black',
+                                                                    backgroundColor: 'rgb(255, 255, 255)',
+                                                                    minWidth: 1,
+                                                                    maxWidth: 2.5,
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        {formState.errors.guardianSignature && (
+                                                            <div className="text-danger mt-2">
+                                                                {formState.errors.guardianSignature}
+                                                            </div>
+                                                        )}
+                                                        <div className="signature-buttons">
+                                                            <Button
+                                                                variant="secondary"
+                                                                onClick={() => guardianSigRef.current?.clear()}
+                                                                className="me-2"
+                                                            >
+                                                                Clear
+                                                            </Button>
+                                                            <Button
+                                                                variant="primary"
+                                                                onClick={() => handleSignatureSave('guardian')}
+                                                            >
+                                                                Save Guardian Signature
+                                                            </Button>
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="waiver-form-section waiver-submit-section">
+                                        <Row className="mt-1">
+                                            <Col>
+                                                <FormControlLabel
+                                                    control={
+                                                        <Checkbox
+                                                            checked={acceptEmailSubscription}
+                                                            onChange={(e) => setAcceptEmailSubscription(e.target.checked)}
+                                                            color="primary"
+                                                        />
+                                                    }
+                                                    label="I would like to receive email updates and newsletters"
                                                 />
-                                            }
-                                            label="I would like to receive email updates and newsletters"
-                                        />
-                                    </Col>
-                                </Row>
+                                            </Col>
+                                        </Row>
 
-                                {/* Submit Button */}
-                                <Row>
-                                    <Col className="text-center">
-                                        <Button
-                                            variant="primary"
-                                            type="submit"
-                                            disabled={loading}
-                                            className="submit-button"
-                                            onClick={handleSubmit}
-                                        >
-                                            {loading ? (
-                                                <>
-                                                    <Spinner animation="border" size="sm" /> Submitting...
-                                                </>
-                                            ) : 'Submit Waiver'}
-                                        </Button>
-                                    </Col>
-                                </Row>
+                                        <div className="waiver-submit-row">
+                                            <Button
+                                                variant="primary"
+                                                type="submit"
+                                                disabled={loading}
+                                                className="submit-button"
+                                            >
+                                                {loading ? (
+                                                    <>
+                                                        <Spinner animation="border" size="sm" /> Submitting...
+                                                    </>
+                                                ) : 'Submit Waiver'}
+                                            </Button>
+                                        </div>
 
-                                {/* Error Message */}
-                                {errorWaiver && (
-                                    <Row className="mt-3">
-                                        <Col className="text-center">
-                                            <div className="error-message">{errorWaiver}</div>
-                                        </Col>
-                                    </Row>
-                                )}
+                                        {errorWaiver && (
+                                            <Row className="mt-3">
+                                                <Col className="text-center">
+                                                    <div className="error-message">{errorWaiver}</div>
+                                                </Col>
+                                            </Row>
+                                        )}
+                                    </div>
+                                </Form>
                             </Col>
                         </Row>
                     )}

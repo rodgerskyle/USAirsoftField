@@ -1,8 +1,8 @@
 .card-rental-form {
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(180deg, #12171d 0%, #0f141a 100%);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
     border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     padding: 2rem;
     transition: transform 0.2s ease;
 }
@@ -12,7 +12,7 @@
 }
 
 .rental-form-header {
-    color: #2c3e50;
+    color: #f4f7fb;
     margin-bottom: 2rem;
     font-size: 2rem;
     font-weight: 600;
@@ -25,7 +25,7 @@
     display: block;
     width: 50px;
     height: 3px;
-    background: #3498db;
+    background: #1f65c7;
     margin: 10px auto;
     border-radius: 2px;
 }
@@ -71,30 +71,77 @@
     box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4) !important;
 }
 
-/* Override MUI styles */
-.MuiTextField-root {
-    background-color: #fff;
-    border-radius: 8px !important;
+.submit-button.Mui-disabled,
+.submit-button:disabled {
+    background: #253140 !important;
+    color: rgba(244, 247, 251, 0.45) !important;
+    box-shadow: none !important;
 }
 
-.MuiInputLabel-root {
-    color: #34495e !important;
+/* Override MUI styles */
+.card-rental-form .MuiTextField-root {
+    background-color: transparent !important;
+    border-radius: 10px !important;
+}
+
+.card-rental-form .MuiInputLabel-root {
+    color: #9fb0c4 !important;
     font-weight: 500 !important;
 }
 
-.MuiOutlinedInput-root {
-    background-color: #fff;
-    border-radius: 8px !important;
+.card-rental-form .MuiInputLabel-root.Mui-focused,
+.card-rental-form .MuiInputLabel-root.MuiFormLabel-filled {
+    color: #f4f7fb !important;
+}
+
+.card-rental-form .MuiOutlinedInput-root {
+    background-color: #161d25 !important;
+    border-radius: 10px !important;
+    color: #f4f7fb !important;
     transition: all 0.2s ease !important;
 }
 
-.MuiOutlinedInput-root:hover {
-    background-color: #f8f9fa;
+.card-rental-form .MuiOutlinedInput-root:hover {
+    background-color: #1a222c !important;
+}
+
+.card-rental-form .MuiOutlinedInput-root fieldset {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.card-rental-form .MuiOutlinedInput-root:hover fieldset {
+    border-color: rgba(255, 255, 255, 0.22) !important;
+}
+
+.card-rental-form .MuiOutlinedInput-root.Mui-focused fieldset {
+    border-color: #1f65c7 !important;
+}
+
+.card-rental-form .MuiInputBase-input,
+.card-rental-form input,
+.card-rental-form textarea {
+    color: #f4f7fb !important;
+    -webkit-text-fill-color: #f4f7fb !important;
+}
+
+.card-rental-form .MuiInputBase-input::placeholder,
+.card-rental-form input::placeholder,
+.card-rental-form textarea::placeholder {
+    color: rgba(244, 247, 251, 0.72) !important;
+    opacity: 1;
+}
+
+.card-rental-form .MuiFormHelperText-root {
+    color: #9fb0c4 !important;
+}
+
+.card-rental-form .MuiFormHelperText-root.Mui-error {
+    color: #ff8f8f !important;
 }
 
 /* Payment form specific styles */
 .credit-card-form {
-    background: #f8f9fa;
+    background: #111821;
     padding: 1.5rem;
     border-radius: 12px;
     margin-top: 1rem;
@@ -111,7 +158,7 @@
 }
 
 .spinner-text {
-    color: #3498db;
+    color: #1f65c7;
     margin-top: 1rem;
     font-weight: 500;
 }
@@ -120,12 +167,15 @@
 .rental-options-section {
     padding: 1.5rem;
     margin: 1rem 0;
-    background: #fff;
+    background: #111821 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px !important;
+    box-shadow: none !important;
 }
 
 .rental-options-header {
     margin-bottom: 1rem !important;
-    color: #2c3e50 !important;
+    color: #f4f7fb !important;
     font-weight: 600 !important;
 }
 
@@ -144,18 +194,22 @@
 .rental-option-price {
     margin-left: 10px;
     font-weight: 600;
-    color: #2980b9;
+    color: #5aa7ff;
 }
 
 .rental-option-stock {
     margin-left: 1rem;
     font-size: 0.85rem;
-    color: #7f8c8d;
+    color: #9fb0c4;
 }
 
 .rental-total {
     margin-top: 1.5rem;
     text-align: right;
+}
+
+.rental-total .MuiTypography-root {
+    color: #f4f7fb !important;
 }
 
 /* Edit Form Styles */
@@ -182,16 +236,19 @@
 
 .rental-form-card {
     transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+    background: #12171d !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #f4f7fb !important;
 }
 
 .rental-form-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.24);
 }
 
 .form-name {
     margin-bottom: 1rem !important;
-    color: #2c3e50 !important;
+    color: #f4f7fb !important;
 }
 
 .form-details {
@@ -199,6 +256,7 @@
     align-items: center;
     justify-content: space-between;
     margin-top: 0.5rem;
+    color: #9fb0c4 !important;
 }
 
 .status-chip {
@@ -207,7 +265,7 @@
 
 .no-forms-message {
     text-align: center;
-    color: #7f8c8d;
+    color: #9fb0c4;
     padding: 2rem;
 }
 
@@ -246,11 +304,14 @@
     padding: 2rem;
     min-width: 400px;
     max-width: 90%;
+    background: #111821 !important;
+    color: #f4f7fb !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .transaction-title {
     margin-bottom: 1.5rem !important;
-    color: #2c3e50 !important;
+    color: #f4f7fb !important;
 }
 
 .transaction-input {
@@ -275,9 +336,23 @@
     max-height: 86vh;
     display: flex;
     flex-direction: column;
-    background: white;
+    background: #111821;
     border-radius: 12px;
     padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #f4f7fb;
+}
+
+.add-participant-modal,
+.add-participant-modal.MuiPaper-root,
+.size-edit-modal,
+.size-edit-modal.MuiPaper-root,
+.inventory-edit-modal,
+.inventory-edit-modal.MuiPaper-root,
+.transaction-paper,
+.transaction-paper.MuiPaper-root {
+    background: #111821 !important;
+    color: #f4f7fb !important;
 }
 
 .participant-grid {
@@ -287,10 +362,14 @@
     margin-top: 24px;
 }
 
-.participant-card {
+.participant-card,
+.participant-card.MuiPaper-root {
     padding: 18px;
     transition: all 0.2s ease !important;
     border-radius: 10px !important;
+    background: #12171d !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #f4f7fb !important;
 }
 
 .participant-card:hover {
@@ -321,8 +400,34 @@
     gap: 8px;
     min-height: 48px;
     padding: 10px;
-    background: #f5f5f5;
+    background: #0d131a;
     border-radius: 8px;
+}
+
+.participant-card .MuiTypography-root,
+.participant-card .MuiChip-root,
+.participant-card .MuiChip-label,
+.participant-card .MuiChip-deleteIcon,
+.participant-card .MuiSvgIcon-root {
+    color: inherit !important;
+}
+
+.participant-card .MuiChip-root,
+.participant-card .rental-chip {
+    background: #18212b !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.participant-card .rental-chip .MuiChip-label {
+    color: #d8e0ea !important;
+}
+
+.participant-card .rental-chip .MuiChip-deleteIcon {
+    color: rgba(216, 224, 234, 0.72) !important;
+}
+
+.participant-card .rental-chip .MuiChip-deleteIcon:hover {
+    color: #f4f7fb !important;
 }
 
 .modal-header {
@@ -333,8 +438,23 @@
     position: sticky;
     top: 0;
     z-index: 4;
-    background: #fff;
+    background: #111821;
     padding-bottom: 8px;
+}
+
+.modal-header .MuiTypography-root,
+.add-participant-modal .MuiTypography-root,
+.size-edit-modal .MuiTypography-root,
+.inventory-edit-modal .MuiTypography-root,
+.transaction-paper .MuiTypography-root {
+    color: #f4f7fb !important;
+}
+
+.add-participant-modal .MuiIconButton-root,
+.size-edit-modal .MuiIconButton-root,
+.inventory-edit-modal .MuiIconButton-root,
+.transaction-paper .MuiIconButton-root {
+    color: #d8e0ea !important;
 }
 
 .search-controls {
@@ -342,21 +462,41 @@
     position: sticky;
     top: 56px;
     z-index: 3;
-    background: #fff;
+    background: #111821;
     padding: 8px 0 12px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.add-participant-modal .MuiList-root,
+.add-participant-modal .MuiTablePagination-toolbar,
+.add-participant-modal .MuiTablePagination-spacer,
+.add-participant-modal .MuiTablePagination-selectLabel,
+.add-participant-modal .MuiTablePagination-displayedRows {
+    background: #111821 !important;
+    color: #9fb0c4 !important;
+}
+
+.add-participant-modal .MuiTablePagination-actions .MuiIconButton-root,
+.add-participant-modal .MuiSelect-icon {
+    color: #9fb0c4 !important;
+}
+
+.add-participant-modal .MuiMenuItem-root,
+.size-edit-modal .MuiMenuItem-root,
+.inventory-edit-modal .MuiMenuItem-root {
+    color: #f4f7fb !important;
 }
 
 .search-status-text {
     margin-top: -4px;
     margin-bottom: 8px;
-    color: #4a5568;
+    color: #9fb0c4;
 }
 
 .waivers-list {
     overflow-y: auto;
     flex: 1;
-    border: 1px solid rgba(0, 0, 0, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 4px;
 }
 
@@ -375,16 +515,16 @@
 }
 
 .add-participant-modal .MuiList-root {
-    border: 1px solid rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 10px;
-    background: #fff;
+    background: #0f141a;
 }
 
 .add-participant-modal .MuiListItem-root {
     min-height: 52px;
     padding-top: 10px;
     padding-bottom: 10px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .add-participant-modal .MuiListItem-root:last-child {
@@ -392,13 +532,13 @@
 }
 
 .add-participant-modal .MuiListItem-root:hover {
-    background: rgba(25, 118, 210, 0.06);
+    background: rgba(31, 101, 199, 0.16);
 }
 
 .search-results-meta {
     display: block;
     padding: 8px 2px 2px;
-    color: #4a5568;
+    color: #9fb0c4;
 }
 
 .add-participant-modal .MuiButton-root {
@@ -420,11 +560,24 @@
 }
 
 /* Available Rentals Summary */
-.available-rentals-summary {
-    background: white;
+.available-rentals-summary,
+.available-rentals-summary.MuiPaper-root {
+    background: #111821;
     padding: 16px;
     border-radius: 8px;
     margin-bottom: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #f4f7fb;
+}
+
+.available-rentals-summary .MuiTypography-root,
+.available-rentals-summary .MuiChip-label {
+    color: #f4f7fb !important;
+}
+
+.available-rentals-summary .MuiChip-root {
+    background: #161d25 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
 }
 
 .summary-chips {
@@ -452,30 +605,36 @@
     align-items: center;
     padding: 2px 8px;
     gap: 4px;
+    background: #18212b !important;
+    color: #f4f7fb !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
 .rental-number-input {
     width: 80px;
     font-size: 14px;
+    color: #f4f7fb !important;
+    background: transparent !important;
 }
 
 .rental-number {
     cursor: pointer;
     padding: 2px 8px;
     border-radius: 4px;
-    background: #f0f0f0;
+    background: #18212b;
     transition: background-color 0.2s;
+    color: #f4f7fb !important;
 }
 
 .rental-number:hover {
-    background: #e0e0e0;
+    background: #202b37;
 }
 
 .rental-option-item {
     display: flex;
     align-items: center;
     padding: 8px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .rental-option-label {
@@ -494,7 +653,31 @@
 
 .rental-option-price {
     font-weight: 500;
-    color: #1976d2;
+    color: #5aa7ff;
+}
+
+.card-rental-form .MuiFormControlLabel-root,
+.card-rental-form .MuiTypography-root,
+.card-rental-form .rental-option-label,
+.card-rental-form .rental-option-item span,
+.card-rental-form .rental-option-item .MuiTypography-root {
+    color: #f4f7fb !important;
+}
+
+.card-rental-form .MuiCheckbox-root {
+    color: #9fb0c4 !important;
+}
+
+.card-rental-form .MuiCheckbox-root.Mui-checked {
+    color: #1f65c7 !important;
+}
+
+.card-rental-form .MuiIconButton-root {
+    color: #d8e0ea !important;
+}
+
+.card-rental-form .MuiIconButton-root.Mui-disabled {
+    color: rgba(216, 224, 234, 0.32) !important;
 }
 
 .return-form-root {
@@ -515,18 +698,22 @@
 .return-rental-forms-list {
     border-radius: 12px !important;
     overflow: hidden;
+    background: #12171d !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .rental-form-item {
     transition: background-color 0.2s;
+    background: transparent !important;
+    color: #f4f7fb !important;
 }
 
 .rental-form-item:hover {
-    background-color: rgba(25, 118, 210, 0.04);
+    background-color: rgba(31, 101, 199, 0.08) !important;
 }
 
 .corrupted-form-item {
-    background-color: rgba(211, 47, 47, 0.04);
+    background-color: rgba(164, 67, 71, 0.18) !important;
 }
 
 .form-avatar {
@@ -545,16 +732,19 @@
     max-width: 600px;
     margin: 32px auto;
     border-radius: 12px !important;
+    background: #12171d !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #f4f7fb !important;
 }
 
 .completion-title {
-    color: #1976d2;
+    color: #f4f7fb;
     margin-bottom: 16px !important;
 }
 
 .completion-text {
     margin-bottom: 24px !important;
-    color: #666;
+    color: #9fb0c4;
 }
 
 .email-input {
@@ -589,8 +779,9 @@
 
 .group-name {
     padding: 16px;
-    background-color: #f5f5f5;
-    border-bottom: 1px solid rgba(224, 224, 224, 1);
+    background-color: #18212b;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    color: #f4f7fb;
 }
 
 .loading-spinner {
@@ -662,14 +853,14 @@
 
 /* Container Styles */
 .rental-options-container {
-    background-color: #f5f5f5;
+    background-color: #0b0d10;
     min-height: 100vh;
     padding: 2rem 0;
 }
 
 /* Header Styles */
 .rental-header {
-    color: #1976d2;
+    color: #f4f7fb;
     font-weight: 600;
     position: relative;
     margin-bottom: 2rem;
@@ -683,7 +874,7 @@
     left: 0;
     width: 60px;
     height: 4px;
-    background-color: #1976d2;
+    background-color: #1f65c7;
     border-radius: 2px;
 }
 
@@ -839,6 +1030,199 @@ button.btn-pin-code-link {
 .col-cc .MuiInputBase-formControl {
     box-shadow: 0px 3px 3px -2px rgba(0, 0, 0, 0.2), 0px 3px 4px 0px rgba(0, 0, 0, 0.14), 0px 1px 8px 0px rgba(0, 0, 0, 0.12);
     border-radius: 10px;
+}
+
+.rental-management,
+.return-form-root,
+.rental-forms-list {
+    color: #f4f7fb;
+}
+
+.form-header {
+    background: #12171d !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px !important;
+    box-shadow: none !important;
+    color: #f4f7fb !important;
+    margin-bottom: 1rem;
+}
+
+.form-header.MuiPaper-root {
+    background: #12171d !important;
+}
+
+.form-header .MuiButton-root,
+.edit-form-header .MuiButton-root,
+.dialog-actions .MuiButton-root,
+.size-edit-modal .MuiButton-root,
+.inventory-edit-modal .MuiButton-root {
+    min-height: 42px;
+    text-transform: none;
+}
+
+.rental-menu {
+    background: #0f141a !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px !important;
+    padding: 12px;
+    margin-top: 12px;
+}
+
+.rental-menu-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.rental-menu-item {
+    color: #d8e0ea !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+.size-edit-modal,
+.inventory-edit-modal {
+    background: #111821 !important;
+    color: #f4f7fb !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px !important;
+}
+
+.rental-management .MuiTable-root,
+.return-form-root .MuiTable-root {
+    background: #12171d;
+}
+
+.rental-management .MuiTableCell-root,
+.return-form-root .MuiTableCell-root {
+    color: #d8e0ea !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.rental-management .MuiTableHead-root .MuiTableCell-root,
+.return-form-root .MuiTableHead-root .MuiTableCell-root {
+    color: #f4f7fb !important;
+    background: #18212b;
+    font-weight: 600;
+}
+
+.rentals-table-container {
+    background: #12171d !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.rental-management .MuiChip-root,
+.return-form-root .MuiChip-root {
+    border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+.rental-management .MuiChip-label,
+.return-form-root .MuiChip-label {
+    color: inherit !important;
+}
+
+.rental-management .MuiAvatar-root,
+.return-form-root .MuiAvatar-root {
+    color: #f4f7fb !important;
+}
+
+.rental-management .MuiInputBase-root,
+.rental-management .MuiOutlinedInput-root,
+.return-form-root .MuiInputBase-root,
+.return-form-root .MuiOutlinedInput-root,
+.add-participant-modal .MuiInputBase-root,
+.add-participant-modal .MuiOutlinedInput-root,
+.size-edit-modal .MuiInputBase-root,
+.size-edit-modal .MuiOutlinedInput-root,
+.inventory-edit-modal .MuiInputBase-root,
+.inventory-edit-modal .MuiOutlinedInput-root {
+    background: #161d25 !important;
+    color: #f4f7fb !important;
+}
+
+.rental-management .MuiInputLabel-root,
+.return-form-root .MuiInputLabel-root,
+.add-participant-modal .MuiInputLabel-root,
+.size-edit-modal .MuiInputLabel-root,
+.inventory-edit-modal .MuiInputLabel-root {
+    color: #9fb0c4 !important;
+}
+
+.rental-management .MuiInputLabel-root.Mui-focused,
+.return-form-root .MuiInputLabel-root.Mui-focused,
+.add-participant-modal .MuiInputLabel-root.Mui-focused,
+.size-edit-modal .MuiInputLabel-root.Mui-focused,
+.inventory-edit-modal .MuiInputLabel-root.Mui-focused {
+    color: #f4f7fb !important;
+}
+
+.rental-management .MuiOutlinedInput-notchedOutline,
+.return-form-root .MuiOutlinedInput-notchedOutline,
+.add-participant-modal .MuiOutlinedInput-notchedOutline,
+.size-edit-modal .MuiOutlinedInput-notchedOutline,
+.inventory-edit-modal .MuiOutlinedInput-notchedOutline {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.rental-management .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline,
+.return-form-root .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline,
+.add-participant-modal .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline,
+.size-edit-modal .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline,
+.inventory-edit-modal .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+    border-color: rgba(255, 255, 255, 0.22) !important;
+}
+
+.rental-management .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline,
+.return-form-root .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline,
+.add-participant-modal .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline,
+.size-edit-modal .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline,
+.inventory-edit-modal .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+    border-color: #1f65c7 !important;
+}
+
+.rental-management .MuiListItemText-primary,
+.return-form-root .MuiListItemText-primary,
+.add-participant-modal .MuiListItemText-primary {
+    color: #f4f7fb !important;
+}
+
+.rental-management .MuiListItemText-secondary,
+.return-form-root .MuiListItemText-secondary,
+.add-participant-modal .MuiListItemText-secondary {
+    color: #9fb0c4 !important;
+}
+
+.rental-management .MuiTablePagination-root,
+.add-participant-modal .MuiTablePagination-root {
+    color: #9fb0c4 !important;
+}
+
+.rental-management .btn,
+.return-form-root .btn {
+    min-height: 42px;
+    border-radius: 10px;
+    padding: 0.6rem 1rem;
+    text-transform: none;
+}
+
+.rental-management .btn-primary,
+.return-form-root .btn-primary {
+    background: linear-gradient(180deg, #1f65c7 0%, #174f9f 100%);
+    border-color: #1f65c7;
+    color: #f4f7fb;
+}
+
+.rental-management .btn-outline-primary,
+.return-form-root .btn-outline-primary,
+.rental-management .btn-outline-secondary,
+.return-form-root .btn-outline-secondary {
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.18);
+    color: #d8e0ea;
+}
+
+.rental-management .btn:hover,
+.return-form-root .btn:hover {
+    filter: brightness(1.05);
 }
 
 @media (max-width: 1024px) {

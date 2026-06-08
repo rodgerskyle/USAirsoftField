@@ -215,24 +215,27 @@ class RenewSubscription extends Component {
         return (
             <AuthUserContext.Consumer>
                 {authUser => (
-                    <div className="background-static-all">
+                    <div className="admin-container admin-compact-page admin-renew-page">
                         <Helmet>
                             <title>US Airsoft Field: Renewal</title>
                         </Helmet>
                         {!showLander ?
-                            <Container>
-                                <h2 className="admin-header">Renew Member{uid && usersObject && <div>{usersObject[uid].name}</div>}</h2>
+                            <Container className="admin-content">
+                                <div className="admin-page-header">
+                                <h2 className="admin-header">Renew Member</h2>
+                                {uid && usersObject && <p className="admin-page-subtitle admin-renew-member-name">{usersObject[uid].name}</p>}
                                 {authUser && !!authUser.roles[ROLES.ADMIN] ?
-                                    <Breadcrumb className="admin-breadcrumb">
+                                    <Breadcrumb className="admin-breadcrumb admin-page-breadcrumb">
                                         <LinkContainer to="/admin">
                                             <Breadcrumb.Item>Admin</Breadcrumb.Item>
                                         </LinkContainer>
                                         <Breadcrumb.Item active>Renew Member</Breadcrumb.Item>
                                     </Breadcrumb>
                                     : null}
+                                </div>
                                 <Row className="waiver-row-renew">
                                     <Col>
-                                        <Card className="waiver-cards">
+                                        <Card className="waiver-cards admin-panel-card admin-renew-card">
                                             {!showWaiver ?
                                                 <Card.Header>
                                                     <Form className="team-manage-text" onSubmit={e => { e.preventDefault(); }}>
@@ -257,27 +260,37 @@ class RenewSubscription extends Component {
                                                 <UserBox users={this.state.users} index={0} length={this.state.users.length} convert={this.convertDate}
                                                     search={this.state.search} update={this.state.UpdateUserState} loading={this.state.loading} pad={this.pad.bind(this)} />
                                                 :
-                                                <div>
-                                                    <Row className="justify-content-row">
-                                                        <Col>
-                                                            <Row className="justify-content-row waiver-row-rp">
-                                                                <img src={waiver} alt="US Airsoft waiver" className={!hideWaiver ? "waiver-rp" : "waiver-hidden-rp"} />
-                                                                <Row className="text-block-waiver-rp">
-                                                                    <Button variant="outline-secondary" type="button" className={hideWaiver ? "button-hidden-rp" : ""}
-                                                                        onClick={() => {
-                                                                            this.setState({ hideWaiver: !hideWaiver })
-                                                                        }}>
-                                                                        {hideWaiver ? "Show Agreement" : "Hide Agreement"}
-                                                                    </Button>
-                                                                </Row>
-                                                            </Row>
-                                                            <Row className={!hideWaiver ? "row-renew" : "row-renew waiver-input-rp"}>
-                                                                <h2 className="waiver-header-rp">
-                                                                    Participant Information:
-                                                                </h2>
-                                                            </Row>
-                                                            <Row className="row-renew">
-                                                                <Form className="waiver-form-rp">
+                                                <div className="admin-renew-detail">
+                                                    <div className="admin-renew-layout">
+                                                        <div className="admin-renew-preview-panel">
+                                                            <div className="admin-renew-panel-header">
+                                                                <div>
+                                                                    <h3 className="admin-renew-panel-title">Renewal Agreement</h3>
+                                                                    <p className="admin-renew-panel-copy">Review the waiver and update any participant details before submitting the renewal.</p>
+                                                                </div>
+                                                                <Button variant="outline-secondary" type="button" className="admin-renew-toggle"
+                                                                    onClick={() => {
+                                                                        this.setState({ hideWaiver: !hideWaiver })
+                                                                    }}>
+                                                                    {hideWaiver ? "Show Agreement" : "Hide Agreement"}
+                                                                </Button>
+                                                            </div>
+                                                            {!hideWaiver ?
+                                                                <div className="admin-renew-waiver-image-shell">
+                                                                    <img src={waiver} alt="US Airsoft waiver" className="waiver-rp" />
+                                                                </div>
+                                                                : null}
+                                                        </div>
+                                                        <div className="admin-renew-form-panel">
+                                                            <div className="admin-renew-panel-header">
+                                                                <div>
+                                                                    <h2 className="waiver-header-rp admin-renew-panel-title">
+                                                                        Participant Information
+                                                                    </h2>
+                                                                    <p className="admin-renew-panel-copy">Confirm the player information and collect fresh signatures for the updated waiver.</p>
+                                                                </div>
+                                                            </div>
+                                                            <Form className="waiver-form-rp admin-renew-form-grid">
                                                                     <Row>
                                                                         <Col>
                                                                             <Form.Group>
@@ -441,9 +454,9 @@ class RenewSubscription extends Component {
                                                                         </Button>
                                                                     </Row>
                                                                     {!agecheck ?
-                                                                        <div>
+                                                                        <div className="admin-renew-guardian-section">
                                                                             <Row className="row-renew">
-                                                                                <h2 className="waiver-header-rp">
+                                                                                <h2 className="waiver-header-rp admin-renew-panel-title">
                                                                                     {"Guardian/Parent Information:"}
                                                                                 </h2>
                                                                             </Row>
@@ -486,12 +499,12 @@ class RenewSubscription extends Component {
                                                                                 <Col className="justify-content-center-col sig-col-rp">
                                                                                     {!this.state.pgImg ?
                                                                                         <SignatureCanvas penColor='black' ref={(ref) => { this.sigRef2 = ref }}
-                                                                                            canvasProps={{ width: this.state.width * .75, height: 150, className: 'participant-sig-rp' }} />
+                                                                                            canvasProps={{ className: 'participant-sig-rp' }} />
                                                                                         : <img className="signBox-image-rt" src={this.state.pgImg} alt="signature" />
                                                                                     }
                                                                                 </Col>
                                                                             </Row>
-                                                                            <Row className="row-renew">
+                                                                            <Row className="row-renew button-row-rp2">
                                                                                 <Button variant="secondary" type="button" className="clear-button-rp"
                                                                                     onClick={() => {
                                                                                         this.setState({ pgImg: null })
@@ -515,13 +528,12 @@ class RenewSubscription extends Component {
                                                                         </div>
                                                                         : null}
                                                                 </Form>
-                                                            </Row>
                                                             <Row className="row-renew">
                                                                 {errorWaiver && <p className="error-text-rp">{errorWaiver}</p>}
                                                             </Row>
-                                                        </Col>
-                                                    </Row>
-                                                    <Row className="nav-row-rp">
+                                                        </div>
+                                                    </div>
+                                                    <Row className="nav-row-rp admin-renew-nav">
                                                         <Button className="next-button-rp" variant="info" type="button" disabled={this.state.pageIndex === 1 || submitted}
                                                             onClick={() => {
                                                                 if (address === "" || fname === "" || lname === "" || email === "" || address === "" ||

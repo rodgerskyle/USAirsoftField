@@ -75,31 +75,33 @@ class FreeGames extends Component {
 
     render() {
         return (
-            <div className="background-static-all">
+            <div className="admin-container admin-compact-page">
                 <Helmet>
                     <title>US Airsoft Field: Free Games Lookup</title>
                 </Helmet>
-                <Container>
-                    <h2 className="admin-header">Redeem Free Game</h2>
-                    <Breadcrumb className="admin-breadcrumb">
-                        {window.location.href.indexOf("admin") > -1 ?
-                            <LinkContainer to="/admin">
-                                <Breadcrumb.Item>Admin</Breadcrumb.Item>
-                            </LinkContainer>
-                            :
-                            <LinkContainer to="/dashboard">
-                                <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
-                            </LinkContainer>
-                        }
-                        <Breadcrumb.Item active>Free Games</Breadcrumb.Item>
-                    </Breadcrumb>
+                <Container fluid className="admin-content">
+                    <div className="admin-page-header">
+                        <h2 className="admin-header">Redeem Free Game</h2>
+                        <Breadcrumb className="admin-breadcrumb admin-page-breadcrumb">
+                            {window.location.href.indexOf("admin") > -1 ?
+                                <LinkContainer to="/admin">
+                                    <Breadcrumb.Item>Admin</Breadcrumb.Item>
+                                </LinkContainer>
+                                :
+                                <LinkContainer to="/dashboard">
+                                    <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
+                                </LinkContainer>
+                            }
+                            <Breadcrumb.Item active>Free Games</Breadcrumb.Item>
+                        </Breadcrumb>
+                    </div>
                     <Row>
                         <Col>
-                            <Card className="admin-cards">
+                            <Card className="admin-panel-card admin-freegames-card">
                                 <Card.Header>
-                                    <Form className="team-manage-text" onSubmit={e => { e.preventDefault(); }}>
+                                    <Form className="team-manage-text admin-freegames-search" onSubmit={e => { e.preventDefault(); }}>
                                         <Form.Group controlId="input1">
-                                            <Form.Label className="search-label-admin">Search by Username:</Form.Label>
+                                            <Form.Label className="search-label-admin">Search by Username</Form.Label>
                                             <Form.Control
                                                 type="name"
                                                 placeholder="ex: JohnDoe"
@@ -138,7 +140,7 @@ function UserBox({ users, index, search, update, length }) {
     };
 
     const renderUserRow = (user, i, rowIndex, isEven) => {
-        const rowClass = isEven ? "row-fg" : "status-card-offrow-admin-fg";
+        const rowClass = isEven ? "row-fg admin-freegames-user-row" : "status-card-offrow-admin-fg admin-freegames-user-row";
 
         return (
             <Row className={rowClass} key={rowIndex}>
@@ -153,7 +155,7 @@ function UserBox({ users, index, search, update, length }) {
                             {user.freegames + " Free Game(s)"}
                         </Col>
                         {ButtonArray[i] === false ? (
-                            <Col xs={4}>
+                            <Col xs={12} md={4} className="admin-freegames-action-col">
                                 <Button
                                     className="button-submit-admin2"
                                     onClick={() => {
@@ -170,8 +172,8 @@ function UserBox({ users, index, search, update, length }) {
                                 </Button>
                             </Col>
                         ) : (
-                            <Col xs={4}>
-                                <Row>
+                            <Col xs={12} md={4} className="admin-freegames-action-col">
+                                <Row className="g-2">
                                     <Col>
                                         <Button
                                             className="button-submit-admin2"
@@ -208,7 +210,7 @@ function UserBox({ users, index, search, update, length }) {
     };
 
     return (
-        <Card.Body className="status-card-body-fg-admin">
+        <Card.Body className="status-card-body-fg-admin admin-freegames-body">
             {users.map((user, i) => {
                 if (search !== "" && !user.username.toLowerCase().includes(search.toLowerCase())) {
                     return null;

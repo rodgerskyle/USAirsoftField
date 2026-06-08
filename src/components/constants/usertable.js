@@ -23,6 +23,13 @@ import './admin-table.css';
 
 function TablePaginationActions(props) {
   const { count, page, rowsPerPage, onPageChange } = props;
+  const actionButtonSx = {
+    minWidth: '40px',
+    color: '#aab4c2',
+    '&.Mui-disabled': {
+      color: 'rgba(170,180,194,0.3)',
+    },
+  };
 
   return (
     <Box sx={{ display: 'flex', gap: 1 }}>
@@ -30,7 +37,7 @@ function TablePaginationActions(props) {
         onClick={(e) => onPageChange(e, 0)}
         disabled={page === 0}
         aria-label="first page"
-        sx={{ minWidth: '40px', color: 'white' }}
+        sx={actionButtonSx}
       >
         <FontAwesomeIcon icon={faAnglesLeft} />
       </Button>
@@ -38,7 +45,7 @@ function TablePaginationActions(props) {
         onClick={(e) => onPageChange(e, page - 1)}
         disabled={page === 0}
         aria-label="previous page"
-        sx={{ minWidth: '40px', color: 'white' }}
+        sx={actionButtonSx}
       >
         <FontAwesomeIcon icon={faChevronLeft} />
       </Button>
@@ -46,7 +53,7 @@ function TablePaginationActions(props) {
         onClick={(e) => onPageChange(e, page + 1)}
         disabled={page >= Math.ceil(count / rowsPerPage) - 1}
         aria-label="next page"
-        sx={{ minWidth: '40px', color: 'white' }}
+        sx={actionButtonSx}
       >
         <FontAwesomeIcon icon={faChevronRight} />
       </Button>
@@ -54,7 +61,7 @@ function TablePaginationActions(props) {
         onClick={(e) => onPageChange(e, Math.max(0, Math.ceil(count / rowsPerPage) - 1))}
         disabled={page >= Math.ceil(count / rowsPerPage) - 1}
         aria-label="last page"
-        sx={{ minWidth: '40px', color: 'white' }}
+        sx={actionButtonSx}
       >
         <FontAwesomeIcon icon={faAnglesRight} />
       </Button>
@@ -71,51 +78,51 @@ function UserRow({ user, page, rowsPerPage, index }) {
       <TableRow
         sx={{
           '& > *': { borderBottom: 'unset' },
-          backgroundColor: open ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
+          backgroundColor: open ? 'rgba(31, 101, 199, 0.10)' : 'rgba(18, 23, 29, 0.96)',
           transition: 'background-color 0.2s',
           '&:hover': {
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            backgroundColor: 'rgba(255,255,255,0.04)',
           }
         }}
       >
-        <TableCell sx={{ width: 50, color: 'white' }}>
+        <TableCell sx={{ width: 50, color: '#aab4c2' }}>
           <Button
             size="small"
             onClick={() => setOpen(!open)}
-            sx={{ minWidth: '40px', color: 'white' }}
+            sx={{ minWidth: '40px', color: '#aab4c2' }}
           >
             <FontAwesomeIcon icon={open ? faChevronUp : faChevronDown} />
           </Button>
         </TableCell>
-        <TableCell sx={{ color: 'white' }}>
+        <TableCell sx={{ color: '#f4f7fb', fontWeight: 600 }}>
           {`(${(index + 1) + (page * rowsPerPage)}) ${user.name}`}
         </TableCell>
-        <TableCell align="right" sx={{ color: 'white' }}>{user.username}</TableCell>
-        <TableCell align="right" sx={{ color: 'white' }}>{user.email}</TableCell>
+        <TableCell align="right" sx={{ color: '#aab4c2' }}>{user.username}</TableCell>
+        <TableCell align="right" sx={{ color: '#aab4c2' }}>{user.email}</TableCell>
       </TableRow>
 
       <TableRow>
-        <TableCell colSpan={6} sx={{ py: 0 }}>
+        <TableCell colSpan={6} sx={{ py: 0, backgroundColor: 'rgba(10,14,19,0.88)' }}>
           <Collapse in={open} timeout="auto" unmountOnExit>
             <Box sx={{ py: 2 }}>
-              <Table size="small">
+              <Table size="small" sx={{ '& .MuiTableCell-root': { borderBottomColor: 'rgba(255,255,255,0.08)' } }}>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ color: 'white', width: 120 }}>Renewal</TableCell>
-                    <TableCell sx={{ color: 'white', width: 120 }}>Warnings</TableCell>
+                    <TableCell sx={{ color: '#f4f7fb', width: 120, fontWeight: 700 }}>Renewal</TableCell>
+                    <TableCell sx={{ color: '#f4f7fb', width: 120, fontWeight: 700 }}>Warnings</TableCell>
                     <TableCell align="right" />
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   <TableRow>
-                    <TableCell sx={{ color: expired ? '#ff4444' : '#4CAF50' }}>
+                    <TableCell sx={{ color: expired ? '#f87171' : '#86efac' }}>
                       <FontAwesomeIcon
                         icon={expired ? faCircleXmark : faCircleCheck}
                         className="me-2"
                       />
                       {expired ? 'Expired' : 'Clear'}
                     </TableCell>
-                    <TableCell sx={{ color: '#4CAF50' }}>
+                    <TableCell sx={{ color: '#86efac' }}>
                       <FontAwesomeIcon icon={faCircleCheck} className="me-2" />
                       Clean
                     </TableCell>
@@ -125,9 +132,9 @@ function UserRow({ user, page, rowsPerPage, index }) {
                         to={`/admin/useroptions/${user.uid}`}
                         variant="contained"
                         sx={{
-                          backgroundColor: '#51585e',
+                          backgroundColor: '#1f65c7',
                           '&:hover': {
-                            backgroundColor: '#636c74',
+                            backgroundColor: '#163e7d',
                           }
                         }}
                       >
@@ -150,15 +157,20 @@ export default function UserTable({ users, index, search, length }) {
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
 
+  React.useEffect(() => {
+    setPage(0);
+  }, [search, length]);
+
   const emptyRows = rowsPerPage - Math.min(rowsPerPage, length - page * rowsPerPage);
 
   return (
     <TableContainer
       component={Paper}
       sx={{
-        backgroundColor: '#51585e',
-        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-        borderRadius: '8px',
+        backgroundColor: 'rgba(18, 23, 29, 0.96)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        boxShadow: '0 18px 40px rgba(0, 0, 0, 0.22)',
+        borderRadius: '16px',
       }}
     >
       <Table>
@@ -190,10 +202,10 @@ export default function UserTable({ users, index, search, length }) {
               count={length}
               rowsPerPage={rowsPerPage}
               page={page}
-              SelectProps={{
+                SelectProps={{
                 inputProps: { 'aria-label': 'rows per page' },
                 native: true,
-                sx: { color: 'white' }
+                sx: { color: '#aab4c2' }
               }}
               onPageChange={(e, newPage) => setPage(newPage)}
               onRowsPerPageChange={(e) => {
@@ -202,12 +214,15 @@ export default function UserTable({ users, index, search, length }) {
               }}
               ActionsComponent={TablePaginationActions}
               sx={{
-                color: 'white',
+                color: '#aab4c2',
                 '& .MuiTablePagination-select': {
-                  color: 'white'
+                  color: '#aab4c2'
                 },
                 '& .MuiTablePagination-selectIcon': {
-                  color: 'white'
+                  color: '#aab4c2'
+                },
+                '& .MuiTablePagination-displayedRows, & .MuiTablePagination-selectLabel': {
+                  color: '#aab4c2'
                 }
               }}
             />
