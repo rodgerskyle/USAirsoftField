@@ -59,7 +59,7 @@ const GAMEPLAY_CARDS = [
     },
     {
         name: 'Member Package',
-        price: '$65',
+        price: '$50',
         accent: 'red',
         description: 'For members who want field entry plus the basics to play.',
         items: [
@@ -69,7 +69,7 @@ const GAMEPLAY_CARDS = [
     },
     {
         name: 'Non-Member Package',
-        price: '$75',
+        price: '$55',
         accent: 'blue',
         description: 'An easy all-in starting point for new or visiting players.',
         items: [
@@ -174,6 +174,45 @@ const PARTY_CARDS = [
             '4 sodas (2 liter)',
             '1 US Airsoft birthday patch',
             'Additional players are $38 each',
+        ],
+    },
+];
+
+const WEEKDAY_PARTY_CARDS = [
+    {
+        name: 'Weekday Package #1',
+        price: '$1000',
+        accent: 'red',
+        description: 'Weekday private package for larger groups without rental distribution.',
+        items: [
+            '30 players',
+            'No rental equipment distributed',
+            'Additional players are $40 each',
+            'Game Time: 4 Hours',
+        ],
+    },
+    {
+        name: 'Weekday Package #2',
+        price: '$1200',
+        accent: 'blue',
+        description: 'Weekday private package with rental equipment included.',
+        items: [
+            '20 players',
+            'Rental equipment distributed',
+            'Additional players are $60 each',
+            'Game Time: 4 Hours',
+        ],
+    },
+    {
+        name: 'Weekday Package #3',
+        price: '$2200',
+        accent: 'red',
+        description: 'Largest weekday package for high-capacity private events.',
+        items: [
+            '40 players',
+            'Rental equipment distributed',
+            'Additional players are $55 each',
+            'Game Time: 4 Hours',
         ],
     },
 ];
@@ -287,7 +326,6 @@ const PartiesSection = () => (
                     <span>12:30 PM - 4:00 PM</span>
                     <span>Up to 10 players</span>
                     <span>$25 each additional player</span>
-                    <span>Rentals available for $20</span>
                 </div>
             </div>
             <div className="pricing-modern-callout-price">
@@ -303,6 +341,20 @@ const PartiesSection = () => (
                 </Col>
             ))}
         </Row>
+
+        <div className="pricing-modern-subsection">
+            <div className="pricing-modern-subsection-header">
+                <p className="pricing-modern-callout-eyebrow">Weekday Packages</p>
+                <h3 className="pricing-modern-callout-title">Weekday private event options</h3>
+            </div>
+            <Row className="g-4 mt-1">
+                {WEEKDAY_PARTY_CARDS.map((card) => (
+                    <Col key={card.name} lg={4}>
+                        <PricingCard {...card} />
+                    </Col>
+                ))}
+            </Row>
+        </div>
     </div>
 );
 

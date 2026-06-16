@@ -328,6 +328,14 @@
     letter-spacing: 0.08rem;
 }
 
+.pricing-modern-subsection {
+    margin-top: 2.75rem;
+}
+
+.pricing-modern-subsection-header {
+    margin-bottom: 1rem;
+}
+
 .pricing-modern-cta {
     display: flex;
     align-items: center;

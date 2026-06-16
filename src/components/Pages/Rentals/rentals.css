@@ -55,6 +55,18 @@
     justify-content: center;
 }
 
+.rental-submit-spinner {
+    margin-right: 0.65rem;
+}
+
+.rental-submit-status {
+    margin: 1rem 0 0;
+    text-align: center;
+    color: #9fb0c4;
+    font-size: 0.98rem;
+    font-weight: 500;
+}
+
 .submit-button {
     min-width: 250px !important;
     padding: 12px 24px !important;

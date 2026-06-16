@@ -10,9 +10,12 @@ class Logout extends Component {
     this.state={};
   }
 
-  componentDidMount() {
-    this.props.firebase.doSignOut()
-    this.props.history.push('/login')
+  async componentDidMount() {
+    try {
+      await this.props.firebase.doSignOut();
+    } finally {
+      this.props.history.replace('/login');
+    }
   }
 
   render() {

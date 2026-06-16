@@ -121,7 +121,7 @@ const NavigationWaiver = ({ authUser, profilePic }) => {
                         {/* Mobile only feature*/}
                         {!!authUser.roles[ROLES.STATIC] ? null :
                             <Nav>
-                                <NavDropdown className="nav-item-profile-nav" title={
+                                <NavDropdown align="end" className="nav-item-profile-nav" title={
                                     <MUIButton
                                         variant="contained"
                                         color="primary"
@@ -153,7 +153,7 @@ const NavigationWaiver = ({ authUser, profilePic }) => {
                     </Nav>
                     {!!authUser.roles[ROLES.STATIC] ? null :
                         <Nav className="mdb-nav-not-mobile-profile">
-                            <NavDropdown className="nav-item-profile-nav" title={
+                            <NavDropdown align="end" className="nav-item-profile-nav" title={
                                 <MUIButton
                                     variant="contained"
                                     color="primary"
@@ -248,7 +248,7 @@ const NavigationAuth = ({ authUser, profilePic }) => {
                     <Col className="col-mobile-profile-nav">
                         {/* Mobile only feature*/}
                         <Nav onSelect={handleSelect} activeKey={key}>
-                            <NavDropdown className="nav-item-profile-nav"
+                            <NavDropdown align="end" className="nav-item-profile-nav nav-item-loggedout"
                                 title={
                                     <MUIButton
                                         variant="contained"
@@ -294,7 +294,7 @@ const NavigationAuth = ({ authUser, profilePic }) => {
                         <Nav.Link as={Link} className="nav-link" to="/leaderboard" eventKey={1}
                             onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Leaderboard</Nav.Link>
                         <Nav.Link as={Link} className="nav-link" to="/pricing" eventKey={3}
-                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Pricing</Nav.Link>
+                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Pricing/Parties</Nav.Link>
                         {/* <Nav.Link as={Link} className="nav-link" to="/teams" eventKey={3}
                             onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Teams</Nav.Link> */}
                         {!!authUser.roles[ROLES.ADMIN] && (
@@ -336,7 +336,7 @@ const NavigationAuth = ({ authUser, profilePic }) => {
                         <SocialNavIcons />
                     </Nav>
                     <Nav className="mdb-nav-not-mobile-profile" onSelect={handleSelect} activeKey={key}>
-                        <NavDropdown className="nav-item-profile-nav"
+                        <NavDropdown align="end" className="nav-item-profile-nav"
                             title={
                                 <MUIButton
                                     variant="contained"
@@ -443,7 +443,7 @@ const NavigationNonAuth = () => {
                     <Col className="col-mobile-profile-nav">
                         {/* Mobile only feature*/}
                         <Nav onSelect={handleSelect} activeKey={key}>
-                            <NavDropdown className="nav-item-profile-nav"
+                            <NavDropdown align="end" className="nav-item-profile-nav nav-item-loggedout"
                                 title={
                                     <MUIButton
                                         variant="contained"
@@ -480,7 +480,7 @@ const NavigationNonAuth = () => {
                         <Nav.Link as={Link} className="nav-link" to="/leaderboard" eventKey={1}
                             onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Leaderboard</Nav.Link>
                         <Nav.Link as={Link} className="nav-link" to="/pricing" eventKey={3}
-                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Pricing</Nav.Link>
+                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Pricing/Parties</Nav.Link>
                         {/* <Nav.Link as={Link} className="nav-link" to="/teams" eventKey={3}
                             onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Teams</Nav.Link> */}
                         <NavDropdown title="Socials" className="socials-nav-dropdown">
@@ -518,7 +518,7 @@ const NavigationNonAuth = () => {
                         <SocialNavIcons />
                     </Nav>
                     <Nav className="mdb-nav-not-mobile-profile" onSelect={handleSelect} activeKey={key}>
-                        <NavDropdown className="nav-item-profile-nav" title={
+                        <NavDropdown align="end" className="nav-item-profile-nav nav-item-loggedout" title={
                             <MUIButton
                                 variant="contained"
                                 color="primary"

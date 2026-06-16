@@ -62,12 +62,14 @@ const AddParticipantModal = ({
     <Modal open={open} onClose={onClose}>
         {(() => {
             const trimmedSearch = searchQuery.trim();
+            const isMemberShortSearch = isMemberMode && trimmedSearch.length > 0 && trimmedSearch.length < 2;
             const isDigitalShortSearch = !isMemberMode && trimmedSearch.length > 0 && trimmedSearch.length < 2;
-            const hasActiveSearch = isMemberMode ? trimmedSearch.length > 0 : trimmedSearch.length >= 2;
+            const hasActiveSearch = trimmedSearch.length >= 2;
+            const showDigitalDateFilters = !isMemberMode && !hasActiveSearch;
             const loadingLabel = isLoadingMembers
                 ? 'Loading members...'
                 : (hasActiveSearch && !isMemberMode
-                    ? 'Searching waivers across selected dates...'
+                    ? 'Searching waivers across all dates...'
                     : 'Updating results...');
 
             return (
@@ -97,7 +99,7 @@ const AddParticipantModal = ({
                 <TextField
                     fullWidth
                     variant="outlined"
-                    placeholder={isMemberMode ? "Search members..." : "Search waivers..."}
+                    placeholder={isMemberMode ? "Search members by first or last name..." : "Search waivers..."}
                     value={searchQuery}
                     onChange={(e) => onSearchChange(e.target.value)}
                     InputProps={{
@@ -116,14 +118,16 @@ const AddParticipantModal = ({
                     sx={{ mb: 2 }}
                 />
                 <Typography variant="body2" className="search-status-text">
-                    {isDigitalShortSearch
+                    {isMemberShortSearch
+                        ? 'Type at least 2 characters to search members by first or last name.'
+                        : isDigitalShortSearch
                         ? 'Type at least 2 characters to search digital waivers by name.'
                         : trimmedSearch
                         ? (isMemberMode
                             ? `Searching members for "${trimmedSearch}".`
-                            : `Searching all waivers in selected dates for "${trimmedSearch}".`)
+                            : `Searching all waivers for "${trimmedSearch}".`)
                         : (isMemberMode
-                            ? 'Type to search members.'
+                            ? 'Type at least 2 characters to search all members.'
                             : 'Tap a waiver to add participant.')}
                 </Typography>
                 <Box sx={{
@@ -153,7 +157,7 @@ const AddParticipantModal = ({
 
             <Box sx={{ position: 'relative', minHeight: 440 }}>
                 {/* Add date filters */}
-                {!isMemberMode && (
+                {showDigitalDateFilters && (
                     <Box sx={{
                         display: 'flex',
                         gap: 2,
@@ -818,6 +822,14 @@ class EditSelectedForm extends Component {
     loadDigitalWaivers = async (startDate = null, endDate = null) => {
         try {
             this.setState({ isLoadingDigital: true });
+            const searchTerm = this.state.searchQuery.trim().toLowerCase();
+
+            if (searchTerm.length >= 2) {
+                const globalSearchRange = this.getGlobalDigitalSearchRange();
+                startDate = globalSearchRange.startDate;
+                endDate = globalSearchRange.endDate;
+            }
+
             // Default to current month if no dates provided
             if (!startDate || !endDate) {
                 const now = new Date();
@@ -828,7 +840,6 @@ class EditSelectedForm extends Component {
             // Convert dates to timestamps for Firebase query
             const startTimestamp = startDate.getTime();
             const endTimestamp = endDate.getTime();
-            const searchTerm = this.state.searchQuery.trim().toLowerCase();
             const monthKeysForSearch = this.getSearchMonthKeysForRange();
 
             if (searchTerm.length >= 2 && monthKeysForSearch.length > 0) {
@@ -901,6 +912,11 @@ class EditSelectedForm extends Component {
     };
 
     getSearchMonthKeysForRange = () => {
+        const trimmedSearch = this.state.searchQuery.trim();
+        if (trimmedSearch.length >= 2) {
+            return this.getAllDigitalSearchMonthKeys();
+        }
+
         const { activeMonth, activeYear } = this.state;
         const allYearsValue = new Date().getFullYear() + 1;
 
@@ -917,6 +933,28 @@ class EditSelectedForm extends Component {
 
         const monthKey = String(activeMonth).padStart(2, '0');
         return [`${activeYear}-${monthKey}`];
+    };
+
+    getGlobalDigitalSearchRange = () => {
+        const now = new Date();
+        return {
+            startDate: new Date(2020, 0, 1),
+            endDate: new Date(now.getFullYear() + 1, 11, 31, 23, 59, 59, 999)
+        };
+    };
+
+    getAllDigitalSearchMonthKeys = () => {
+        const now = new Date();
+        const keys = [];
+
+        for (let year = 2020; year <= now.getFullYear(); year++) {
+            const maxMonth = year === now.getFullYear() ? now.getMonth() + 1 : 12;
+            for (let month = 1; month <= maxMonth; month++) {
+                keys.push(`${year}-${String(month).padStart(2, '0')}`);
+            }
+        }
+
+        return keys;
     };
 
     getMonthlyDigitalCountIfApplicable = async () => {
@@ -1017,98 +1055,80 @@ class EditSelectedForm extends Component {
     };
 
     loadMembers = async (searchTerm = '') => {
-        const runFallbackMemberSearch = async (normalizedSearch) => {
-            const fullSnapshot = await get(this.props.firebase.users());
-            if (!fullSnapshot.exists()) {
-                this.setState({
-                    members: [],
-                    totalMembers: 0,
-                    isLoadingMembers: false
-                });
-                return;
-            }
+        const mapMember = ([key, value]) => ({
+            name: value.name || value.username || '',
+            date: new Date(),
+            ref: key,
+            isMember: true,
+            data: value
+        });
 
-            const allMembers = Object.entries(fullSnapshot.val())
-                .map(([key, value]) => ({
-                    name: value.username,
-                    date: new Date(),
-                    ref: key,
-                    isMember: true,
-                    data: value
-                }))
-                .filter(member =>
-                    member.name &&
-                    (!normalizedSearch || member.name.toLowerCase().includes(normalizedSearch)))
+        const dedupeMembers = (entries) => {
+            const uniqueMembers = new Map();
+            entries.forEach((entry) => {
+                if (!entry) {
+                    return;
+                }
+
+                if (!uniqueMembers.has(entry.ref)) {
+                    uniqueMembers.set(entry.ref, entry);
+                }
+            });
+
+            return Array.from(uniqueMembers.values())
+                .filter((member) => member.name)
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .slice(0, this.state.membersPerPage);
-
-            this.setState({
-                members: allMembers,
-                totalMembers: allMembers.length,
-                isLoadingMembers: false
-            });
         };
 
         try {
             this.setState({ isLoadingMembers: true });
             const normalizedSearch = searchTerm.trim().toLowerCase();
-            const membersQuery = normalizedSearch
-                ? query(
-                    this.props.firebase.users(),
-                    orderByChild('usernameLower'),
-                    startAt(normalizedSearch),
-                    endAt(`${normalizedSearch}\uf8ff`),
-                    limitToFirst(this.state.membersPerPage)
-                )
-                : query(
-                    this.props.firebase.users(),
-                    orderByChild('usernameLower'),
-                    limitToFirst(this.state.membersPerPage)
-                );
-            const snapshot = await get(membersQuery);
-
-            if (snapshot.exists()) {
-                const membersObject = snapshot.val();
-                const members = Object.entries(membersObject)
-                    .map(([key, value]) => ({
-                        name: value.username,
-                        date: new Date(),
-                        ref: key,
-                        isMember: true,
-                        data: value
-                    }));
-
-                // Sort by name
-                members.sort((a, b) => a.name.localeCompare(b.name));
-
-                this.setState({
-                    members,
-                    totalMembers: members.length,
-                    isLoadingMembers: false
-                });
-            } else {
+            if (normalizedSearch.length < 2) {
                 this.setState({
                     members: [],
                     totalMembers: 0,
                     isLoadingMembers: false
                 });
-
-                // Fallback for legacy user records that may not have usernameLower
-                if (normalizedSearch) {
-                    await runFallbackMemberSearch(normalizedSearch);
-                }
-            }
-        } catch (error) {
-            console.error('Error loading members:', error);
-            console.log(error)
-            const normalizedSearch = searchTerm.trim().toLowerCase();
-            const message = (error && error.message) || '';
-            if (message.includes('Index not defined')) {
-                await runFallbackMemberSearch(normalizedSearch);
                 return;
             }
+
+            const resultLimit = this.state.membersPerPage;
+            const searchFields = ['usernameLower', 'nameLower'];
+            const snapshots = await Promise.all(
+                searchFields.map((field) =>
+                    get(query(
+                        this.props.firebase.users(),
+                        orderByChild(field),
+                        startAt(normalizedSearch),
+                        endAt(`${normalizedSearch}\uf8ff`),
+                        limitToFirst(resultLimit)
+                    ))
+                )
+            );
+
+            const mergedMembers = dedupeMembers(
+                snapshots.flatMap((snapshot) =>
+                    snapshot.exists()
+                        ? Object.entries(snapshot.val()).map(mapMember)
+                        : []
+                )
+            );
+
             this.setState({
-                error: 'Failed to load members',
+                members: mergedMembers,
+                totalMembers: mergedMembers.length,
+                isLoadingMembers: false
+            });
+        } catch (error) {
+            console.error('Error loading members:', error);
+            const message = (error && error.message) || '';
+            this.setState({
+                error: message.includes('Index not defined')
+                    ? 'Member search index is not configured yet. Add database indexes for usernameLower and nameLower to enable fast full-database search.'
+                    : 'Failed to load members',
+                members: [],
+                totalMembers: 0,
                 isLoadingMembers: false
             });
         }

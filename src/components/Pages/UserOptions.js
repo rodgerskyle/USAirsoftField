@@ -160,8 +160,10 @@ class UserOptions extends Component {
         let wins = parseInt(this.state.wins)
         let losses = parseInt(this.state.losses)
         let freegames = parseInt(this.state.freegames)
+        const normalizedName = (name || '').trim().toLowerCase();
+        const normalizedUsername = (username || '').trim().toLowerCase();
         update(this.props.firebase.user(uid), ({
-            username, name, team, wins, losses, points, profilepic, freegames
+            username, usernameLower: normalizedUsername, name, nameLower: normalizedName, team, wins, losses, points, profilepic, freegames
         }));
 
         // Email portion

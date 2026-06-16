@@ -162,6 +162,8 @@ class SignUpFormBase extends Component {
     const renewal = (new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear() + 1);
     const username = this.createUsername((fname + lname).replace(/\s/, "").toLowerCase());
     const name = fname + " " + lname;
+    const normalizedName = name.trim().toLowerCase();
+    const normalizedUsername = username.trim().toLowerCase();
     const profilepic = false;
     const freegames = 0;
     const team = '';
@@ -181,6 +183,7 @@ class SignUpFormBase extends Component {
           this.setState({ uid: authUser.user.uid })
           return set(this.props.firebase.user(authUser.user.uid), {
             name,
+            nameLower: normalizedName,
             email,
             roles,
             points,
@@ -188,6 +191,7 @@ class SignUpFormBase extends Component {
             losses,
             freegames,
             username,
+            usernameLower: normalizedUsername,
             team,
             cmwins,
             cmlosses,

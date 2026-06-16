@@ -36,14 +36,22 @@ const HOURS = {
   winter: {
     label: '02 Nov - 30 Apr',
     arena: [
+      'Mon: Closed',
+      'Tue: Closed',
+      'Wed: Closed',
+      'Thu: Closed',
       'Fri: Closed',
       'Sat: 9AM - 3PM',
       'Sun: 9AM - 3PM',
     ],
     store: [
-      'Mon-Fri: 9AM - 5PM',
-      'Sat: 9AM - 5PM',
-      'Sun: 9AM - 5PM',
+      'Mon: 9:30AM - 6PM',
+      'Tue: 9:30AM - 6PM',
+      'Wed: 9:30AM - 6PM',
+      'Thu: 9:30AM - 6PM',
+      'Fri: 9:30AM - 6PM',
+      'Sat: 8AM - 4PM',
+      'Sun: 8AM - 4PM',
     ],
   },
 };

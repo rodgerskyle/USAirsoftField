@@ -79,15 +79,15 @@ class SignInFormBase extends Component {
 
       this.props.firebase
         .doSignInWithEmailAndPassword(email, password)
-        .then(() => {
+        .then(async () => {
           this.setState({ ...INITIAL_STATE });
-          get(this.props.firebase.user(this.props.firebase.uid()), snapshot => {
-            const userObject = snapshot.val();
-            this.props.history.push("/");
-            if (userObject.roles && !!userObject.roles[ROLES.WAIVER]) {
-              this.props.history.push("/dashboard");
-            }
-          })
+          const snapshot = await get(this.props.firebase.user(this.props.firebase.uid()));
+          const userObject = snapshot.val() || {};
+
+          this.props.history.push("/");
+          if (userObject.roles && !!userObject.roles[ROLES.WAIVER]) {
+            this.props.history.push("/dashboard");
+          }
         })
         .catch(error_p => {
           console.log(error_p);
