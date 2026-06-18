@@ -14,17 +14,24 @@ class Gametypes extends Component {
 
     render() {
         return (
-            <div className="background-static-all">
+            <div className="public-page-shell">
                 <Helmet>
                     <title>US Airsoft Field: Gametypes</title>
                 </Helmet>
-                <h2 className="page-header">Gametypes</h2>
-                <Container>
-                    <Row className="row-update-rules"><p>Last Updated: 1/1/2020</p></Row>
+                <section className="public-section public-reference-section">
+                <div className="public-section-heading">
+                    <p className="public-section-kicker">Game Info</p>
+                    <h1 className="public-section-title">Gametypes</h1>
+                    <p className="public-section-copy">
+                        Browse the modes played at US Airsoft so new players and returning groups can quickly understand each match style.
+                    </p>
+                </div>
+                <Container fluid>
+                    <Row className="row-update-rules public-meta-row"><p>Last Updated: 1/1/2020</p></Row>
                     <Tab.Container id="rules-list-group-tabs" defaultActiveKey="#link1">
-                        <Row>
-                            <Col sm={4}>
-                                <ListGroup className="list-gametypes">
+                        <Row className="public-tab-layout">
+                            <Col lg={4} className="mb-4 mb-lg-0">
+                                <ListGroup className="list-gametypes public-tab-nav">
                                     <ListGroup.Item action href="#link1">
                                         The Enemy within
                                 </ListGroup.Item>
@@ -126,7 +133,8 @@ class Gametypes extends Component {
                                 </ListGroup.Item>
                                 </ListGroup>
                             </Col>
-                            <Col sm={8}>
+                            <Col lg={8}>
+                                <div className="public-tab-panel">
                                 <Tab.Content>
                                     <Tab.Pane eventKey="#link1">
                                         <EnemyWithin />
@@ -228,10 +236,12 @@ class Gametypes extends Component {
                                         <FuelDepotDemolition />
                                     </Tab.Pane>
                                 </Tab.Content>
+                                </div>
                             </Col>
                         </Row>
                     </Tab.Container>
                 </Container>
+                </section>
             </div>
         );
     }

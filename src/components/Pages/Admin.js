@@ -31,6 +31,22 @@ import {
   faClipboardList
 } from '@fortawesome/free-solid-svg-icons';
 
+const PRIMARY_ACTIONS = [
+  { title: 'Enter Wins', path: '/admin/enterwins', icon: faTrophy },
+  { title: 'Enter Losses', path: '/admin/enterlosses', icon: faTimesCircle },
+  { title: 'Check Free Games', path: '/admin/freegames', icon: faGift },
+  { title: 'New Member', path: '/admin/signup', icon: faUserPlus },
+  { title: 'Renew Member', path: '/admin/renewal', icon: faUserGear }
+];
+
+const SECONDARY_ACTIONS = [
+  { title: 'Calendar', path: '/admin/birthday', icon: faCalendar },
+  { title: 'Sign Waiver', path: '/admin/waiverform', icon: faUserPen },
+  { title: 'Scan Waiver', path: '/admin/scanwaiver', icon: faQrcode },
+  { title: 'Search Waiver', path: '/admin/waiverlookup', icon: faSearch },
+  { title: 'Rental Form', path: '/admin/rentalform', icon: faClipboardList }
+];
+
 class AdminPage extends Component {
   constructor(props) {
     super(props);
@@ -203,85 +219,109 @@ class AdminPage extends Component {
         <AdminDrawer component={
           <div className="admin-content">
             <Container fluid className="p-0">
-              {/* Quick Actions Grid */}
-              <Row className="action-cards-grid">
-                {[
-                  { title: 'Enter Wins', path: '/admin/enterwins', icon: faTrophy },
-                  { title: 'Enter Losses', path: '/admin/enterlosses', icon: faTimesCircle },
-                  { title: 'Check Free Games', path: '/admin/freegames', icon: faGift },
-                  { title: 'New Member', path: '/admin/signup', icon: faUserPlus },
-                  { title: 'Renew Member', path: '/admin/renewal', icon: faUserGear }
-                ].map((item, index) => (
-                  <Col key={index} lg={2} md={4} sm={6} className="mb-4">
-                    <Link to={item.path} className="card-link">
-                      <Card className="modern-card">
-                        <Card.Body>
-                          <FontAwesomeIcon icon={item.icon} className="card-icon" />
-                          <h3 className="card-title">{item.title}</h3>
-                        </Card.Body>
-                      </Card>
-                    </Link>
-                  </Col>
-                ))}
-              </Row>
+              <section className="admin-hero-panel">
+                <div className="admin-hero-copy">
+                  <p className="admin-eyebrow">Admin Dashboard</p>
+                  <h1 className="admin-page-title">Operations Center</h1>
+                  <p className="admin-page-copy">
+                    Manage players, waivers, rentals, and staff actions
+                  </p>
+                </div>
+                <div className="admin-hero-stats">
+                  <div className="admin-stat-card">
+                    <span className="admin-stat-value">{this.state.users.length}</span>
+                    <span className="admin-stat-label">Total users</span>
+                  </div>
+                </div>
+              </section>
+
+              <section className="admin-section-block">
+                <div className="admin-section-heading">
+                  <p className="admin-section-kicker">Primary Actions</p>
+                  <h2 className="admin-section-title">Member and gameplay tasks</h2>
+                </div>
+                {/* Quick Actions Grid */}
+                <Row className="action-cards-grid">
+                  {PRIMARY_ACTIONS.map((item, index) => (
+                    <Col key={index} xl={2} lg={4} md={6} sm={6} className="mb-4">
+                      <Link to={item.path} className="card-link">
+                        <Card className="modern-card">
+                          <Card.Body>
+                            <FontAwesomeIcon icon={item.icon} className="card-icon" />
+                            <h3 className="card-title">{item.title}</h3>
+                          </Card.Body>
+                        </Card>
+                      </Link>
+                    </Col>
+                  ))}
+                </Row>
+              </section>
 
               {/* Users List Section */}
-              <Row className="mt-4 users-card-container">
-                <Col lg={10} md={12}>
-                  <Card className="modern-card users-card">
-                    <Card.Header>
-                      <FontAwesomeIcon icon={faUsers} className="me-2" />
-                      Users List
-                    </Card.Header>
-                    <Card.Body>
-                      <Form className="search-form mb-4">
-                        <Form.Group>
-                          <Form.Control
-                            type="search"
-                            placeholder="Search users..."
-                            value={this.state.search}
-                            onChange={this.onChange}
+              <section className="admin-section-block admin-users-section">
+                <div className="admin-section-heading admin-section-heading-inline">
+                  <div>
+                    <p className="admin-section-kicker">Directory</p>
+                    <h2 className="admin-section-title">Users List</h2>
+                  </div>
+                </div>
+                <Row className="users-card-container">
+                  <Col xl={10} lg={11} md={12}>
+                    <Card className="modern-card users-card">
+                      <Card.Header>
+                        <FontAwesomeIcon icon={faUsers} className="me-2" />
+                        Users List
+                      </Card.Header>
+                      <Card.Body>
+                        <Form className="search-form mb-4">
+                          <Form.Group>
+                            <Form.Control
+                              type="search"
+                              placeholder="Search users..."
+                              value={this.state.search}
+                              onChange={this.onChange}
+                            />
+                          </Form.Group>
+                        </Form>
+                        {loading ? (
+                          <div className="text-center">
+                            <Spinner animation="border" variant="light" />
+                          </div>
+                        ) : (
+                          <UserTable
+                            users={this.state.usersSearchList}
+                            index={0}
+                            length={this.state.usersSearchList.length}
+                            search={this.state.search}
                           />
-                        </Form.Group>
-                      </Form>
-                      {loading ? (
-                        <div className="text-center">
-                          <Spinner animation="border" variant="light" />
-                        </div>
-                      ) : (
-                        <UserTable
-                          users={this.state.usersSearchList}
-                          index={0}
-                          length={this.state.usersSearchList.length}
-                          search={this.state.search}
-                        />
-                      )}
-                    </Card.Body>
-                  </Card>
-                </Col>
-              </Row>
+                        )}
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                </Row>
+              </section>
 
               {/* Additional Actions Grid */}
-              <Row className="action-cards-grid mt-4">
-                {[
-                  { title: 'Calendar', path: '/admin/birthday', icon: faCalendar },
-                  { title: 'Sign Waiver', path: '/admin/waiverform', icon: faUserPen },
-                  { title: 'Scan Waiver', path: '/admin/scanwaiver', icon: faQrcode },
-                  { title: 'Search Waiver', path: '/admin/waiverlookup', icon: faSearch },
-                  { title: 'Rental Form', path: '/admin/rentalform', icon: faClipboardList }
-                ].map((item, index) => (
-                  <Col key={index} lg={2} md={4} sm={6} className="mb-4">
-                    <Link to={item.path} className="card-link">
-                      <Card className="modern-card">
-                        <Card.Body>
-                          <FontAwesomeIcon icon={item.icon} className="card-icon" />
-                          <h3 className="card-title">{item.title}</h3>
-                        </Card.Body>
-                      </Card>
-                    </Link>
-                  </Col>
-                ))}
-              </Row>
+              <section className="admin-section-block">
+                <div className="admin-section-heading">
+                  <p className="admin-section-kicker">Support Tools</p>
+                  <h2 className="admin-section-title">Waivers, rentals, and event flow</h2>
+                </div>
+                <Row className="action-cards-grid mt-0">
+                  {SECONDARY_ACTIONS.map((item, index) => (
+                    <Col key={index} xl={2} lg={4} md={6} sm={6} className="mb-4">
+                      <Link to={item.path} className="card-link">
+                        <Card className="modern-card">
+                          <Card.Body>
+                            <FontAwesomeIcon icon={item.icon} className="card-icon" />
+                            <h3 className="card-title">{item.title}</h3>
+                          </Card.Body>
+                        </Card>
+                      </Link>
+                    </Col>
+                  ))}
+                </Row>
+              </section>
             </Container>
           </div>
         }>

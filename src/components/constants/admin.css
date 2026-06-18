@@ -1,89 +1,1312 @@
+:root {
+    --admin-bg: #0b0d10;
+    --admin-surface: rgba(18, 23, 29, 0.96);
+    --admin-surface-muted: rgba(24, 33, 43, 0.96);
+    --admin-border: rgba(255, 255, 255, 0.08);
+    --admin-border-strong: rgba(143, 184, 255, 0.16);
+    --admin-text: #f4f7fb;
+    --admin-subtext: #aab4c2;
+    --admin-accent: #1f65c7;
+    --admin-accent-dark: #163e7d;
+    --admin-accent-soft: rgba(31, 101, 199, 0.14);
+    --admin-danger: #a44347;
+    --admin-shadow: 0 24px 60px rgba(0, 0, 0, 0.34);
+}
+
 .admin-container {
     min-height: 100vh;
-    background: rgba(4, 4, 4, 0.4);
+    background:
+        radial-gradient(1100px 420px at 15% -12%, rgba(31, 101, 199, 0.16) 0%, transparent 58%),
+        radial-gradient(950px 420px at 90% -14%, rgba(164, 67, 71, 0.14) 0%, transparent 60%),
+        var(--admin-bg);
+}
+
+.admin-compact-page {
+    min-height: 100vh;
 }
 
 .admin-content {
-    padding: 2rem;
+    padding: 1.35rem 1.25rem 2.25rem;
+    max-width: 1440px;
+    margin: 0 auto;
 }
 
-.modern-card {
-    background: #51585e !important;
-    border: none;
+.admin-compact-page .admin-content {
+    padding-top: 1.25rem;
+}
+
+.admin-page-header {
+    margin-bottom: 1rem;
+}
+
+.admin-page-header .admin-header,
+.admin-page-header h2,
+.admin-page-header h1 {
+    color: var(--admin-text);
+    margin-bottom: 0.35rem;
+    font-size: clamp(1.6rem, 2.2vw, 2.2rem);
+    font-weight: 600;
+}
+
+.admin-page-subtitle,
+.admin-page-header p {
+    color: var(--admin-subtext);
+    margin-bottom: 0;
+}
+
+.admin-page-breadcrumb,
+.admin-breadcrumb {
+    margin-bottom: 0;
+}
+
+.admin-page-breadcrumb .breadcrumb,
+.admin-breadcrumb .breadcrumb {
+    margin-bottom: 0;
+    background: transparent;
+}
+
+.admin-page-breadcrumb .breadcrumb-item,
+.admin-breadcrumb .breadcrumb-item,
+.admin-breadcrumb a,
+.admin-page-breadcrumb a {
+    color: var(--admin-subtext) !important;
+    font-size: 0.92rem;
+}
+
+.admin-page-breadcrumb .breadcrumb-item.active,
+.admin-breadcrumb .breadcrumb-item.active {
+    color: var(--admin-text) !important;
+}
+
+.admin-panel-card,
+.admin-compact-page .waiver-cards,
+.admin-compact-page .usa-waiver-card {
+    background: linear-gradient(180deg, rgba(20, 23, 29, 0.98) 0%, rgba(14, 17, 22, 0.98) 100%) !important;
+    border: 1px solid var(--admin-border) !important;
+    border-radius: 18px !important;
+    box-shadow: var(--admin-shadow);
+    color: var(--admin-text);
+}
+
+.admin-panel-card .card-header,
+.admin-compact-page .waiver-cards .card-header {
+    background: rgba(255, 255, 255, 0.02) !important;
+    border-bottom: 1px solid var(--admin-border) !important;
+    color: var(--admin-text) !important;
+}
+
+.admin-panel-card .card-body,
+.admin-compact-page .waiver-cards .card-body,
+.admin-compact-page .usa-waiver-body {
+    background: transparent !important;
+    color: var(--admin-text);
+}
+
+.admin-compact-page .form-control,
+.admin-compact-page .form-select,
+.admin-compact-page input,
+.admin-compact-page textarea,
+.admin-compact-page select {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid var(--admin-border) !important;
+    color: var(--admin-text) !important;
+    -webkit-text-fill-color: var(--admin-text) !important;
+    border-radius: 12px !important;
+}
+
+.admin-compact-page .form-control:focus,
+.admin-compact-page .form-select:focus,
+.admin-compact-page input:focus,
+.admin-compact-page textarea:focus,
+.admin-compact-page select:focus {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border-color: rgba(143, 184, 255, 0.34) !important;
+    box-shadow: 0 0 0 3px rgba(31, 101, 199, 0.18) !important;
+    color: var(--admin-text) !important;
+}
+
+.admin-compact-page .form-control::placeholder,
+.admin-compact-page input::placeholder,
+.admin-compact-page textarea::placeholder {
+    color: #7d8a9c !important;
+}
+
+.admin-compact-page .form-label,
+.admin-compact-page label,
+.admin-compact-page .search-label-admin,
+.admin-compact-page .team-manage-text,
+.admin-compact-page .waiver-header-rp,
+.admin-compact-page .header-sig-rp {
+    color: var(--admin-text) !important;
+}
+
+.admin-compact-page .btn-outline-primary,
+.admin-compact-page .btn-primary,
+.admin-compact-page .button-options-style-admin {
     border-radius: 12px;
-    transition: transform 0.2s, box-shadow 0.2s;
-    height: 100%;
 }
 
-.modern-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+.admin-compact-page .btn-primary,
+.admin-compact-page .button-options-style-admin.btn-primary {
+    background: var(--admin-accent);
+    border-color: var(--admin-accent);
+}
+
+.admin-compact-page .btn-primary:hover,
+.admin-compact-page .button-options-style-admin.btn-primary:hover {
+    background: var(--admin-accent-dark);
+    border-color: var(--admin-accent-dark);
+}
+
+.admin-compact-page .btn-outline-primary {
+    color: #9ec4ff;
+    border-color: rgba(143, 184, 255, 0.35);
+}
+
+.admin-compact-page .btn-outline-primary:hover {
+    background: rgba(31, 101, 199, 0.16);
+    border-color: rgba(143, 184, 255, 0.5);
+    color: #ffffff;
+}
+
+.admin-compact-page .btn-outline-info {
+    color: #9ec4ff;
+    border-color: rgba(143, 184, 255, 0.35);
+}
+
+.admin-compact-page .btn-outline-info:hover {
+    background: rgba(31, 101, 199, 0.16);
+    color: #ffffff;
+}
+
+.admin-compact-page .btn-outline-danger {
+    color: #ffb4b7;
+    border-color: rgba(164, 67, 71, 0.45);
+}
+
+.admin-compact-page .btn-outline-danger:hover {
+    background: rgba(164, 67, 71, 0.18);
+    color: #ffffff;
+}
+
+.admin-compact-page .row-buttons-uo,
+.admin-compact-page .row-priv-buttons-uo,
+.admin-compact-page .waiver-row-renew {
+    gap: 0.75rem;
+}
+
+.admin-compact-page .status-uo-admin,
+.admin-compact-page .super-status-uo-admin,
+.admin-compact-page .status-email-admin,
+.admin-compact-page .status-ul-admin {
+    color: #86efac !important;
+}
+
+.admin-compact-page .error-oo-admin,
+.admin-compact-page .error-ul-admin,
+.admin-compact-page .text-red {
+    color: #fca5a5 !important;
+}
+
+.admin-compact-page .admin-points-card,
+.admin-compact-page .admin-status-card,
+.admin-compact-page .admin-freegames-card {
+    overflow: hidden;
+}
+
+.admin-compact-page .admin-points-form {
+    display: grid;
+    gap: 0.9rem;
+}
+
+.admin-compact-page .admin-points-field .form-control,
+.admin-compact-page .admin-freegames-search .form-control,
+.admin-compact-page .form-input-admin {
+    min-height: 50px;
+    padding: 0.85rem 1rem;
+    font-size: 1rem;
+}
+
+.admin-compact-page .admin-submit-row {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.admin-compact-page .button-submit-admin,
+.admin-compact-page .button-submit-admin2 {
+    min-height: 44px;
+    padding: 0.7rem 1rem;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.admin-compact-page .button-submit-admin {
+    background: var(--admin-accent);
+    border-color: var(--admin-accent);
+    color: #ffffff;
+}
+
+.admin-compact-page .button-submit-admin:hover,
+.admin-compact-page .button-submit-admin:focus,
+.admin-compact-page .button-submit-admin:active {
+    background: var(--admin-accent-dark) !important;
+    border-color: var(--admin-accent-dark) !important;
+    color: #ffffff !important;
+}
+
+.admin-compact-page .button-submit-admin2 {
+    border-color: rgba(143, 184, 255, 0.35);
+}
+
+.admin-compact-page .button-submit-admin2.btn-success {
+    background: rgba(22, 163, 74, 0.18);
+    border-color: rgba(74, 222, 128, 0.32);
+    color: #d4ffe1;
+}
+
+.admin-compact-page .button-submit-admin2.btn-danger {
+    background: rgba(164, 67, 71, 0.18);
+    border-color: rgba(252, 165, 165, 0.3);
+    color: #ffe0e1;
+}
+
+.admin-compact-page .status-card-admin,
+.admin-compact-page .admin-freegames-card {
+    background: linear-gradient(180deg, rgba(20, 23, 29, 0.98) 0%, rgba(14, 17, 22, 0.98) 100%) !important;
+    border: 1px solid var(--admin-border) !important;
+    border-radius: 18px !important;
+}
+
+.admin-compact-page .status-card-body-admin,
+.admin-compact-page .status-card-body-fg-admin {
+    background: transparent !important;
+    padding: 0;
+    color: var(--admin-text);
+}
+
+.admin-compact-page .status-card-row-admin,
+.admin-compact-page .status-card-offrow-admin,
+.admin-compact-page .row-fg,
+.admin-compact-page .status-card-offrow-admin-fg {
+    margin: 0;
+    padding: 0.95rem 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    color: var(--admin-text) !important;
+}
+
+.admin-compact-page .status-card-row-admin,
+.admin-compact-page .row-fg {
+    background: rgba(255, 255, 255, 0.025) !important;
+}
+
+.admin-compact-page .status-card-offrow-admin,
+.admin-compact-page .status-card-offrow-admin-fg {
+    background: rgba(255, 255, 255, 0.04) !important;
+}
+
+.admin-compact-page .status-card-row-admin:last-child,
+.admin-compact-page .status-card-offrow-admin:last-child,
+.admin-compact-page .row-fg:last-child,
+.admin-compact-page .status-card-offrow-admin-fg:last-child {
+    border-bottom-left-radius: 18px;
+    border-bottom-right-radius: 18px;
+}
+
+.admin-compact-page .admin-freegames-search .form-label,
+.admin-compact-page .admin-points-field .form-label {
+    margin-bottom: 0.5rem;
+    font-size: 0.92rem;
+    color: var(--admin-subtext) !important;
+}
+
+.admin-compact-page .admin-freegames-body .card-text,
+.admin-compact-page .admin-freegames-user-row .card-text,
+.admin-compact-page .col-name-fg {
+    color: var(--admin-text) !important;
+}
+
+.admin-compact-page .admin-freegames-user-row {
+    align-items: center;
+}
+
+.admin-compact-page .admin-freegames-action-col {
+    margin-top: 0.75rem;
+}
+
+.admin-compact-page .admin-signup-header {
+    margin-bottom: 1.25rem;
+}
+
+.admin-compact-page .admin-signup-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+}
+
+.admin-compact-page .admin-signup-logo {
+    width: 42px;
+    height: auto;
+    margin: 0;
+}
+
+.admin-compact-page .page-header {
+    color: var(--admin-text);
+    margin-bottom: 0;
+}
+
+.admin-compact-page.admin-signup-page .admin-signup-flow {
+    color: var(--admin-text);
+}
+
+.admin-compact-page.admin-signup-page .admin-signup-stage {
+    display: grid;
+    gap: 1rem;
+}
+
+.admin-compact-page.admin-signup-page .admin-signup-stepbar {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.25rem;
+}
+
+.admin-compact-page.admin-signup-page .admin-signup-step {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.6rem 0.9rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--admin-border);
+    color: var(--admin-subtext);
+}
+
+.admin-compact-page.admin-signup-page .admin-signup-step.active,
+.admin-compact-page.admin-signup-page .admin-signup-step.complete {
+    color: var(--admin-text);
+    border-color: rgba(143, 184, 255, 0.22);
+}
+
+.admin-compact-page.admin-signup-page .admin-signup-step.active {
+    background: rgba(31, 101, 199, 0.16);
+}
+
+.admin-compact-page.admin-signup-page .admin-signup-step-number {
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.07);
+    font-weight: 700;
+}
+
+.admin-compact-page.admin-signup-page .admin-signup-waiver-layout,
+.admin-compact-page.admin-signup-page .admin-signup-profile-layout {
+    display: grid;
+    gap: 1rem;
+}
+
+.admin-compact-page.admin-signup-page .admin-signup-waiver-layout {
+    grid-template-columns: minmax(320px, 0.92fr) minmax(420px, 1.08fr);
+    align-items: start;
+}
+
+.admin-compact-page.admin-signup-page .admin-signup-panel,
+.admin-compact-page.admin-signup-page .admin-signup-success-card {
+    padding: 1.1rem 1.15rem 1.2rem;
+    border-radius: 18px;
+    border: 1px solid var(--admin-border);
+    background: linear-gradient(180deg, rgba(20, 23, 29, 0.98) 0%, rgba(14, 17, 22, 0.98) 100%);
+    box-shadow: var(--admin-shadow);
+}
+
+.admin-compact-page.admin-signup-page .admin-signup-panel-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.95rem;
+}
+
+.admin-compact-page.admin-signup-page .admin-signup-panel-title {
+    color: var(--admin-text);
+    margin-bottom: 0.25rem;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.admin-compact-page.admin-signup-page .admin-signup-panel-copy {
+    margin-bottom: 0;
+    color: var(--admin-subtext);
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+
+.admin-compact-page.admin-signup-page .admin-signup-waiver-image-shell {
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--admin-border);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.admin-compact-page.admin-signup-page .waiver-rp {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+}
+
+.admin-compact-page.admin-signup-page .waiver-hidden-rp {
+    display: none;
+}
+
+.admin-compact-page.admin-signup-page .text-block-waiver-rp {
+    position: static;
+    display: flex;
+    justify-content: flex-end;
+    padding: 0;
+}
+
+.admin-compact-page.admin-signup-page .admin-signup-toggle {
+    white-space: nowrap;
+}
+
+.admin-compact-page.admin-signup-page .waiver-form-rp,
+.admin-compact-page.admin-signup-page .form-rp {
+    width: 100%;
+    margin: 0;
+}
+
+.admin-compact-page.admin-signup-page .admin-signup-form-grid,
+.admin-compact-page.admin-signup-page .admin-signup-profile-form {
+    padding: 0;
+}
+
+.admin-compact-page.admin-signup-page .row-rp,
+.admin-compact-page.admin-signup-page .waiver-row-rp,
+.admin-compact-page.admin-signup-page .sig-row-rp,
+.admin-compact-page.admin-signup-page .button-row-rp2,
+.admin-compact-page.admin-signup-page .button-row-rp,
+.admin-compact-page.admin-signup-page .nav-row-rp {
+    margin-left: 0;
+    margin-right: 0;
+    background: transparent !important;
+}
+
+.admin-compact-page.admin-signup-page .participant-sig-rp {
+    display: block;
+    width: 100%;
+    height: 180px;
+    background: #ffffff;
+    border: 1px solid rgba(143, 184, 255, 0.24);
+    border-radius: 16px;
+    position: static;
+    top: auto;
+    left: auto;
+}
+
+.admin-compact-page.admin-signup-page .signBox-image-rt {
+    width: 100%;
+    border-radius: 16px;
+    border: 1px solid var(--admin-border);
+    background: #ffffff;
+}
+
+.admin-compact-page.admin-signup-page .admin-signup-guardian-section {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.admin-compact-page.admin-signup-page .sig-row-rp {
+    display: block;
+    margin-bottom: 0.75rem;
+}
+
+.admin-compact-page.admin-signup-page .sig-col-rp {
+    height: auto;
+    min-height: 180px;
+}
+
+.admin-compact-page.admin-signup-page .button-row-rp2 {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 0.25rem;
+    flex-wrap: wrap;
+}
+
+.admin-compact-page.admin-signup-page .button-row-rp2 .btn,
+.admin-compact-page.admin-signup-page .button-row-rp .btn {
+    min-width: 120px;
+    min-height: 44px;
+    border-radius: 12px;
+}
+
+.admin-compact-page.admin-signup-page .button-row-rp2 .btn-secondary {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #f4f7fb;
+}
+
+.admin-compact-page.admin-signup-page .button-row-rp2 .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(143, 184, 255, 0.24);
+    color: #ffffff;
+}
+
+.admin-compact-page.admin-signup-page .error-text-rp {
+    width: 100%;
+    margin: 0.9rem 0 0;
+    padding: 0.8rem 0.95rem;
+    border-radius: 12px;
+    background: rgba(164, 67, 71, 0.16);
+    border: 1px solid rgba(252, 165, 165, 0.2);
+    color: #ffb4b7 !important;
+    text-align: center;
+    font-weight: 500;
+}
+
+.admin-compact-page.admin-signup-page .admin-signup-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.8rem;
+}
+
+.admin-compact-page.admin-signup-page .admin-signup-nav-spacer {
+    width: 120px;
+    min-height: 46px;
+}
+
+.admin-compact-page.admin-signup-page .admin-signup-nav-button {
+    min-height: 46px;
+    border-radius: 12px;
+    padding-inline: 1rem;
+}
+
+.admin-compact-page.admin-signup-page .admin-signup-success-shell {
+    justify-content: center;
+}
+
+.admin-compact-page.admin-signup-page .admin-signup-success-card {
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.admin-compact-page.admin-sign-waiver-page .col-waiver {
+    max-width: 980px;
+    margin: 0 auto;
+}
+
+.admin-compact-page.admin-sign-waiver-page .waiver-row-rp {
+    display: flex;
+    flex-direction: column;
+    margin-left: 0;
+    margin-right: 0;
+    margin-bottom: 1rem;
+    background: transparent !important;
+}
+
+.admin-compact-page.admin-sign-waiver-page .text-block-waiver-rp {
+    position: static;
+    display: flex;
+    justify-content: flex-start;
+    padding: 0;
+    margin: 0 0 0.75rem;
+    background: transparent !important;
+}
+
+.admin-compact-page.admin-sign-waiver-page .button-hidden-rp,
+.admin-compact-page.admin-sign-waiver-page .text-block-waiver-rp .btn {
+    max-width: 100%;
+    white-space: normal;
+}
+
+.admin-compact-page.admin-sign-waiver-page .waiver-rp,
+.admin-compact-page.admin-sign-waiver-page .waiver-hidden-rp {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+    border-radius: 16px;
+    border: 1px solid var(--admin-border);
+    background: #ffffff;
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.26);
+}
+
+.admin-compact-page.admin-sign-waiver-page .waiver-hidden-rp {
+    display: none;
+}
+
+.admin-compact-page.admin-sign-waiver-page .row-rp {
+    margin-left: 0;
+    margin-right: 0;
+    background: transparent !important;
+}
+
+.admin-compact-page.admin-sign-waiver-page .row-rp.waiver-input-rp,
+.admin-compact-page.admin-sign-waiver-page .row-rp.spinner-row-rp {
+    grid-column: auto;
+}
+
+.admin-compact-page.admin-sign-waiver-page .waiver-header-rp {
+    color: var(--admin-text) !important;
+    margin-bottom: 0.25rem;
+}
+
+.admin-compact-page.admin-sign-waiver-page .waiver-form-rp {
+    width: 100%;
+    margin: 0;
+    padding: 1.1rem 1.15rem 1.2rem;
+    border-radius: 18px;
+    border: 1px solid var(--admin-border);
+    background: linear-gradient(180deg, rgba(20, 23, 29, 0.98) 0%, rgba(14, 17, 22, 0.98) 100%);
+    box-shadow: var(--admin-shadow);
+}
+
+.admin-compact-page.admin-sign-waiver-page .p-groupname-rp,
+.admin-compact-page.admin-sign-waiver-page .header-sig-rp {
+    color: var(--admin-text) !important;
+}
+
+.admin-compact-page.admin-sign-waiver-page .participant-sig-rp {
+    display: block;
+    width: 100%;
+    height: 180px;
+    background: #ffffff;
+    border: 1px solid rgba(143, 184, 255, 0.24);
+    border-radius: 16px;
+    position: static;
+    top: auto;
+    left: auto;
+}
+
+.admin-compact-page.admin-sign-waiver-page .sig-row-rp {
+    display: block;
+    margin-bottom: 0.75rem;
+    background: transparent !important;
+}
+
+.admin-compact-page.admin-sign-waiver-page .sig-col-rp {
+    height: auto;
+    min-height: 180px;
+}
+
+.admin-compact-page.admin-sign-waiver-page .signBox-image-rt {
+    width: 100%;
+    border-radius: 16px;
+    border: 1px solid var(--admin-border);
+    background: #ffffff;
+}
+
+.admin-compact-page.admin-sign-waiver-page .button-row-rp2 {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 0.25rem;
+    flex-wrap: wrap;
+    background: transparent !important;
+}
+
+.admin-compact-page.admin-sign-waiver-page .button-row-rp2 .btn,
+.admin-compact-page.admin-sign-waiver-page .nav-row-rp .btn {
+    min-width: 120px;
+    min-height: 44px;
+    border-radius: 12px;
+}
+
+.admin-compact-page.admin-sign-waiver-page .button-row-rp2 .btn-secondary {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #f4f7fb;
+}
+
+.admin-compact-page.admin-sign-waiver-page .button-row-rp2 .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(143, 184, 255, 0.24);
+    color: #ffffff;
+}
+
+.admin-compact-page.admin-sign-waiver-page .error-text-rp {
+    width: 100%;
+    margin: 0.9rem 0 0;
+    padding: 0.8rem 0.95rem;
+    border-radius: 12px;
+    background: rgba(164, 67, 71, 0.16);
+    border: 1px solid rgba(252, 165, 165, 0.2);
+    color: #ffb4b7 !important;
+    text-align: center;
+    font-weight: 500;
+}
+
+.admin-compact-page.admin-sign-waiver-page .nav-row-rp {
+    display: flex;
+    justify-content: flex-end;
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 1rem;
+    background: transparent !important;
+}
+
+.admin-compact-page.admin-sign-waiver-page .notice-text-container {
+    padding: 0;
+}
+
+.admin-compact-page.admin-sign-waiver-page .row-success-rp {
+    justify-content: center;
+}
+
+.admin-compact-page.admin-sign-waiver-page .col-rp {
+    max-width: 720px;
+    padding: 1.1rem 1.15rem 1.2rem;
+    border-radius: 18px;
+    border: 1px solid var(--admin-border);
+    background: linear-gradient(180deg, rgba(20, 23, 29, 0.98) 0%, rgba(14, 17, 22, 0.98) 100%);
+    box-shadow: var(--admin-shadow);
+}
+
+
+.admin-pin-shell {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+}
+
+.admin-pin-panel {
+    max-width: 420px;
+    width: 100%;
+    padding: 1.35rem 1.25rem 1.5rem;
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(20, 23, 29, 0.98) 0%, rgba(14, 17, 22, 0.98) 100%);
+    border: 1px solid var(--admin-border);
+    box-shadow: var(--admin-shadow);
+}
+
+.admin-compact-page.admin-renew-page .admin-renew-member-name {
+    margin-bottom: 0.5rem;
+    font-size: 0.98rem;
+}
+
+.admin-compact-page.admin-renew-page .admin-renew-card {
+    overflow: hidden;
+}
+
+.admin-compact-page.admin-renew-page .admin-renew-detail {
+    padding: 1rem 1.1rem 1.15rem;
+}
+
+.admin-compact-page.admin-renew-page .admin-renew-layout {
+    display: grid;
+    grid-template-columns: minmax(320px, 0.92fr) minmax(420px, 1.08fr);
+    gap: 1rem;
+    align-items: start;
+}
+
+.admin-compact-page.admin-renew-page .admin-renew-preview-panel,
+.admin-compact-page.admin-renew-page .admin-renew-form-panel {
+    padding: 1.1rem 1.15rem 1.2rem;
+    border-radius: 18px;
+    border: 1px solid var(--admin-border);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.admin-compact-page.admin-renew-page .admin-renew-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 0.95rem;
+}
+
+.admin-compact-page.admin-renew-page .admin-renew-panel-title {
+    color: var(--admin-text);
+    margin-bottom: 0.25rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.admin-compact-page.admin-renew-page .admin-renew-panel-copy {
+    margin-bottom: 0;
+    color: var(--admin-subtext);
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+
+.admin-compact-page.admin-renew-page .admin-renew-toggle {
+    white-space: nowrap;
+    border-radius: 12px;
+    color: #9ec4ff;
+    border-color: rgba(143, 184, 255, 0.35);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.admin-compact-page.admin-renew-page .admin-renew-toggle:hover {
+    background: rgba(31, 101, 199, 0.16);
+    color: #ffffff;
+    border-color: rgba(143, 184, 255, 0.5);
+}
+
+.admin-compact-page.admin-renew-page .admin-renew-waiver-image-shell {
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--admin-border);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.admin-compact-page.admin-renew-page .waiver-row-renew {
+    margin-top: 0.2rem;
+}
+
+.admin-compact-page.admin-renew-page .row-renew,
+.admin-compact-page.admin-renew-page .waiver-row-rp {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.admin-compact-page.admin-renew-page .waiver-form-rp {
+    width: 100%;
+    padding: 0;
+}
+
+.admin-compact-page.admin-renew-page .text-block-waiver-rp {
+    position: static;
+    display: flex;
+    justify-content: flex-end;
+    padding: 0.75rem 0 0;
+}
+
+.admin-compact-page.admin-renew-page .button-hidden-rp,
+.admin-compact-page.admin-renew-page .text-block-waiver-rp .btn,
+.admin-compact-page.admin-renew-page .button-hidden-rp.btn {
+    border-radius: 12px;
+    color: #9ec4ff;
+    border-color: rgba(143, 184, 255, 0.35);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.admin-compact-page.admin-renew-page .button-hidden-rp:hover,
+.admin-compact-page.admin-renew-page .text-block-waiver-rp .btn:hover {
+    background: rgba(31, 101, 199, 0.16);
+    color: #ffffff;
+    border-color: rgba(143, 184, 255, 0.5);
+}
+
+.admin-compact-page.admin-renew-page .waiver-rp,
+.admin-compact-page.admin-renew-page .waiver-hidden-rp {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+    border-radius: 16px;
+    border: 1px solid var(--admin-border);
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.26);
+}
+
+.admin-compact-page.admin-renew-page .participant-sig-rp,
+.admin-compact-page.admin-renew-page .pg-sig-rp {
+    display: block;
+    width: 100%;
+    height: 180px;
+    min-height: 180px;
+    background: #ffffff;
+    border: 1px solid rgba(143, 184, 255, 0.24);
+    border-radius: 16px;
+    position: static;
+    top: auto;
+    left: auto;
+}
+
+.admin-compact-page.admin-renew-page .sig-col-rp {
+    padding: 0.35rem 0;
+    height: auto;
+    min-height: 180px;
+}
+
+.admin-compact-page.admin-renew-page .button-row-rp2 {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 0.35rem;
+    flex-wrap: wrap;
+}
+
+.admin-compact-page.admin-renew-page .button-row-rp2 .btn,
+.admin-compact-page.admin-renew-page .admin-renew-nav .btn {
+    min-width: 120px;
+    min-height: 44px;
+    border-radius: 12px;
+}
+
+.admin-compact-page.admin-renew-page .button-row-rp2 .btn-secondary {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #f4f7fb;
+}
+
+.admin-compact-page.admin-renew-page .button-row-rp2 .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(143, 184, 255, 0.24);
+    color: #ffffff;
+}
+
+.admin-compact-page.admin-renew-page .signBox-image-rt {
+    width: 100%;
+    border-radius: 16px;
+    border: 1px solid var(--admin-border);
+    background: #ffffff;
+}
+
+.admin-compact-page.admin-renew-page .error-text-rp {
+    width: 100%;
+    margin: 0.9rem 0 0;
+    padding: 0.8rem 0.95rem;
+    border-radius: 12px;
+    background: rgba(164, 67, 71, 0.16);
+    border: 1px solid rgba(252, 165, 165, 0.2);
+    color: #ffb4b7 !important;
+    text-align: center;
+    font-weight: 500;
+}
+
+.admin-compact-page.admin-renew-page .admin-renew-guardian-section {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.admin-compact-page.admin-renew-page .admin-renew-nav {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1rem;
+}
+
+@media (max-width: 1180px) {
+    .admin-compact-page.admin-signup-page .admin-signup-waiver-layout,
+    .admin-compact-page.admin-renew-page .admin-renew-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 1024px) {
+    .admin-compact-page.admin-renew-page .admin-renew-panel-header,
+    .admin-compact-page.admin-signup-page .admin-signup-panel-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .admin-compact-page.admin-renew-page .admin-renew-toggle,
+    .admin-compact-page.admin-signup-page .admin-signup-toggle {
+        align-self: flex-start;
+    }
+}
+
+@media (max-width: 820px) {
+    .admin-compact-page.admin-signup-page .admin-signup-nav {
+        flex-direction: column;
+    }
+
+    .admin-compact-page.admin-signup-page .admin-signup-nav-spacer {
+        display: none;
+    }
+
+    .admin-compact-page.admin-renew-page .admin-renew-detail {
+        padding: 0.85rem;
+    }
+
+    .admin-compact-page.admin-renew-page .admin-renew-preview-panel,
+    .admin-compact-page.admin-renew-page .admin-renew-form-panel,
+    .admin-compact-page.admin-signup-page .admin-signup-panel,
+    .admin-compact-page.admin-signup-page .admin-signup-success-card {
+        padding: 1rem;
+    }
+}
+
+.admin-compact-page .row-uo {
+    margin: 0;
+}
+
+.admin-compact-page .admin-user-options-card {
+    gap: 1rem;
+    padding: 1.1rem;
+    border-radius: 18px;
+    border: 1px solid var(--admin-border);
+    background: linear-gradient(180deg, rgba(20, 23, 29, 0.98) 0%, rgba(14, 17, 22, 0.98) 100%);
+    box-shadow: var(--admin-shadow);
+}
+
+.admin-compact-page .admin-user-options-sidebar,
+.admin-compact-page .admin-user-options-main {
+    color: var(--admin-text);
+}
+
+.admin-compact-page .team-single-img {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 240px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--admin-border);
+    margin-bottom: 0.9rem;
+}
+
+.admin-compact-page .profile-pic {
+    width: min(100%, 280px);
+    max-height: 280px;
+    object-fit: cover;
+    border-radius: 18px;
+    border: 1px solid var(--admin-border);
+}
+
+.admin-compact-page .col-button-renew-uo {
+    display: flex;
+    align-items: end;
+    justify-content: flex-start;
+}
+
+.admin-compact-page .admin-user-options-actions {
+    margin-top: 1rem;
+    align-items: center;
+}
+
+.admin-compact-page .button-update-uo,
+.admin-compact-page .button-options-style-admin,
+.admin-compact-page .col-button-renew-uo .btn {
+    min-height: 44px;
+    border-radius: 12px;
+}
+
+.admin-compact-page .status-col-uo,
+.admin-compact-page .status-uo-admin,
+.admin-compact-page .super-status-uo-admin {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0;
+}
+
+.admin-hero-panel {
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.15rem;
+    border-radius: 18px;
+    border: 1px solid var(--admin-border);
+    background:
+        radial-gradient(circle at top right, rgba(31, 101, 199, 0.18), transparent 30%),
+        radial-gradient(circle at top left, rgba(164, 67, 71, 0.16), transparent 28%),
+        linear-gradient(180deg, rgba(12, 15, 19, 0.98), rgba(9, 11, 15, 0.96));
+    box-shadow: var(--admin-shadow);
+}
+
+.admin-hero-copy {
+    max-width: 48rem;
+}
+
+.admin-eyebrow,
+.admin-section-kicker {
+    margin-bottom: 0.45rem;
+    color: #90b8ff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.2rem;
+    text-transform: uppercase;
+}
+
+.admin-page-title,
+.admin-section-title {
+    color: var(--admin-text);
+    font-weight: 300;
+}
+
+.admin-page-title {
+    font-size: clamp(1.4rem, 2vw, 1.85rem);
+    margin-bottom: 0.25rem;
+}
+
+.admin-page-copy {
+    margin-bottom: 0;
+    color: var(--admin-subtext);
+    max-width: 38rem;
+    font-size: 0.88rem;
+    line-height: 1.45;
+}
+
+.admin-hero-stats {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(120px, 1fr));
+    gap: 1rem;
+    min-width: 120px;
+}
+
+.admin-stat-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 84px;
+    padding: 0.85rem 0.95rem;
+    border-radius: 16px;
+    border: 1px solid var(--admin-border);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.admin-stat-value {
+    color: var(--admin-text);
+    font-size: 1.35rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.admin-stat-label {
+    margin-top: 0.35rem;
+    color: var(--admin-subtext);
+    font-size: 0.85rem;
+}
+
+.admin-section-block {
+    margin-bottom: 1.6rem;
+}
+
+.admin-section-heading {
+    margin-bottom: 0.95rem;
+}
+
+.admin-section-heading-inline {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+}
+
+.admin-section-title {
+    margin-bottom: 0;
+    font-size: clamp(1.3rem, 1.7vw, 1.75rem);
+}
+
+.action-cards-grid {
+    margin: -0.4rem;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.action-cards-grid>[class*='col-'] {
+    padding: 0.4rem;
 }
 
 .card-link {
     text-decoration: none;
-    color: white;
+    color: var(--admin-text);
 }
 
 .card-link:hover {
-    color: white;
+    color: var(--admin-text);
+}
+
+.modern-card {
+    background: linear-gradient(180deg, rgba(20, 23, 29, 0.98) 0%, rgba(14, 17, 22, 0.98) 100%) !important;
+    border: 1px solid var(--admin-border) !important;
+    border-radius: 18px !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    height: 100%;
+    box-shadow: var(--admin-shadow);
+}
+
+.modern-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+    border-color: rgba(143, 184, 255, 0.22) !important;
+}
+
+.modern-card .card-body {
+    min-height: 112px;
+    background: transparent !important;
+    color: var(--admin-text);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 0.45rem;
+    padding: 1.15rem 1.2rem;
 }
 
 .card-icon {
-    color: white !important;
-    font-size: 1.5rem;
-    margin-bottom: 0.75rem;
-    width: 100%;
-    /* Ensures icon takes full width */
-    text-align: center;
+    color: #9ec4ff !important;
+    font-size: 1.2rem;
+    width: auto;
+    text-align: left;
+    padding: 0.55rem;
+    border-radius: 12px;
+    background: var(--admin-accent-soft);
 }
 
 .card-title {
-    color: white !important;
-    font-size: 1.1rem;
-    text-align: center;
+    color: var(--admin-text) !important;
+    font-size: 0.98rem;
+    text-align: left;
     margin: 0;
+    font-weight: 600;
 }
 
 .users-card {
-    background: #51585e;
+    background: var(--admin-surface) !important;
+}
+
+.users-card .card-header {
+    background: linear-gradient(90deg, rgba(11, 56, 136, 0.86) 0%, rgba(22, 62, 125, 0.88) 100%) !important;
+    color: var(--admin-text);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    padding: 0.9rem 1.1rem;
+}
+
+.users-card .card-body {
+    background: transparent;
+    padding: 1rem;
 }
 
 .search-form input {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white;
-    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--admin-border);
+    color: var(--admin-text);
+    padding: 0.7rem 0.85rem;
+    border-radius: 12px;
 }
 
 .search-form input:focus {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.3);
-    color: white;
-    box-shadow: none;
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(143, 184, 255, 0.34);
+    color: var(--admin-text);
+    box-shadow: 0 0 0 3px rgba(31, 101, 199, 0.18);
 }
 
 .search-form input::placeholder {
-    color: rgba(255, 255, 255, 0.6);
+    color: #7d8a9c;
 }
 
-.action-cards-grid {
-    margin: -0.5rem;
-}
-
-.action-cards-grid>[class*='col-'] {
-    padding: 0.5rem;
+.users-card-container {
+    justify-content: center;
 }
 
 .admin-layout {
     min-height: 100vh;
-    background: rgba(4, 4, 4, 0.4);
+    background: var(--admin-bg);
 }
 
 .admin-navbar {
-    background: #51585e;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    padding: 0.5rem 1rem;
+    background: rgba(9, 11, 15, 0.96);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
 }
 
 .admin-nav-logo {
@@ -92,13 +1315,12 @@
 }
 
 .admin-main-content {
-    padding-top: 70px;
-    /* Navbar height + some spacing */
+    padding-top: 88px;
     min-height: calc(100vh - 56px);
 }
 
 .nav-link-light {
-    color: rgba(255, 255, 255, 0.8) !important;
+    color: rgba(244, 247, 251, 0.82) !important;
     transition: color 0.2s;
 }
 
@@ -106,27 +1328,48 @@
     color: white !important;
 }
 
-/* Add these new styles */
-.admin-content {
-    padding: 2rem;
-    max-width: 1400px;
-    /* Adjust this value based on your preference */
-    margin: 0 auto;
+.admin-navbar .navbar-brand {
+    color: var(--admin-text) !important;
+    font-weight: 600;
 }
 
-/* Update the existing grid styles */
-.action-cards-grid {
-    margin: -0.5rem;
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
+@media (max-width: 992px) {
+    .admin-hero-panel {
+        flex-direction: column;
+    }
+
+    .admin-hero-stats {
+        grid-template-columns: 1fr 1fr;
+        min-width: 0;
+    }
 }
 
-.action-cards-grid>[class*='col-'] {
-    padding: 0.5rem;
-}
+@media (max-width: 768px) {
+    .admin-content {
+        padding: 1.25rem 0.75rem 2rem;
+    }
 
-/* Center the users list card */
-.users-card-container {
-    justify-content: center;
+    .admin-hero-panel {
+        padding: 1.4rem;
+        border-radius: 18px;
+    }
+
+    .admin-hero-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .modern-card .card-body {
+        min-height: 118px;
+        padding: 1.25rem;
+    }
+
+    .users-card .card-body {
+        padding: 1rem;
+    }
+
+    .admin-page-header .admin-header,
+    .admin-page-header h2,
+    .admin-page-header h1 {
+        font-size: 1.45rem;
+    }
 }

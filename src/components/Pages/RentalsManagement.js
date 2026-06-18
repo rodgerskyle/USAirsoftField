@@ -1,8 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Spinner, Button } from 'react-bootstrap';
-import { BottomNavigation, BottomNavigationAction } from '@mui/material';
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faFolderPlus, faFolderOpen, faFolderMinus, faCog, faLock, faLockOpen } from "@fortawesome/free-solid-svg-icons";
+import React, { useEffect, useMemo, useState } from 'react';
+import { Container, Row, Spinner } from 'react-bootstrap';
 import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
 import * as ROLES from '../constants/roles';
@@ -17,9 +14,30 @@ import EditForm from './Rentals/EditForm';
 import { onValue } from 'firebase/database';
 import PinCode from '../constants/pincode';
 import logo from '../../assets/usairsoft-small-logo.png';
+import {
+    Box,
+    Tabs,
+    Tab,
+    Paper,
+    Typography,
+    Chip,
+    IconButton
+} from '@mui/material';
+import { AddBox, EditNote, AssignmentReturn, Inventory2, Lock, LockOpen } from '@mui/icons-material';
+import { useSearchParams } from 'react-router-dom';
+import '../constants/admin.css';
+
+const VIEW_KEYS = ['new', 'edit', 'return', 'inventory'];
+
+const VIEW_CONFIG = {
+    new: { label: 'New Form', icon: <AddBox fontSize="small" /> },
+    edit: { label: 'Edit Form', icon: <EditNote fontSize="small" /> },
+    return: { label: 'Return Form', icon: <AssignmentReturn fontSize="small" /> },
+    inventory: { label: 'Inventory', icon: <Inventory2 fontSize="small" /> }
+};
 
 function RentalsManagement(props) {
-    const [value, setValue] = useState(0);
+    const [searchParams, setSearchParams] = useSearchParams();
     const [loading, setLoading] = useState(true);
     const [rentalForms, setRentalForms] = useState([]);
     const [rentalOptions, setRentalOptions] = useState([]);
@@ -28,7 +46,17 @@ function RentalsManagement(props) {
     const [error, setError] = useState(null);
     const [authUser, setAuthUser] = useState(null);
 
-    // Add auth listener
+    const activeView = useMemo(() => {
+        const view = searchParams.get('view');
+        return VIEW_KEYS.includes(view) ? view : 'new';
+    }, [searchParams]);
+
+    useEffect(() => {
+        if (!searchParams.get('view')) {
+            setSearchParams({ view: 'new' }, { replace: true });
+        }
+    }, [searchParams, setSearchParams]);
+
     useEffect(() => {
         const unsubscribe = props.firebase.onAuthUserListener(
             (user) => setAuthUser(user),
@@ -37,7 +65,6 @@ function RentalsManagement(props) {
         return () => unsubscribe();
     }, [props.firebase]);
 
-    // Single listener for rental forms and options
     useEffect(() => {
         const formsRef = props.firebase.rentalGroups();
         const optionsRef = props.firebase.rentalOptions();
@@ -66,7 +93,6 @@ function RentalsManagement(props) {
             }
         });
 
-        // Cleanup listeners on unmount
         return () => {
             unsubscribeForms();
             unsubscribeOptions();
@@ -74,21 +100,18 @@ function RentalsManagement(props) {
     }, [props.firebase]);
 
     const verifyPin = (val) => {
-        if (authUser?.pin === parseInt(val)) {
+        if (authUser?.pin === parseInt(val, 10)) {
             setShowPinInput(false);
             setIsNavHidden(false);
         } else {
-            setError("The pin code entered was not correct. Please try again.");
-            setTimeout(() => {
-                setError(null);
-            }, 4000);
+            setError('The pin code entered was not correct. Please try again.');
+            setTimeout(() => setError(null), 4000);
         }
     };
 
     const toggleNavVisibility = () => {
         if (isNavHidden) {
-            // When trying to show the nav, check if user has WAIVER role
-            if (authUser?.roles[ROLES.WAIVER]) {
+            if (authUser?.roles?.[ROLES.WAIVER]) {
                 setShowPinInput(true);
             } else {
                 setIsNavHidden(false);
@@ -98,27 +121,37 @@ function RentalsManagement(props) {
         }
     };
 
+    const setView = (view) => {
+        setSearchParams({ view });
+    };
+
+    const activeFormsCount = rentalForms.filter(form => !!form.complete).length;
+    const pendingFormsCount = rentalForms.filter(form => !form.complete).length;
+
     return (
         <AuthUserContext.Consumer>
-            {authUser => (
-                <div className="background-static-all">
+            {viewer => (
+                <div className="admin-container admin-compact-page">
                     <Helmet>
                         <title>US Airsoft Field: Rental Forms</title>
                     </Helmet>
-                    <Container>
-                        <h2 className="admin-header">Rental Form</h2>
-                        <Breadcrumb className="admin-breadcrumb">
-                            {authUser && !!authUser.roles[ROLES.ADMIN] ?
-                                <LinkContainer to="/admin">
-                                    <Breadcrumb.Item>Admin</Breadcrumb.Item>
-                                </LinkContainer>
-                                :
-                                <LinkContainer to="/dashboard">
-                                    <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
-                                </LinkContainer>
-                            }
-                            <Breadcrumb.Item active>Rental Form</Breadcrumb.Item>
-                        </Breadcrumb>
+                    <div className="admin-content">
+                    <Container fluid className="p-0">
+                        <div className="admin-page-header">
+                            <h2 className="admin-header">Rental Form</h2>
+                            <Breadcrumb className="admin-breadcrumb admin-page-breadcrumb">
+                                {viewer && !!viewer.roles[ROLES.ADMIN] ? (
+                                    <LinkContainer to="/admin">
+                                        <Breadcrumb.Item>Admin</Breadcrumb.Item>
+                                    </LinkContainer>
+                                ) : (
+                                    <LinkContainer to="/dashboard">
+                                        <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
+                                    </LinkContainer>
+                                )}
+                                <Breadcrumb.Item active>Rental Form</Breadcrumb.Item>
+                            </Breadcrumb>
+                        </div>
 
                         {showPinInput ? (
                             <div className="div-pin-code-dashboard">
@@ -140,113 +173,115 @@ function RentalsManagement(props) {
                                 </Container>
                             </div>
                         ) : (
-                            <Row>
-                                <Col>
+                            <>
+                                <Paper
+                                    className="admin-panel-card"
+                                    elevation={2}
+                                    sx={{
+                                        p: 1.25,
+                                        mb: 2,
+                                        borderRadius: 3,
+                                        background: 'linear-gradient(180deg, rgba(20, 23, 29, 0.98) 0%, rgba(14, 17, 22, 0.98) 100%)',
+                                        border: '1px solid rgba(255,255,255,0.08)',
+                                        color: '#f4f7fb'
+                                    }}
+                                >
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            <Typography variant="h6" sx={{ fontWeight: 700, color: '#f4f7fb', fontSize: '1.2rem' }}>
+                                                Rental Operations
+                                            </Typography>
+                                            <Chip label={`${rentalForms.length} total`} size="small" sx={{ backgroundColor: 'rgba(31,101,199,0.18)', color: '#dbeafe' }} />
+                                            <Chip label={`${activeFormsCount} active`} size="small" sx={{ backgroundColor: 'rgba(34,197,94,0.18)', color: '#bbf7d0' }} />
+                                            <Chip label={`${pendingFormsCount} pending`} size="small" sx={{ backgroundColor: 'rgba(245,158,11,0.18)', color: '#fde68a' }} />
+                                        </Box>
+
+                                        <IconButton
+                                            onClick={toggleNavVisibility}
+                                            title={isNavHidden ? 'Show navigation' : 'Hide navigation'}
+                                            sx={{ border: '1px solid rgba(255,255,255,0.12)', color: '#aab4c2', backgroundColor: 'rgba(255,255,255,0.04)' }}
+                                        >
+                                            {isNavHidden ? <LockOpen /> : <Lock />}
+                                        </IconButton>
+                                    </Box>
+
                                     {!isNavHidden && (
-                                        <BottomNavigation
-                                            value={value}
-                                            onChange={(e, newValue) => {
-                                                if (newValue === 4) {
-                                                    toggleNavVisibility();
-                                                } else {
-                                                    setValue(newValue);
+                                        <Tabs
+                                            value={activeView}
+                                            onChange={(event, newValue) => setView(newValue)}
+                                            variant="scrollable"
+                                            allowScrollButtonsMobile
+                                            sx={{
+                                                mt: 1,
+                                                minHeight: 44,
+                                                '.MuiTabs-indicator': { backgroundColor: '#1f65c7' },
+                                                '.MuiTab-root': {
+                                                    minHeight: 44,
+                                                    textTransform: 'none',
+                                                    fontWeight: 600,
+                                                    color: '#aab4c2',
+                                                    borderRadius: '10px'
+                                                },
+                                                '.Mui-selected': {
+                                                    color: '#f4f7fb !important'
                                                 }
                                             }}
-                                            showLabels
-                                            className="navigation-rf"
                                         >
-                                            <BottomNavigationAction
-                                                className="bottom-nav-rf"
-                                                label="New Form"
-                                                icon={<FontAwesomeIcon icon={faFolderPlus} className="icons-rf" />}
-                                            />
-                                            <BottomNavigationAction
-                                                className="bottom-nav-rf"
-                                                label="Edit Form"
-                                                icon={<FontAwesomeIcon icon={faFolderOpen} className="icons-rf" />}
-                                            />
-                                            <BottomNavigationAction
-                                                className="bottom-nav-rf"
-                                                label="Return Form"
-                                                icon={<FontAwesomeIcon icon={faFolderMinus} className="icons-rf" />}
-                                            />
-                                            <BottomNavigationAction
-                                                className="bottom-nav-rf"
-                                                label="Rentals"
-                                                icon={<FontAwesomeIcon icon={faCog} className="icons-rf" />}
-                                            />
-                                            <BottomNavigationAction
-                                                className="bottom-nav-rf"
-                                                label="Hide"
-                                                icon={<FontAwesomeIcon icon={faLock} className="icons-rf" />}
-                                            />
-                                        </BottomNavigation>
+                                            {VIEW_KEYS.map((key) => (
+                                                <Tab
+                                                    key={key}
+                                                    value={key}
+                                                    icon={VIEW_CONFIG[key].icon}
+                                                    iconPosition="start"
+                                                    label={VIEW_CONFIG[key].label}
+                                                />
+                                            ))}
+                                        </Tabs>
                                     )}
-                                    {isNavHidden && (
-                                        <Button
-                                            onClick={toggleNavVisibility}
-                                            className="btn-pin-code-link d-block mx-auto mb-3"
-                                        >
-                                            <FontAwesomeIcon icon={faLockOpen} className="icons-rf" /> Show Navigation
-                                        </Button>
-                                    )}
-                                </Col>
-                            </Row>
+                                </Paper>
+
+                                <Box sx={{ minHeight: 420, mt: 1 }}>
+                                    {loading ? (
+                                        <Row className="spinner-standard">
+                                            <Spinner animation="border" />
+                                        </Row>
+                                    ) : null}
+
+                                    {!loading && activeView === 'new' ? (
+                                        <CreateRentalForm
+                                            {...props}
+                                            rentalForms={rentalForms}
+                                            rentalOptions={rentalOptions}
+                                        />
+                                    ) : null}
+
+                                    {!loading && activeView === 'edit' ? (
+                                        <EditForm
+                                            {...props}
+                                            rentalForms={rentalForms}
+                                            rentalOptions={rentalOptions}
+                                        />
+                                    ) : null}
+
+                                    {!loading && activeView === 'return' ? (
+                                        <ReturnForm
+                                            {...props}
+                                            rentalForms={rentalForms}
+                                            rentalOptions={rentalOptions}
+                                        />
+                                    ) : null}
+
+                                    {!loading && activeView === 'inventory' ? (
+                                        <RentalOptions
+                                            {...props}
+                                            rentalOptions={rentalOptions}
+                                        />
+                                    ) : null}
+                                </Box>
+                            </>
                         )}
-
-                        {value === 0 && !loading ? (
-                            <CreateRentalForm
-                                {...props}
-                                rentalForms={rentalForms}
-                                rentalOptions={rentalOptions}
-                            />
-                        ) : value === 0 ? (
-                            <Row className="spinner-standard">
-                                <Spinner animation="border" />
-                            </Row>
-                        ) : null}
-
-                        {value === 1 && !loading ? (
-                            <div className="div-edit-rf">
-                                <EditForm
-                                    {...props}
-                                    rentalForms={rentalForms}
-                                    rentalOptions={rentalOptions}
-                                />
-                            </div>
-                        ) : value === 1 ? (
-                            <Row className="spinner-standard">
-                                <Spinner animation="border" />
-                            </Row>
-                        ) : null}
-
-                        {value === 2 && !loading ? (
-                            <div className="div-edit-rf">
-                                <ReturnForm
-                                    {...props}
-                                    rentalForms={rentalForms}
-                                    rentalOptions={rentalOptions}
-                                />
-                            </div>
-                        ) : value === 2 ? (
-                            <Row className="spinner-standard">
-                                <Spinner animation="border" />
-                            </Row>
-                        ) : null}
-
-                        {value === 3 && !loading ? (
-                            <div className="div-edit-rf">
-                                <RentalOptions
-                                    {...props}
-                                    rentalOptions={rentalOptions}
-                                />
-                            </div>
-                        ) : value === 3 ? (
-                            <Row className="spinner-standard">
-                                <Spinner animation="border" />
-                            </Row>
-                        ) : null}
                     </Container>
+                    </div>
                 </div>
             )}
         </AuthUserContext.Consumer>
@@ -256,4 +291,4 @@ function RentalsManagement(props) {
 const condition = authUser =>
     authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]);
 
-export default withAuthorization(condition)(withFirebase(RentalsManagement)); 
+export default withAuthorization(condition)(withFirebase(RentalsManagement));

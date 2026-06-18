@@ -270,13 +270,13 @@ class Birthday extends Component {
         } = this.state
         const VM = Views.MONTH
         return (
-            <div className="background-static-all">
+            <div className="admin-container admin-compact-page admin-birthday-page">
                 <Helmet>
                     <title>US Airsoft Field: Birthday</title>
                 </Helmet>
                 {loading ?
                     <Row className="justify-content-row padding-5px"><Spinner animation="border" /></Row> :
-                    <Container>
+                    <Container className="admin-content">
                         <h2 className="admin-header">Calendar - Birthday</h2>
                         <Breadcrumb className="admin-breadcrumb">
                             {window.location.href.indexOf("admin") > -1 ?
@@ -290,7 +290,7 @@ class Birthday extends Component {
                             }
                             <Breadcrumb.Item active>Calendar</Breadcrumb.Item>
                         </Breadcrumb>
-                        <div className="div-main-birthday">
+                        <div className="div-main-birthday admin-panel-card">
                             <Calendar
                                 selectable
                                 localizer={localizer}

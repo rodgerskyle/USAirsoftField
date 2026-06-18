@@ -174,6 +174,33 @@ class Profile extends Component {
         const { images, rankindex, rankprogress, loading, matches, authUser, profileicon, activePage, prevPage } = this.state;
         const curRankPoints = rankincrements[rankindex]
         const nextRankPoints = rankincrements[rankindex + 1 <= images.length ? rankindex + 1 : rankindex]
+        const safeUser = authUser || {
+            username: '',
+            name: '',
+            renewal: '',
+            team: '',
+            wins: 0,
+            losses: 0,
+            points: 0,
+            freegames: 0,
+        };
+        const totalGames = safeUser.wins + safeUser.losses;
+        const winPercentage = totalGames > 0 ? Math.ceil((safeUser.wins / totalGames) * 100) : 0;
+        const progressPercent = rankindex + 1 < images.length ? (rankprogress * 100).toFixed(2) : '100.00';
+        const currentRankPoints = safeUser.points - (rankindex + 1 < images.length ? curRankPoints : 0);
+        const pointsNeeded = rankindex + 1 < images.length
+            ? (nextRankPoints - curRankPoints) - (safeUser.points - curRankPoints)
+            : 0;
+        const profileStatsLeft = [
+            { label: 'Wins', value: safeUser.wins },
+            { label: 'Losses', value: safeUser.losses },
+            { label: 'Win Percentage', value: `${winPercentage}%` },
+        ];
+        const profileStatsRight = [
+            { label: 'Points', value: safeUser.points },
+            { label: 'Badges', value: 'Coming soon...' },
+            { label: 'Free Games', value: safeUser.freegames },
+        ];
         return (
             <div className="background-static-rp">
                 {loading ?
@@ -185,35 +212,35 @@ class Profile extends Component {
                         <Container>
                             <div>
                                 <div className="div-profile-main-p">
-                                    <Row className="row-profile-main-p">
+                                    <Row className="row-profile-main-p profile-hero-card">
                                         <Col md={"auto"} className={isMobile ? "col-mobile-profile-pic-p" : "col-profile-pic-p"}>
                                             <img src={profileicon} alt="personal profile" className="img-profile-p" />
                                         </Col>
-                                        <Col className="col-details-p">
+                                        <Col className="col-details-p profile-hero-details">
                                             <Row className="row-username-p">
-                                                {authUser.username}
+                                                {safeUser.username}
                                             </Row>
                                             <Row className="row-details-p">
                                                 <span className="span-details-p" style={{ marginRight: 31 }}>NAME:&nbsp;</span>
                                                 <p className="p-details-p">
-                                                    {authUser.name}
+                                                    {safeUser.name}
                                                 </p>
                                             </Row>
                                             <Row className="row-details-p">
                                                 <span className="span-details-p">RENEWAL:&nbsp;</span>
                                                 <p className="p-details-p">
-                                                    {authUser.renewal}
+                                                    {safeUser.renewal}
                                                 </p>
                                             </Row>
                                             <Row className="row-details-p">
                                                 <span className="span-details-p" style={{ marginRight: 33 }}>TEAM:&nbsp;</span>
-                                                {authUser.team !== "" ?
-                                                    <Link className="p-details-p" to={"/teams/" + authUser.team}>{authUser.team.toUpperCase()}</Link> : "N/A"}
+                                                {safeUser.team !== "" ?
+                                                    <Link className="p-details-p" to={"/teams/" + safeUser.team}>{safeUser.team.toUpperCase()}</Link> : "N/A"}
                                             </Row>
                                         </Col>
                                     </Row>
                                 </div>
-                                <Row style={{ paddingTop: 10 }} className={isMobile ? 'justify-content-row' : ''}>
+                                <Row style={{ paddingTop: 10 }} className={`row-profile-tabs-p ${isMobile ? 'justify-content-row' : ''}`}>
                                     <p className={activePage === 0 ? "p-nav-profile-active" : "p-nav-profile"}
                                         onClick={() => setTimeout(() => {
                                             this.setState({ activePage: 0 }, () => {
@@ -250,107 +277,89 @@ class Profile extends Component {
                                 <div style={{ paddingTop: 10 }}>
                                     {activePage === 0 ?
                                         <Slide direction={"right"} in={true} mountOnEnter unmountOnExit>
-                                            <Row>
-                                                <Col md={4}>
-                                                    <div className="div-stats-box-profile">
-                                                        <Row className="justify-content-row">
-                                                            <p className="p-title-stats-box-profile">{"Wins:"}</p>
-                                                        </Row>
-                                                        <Row className="justify-content-row">
-                                                            <p className="p-stats-box-profile">{authUser.wins}</p>
-                                                        </Row>
-                                                    </div>
-                                                    <div className="div-stats-box-profile">
-                                                        <Row className="justify-content-row">
-                                                            <p className="p-title-stats-box-profile">{"Losses:"}</p>
-                                                        </Row>
-                                                        <Row className="justify-content-row">
-                                                            <p className="p-stats-box-profile">{authUser.losses}</p>
-                                                        </Row>
-                                                    </div>
-                                                    <div className="div-stats-box-profile">
-                                                        <Row className="justify-content-row">
-                                                            <p className="p-title-stats-box-profile">{"Win Percentage:"}</p>
-                                                        </Row>
-                                                        <Row className="justify-content-row">
-                                                            <p className="p-stats-box-profile">{`${Math.ceil(authUser.wins / (authUser.losses + authUser.wins) * 100)}%`}</p>
-                                                        </Row>
+                                            <Row className="row-profile-panel-p profile-overview-shell">
+                                                <Col lg={3} md={4}>
+                                                    <div className="profile-stats-column">
+                                                        {profileStatsLeft.map((stat) => (
+                                                            <div className="div-stats-box-profile profile-stat-card" key={stat.label}>
+                                                                <p className="p-title-stats-box-profile">{stat.label}</p>
+                                                                <p className="p-stats-box-profile">{stat.value}</p>
+                                                            </div>
+                                                        ))}
                                                     </div>
                                                 </Col>
-                                                <Col md={4} className="col-rank-box-profile">
-                                                    <img style={{ width: '100%' }} src={images.length !== 0 ? images[rankindex] : null}
-                                                        alt="Players rank" className="img-xlarge-rank" />
+                                                <Col lg={6} md={4} className="col-rank-box-profile">
+                                                    <div className="profile-rank-spotlight">
+                                                        <p className="profile-rank-label">Current Rank</p>
+                                                        <img
+                                                            src={images.length !== 0 ? images[rankindex] : null}
+                                                            alt="Players rank"
+                                                            className="img-xlarge-rank profile-rank-image"
+                                                        />
+                                                        <p className="profile-rank-name">{ranks[rankindex]}</p>
+                                                        <p className="profile-rank-subcopy">
+                                                            {totalGames > 0 ? `${totalGames} total games logged` : 'Play your first games to start climbing the ranks.'}
+                                                        </p>
+                                                    </div>
                                                 </Col>
-                                                <Col md={4}>
-                                                    <div className="div-stats-box-profile">
-                                                        <Row className="justify-content-row">
-                                                            <p className="p-title-stats-box-profile">{"Points:"}</p>
-                                                        </Row>
-                                                        <Row className="justify-content-row">
-                                                            <p className="p-stats-box-profile">{authUser.points}</p>
-                                                        </Row>
-                                                    </div>
-                                                    <div className="div-stats-box-profile">
-                                                        <Row className="justify-content-row">
-                                                            <p className="p-title-stats-box-profile">{"Badges:"}</p>
-                                                        </Row>
-                                                        <Row className="justify-content-row">
-                                                            <p className="p-stats-box-profile">{"Coming soon..."}</p>
-                                                        </Row>
-                                                    </div>
-                                                    <div className="div-stats-box-profile" style={{ marginBottom: '1rem' }}>
-                                                        <Row className="justify-content-row">
-                                                            <p className="p-title-stats-box-profile">{"Free Games:"}</p>
-                                                        </Row>
-                                                        <Row className="justify-content-row">
-                                                            <p className="p-stats-box-profile">{authUser.freegames}</p>
-                                                        </Row>
+                                                <Col lg={3} md={4}>
+                                                    <div className="profile-stats-column">
+                                                        {profileStatsRight.map((stat) => (
+                                                            <div className="div-stats-box-profile profile-stat-card" key={stat.label}>
+                                                                <p className="p-title-stats-box-profile">{stat.label}</p>
+                                                                <p className="p-stats-box-profile">{stat.value}</p>
+                                                            </div>
+                                                        ))}
                                                     </div>
                                                 </Col>
                                             </Row>
                                         </Slide> : null}
                                     {activePage === 1 ?
                                         <Slide direction={prevPage < 1 ? "left" : "right"} in={true} mountOnEnter unmountOnExit>
-                                            <Row style={{ paddingTop: '1rem' }}>
-                                                <Col md={4}>
-                                                    <Row className="justify-content-row row-rank-progress-profile" style={{ alignItems: 'center' }}>
-                                                        <CircularProgress value={100} variant={"determinate"} size={200} className="cp-static-profile" />
-                                                        <CircularProgress value={rankprogress * 100} variant={"determinate"} size={200} className="cp2-static-profile" />
-                                                        <div style={{ position: 'absolute' }}>
+                                            <Row style={{ paddingTop: '1rem' }} className="row-profile-panel-p profile-progression-shell">
+                                                <Col lg={4}>
+                                                    <div className="profile-progression-summary">
+                                                        <div className="profile-progress-ring-wrap">
+                                                            <Row className="justify-content-row row-rank-progress-profile" style={{ alignItems: 'center' }}>
+                                                                <CircularProgress value={100} variant={"determinate"} size={200} className="cp-static-profile" />
+                                                                <CircularProgress value={rankprogress * 100} variant={"determinate"} size={200} className="cp2-static-profile" />
+                                                                <div style={{ position: 'absolute' }}>
+                                                                    <Row className="justify-content-row">
+                                                                        <img src={images.length !== 0 ? images[rankindex] : null}
+                                                                            alt="Players rank" className="img-large-rank" />
+                                                                    </Row>
+                                                                    <Row className="justify-content-row">
+                                                                        <p className="p-rank-title-rp">{ranks[rankindex]}</p>
+                                                                    </Row>
+                                                                </div>
+                                                            </Row>
+                                                        </div>
+                                                        <div className="profile-progression-metric">
+                                                            <span className="profile-progression-metric-label">Progress To Next Rank</span>
+                                                            <span className="profile-progression-metric-value">{progressPercent}%</span>
+                                                            <span className="profile-progression-metric-copy">{currentRankPoints} points earned in this rank</span>
+                                                        </div>
+                                                        <div className="profile-next-rank-card">
+                                                            <p className="p-rank-title-profile">Next Rank</p>
                                                             <Row className="justify-content-row">
-                                                                <img src={images.length !== 0 ? images[rankindex] : null}
+                                                                <img src={images.length !== 0 ? images[rankindex + 1 < images.length ? rankindex + 1 : rankindex] : null}
                                                                     alt="Players rank" className="img-large-rank" />
                                                             </Row>
                                                             <Row className="justify-content-row">
-                                                                <p className="p-rank-title-rp">{ranks[rankindex]}</p>
+                                                                <p className="p-next-rank-title-rp">{ranks[rankindex + 1 < images.length ? rankindex + 1 : rankindex]}</p>
                                                             </Row>
+                                                            {rankindex + 1 < images.length ?
+                                                                <Row className="justify-content-row">
+                                                                    <p className="p-rank-progress-rp">
+                                                                        {`${pointsNeeded} points needed`}
+                                                                    </p>
+                                                                </Row> : null}
                                                         </div>
-                                                    </Row>
-                                                    <Row className="justify-content-row" style={{ marginTop: '1rem' }}>
-                                                        <p className="p-title-stats-box-profile">{`${rankindex + 1 < images.length ?
-                                                            (rankprogress * 100).toFixed(2) : 100}% | ${authUser.points -
-                                                            (rankindex + 1 < images.length ? curRankPoints : 0)} points`}</p>
-                                                    </Row>
-                                                    <div className="row-rank-progress-profile">
-                                                        <p className="p-rank-title-profile">Next Rank</p>
                                                     </div>
-                                                    <Row className="justify-content-row">
-                                                        <img src={images.length !== 0 ? images[rankindex + 1 < images.length ? rankindex + 1 : rankindex] : null}
-                                                            alt="Players rank" className="img-large-rank" />
-                                                    </Row>
-                                                    <Row className="justify-content-row">
-                                                        <p className="p-next-rank-title-rp">{ranks[rankindex + 1 < images.length ? rankindex + 1 : rankindex]}</p>
-                                                    </Row>
-                                                    {rankindex + 1 < images.length ?
-                                                        <Row className="justify-content-row">
-                                                            <p className="p-rank-progress-rp">
-                                                                {`Points Needed: ${(nextRankPoints - curRankPoints) - (authUser.points - curRankPoints)} `}
-                                                            </p>
-                                                        </Row> : null}
                                                 </Col>
-                                                <Col md={8} className="col-center-middle">
-                                                    <div>
-                                                        <Row className="row-rank-category-title">
+                                                <Col lg={8} className="col-center-middle">
+                                                    <div className="profile-rank-board">
+                                                        <Row className="row-rank-category-title profile-rank-category-panel">
                                                             <p className="p-rank-category-title">
                                                                 ENLISTED RANKS
                                                             </p>
@@ -359,7 +368,7 @@ class Profile extends Component {
                                                             rankincs={rankincrements} rankindex={rankindex} />
                                                         <RankList images={images.slice((1) * 6, ((1) * 6) + 6)} ranks={ranks} page={1}
                                                             rankincs={rankincrements} rankindex={rankindex} />
-                                                        <Row className="row-officer-rank-category-title">
+                                                        <Row className="row-officer-rank-category-title profile-rank-category-panel">
                                                             <p className="p-rank-category-title">
                                                                 OFFICER RANKS
                                                             </p>
@@ -428,17 +437,35 @@ function MatchHistory({ matches }) {
         return array.join('-')
     }
 
+    const matchCount = matches ? matches.length : 0;
+    const totalPoints = matches ? matches.reduce((sum, day) => sum + (day.wins * 10 + day.losses * 3), 0) : 0;
+
     return (
         <div>
-            <Row style={{ paddingRight: 15, paddingLeft: 15 }}>
-                <Col className="col-match-history-rp">
-                    <Row className="justify-content-row">
-                        <p className="p-match-history-title-rp">
-                            Game Feed
-                        </p>
-                    </Row>
+            <Row style={{ paddingRight: 15, paddingLeft: 15 }} className="row-profile-panel-p">
+                <Col className="col-match-history-rp profile-feed-shell">
+                    <div className="profile-feed-header">
+                        <div>
+                            <p className="p-match-history-title-rp">
+                                Game Feed
+                            </p>
+                            <p className="profile-feed-subcopy">
+                                Match-by-match history with wins, losses, and earned points.
+                            </p>
+                        </div>
+                        <div className="profile-feed-summary">
+                            <div className="profile-feed-summary-card">
+                                <span className="profile-feed-summary-label">Matches</span>
+                                <span className="profile-feed-summary-value">{matchCount}</span>
+                            </div>
+                            <div className="profile-feed-summary-card">
+                                <span className="profile-feed-summary-label">Points Earned</span>
+                                <span className="profile-feed-summary-value">{totalPoints}</span>
+                            </div>
+                        </div>
+                    </div>
                     <Row className="row-table-match-history-rp">
-                        <TableContainer component={Paper} className="container">
+                        <TableContainer component={Paper} className="container profile-feed-table-shell">
                             <Table stickyHeader className="table" aria-label="match history table">
                                 <TableHead>
                                     <TableRow>
@@ -461,7 +488,9 @@ function MatchHistory({ matches }) {
                                             </TableRow>
                                         )) :
                                         <TableRow>
-                                            <TableCell colspan={5} className="p-rank-title-rp">Scan games to see your match history!</TableCell>
+                                            <TableCell colSpan={4} className="profile-feed-empty">
+                                                Scan games to see your match history!
+                                            </TableCell>
                                         </TableRow>
                                     }
                                 </TableBody>

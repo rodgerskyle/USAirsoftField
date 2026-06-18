@@ -11,31 +11,38 @@ import { withStyles } from '@mui/styles';
 const TextFieldCard = withStyles({
     root: {
         '& label.Mui-focused': {
-            color: 'white',
+            color: '#f4f7fb',
         },
         '& .MuiInput-underline:after': {
-            borderBottomColor: 'white',
+            borderBottomColor: '#1f65c7',
         },
         '& .MuiOutlinedInput-root': {
+            backgroundColor: '#161d25',
             '& fieldset': {
-                borderColor: 'white',
+                borderColor: 'rgba(255, 255, 255, 0.12)',
             },
             '&:hover fieldset': {
-                borderColor: 'white',
+                borderColor: 'rgba(255, 255, 255, 0.22)',
             },
             '&.Mui-focused fieldset': {
-                borderColor: 'white',
+                borderColor: '#1f65c7',
             },
         },
         '& .MuiInputBase-input': {
-            color: 'black',
-            borderColor: 'white',
+            color: '#f4f7fb',
+            borderColor: 'rgba(255, 255, 255, 0.12)',
         },
         '&.MuiInputBase-root': {
-            color: 'black',
+            color: '#f4f7fb',
         },
         '& .MuiFormLabel-root': {
-            color: 'black',
+            color: '#9fb0c4',
+        },
+        '& .MuiFormHelperText-root': {
+            color: '#9fb0c4',
+        },
+        '& .MuiFormHelperText-root.Mui-error': {
+            color: '#ff8f8f',
         },
     },
 })(TextField);

@@ -70,7 +70,7 @@ class EditForm extends Component {
                                             <Typography variant="h6" className="form-name">
                                                 {form.name}
                                             </Typography>
-                                            <Typography color="textSecondary" className="form-details">
+                                            <Typography component="div" color="textSecondary" className="form-details">
                                                 {form.size} Participants
                                                 {form.complete ?
                                                     <Chip

@@ -28,8 +28,13 @@ const ProfileSettings = () => {
             <title>US Airsoft Field: Account Settings</title>
           </Helmet>
           <Container className="container-settings">
-            <p className="p-header-about">Account Settings</p>
-            <Paper square>
+            <div className="settings-hero-card">
+              <p className="p-header-about settings-page-title">Account Settings</p>
+              <p className="settings-page-copy">
+                Update your profile photo, account details, and password from one place.
+              </p>
+            </div>
+            <Paper square className="settings-tabs-shell">
               <Tabs
                 value={value}
                 indicatorColor="primary"
@@ -37,11 +42,10 @@ const ProfileSettings = () => {
                 onChange={handleChange}
               >
                 <Tab label="Account" />
-                <Tab label="Information" />
               </Tabs>
             </Paper>
             {value === 0 ?
-              <Row className="row-parent-settings">
+              <Row className="row-parent-settings settings-content-card">
                 <Col md={4}>
                   <ImageUpload />
                 </Col>

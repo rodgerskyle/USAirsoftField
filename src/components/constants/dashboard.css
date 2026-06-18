@@ -1,52 +1,46 @@
-.admin-top {
-    background-color: #343a40;
-    padding: 20px 0;
-    margin-bottom: 30px;
-}
-
-.admin-container {
-    padding: 20px;
-}
-
-.admin-cards-container {
+.waiver-dashboard-grid {
     width: 100%;
 }
 
-.admin-row {
-    margin-bottom: 30px;
+.waiver-dashboard-row {
+    margin-bottom: 0.2rem;
 }
 
-.admin-col {
-    margin-bottom: 20px;
+.waiver-dashboard-col {
+    margin-bottom: 1rem;
 }
 
-.admin-link {
+.waiver-dashboard-link {
     text-decoration: none;
 }
 
-.admin-card {
-    background-color: #343a40;
-    border: none;
-    transition: transform 0.2s;
+.waiver-dashboard-card {
+    background: linear-gradient(180deg, rgba(20, 23, 29, 0.98) 0%, rgba(14, 17, 22, 0.98) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.34);
+    transition: transform 0.2s, border-color 0.2s, background-color 0.2s;
 }
 
-.admin-card:hover {
-    transform: translateY(-5px);
+.waiver-dashboard-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(143, 184, 255, 0.22);
 }
 
-.admin-card-content {
+.waiver-dashboard-card-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    color: white;
-    padding: 15px;
+    color: #f4f7fb;
+    padding: 0.35rem 0.1rem;
 }
 
-.admin-card-title {
-    font-size: 1.2rem;
-    font-weight: 500;
+.waiver-dashboard-card-title {
+    font-size: 1.02rem;
+    font-weight: 600;
 }
 
-.admin-card-icon {
-    font-size: 1.5rem;
+.waiver-dashboard-card-icon {
+    font-size: 1.25rem;
+    color: #9ec4ff;
 }

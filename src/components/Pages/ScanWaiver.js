@@ -27,13 +27,14 @@ class ScanWaiver extends Component {
         return (
             <AuthUserContext.Consumer>
                 {authUser => (
-                    <div className="background-static-all">
+                    <div className="admin-container admin-compact-page">
                         <Helmet>
                             <title>US Airsoft Field: Scan Waiver</title>
                         </Helmet>
-                        <Container>
+                        <Container className="admin-content">
+                            <div className="admin-page-header">
                             <h2 className="admin-header">Scan Waiver</h2>
-                            <Breadcrumb className="admin-breadcrumb">
+                            <Breadcrumb className="admin-breadcrumb admin-page-breadcrumb">
                                 {authUser && !!authUser.roles[ROLES.ADMIN] ?
                                     <LinkContainer to="/admin">
                                         <Breadcrumb.Item>Admin</Breadcrumb.Item>
@@ -45,6 +46,7 @@ class ScanWaiver extends Component {
                                 }
                                 <Breadcrumb.Item active>Scan Waiver</Breadcrumb.Item>
                             </Breadcrumb>
+                            </div>
                             <CameraModule />
                         </Container>
                     </div>

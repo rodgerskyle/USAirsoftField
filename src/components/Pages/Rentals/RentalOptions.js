@@ -30,11 +30,12 @@ const RentalRow = ({ rental, onMaxChange }) => {
             sx={{
                 mb: 2,
                 border: '1px solid',
-                borderColor: 'divider',
+                borderColor: 'rgba(255,255,255,0.08)',
                 borderRadius: 2,
+                backgroundColor: '#12171d',
                 transition: 'all 0.2s ease',
                 '&:hover': {
-                    boxShadow: '0 4px 20px rgba(255, 255, 255, 0.1)',
+                    boxShadow: '0 10px 24px rgba(0, 0, 0, 0.24)',
                     transform: 'translateY(-2px)'
                 }
             }}
@@ -45,7 +46,7 @@ const RentalRow = ({ rental, onMaxChange }) => {
                         <Typography
                             variant="h6"
                             sx={{
-                                color: 'text.primary',
+                                color: '#f4f7fb',
                                 fontWeight: 500
                             }}
                         >
@@ -61,11 +62,21 @@ const RentalRow = ({ rental, onMaxChange }) => {
                             disabled
                             variant="outlined"
                             InputProps={{
-                                startAdornment: <Inventory2 sx={{ color: 'text.secondary', mr: 1 }} />
+                                startAdornment: <Inventory2 sx={{ color: '#9fb0c4', mr: 1 }} />
                             }}
                             sx={{
+                                '& .MuiInputLabel-root': {
+                                    color: '#9fb0c4'
+                                },
+                                '& .MuiInputLabel-root.Mui-focused': {
+                                    color: '#f4f7fb'
+                                },
                                 '& .MuiOutlinedInput-root': {
-                                    backgroundColor: 'action.hover'
+                                    backgroundColor: '#161d25',
+                                    color: '#f4f7fb',
+                                    '& fieldset': {
+                                        borderColor: 'rgba(255,255,255,0.12)'
+                                    }
                                 }
                             }}
                         />
@@ -79,6 +90,27 @@ const RentalRow = ({ rental, onMaxChange }) => {
                             onChange={(e) => onMaxChange(e.target.value)}
                             variant="outlined"
                             color="primary"
+                            sx={{
+                                '& .MuiInputLabel-root': {
+                                    color: '#9fb0c4'
+                                },
+                                '& .MuiInputLabel-root.Mui-focused': {
+                                    color: '#f4f7fb'
+                                },
+                                '& .MuiOutlinedInput-root': {
+                                    backgroundColor: '#161d25',
+                                    color: '#f4f7fb',
+                                    '& fieldset': {
+                                        borderColor: 'rgba(255,255,255,0.12)'
+                                    },
+                                    '&:hover fieldset': {
+                                        borderColor: 'rgba(255,255,255,0.22)'
+                                    },
+                                    '&.Mui-focused fieldset': {
+                                        borderColor: '#1f65c7'
+                                    }
+                                }
+                            }}
                         />
                     </Grid>
                 </Grid>
@@ -157,7 +189,7 @@ const RentalOptions = (props) => {
                         variant="h4"
                         sx={{
                             fontWeight: 600,
-                            color: '#fff',
+                            color: '#f4f7fb',
                             mb: 1
                         }}
                     >
@@ -166,7 +198,7 @@ const RentalOptions = (props) => {
                     <Typography
                         variant="body1"
                         sx={{
-                            color: '#fff',
+                            color: '#9fb0c4',
                             mb: 4
                         }}
                     >

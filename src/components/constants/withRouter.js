@@ -11,9 +11,17 @@ export function withRouter(Component) {
     let location = useLocation();
     let navigate = useNavigate();
     let params = useParams();
+    const history = {
+      push: (to, state) => navigate(to, { state }),
+      replace: (to, state) => navigate(to, { replace: true, state }),
+      goBack: () => navigate(-1),
+      goForward: () => navigate(1),
+    };
+
     return (
       <Component
         {...props}
+        history={history}
         router={{ location, navigate, params }}
       />
     );

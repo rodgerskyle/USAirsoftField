@@ -177,6 +177,18 @@ class ProfileLookup extends Component {
         const { images, rankindex, rankprogress, loading, matches, authUser, profileicon, activePage, prevPage } = this.state;
         const curRankPoints = rankincrements[rankindex]
         const nextRankPoints = rankincrements[rankindex + 1 <= images.length ? rankindex + 1 : rankindex]
+        const safeUser = authUser || {
+            username: '',
+            name: '',
+            renewal: '',
+            team: '',
+            wins: 0,
+            losses: 0,
+            points: 0,
+            freegames: 0,
+        };
+        const totalGames = safeUser.wins + safeUser.losses;
+        const winPercentage = totalGames > 0 ? Math.ceil((safeUser.wins / totalGames) * 100) : 0;
         return (
             <div className="background-static-rp">
                 {loading ?
@@ -186,8 +198,8 @@ class ProfileLookup extends Component {
                     :
                     <div style={{ overflowX: 'hidden' }}>
                         <Helmet>
-                            <title>{`US Airsoft Field: ${authUser.username} Profile`}</title>
-                            <meta property="og:title" content={`US Airsoft Field: ${authUser.username} Profile`} />
+                            <title>{`US Airsoft Field: ${safeUser.username} Profile`}</title>
+                            <meta property="og:title" content={`US Airsoft Field: ${safeUser.username} Profile`} />
                             <meta property="og:image" content={profileicon} />
                         </Helmet>
                         <Container>
@@ -199,24 +211,24 @@ class ProfileLookup extends Component {
                                         </Col>
                                         <Col className="col-details-p">
                                             <Row className="row-username-p">
-                                                {authUser.username}
+                                                {safeUser.username}
                                             </Row>
                                             <Row className="row-details-p">
                                                 <span className="span-details-p" style={{ marginRight: 31 }}>NAME:&nbsp;</span>
                                                 <p className="p-details-p">
-                                                    {authUser.name}
+                                                    {safeUser.name}
                                                 </p>
                                             </Row>
                                             <Row className="row-details-p">
                                                 <span className="span-details-p">RENEWAL:&nbsp;</span>
                                                 <p className="p-details-p">
-                                                    {authUser.renewal}
+                                                    {safeUser.renewal}
                                                 </p>
                                             </Row>
                                             <Row className="row-details-p">
                                                 <span className="span-details-p" style={{ marginRight: 33 }}>TEAM:&nbsp;</span>
-                                                {authUser.team !== "" ?
-                                                    <Link className="p-details-p" to={"/teams/" + authUser.team}>{authUser.team.toUpperCase()}</Link> : "N/A"}
+                                                {safeUser.team !== "" ?
+                                                    <Link className="p-details-p" to={"/teams/" + safeUser.team}>{safeUser.team.toUpperCase()}</Link> : "N/A"}
                                             </Row>
                                         </Col>
                                     </Row>
@@ -265,7 +277,7 @@ class ProfileLookup extends Component {
                                                             <p className="p-title-stats-box-profile">{"Wins:"}</p>
                                                         </Row>
                                                         <Row className="justify-content-row">
-                                                            <p className="p-stats-box-profile">{authUser.wins}</p>
+                                                            <p className="p-stats-box-profile">{safeUser.wins}</p>
                                                         </Row>
                                                     </div>
                                                     <div className="div-stats-box-profile">
@@ -273,7 +285,7 @@ class ProfileLookup extends Component {
                                                             <p className="p-title-stats-box-profile">{"Losses:"}</p>
                                                         </Row>
                                                         <Row className="justify-content-row">
-                                                            <p className="p-stats-box-profile">{authUser.losses}</p>
+                                                            <p className="p-stats-box-profile">{safeUser.losses}</p>
                                                         </Row>
                                                     </div>
                                                     <div className="div-stats-box-profile">
@@ -281,7 +293,7 @@ class ProfileLookup extends Component {
                                                             <p className="p-title-stats-box-profile">{"Win Percentage:"}</p>
                                                         </Row>
                                                         <Row className="justify-content-row">
-                                                            <p className="p-stats-box-profile">{`${Math.ceil(authUser.wins / (authUser.losses + authUser.wins) * 100)}%`}</p>
+                                                            <p className="p-stats-box-profile">{`${winPercentage}%`}</p>
                                                         </Row>
                                                     </div>
                                                 </Col>
@@ -295,7 +307,7 @@ class ProfileLookup extends Component {
                                                             <p className="p-title-stats-box-profile">{"Points:"}</p>
                                                         </Row>
                                                         <Row className="justify-content-row">
-                                                            <p className="p-stats-box-profile">{authUser.points}</p>
+                                                            <p className="p-stats-box-profile">{safeUser.points}</p>
                                                         </Row>
                                                     </div>
                                                     <div className="div-stats-box-profile">
@@ -311,7 +323,7 @@ class ProfileLookup extends Component {
                                                             <p className="p-title-stats-box-profile">{"Free Games:"}</p>
                                                         </Row>
                                                         <Row className="justify-content-row">
-                                                            <p className="p-stats-box-profile">{authUser.freegames}</p>
+                                                            <p className="p-stats-box-profile">{safeUser.freegames}</p>
                                                         </Row>
                                                     </div>
                                                 </Col>
@@ -336,7 +348,7 @@ class ProfileLookup extends Component {
                                                     </Row>
                                                     <Row className="justify-content-row" style={{ marginTop: '1rem' }}>
                                                         <p className="p-title-stats-box-profile">{`${rankindex + 1 < images.length ?
-                                                            (rankprogress * 100).toFixed(2) : 100}% | ${authUser.points -
+                                                            (rankprogress * 100).toFixed(2) : 100}% | ${safeUser.points -
                                                             (rankindex + 1 < images.length ? curRankPoints : 0)} points`}</p>
                                                     </Row>
                                                     <div className="row-rank-progress-profile">
@@ -352,7 +364,7 @@ class ProfileLookup extends Component {
                                                     {rankindex + 1 < images.length ?
                                                         <Row className="justify-content-row">
                                                             <p className="p-rank-progress-rp">
-                                                                {`Points Needed: ${(nextRankPoints - curRankPoints) - (authUser.points - curRankPoints)} `}
+                                                                {`Points Needed: ${(nextRankPoints - curRankPoints) - (safeUser.points - curRankPoints)} `}
                                                             </p>
                                                         </Row> : null}
                                                 </Col>

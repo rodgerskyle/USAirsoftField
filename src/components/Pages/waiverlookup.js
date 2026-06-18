@@ -310,165 +310,165 @@ class WaiverLookup extends Component {
         return (
             <AuthUserContext.Consumer>
                 {authUser => (
-                    <div className="usa-waiver-container">
-                        <div className="usa-waiver-breadcrumb">
-                            <Breadcrumb>
-                                <LinkContainer to="/">
-                                    <Breadcrumb.Item>Home</Breadcrumb.Item>
-                                </LinkContainer>
-                                <LinkContainer to="/admin">
-                                    <Breadcrumb.Item>Admin</Breadcrumb.Item>
-                                </LinkContainer>
-                                <Breadcrumb.Item active>Waiver Lookup</Breadcrumb.Item>
-                            </Breadcrumb>
-                        </div>
+                    <div className="admin-container admin-compact-page">
+                        <div className="admin-content usa-waiver-container">
+                            <div className="usa-waiver-breadcrumb admin-page-header">
+                                <h2 className="admin-header">Waiver Lookup</h2>
+                                <Breadcrumb>
+                                    <LinkContainer to="/admin">
+                                        <Breadcrumb.Item>Admin</Breadcrumb.Item>
+                                    </LinkContainer>
+                                    <Breadcrumb.Item active>Waiver Lookup</Breadcrumb.Item>
+                                </Breadcrumb>
+                            </div>
 
-                        <Card className="usa-waiver-card">
-                            <Card.Header className="usa-waiver-header">
-                                <Form.Control
-                                    type="text"
-                                    placeholder="Search by name..."
-                                    value={search}
-                                    onChange={(e) => this.setState({ search: e.target.value })}
-                                    className="usa-waiver-search"
-                                />
+                            <Card className="usa-waiver-card admin-panel-card">
+                                <Card.Header className="usa-waiver-header">
+                                    <Form.Control
+                                        type="text"
+                                        placeholder="Search by name..."
+                                        value={search}
+                                        onChange={(e) => this.setState({ search: e.target.value })}
+                                        className="usa-waiver-search"
+                                    />
 
-                                {/* Date Filters */}
-                                <div className="usa-waiver-date-filters">
-                                    <Dropdown className="usa-waiver-date-dropdown">
-                                        <Dropdown.Toggle as={CustomToggle}>
-                                            Month: {activeMonth !== 13 ? this.state.months[activeMonth - 1] : "All"}
-                                        </Dropdown.Toggle>
-                                        <Dropdown.Menu as={CustomMenu}>
-                                            <Dropdown.Item onClick={() => this.setState({ activeMonth: 13 })}>
-                                                All Months
-                                            </Dropdown.Item>
-                                            {this.state.months.map((month, index) => (
-                                                <Dropdown.Item
-                                                    key={month}
-                                                    onClick={() => this.setState({ activeMonth: index + 1 })}
-                                                >
-                                                    {month}
+                                    {/* Date Filters */}
+                                    <div className="usa-waiver-date-filters">
+                                        <Dropdown className="usa-waiver-date-dropdown">
+                                            <Dropdown.Toggle as={CustomToggle}>
+                                                Month: {activeMonth !== 13 ? this.state.months[activeMonth - 1] : "All"}
+                                            </Dropdown.Toggle>
+                                            <Dropdown.Menu as={CustomMenu}>
+                                                <Dropdown.Item onClick={() => this.setState({ activeMonth: 13 })}>
+                                                    All Months
                                                 </Dropdown.Item>
-                                            ))}
-                                        </Dropdown.Menu>
-                                    </Dropdown>
+                                                {this.state.months.map((month, index) => (
+                                                    <Dropdown.Item
+                                                        key={month}
+                                                        onClick={() => this.setState({ activeMonth: index + 1 })}
+                                                    >
+                                                        {month}
+                                                    </Dropdown.Item>
+                                                ))}
+                                            </Dropdown.Menu>
+                                        </Dropdown>
 
-                                    <Dropdown className="usa-waiver-date-dropdown">
-                                        <Dropdown.Toggle as={CustomToggle}>
-                                            Day: {activeDay !== 32 ? activeDay : "All"}
-                                        </Dropdown.Toggle>
-                                        <Dropdown.Menu as={CustomMenu}>
-                                            <Dropdown.Item onClick={() => this.setState({ activeDay: 32 })}>
-                                                All Days
-                                            </Dropdown.Item>
-                                            {this.state.days.map((day, index) => (
-                                                <Dropdown.Item
-                                                    key={day}
-                                                    onClick={() => this.setState({ activeDay: index + 1 })}
-                                                >
-                                                    {index + 1}
+                                        <Dropdown className="usa-waiver-date-dropdown">
+                                            <Dropdown.Toggle as={CustomToggle}>
+                                                Day: {activeDay !== 32 ? activeDay : "All"}
+                                            </Dropdown.Toggle>
+                                            <Dropdown.Menu as={CustomMenu}>
+                                                <Dropdown.Item onClick={() => this.setState({ activeDay: 32 })}>
+                                                    All Days
                                                 </Dropdown.Item>
-                                            ))}
-                                        </Dropdown.Menu>
-                                    </Dropdown>
+                                                {this.state.days.map((day, index) => (
+                                                    <Dropdown.Item
+                                                        key={day}
+                                                        onClick={() => this.setState({ activeDay: index + 1 })}
+                                                    >
+                                                        {index + 1}
+                                                    </Dropdown.Item>
+                                                ))}
+                                            </Dropdown.Menu>
+                                        </Dropdown>
 
-                                    <Dropdown className="usa-waiver-date-dropdown">
-                                        <Dropdown.Toggle as={CustomToggle}>
-                                            Year: {activeYear !== new Date().getFullYear() + 1 ? activeYear : "All"}
-                                        </Dropdown.Toggle>
-                                        <Dropdown.Menu as={CustomMenu}>
-                                            <Dropdown.Item
-                                                onClick={() => this.setState({ activeYear: new Date().getFullYear() + 1 })}
-                                            >
-                                                All Years
-                                            </Dropdown.Item>
-                                            {this.state.years.map(year => (
+                                        <Dropdown className="usa-waiver-date-dropdown">
+                                            <Dropdown.Toggle as={CustomToggle}>
+                                                Year: {activeYear !== new Date().getFullYear() + 1 ? activeYear : "All"}
+                                            </Dropdown.Toggle>
+                                            <Dropdown.Menu as={CustomMenu}>
                                                 <Dropdown.Item
-                                                    key={year}
-                                                    onClick={() => this.setState({ activeYear: year })}
+                                                    onClick={() => this.setState({ activeYear: new Date().getFullYear() + 1 })}
                                                 >
-                                                    {year}
+                                                    All Years
                                                 </Dropdown.Item>
-                                            ))}
-                                        </Dropdown.Menu>
-                                    </Dropdown>
-                                </div>
-
-                                <FormControlLabel
-                                    control={
-                                        <Switch
-                                            checked={this.state.useLegacy}
-                                            onChange={this.toggleWaiverType}
-                                            color="primary"
-                                        />
-                                    }
-                                    label="Use Legacy Waivers"
-                                    className="usa-waiver-switch"
-                                />
-                            </Card.Header>
-
-                            <Card.Body className="usa-waiver-body">
-                                {loading ? (
-                                    <div className="usa-waiver-loading">
-                                        <Spinner animation="border" role="status">
-                                            <span className="visually-hidden">Loading...</span>
-                                        </Spinner>
+                                                {this.state.years.map(year => (
+                                                    <Dropdown.Item
+                                                        key={year}
+                                                        onClick={() => this.setState({ activeYear: year })}
+                                                    >
+                                                        {year}
+                                                    </Dropdown.Item>
+                                                ))}
+                                            </Dropdown.Menu>
+                                        </Dropdown>
                                     </div>
-                                ) : (
-                                    <>
-                                        {filteredWaivers.length > 0 ? (
-                                            <>
-                                                <div className="usa-waiver-list">
-                                                    {currentWaivers.map((waiver) => (
-                                                        <div
-                                                            className={`usa-waiver-row ${index++ % 2 === 0 ? 'usa-waiver-row-even' : 'usa-waiver-row-odd'}`}
-                                                            key={waiver.ref}
-                                                        >
-                                                            <div className="usa-waiver-row-content">
-                                                                <div className="usa-waiver-info">
-                                                                    <span className="usa-waiver-index">#{index}</span>
-                                                                    <span className="usa-waiver-name">
-                                                                        {waiver.isDigital ?
-                                                                            waiver.name :
-                                                                            waiver.name.substr(0, waiver.name.lastIndexOf('('))}
-                                                                    </span>
+
+                                    <FormControlLabel
+                                        control={
+                                            <Switch
+                                                checked={this.state.useLegacy}
+                                                onChange={this.toggleWaiverType}
+                                                color="primary"
+                                            />
+                                        }
+                                        label="Use Legacy Waivers"
+                                        className="usa-waiver-switch"
+                                    />
+                                </Card.Header>
+
+                                <Card.Body className="usa-waiver-body">
+                                    {loading ? (
+                                        <div className="usa-waiver-loading">
+                                            <Spinner animation="border" role="status">
+                                                <span className="visually-hidden">Loading...</span>
+                                            </Spinner>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            {filteredWaivers.length > 0 ? (
+                                                <>
+                                                    <div className="usa-waiver-list">
+                                                        {currentWaivers.map((waiver) => (
+                                                            <div
+                                                                className={`usa-waiver-row ${index++ % 2 === 0 ? 'usa-waiver-row-even' : 'usa-waiver-row-odd'}`}
+                                                                key={waiver.ref}
+                                                            >
+                                                                <div className="usa-waiver-row-content">
+                                                                    <div className="usa-waiver-info">
+                                                                        <span className="usa-waiver-index">#{index}</span>
+                                                                        <span className="usa-waiver-name">
+                                                                            {waiver.isDigital ?
+                                                                                waiver.name :
+                                                                                waiver.name.substr(0, waiver.name.lastIndexOf('('))}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="usa-waiver-date">
+                                                                        {formatDate(waiver.date)}
+                                                                    </div>
+                                                                    <Button
+                                                                        className={`usa-waiver-button ${waiver.isDigital ? 'usa-waiver-button-view' : 'usa-waiver-button-open'}`}
+                                                                        onClick={() => this.openWaiver(waiver.ref, waiver.isDigital)}
+                                                                    >
+                                                                        {waiver.isDigital ? 'View' : 'Open'}
+                                                                    </Button>
                                                                 </div>
-                                                                <div className="usa-waiver-date">
-                                                                    {formatDate(waiver.date)}
-                                                                </div>
-                                                                <Button
-                                                                    className={`usa-waiver-button ${waiver.isDigital ? 'usa-waiver-button-view' : 'usa-waiver-button-open'}`}
-                                                                    onClick={() => this.openWaiver(waiver.ref, waiver.isDigital)}
-                                                                >
-                                                                    {waiver.isDigital ? 'View' : 'Open'}
-                                                                </Button>
                                                             </div>
-                                                        </div>
-                                                    ))}
+                                                        ))}
+                                                    </div>
+                                                    <div className="usa-waiver-pagination">
+                                                        {Array.from({ length: Math.ceil(filteredWaivers.length / itemsPerPage) }, (_, i) => (
+                                                            <Button
+                                                                key={i + 1}
+                                                                onClick={() => this.handlePageChange(i + 1)}
+                                                                className={`usa-waiver-page-button ${currentPage === i + 1 ? 'active' : ''}`}
+                                                            >
+                                                                {i + 1}
+                                                            </Button>
+                                                        ))}
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <div className="usa-waiver-no-results">
+                                                    <p>No waivers found matching your search criteria.</p>
+                                                    <p>Try broadening your search or adjusting the date filters.</p>
                                                 </div>
-                                                <div className="usa-waiver-pagination">
-                                                    {Array.from({ length: Math.ceil(filteredWaivers.length / itemsPerPage) }, (_, i) => (
-                                                        <Button
-                                                            key={i + 1}
-                                                            onClick={() => this.handlePageChange(i + 1)}
-                                                            className={`usa-waiver-page-button ${currentPage === i + 1 ? 'active' : ''}`}
-                                                        >
-                                                            {i + 1}
-                                                        </Button>
-                                                    ))}
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <div className="usa-waiver-no-results">
-                                                <p>No waivers found matching your search criteria.</p>
-                                                <p>Try broadening your search or adjusting the date filters.</p>
-                                            </div>
-                                        )}
-                                    </>
-                                )}
-                            </Card.Body>
-                        </Card>
+                                            )}
+                                        </>
+                                    )}
+                                </Card.Body>
+                            </Card>
+                        </div>
                     </div>
                 )}
             </AuthUserContext.Consumer>

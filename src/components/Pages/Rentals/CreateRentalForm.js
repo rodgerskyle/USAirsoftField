@@ -61,6 +61,7 @@ const INITIAL_STATE = {
     number: '',
     zipcode: '',
     addingParticipant: false,
+    submitting: false,
 };
 
 const StyledToggle = styled(FormControlLabel)({
@@ -104,8 +105,15 @@ class CreateRentalForm extends Component {
     // Keep your existing methods for form handling
     createForm = (e, options) => {
         e.preventDefault();
+        if (this.state.submitting) {
+            return;
+        }
         if (this.validateCreateForm()) {
             const { cvc, number, expiry, name, zipcode, rentalName, numParticipants, rentalQuantities } = this.state;
+            this.setState({
+                submitting: true,
+                rentalsError: null
+            });
             get(this.props.firebase.rentalGroups()).then(async (obj) => {
                 try {
                     let group = obj.val() || {};
@@ -171,13 +179,15 @@ class CreateRentalForm extends Component {
                 } catch (error) {
                     console.error('Error creating rental form:', error);
                     this.setState({
-                        rentalsError: 'Failed to create rental form. Please try again.'
+                        rentalsError: 'Failed to create rental form. Please try again.',
+                        submitting: false
                     });
                 }
             }).catch(error => {
                 console.error('Error accessing rental groups:', error);
                 this.setState({
-                    rentalsError: 'Failed to access rental groups. Please try again.'
+                    rentalsError: 'Failed to access rental groups. Please try again.',
+                    submitting: false
                 });
             });
         }
@@ -298,7 +308,8 @@ class CreateRentalForm extends Component {
             rentalQuantities,
             totalPrice,
             success,
-            successMessage
+            successMessage,
+            submitting
         } = this.state;
 
         const options = this.props.rentalOptions;
@@ -320,11 +331,12 @@ class CreateRentalForm extends Component {
                                         label="Rental Name"
                                         value={rentalName}
                                         onChange={(e) => this.setState({ rentalName: e.target.value })}
+                                        disabled={submitting}
                                         error={!!rentalnameError}
                                         helperText={rentalnameError}
                                         required
                                         sx={{
-                                            backgroundColor: '#fff',
+                                            backgroundColor: 'transparent',
                                             borderRadius: '4px',
                                             marginBottom: '1rem'
                                         }}
@@ -335,11 +347,12 @@ class CreateRentalForm extends Component {
                                         type="number"
                                         value={numParticipants}
                                         onChange={(e) => this.setState({ numParticipants: e.target.value })}
+                                        disabled={submitting}
                                         error={!!numparticipantsError}
                                         helperText={numparticipantsError}
                                         required
                                         sx={{
-                                            backgroundColor: '#fff',
+                                            backgroundColor: 'transparent',
                                             borderRadius: '4px',
                                             marginBottom: '1rem'
                                         }}
@@ -357,7 +370,7 @@ class CreateRentalForm extends Component {
                                                                 <Checkbox
                                                                     checked={!!selectedRentals[option.id]}
                                                                     onChange={() => this.handleRentalSelect(option, 1)}
-                                                                    disabled={option.stock >= option.max}
+                                                                    disabled={submitting || option.stock >= option.max}
                                                                 />
                                                             }
                                                             label={
@@ -374,6 +387,7 @@ class CreateRentalForm extends Component {
                                                                 <IconButton
                                                                     size="small"
                                                                     onClick={() => this.handleRentalSelect(option, -1)}
+                                                                    disabled={submitting}
                                                                 >
                                                                     <Remove />
                                                                 </IconButton>
@@ -384,6 +398,7 @@ class CreateRentalForm extends Component {
                                                                     size="small"
                                                                     onClick={() => this.handleRentalSelect(option, 1)}
                                                                     disabled={
+                                                                        submitting ||
                                                                         rentalQuantities[option.id] >= option.max
                                                                     }
                                                                 >
@@ -426,11 +441,25 @@ class CreateRentalForm extends Component {
                                             color="primary"
                                             endIcon={<VerifiedUser />}
                                             className="submit-button"
-                                            disabled={totalPrice === 0}
+                                            disabled={submitting || totalPrice === 0}
                                         >
-                                            Create Rental (${totalPrice.toFixed(2)})
+                                            {submitting ? (
+                                                <>
+                                                    <Spinner
+                                                        animation="border"
+                                                        size="sm"
+                                                        className="rental-submit-spinner"
+                                                    />
+                                                    Creating Rental Form...
+                                                </>
+                                            ) : `Create Rental ($${totalPrice.toFixed(2)})`}
                                         </MUIButton>
                                     </div>
+                                    {submitting && (
+                                        <p className="rental-submit-status">
+                                            Creating the rental form now. Please keep this screen open and do not tap the button again.
+                                        </p>
+                                    )}
                                 </div>
                             </Form>
                         </Card.Body>
@@ -462,7 +491,9 @@ const SuccessScreen = ({ message }) => (
             textAlign: 'center',
             maxWidth: 600,
             margin: '40px auto',
-            backgroundColor: 'rgba(255, 255, 255, 0.9)'
+            backgroundColor: '#12171d',
+            color: '#f4f7fb',
+            border: '1px solid rgba(255,255,255,0.08)'
         }}
     >
         <CheckCircle
@@ -476,7 +507,7 @@ const SuccessScreen = ({ message }) => (
             variant="h5"
             sx={{
                 mb: 2,
-                color: 'text.primary',
+                color: '#f4f7fb',
                 fontWeight: 500
             }}
         >
@@ -486,7 +517,7 @@ const SuccessScreen = ({ message }) => (
             variant="body1"
             sx={{
                 mb: 3,
-                color: 'text.secondary'
+                color: '#9fb0c4'
             }}
         >
             {message}

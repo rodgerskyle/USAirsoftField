@@ -11,6 +11,9 @@ import { Collapse, IconButton } from '@mui/material';
 import Preheader from './components/constants/Preheader';
 import { getDownloadURL } from 'firebase/storage';
 import MenuIcon from '@mui/icons-material/Menu';
+import fblogo from './assets/SocialMedia/facebook.png';
+import iglogo from './assets/SocialMedia/instagram.png';
+import ytlogo from './assets/SocialMedia/youtube.png';
 
 
 class Navigation extends Component {
@@ -65,6 +68,42 @@ class Navigation extends Component {
     }
 }
 
+const SOCIAL_LINKS = [
+    {
+        href: 'https://www.facebook.com/USAirsoftworld/',
+        label: 'Facebook',
+        icon: fblogo,
+    },
+    {
+        href: 'https://www.instagram.com/usairsoftworld/',
+        label: 'Instagram',
+        icon: iglogo,
+    },
+    {
+        href: 'https://www.youtube.com/user/USAirsoftWorldInc',
+        label: 'YouTube',
+        icon: ytlogo,
+    },
+];
+
+const SocialNavIcons = () => (
+    <div className="social-nav-icons">
+        {SOCIAL_LINKS.map((link) => (
+            <a
+                key={link.label}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="social-nav-link"
+                aria-label={link.label}
+                title={link.label}
+            >
+                <img src={link.icon} alt={link.label} className="social-nav-icon" />
+            </a>
+        ))}
+    </div>
+);
+
 const NavigationWaiver = ({ authUser, profilePic }) => {
     const [expanded, setExpanded] = useState(false);
     return (
@@ -82,7 +121,7 @@ const NavigationWaiver = ({ authUser, profilePic }) => {
                         {/* Mobile only feature*/}
                         {!!authUser.roles[ROLES.STATIC] ? null :
                             <Nav>
-                                <NavDropdown className="nav-item-profile-nav" title={
+                                <NavDropdown align="end" className="nav-item-profile-nav" title={
                                     <MUIButton
                                         variant="contained"
                                         color="primary"
@@ -114,7 +153,7 @@ const NavigationWaiver = ({ authUser, profilePic }) => {
                     </Nav>
                     {!!authUser.roles[ROLES.STATIC] ? null :
                         <Nav className="mdb-nav-not-mobile-profile">
-                            <NavDropdown className="nav-item-profile-nav" title={
+                            <NavDropdown align="end" className="nav-item-profile-nav" title={
                                 <MUIButton
                                     variant="contained"
                                     color="primary"
@@ -149,23 +188,14 @@ const NavigationAuth = ({ authUser, profilePic }) => {
         else if (url === "/leaderboard") {
             setKey(1);
         }
-        else if (url === "/schedule") {
-            setKey(2);
-        }
-        else if (url === "/events") {
+        else if (url === "/pricing" || url === "/events" || url.includes("/information/pricing")) {
             setKey(3);
         }
         else if (url === "/admin") {
             setKey(4);
         }
-        else if (url === "/media") {
+        else if (url.includes("/information/contact") || url.includes("/contact")) {
             setKey(5);
-        }
-        else if (url === "/media/instagram") {
-            setKey(5.1);
-        }
-        else if (url === "/media/youtube") {
-            setKey(5.2);
         }
         else if (url === "/waiver") {
             setKey(6);
@@ -181,12 +211,6 @@ const NavigationAuth = ({ authUser, profilePic }) => {
         }
         else if (url.includes("/information/gametypes")) {
             setKey(8.2);
-        }
-        else if (url.includes("/information/pricing")) {
-            setKey(8.3);
-        }
-        else if (url.includes("/information/contact") || url.includes("/contact")) {
-            setKey(8.4);
         }
         else if (url === "/account") {
             setKey(9.1);
@@ -224,7 +248,7 @@ const NavigationAuth = ({ authUser, profilePic }) => {
                     <Col className="col-mobile-profile-nav">
                         {/* Mobile only feature*/}
                         <Nav onSelect={handleSelect} activeKey={key}>
-                            <NavDropdown className="nav-item-profile-nav"
+                            <NavDropdown align="end" className="nav-item-profile-nav nav-item-loggedout"
                                 title={
                                     <MUIButton
                                         variant="contained"
@@ -269,32 +293,35 @@ const NavigationAuth = ({ authUser, profilePic }) => {
                         </Nav.Link>
                         <Nav.Link as={Link} className="nav-link" to="/leaderboard" eventKey={1}
                             onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Leaderboard</Nav.Link>
-                        <Nav.Link as={Link} className="nav-link" to="/events" eventKey={3}
-                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Parties & Events</Nav.Link>
-                        <Nav.Link as={Link} className="nav-link" to="/schedule" eventKey={2}
-                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Schedule</Nav.Link>
+                        <Nav.Link as={Link} className="nav-link" to="/pricing" eventKey={3}
+                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Pricing/Parties</Nav.Link>
                         {/* <Nav.Link as={Link} className="nav-link" to="/teams" eventKey={3}
                             onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Teams</Nav.Link> */}
                         {!!authUser.roles[ROLES.ADMIN] && (
                             <Nav.Link as={Link} className="nav-link" to="/admin" eventKey={4}
                                 onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Admin</Nav.Link>
                         )}
-                        <NavDropdown title="Media" active={checkKey(5)}>
-                            <NavDropdown.Item className="NavDropdown-default" as={Link} to="/media/instagram" eventKey={5.1}
-                                onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
-                                Instagram
-                            </NavDropdown.Item>
-                            <NavDropdown.Divider />
-                            <NavDropdown.Item className="NavDropdown-default" as={Link} to="/media/youtube" eventKey={5.2}
-                                onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
-                                Youtube
-                            </NavDropdown.Item>
+                        <NavDropdown title="Socials" className="socials-nav-dropdown">
+                            {SOCIAL_LINKS.map((link) => (
+                                <NavDropdown.Item
+                                    key={link.label}
+                                    className="NavDropdown-default"
+                                    href={link.href}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={() => setTimeout(() => { setExpanded(false) }, 150)}
+                                >
+                                    {link.label}
+                                </NavDropdown.Item>
+                            ))}
                         </NavDropdown>
                         <Nav.Link as={Link} className="nav-link" to="/waiver" eventKey={6}
                             onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Waiver</Nav.Link>
                         <Nav.Link as={Link} className="nav-link" to="/map" eventKey={7}
                             onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Map</Nav.Link>
-                        <NavDropdown title="Information" active={checkKey(8)}>
+                        <Nav.Link as={Link} className="nav-link" to="/contact" eventKey={5}
+                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Contact</Nav.Link>
+                        <NavDropdown title="Info" active={checkKey(8)}>
                             <NavDropdown.Item className="NavDropdown-default" as={Link} to="/information/rules" eventKey={8.1}
                                 onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
                                 Rules
@@ -303,19 +330,13 @@ const NavigationAuth = ({ authUser, profilePic }) => {
                                 onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
                                 Gametypes
                             </NavDropdown.Item>
-                            <NavDropdown.Item className="NavDropdown-default" as={Link} to="/information/pricing" eventKey={8.3}
-                                onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
-                                Pricing
-                            </NavDropdown.Item>
-                            <NavDropdown.Divider />
-                            <NavDropdown.Item className="NavDropdown-default" as={Link} to="/information/contact" eventKey={8.4}
-                                onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
-                                Contact Us
-                            </NavDropdown.Item>
                         </NavDropdown>
                     </Nav>
+                    <Nav className="mdb-nav-not-mobile-profile social-nav-wrapper">
+                        <SocialNavIcons />
+                    </Nav>
                     <Nav className="mdb-nav-not-mobile-profile" onSelect={handleSelect} activeKey={key}>
-                        <NavDropdown className="nav-item-profile-nav"
+                        <NavDropdown align="end" className="nav-item-profile-nav"
                             title={
                                 <MUIButton
                                     variant="contained"
@@ -362,10 +383,7 @@ const NavigationNonAuth = () => {
         else if (url === "/leaderboard") {
             setKey(1);
         }
-        else if (url === "/schedule") {
-            setKey(2);
-        }
-        else if (url === "/events") {
+        else if (url === "/pricing" || url === "/events" || url.includes("/information/pricing")) {
             setKey(3);
         }
         // else if (url === "/teams") {
@@ -374,14 +392,8 @@ const NavigationNonAuth = () => {
         else if (url === "/admin") {
             setKey(4);
         }
-        else if (url === "/media") {
+        else if (url.includes("/information/contact") || url.includes("/contact")) {
             setKey(5);
-        }
-        else if (url === "/media/instagram") {
-            setKey(5.1);
-        }
-        else if (url === "/media/youtube") {
-            setKey(5.2);
         }
         else if (url === "/waiver") {
             setKey(6);
@@ -397,12 +409,6 @@ const NavigationNonAuth = () => {
         }
         else if (url.includes("/information/gametypes")) {
             setKey(8.2);
-        }
-        else if (url.includes("/information/pricing")) {
-            setKey(8.3);
-        }
-        else if (url.includes("/information/contact") || url.includes("/contact")) {
-            setKey(8.4);
         }
         else if (url === "/login") {
             setKey(9.1);
@@ -437,7 +443,7 @@ const NavigationNonAuth = () => {
                     <Col className="col-mobile-profile-nav">
                         {/* Mobile only feature*/}
                         <Nav onSelect={handleSelect} activeKey={key}>
-                            <NavDropdown className="nav-item-profile-nav"
+                            <NavDropdown align="end" className="nav-item-profile-nav nav-item-loggedout"
                                 title={
                                     <MUIButton
                                         variant="contained"
@@ -473,28 +479,31 @@ const NavigationNonAuth = () => {
                         </Nav.Link>
                         <Nav.Link as={Link} className="nav-link" to="/leaderboard" eventKey={1}
                             onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Leaderboard</Nav.Link>
-                        <Nav.Link as={Link} className="nav-link" to="/events" eventKey={3}
-                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Parties & Events</Nav.Link>
-                        <Nav.Link as={Link} className="nav-link" to="/schedule" eventKey={2}
-                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Schedule</Nav.Link>
+                        <Nav.Link as={Link} className="nav-link" to="/pricing" eventKey={3}
+                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Pricing/Parties</Nav.Link>
                         {/* <Nav.Link as={Link} className="nav-link" to="/teams" eventKey={3}
                             onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Teams</Nav.Link> */}
-                        <NavDropdown title="Media" active={checkKey(5)}>
-                            <NavDropdown.Item className="NavDropdown-default" as={Link} to="/media/instagram" eventKey={5.1}
-                                onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
-                                Instagram
-                            </NavDropdown.Item>
-                            <NavDropdown.Divider />
-                            <NavDropdown.Item className="NavDropdown-default" as={Link} to="/media/youtube" eventKey={5.2}
-                                onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
-                                Youtube
-                            </NavDropdown.Item>
+                        <NavDropdown title="Socials" className="socials-nav-dropdown">
+                            {SOCIAL_LINKS.map((link) => (
+                                <NavDropdown.Item
+                                    key={link.label}
+                                    className="NavDropdown-default"
+                                    href={link.href}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={() => setTimeout(() => { setExpanded(false) }, 150)}
+                                >
+                                    {link.label}
+                                </NavDropdown.Item>
+                            ))}
                         </NavDropdown>
                         <Nav.Link as={Link} className="nav-link" to="/waiver" eventKey={6}
                             onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Waiver</Nav.Link>
                         <Nav.Link as={Link} className="nav-link" to="/map" eventKey={7}
                             onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Map</Nav.Link>
-                        <NavDropdown title="Information" active={checkKey(8)}>
+                        <Nav.Link as={Link} className="nav-link" to="/contact" eventKey={5}
+                            onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>Contact</Nav.Link>
+                        <NavDropdown title="Info" active={checkKey(8)}>
                             <NavDropdown.Item className="NavDropdown-default" as={Link} to="/information/rules" eventKey={8.1}
                                 onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
                                 Rules
@@ -503,19 +512,13 @@ const NavigationNonAuth = () => {
                                 onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
                                 Gametypes
                             </NavDropdown.Item>
-                            <NavDropdown.Item className="NavDropdown-default" as={Link} to="/information/pricing" eventKey={8.3}
-                                onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
-                                Pricing
-                            </NavDropdown.Item>
-                            <NavDropdown.Divider />
-                            <NavDropdown.Item className="NavDropdown-default" as={Link} to="/information/contact" eventKey={8.4}
-                                onClick={() => setTimeout(() => { setExpanded(false) }, 150)}>
-                                Contact Us
-                            </NavDropdown.Item>
                         </NavDropdown>
                     </Nav>
+                    <Nav className="mdb-nav-not-mobile-profile social-nav-wrapper">
+                        <SocialNavIcons />
+                    </Nav>
                     <Nav className="mdb-nav-not-mobile-profile" onSelect={handleSelect} activeKey={key}>
-                        <NavDropdown className="nav-item-profile-nav" title={
+                        <NavDropdown align="end" className="nav-item-profile-nav nav-item-loggedout" title={
                             <MUIButton
                                 variant="contained"
                                 color="primary"

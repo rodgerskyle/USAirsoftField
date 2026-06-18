@@ -10,7 +10,9 @@ const EmptyState = () => (
             textAlign: 'center',
             maxWidth: 600,
             margin: '40px auto',
-            backgroundColor: 'rgba(255, 255, 255, 0.9)'
+            backgroundColor: '#12171d',
+            color: '#f4f7fb',
+            border: '1px solid rgba(255,255,255,0.08)'
         }}
     >
         <img
@@ -26,7 +28,7 @@ const EmptyState = () => (
             variant="h5"
             sx={{
                 mb: 2,
-                color: 'text.primary',
+                color: '#f4f7fb',
                 fontWeight: 500
             }}
         >
@@ -36,7 +38,7 @@ const EmptyState = () => (
             variant="body1"
             sx={{
                 mb: 3,
-                color: 'text.secondary',
+                color: '#9fb0c4',
                 maxWidth: 400,
                 mx: 'auto'
             }}

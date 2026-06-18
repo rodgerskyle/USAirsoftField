@@ -15,7 +15,7 @@ const AdminNav = ({ component }) => {
               alt="US Airsoft logo"
               className="admin-nav-logo"
             />
-            <span className="ms-2">Administrative Panel</span>
+            <span className="ms-2">Admin</span>
           </Navbar.Brand>
           <Nav>
             <Nav.Link as={Link} to="/" className="nav-link-light">

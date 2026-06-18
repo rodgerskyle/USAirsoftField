@@ -1,51 +1,34 @@
 .contact-page-wrapper {
-    padding: 3rem 0;
-    background-color: #1a1a1a;
+    background-color: transparent;
     min-height: 100vh;
 }
 
-.contact-page-title {
-    text-align: center;
-    margin-bottom: 3rem;
-    color: #dadada;
-    margin-bottom: 4rem;
-    font-weight: 400;
-    font-size: 2rem;
-    position: relative;
-}
-
-.contact-page-title::after {
-    content: '';
-    position: absolute;
-    bottom: -15px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80px;
-    height: 4px;
-    background: #1976d2;
-    border-radius: 2px;
+.contact-modern-section {
+    max-width: 1100px;
 }
 
 .contact-card {
-    background-color: unset;
-    border: none;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease;
+    height: 100%;
 }
 
-.contact-card .card-body {
-    background-color: #242424;
-    border: 1px solid rgba(0, 0, 0, .175);
-    border-radius: 5px;
+.contact-card-body {
+    height: 100%;
+    padding: 1.75rem;
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(18, 25, 34, 0.95) 0%, rgba(10, 14, 19, 0.98) 100%);
+    border: 1px solid rgba(126, 165, 218, 0.16);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .contact-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-3px);
 }
 
 .contact-card-title {
-    color: #dadada;
+    color: #ffffff;
     margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+    font-weight: 400;
 }
 
 .contact-details {
@@ -54,19 +37,28 @@
 
 .contact-item {
     display: flex;
-    align-items: center;
-    margin-bottom: 1rem;
+    align-items: flex-start;
+    margin-bottom: 1.15rem;
+    padding-bottom: 1.15rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.contact-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
 }
 
 .contact-item p {
-    color: #dadada;
+    color: rgba(255, 255, 255, 0.85);
     margin-bottom: 0;
 }
 
 .contact-icon {
-    font-size: 1.2rem;
+    font-size: 1rem;
     margin-right: 1rem;
-    color: #3498db;
+    margin-top: 0.2rem;
+    color: #8fb8ff;
 }
 
 .location-toggle-btn {
@@ -78,27 +70,16 @@
     width: 100%;
     height: 400px;
     object-fit: cover;
-    border-radius: 8px;
+    border-radius: 18px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .contact-visual-wrapper {
     height: 400px;
     overflow: hidden;
-    border-radius: 8px;
-}
-
-.contact-form-card {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.contact-form-title {
-    color: #2c3e50;
-    margin-bottom: 1.5rem;
-}
-
-.contact-submit-btn {
-    width: 100%;
+    border-radius: 18px;
+    border: 1px solid rgba(126, 165, 218, 0.16);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.24);
 }
 
 @media (max-width: 991px) {
@@ -108,13 +89,13 @@
 }
 
 .contact-link {
-    color: #3498db;
+    color: #8fb8ff;
     text-decoration: none;
     transition: color 0.3s ease;
 }
 
 .contact-link:hover {
-    color: #2980b9;
+    color: #ffffff;
     text-decoration: underline;
 }
 
@@ -124,18 +105,8 @@
         padding: 2rem 0;
     }
 
-    .contact-page-title {
-        font-size: 1.75rem;
-        margin-bottom: 3rem;
-    }
-
-    .contact-page-title::after {
-        width: 60px;
-        bottom: -12px;
-    }
-
     .contact-content-wrapper {
-        padding: 0 1rem;
+        padding: 0;
     }
 
     .contact-visual-section {
@@ -152,25 +123,9 @@
     }
 }
 
-/* Small Mobile Devices */
 @media (max-width: 576px) {
     .contact-page-wrapper {
         padding: 1.5rem 0;
-    }
-
-    .contact-page-title {
-        font-size: 1.5rem;
-        margin-bottom: 2.5rem;
-    }
-
-    .contact-page-title::after {
-        width: 50px;
-        height: 3px;
-        bottom: -10px;
-    }
-
-    .contact-card {
-        margin: 0 0.5rem;
     }
 
     .contact-card-title {
@@ -193,8 +148,6 @@
 
     .contact-visual-wrapper {
         height: 250px;
-        /* Even smaller height for small devices */
-        margin: 0 0.5rem;
     }
 
     .store-image {
@@ -206,7 +159,6 @@
     }
 }
 
-/* Landscape Orientation */
 @media (max-height: 576px) and (orientation: landscape) {
     .contact-page-wrapper {
         padding: 1rem 0;
