@@ -88,6 +88,7 @@ const RENTAL_CARDS = [
         items: [
             'Updated rental price for customers',
             'Affordable option for new players',
+            'Comes with a fully loaded mag; bottles of BBs can be purchased separately',
             'Great add-on for private parties and walk-ins',
         ],
     },
