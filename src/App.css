@@ -3655,6 +3655,50 @@ a.nav-link:hover {
   background-color: rgb(0 0 0 / 0);
 }
 
+@media screen and (max-width: 1199px) {
+  .row-nav-auth {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.25rem;
+    width: auto;
+    margin: 0 0 0 auto;
+    padding: 0;
+  }
+
+  .row-nav-auth .col-mobile-profile-nav,
+  .row-nav-auth .div-hamburger {
+    position: relative;
+    flex: 0 0 47px;
+    width: 47px;
+    max-width: 47px;
+    height: 47px;
+    padding: 0;
+  }
+
+  .col-mobile-profile-nav .nav-item.dropdown {
+    position: relative;
+    right: auto;
+  }
+
+  .col-mobile-profile-nav .nav-item-profile-nav .MuiButtonBase-root {
+    width: 47px;
+    min-width: 47px;
+    height: 47px;
+    padding: 6px;
+  }
+
+  .col-mobile-profile-nav .MuiButton-startIcon {
+    flex: 0 0 auto;
+    margin: 0;
+  }
+
+  .col-mobile-profile-nav .nav-item-profile-nav img {
+    flex: 0 0 35px;
+    object-fit: cover;
+  }
+}
+
 .mdb-nav-not-mobile-profile .nav-item-profile-nav.nav-item.dropdown {
   display: none;
 }
