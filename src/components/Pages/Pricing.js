@@ -49,7 +49,7 @@ const GAMEPLAY_CARDS = [
     },
     {
         name: 'Non-Member Gamepass',
-        price: '$35',
+        price: '$40',
         accent: 'blue',
         description: 'A straightforward option for players coming out for open play.',
         items: [
@@ -69,7 +69,7 @@ const GAMEPLAY_CARDS = [
     },
     {
         name: 'Non-Member Package',
-        price: '$55',
+        price: '$60',
         accent: 'blue',
         description: 'An easy all-in starting point for new or visiting players.',
         items: [
@@ -260,7 +260,7 @@ const SummaryStrip = () => (
         </div>
         <div className="pricing-modern-summary-item">
             <span className="pricing-modern-summary-value">$400</span>
-            <span className="pricing-modern-summary-label">Battle Arena private booking</span>
+            <span className="pricing-modern-summary-label">Nerf Arena private booking</span>
         </div>
     </div>
 );
@@ -318,13 +318,14 @@ const PartiesSection = () => (
     <div className="pricing-modern-section-body">
         <div className="pricing-modern-callout">
             <div className="pricing-modern-callout-copy">
-                <p className="pricing-modern-callout-eyebrow">Battle Arena</p>
-                <h3 className="pricing-modern-callout-title">Private arena booking for Nerf or Airsoft</h3>
+                <p className="pricing-modern-callout-eyebrow">Nerf Arena</p>
+                <h3 className="pricing-modern-callout-title">Private Nerf arena booking</h3>
                 <p className="pricing-modern-card-description">
-                    Available Wednesday through Sunday, with a simple private-session format for birthdays and groups.
+                    Available Wednesday through Sunday, with two private Nerf session blocks for birthdays and groups.
                 </p>
                 <div className="pricing-modern-callout-pills">
-                    <span>12:30 PM - 4:00 PM</span>
+                    <span>Block 1: 8:30 AM - 12:00 PM</span>
+                    <span>Block 2: 12:30 PM - 4:00 PM</span>
                     <span>Up to 10 players</span>
                     <span>$25 each additional player</span>
                 </div>
