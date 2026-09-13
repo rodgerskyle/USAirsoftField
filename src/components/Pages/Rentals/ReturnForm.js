@@ -32,7 +32,7 @@ const RentalRow = ({ rental, onCheckNumber, formKey }) => {
             </TableCell>
             <TableCell align="right">
                 {rental.numbers?.length > 0 && (
-                    <Typography variant="body2" color="textSecondary">
+                    <Typography variant="body2" color="textSecondary" className="rental-check-count">
                         {Object.values(rental.checkedStates).filter(Boolean).length} / {rental.numbers.length} checked
                     </Typography>
                 )}

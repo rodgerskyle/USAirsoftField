@@ -829,21 +829,31 @@
     border: 1px solid rgba(0, 0, 0, 0.12) !important;
 }
 
-.rental-number-chip:hover {
+.return-form-root .rental-number-chip.MuiChip-root {
+    background-color: #202a35 !important;
+    color: #f4f7fb !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.return-form-root .rental-number-chip.MuiChip-root:hover {
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
-    background-color: rgba(25, 118, 210, 0.08) !important;
+    background-color: #293747 !important;
 }
 
-.rental-number-chip.MuiChip-colorSuccess {
-    background-color: rgba(46, 125, 50, 0.12) !important;
-    color: #2e7d32 !important;
-    border-color: rgba(46, 125, 50, 0.3) !important;
+.return-form-root .rental-number-chip.MuiChip-colorSuccess {
+    background-color: #173d29 !important;
+    color: #a7e3b0 !important;
+    border-color: #3e8554 !important;
 }
 
-.rental-number-chip.MuiChip-colorSuccess:hover {
-    background-color: rgba(46, 125, 50, 0.2) !important;
+.return-form-root .rental-number-chip.MuiChip-colorSuccess:hover {
+    background-color: #205337 !important;
     box-shadow: 0 2px 8px rgba(46, 125, 50, 0.2) !important;
+}
+
+.return-form-root .rental-number-chip .MuiChip-icon {
+    color: inherit !important;
 }
 
 .rental-number-chip.MuiChip-label {
@@ -1115,6 +1125,10 @@ button.btn-pin-code-link {
     color: #f4f7fb !important;
     background: #18212b;
     font-weight: 600;
+}
+
+.return-form-root .rental-check-count {
+    color: #9fb0c4 !important;
 }
 
 .rentals-table-container {
