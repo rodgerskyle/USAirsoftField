@@ -3,7 +3,7 @@ import jsPDF from "jspdf";
 
 //Taken from MArtin
 
-import Camera, { FACING_MODES } from 'react-html5-camera-photo';
+import Camera, { FACING_MODES, IMAGE_TYPES } from 'react-html5-camera-photo';
 import 'react-html5-camera-photo/build/css/index.css';
 import ImagePreview from './ImagePreview';
 import { withFirebase } from '../Firebase';
@@ -13,6 +13,7 @@ import { uploadBytes } from "firebase/storage";
 
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/lab/Alert';
+import { normalizeRentalGroups } from './CameraModule.utils';
 
 const max_width = 595;
 const max_height = 842
@@ -68,40 +69,34 @@ class CameraModule extends Component {
     photo: null,
     fullname: "",
     selectedGroup: [],
-    groupsObject: null,
-    groupIndex: null,
-    groups: null,
+    groupsObject: {},
+    groupIndex: {},
+    groups: [],
     loading: true,
+    uploading: false,
     error: null,
     success: null,
     blob: null,
   }
 
   componentDidMount() {
-    onValue(this.props.firebase.rentalGroups(), obj => {
-      const groupsObj = obj.val()
-
-      let groups = []
-      let groupsObject;
-      let groupIndex = {}
-
-      if (groupsObj) {
-        groupsObject = Object.keys(groupsObj).map(key => ({
-          ...groupsObj[key],
-          index: key,
-        }))
-        for (let i = 0; i < groupsObj.length; i++) {
-          groups[i] = groupsObj[i].name
-          groupIndex[groupsObj[i].name] = i
-        }
+    this.unsubscribeRentalGroups = onValue(
+      this.props.firebase.rentalGroups(),
+      snapshot => {
+        const rentalGroups = normalizeRentalGroups(snapshot.val() || {});
+        this.setState({ ...rentalGroups, loading: false });
+      },
+      () => {
+        this.setState({
+          error: "Rental groups could not be loaded. You can still scan a waiver without selecting a group.",
+          loading: false,
+        });
       }
-
-      this.setState({ groups, loading: false, groupsObject, groupIndex })
-    })
+    );
   }
 
   componentWillUnmount() {
-    // this.props.firebase.rentalGroups().off()
+    if (this.unsubscribeRentalGroups) this.unsubscribeRentalGroups();
   }
 
   resizeMe(img) {
@@ -143,56 +138,85 @@ class CameraModule extends Component {
     })
   }
 
-  handleAcceptPhoto = () => {
+  handleAcceptPhoto = async () => {
     const { imgWidth, imgHeight, fullname, groupsObject, groupIndex, selectedGroup } = this.state
 
-    if (fullname === "") {
+    const trimmedFullname = fullname.trim();
+    if (trimmedFullname === "") {
       this.setState({ error: "Please enter the full name for this waiver." })
       return;
     }
 
-    const doc = new jsPDF()
-    //doc.addPage()
+    if (this.state.uploading) return;
 
-    const imageDimensions = imageDimensionsOnA4({
-      width: imgWidth,
-      height: imgHeight
-    })
+    const selectedGroupName = selectedGroup[0];
+    const selectedGroupKey = selectedGroupName ? groupIndex[selectedGroupName] : null;
+    const rentalGroup = selectedGroupKey != null ? groupsObject[selectedGroupKey] : null;
 
-    doc.addImage(
-      this.state.blob,
-      'png',
-      (A4_PAPER_DIMENSIONS.width - A4_PAPER_DIMENSIONS.width) / 2,
-      (A4_PAPER_DIMENSIONS.height - A4_PAPER_DIMENSIONS.height) / 2,
-      imageDimensions.width,
-      imageDimensions.height
-    )
-    // Creates a PDF and opens it in a new browser tab.
-    const blob = doc.output("blob");
+    if (selectedGroupName && !rentalGroup) {
+      this.setState({ error: "That rental group is no longer available. Please select it again." });
+      return;
+    }
 
-    var date = (new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear()) + ":" +
-      (new Date().getHours()) + ":" + (new Date().getMinutes()) + ":" + (new Date().getSeconds()) + ":" + (new Date().getMilliseconds());
-    uploadBytes(this.props.firebase.nonmembersWaivers(`${fullname}(${date}).pdf`), blob).then(() => {
-      if (selectedGroup.length !== 0) {
-        if (typeof groupsObject[groupIndex[selectedGroup[0]]].participants === 'undefined') {
-          // Push participant into new array and set it
-          let participants = []
-          let obj = { name: `${fullname}(${date})`, gamepass: false }
-          participants.push(obj)
-          update(this.props.firebase.rentalGroup(groupIndex[selectedGroup[0]]), ({ participants }))
-        }
-        else if (groupsObject[groupIndex[selectedGroup[0]]].participants.length < groupsObject[groupIndex[selectedGroup[0]]].size) {
-          // Push participant into existing array and set it
-          let participants = groupsObject[groupIndex[selectedGroup[0]]].participants
-          let obj = { name: `${fullname}(${date})`, gamepass: false }
-          participants.push(obj)
-          update(this.props.firebase.rentalGroup(groupIndex[selectedGroup[0]]), ({ participants }))
-        }
-        // Make sure length and size are not equal
-        // Push new user to participants table
+    const participants = rentalGroup?.participants || [];
+    if (rentalGroup && participants.length >= rentalGroup.size) {
+      this.setState({ error: "That rental group is already full." });
+      return;
+    }
+
+    this.setState({ uploading: true, error: null });
+    let waiverUploaded = false;
+
+    try {
+      const doc = new jsPDF()
+
+      const imageDimensions = imageDimensionsOnA4({
+        width: imgWidth,
+        height: imgHeight
+      })
+
+      doc.addImage(
+        this.state.blob,
+        'JPEG',
+        0,
+        0,
+        imageDimensions.width,
+        imageDimensions.height
+      )
+      const waiverPdf = doc.output("blob");
+
+      const now = new Date();
+      const date = `${now.getMonth() + 1}-${now.getDate()}-${now.getFullYear()}:${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}:${now.getMilliseconds()}`;
+      const waiverName = `${trimmedFullname}(${date})`;
+
+      await uploadBytes(this.props.firebase.nonmembersWaivers(`${waiverName}.pdf`), waiverPdf);
+      waiverUploaded = true;
+
+      if (rentalGroup) {
+        await update(this.props.firebase.rentalGroup(selectedGroupKey), {
+          participants: [...participants, { name: waiverName, gamepass: false }]
+        });
       }
-      this.setState({ success: "Waiver was successfully scanned in.", photo: null, fullname: "", selectedGroup: [] })
-    })
+
+      this.setState({
+        success: "Waiver was successfully scanned in.",
+        photo: null,
+        fullname: "",
+        selectedGroup: [],
+        uploading: false,
+      });
+    } catch (error) {
+      console.error("Unable to scan waiver", error);
+      this.setState({
+        error: waiverUploaded
+          ? "The waiver was uploaded, but it could not be added to the rental group. Please update the group manually."
+          : "The waiver could not be uploaded. Please check the connection and try again.",
+        photo: waiverUploaded ? null : this.state.photo,
+        fullname: waiverUploaded ? "" : this.state.fullname,
+        selectedGroup: waiverUploaded ? [] : this.state.selectedGroup,
+        uploading: false,
+      });
+    }
   }
 
   // Set group from typeahead
@@ -221,6 +245,13 @@ class CameraModule extends Component {
     }
   }
 
+  handleCameraError = (error) => {
+    console.error("Unable to start camera", error);
+    this.setState({
+      error: "The camera could not be opened. Check this browser's camera permission and make sure the page is using HTTPS."
+    });
+  }
+
   render() {
     return (
       <div>
@@ -235,11 +266,14 @@ class CameraModule extends Component {
               fullname={this.state.fullname}
               selectedGroup={this.state.selectedGroup}
               groups={this.state.groups}
+              uploading={this.state.uploading}
             />
             : <Camera
               idealFacingMode={FACING_MODES.ENVIRONMENT}
               isImageMirror={false}
               onTakePhotoAnimationDone={this.handleTakePhotoAnimationDone}
+              onCameraError={this.handleCameraError}
+              imageType={IMAGE_TYPES.JPG}
               imageCompression={0.92}
             />
           }

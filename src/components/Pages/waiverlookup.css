@@ -23,6 +23,36 @@
     margin-bottom: 15px;
 }
 
+.usa-waiver-manage-bans {
+    align-self: flex-start;
+    margin-bottom: 10px;
+}
+
+.usa-waiver-ban-alert {
+    margin: 20px 20px 0;
+}
+
+.usa-waiver-ban-alert p {
+    margin-bottom: 12px;
+}
+
+.usa-waiver-ban-matches {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.usa-waiver-ban-match {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.usa-waiver-ban-match > span:last-child {
+    flex-basis: 100%;
+}
+
 .usa-waiver-switch {
     margin: 0;
 }
@@ -60,6 +90,12 @@
 
 .usa-waiver-row:hover {
     background-color: rgba(255,255,255,0.06);
+}
+
+.usa-waiver-row-flagged,
+.usa-waiver-row-flagged:hover {
+    background-color: rgba(220, 53, 69, 0.18);
+    border: 1px solid rgba(255, 107, 122, 0.5);
 }
 
 .usa-waiver-row-content {
@@ -358,4 +394,48 @@
 .usa-waiver-switch,
 .usa-waiver-switch .MuiTypography-root {
     color: #aab4c2 !important;
+}
+
+.usa-waiver-ban-modal .modal-content {
+    background: #171d24;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #f4f7fb;
+}
+
+.usa-waiver-ban-modal .modal-header {
+    border-bottom-color: rgba(255,255,255,0.1);
+}
+
+.usa-waiver-ban-modal .btn-close {
+    filter: invert(1);
+}
+
+.usa-waiver-ban-help {
+    color: #aab4c2;
+}
+
+.usa-waiver-ban-list {
+    border-top: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 20px;
+}
+
+.usa-waiver-ban-list-item {
+    align-items: center;
+    background: rgba(255,255,255,0.04);
+    border-radius: 8px;
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    padding: 12px;
+}
+
+.usa-waiver-ban-list-item span {
+    color: #aab4c2;
+    display: block;
+    font-size: 0.9rem;
+    margin-top: 3px;
 }

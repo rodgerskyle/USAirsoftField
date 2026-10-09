@@ -190,6 +190,10 @@ class Firebase {
 
     digitalWaiver = (ref) => db_ref(this.db, `digital_waivers/${ref}`);
 
+    bannedNames = () => db_ref(this.db, 'banned_names');
+
+    bannedName = (id) => db_ref(this.db, `banned_names/${id}`);
+
     // Calendar API
 
     calendar = () => db_ref(this.db, `calendar`);

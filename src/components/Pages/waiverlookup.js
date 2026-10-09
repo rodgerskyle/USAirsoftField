@@ -6,7 +6,7 @@ import { withFirebase } from '../Firebase';
 import { AuthUserContext, withAuthorization } from '../session';
 
 import convertDate from '../utils/convertDate';
-import { Button, Form, Container, Card, Row, Col, Breadcrumb, Spinner, Dropdown, Collapse, Modal } from 'react-bootstrap/';
+import { Alert, Badge, Button, Form, Card, Breadcrumb, Spinner, Dropdown, Modal } from 'react-bootstrap/';
 import { LinkContainer } from 'react-router-bootstrap';
 
 import CustomToggle from '../constants/customtoggle'
@@ -16,16 +16,13 @@ import * as ROLES from '../constants/roles';
 
 import { Helmet } from 'react-helmet-async';
 import { getDownloadURL, listAll } from 'firebase/storage';
-import { get, onValue } from 'firebase/database';
+import { get, onValue, push, remove, set } from 'firebase/database';
 
 import { FormControlLabel, Switch } from '@mui/material';
-import { styled } from '@mui/material/styles';
-
-import { Document, Page } from 'react-pdf';
-import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 
 import SignedWaiver from './SignedWaiver';
 import { pdf } from '@react-pdf/renderer';
+import { findPotentialBans, normalizePersonName } from '../utils/banMatching';
 
 const formatDate = (date) => {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -61,14 +58,22 @@ class WaiverLookup extends Component {
             currentPage: 1,
             itemsPerPage: 50,
             totalPages: 1,
+            bannedNames: [],
+            bannedNamesLoading: true,
+            bannedNamesLoadError: null,
+            banManagerOpen: false,
+            banName: "",
+            banReason: "",
+            banSaving: false,
+            banError: null,
+            banStatus: null,
         };
         // this.validate = this.validate.bind(this)
         this.lookup = this.lookup.bind(this)
     }
 
     componentWillUnmount() {
-        //this.props.firebase.waiversList().off();
-        // this.props.firebase.numWaivers().off();
+        if (this.bannedNamesUnsubscribe) this.bannedNamesUnsubscribe();
     }
 
 
@@ -76,7 +81,86 @@ class WaiverLookup extends Component {
         this.setState({ loading: true });
         this.initializeDates();
         this.loadWaivers();
+        this.loadBannedNames();
     }
+
+    loadBannedNames = () => {
+        this.bannedNamesUnsubscribe = onValue(
+            this.props.firebase.bannedNames(),
+            snapshot => {
+                const bannedNamesObject = snapshot.val() || {};
+                const bannedNames = Object.entries(bannedNamesObject).map(([id, entry]) => ({
+                    id,
+                    ...entry,
+                }));
+                this.setState({
+                    bannedNames,
+                    bannedNamesLoading: false,
+                    bannedNamesLoadError: null,
+                });
+            },
+            error => {
+                console.error('Unable to load flagged names', error);
+                this.setState({
+                    bannedNamesLoading: false,
+                    bannedNamesLoadError: "Potential-ban checks are unavailable. Do not assume this search is clear.",
+                });
+            }
+        );
+    }
+
+    addBannedName = async (authUser) => {
+        const name = this.state.banName.trim();
+        const normalizedName = normalizePersonName(name);
+
+        if (normalizedName.length < 3 || normalizedName.split(' ').length < 2) {
+            this.setState({ banError: "Enter the person's full name." });
+            return;
+        }
+
+        if (findPotentialBans(name, this.state.bannedNames).some(entry => entry.match.type === 'exact')) {
+            this.setState({ banError: "That name is already on the flagged-name list." });
+            return;
+        }
+
+        this.setState({ banSaving: true, banError: null, banStatus: null });
+        try {
+            const newEntry = push(this.props.firebase.bannedNames());
+            await set(newEntry, {
+                name,
+                normalizedName,
+                reason: this.state.banReason.trim(),
+                createdAt: Date.now(),
+                createdBy: authUser.uid,
+            });
+            this.setState({
+                banName: "",
+                banReason: "",
+                banSaving: false,
+                banStatus: `${name} was added to the flagged-name list.`,
+            });
+        } catch (error) {
+            console.error('Unable to add flagged name', error);
+            this.setState({ banSaving: false, banError: "The name could not be added. Please try again." });
+        }
+    }
+
+    removeBannedName = async (entry) => {
+        if (!window.confirm(`Remove ${entry.name} from the flagged-name list?`)) return;
+
+        this.setState({ banError: null, banStatus: null });
+        try {
+            await remove(this.props.firebase.bannedName(entry.id));
+            this.setState({ banStatus: `${entry.name} was removed from the flagged-name list.` });
+        } catch (error) {
+            console.error('Unable to remove flagged name', error);
+            this.setState({ banError: "The name could not be removed. Please try again." });
+        }
+    }
+
+    getWaiverName = waiver => waiver.isDigital
+        ? waiver.name
+        : waiver.name.substr(0, waiver.name.lastIndexOf('('));
 
     initializeDates = () => {
         let date = new Date();
@@ -287,8 +371,9 @@ class WaiverLookup extends Component {
     }
 
     render() {
-        const { loading, waivers, search, activeMonth, activeDay, activeYear, currentPage, itemsPerPage } = this.state;
+        const { loading, waivers, search, activeMonth, activeDay, activeYear, currentPage, itemsPerPage, bannedNames } = this.state;
         let index = ((currentPage - 1) * itemsPerPage) + 1;
+        const potentialBanMatches = findPotentialBans(search, bannedNames);
 
         // Get current waivers
         const filteredWaivers = waivers
@@ -311,6 +396,9 @@ class WaiverLookup extends Component {
             <AuthUserContext.Consumer>
                 {authUser => (
                     <div className="admin-container admin-compact-page">
+                        <Helmet>
+                            <title>US Airsoft Field: Waiver Lookup</title>
+                        </Helmet>
                         <div className="admin-content usa-waiver-container">
                             <div className="usa-waiver-breadcrumb admin-page-header">
                                 <h2 className="admin-header">Waiver Lookup</h2>
@@ -328,9 +416,19 @@ class WaiverLookup extends Component {
                                         type="text"
                                         placeholder="Search by name..."
                                         value={search}
-                                        onChange={(e) => this.setState({ search: e.target.value })}
+                                        onChange={(e) => this.setState({ search: e.target.value, currentPage: 1 })}
                                         className="usa-waiver-search"
                                     />
+
+                                    {!!authUser?.roles[ROLES.ADMIN] && (
+                                        <Button
+                                            variant="outline-danger"
+                                            className="usa-waiver-manage-bans"
+                                            onClick={() => this.setState({ banManagerOpen: true, banError: null, banStatus: null })}
+                                        >
+                                            Manage flagged names ({bannedNames.length})
+                                        </Button>
+                                    )}
 
                                     {/* Date Filters */}
                                     <div className="usa-waiver-date-filters">
@@ -407,6 +505,39 @@ class WaiverLookup extends Component {
                                     />
                                 </Card.Header>
 
+                                {this.state.bannedNamesLoadError && (
+                                    <Alert variant="warning" className="usa-waiver-ban-alert" role="alert">
+                                        <Alert.Heading>Flagged-name check unavailable</Alert.Heading>
+                                        {this.state.bannedNamesLoadError}
+                                    </Alert>
+                                )}
+
+                                {!this.state.bannedNamesLoadError && search.trim().length >= 3 && this.state.bannedNamesLoading && (
+                                    <Alert variant="info" className="usa-waiver-ban-alert" role="status">
+                                        Checking the flagged-name list…
+                                    </Alert>
+                                )}
+
+                                {search.trim().length >= 3 && potentialBanMatches.length > 0 && (
+                                    <Alert variant="danger" className="usa-waiver-ban-alert" role="alert">
+                                        <Alert.Heading>Potential ban match</Alert.Heading>
+                                        <p>
+                                            Verify the customer's identity before admitting them. A similar name appears on the flagged-name list.
+                                        </p>
+                                        <div className="usa-waiver-ban-matches">
+                                            {potentialBanMatches.map(entry => (
+                                                <div key={entry.id} className="usa-waiver-ban-match">
+                                                    <strong>{entry.name}</strong>
+                                                    <Badge bg={entry.match.type === 'exact' ? 'danger' : 'warning'} text={entry.match.type === 'exact' ? undefined : 'dark'}>
+                                                        {entry.match.type === 'exact' ? 'Exact name' : 'Similar name'}
+                                                    </Badge>
+                                                    {entry.reason && <span>{entry.reason}</span>}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </Alert>
+                                )}
+
                                 <Card.Body className="usa-waiver-body">
                                     {loading ? (
                                         <div className="usa-waiver-loading">
@@ -419,32 +550,34 @@ class WaiverLookup extends Component {
                                             {filteredWaivers.length > 0 ? (
                                                 <>
                                                     <div className="usa-waiver-list">
-                                                        {currentWaivers.map((waiver) => (
-                                                            <div
-                                                                className={`usa-waiver-row ${index++ % 2 === 0 ? 'usa-waiver-row-even' : 'usa-waiver-row-odd'}`}
-                                                                key={waiver.ref}
-                                                            >
-                                                                <div className="usa-waiver-row-content">
-                                                                    <div className="usa-waiver-info">
-                                                                        <span className="usa-waiver-index">#{index}</span>
-                                                                        <span className="usa-waiver-name">
-                                                                            {waiver.isDigital ?
-                                                                                waiver.name :
-                                                                                waiver.name.substr(0, waiver.name.lastIndexOf('('))}
-                                                                        </span>
+                                                        {currentWaivers.map((waiver) => {
+                                                            const waiverName = this.getWaiverName(waiver);
+                                                            const waiverBanMatches = findPotentialBans(waiverName, bannedNames);
+                                                            const rowIndex = index++;
+                                                            return (
+                                                                <div
+                                                                    className={`usa-waiver-row ${waiverBanMatches.length > 0 ? 'usa-waiver-row-flagged' : (rowIndex % 2 === 0 ? 'usa-waiver-row-even' : 'usa-waiver-row-odd')}`}
+                                                                    key={waiver.ref}
+                                                                >
+                                                                    <div className="usa-waiver-row-content">
+                                                                        <div className="usa-waiver-info">
+                                                                            <span className="usa-waiver-index">#{rowIndex}</span>
+                                                                            <span className="usa-waiver-name">{waiverName}</span>
+                                                                            {waiverBanMatches.length > 0 && <Badge bg="danger">Potential ban</Badge>}
+                                                                        </div>
+                                                                        <div className="usa-waiver-date">
+                                                                            {formatDate(waiver.date)}
+                                                                        </div>
+                                                                        <Button
+                                                                            className={`usa-waiver-button ${waiver.isDigital ? 'usa-waiver-button-view' : 'usa-waiver-button-open'}`}
+                                                                            onClick={() => this.openWaiver(waiver.ref, waiver.isDigital)}
+                                                                        >
+                                                                            {waiver.isDigital ? 'View' : 'Open'}
+                                                                        </Button>
                                                                     </div>
-                                                                    <div className="usa-waiver-date">
-                                                                        {formatDate(waiver.date)}
-                                                                    </div>
-                                                                    <Button
-                                                                        className={`usa-waiver-button ${waiver.isDigital ? 'usa-waiver-button-view' : 'usa-waiver-button-open'}`}
-                                                                        onClick={() => this.openWaiver(waiver.ref, waiver.isDigital)}
-                                                                    >
-                                                                        {waiver.isDigital ? 'View' : 'Open'}
-                                                                    </Button>
                                                                 </div>
-                                                            </div>
-                                                        ))}
+                                                            );
+                                                        })}
                                                     </div>
                                                     <div className="usa-waiver-pagination">
                                                         {Array.from({ length: Math.ceil(filteredWaivers.length / itemsPerPage) }, (_, i) => (
@@ -468,6 +601,76 @@ class WaiverLookup extends Component {
                                     )}
                                 </Card.Body>
                             </Card>
+
+                            {!!authUser?.roles[ROLES.ADMIN] && (
+                                <Modal
+                                    show={this.state.banManagerOpen}
+                                    onHide={() => this.setState({ banManagerOpen: false })}
+                                    centered
+                                    className="usa-waiver-ban-modal"
+                                >
+                                    <Modal.Header closeButton>
+                                        <Modal.Title>Manage flagged names</Modal.Title>
+                                    </Modal.Header>
+                                    <Modal.Body>
+                                        <p className="usa-waiver-ban-help">
+                                            Add a full name and optional identifying note. Staff will see a warning for exact and closely similar names.
+                                        </p>
+                                        {this.state.banError && <Alert variant="danger">{this.state.banError}</Alert>}
+                                        {this.state.banStatus && <Alert variant="success">{this.state.banStatus}</Alert>}
+                                        <Form.Group className="mb-3">
+                                            <Form.Label>Full name</Form.Label>
+                                            <Form.Control
+                                                value={this.state.banName}
+                                                onChange={event => this.setState({ banName: event.target.value })}
+                                                placeholder="First and last name"
+                                                disabled={this.state.banSaving}
+                                            />
+                                        </Form.Group>
+                                        <Form.Group className="mb-3">
+                                            <Form.Label>Reason or identifying note (optional)</Form.Label>
+                                            <Form.Control
+                                                as="textarea"
+                                                rows={2}
+                                                value={this.state.banReason}
+                                                onChange={event => this.setState({ banReason: event.target.value })}
+                                                placeholder="Enough detail for staff to verify the person"
+                                                disabled={this.state.banSaving}
+                                            />
+                                        </Form.Group>
+                                        <Button
+                                            variant="danger"
+                                            onClick={() => this.addBannedName(authUser)}
+                                            disabled={this.state.banSaving}
+                                        >
+                                            {this.state.banSaving ? 'Adding…' : 'Add flagged name'}
+                                        </Button>
+
+                                        <div className="usa-waiver-ban-list">
+                                            {bannedNames.length === 0 ? (
+                                                <p>No names have been flagged.</p>
+                                            ) : bannedNames
+                                                .slice()
+                                                .sort((left, right) => left.name.localeCompare(right.name))
+                                                .map(entry => (
+                                                    <div key={entry.id} className="usa-waiver-ban-list-item">
+                                                        <div>
+                                                            <strong>{entry.name}</strong>
+                                                            {entry.reason && <span>{entry.reason}</span>}
+                                                        </div>
+                                                        <Button
+                                                            variant="outline-danger"
+                                                            size="sm"
+                                                            onClick={() => this.removeBannedName(entry)}
+                                                        >
+                                                            Remove
+                                                        </Button>
+                                                    </div>
+                                                ))}
+                                        </div>
+                                    </Modal.Body>
+                                </Modal>
+                            )}
                         </div>
                     </div>
                 )}

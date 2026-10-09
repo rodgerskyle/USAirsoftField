@@ -12,7 +12,7 @@ import { Col, Row, Form } from 'react-bootstrap';
 import { Typeahead } from 'react-bootstrap-typeahead';
 
 
-export const ImagePreview = ({ dataUri, handleRetakePhoto, handleAcceptPhoto, setGroup, setFullname, fullname, groups, selectedGroup }) => {
+export const ImagePreview = ({ dataUri, handleRetakePhoto, handleAcceptPhoto, setGroup, setFullname, fullname, groups, selectedGroup, uploading }) => {
 
   return (
     <div>
@@ -24,12 +24,12 @@ export const ImagePreview = ({ dataUri, handleRetakePhoto, handleAcceptPhoto, se
       <Row className="justify-content-center">
         <Col md={6}>
           <div className="IconRetake">
-            <MUIButton onClick={handleRetakePhoto}>
+            <MUIButton aria-label="Retake photo" disabled={uploading} onClick={handleRetakePhoto}>
               <HighlightOffIcon style={{ fontSize: "4rem" }} />
             </MUIButton>
           </div>
           <div className="IconAccept">
-            <MUIButton onClick={handleAcceptPhoto} >
+            <MUIButton aria-label="Save scanned waiver" disabled={uploading} onClick={handleAcceptPhoto}>
               <CheckCircleOutlineIcon style={{ fontSize: "4rem" }} />
             </MUIButton>
           </div>
@@ -46,6 +46,7 @@ export const ImagePreview = ({ dataUri, handleRetakePhoto, handleAcceptPhoto, se
               onChange={(e) => {
                 setFullname(e.target.value)
               }}
+              disabled={uploading}
               type="text"
               autoComplete="off"
               placeholder="Full Name"
@@ -66,8 +67,9 @@ export const ImagePreview = ({ dataUri, handleRetakePhoto, handleAcceptPhoto, se
             onChange={(val) => {
               setGroup(val)
             }}
-            options={groups}
+            options={groups || []}
             selected={selectedGroup}
+            disabled={uploading}
           />
         </Col>
       </Row>
