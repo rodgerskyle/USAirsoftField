@@ -67,6 +67,9 @@ class WaiverLookup extends Component {
             banSaving: false,
             banError: null,
             banStatus: null,
+            banDetailsOpen: false,
+            banDetailsName: "",
+            banDetailsMatches: [],
         };
         // this.validate = this.validate.bind(this)
         this.lookup = this.lookup.bind(this)
@@ -161,6 +164,14 @@ class WaiverLookup extends Component {
     getWaiverName = waiver => waiver.isDigital
         ? waiver.name
         : waiver.name.substr(0, waiver.name.lastIndexOf('('));
+
+    showBanDetails = (name, matches) => {
+        this.setState({
+            banDetailsOpen: true,
+            banDetailsName: name,
+            banDetailsMatches: matches,
+        });
+    }
 
     initializeDates = () => {
         let date = new Date();
@@ -532,6 +543,13 @@ class WaiverLookup extends Component {
                                                         {entry.match.type === 'exact' ? 'Exact name' : 'Similar name'}
                                                     </Badge>
                                                     {entry.reason && <span>{entry.reason}</span>}
+                                                    <Button
+                                                        variant="outline-danger"
+                                                        size="sm"
+                                                        onClick={() => this.showBanDetails(search, [entry])}
+                                                    >
+                                                        View details
+                                                    </Button>
                                                 </div>
                                             ))}
                                         </div>
@@ -563,7 +581,16 @@ class WaiverLookup extends Component {
                                                                         <div className="usa-waiver-info">
                                                                             <span className="usa-waiver-index">#{rowIndex}</span>
                                                                             <span className="usa-waiver-name">{waiverName}</span>
-                                                                            {waiverBanMatches.length > 0 && <Badge bg="danger">Potential ban</Badge>}
+                                                                            {waiverBanMatches.length > 0 && (
+                                                                                <Button
+                                                                                    variant="danger"
+                                                                                    size="sm"
+                                                                                    className="usa-waiver-ban-button"
+                                                                                    onClick={() => this.showBanDetails(waiverName, waiverBanMatches)}
+                                                                                >
+                                                                                    Potential ban
+                                                                                </Button>
+                                                                            )}
                                                                         </div>
                                                                         <div className="usa-waiver-date">
                                                                             {formatDate(waiver.date)}
@@ -671,6 +698,49 @@ class WaiverLookup extends Component {
                                     </Modal.Body>
                                 </Modal>
                             )}
+
+                            <Modal
+                                show={this.state.banDetailsOpen}
+                                onHide={() => this.setState({ banDetailsOpen: false })}
+                                centered
+                                className="usa-waiver-ban-modal"
+                            >
+                                <Modal.Header closeButton>
+                                    <Modal.Title>Potential ban details</Modal.Title>
+                                </Modal.Header>
+                                <Modal.Body>
+                                    <Alert variant="warning">
+                                        This is a name-based match. Verify the customer's identity before taking action.
+                                    </Alert>
+                                    <p className="usa-waiver-ban-details-search">
+                                        Name being checked: <strong>{this.state.banDetailsName}</strong>
+                                    </p>
+                                    <div className="usa-waiver-ban-details-list">
+                                        {this.state.banDetailsMatches.map(entry => (
+                                            <div key={entry.id} className="usa-waiver-ban-details-item">
+                                                <div className="usa-waiver-ban-details-heading">
+                                                    <strong>{entry.name}</strong>
+                                                    <Badge bg={entry.match.type === 'exact' ? 'danger' : 'warning'} text={entry.match.type === 'exact' ? undefined : 'dark'}>
+                                                        {entry.match.type === 'exact' ? 'Exact name' : 'Similar name'}
+                                                    </Badge>
+                                                </div>
+                                                <div className="usa-waiver-ban-details-reason">
+                                                    <span>Reason / identifying note</span>
+                                                    <p>{entry.reason || 'No reason or identifying note was provided.'}</p>
+                                                </div>
+                                                {entry.createdAt && (
+                                                    <small>Added {new Date(entry.createdAt).toLocaleDateString()}</small>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </Modal.Body>
+                                <Modal.Footer>
+                                    <Button variant="secondary" onClick={() => this.setState({ banDetailsOpen: false })}>
+                                        Close
+                                    </Button>
+                                </Modal.Footer>
+                            </Modal>
                         </div>
                     </div>
                 )}

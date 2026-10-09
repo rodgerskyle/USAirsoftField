@@ -53,6 +53,10 @@
     flex-basis: 100%;
 }
 
+.usa-waiver-ban-button {
+    white-space: nowrap;
+}
+
 .usa-waiver-switch {
     margin: 0;
 }
@@ -438,4 +442,46 @@
     display: block;
     font-size: 0.9rem;
     margin-top: 3px;
+}
+
+.usa-waiver-ban-details-search {
+    color: #dbe4ef;
+}
+
+.usa-waiver-ban-details-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.usa-waiver-ban-details-item {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 14px;
+}
+
+.usa-waiver-ban-details-heading {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.usa-waiver-ban-details-reason > span {
+    color: #aab4c2;
+    display: block;
+    font-size: 0.8rem;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+}
+
+.usa-waiver-ban-details-reason p {
+    margin-bottom: 8px;
+    white-space: pre-wrap;
+}
+
+.usa-waiver-ban-details-item small {
+    color: #aab4c2;
 }
