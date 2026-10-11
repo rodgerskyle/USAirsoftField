@@ -1,34 +1,131 @@
-.demo-image-preview {
-    position: relative;
-    text-align: center;
-  }
-  
-  /* fullscreen enable by props */
-  
-  .demo-image-preview-fullscreen>img {
-    width: 100vw;
-    height: 100vh;
-  }
-  
-  .IconRetake {
-    position: absolute;
-    z-index: 2;
+.div-photo-cm,
+.react-html5-camera-photo,
+.react-html5-camera-photo > img,
+.react-html5-camera-photo > video {
+  max-width: 100%;
+}
+
+.scan-waiver-review {
+  background: linear-gradient(180deg, rgba(20, 23, 29, 0.98), rgba(14, 17, 22, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+  color: #f4f7fb;
+  margin: 0 auto;
+  max-width: 900px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.scan-waiver-review-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 1.25rem 1.35rem;
+}
+
+.scan-waiver-review-header h3 {
+  font-size: 1.25rem;
+  margin: 0 0 0.35rem;
+}
+
+.scan-waiver-review-header p {
+  color: #aab4c2;
+  margin: 0;
+}
+
+.scan-waiver-preview-frame {
+  align-items: center;
+  background: #090b0e;
+  display: flex;
+  justify-content: center;
+  max-height: 62vh;
+  min-height: 220px;
+  overflow: hidden;
+  padding: 1rem;
+  width: 100%;
+}
+
+.scan-waiver-preview-image {
+  display: block;
+  height: auto;
+  max-height: calc(62vh - 2rem);
+  max-width: 100%;
+  object-fit: contain;
+  width: auto;
+}
+
+.scan-waiver-form {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 1.25rem 1.35rem 0;
+}
+
+.scan-waiver-form .form-label {
+  color: #f4f7fb;
+  font-weight: 600;
+  margin-bottom: 0.45rem;
+}
+
+.scan-waiver-form .form-label span {
+  color: #aab4c2;
+  font-weight: 400;
+}
+
+.scan-waiver-actions {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 1.25rem 1.35rem 1.35rem;
+}
+
+.scan-waiver-action.MuiButton-root {
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  min-height: 52px;
+  text-transform: none;
+}
+
+.scan-waiver-retake.MuiButton-root {
+  border-color: rgba(252, 165, 165, 0.55);
+  color: #ffc1c3;
+}
+
+.scan-waiver-submit.MuiButton-root {
+  background: #16833f;
+}
+
+.scan-waiver-submit.MuiButton-root:hover {
+  background: #116c34;
+}
+
+@media (max-width: 767px) {
+  .scan-waiver-review {
+    border-radius: 14px;
   }
 
-  .IconRetake .MuiSvgIcon-root {
-    color: red;
-  }
-  
-  .IconAccept {
-    width: 100%;
-    margin-left: -15px;
-    padding-right: 15px;
-    position: absolute;
-    display: flex;
-    justify-content: flex-end;
-    z-index: 1;
+  .scan-waiver-preview-frame {
+    max-height: 52vh;
+    min-height: 180px;
+    padding: 0.75rem;
   }
 
-  .IconAccept .MuiSvgIcon-root {
-      color: green;
+  .scan-waiver-preview-image {
+    max-height: calc(52vh - 1.5rem);
   }
+
+  .scan-waiver-form,
+  .scan-waiver-actions {
+    grid-template-columns: 1fr;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .scan-waiver-actions {
+    padding-bottom: 1rem;
+  }
+
+  .scan-waiver-submit {
+    grid-row: 1;
+  }
+}
