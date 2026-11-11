@@ -30,7 +30,6 @@ img {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !important;
   font-size: 1rem !important;
   letter-spacing: unset !important;
   -webkit-font-smoothing: antialiased;
@@ -64,7 +63,7 @@ body {
   bottom: 4%;
   left: 20px;
   padding: 5px;
-  font-family: Roboto-Black;
+  font-family: var(--usaw-font-display);
   font-size: 1.5vw;
   color: white;
 }
@@ -559,7 +558,6 @@ p.error-text-rp {
   display: inherit;
   padding: 10px;
   font-size: 0.875rem;
-  font-family: Roboto, Helvetica, Arial, sans-serif;
   font-weight: 700;
   text-shadow: 1px 1px #000000;
   border-radius: 15px;
@@ -3082,21 +3080,18 @@ svg.MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium.MuiNativeSelect-icon.MuiTablePagin
 }
 
 .firstPlace {
-  font-family: sans-serif;
   color: gold;
   margin-bottom: 0;
   font-size: 17px;
 }
 
 .secondPlace {
-  font-family: sans-serif;
   color: silver;
   margin-bottom: 0;
   font-size: 15px;
 }
 
 .thirdPlace {
-  font-family: sans-serif;
   color: #CD7F32;
   margin-bottom: 0;
   font-size: 13px;
@@ -6267,7 +6262,6 @@ div .p-rank-title-rp {
   display: flex;
   justify-content: center;
   font-weight: 500;
-  font-family: "Teko";
   text-shadow: 8px 8px 16px #000000;
   /* -webkit-text-stroke-width: 4px;
   -webkit-text-stroke-color: black; */
@@ -6278,7 +6272,6 @@ div .p-rank-title-rp {
   font-size: 3vw;
   display: flex;
   justify-content: center;
-  font-family: "Teko";
 }
 
 .countdown-img-home {
@@ -6921,21 +6914,18 @@ div .p-nav-profile-active {
   }
 
   .firstPlace {
-    font-family: sans-serif;
     color: gold;
     margin-bottom: 0;
     font-size: x-large;
   }
 
   .secondPlace {
-    font-family: sans-serif;
     color: silver;
     margin-bottom: 0;
     font-size: larger;
   }
 
   .thirdPlace {
-    font-family: sans-serif;
     color: #CD7F32;
     margin-bottom: 0;
     font-size: large;

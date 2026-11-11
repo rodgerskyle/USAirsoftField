@@ -1,5 +1,6 @@
 import React from 'react';
 import { render } from 'react-dom';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 import './index.css';
 import App from './App';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -8,13 +9,32 @@ import Firebase, { FirebaseContext } from './components/Firebase';
 import { HelmetProvider } from 'react-helmet-async';
 import { AppearanceProvider } from './Appearance';
 
+const displayTypography = {
+  fontFamily: 'var(--usaw-font-display)',
+  fontWeight: 900,
+};
+
+const fieldTheme = createTheme({
+  typography: {
+    fontFamily: 'var(--usaw-font-body)',
+    h1: displayTypography,
+    h2: displayTypography,
+    h3: displayTypography,
+    h4: displayTypography,
+    h5: displayTypography,
+    h6: displayTypography,
+  },
+});
+
 //const root = createRoot(document.getElementById("root"));
 render(
   <React.StrictMode>
     <FirebaseContext.Provider value={new Firebase()}>
       <HelmetProvider>
         <AppearanceProvider>
-          <App />
+          <ThemeProvider theme={fieldTheme}>
+            <App />
+          </ThemeProvider>
         </AppearanceProvider>
       </HelmetProvider>
     </FirebaseContext.Provider>

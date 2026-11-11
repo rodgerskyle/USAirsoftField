@@ -1,10 +1,39 @@
+@font-face {
+  font-family: 'Archivo';
+  src: url('./assets/fonts/archivo-latin-variable.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Archivo Black';
+  src: url('./assets/fonts/archivo-black-latin.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+}
+
+html:root {
+  --usaw-font-body: 'Archivo', system-ui, sans-serif;
+  --usaw-font-display: 'Archivo Black', var(--usaw-font-body);
+  --bs-font-sans-serif: var(--usaw-font-body);
+  --bs-body-font-family: var(--usaw-font-body);
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: var(--usaw-font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+:where(h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6, .p-header-about) {
+  font-family: var(--usaw-font-display);
+}
+
+button, input, optgroup, select, textarea {
+  font-family: inherit;
 }
 
 code {
