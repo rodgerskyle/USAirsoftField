@@ -103,8 +103,7 @@
   gap: .65rem;
 }
 
-.field-home__button,
-.field-home__video-toggle {
+.field-home__button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -130,15 +129,13 @@
   background: #961b25;
 }
 
-.field-home__button--outline,
-.field-home__video-toggle {
+.field-home__button--outline {
   color: #f3f6fa;
   background: #ffffff0a;
   border-color: #7793b1;
 }
 
-.field-home__button--outline:hover,
-.field-home__video-toggle:hover {
+.field-home__button--outline:hover {
   color: #fff;
   background: #ffffff1c;
   border-color: #b4d3f7;
@@ -182,43 +179,6 @@
   aspect-ratio: 16 / 9;
   object-fit: contain;
   background: var(--field-navy);
-}
-
-.field-home__showcase-caption {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: .75rem;
-  min-height: 56px;
-  padding: .35rem .85rem;
-  border-top: 1px solid #456684;
-}
-
-.field-home__showcase-caption strong,
-.field-home__showcase-caption small {
-  display: block;
-}
-
-.field-home__showcase-caption strong {
-  color: #f2f6fb;
-  font-size: .76rem;
-  font-weight: 750;
-  letter-spacing: .095em;
-  text-transform: uppercase;
-}
-
-.field-home__showcase-caption small {
-  margin-top: .12rem;
-  color: var(--field-light-blue);
-  font-size: .76rem;
-}
-
-.field-home__video-toggle {
-  flex: 0 0 auto;
-  min-width: 86px;
-  min-height: 44px;
-  padding-inline: .75rem;
-  cursor: pointer;
 }
 
 .field-home__section {
@@ -494,10 +454,6 @@
 
   .field-home__hero-actions .field-home__button {
     flex: 1 0 auto;
-    padding-inline: .65rem;
-  }
-
-  .field-home__showcase-caption {
     padding-inline: .65rem;
   }
 
