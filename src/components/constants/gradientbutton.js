@@ -12,7 +12,7 @@ const BaseButton = styled('button')({
   margin: '8px',
   textTransform: 'uppercase',
   fontWeight: 600,
-  fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+  fontFamily: 'var(--usaw-font-body)',
   fontSize: '0.875rem',
   letterSpacing: '1px',
   transition: 'all 0.3s ease-in-out',

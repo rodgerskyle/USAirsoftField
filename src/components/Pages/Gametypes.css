@@ -1,0 +1,130 @@
+.game-mode-guide {
+    --game-mode-ink: var(--usaw-text);
+    --game-mode-muted: var(--usaw-muted);
+    --game-mode-line: var(--usaw-line);
+    --game-mode-red: var(--usaw-red);
+    --game-mode-blue: var(--usaw-accent);
+}
+
+.game-mode-guide .game-mode-meta {
+    text-align: center;
+}
+
+.game-mode-guide .game-mode-meta p {
+    color: var(--game-mode-muted);
+}
+
+.game-mode-finder {
+    padding: 1rem;
+    margin-bottom: .75rem;
+    border-radius: 14px;
+    background: var(--usaw-raised);
+    border: 1px solid var(--game-mode-line);
+    color: var(--game-mode-ink);
+}
+
+.game-mode-finder label {
+    display: block;
+    margin-bottom: .5rem;
+    font-weight: 700;
+}
+
+.game-mode-search-row {
+    display: flex;
+    align-items: stretch;
+    gap: .5rem;
+}
+
+.game-mode-search-row input {
+    min-width: 0;
+    min-height: 44px;
+    border-color: var(--usaw-line);
+    font-size: 1rem;
+}
+
+.game-mode-search-row button {
+    min-height: 44px;
+    padding: .25rem .65rem;
+    border: 1px solid var(--usaw-line);
+    border-radius: .375rem;
+    color: var(--game-mode-ink);
+    background: var(--usaw-subtle);
+    font-weight: 650;
+}
+
+.game-mode-search-row button:disabled {
+    opacity: .55;
+}
+
+.game-mode-finder #game-mode-count {
+    margin: .5rem 0 0;
+    color: var(--game-mode-muted);
+    font-size: .85rem;
+}
+
+.game-mode-guide .list-gametypes {
+    height: auto;
+    max-height: 29rem;
+    padding: 3px;
+    overflow: auto;
+    gap: .4rem;
+}
+
+.game-mode-guide .public-tab-nav .list-group-item {
+    min-height: 44px;
+    padding: .65rem .85rem;
+    margin-bottom: 0;
+    color: var(--game-mode-ink);
+    background: var(--usaw-raised);
+    border: 1px solid var(--game-mode-line);
+}
+
+.game-mode-guide .public-tab-nav .list-group-item:hover {
+    color: var(--game-mode-ink) !important;
+    background: var(--usaw-subtle);
+    border-color: var(--game-mode-blue);
+}
+
+.game-mode-guide .public-tab-nav .list-group-item.active {
+    color: #fff !important;
+    background: var(--game-mode-red) !important;
+    border-color: var(--game-mode-red);
+    box-shadow: none;
+}
+
+.game-mode-guide :is(input, button):focus-visible {
+    outline: 2px solid var(--game-mode-blue);
+    outline-offset: 1px;
+}
+
+.game-mode-guide .list-group-item:focus-visible {
+    outline: 2px solid var(--usaw-focus);
+    outline-offset: 1px;
+}
+
+.game-mode-guide .public-tab-panel {
+    color: var(--game-mode-ink);
+    background: var(--usaw-raised);
+    border: 1px solid var(--game-mode-line);
+}
+
+.game-mode-guide .public-tab-panel .tab-pane,
+.game-mode-guide .public-tab-panel .ol-rules li {
+    color: var(--game-mode-ink);
+}
+
+.game-mode-guide .public-tab-panel .tab-content > .active {
+    height: auto;
+    overflow: visible;
+}
+
+.game-mode-empty {
+    color: var(--game-mode-muted);
+    margin: 0;
+}
+
+@media (max-width: 991.98px) {
+    .game-mode-guide .list-gametypes {
+        max-height: 12rem;
+    }
+}

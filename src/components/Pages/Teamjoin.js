@@ -103,7 +103,7 @@ class TeamJoin extends Component {
         return (
             <AuthUserContext.Consumer>
                 {authUser => (
-                    <div className="background-static-all">
+                    <div className="background-static-all team-form-page">
                         <Helmet>
                             <title>US Airsoft Field: Join Team</title>
                         </Helmet>
@@ -135,7 +135,7 @@ class TeamJoin extends Component {
                                     options={this.state.teams}
                                     selected={this.state.joinbox}
                                 />
-                                {this.state.loading ? <Progress type="spin" color="white"/> : ""}
+                                {this.state.loading ? <Progress type="spin" color="var(--usaw-accent)"/> : ""}
                                 <p className="team-manage-text">{this.state.statustext}</p>
                                 <Button className="team-manage-button" variant="outline-success" type="button"
                                 onClick={(e) => this.RequestTeam(e)}>

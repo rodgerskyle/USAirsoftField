@@ -188,7 +188,7 @@ class TeamCreate extends Component {
         return (
             <AuthUserContext.Consumer>
                 {authUser => (
-                    <div className="background-static-all">
+                    <div className="background-static-all team-form-page">
                         <Helmet>
                             <title>US Airsoft Field: Create Team</title>
                         </Helmet>

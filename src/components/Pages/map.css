@@ -163,3 +163,218 @@
 .pin {
   transition: all 0.3s ease-in-out;
 }
+
+.field-map-page {
+  --field-map-surface: var(--usaw-surface);
+  --field-map-border: var(--usaw-line);
+  --field-map-text: var(--usaw-text);
+  --field-map-muted: var(--usaw-muted);
+  --field-map-accent: var(--usaw-accent);
+  --field-map-crimson: var(--usaw-red);
+  background: radial-gradient(ellipse at 15% 0, var(--usaw-subtle), transparent 54%), var(--usaw-page-bg);
+  color: var(--field-map-text);
+}
+
+.field-map-shell {
+  width: min(100% - 2rem, 72rem);
+  margin-inline: auto;
+  padding-block: clamp(1.65rem, 4vw, 3.25rem) clamp(2.5rem, 6vw, 4.5rem);
+}
+
+.field-map-intro {
+  margin-bottom: clamp(1rem, 3vw, 1.75rem);
+}
+
+.field-map-intro h1 {
+  margin: 0 0 0.55rem;
+  color: var(--field-map-text);
+  font-size: clamp(2.55rem, 7vw, 5rem);
+  font-weight: 750;
+  letter-spacing: -0.045em;
+  line-height: 1.05;
+}
+
+.field-map-intro p {
+  margin: 0;
+  color: var(--field-map-muted);
+}
+
+.field-map-intro .field-map-kicker {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.6rem;
+  color: var(--field-map-accent);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.field-map-kicker::before {
+  width: 1.25rem;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--field-map-crimson);
+  content: '';
+}
+
+.field-map-viewer {
+  min-width: 0;
+  padding: clamp(0.6rem, 1.65vw, 1.15rem);
+  border: 1px solid var(--field-map-border);
+  border-radius: 1rem;
+  background: var(--field-map-surface);
+  box-shadow: 0 1.4rem 3.5rem rgb(0 0 0 / 12%);
+}
+
+.field-map-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.field-map-toolbar h2 {
+  margin: 0;
+  color: var(--field-map-text);
+  font-size: clamp(1.12rem, 3vw, 1.6rem);
+  font-weight: 650;
+}
+
+.field-map-image-link,
+.field-map-controls button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--field-map-border);
+  border-radius: 0.5rem;
+  background: var(--usaw-raised);
+  color: var(--field-map-text);
+  font: inherit;
+  font-weight: 650;
+}
+
+.field-map-image-link {
+  border-color: var(--field-map-crimson);
+  background: var(--field-map-crimson);
+  color: #fff;
+  font-size: 0.875rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.field-map-image-link:hover {
+  border-color: #e59ca4;
+  background: #951723;
+  color: #fff;
+}
+
+.field-map-controls button:not(:disabled):hover {
+  border-color: var(--field-map-accent);
+  background: #174a87;
+  color: #fff;
+}
+
+.field-map-image-link:focus-visible,
+.field-map-controls button:focus-visible,
+.field-map-viewport:focus-visible {
+  outline: 2px solid var(--usaw-focus);
+  outline-offset: 2px;
+}
+
+.field-map-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.65rem;
+}
+
+.field-map-controls button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.field-map-controls .field-map-zoom-button {
+  min-width: 44px;
+  padding-inline: 0.45rem;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.field-map-zoom-value {
+  min-width: 2.8rem;
+  color: var(--field-map-muted);
+  font-size: 0.9rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.field-map-controls .field-map-fit-button {
+  margin-inline-start: 0.15rem;
+  white-space: nowrap;
+}
+
+.field-map-viewport {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 0.6rem;
+  background: #091a2b;
+}
+
+.field-map-viewport.is-zoomed {
+  overflow: auto;
+  cursor: grab;
+}
+
+.field-map-viewport.is-zoomed:active {
+  cursor: grabbing;
+}
+
+.field-map-stage {
+  display: flex;
+  align-items: center;
+  min-height: 100%;
+}
+
+.field-map-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: none;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  user-select: none;
+}
+
+.field-map-hint {
+  margin: 0.65rem 0 0;
+  color: var(--field-map-muted);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 480px) {
+  .field-map-controls {
+    gap: 0.3rem;
+  }
+
+  .field-map-controls .field-map-fit-button {
+    margin-inline-start: auto;
+    padding-inline: 0.6rem;
+    font-size: 0.875rem;
+  }
+
+  .field-map-image-link {
+    padding-inline: 0.65rem;
+  }
+}

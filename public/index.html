@@ -5,11 +5,26 @@
   <meta charset="utf-8" />
   <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#000000" />
+  <meta name="theme-color" content="#0d2338" />
+  <script>
+    // Apply the saved appearance before the page styles are painted.
+    (function () {
+      var theme;
+      try {
+        theme = localStorage.getItem('usaw-field-theme');
+      } catch {}
+      if (theme !== 'light' && theme !== 'dark') {
+        theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-bs-theme', theme);
+      if (theme === 'dark') {
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0b1622');
+      }
+    })();
+  </script>
   <meta name="description" content="U.S. Airsoft Field. U.S. AIRSOFT is the premier airsoft arena in the U.S. We are located in Anderson, CA." />
   <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo.png" />
   <link rel="image_src" href="%PUBLIC_URL%/logo.png" />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Teko" />
   <meta property="og:image" content="%PUBLIC_URL%/logo.png" />
   <!--
       manifest.json provides metadata used when your web app is installed on a

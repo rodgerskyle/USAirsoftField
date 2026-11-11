@@ -1,22 +1,16 @@
-:root {
-    --pricing-bg: #0b0d10;
-    --pricing-surface: rgba(17, 20, 25, 0.95);
-    --pricing-surface-soft: rgba(23, 28, 35, 0.92);
-    --pricing-border: rgba(255, 255, 255, 0.08);
-    --pricing-border-strong: rgba(255, 255, 255, 0.14);
-    --pricing-text: #f4f7fb;
-    --pricing-text-muted: #aab4c2;
-    --pricing-blue: #0b3888;
-    --pricing-blue-soft: #163e7d;
-    --pricing-red: #a44347;
+.pricing-page {
+    --pricing-surface: var(--usaw-surface);
+    --pricing-surface-soft: var(--usaw-raised);
+    --pricing-border: var(--usaw-line);
+    --pricing-text: var(--usaw-text);
+    --pricing-text-muted: var(--usaw-muted);
+    --pricing-blue: #174a87;
+    --pricing-red: var(--usaw-red);
     --pricing-red-soft: #7a3034;
     --pricing-highlight: #1f65c7;
-    --pricing-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
-}
-
-.pricing-page {
+    --pricing-shadow: 0 24px 60px rgb(0 0 0 / 12%);
     min-height: 100vh;
-    padding: 3rem 0 2rem;
+    padding: clamp(1.5rem, 4vw, 3rem) 0 2rem;
     background: transparent;
     color: var(--pricing-text);
 }
@@ -26,14 +20,14 @@
 }
 
 .pricing-modern-hero {
-    margin-bottom: 2rem;
-    padding: 2.5rem 2rem;
+    margin-bottom: 1rem;
+    padding: 1.75rem 2rem;
     border: 1px solid var(--pricing-border);
     border-radius: 22px;
     background:
         radial-gradient(circle at top right, rgba(11, 56, 136, 0.18), transparent 30%),
         radial-gradient(circle at top left, rgba(164, 67, 71, 0.16), transparent 28%),
-        linear-gradient(180deg, rgba(12, 15, 19, 0.98), rgba(9, 11, 15, 0.96));
+        var(--pricing-surface);
     box-shadow: var(--pricing-shadow);
 }
 
@@ -42,7 +36,7 @@
 .pricing-modern-cta-eyebrow,
 .pricing-modern-callout-eyebrow {
     margin-bottom: 0.75rem;
-    color: #90b8ff;
+    color: var(--usaw-accent);
     font-size: 0.78rem;
     font-weight: 700;
     letter-spacing: 0.2rem;
@@ -64,33 +58,6 @@
     line-height: 1.7;
 }
 
-.pricing-modern-summary {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1rem;
-    margin-top: 2rem;
-}
-
-.pricing-modern-summary-item {
-    padding: 1rem 1.1rem;
-    border: 1px solid var(--pricing-border);
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.03);
-}
-
-.pricing-modern-summary-value {
-    display: block;
-    margin-bottom: 0.2rem;
-    color: var(--pricing-text);
-    font-size: 1.5rem;
-    font-weight: 700;
-}
-
-.pricing-modern-summary-label {
-    color: var(--pricing-text-muted);
-    font-size: 0.92rem;
-}
-
 .pricing-modern-tabs {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -107,7 +74,7 @@
     padding: 0.85rem 1rem;
     border: 1px solid var(--pricing-border);
     border-radius: 14px;
-    background: linear-gradient(180deg, rgba(19, 28, 40, 0.95), rgba(15, 21, 30, 0.95));
+    background: var(--pricing-surface-soft);
     color: var(--pricing-text-muted);
     font-size: 0.95rem;
     font-weight: 700;
@@ -122,8 +89,13 @@
     border-color: rgba(144, 184, 255, 0.28);
 }
 
+.pricing-modern-tab:focus-visible {
+    outline: 2px solid var(--usaw-focus);
+    outline-offset: 2px;
+}
+
 .pricing-modern-tab.active {
-    color: var(--pricing-text);
+    color: #fff;
     border-color: rgba(144, 184, 255, 0.32);
     background: linear-gradient(135deg, rgba(11, 56, 136, 0.95), rgba(31, 101, 199, 0.92));
     box-shadow: 0 12px 28px rgba(11, 56, 136, 0.24);
@@ -133,7 +105,7 @@
     padding: 2rem;
     border: 1px solid var(--pricing-border);
     border-radius: 22px;
-    background: linear-gradient(180deg, rgba(12, 15, 19, 0.96), rgba(9, 11, 15, 0.96));
+    background: var(--pricing-surface);
     box-shadow: var(--pricing-shadow);
 }
 
@@ -148,6 +120,10 @@
     font-weight: 300;
 }
 
+.pricing-modern-panel-title + .pricing-modern-copy {
+    margin-top: 0.45rem;
+}
+
 .pricing-modern-section-body {
     margin-top: 0.25rem;
 }
@@ -157,8 +133,7 @@
     padding: 1.5rem;
     border: 1px solid var(--pricing-border);
     border-radius: 18px;
-    background: linear-gradient(180deg, rgba(20, 23, 29, 0.98), rgba(14, 17, 22, 0.98));
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    background: var(--pricing-surface-soft);
 }
 
 .pricing-modern-card-top {
@@ -177,11 +152,11 @@
     border-top: 3px solid var(--pricing-highlight);
     background:
         radial-gradient(circle at top right, rgba(31, 101, 199, 0.18), transparent 38%),
-        linear-gradient(180deg, rgba(20, 23, 29, 0.98), rgba(14, 17, 22, 0.98));
+        var(--pricing-surface-soft);
 }
 
 .pricing-modern-card-dark {
-    border-top: 3px solid rgba(255, 255, 255, 0.14);
+    border-top: 3px solid var(--pricing-border);
 }
 
 .pricing-modern-badge {
@@ -190,7 +165,7 @@
     padding: 0.35rem 0.65rem;
     border-radius: 999px;
     background: rgba(31, 101, 199, 0.14);
-    color: #9ec4ff;
+    color: var(--usaw-accent);
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.08rem;
@@ -237,7 +212,7 @@
     gap: 0.85rem;
     padding: 0.8rem 0;
     color: var(--pricing-text-muted);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid var(--pricing-border);
     line-height: 1.6;
 }
 
@@ -248,7 +223,7 @@
 
 .pricing-modern-list-icon {
     margin-top: 0.25rem;
-    color: #8fc8ff;
+    color: var(--usaw-accent);
     font-size: 0.88rem;
 }
 
@@ -264,7 +239,7 @@
     padding: 1.5rem;
     border: 1px solid var(--pricing-border);
     border-radius: 18px;
-    background: linear-gradient(180deg, rgba(20, 23, 29, 0.98), rgba(14, 17, 22, 0.98));
+    background: var(--pricing-surface-soft);
 }
 
 .pricing-modern-callout {
@@ -278,7 +253,7 @@
     border-radius: 20px;
     background:
         radial-gradient(circle at top right, rgba(31, 101, 199, 0.18), transparent 40%),
-        linear-gradient(180deg, rgba(18, 25, 34, 0.96), rgba(11, 15, 21, 0.96));
+        var(--pricing-surface-soft);
 }
 
 .pricing-modern-callout-title {
@@ -298,7 +273,7 @@
 .pricing-modern-callout-pills span {
     padding: 0.55rem 0.8rem;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--usaw-subtle);
     color: var(--pricing-text);
     font-size: 0.88rem;
 }
@@ -345,7 +320,7 @@
     padding: 1.75rem 2rem;
     border: 1px solid var(--pricing-border);
     border-radius: 20px;
-    background: linear-gradient(180deg, rgba(16, 20, 25, 0.96), rgba(10, 13, 18, 0.96));
+    background: var(--pricing-surface);
     box-shadow: var(--pricing-shadow);
 }
 
@@ -374,10 +349,6 @@
 }
 
 @media (max-width: 992px) {
-    .pricing-modern-summary {
-        grid-template-columns: 1fr;
-    }
-
     .pricing-modern-tabs {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -398,22 +369,23 @@
 }
 
 @media (max-width: 768px) {
-    .pricing-page {
-        padding: 2rem 0 1.5rem;
-    }
-
     .pricing-modern-hero,
     .pricing-modern-panel,
     .pricing-modern-cta {
-        padding: 1.4rem;
+        padding: 1.1rem;
         border-radius: 18px;
     }
 
     .pricing-modern-tabs {
-        grid-template-columns: 1fr;
+        gap: 0.5rem;
     }
 
     .pricing-modern-tab {
-        width: 100%;
+        min-height: 46px;
+        gap: 0.35rem;
+        padding: 0.5rem;
+        font-size: 0.875rem;
+        letter-spacing: normal;
+        text-transform: none;
     }
 }

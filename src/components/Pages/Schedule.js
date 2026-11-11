@@ -247,7 +247,7 @@ const Schedule = ({ firebase }) => {
                 <FiberManualRecord
                     sx={{
                         fontSize: '10px',
-                        color: 'black'
+                        color: 'currentColor'
                     }}
                 />
             </Box>
@@ -259,7 +259,8 @@ const Schedule = ({ firebase }) => {
         <Card
             sx={{
                 mb: 2,
-                backgroundColor: event.static ? 'action.selected' : 'background.paper',
+                backgroundColor: event.static ? 'var(--usaw-subtle)' : 'var(--usaw-raised)',
+                color: 'var(--usaw-text)',
                 position: 'relative'
             }}
         >
@@ -267,7 +268,7 @@ const Schedule = ({ firebase }) => {
                 <Typography variant="h6" gutterBottom>
                     {event.name}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" sx={{ color: 'var(--usaw-muted)' }}>
                     {event.time}
                 </Typography>
                 {event.additional && (
@@ -303,7 +304,7 @@ const Schedule = ({ firebase }) => {
                 sx={{
                     textAlign: 'center',
                     py: 3,
-                    color: 'white'
+                    color: 'var(--usaw-text)'
                 }}
             >
                 US Airsoft Schedule
@@ -319,7 +320,8 @@ const Schedule = ({ firebase }) => {
                         elevation={3}
                         sx={{
                             p: { xs: 2, sm: 3 },
-                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            backgroundColor: 'var(--usaw-surface)',
+                            color: 'var(--usaw-text)',
                             borderRadius: { xs: '12px', sm: '16px' }
                         }}
                     >

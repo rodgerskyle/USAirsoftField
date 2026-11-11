@@ -9,6 +9,7 @@ import { PasswordForgetForm } from './passwordForgot';
 import AccountPage from './components/Pages/Account';
 import ProfileSettings from './components/Pages/Profilesettings';
 import Home from './components/Pages/home'
+import PlayerHub from './components/Pages/PlayerHub';
 import Admin from './components/Pages/Admin'
 import SignUpForm from './components/Pages/Signup'
 import WaiverForm from './components/Pages/FillOutWaiver'
@@ -53,9 +54,11 @@ import RentalsManagement from './components/Pages/RentalsManagement';
 
 const App = () => (
   <Router>
+    <a className="field-skip-link" href="#field-content" onClick={focusContent}>Skip to content</a>
     <ScrollToTop />
     <Redirect />
     <NavigationRoute />
+    <div id="field-content" tabIndex={-1}>
     <Routes>
       {/* <Route exact path="/migrate">
                   <Migration />
@@ -67,6 +70,7 @@ const App = () => (
       ></Route>
       <Route exact path="/events" element={<Navigate to="/pricing" replace />} />
       <Route exact path="/schedule" element={<Schedule />} />
+      <Route path="/player-hub" element={<PlayerHub />} />
       <Route exact path="/map" element={<Map />} />
       <Route exact path="/waiver" element={<Waiver />} />
       <Route exact path="/membership" element={<Membership />} />
@@ -120,12 +124,21 @@ const App = () => (
       <Route exact path="/information/pricing" element={<Navigate to="/pricing" replace />} />
       <Route exact path="/home" element={<Home />} />
       <Route exact path="/" element={<Home />} />
-      <Route element={<PageNotFound />} />
+      <Route path="*" element={<PageNotFound />} />
     </Routes>
+    </div>
     <FooterRoute />
     <CookieConsent>This website uses cookies to enhance the user experience.</CookieConsent>
   </Router>
 );
+
+function focusContent(event) {
+  const content = document.getElementById('field-content');
+  if (content) {
+    event.preventDefault();
+    content.focus();
+  }
+}
 
 function LoginRoute() {
   return <div><Login /></div>

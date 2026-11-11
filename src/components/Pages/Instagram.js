@@ -52,7 +52,7 @@ class Instagram extends Component {
                 <Helmet>
                     <title>US Airsoft Field: Instagram Photos</title>
                 </Helmet>
-                <h2 className="page-header"> 
+                <h2 className="page-header text-body">
                     <a href="https://www.instagram.com/usairsoftworld/" target="_blank" rel="noopener noreferrer" className="a-instagram-link">
                     <img src={iglogo} alt="Instagram Logo" className="instagram-logo"/>Instagram Media</a>
                 </h2>

@@ -328,13 +328,13 @@ class TeamManage extends Component {
         return (
             <AuthUserContext.Consumer>
                 {authUser => (
-                    <div className="background-static-all">
+                    <div className="background-static-all team-form-page">
                         <Helmet>
                             <title>US Airsoft Field: Manage Team</title>
                         </Helmet>
                         {this.state.loading ? 
                         <Row className="justify-content-row">
-                            <Spinner animation="border" variant="light"/>
+                            <Spinner animation="border"/>
                         </Row> :
                         authUser.team === "" ?
                             <Container className="notice-text-container">
@@ -369,7 +369,7 @@ class TeamManage extends Component {
                                     </Col>
                                 </Row>
                                 : null }
-                                {this.state.memberLoading ? <Progress type="spin" color="white"/> : null}
+                                {this.state.memberLoading ? <Progress type="spin" color="var(--usaw-accent)"/> : null}
                                 {!this.state.deleting ?
                                 <Row className="justify-content-row">
                                     <Col md={7}>
@@ -380,7 +380,7 @@ class TeamManage extends Component {
                                     </Col>
                                 </Row>
                                 : null}
-                                {this.state.requestLoading ? <Progress type="spin" color="white"/> : null}
+                                {this.state.requestLoading ? <Progress type="spin" color="var(--usaw-accent)"/> : null}
                                 {!this.state.deleting ?
                                 <Row className="justify-content-row">
                                     <Col md={7}>
@@ -399,7 +399,7 @@ class TeamManage extends Component {
                                 </Row>
                                 : null }
                                 {this.state.descriptionError ? <p className="status-text-teammanage">{this.state.descriptionError}</p> : null}
-                                {this.state.descriptionLoading ? <Progress type="spin" color="white"/> : null}
+                                {this.state.descriptionLoading ? <Progress type="spin" color="var(--usaw-accent)"/> : null}
                                 <Row className="justify-content-row">
                                     <Col md={7}>
                                         <Button variant="danger" size="md" block disabled={!this.state.checkBox}
@@ -415,7 +415,7 @@ class TeamManage extends Component {
                                         {this.state.disbandError ? <p className="status-text-teammanage">{this.state.disbandError}</p> : null}
                                     </Col>
                                 </Row>
-                                {this.state.deleting ? <Progress type="spin" color="white"/> : null}
+                                {this.state.deleting ? <Progress type="spin" color="var(--usaw-accent)"/> : null}
                             </Container> 
                             :
                             <Container>
@@ -427,7 +427,7 @@ class TeamManage extends Component {
                                     <Button className="team-manage-button-2" variant="danger" type="submit" onClick={(e) => this.QuitTeam(e)}>
                                         Quit Team
                                     </Button>
-                                    {this.state.requestLoading ? <Progress type="spin" color="white"/> : null}
+                                    {this.state.requestLoading ? <Progress type="spin" color="var(--usaw-accent)"/> : null}
                                 </Row>
                             </Container> 
                         }

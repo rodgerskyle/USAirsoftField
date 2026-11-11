@@ -16,7 +16,7 @@ class PageNotFound extends Component {
 
     render() {
         return (
-            <div className="background-static-all">
+            <div className="background-static-all public-error-page">
                 <Helmet>
                     <title>US Airsoft Field: 404</title>
                 </Helmet>
