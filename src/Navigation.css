@@ -75,10 +75,19 @@
 .usaw-nav .usaw-nav__store {
     display: inline-flex;
     align-items: center;
-    gap: .3rem;
     min-height: 2.25rem;
     color: var(--nav-accent);
     white-space: nowrap;
+}
+
+.usaw-nav__utility .usaw-nav__store {
+    min-height: 1.95rem;
+    padding-inline: .7rem;
+    color: var(--nav-text);
+    background: var(--nav-blue);
+    border: 1px solid var(--nav-line);
+    border-radius: .35rem;
+    font-weight: 750;
 }
 
 .usaw-nav__store:hover {
@@ -87,24 +96,25 @@
 }
 
 .usaw-nav__social {
-    gap: .15rem;
+    gap: .35rem;
 }
 
 .usaw-nav__social a {
     display: grid;
-    width: 1.85rem;
-    height: 1.85rem;
+    width: 1.95rem;
+    height: 1.95rem;
     place-items: center;
+    color: var(--nav-accent);
+    background: var(--nav-raised);
+    border: 1px solid var(--nav-line);
     border-radius: .35rem;
+    font-size: 1rem;
 }
 
 .usaw-nav__social a:hover {
+    color: var(--nav-text);
     background: var(--nav-blue);
-}
-
-.usaw-nav__social img {
-    display: block;
-    object-fit: contain;
+    border-color: var(--nav-accent);
 }
 
 .usaw-nav__bar {

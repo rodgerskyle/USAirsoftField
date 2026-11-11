@@ -18,8 +18,8 @@
 
 .field-home__hero {
   --hero-shadow: #081726;
-  --hero-video-height: min(56.25vw, 41.625rem, 64vh, max(17rem, calc(100vh - 18.5rem)));
-  --hero-video-height: min(56.25vw, 41.625rem, 64svh, max(17rem, calc(100svh - 18.5rem)));
+  --hero-video-height: min(56.25vw, 41.625rem, 64vh, max(17rem, calc(100vh - 20.25rem)));
+  --hero-video-height: min(56.25vw, 41.625rem, 64svh, max(17rem, calc(100svh - 20.25rem)));
   position: relative;
   isolation: isolate;
   overflow: hidden;
@@ -41,7 +41,7 @@
 .field-home__hero-inner {
   display: flex;
   align-items: flex-end;
-  padding-block: calc(var(--hero-video-height) - 1rem) clamp(1.6rem, 2.6vw, 2.75rem);
+  padding-block: calc(var(--hero-video-height) + .75rem) clamp(1.6rem, 2.6vw, 2.75rem);
 }
 
 .field-home__eyebrow {

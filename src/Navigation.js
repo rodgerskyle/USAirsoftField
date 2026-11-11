@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import { faFacebookF, faInstagram, faYoutube } from '@fortawesome/free-brands-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { getDownloadURL } from 'firebase/storage';
 import { withFirebase } from './components/Firebase';
 import * as ROLES from './components/constants/roles';
@@ -8,9 +10,6 @@ import shieldLogo from './assets/usairsoft-small-logo.png';
 import AppearanceControl from './AppearanceControl';
 import { useAppearance } from './Appearance';
 import defaultProfile from './assets/default.png';
-import facebook from './assets/SocialMedia/facebook.png';
-import instagram from './assets/SocialMedia/instagram.png';
-import youtube from './assets/SocialMedia/youtube.png';
 import './Navigation.css';
 
 const VISIT_LINKS = [
@@ -27,9 +26,9 @@ const PLAY_LINKS = [
 ];
 
 const SOCIAL_LINKS = [
-    ['https://www.facebook.com/USAirsoftworld/', 'Facebook', facebook],
-    ['https://www.instagram.com/usairsoftworld/', 'Instagram', instagram],
-    ['https://www.youtube.com/user/USAirsoftWorldInc', 'YouTube', youtube],
+    ['https://www.facebook.com/USAirsoftworld/', 'Facebook', faFacebookF],
+    ['https://www.instagram.com/usairsoftworld/', 'Instagram', faInstagram],
+    ['https://www.youtube.com/user/USAirsoftWorldInc', 'YouTube', faYoutube],
 ];
 
 function SiteLink({ to, children, ...props }) {
@@ -57,7 +56,7 @@ function AccountIcon() {
 function StoreLink() {
     return (
         <a className="usaw-nav__store" href="https://www.usairsoft.com" target="_blank" rel="noopener noreferrer">
-            Online store <span aria-hidden="true">↗</span>
+            Online store
         </a>
     );
 }
@@ -67,7 +66,7 @@ function SocialLinks() {
         <div className="usaw-nav__social" aria-label="US Airsoft social channels">
             {SOCIAL_LINKS.map(([href, label, icon]) => (
                 <a key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={label}>
-                    <img src={icon} alt="" width="15" height="15" />
+                    <FontAwesomeIcon icon={icon} aria-hidden="true" />
                 </a>
             ))}
         </div>
