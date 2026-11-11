@@ -98,7 +98,7 @@ const Home = () => {
             <p className="field-home__eyebrow">Anderson, California</p>
             <h1 id="field-home-title">US Airsoft <span>Field</span></h1>
             <p className="field-home__hero-description">
-              Indoor and outdoor airsoft. Find open play, rentals, and everything you need for game day.
+              Open play indoors and outdoors. Bring your own gear or rent a setup at the field.
             </p>
             <div className="field-home__hero-actions">
               <Link className="field-home__button field-home__button--primary" to="/pricing">
@@ -107,8 +107,8 @@ const Home = () => {
               <Link className="field-home__button field-home__button--outline" to="/waiver">Sign a waiver</Link>
             </div>
           </div>
-          <BackgroundVideo />
         </div>
+        <BackgroundVideo />
       </section>
 
       <section className="field-home__wrap field-home__section" aria-labelledby="field-home-visit">
