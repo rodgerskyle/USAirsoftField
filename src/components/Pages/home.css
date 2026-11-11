@@ -1,3 +1,11 @@
+@font-face {
+  font-family: 'Archivo Black';
+  src: url('../../assets/fonts/archivo-black-latin.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+}
+
 .field-home {
   --field-ink: var(--usaw-text);
   --field-navy: #091a2b;
@@ -72,11 +80,12 @@
 .field-home__hero h1 {
   margin: 0;
   color: #fff;
-  font-size: clamp(4rem, 8.4vw, 8rem);
+  font-family: 'Archivo Black', system-ui, sans-serif;
+  font-size: clamp(2.5rem, 5.3vw, 5.25rem);
   font-weight: 900;
-  letter-spacing: -.078em;
-  line-height: .84;
-  text-shadow: 0 .12em .5em #02091070;
+  letter-spacing: -.025em;
+  line-height: .98;
+  text-shadow: 0 .08em .28em #02091070;
   text-transform: uppercase;
 }
 
@@ -84,8 +93,7 @@
   display: block;
   margin-top: .08em;
   color: var(--field-light-blue);
-  font-size: 1.12em;
-  letter-spacing: -.055em;
+  font-size: 1.07em;
 }
 
 .field-home__hero-description {
@@ -419,8 +427,6 @@
 
   .field-home__hero h1 {
     grid-area: title;
-    font-size: clamp(2.75rem, 5.7vw, 5.4rem);
-    line-height: .94;
   }
 
   .field-home__hero h1 span {
@@ -460,7 +466,7 @@
   }
 
   .field-home__hero h1 {
-    font-size: clamp(3rem, 10.8vw, 5.7rem);
+    font-size: clamp(2.55rem, 11.5vw, 5.7rem);
   }
 }
 
