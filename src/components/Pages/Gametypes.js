@@ -1,250 +1,94 @@
-import React, { Component } from 'react';
-
-import { Container, Row, Col, Tab, ListGroup } from 'react-bootstrap/';
-
+import React, { useRef, useState } from 'react';
+import { Col, Container, ListGroup, Row, Tab } from 'react-bootstrap/';
 import { Helmet } from 'react-helmet-async';
 
-class Gametypes extends Component {
-    constructor(props) {
-        super(props);
+import './Gametypes.css';
 
-        this.state = {
-        };
-    }
+function Gametypes() {
+    const [query, setQuery] = useState('');
+    const [selectedKey, setSelectedKey] = useState(GAME_MODES[0].key);
+    const searchInput = useRef(null);
+    const terms = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
+    const matches = GAME_MODES.filter(({ name }) =>
+        terms.every(term => name.toLowerCase().includes(term))
+    );
+    const activeMode = matches.find(({ key }) => key === selectedKey) || matches[0];
 
-    render() {
-        return (
-            <div className="public-page-shell">
-                <Helmet>
-                    <title>US Airsoft Field: Gametypes</title>
-                </Helmet>
-                <section className="public-section public-reference-section">
+    return (
+        <div className="public-page-shell">
+            <Helmet>
+                <title>US Airsoft Field: Game Modes</title>
+            </Helmet>
+            <section className="public-section public-reference-section game-mode-guide">
                 <div className="public-section-heading">
                     <p className="public-section-kicker">Game Info</p>
-                    <h1 className="public-section-title">Gametypes</h1>
+                    <h1 className="public-section-title">Game modes</h1>
                     <p className="public-section-copy">
-                        Browse the modes played at US Airsoft so new players and returning groups can quickly understand each match style.
+                        Find a game mode and review its objectives, respawns, and time limit.
                     </p>
                 </div>
                 <Container fluid>
-                    <Row className="row-update-rules public-meta-row"><p>Last Updated: 1/1/2020</p></Row>
-                    <Tab.Container id="rules-list-group-tabs" defaultActiveKey="#link1">
+                    <div className="public-meta-row game-mode-meta"><p>Last Updated: 1/1/2020</p></div>
+                    <Tab.Container id="game-mode-tabs" activeKey={activeMode?.key ?? null} onSelect={setSelectedKey} transition={false}>
                         <Row className="public-tab-layout">
                             <Col lg={4} className="mb-4 mb-lg-0">
-                                <ListGroup className="list-gametypes public-tab-nav">
-                                    <ListGroup.Item action href="#link1">
-                                        The Enemy within
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link2">
-                                        Medic!
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link3">
-                                        Bottle Domination
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link4">
-                                        Flag Domination “Downtown”
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link5">
-                                        Flag Domination “Full Map”
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link6">
-                                        Sticky Bomb
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link7">
-                                        Capture the Flag
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link8">
-                                        Battle Buddy
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link9">
-                                        Downed Pilot
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link10">
-                                        Interrogation
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link11">
-                                        Pilot Rescue
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link12">
-                                        Wolf
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link13">
-                                        General
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link14">
-                                        Team Death Match
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link15">
-                                        VIP Rescue
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link16">
-                                        Bomb Disarmament “Bridge”
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link17">
-                                        Multiple Bomb Disarmament
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link18">
-                                        Red City Siege
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link19">
-                                        The Purge
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link20">
-                                        Countdown
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link21">
-                                        P.F.R.C. “Pod Fired Rocket Cluster”
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link22">
-                                        Ring the Bell - Operation Alamo
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link23">
-                                        ICBM “First Strike”
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link24">
-                                        Demolition
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link25">
-                                        Sabotage
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link26">
-                                        Operation Airstrike
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link27">
-                                        Broken Arrow
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link28">
-                                        Level 4 Biohazard
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link29">
-                                        Operation First Strike
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link30">
-                                        Detonation
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link31">
-                                        Zombie Attack
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link32">
-                                        Money Bag
-                                </ListGroup.Item>
-                                    <ListGroup.Item action href="#link33">
-                                        Fuel Depot “Demolition”
-                                </ListGroup.Item>
-                                </ListGroup>
+                                <div className="game-mode-finder">
+                                    <label htmlFor="game-mode-search">Find a game mode</label>
+                                    <div className="game-mode-search-row">
+                                        <input
+                                            ref={searchInput}
+                                            id="game-mode-search"
+                                            type="search"
+                                            className="form-control"
+                                            placeholder="Try Countdown or Sticky Bomb"
+                                            value={query}
+                                            onChange={event => setQuery(event.target.value)}
+                                            aria-describedby="game-mode-count"
+                                        />
+                                        <button
+                                            type="button"
+                                            disabled={!query}
+                                            onClick={() => {
+                                                setQuery('');
+                                                searchInput.current.focus();
+                                            }}
+                                        >
+                                            Clear
+                                        </button>
+                                    </div>
+                                    <p id="game-mode-count" role="status">
+                                        {matches.length} {matches.length === 1 ? 'mode' : 'modes'} found
+                                    </p>
+                                </div>
+                                {matches.length > 0 && (
+                                    <ListGroup className="list-gametypes public-tab-nav" aria-label="Game modes" aria-orientation="vertical">
+                                        {matches.map(({ name, key }) => (
+                                            <ListGroup.Item key={key} action as="button" type="button" eventKey={key}>{name}</ListGroup.Item>
+                                        ))}
+                                    </ListGroup>
+                                )}
                             </Col>
                             <Col lg={8}>
                                 <div className="public-tab-panel">
-                                <Tab.Content>
-                                    <Tab.Pane eventKey="#link1">
-                                        <EnemyWithin />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link2">
-                                        <Medic />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link3">
-                                        <BottleDomination />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link4">
-                                        <FlagDominationDowntown />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link5">
-                                        <FlagDominationFullMap />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link6">
-                                        <StickyBomb />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link7">
-                                        <CaptureTheFlag />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link8">
-                                        <BattleBuddy />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link9">
-                                        <DownedPilot />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link10">
-                                        <Interrogation />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link11">
-                                        <PilotRescue />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link12">
-                                        <Wolf />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link13">
-                                        <General />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link14">
-                                        <TeamDeathMatch />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link15">
-                                        <VIPRescue />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link16">
-                                        <BombDisarmamentBridge />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link17">
-                                        <MultipleBombDisarmament />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link18">
-                                        <RedCitySiege />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link19">
-                                        <ThePurge />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link20">
-                                        <Countdown />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link21">
-                                        <PFRC />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link22">
-                                        <RingTheBell />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link23">
-                                        <ICBM />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link24">
-                                        <Demolition />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link25">
-                                        <Sabotage />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link26">
-                                        <OperationAirstrike />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link27">
-                                        <BrokenArrow />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link28">
-                                        <Level4Biohazard />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link29">
-                                        <OperationFirstStrike />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link30">
-                                        <Detonation />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link31">
-                                        <ZombieAttack />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link32">
-                                        <MoneyBag />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="#link33">
-                                        <FuelDepotDemolition />
-                                    </Tab.Pane>
-                                </Tab.Content>
+                                    {activeMode ? (
+                                        <Tab.Content>
+                                            {matches.map(({ key, Mode }) => (
+                                                <Tab.Pane key={key} eventKey={key} hidden={key !== activeMode.key}>
+                                                    <Mode />
+                                                </Tab.Pane>
+                                            ))}
+                                        </Tab.Content>
+                                    ) : (
+                                        <p className="game-mode-empty">Try part of a mode name or clear the search.</p>
+                                    )}
                                 </div>
                             </Col>
                         </Row>
                     </Tab.Container>
                 </Container>
-                </section>
-            </div>
-        );
-    }
+            </section>
+        </div>
+    );
 }
 
 const EnemyWithin = () => (
@@ -1638,5 +1482,41 @@ const FuelDepotDemolition = () => (
     </ol>
 )
 
+
+const GAME_MODES = [
+    ["The Enemy within", EnemyWithin],
+    ["Medic!", Medic],
+    ["Bottle Domination", BottleDomination],
+    ["Flag Domination “Downtown”", FlagDominationDowntown],
+    ["Flag Domination “Full Map”", FlagDominationFullMap],
+    ["Sticky Bomb", StickyBomb],
+    ["Capture the Flag", CaptureTheFlag],
+    ["Battle Buddy", BattleBuddy],
+    ["Downed Pilot", DownedPilot],
+    ["Interrogation", Interrogation],
+    ["Pilot Rescue", PilotRescue],
+    ["Wolf", Wolf],
+    ["General", General],
+    ["Team Death Match", TeamDeathMatch],
+    ["VIP Rescue", VIPRescue],
+    ["Bomb Disarmament “Bridge”", BombDisarmamentBridge],
+    ["Multiple Bomb Disarmament", MultipleBombDisarmament],
+    ["Red City Siege", RedCitySiege],
+    ["The Purge", ThePurge],
+    ["Countdown", Countdown],
+    ["P.F.R.C. “Pod Fired Rocket Cluster”", PFRC],
+    ["Ring the Bell - Operation Alamo", RingTheBell],
+    ["ICBM “First Strike”", ICBM],
+    ["Demolition", Demolition],
+    ["Sabotage", Sabotage],
+    ["Operation Airstrike", OperationAirstrike],
+    ["Broken Arrow", BrokenArrow],
+    ["Level 4 Biohazard", Level4Biohazard],
+    ["Operation First Strike", OperationFirstStrike],
+    ["Detonation", Detonation],
+    ["Zombie Attack", ZombieAttack],
+    ["Money Bag", MoneyBag],
+    ["Fuel Depot “Demolition”", FuelDepotDemolition],
+].map(([name, Mode], index) => ({ name, Mode, key: "#link" + (index + 1) }));
 
 export default Gametypes;

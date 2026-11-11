@@ -15,9 +15,8 @@
     height: 100%;
     padding: 1.75rem;
     border-radius: 18px;
-    background: linear-gradient(180deg, rgba(18, 25, 34, 0.95) 0%, rgba(10, 14, 19, 0.98) 100%);
-    border: 1px solid rgba(126, 165, 218, 0.16);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    background: var(--usaw-raised);
+    border: 1px solid var(--usaw-line);
 }
 
 .contact-card:hover {
@@ -25,7 +24,7 @@
 }
 
 .contact-card-title {
-    color: #ffffff;
+    color: var(--usaw-text);
     margin-bottom: 1.5rem;
     font-size: 1.5rem;
     font-weight: 400;
@@ -40,7 +39,7 @@
     align-items: flex-start;
     margin-bottom: 1.15rem;
     padding-bottom: 1.15rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid var(--usaw-line);
 }
 
 .contact-item:last-child {
@@ -50,7 +49,7 @@
 }
 
 .contact-item p {
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--usaw-text);
     margin-bottom: 0;
 }
 
@@ -58,7 +57,7 @@
     font-size: 1rem;
     margin-right: 1rem;
     margin-top: 0.2rem;
-    color: #8fb8ff;
+    color: var(--usaw-accent);
 }
 
 .location-toggle-btn {
@@ -78,7 +77,7 @@
     height: 400px;
     overflow: hidden;
     border-radius: 18px;
-    border: 1px solid rgba(126, 165, 218, 0.16);
+    border: 1px solid var(--usaw-line);
     box-shadow: 0 24px 60px rgba(0, 0, 0, 0.24);
 }
 
@@ -89,13 +88,13 @@
 }
 
 .contact-link {
-    color: #8fb8ff;
+    color: var(--usaw-accent);
     text-decoration: none;
     transition: color 0.3s ease;
 }
 
 .contact-link:hover {
-    color: #ffffff;
+    color: var(--usaw-text);
     text-decoration: underline;
 }
 

@@ -1,7 +1,7 @@
 .react-calendar {
     width: 100%;
-    background-color: #ffffff;
-    color: #1a1a1a;
+    background-color: var(--usaw-raised);
+    color: var(--usaw-text);
     border-radius: 12px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     padding: 20px;
@@ -19,7 +19,7 @@
 }
 
 .react-calendar__navigation button {
-    color: #1a1a1a;
+    color: var(--usaw-text);
     min-width: 44px;
     background: none;
     font-size: 1.25rem;
@@ -34,7 +34,7 @@
 
 .react-calendar__navigation button:enabled:hover,
 .react-calendar__navigation button:enabled:focus {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: var(--usaw-subtle);
 }
 
 /* Month View Styles - Better alignment */
@@ -48,7 +48,7 @@
     font-weight: 600;
     font-size: 0.75rem;
     padding: 8px 0;
-    background-color: rgba(0, 0, 0, 0.02);
+    background-color: var(--usaw-subtle);
     border-radius: 8px;
     margin-bottom: 8px;
     display: flex;
@@ -78,6 +78,7 @@
 /* Tile base styles - Improved grid alignment */
 .react-calendar__tile {
     position: relative;
+    color: var(--usaw-text);
     height: 70px;
     display: flex;
     align-items: center;
@@ -144,14 +145,14 @@ button.react-calendar__tile.react-calendar__year-view__months__month:hover {
 
 /* Selected Date Styles */
 .react-calendar__tile--active {
-    background: #1976d2 !important;
+    background: #174a87 !important;
     color: white !important;
     border-radius: 50%;
 }
 
 /* Neighboring Month Days */
 .react-calendar__month-view__days__day--neighboringMonth {
-    color: #bdbdbd;
+    color: var(--usaw-muted);
 }
 
 /* Event List Styles - More modern look */

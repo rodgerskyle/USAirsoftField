@@ -219,7 +219,7 @@ const WEEKDAY_PARTY_CARDS = [
 ];
 
 const SECTION_BUTTONS = [
-    { key: PRICING_SECTIONS.GAMEPLAY, label: 'Gameplay', icon: faTicketAlt },
+    { key: PRICING_SECTIONS.GAMEPLAY, label: 'Open Play', icon: faTicketAlt },
     { key: PRICING_SECTIONS.RENTALS, label: 'Rentals', icon: faShieldAlt },
     { key: PRICING_SECTIONS.MEMBERSHIP, label: 'Membership', icon: faUsers },
     { key: PRICING_SECTIONS.PARTIES, label: 'Parties', icon: faClock },
@@ -245,23 +245,6 @@ const PricingCard = ({ name, price, accent, description, items, badge }) => (
             <p className="pricing-modern-card-description">{description}</p>
         </div>
         <FeatureList items={items} />
-    </div>
-);
-
-const SummaryStrip = () => (
-    <div className="pricing-modern-summary">
-        <div className="pricing-modern-summary-item">
-            <span className="pricing-modern-summary-value">$20</span>
-            <span className="pricing-modern-summary-label">Standard rental</span>
-        </div>
-        <div className="pricing-modern-summary-item">
-            <span className="pricing-modern-summary-value">$30</span>
-            <span className="pricing-modern-summary-label">Member gamepass</span>
-        </div>
-        <div className="pricing-modern-summary-item">
-            <span className="pricing-modern-summary-value">$400</span>
-            <span className="pricing-modern-summary-label">Nerf Arena private booking</span>
-        </div>
     </div>
 );
 
@@ -376,12 +359,11 @@ const ContactCta = () => (
 );
 
 const Pricing = () => {
-    const [activeSection, setActiveSection] = useState(PRICING_SECTIONS.GAMEPLAY);
-    const resolvedSection = SECTION_META[activeSection] ? activeSection : PRICING_SECTIONS.GAMEPLAY;
-    const activeMeta = SECTION_META[resolvedSection];
+    const [activeSection, setActiveSection] = useState(null);
+    const activeMeta = SECTION_META[activeSection];
 
     const renderSection = () => {
-        switch (resolvedSection) {
+        switch (activeSection) {
             case PRICING_SECTIONS.GAMEPLAY:
                 return <GameplaySection />;
             case PRICING_SECTIONS.RENTALS:
@@ -391,7 +373,7 @@ const Pricing = () => {
             case PRICING_SECTIONS.PARTIES:
                 return <PartiesSection />;
             default:
-                return <GameplaySection />;
+                return null;
         }
     };
 
@@ -408,20 +390,18 @@ const Pricing = () => {
             <Container className="pricing-modern-shell">
                 <section className="pricing-modern-hero">
                     <h1 className="pricing-modern-title">Pricing</h1>
-                    <p className="pricing-modern-copy">
-                        {activeMeta.intro}
-                    </p>
-                    <SummaryStrip />
+                    <p className="pricing-modern-copy">Choose a category to see rates and what’s included.</p>
                 </section>
 
-                <div className="pricing-modern-tabs" role="tablist" aria-label="Pricing sections">
+                <div className="pricing-modern-tabs" role="group" aria-label="Pricing categories">
                     {SECTION_BUTTONS.map((section) => (
                         <button
                             key={section.key}
                             type="button"
-                            className={resolvedSection === section.key ? 'pricing-modern-tab active' : 'pricing-modern-tab'}
+                            className={activeSection === section.key ? 'pricing-modern-tab active' : 'pricing-modern-tab'}
                             onClick={() => setActiveSection(section.key)}
-                            aria-pressed={resolvedSection === section.key}
+                            aria-pressed={activeSection === section.key}
+                            aria-controls="pricing-details"
                         >
                             <FontAwesomeIcon icon={section.icon} />
                             <span>{section.label}</span>
@@ -429,13 +409,18 @@ const Pricing = () => {
                     ))}
                 </div>
 
-                <section className="pricing-modern-panel">
-                    <div className="pricing-modern-panel-header">
-                        <p className="pricing-modern-panel-eyebrow">{activeMeta.eyebrow}</p>
-                        <h2 className="pricing-modern-panel-title">{activeMeta.title}</h2>
-                    </div>
-                    <div>{renderSection()}</div>
-                </section>
+                <div id="pricing-details">
+                    {activeMeta && (
+                        <section className="pricing-modern-panel" aria-labelledby="pricing-details-title">
+                            <div className="pricing-modern-panel-header">
+                                <p className="pricing-modern-panel-eyebrow">{activeMeta.eyebrow}</p>
+                                <h2 className="pricing-modern-panel-title" id="pricing-details-title">{activeMeta.title}</h2>
+                                <p className="pricing-modern-copy">{activeMeta.intro}</p>
+                            </div>
+                            {renderSection()}
+                        </section>
+                    )}
+                </div>
 
                 <ContactCta />
             </Container>

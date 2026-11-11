@@ -12,7 +12,7 @@ class Membership extends Component {
     render() {
         return (
             <div className="background-static-all">
-                <h2 className="page-header">Membership</h2>
+                <h2 className="page-header text-body">Membership</h2>
             </div>
         );
     }

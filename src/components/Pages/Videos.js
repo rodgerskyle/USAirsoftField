@@ -47,7 +47,7 @@ class Videos extends Component {
                 <Helmet>
                     <title>US Airsoft Field: Youtube Videos</title>
                 </Helmet>
-                <h2 className="page-header"> 
+                <h2 className="page-header text-body">
                 <a href="https://www.youtube.com/user/USAirsoftWorldInc" target="_blank" rel="noopener noreferrer" className="a-youtube-link">
                 <img src={ytlogo} alt="Instagram Logo" className="youtube-logo"/>Youtube Videos</a>
                 </h2>

@@ -6,13 +6,16 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import * as serviceWorker from './serviceWorker';
 import Firebase, { FirebaseContext } from './components/Firebase';
 import { HelmetProvider } from 'react-helmet-async';
+import { AppearanceProvider } from './Appearance';
 
 //const root = createRoot(document.getElementById("root"));
 render(
   <React.StrictMode>
     <FirebaseContext.Provider value={new Firebase()}>
       <HelmetProvider>
-        <App />
+        <AppearanceProvider>
+          <App />
+        </AppearanceProvider>
       </HelmetProvider>
     </FirebaseContext.Provider>
   </React.StrictMode>,
