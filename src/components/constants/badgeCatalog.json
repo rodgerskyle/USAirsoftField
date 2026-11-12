@@ -1,0 +1,72 @@
+[
+  {
+    "id": "ambassador",
+    "name": "USAW Ambassador",
+    "description": "Recognized for sportsmanship, kindness, and setting an example for others."
+  },
+  {
+    "id": "countdown",
+    "name": "Countdown",
+    "description": "Recognized by staff for an achievement in Countdown."
+  },
+  {
+    "id": "three-flag",
+    "name": "3 Flag",
+    "description": "Recognized by staff for an achievement in 3 Flag."
+  },
+  {
+    "id": "downed-pilot",
+    "name": "Downed Pilot",
+    "description": "Recognized by staff for an achievement in Save the Downed Pilot."
+  },
+  {
+    "id": "ring-the-bell",
+    "name": "Ring the Bell",
+    "description": "Recognized by staff for an achievement in Ring the Bell."
+  },
+  {
+    "id": "power-struggle",
+    "name": "Power Struggle",
+    "description": "Recognized by staff for an achievement in Power Struggle."
+  },
+  {
+    "id": "sticky-bomb",
+    "name": "Sticky Bomb",
+    "description": "Recognized by staff for an achievement in Sticky Bomb."
+  },
+  {
+    "id": "three-bomb",
+    "name": "3 Bomb",
+    "description": "Recognized by staff for an achievement in 3 Bomb."
+  },
+  {
+    "id": "first-game",
+    "name": "First Game",
+    "description": "A welcome to the field after a first USAW game day."
+  },
+  {
+    "id": "community-builder",
+    "name": "Community Builder",
+    "description": "Recognized for helping the USAW community grow."
+  },
+  {
+    "id": "objective-mvp",
+    "name": "Objective MVP",
+    "description": "Awarded for a decisive contribution to the round objective, such as securing a capture or completing an extraction."
+  },
+  {
+    "id": "squad-leader",
+    "name": "Squad Leader",
+    "description": "Awarded for giving clear calls, organizing roles, and keeping a squad coordinated through a round."
+  },
+  {
+    "id": "field-steward",
+    "name": "Field Steward",
+    "description": "Awarded for helping staff care for the field or staging area, such as cleaning up or returning equipment as directed."
+  },
+  {
+    "id": "rookie-mentor",
+    "name": "Rookie Mentor",
+    "description": "Awarded for helping new players get ready and learn field etiquette, game rules, or how to play the objective."
+  }
+]

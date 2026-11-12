@@ -390,6 +390,19 @@
     text-underline-offset: .2em;
 }
 
+.field-lb-player-marks {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    gap: .3rem;
+}
+
+.field-lb-featured-badge {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+}
+
 .field-lb-insignia {
     display: grid;
     flex: 0 0 auto;
@@ -466,6 +479,15 @@
 
     .field-lb-player {
         gap: .35rem;
+    }
+
+    .field-lb-player-marks {
+        gap: .15rem;
+    }
+
+    .field-lb-featured-badge {
+        width: 20px;
+        height: 20px;
     }
 
     .field-lb-insignia {

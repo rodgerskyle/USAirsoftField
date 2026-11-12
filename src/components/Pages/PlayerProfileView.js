@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { getDownloadURL } from 'firebase/storage';
@@ -10,7 +10,9 @@ import rankImages from '../constants/rankimgs';
 import rankNames from '../constants/ranks';
 import rankIncrements from '../constants/rankincrements';
 import * as ROLES from '../constants/roles';
+import { badgeById, getFeaturedBadges, getMyBadges, setFeaturedBadge } from '../constants/playerBadges';
 import SharePageLink from '../constants/SharePageLink';
+import PlayerBadgeCollection from './PlayerBadgeCollection';
 import './PlayerProfileView.css';
 
 const sections = [
@@ -21,6 +23,64 @@ const sections = [
 
 const numberFormat = new Intl.NumberFormat('en-US');
 const dateFormat = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+
+function getBadge(id) {
+  const badge = badgeById[id];
+  return badge?.id === id ? badge : undefined;
+}
+
+function useProfileBadges(firebase, playerId, account, eligible) {
+  const [record, setRecord] = useState(null);
+  const [error, setError] = useState('');
+  const [feedback, setFeedback] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const request = useRef(null);
+
+  useEffect(() => {
+    if (!eligible || !playerId) return undefined;
+    const controller = new AbortController();
+    request.current = controller;
+    const options = { signal: controller.signal };
+    const result = account
+      ? getMyBadges(firebase, options)
+      : getFeaturedBadges([playerId], options).then((featured) => ({ featuredBadgeId: featured[playerId] }));
+    result.then((data) => {
+      if (!controller.signal.aborted) setRecord(data);
+    }).catch((failure) => {
+      if (!controller.signal.aborted) setError(failure.message || 'Badge information is temporarily unavailable.');
+    });
+    return () => controller.abort();
+  }, [account, attempt, eligible, firebase, playerId]);
+
+  function retry() {
+    setError('');
+    setRecord(null);
+    setFeedback(null);
+    setAttempt((value) => value + 1);
+  }
+
+  async function chooseBadge(badgeId) {
+    const current = request.current;
+    if (!account || !eligible || !current || current.signal.aborted || saving) return;
+    setSaving(true);
+    setFeedback(null);
+    try {
+      const { featuredBadgeId } = await setFeaturedBadge(firebase, badgeId);
+      if (current.signal.aborted) return;
+      setRecord((previous) => ({ ...previous, featuredBadgeId }));
+      setFeedback({ message: featuredBadgeId ? 'Featured badge updated.' : 'Featured badge removed.' });
+    } catch (failure) {
+      if (!current.signal.aborted) {
+        setFeedback({ error: true, message: failure.message || 'Could not save your selection. Try again.' });
+      }
+    } finally {
+      if (!current.signal.aborted) setSaving(false);
+    }
+  }
+
+  return { record, error, feedback, saving, retry, chooseBadge };
+}
 
 function count(value) {
   const number = Number(value);
@@ -172,6 +232,11 @@ function GameFeed({ games }) {
 export default function PlayerProfileView({ firebase, user, playerId, account = false }) {
   const [section, setSection] = useState('overview');
   const profileImage = useProfileImage(firebase, playerId, user.profilepic);
+  const badgeEligible = !user.roles?.[ROLES.WAIVER];
+  const canManageBadges = account && badgeEligible;
+  const badges = useProfileBadges(firebase, playerId, canManageBadges, badgeEligible);
+  const featuredBadge = getBadge(badges.record?.featuredBadgeId);
+  const profileSections = canManageBadges ? [...sections, { id: 'badges', label: 'Badges' }] : sections;
   const displayName = user.username || user.name || 'USAW player';
   const team = typeof user.team === 'string' ? user.team.trim() : '';
   const points = count(user.points);
@@ -227,19 +292,34 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
                 {user.renewal && <div><dt>Renewal</dt><dd>{user.renewal}</dd></div>}
               </dl>
             </div>
-            <div className="player-profile__rank">
-              <img src={rankImages[rank]} alt="" />
-              <div>
-                <p className="player-profile__label">Current rank</p>
-                <strong>{rankNames[rank]}</strong>
+            <div className="player-profile__honors">
+              <div className="player-profile__rank">
+                <img src={rankImages[rank]} alt="" />
+                <div>
+                  <p className="player-profile__label">Current rank</p>
+                  <strong>{rankNames[rank]}</strong>
+                </div>
               </div>
+              {featuredBadge && (
+                <div className="player-profile__featured-badge">
+                  <img src={featuredBadge.thumbUrl} alt="" width="58" height="58" decoding="async" />
+                  <div>
+                    <p className="player-profile__label">Featured badge</p>
+                    <strong>{featuredBadge.name}</strong>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </header>
       <div className="player-profile__wrap player-profile__body">
-        <div className="player-profile__sections" role="group" aria-label="Profile sections">
-          {sections.map(({ id, label }) => (
+        <div
+          className={`player-profile__sections${canManageBadges ? ' player-profile__sections--with-badges' : ''}`}
+          role="group"
+          aria-label="Profile sections"
+        >
+          {profileSections.map(({ id, label }) => (
             <button key={id} type="button" aria-pressed={section === id} onClick={() => setSection(id)}>
               {label}
             </button>
@@ -269,6 +349,19 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
           </div>
         )}
         {section === 'game-feed' && <GameFeed games={user.games} />}
+        {section === 'badges' && canManageBadges && (
+          <PlayerBadgeCollection
+            awards={badges.record?.awards || []}
+            featuredBadgeId={featuredBadge?.id}
+            getBadge={getBadge}
+            loading={!badges.record && !badges.error}
+            error={badges.error}
+            onRetry={badges.retry}
+            onFeature={badges.chooseBadge}
+            saving={badges.saving}
+            feedback={badges.feedback}
+          />
+        )}
       </div>
     </main>
   );

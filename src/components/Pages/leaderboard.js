@@ -10,6 +10,7 @@ import ranks from '../constants/ranks';
 import rankImages from '../constants/rankimgs';
 import * as ROLES from '../constants/roles';
 import SharePageLink from '../constants/SharePageLink';
+import { badgeById, getFeaturedBadges } from '../constants/playerBadges';
 import { withFirebase } from '../Firebase';
 import { AuthUserContext } from '../session';
 import './leaderboard.css';
@@ -59,7 +60,7 @@ function RankInsignia({ points }) {
     );
 }
 
-function LeaderboardTable({ players, personalUid, period }) {
+function LeaderboardTable({ players, personalUid, period, featured }) {
     return (
         <table className="field-lb-table">
             <caption className="visually-hidden">{period} player standings</caption>
@@ -78,7 +79,15 @@ function LeaderboardTable({ players, personalUid, period }) {
                         <td><span className="field-lb-place">#{player.position}</span></td>
                         <th scope="row">
                             <Link className="field-lb-player" to={profilePath(player)}>
-                                <RankInsignia points={player.careerPoints} />
+                                <span className="field-lb-player-marks">
+                                    <RankInsignia points={player.careerPoints} />
+                                    {badgeById[featured[player.uid]] && (
+                                        <img className="field-lb-featured-badge" loading="lazy" width="30" height="30"
+                                            src={badgeById[featured[player.uid]].thumbUrl}
+                                            alt={`Featured badge: ${badgeById[featured[player.uid]].name}`}
+                                            title={badgeById[featured[player.uid]].name} />
+                                    )}
+                                </span>
                                 <span>{player.name}</span>
                             </Link>
                         </th>
@@ -109,6 +118,7 @@ function Leaderboard({ firebase }) {
     const [status, setStatus] = useState('loading');
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
+    const [featured, setFeatured] = useState({});
 
     useEffect(() => onValue(firebase.users(), snapshot => {
         const publicPlayers = Object.entries(snapshot.val() ?? {})
@@ -141,10 +151,22 @@ function Leaderboard({ firebase }) {
     const personalPlayer = standings.find(player => player.uid === authUser?.uid && player.personalEligible);
     const leaders = standings.slice(0, 3).filter(player => !monthly || player.points > 0);
     const query = search.trim().toLowerCase();
-    const results = query ? standings.filter(player => player.name.toLowerCase().includes(query)) : standings;
+    const results = useMemo(() => query
+        ? standings.filter(player => player.name.toLowerCase().includes(query))
+        : standings, [query, standings]);
     const pageCount = Math.max(1, Math.ceil(results.length / PAGE_SIZE));
     const currentPage = Math.min(page, pageCount);
     const offset = (currentPage - 1) * PAGE_SIZE;
+    const visiblePlayers = useMemo(() => results.slice(offset, offset + PAGE_SIZE), [results, offset]);
+
+    useEffect(() => {
+        if (!visiblePlayers.length) return undefined;
+        const controller = new AbortController();
+        getFeaturedBadges(visiblePlayers.map(player => player.uid), { signal: controller.signal })
+            .then((badges) => { if (!controller.signal.aborted) setFeatured(badges); })
+            .catch(() => { if (!controller.signal.aborted) setFeatured({}); });
+        return () => controller.abort();
+    }, [visiblePlayers]);
 
     function changePeriod(view, month = currentMonth, year = currentYear) {
         const next = new URLSearchParams(params);
@@ -252,7 +274,8 @@ function Leaderboard({ firebase }) {
                         </div>
                     ) : (
                         <>
-                            <LeaderboardTable players={results.slice(offset, offset + PAGE_SIZE)} personalUid={personalPlayer?.uid} period={period} />
+                            <LeaderboardTable players={visiblePlayers} personalUid={personalPlayer?.uid} period={period}
+                                featured={featured} />
                             {pageCount > 1 && (
                                 <div className="field-lb-pagination">
                                     <Pagination count={pageCount} page={currentPage} onChange={(_, value) => setPage(value)}
