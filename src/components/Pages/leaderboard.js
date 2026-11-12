@@ -68,8 +68,8 @@ function LeaderboardTable({ players, personalUid, period, featured }) {
                 <tr>
                     <th scope="col">Place</th>
                     <th scope="col">Player</th>
-                    <th scope="col">Wins</th>
-                    <th scope="col">Losses</th>
+                    <th scope="col" className="field-lb-wins">Wins</th>
+                    <th scope="col" className="field-lb-losses">Losses</th>
                     <th scope="col">Points</th>
                 </tr>
             </thead>
@@ -91,8 +91,8 @@ function LeaderboardTable({ players, personalUid, period, featured }) {
                                 <span>{player.name}</span>
                             </Link>
                         </th>
-                        <td>{formatScore(player.wins)}</td>
-                        <td>{formatScore(player.losses)}</td>
+                        <td className="field-lb-wins">{formatScore(player.wins)}</td>
+                        <td className="field-lb-losses">{formatScore(player.losses)}</td>
                         <td className="field-lb-points">{formatScore(player.points)}</td>
                     </tr>
                 ))}

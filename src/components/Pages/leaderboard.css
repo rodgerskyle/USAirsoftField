@@ -1,7 +1,14 @@
 .field-lb {
+    --field-lb-win: #196236;
+    --field-lb-loss: #a12235;
     min-height: 70vh;
     color: var(--usaw-text);
     background: var(--usaw-page-bg);
+}
+
+[data-bs-theme="dark"] .field-lb {
+    --field-lb-win: #8cdeaa;
+    --field-lb-loss: #ffa6b1;
 }
 
 .field-lb-wrap {
@@ -348,6 +355,16 @@
     color: var(--usaw-muted);
     background: var(--usaw-raised);
     font-size: .82rem;
+}
+
+.field-lb-wins {
+    color: var(--field-lb-win);
+    font-weight: 750;
+}
+
+.field-lb-losses {
+    color: var(--field-lb-loss);
+    font-weight: 750;
 }
 
 .field-lb-table th:first-child {
