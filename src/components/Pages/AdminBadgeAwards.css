@@ -133,6 +133,12 @@
   margin-top: .7rem;
 }
 
+.admin-badge-awards__counts-error {
+  display: grid;
+  gap: .5rem;
+  justify-items: start;
+}
+
 .admin-badge-awards__session {
   align-items: center;
   display: flex;

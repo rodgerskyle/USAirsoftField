@@ -11,7 +11,7 @@ import rankImages from '../constants/rankimgs';
 import rankNames from '../constants/ranks';
 import rankIncrements from '../constants/rankincrements';
 import * as ROLES from '../constants/roles';
-import { badgeById, getFeaturedBadges, getMyBadges, setFeaturedBadge } from '../constants/playerBadges';
+import { badgeById, getFeaturedBadgeDetails, getMyBadges, setFeaturedBadge } from '../constants/playerBadges';
 import SharePageLink from '../constants/SharePageLink';
 import PlayerBadgeCollection from './PlayerBadgeCollection';
 import './PlayerProfileView.css';
@@ -32,7 +32,7 @@ function getBadge(id) {
 
 function useProfileBadges(firebase, playerId, account, eligible) {
   const [record, setRecord] = useState(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
   const [feedback, setFeedback] = useState(null);
   const [saving, setSaving] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -45,17 +45,20 @@ function useProfileBadges(firebase, playerId, account, eligible) {
     const options = { signal: controller.signal };
     const result = account
       ? getMyBadges(firebase, options)
-      : getFeaturedBadges([playerId], options).then((featured) => ({ featuredBadgeId: featured[playerId] }));
+      : getFeaturedBadgeDetails([playerId], options).then(({ featured, featuredCounts }) => ({
+          featuredBadgeId: featured[playerId],
+          featuredEarnedCount: featuredCounts[playerId],
+        }));
     result.then((data) => {
       if (!controller.signal.aborted) setRecord(data);
     }).catch((failure) => {
-      if (!controller.signal.aborted) setError(failure.message || 'Badge information is temporarily unavailable.');
+      if (!controller.signal.aborted) setError(failure);
     });
     return () => controller.abort();
   }, [account, attempt, eligible, firebase, playerId]);
 
   function retry() {
-    setError('');
+    setError(null);
     setRecord(null);
     setFeedback(null);
     setAttempt((value) => value + 1);
@@ -275,6 +278,10 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
   const canManageBadges = account && badgeEligible;
   const badges = useProfileBadges(firebase, playerId, canManageBadges, badgeEligible);
   const featuredBadge = getBadge(badges.record?.featuredBadgeId);
+  const featuredEarnedCount = (canManageBadges
+    ? badges.record?.awards?.find(award => award.badgeId === featuredBadge?.id)?.earnedCount
+    : badges.record?.featuredEarnedCount) || 1;
+  const featuredCountText = numberFormat.format(featuredEarnedCount);
   const profileSections = canManageBadges ? [...sections, { id: 'badges', label: 'Badges' }] : sections;
   const displayName = user.username || user.name || 'USAW player';
   const team = typeof user.team === 'string' ? user.team.trim() : '';
@@ -337,7 +344,15 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
               </div>
               {featuredBadge && (
                 <div className="player-profile__featured-badge">
-                  <img src={featuredBadge.artUrl} alt="" width="68" height="68" decoding="async" />
+                  <span className="player-profile__featured-patch">
+                    <img src={featuredBadge.artUrl} alt="" width="68" height="68" decoding="async" />
+                    <span className="player-profile__featured-count">
+                      <span aria-hidden="true">×{featuredCountText}</span>
+                      <span className="visually-hidden">
+                        Earned {featuredCountText} {featuredEarnedCount === 1 ? 'time' : 'times'}
+                      </span>
+                    </span>
+                  </span>
                   <div>
                     <p className="player-profile__label">Featured badge</p>
                     <strong>{featuredBadge.name}</strong>
@@ -390,7 +405,8 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
             featuredBadgeId={featuredBadge?.id}
             getBadge={getBadge}
             loading={!badges.record && !badges.error}
-            error={badges.error}
+            error={badges.error && (badges.error.message || 'Badge information is temporarily unavailable.')}
+            membershipExpired={badges.error?.membershipStatus === 'expired'}
             onRetry={badges.retry}
             onFeature={badges.chooseBadge}
             saving={badges.saving}

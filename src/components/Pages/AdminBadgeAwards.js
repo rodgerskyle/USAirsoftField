@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  BADGE_CATALOG, badgeServiceConfigured, grantPlayerBadge, unlockBadgeStaff,
+  BADGE_CATALOG, badgeServiceConfigured, getStaffBadgeCounts, grantPlayerBadge, unlockBadgeStaff,
 } from '../constants/playerBadges';
 import './AdminBadgeAwards.css';
 
@@ -36,15 +36,24 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [staffSession, setStaffSession] = useState(null);
+  const [countLookup, setCountLookup] = useState(null);
+  const [countRequest, setCountRequest] = useState(0);
   const searchInput = useRef(null);
   const badgeSelect = useRef(null);
+  const pendingGrants = useRef(new Map());
 
   const eligiblePlayers = useMemo(() => players.filter(player =>
     PLAYER_ID.test(player.uid) && (named(player.name) || named(player.username))
   ), [players]);
 
   const selectedPlayer = eligiblePlayers.find(player => player.uid === playerId);
+  const selectedPlayerId = selectedPlayer?.uid;
   const selectedBadge = BADGE_CATALOG.find(badge => badge.id === badgeId);
+  const staffToken = staffSession?.staffToken;
+  const playerCounts = countLookup?.playerId === selectedPlayerId ? countLookup : null;
+  const counts = playerCounts?.counts;
+  const earnedCount = counts?.[badgeId] || 0;
+  const isRepeat = earnedCount > 0;
   const query = search.trim();
   const normalizedQuery = query.toLowerCase();
   const exactId = profileIdFromSearch(query) || query;
@@ -54,22 +63,59 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
     )
   );
   const cleanReason = normalizeReason(reason);
-  const canGrant = !!staffSession && !!selectedPlayer && !!selectedBadge &&
-    cleanReason.length >= 3 && cleanReason.length <= 160 && !busy;
+  const canGrant = !!staffToken && !!selectedPlayer && !!selectedBadge && !!counts &&
+    (isRepeat || (cleanReason.length >= 3 && cleanReason.length <= 160)) && !busy;
 
   useEffect(() => {
     if (!staffSession) return undefined;
     searchInput.current?.focus();
     const timer = setTimeout(() => {
       setStaffSession(null);
+      setCountLookup(null);
       setReason('');
       setFeedback({ text: 'Badge access expired. Unlock the controls to continue.' });
     }, Math.max(0, staffSession.expiresAt - Date.now()));
     return () => clearTimeout(timer);
   }, [staffSession]);
 
+  useEffect(() => {
+    if (!selectedPlayerId || !staffToken) return undefined;
+    const controller = new AbortController();
+    getStaffBadgeCounts(firebase, selectedPlayerId, staffToken, { signal: controller.signal })
+      .then(({ counts: result }) => {
+        if (!result || typeof result !== 'object' || Array.isArray(result)) {
+          throw new Error('The player’s badge counts could not be loaded.');
+        }
+        if (!controller.signal.aborted) setCountLookup({ playerId: selectedPlayerId, counts: result });
+      })
+      .catch(error => {
+        if (controller.signal.aborted) return;
+        const message = error?.message || 'The player’s badge counts could not be loaded.';
+        if (error?.status === 401) {
+          setStaffSession(null);
+          setFeedback({ error: true, text: message });
+          return;
+        }
+        setCountLookup({ playerId: selectedPlayerId, error: message });
+      });
+    return () => controller.abort();
+  }, [firebase, selectedPlayerId, staffToken, countRequest]);
+
+  function retryCounts() {
+    setCountLookup(null);
+    setCountRequest(request => request + 1);
+  }
+
+  function updateCount(player, badge, count) {
+    setCountLookup(lookup => {
+      if (lookup?.playerId !== player || !lookup.counts) return lookup;
+      return { ...lookup, counts: { ...lookup.counts, [badge]: count } };
+    });
+  }
+
   function choosePlayer(player) {
     setPlayerId(player?.uid || '');
+    setCountLookup(null);
     setReason('');
     setFeedback(null);
     setSearch(player ? displayName(player) : '');
@@ -100,6 +146,7 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
       if (!result.staffToken || !Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
         throw new Error('Badge access could not be unlocked. Try again.');
       }
+      setCountLookup(null);
       setStaffSession({ staffToken: result.staffToken, expiresAt });
     } catch (error) {
       setFeedback({ error: true, text: error?.message || 'Badge access could not be unlocked. Try again.' });
@@ -111,17 +158,32 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
   async function submit(event) {
     event.preventDefault();
     if (!canGrant) return;
+    const target = `${selectedPlayerId}:${badgeId}`;
+    const grantId = pendingGrants.current.get(target) || crypto.randomUUID();
+    pendingGrants.current.set(target, grantId);
     setBusy(true);
     setFeedback(null);
     try {
-      await grantPlayerBadge(firebase, {
-        playerId: selectedPlayer.uid, badgeId: selectedBadge.id, reason: cleanReason,
-      }, staffSession.staffToken);
-      setFeedback({ text: `${selectedBadge.name} awarded to ${displayName(selectedPlayer)}.` });
+      const { award } = await grantPlayerBadge(firebase, {
+        playerId: selectedPlayerId, badgeId, reason: isRepeat ? '' : cleanReason, grantId,
+      }, staffToken);
+      const count = award?.earnedCount;
+      if (!Number.isSafeInteger(count) || count < 1) throw new Error('The award could not be confirmed.');
+      pendingGrants.current.delete(target);
+      updateCount(selectedPlayerId, badgeId, count);
+      setFeedback({ text: `${selectedBadge.name} awarded to ${displayName(selectedPlayer)}. Earned ${count} ${count === 1 ? 'time' : 'times'}.` });
       setReason('');
     } catch (error) {
       if (error?.status === 401) setStaffSession(null);
-      setFeedback({ error: true, text: error?.message || 'The award could not be saved. Try again.' });
+      if (error?.code === 'FIRST_AWARD_REASON_REQUIRED') updateCount(selectedPlayerId, badgeId, 0);
+      const uncertain = !error?.status || error.status === 408 || error.status >= 500;
+      setFeedback({
+        error: true,
+        retry: uncertain,
+        text: uncertain
+          ? 'The award could not be confirmed. Retry to check the same grant.'
+          : error.message || 'The award could not be saved. Try again.',
+      });
     } finally {
       setBusy(false);
     }
@@ -153,6 +215,7 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
                 onChange={event => {
                   setSearch(event.target.value);
                   setPlayerId('');
+                  setCountLookup(null);
                   setReason('');
                   setFeedback(null);
                 }} />
@@ -186,16 +249,29 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
               ) : loading ? <p role="status">Loading player directory…</p>
                 : directoryUnavailable ? <p role="alert">The player directory is unavailable. Reload to try again.</p>
                 : query.length >= 2 ? <p role="status">No matching players.</p> : null}
+              {selectedPlayer && !counts && (playerCounts?.error ? (
+                <div className="admin-badge-awards__counts-error">
+                  <p role="alert">{playerCounts.error}</p>
+                  <button type="button" className="admin-badge-awards__change" onClick={retryCounts}>
+                    Retry badge counts
+                  </button>
+                </div>
+              ) : <p role="status">Loading badge counts…</p>)}
             </div>
 
             <div className="admin-badge-awards__patch">
               <label htmlFor="admin-badges-patch">Badge</label>
               <select ref={badgeSelect} id="admin-badges-patch" value={badgeId} required onChange={event => {
                 setBadgeId(event.target.value);
+                setReason('');
                 setFeedback(null);
               }}>
                 <option value="">Choose a badge</option>
-                {BADGE_CATALOG.map(badge => <option key={badge.id} value={badge.id}>{badge.name}</option>)}
+                {BADGE_CATALOG.map(badge => (
+                  <option key={badge.id} value={badge.id}>
+                    {badge.name}{counts?.[badge.id] > 0 ? ` · ${counts[badge.id]} earned` : ''}
+                  </option>
+                ))}
               </select>
               {selectedBadge && (
                 <div className="admin-badge-awards__preview">
@@ -203,16 +279,25 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
                   <div>
                     <strong>{selectedBadge.name}</strong>
                     <p>{selectedBadge.description}</p>
+                    {counts && <p><strong>Earned {earnedCount} {earnedCount === 1 ? 'time' : 'times'}</strong></p>}
                   </div>
                 </div>
               )}
-              <label htmlFor="admin-badges-reason">Public award reason</label>
-              <textarea id="admin-badges-reason" value={reason} required minLength={3} maxLength={160}
-                aria-describedby="admin-badges-reason-length"
-                rows={3} onChange={event => setReason(event.target.value)} />
-              <small id="admin-badges-reason-length">3–160 characters</small>
+              {counts && selectedBadge && (isRepeat ? (
+                <p>Granting again adds one to this player’s count.</p>
+              ) : (
+                <>
+                  <label htmlFor="admin-badges-reason">Reason for first award</label>
+                  <textarea id="admin-badges-reason" value={reason} required minLength={3} maxLength={160}
+                    aria-describedby="admin-badges-reason-length"
+                    rows={3} onChange={event => setReason(event.target.value)} />
+                  <small id="admin-badges-reason-length">3–160 characters. Visible to the player and staff.</small>
+                </>
+              ))}
               <div className="admin-badge-awards__actions">
-                <button type="submit" disabled={!canGrant}>{busy ? 'Granting badge…' : 'Grant badge'}</button>
+                <button type="submit" disabled={!canGrant}>
+                  {busy ? 'Granting badge…' : feedback?.retry ? 'Retry grant' : isRepeat ? 'Grant again' : 'Grant badge'}
+                </button>
               </div>
             </div>
           </fieldset>
@@ -221,7 +306,7 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
       ) : (
         <form key="unlock" className="admin-badge-awards__card admin-badge-awards__unlock" onSubmit={unlock}
           autoComplete="off" aria-busy={busy}>
-          <p>Unlock badge granting with your Field Companion staff credentials.</p>
+          <p>Unlock badge granting with your USAW staff credentials.</p>
           <fieldset className="admin-badge-awards__fields" disabled={busy}>
             <div>
               <label htmlFor="admin-badges-email">Staff email</label>

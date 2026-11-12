@@ -227,6 +227,21 @@
   object-fit: contain;
 }
 
+.player-profile__featured-patch {
+  display: grid;
+  flex: 0 0 auto;
+  justify-items: center;
+  gap: 2px;
+}
+
+.player-profile__featured-count {
+  color: #ffe3a7;
+  font-size: .83rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
 .player-profile__hero .player-profile__featured-badge .player-profile__label {
   color: #f6db96;
 }
@@ -550,8 +565,12 @@
   cursor: not-allowed;
 }
 
-.player-profile__badge-error button {
-  margin-top: 10px;
+.player-profile__badge-error :is(button, a) {
+  margin: 10px 10px 0 0;
+}
+
+.player-profile__badge-header {
+  flex-wrap: wrap;
 }
 
 .player-profile__badge-wall {
@@ -598,6 +617,18 @@
   width: min(90%, 144px);
   height: auto;
   object-fit: contain;
+}
+
+.player-profile__badge-count {
+  justify-self: center;
+  padding: 2px 8px;
+  border-radius: 5px;
+  background: var(--usaw-subtle);
+  color: var(--usaw-text);
+  font-size: .82rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
 }
 
 .player-profile__badge-name {
