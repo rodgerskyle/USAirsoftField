@@ -5,13 +5,15 @@ import Calendar from 'react-calendar';
 import '../constants/react-calendar.css';
 import { Add, Delete, Edit, Event as EventIcon, FiberManualRecord } from '@mui/icons-material';
 import { Box, Card, Container, IconButton, Paper, Typography } from '@mui/material';
-import { onValue, push, remove, runTransaction, set } from 'firebase/database';
+import { child, get, onValue, push, remove, runTransaction, set } from 'firebase/database';
 import { withFirebase } from '../Firebase';
 import * as ROLES from '../constants/roles';
 import staticEvents from '../constants/staticcalendarevents';
 import useFieldResources from '../constants/useFieldResources';
+import { publishFieldEvents, readPostedFieldEvents } from '../constants/fieldCalendar';
 
 const fields = ['date', 'name', 'time', 'additional'];
+const dateOnly = /^\d{4}-\d{2}-\d{2}$/;
 const pacificDate = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit',
 });
@@ -29,8 +31,20 @@ function inputDate(date) {
 }
 
 function fieldDate(value) {
-    const date = new Date(value);
-    return Number.isFinite(date.getTime()) ? pacificDate.format(date) : '';
+    const isDateOnly = typeof value === 'string' && dateOnly.test(value);
+    const date = new Date(isDateOnly ? value + 'T20:00:00Z' : value);
+    if (!Number.isFinite(date.getTime())) return '';
+    if (isDateOnly) return date.toISOString().slice(0, 10) === value ? value : '';
+    const { year, month, day } = Object.fromEntries(pacificDate.formatToParts(date).map(({ type, value: part }) => [type, part]));
+    return `${year}-${month}-${day}`;
+}
+
+function calendarDate(value) {
+    return new Date(value + 'T12:00:00');
+}
+
+function isCalendarEvent(event) {
+    return typeof event?.name === 'string' && typeof event.date === 'string' && Boolean(fieldDate(event.date));
 }
 
 function regularEvent(date, hours) {
@@ -90,50 +104,114 @@ function EventEditor({ editor, date, saving, cancel, save }) {
 }
 
 function Schedule({ firebase }) {
-    const [date, setDate] = useState(() => new Date());
+    const [date, setDate] = useState(() => calendarDate(fieldDate(new Date())));
+    const [activeMonth, setActiveMonth] = useState(() => new Date(date.getFullYear(), date.getMonth(), 1));
     const [events, setEvents] = useState([]);
-    const [authUser, setAuthUser] = useState(null);
+    const [viewer, setViewer] = useState(null);
+    const [admin, setAdmin] = useState(null);
     const [loading, setLoading] = useState(true);
     const [scheduleUnavailable, setScheduleUnavailable] = useState(false);
+    const [refreshCount, setRefreshCount] = useState(0);
     const [editor, setEditor] = useState(null);
     const [showDelete, setShowDelete] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [publishing, setPublishing] = useState(false);
     const [feedback, setFeedback] = useState(null);
     const pendingCreate = useRef(null);
-    const isAdmin = Boolean(authUser?.roles?.[ROLES.ADMIN]);
+    const isAdmin = Boolean(admin);
     const { resources } = useFieldResources();
 
     useEffect(() => {
         let stopEvents = null;
-        const subscribe = (user) => {
+        let request = null;
+        let active = true;
+        const stopAuth = firebase.auth.onAuthStateChanged((user) => {
+            if (!active) return;
             stopEvents?.();
-            setAuthUser(user);
+            stopEvents = null;
+            request?.abort();
+            request = new AbortController();
+            const { signal } = request;
+            setViewer(user);
+            setAdmin(null);
+            setEvents([]);
+            setEditor(null);
+            setShowDelete(false);
+            setSaving(false);
+            setPublishing(false);
+            setFeedback(null);
+            pendingCreate.current = null;
             setLoading(true);
             setScheduleUnavailable(false);
+
+            let isStaff = false;
+            let hasDirectRead = false;
+            let attemptedPublish = false;
+            function publishExistingEvents() {
+                if (!isStaff || !hasDirectRead || attemptedPublish || signal.aborted) return;
+                attemptedPublish = true;
+                publishFieldEvents(user, signal).catch(() => {
+                    if (!signal.aborted) setFeedback(current => current ?? {
+                        error: true, text: 'Player calendars could not be refreshed. Use Publish existing game days to retry.',
+                    });
+                });
+            }
+
             stopEvents = onValue(firebase.schedule(), (snapshot) => {
+                if (signal.aborted) return;
                 const rows = snapshot.val();
                 setEvents(Object.entries(rows && typeof rows === 'object' ? rows : {})
-                    .filter(([, event]) => typeof event?.name === 'string' && typeof event.date === 'string')
+                    .filter(([, event]) => isCalendarEvent(event))
                     .map(([id, event]) => ({ ...event, id })));
+                setScheduleUnavailable(false);
                 setLoading(false);
-            }, () => {
-                setEvents([]);
-                setScheduleUnavailable(true);
+                hasDirectRead = true;
+                publishExistingEvents();
+            }, async () => {
+                if (signal.aborted) return;
+                const publishedEvents = user ? await readPostedFieldEvents(user, signal).catch(() => null) : null;
+                if (signal.aborted) return;
+                setEvents(publishedEvents ? publishedEvents.filter(isCalendarEvent) : []);
+                setScheduleUnavailable(publishedEvents === null);
                 setLoading(false);
             });
+
+            if (user) {
+                get(child(firebase.user(user.uid), `roles/${ROLES.ADMIN}`)).then(snapshot => {
+                    const role = snapshot.val();
+                    if (signal.aborted || (role !== true && role !== ROLES.ADMIN)) return;
+                    isStaff = true;
+                    setAdmin(user);
+                    publishExistingEvents();
+                }, () => {});
+            }
+        });
+        return () => {
+            active = false;
+            request?.abort();
+            stopEvents?.();
+            stopAuth();
         };
-        const stopAuth = firebase.onAuthUserListener(subscribe, () => subscribe(null));
-        return () => { stopEvents?.(); stopAuth(); };
-    }, [firebase]);
+    }, [firebase, refreshCount]);
 
     const selectedDate = inputDate(date);
-    const displayed = events.filter(event => fieldDate(event.date) === selectedDate);
+    const calendarEvents = events.map(event => ({ ...event, day: fieldDate(event.date) }));
+    const markedDays = new Set(calendarEvents.map(event => event.day));
+    const displayed = calendarEvents.filter(event => event.day === selectedDate);
+    const today = fieldDate(new Date());
+    const upcoming = calendarEvents.filter(event => event.day >= today)
+        .sort((first, second) => first.day.localeCompare(second.day) || first.name.localeCompare(second.name));
     const regular = regularEvent(date, resources?.hours);
     if (regular) displayed.push(regular);
 
+    function showDate(next) {
+        setDate(next);
+        setActiveMonth(new Date(next.getFullYear(), next.getMonth(), 1));
+    }
+
     function selectDate(next) {
         if (!(next instanceof Date) || saving) return;
-        setDate(next);
+        showDate(next);
         setShowDelete(false);
         setEditor(null);
         pendingCreate.current = null;
@@ -149,7 +227,7 @@ function Schedule({ firebase }) {
 
     async function saveEvent(event) {
         event.preventDefault();
-        if (saving || !editor || !isAdmin) return;
+        if (saving || publishing || !editor || !admin || firebase.auth.currentUser !== admin) return;
         const input = new FormData(event.currentTarget);
         const day = input.get('date');
         const when = new Date(day + 'T20:00:00Z');
@@ -173,28 +251,49 @@ function Schedule({ firebase }) {
                 pendingCreate.current ??= push(firebase.schedule());
                 await set(pendingCreate.current, data);
             }
-            setDate(new Date(day + 'T12:00:00'));
+            if (firebase.auth.currentUser !== admin) return;
+            showDate(calendarDate(day));
             setEditor(null);
             pendingCreate.current = null;
-            setFeedback({ text: 'Event saved.' });
+            await syncPlayerCalendar('Event saved and published.', 'Event saved.');
         } catch (error) {
-            setFeedback({ error: true, text: error?.message === 'The event changed. Select it again before editing.'
-                ? error.message : 'The field calendar could not save this event. Check your access and try again.' });
+            if (firebase.auth.currentUser === admin) {
+                setFeedback({ error: true, text: error?.message === 'The event changed. Select it again before editing.'
+                    ? error.message : 'The field calendar could not save this event. Check your access and try again.' });
+            }
         } finally {
-            setSaving(false);
+            if (firebase.auth.currentUser === admin) setSaving(false);
         }
     }
 
     async function deleteEvent(id) {
-        if (!isAdmin || saving) return;
+        if (!admin || saving || publishing || firebase.auth.currentUser !== admin) return;
         setSaving(true);
         try {
             await remove(firebase.scheduleEvent(id));
-            setFeedback({ text: 'Event removed.' });
+            await syncPlayerCalendar('Event removed from player calendars.', 'Event removed.');
         } catch {
-            setFeedback({ error: true, text: 'The field calendar could not remove this event.' });
+            if (firebase.auth.currentUser === admin) {
+                setFeedback({ error: true, text: 'The field calendar could not remove this event.' });
+            }
         } finally {
-            setSaving(false);
+            if (firebase.auth.currentUser === admin) setSaving(false);
+        }
+    }
+
+    async function syncPlayerCalendar(success, saved = '') {
+        if (!admin || firebase.auth.currentUser !== admin) return;
+        setPublishing(true);
+        try {
+            await publishFieldEvents(admin);
+            if (firebase.auth.currentUser === admin) setFeedback({ text: success });
+        } catch {
+            if (firebase.auth.currentUser === admin) setFeedback({
+                error: true,
+                text: `${saved ? saved + ' ' : ''}Player calendars could not be refreshed. Use Publish existing game days to retry.`,
+            });
+        } finally {
+            if (firebase.auth.currentUser === admin) setPublishing(false);
         }
     }
 
@@ -214,8 +313,10 @@ function Schedule({ firebase }) {
                                 <Calendar
                                     onChange={selectDate}
                                     value={date}
+                                    activeStartDate={activeMonth}
+                                    onActiveStartDateChange={({ activeStartDate }) => setActiveMonth(activeStartDate)}
                                     tileContent={({ date: day, view }) => view === 'month' && (
-                                        events.some(event => fieldDate(event.date) === inputDate(day)) || regularEvent(day, resources?.hours)
+                                        markedDays.has(inputDate(day)) || regularEvent(day, resources?.hours)
                                     ) ? <Box sx={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)' }}><FiberManualRecord sx={{ fontSize: 10 }} /></Box> : null}
                                     tileClassName={({ date: day }) => {
                                         if (day.getDay() === 6 || day.getDay() === 0) return 'weekend-calendar-games';
@@ -231,7 +332,10 @@ function Schedule({ firebase }) {
                                         {date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                                     </Typography>
                                 </Box>
-                                {scheduleUnavailable && <p role="status">Regular hours are shown. Posted events are unavailable.</p>}
+                                {scheduleUnavailable && <p role="status">Regular hours are shown. {viewer
+                                    ? 'Posted events are temporarily unavailable.'
+                                    : <> <a href="/login">Sign in</a> to view posted game days.</>}
+                                </p>}
                                 {displayed.map((event) => (
                                     <CalendarEvent
                                         key={event.id ?? event.name}
@@ -241,23 +345,46 @@ function Schedule({ firebase }) {
                                     />
                                 ))}
                                 {isAdmin && (
-                                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
-                                        <IconButton color="primary" aria-label="Add field event" disabled={saving} onClick={() => openEditor()}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+                                        <IconButton color="primary" aria-label="Add field event" disabled={saving || publishing} onClick={() => openEditor()}>
                                             <Add />
                                         </IconButton>
-                                        <IconButton color="error" aria-label="Show remove controls" aria-pressed={showDelete} disabled={saving} onClick={() => {
+                                        <IconButton color="error" aria-label="Show remove controls" aria-pressed={showDelete} disabled={saving || publishing} onClick={() => {
                                             setShowDelete(current => !current);
                                             setEditor(null);
                                             setFeedback(null);
                                         }}>
                                             <Delete />
                                         </IconButton>
+                                        <button type="button" className="btn btn-outline-secondary" disabled={saving || publishing}
+                                            onClick={() => syncPlayerCalendar('Player calendars are up to date.')}>
+                                            {publishing ? 'Publishing…' : 'Publish existing game days'}
+                                        </button>
                                     </Box>
                                 )}
-                                {isAdmin && editor && <EventEditor editor={editor} date={date} saving={saving} cancel={() => setEditor(null)} save={saveEvent} />}
+                                {isAdmin && editor && <EventEditor editor={editor} date={date} saving={saving || publishing} cancel={() => setEditor(null)} save={saveEvent} />}
                                 {feedback && <p className="mt-3" role={feedback.error ? 'alert' : 'status'}>{feedback.text}</p>}
                             </Col>
                         </Row>
+                        <Box component="section" aria-labelledby="upcoming-game-days" sx={{ mt: 3, borderTop: '1px solid var(--usaw-border)', pt: 3 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 2 }}>
+                                <Typography id="upcoming-game-days" variant="h6" component="h3">Upcoming posted game days</Typography>
+                                {!isAdmin && <button type="button" className="btn btn-outline-secondary btn-sm"
+                                    onClick={() => setRefreshCount(count => count + 1)}>Refresh</button>}
+                            </Box>
+                            {upcoming.length > 0 && <ul className="list-unstyled d-grid gap-2 mb-0">
+                                {upcoming.map(event => <li key={event.id}>
+                                    <button className="btn btn-outline-secondary text-start w-100" type="button"
+                                        disabled={saving} onClick={() => selectDate(calendarDate(event.day))}>
+                                        <time dateTime={event.day}>{calendarDate(event.day).toLocaleDateString('en-US', {
+                                            month: 'short', day: 'numeric', year: 'numeric',
+                                        })}</time>
+                                        {' · '}{event.name}{event.time ? ` · ${event.time}` : ''}
+                                    </button>
+                                </li>)}
+                            </ul>}
+                            {!upcoming.length && !scheduleUnavailable && <p className="mb-0">No additional game days are posted yet.</p>}
+                        </Box>
                     </Paper>
                 </Container>
             )}
