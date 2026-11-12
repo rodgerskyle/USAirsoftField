@@ -27,17 +27,34 @@ async function readResponse(response) {
   throw error;
 }
 
-export async function getPlayerPrestige(id, signal) {
-  const query = new URLSearchParams({ id });
-  const result = await readResponse(await fetch(`${endpoint}?${query}`, {
+async function readPublicPrestige(params, signal) {
+  const query = new URLSearchParams(params);
+  return readResponse(await fetch(`${endpoint}?${query}`, {
     headers: { Accept: 'application/json' },
     credentials: 'omit',
     cache: 'no-store',
     redirect: 'error',
     signal,
   }));
+}
+
+export async function getPlayerPrestige(id, signal) {
+  const result = await readPublicPrestige({ id }, signal);
   if (!isRecord(result)) throw new Error('Prestige information is unavailable.');
   return result;
+}
+
+export async function getLeaderboardPrestige(playerIds, { signal } = {}) {
+  const ids = [...new Set(playerIds)].filter(id => typeof id === 'string' && playerIdPattern.test(id));
+  const records = new Map();
+  if (!ids.length) return records;
+  const result = await readPublicPrestige({ ids: ids.join(',') }, signal);
+  for (const id of ids) {
+    const record = result?.players?.[id];
+    if (!isRecord(record)) throw new Error('Prestige information is unavailable.');
+    records.set(id, record);
+  }
+  return records;
 }
 
 async function changePrestige(firebase, playerId, body, signal) {

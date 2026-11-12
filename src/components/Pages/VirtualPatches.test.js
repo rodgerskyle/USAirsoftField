@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { HelmetProvider } from 'react-helmet-async';
 import { MemoryRouter } from 'react-router-dom';
 import { get, onValue } from 'firebase/database';
@@ -41,6 +41,13 @@ jest.mock('../constants/playerPrestige', () => ({
 const playerId = 'test-player-123';
 const firebase = { user: id => `users/${id}`, users: () => 'users' };
 const user = { uid: playerId, username: 'Patch Hunter', roles: {} };
+const originalFetch = global.fetch;
+
+function respondToPrestigeBatch(url, records = {}) {
+  const ids = new URL(url).searchParams.get('ids').split(',');
+  const players = Object.fromEntries(ids.map(id => [id, records[id] ?? { prestigeCount: 0, cycleStartPoints: 0 }]));
+  return Promise.resolve({ ok: true, json: async () => ({ players }) });
+}
 
 function renderPage(page, { path = '/virtual-patches', authUser = null } = {}) {
   return render(
@@ -56,6 +63,7 @@ function renderPage(page, { path = '/virtual-patches', authUser = null } = {}) {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  global.fetch = jest.fn(url => respondToPrestigeBatch(url));
   get.mockResolvedValue({ val: () => user.username });
   getAllPlayerDisplayNames.mockResolvedValue({});
   getPlayerDisplayNames.mockResolvedValue({});
@@ -69,6 +77,8 @@ beforeEach(() => {
     standings: badgeId === 'ambassador' ? [{ playerId, earnedCount: page === 1 ? 3 : 2 }] : [],
   }));
 });
+
+afterEach(() => { global.fetch = originalFetch; });
 
 test('loads only the selected patch standings and keeps the full catalog visible', async () => {
   const { container } = renderPage(<VirtualPatches />);
@@ -137,6 +147,9 @@ test('finds a display name on a later standings page without changing its rank',
   const standings = screen.getByRole('table', { name: 'All time player standings' });
   expect(await within(leaders).findByText('Range Lead')).toBeVisible();
   expect(within(standings).getByText('Range Lead')).toBeVisible();
+  await within(standings).findAllByText('Prestige 0');
+  expect(global.fetch).toHaveBeenCalledTimes(1);
+  expect(new URL(global.fetch.mock.calls[0][0]).searchParams.get('ids').split(',')).toHaveLength(50);
   const search = screen.getByRole('searchbox', { name: 'Search player names' });
   expect(screen.queryByText('Field Scout')).not.toBeInTheDocument();
   fireEvent.change(search, { target: { value: 'field scout' } });
@@ -144,7 +157,58 @@ test('finds a display name on a later standings page without changing its rank',
   const match = await screen.findByRole('link', { name: /Field Scout/ });
   expect(match).toHaveAttribute('href', `/profilelookup/${playerId}`);
   expect(within(match.closest('tr')).getByText('#52')).toBeVisible();
+  expect(await within(match).findByText('Prestige 0')).toBeVisible();
+  expect(new URL(global.fetch.mock.calls[1][0]).searchParams.get('ids')).toBe(playerId);
   expect(screen.queryByText('Jordan Example')).not.toBeInTheDocument();
+});
+
+test('updates profile rank and Prestige without moving a player on the all-time or monthly standings', async () => {
+  const otherPlayerId = 'other-player-123';
+  const now = new Date();
+  const matchDate = `${now.getFullYear()}-${now.getMonth()}-1`;
+  onValue.mockImplementation((_ref, next) => {
+    next({ val: () => ({
+      [playerId]: { name: user.username, points: 5100, wins: 42, losses: 9, games: { [matchDate]: { wins: 1, losses: 2 } } },
+      [otherPlayerId]: { name: 'Range Scout', points: 4500, wins: 39, losses: 5, games: { [matchDate]: { wins: 3, losses: 1 } } },
+    }) });
+    return () => {};
+  });
+
+  renderPage(<Leaderboard />, { path: '/leaderboard', authUser: user });
+  const table = within(screen.getByRole('table', { name: 'All time player standings' }));
+  const [firstRow, secondRow] = table.getAllByRole('row').slice(1);
+  const firstPlayer = within(firstRow);
+  expect(firstPlayer.getByText(user.username)).toBeVisible();
+  expect(firstPlayer.getByText('General Of The Army')).toBeVisible();
+  expect(await firstPlayer.findByText('Prestige 0')).toBeVisible();
+  expect(global.fetch).toHaveBeenCalledTimes(1);
+  expect(global.fetch).toHaveBeenLastCalledWith(
+    'https://usaw-field-companion.pink-bud-3735.chatgpt.site/api/player-prestige?ids=other-player-123%2Ctest-player-123',
+    expect.objectContaining({ credentials: 'omit', cache: 'no-store' }),
+  );
+
+  global.fetch.mockImplementation(url => respondToPrestigeBatch(url, {
+    [playerId]: { prestigeCount: 1, cycleStartPoints: 5100 },
+  }));
+  fireEvent(window, new Event('focus'));
+
+  expect(await firstPlayer.findByText('Prestige 1')).toBeVisible();
+  expect(firstPlayer.getByText('Private')).toBeVisible();
+  expect(firstRow.querySelector('.usaw-prestige-emblem--bronze')).toBeInTheDocument();
+  expect(firstPlayer.getByText('#1')).toBeVisible();
+  expect(firstPlayer.getByText('5,100')).toBeVisible();
+  expect(firstPlayer.getByText('42')).toHaveClass('field-lb-wins');
+  expect(firstPlayer.getByText('9')).toHaveClass('field-lb-losses');
+  expect(within(secondRow).getByText('Range Scout')).toBeVisible();
+
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Monthly' })); });
+  const [, monthlyFirst, monthlySecond] = within(screen.getByRole('table', { name: /player standings$/ })).getAllByRole('row');
+  expect(within(monthlyFirst).getByText('Range Scout')).toBeVisible();
+  expect(within(monthlyFirst).getByText('33')).toBeVisible();
+  expect(within(monthlySecond).getByText(user.username)).toBeVisible();
+  expect(within(monthlySecond).getByText('Prestige 1')).toBeVisible();
+  expect(within(monthlySecond).getByText('16')).toBeVisible();
+  expect(global.fetch).toHaveBeenCalledTimes(2);
 });
 
 test('shows one earned patch with its count and preserves the first award reason', async () => {
