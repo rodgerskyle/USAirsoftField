@@ -411,28 +411,28 @@
     display: inline-flex;
     align-items: center;
     flex: 0 0 auto;
-    gap: .3rem;
+    gap: .4rem;
 }
 
 .field-lb-featured-badge {
-    width: 30px;
-    height: 30px;
+    width: 48px;
+    height: 48px;
     object-fit: contain;
 }
 
 .field-lb-insignia {
     display: grid;
     flex: 0 0 auto;
-    width: 38px;
-    height: 38px;
+    width: 52px;
+    height: 52px;
     place-items: center;
     background: #21384d;
     border-radius: .35rem;
 }
 
 .field-lb-insignia img {
-    width: 28px;
-    height: 28px;
+    width: 46px;
+    height: 46px;
     object-fit: contain;
 }
 
@@ -499,26 +499,34 @@
     }
 
     .field-lb-player-marks {
-        gap: .15rem;
+        gap: .3rem;
     }
 
     .field-lb-featured-badge {
-        width: 20px;
-        height: 20px;
+        width: 40px;
+        height: 40px;
     }
 
     .field-lb-insignia {
-        width: 25px;
-        height: 25px;
+        width: 44px;
+        height: 44px;
     }
 
     .field-lb-insignia img {
-        width: 21px;
-        height: 21px;
+        width: 40px;
+        height: 40px;
     }
 
     .field-lb-pagination {
         justify-content: center;
         padding-inline: .25rem;
+    }
+}
+
+@media (max-width: 540px) {
+    .field-lb-player {
+        align-items: flex-start;
+        flex-direction: column;
+        justify-content: center;
     }
 }

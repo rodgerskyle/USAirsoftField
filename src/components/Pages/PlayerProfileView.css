@@ -214,14 +214,15 @@
 }
 
 .player-profile__rank img {
-  width: clamp(43px, 6vw, 69px);
-  height: clamp(43px, 6vw, 69px);
+  width: clamp(56px, 7vw, 76px);
+  height: clamp(56px, 7vw, 76px);
+  flex-shrink: 0;
   object-fit: contain;
 }
 
 .player-profile__featured-badge img {
-  width: clamp(43px, 6vw, 58px);
-  height: clamp(43px, 6vw, 58px);
+  width: clamp(54px, 6vw, 68px);
+  height: clamp(54px, 6vw, 68px);
   flex-shrink: 0;
   object-fit: contain;
 }

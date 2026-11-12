@@ -337,7 +337,7 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
               </div>
               {featuredBadge && (
                 <div className="player-profile__featured-badge">
-                  <img src={featuredBadge.thumbUrl} alt="" width="58" height="58" decoding="async" />
+                  <img src={featuredBadge.artUrl} alt="" width="68" height="68" decoding="async" />
                   <div>
                     <p className="player-profile__label">Featured badge</p>
                     <strong>{featuredBadge.name}</strong>

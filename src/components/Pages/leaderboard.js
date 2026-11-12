@@ -55,7 +55,7 @@ function RankInsignia({ points }) {
     const rank = thresholdIndex === -1 ? RANK_THRESHOLDS.length : thresholdIndex;
     return (
         <span className="field-lb-insignia" title={ranks[rank]}>
-            <img src={rankImages[rank]} alt={ranks[rank]} width="32" height="32" loading="lazy" />
+            <img src={rankImages[rank]} alt={ranks[rank]} width="46" height="46" loading="lazy" />
         </span>
     );
 }
@@ -82,7 +82,7 @@ function LeaderboardTable({ players, personalUid, period, featured }) {
                                 <span className="field-lb-player-marks">
                                     <RankInsignia points={player.careerPoints} />
                                     {badgeById[featured[player.uid]] && (
-                                        <img className="field-lb-featured-badge" loading="lazy" width="30" height="30"
+                                        <img className="field-lb-featured-badge" loading="lazy" width="48" height="48"
                                             src={badgeById[featured[player.uid]].thumbUrl}
                                             alt={`Featured badge: ${badgeById[featured[player.uid]].name}`}
                                             title={badgeById[featured[player.uid]].name} />
