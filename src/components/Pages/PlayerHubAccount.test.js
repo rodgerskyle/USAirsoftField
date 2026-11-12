@@ -5,6 +5,7 @@ import { onValue } from 'firebase/database';
 
 import { FirebaseContext } from '../Firebase';
 import { getPlayerDisplayNames } from '../constants/playerDisplayNames';
+import { usePlayerPrestige } from '../constants/playerPrestige';
 import PlayerHubAccount from './PlayerHubAccount';
 
 jest.mock('../Firebase', () => {
@@ -13,6 +14,10 @@ jest.mock('../Firebase', () => {
 });
 jest.mock('firebase/database', () => ({ onValue: jest.fn() }));
 jest.mock('../constants/playerDisplayNames', () => ({ getPlayerDisplayNames: jest.fn() }));
+jest.mock('../constants/playerPrestige', () => ({
+  ...jest.requireActual('../constants/playerPrestige'),
+  usePlayerPrestige: jest.fn(),
+}));
 
 const firstPlayer = { uid: 'usaw-player-001', displayName: 'First account' };
 const secondPlayer = { uid: 'usaw-player-002', displayName: 'Second account' };
@@ -46,6 +51,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   onValue.mockImplementation(() => jest.fn());
   getPlayerDisplayNames.mockResolvedValue({});
+  usePlayerPrestige.mockReturnValue({ record: null });
 });
 
 test('shows sign-in for a signed-out viewer and live official stats for their verified account', async () => {
@@ -97,4 +103,16 @@ test('discards prior stats and pending names when a different account signs in',
   expect(screen.queryByText('Outdated alias')).not.toBeInTheDocument();
   expect(screen.queryByText('321')).not.toBeInTheDocument();
   expect(screen.queryByRole('link', { name: 'Sign in' })).not.toBeInTheDocument();
+});
+
+test('shows the current profile rank and Prestige count beside lifetime points', async () => {
+  usePlayerPrestige.mockReturnValue({ record: { prestigeCount: 3, cycleStartPoints: 16100 } });
+  getPlayerDisplayNames.mockResolvedValue({ [firstPlayer.uid]: 'Field Veteran' });
+  const setPlayer = renderAccount();
+  setPlayer(firstPlayer);
+  receiveRecord(0, { name: 'Original name', points: 16225, wins: 12, losses: 8 });
+  expect(await screen.findByRole('heading', { name: 'Field Veteran' })).toBeInTheDocument();
+  expect(screen.getByText('Private First Class')).toBeInTheDocument();
+  expect(screen.getByText('Prestige 3')).toBeInTheDocument();
+  expect(screen.getByText('16,225')).toBeInTheDocument();
 });

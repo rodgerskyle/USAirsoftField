@@ -33,6 +33,10 @@ jest.mock('../constants/playerDisplayNames', () => ({
   getAllPlayerDisplayNames: jest.fn(),
   getPlayerDisplayNames: jest.fn(),
 }));
+jest.mock('../constants/playerPrestige', () => ({
+  ...jest.requireActual('../constants/playerPrestige'),
+  usePlayerPrestige: () => ({ record: null, failed: false }),
+}));
 
 const playerId = 'test-player-123';
 const firebase = { user: id => `users/${id}`, users: () => 'users' };
