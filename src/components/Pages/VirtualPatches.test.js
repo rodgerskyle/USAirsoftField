@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { HelmetProvider } from 'react-helmet-async';
 import { MemoryRouter } from 'react-router-dom';
 import { get, onValue } from 'firebase/database';
+import { getDownloadURL } from 'firebase/storage';
 import { FirebaseContext } from '../Firebase';
 import { AuthUserContext } from '../session';
 import { getBadgeStandings, getFeaturedBadges, getFeaturedBadgeDetails, getMyBadges, setFeaturedBadge } from '../constants/playerBadges';
@@ -39,9 +40,17 @@ jest.mock('../constants/playerPrestige', () => ({
 }));
 
 const playerId = 'test-player-123';
-const firebase = { user: id => `users/${id}`, users: () => 'users' };
+const firebase = {
+  user: id => `users/${id}`,
+  users: () => 'users',
+  team: id => `teams/${id}`,
+  teamsPictures: name => `team-logos/${name}`,
+};
 const user = { uid: playerId, username: 'Patch Hunter', roles: {} };
 const originalFetch = global.fetch;
+const companionTeam = { id: '1ba1b987-74ae-4373-8b44-d484c1d10d50', name: 'Rebels', hasLogo: false };
+
+const teamResponse = team => ({ ok: true, json: async () => ({ team }) });
 
 function respondToPrestigeBatch(url, records = {}) {
   const ids = new URL(url).searchParams.get('ids').split(',');
@@ -63,7 +72,9 @@ function renderPage(page, { path = '/virtual-patches', authUser = null } = {}) {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  global.fetch = jest.fn(url => respondToPrestigeBatch(url));
+  global.fetch = jest.fn(url => new URL(url).pathname === '/api/player-team'
+    ? Promise.resolve(teamResponse(null))
+    : respondToPrestigeBatch(url));
   get.mockResolvedValue({ val: () => user.username });
   getAllPlayerDisplayNames.mockResolvedValue({});
   getPlayerDisplayNames.mockResolvedValue({});
@@ -120,6 +131,52 @@ test('shows the custom public profile name without showing the account name', as
   expect(await screen.findByRole('heading', { name: 'Field Scout' })).toBeVisible();
   expect(screen.queryByText(member.name)).not.toBeInTheDocument();
   expect(screen.queryByText(member.username)).not.toBeInTheDocument();
+});
+
+test.each([false, true])('shows the Companion team on a profile with account=%s', async account => {
+  let resolveTeam;
+  global.fetch.mockImplementationOnce(() => new Promise(resolve => { resolveTeam = resolve; }));
+  renderPage(<PlayerProfileView firebase={firebase} user={{ ...user, team: '  ' }} playerId={playerId} account={account} />, {
+    path: account ? '/account' : `/profilelookup/${playerId}`,
+    authUser: account ? user : null,
+  });
+
+  expect(screen.getByText('Checking team…')).toBeVisible();
+  expect(screen.queryByText('Unaffiliated')).not.toBeInTheDocument();
+  expect(global.fetch).toHaveBeenCalledTimes(1);
+  const [url, options] = global.fetch.mock.calls[0];
+  expect(new URL(url).href).toBe(`https://usaw-field-companion.pink-bud-3735.chatgpt.site/api/player-team?id=${playerId}`);
+  expect(options?.credentials).toBe('omit');
+  expect(options?.headers?.Authorization).toBeUndefined();
+
+  await act(async () => resolveTeam(teamResponse(companionTeam)));
+  expect(screen.getByRole('link', { name: /Rebels/ })).toHaveAttribute('href', `/teams/${companionTeam.id}?source=companion`);
+  expect(screen.queryByText('Unaffiliated')).not.toBeInTheDocument();
+});
+
+test('shows an unaffiliated profile only after confirming no Companion team', async () => {
+  renderPage(<PlayerProfileView firebase={firebase} user={user} playerId={playerId} />);
+  expect(await screen.findByText('Unaffiliated')).toBeVisible();
+});
+
+test('reports an unavailable team lookup without labeling the player unaffiliated', async () => {
+  global.fetch.mockRejectedValueOnce(new Error('Connection unavailable'));
+  renderPage(<PlayerProfileView firebase={firebase} user={user} playerId={playerId} />);
+  expect(await screen.findByText(/team unavailable/i)).toBeVisible();
+  expect(screen.queryByText('Unaffiliated')).not.toBeInTheDocument();
+});
+
+test('keeps the existing website team and link without a Companion lookup', async () => {
+  onValue.mockImplementationOnce((_ref, next) => {
+    next({ val: () => ({ name: 'Legacy Team' }) });
+    return jest.fn();
+  });
+  getDownloadURL.mockRejectedValueOnce(new Error('No team logo'));
+  renderPage(<PlayerProfileView firebase={firebase} user={{ ...user, team: 'legacy-team' }} playerId={playerId} />);
+
+  expect(await screen.findByRole('link', { name: /Legacy Team/ })).toHaveAttribute('href', '/teams/legacy-team');
+  expect(onValue).toHaveBeenCalledWith('teams/legacy-team', expect.any(Function), expect.any(Function));
+  expect(global.fetch).not.toHaveBeenCalled();
 });
 
 test('uses the public display name in patch standings', async () => {

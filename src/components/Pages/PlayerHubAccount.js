@@ -5,6 +5,7 @@ import { onValue } from 'firebase/database';
 import { withFirebase } from '../Firebase';
 import { getPlayerDisplayNames } from '../constants/playerDisplayNames';
 import { prestigeCyclePoints, profileRank, usePlayerPrestige } from '../constants/playerPrestige';
+import { teamPagePath, usePlayerTeam } from '../constants/teamDirectory';
 import rankImages from '../constants/rankimgs';
 import rankNames from '../constants/ranks';
 import { PrestigeEmblem } from './PlayerPrestige';
@@ -79,6 +80,7 @@ function usePlayerAccount(firebase) {
 function PlayerCard({ account }) {
   const { record } = account;
   const { record: prestige } = usePlayerPrestige(account.uid);
+  const { team } = usePlayerTeam(record ? account.uid : null, record?.team);
   const displayName = account.displayName || record?.username || record?.name || account.fallbackName || 'USAW player';
   const rank = record ? profileRank(prestigeCyclePoints(record.points, prestige)) : 0;
   const winRate = record && record.wins + record.losses > 0
@@ -108,9 +110,14 @@ function PlayerCard({ account }) {
             <div className="ph-player-losses"><dt>Losses</dt><dd>{numberFormat.format(record.losses)}</dd></div>
             <div><dt>Win rate</dt><dd>{winRate}%</dd></div>
           </dl>
-          {(record.team || record.renewal) && (
+          {(team || record.renewal) && (
             <dl className="ph-player-meta">
-              {record.team && <div><dt>Team</dt><dd>{record.team}</dd></div>}
+              {team && (
+                <div>
+                  <dt>Team</dt>
+                  <dd>{team.source === 'companion' ? <Link to={teamPagePath(team)}>{team.name}</Link> : team.name}</dd>
+                </div>
+              )}
               {record.renewal && <div><dt>Membership renewal</dt><dd>{record.renewal}</dd></div>}
             </dl>
           )}

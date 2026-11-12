@@ -21,6 +21,10 @@ jest.mock('../constants/playerPrestige', () => ({
 
 const firstPlayer = { uid: 'usaw-player-001', displayName: 'First account' };
 const secondPlayer = { uid: 'usaw-player-002', displayName: 'Second account' };
+const companionTeam = { id: '1ba1b987-74ae-4373-8b44-d484c1d10d50', name: 'Rebels', hasLogo: false };
+const originalFetch = global.fetch;
+
+const teamResponse = team => ({ ok: true, json: async () => ({ team }) });
 
 function renderAccount() {
   let changeAuth;
@@ -49,10 +53,13 @@ function receiveRecord(subscription, record) {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  global.fetch = jest.fn().mockResolvedValue(teamResponse(null));
   onValue.mockImplementation(() => jest.fn());
   getPlayerDisplayNames.mockResolvedValue({});
   usePlayerPrestige.mockReturnValue({ record: null });
 });
+
+afterEach(() => { global.fetch = originalFetch; });
 
 test('shows sign-in for a signed-out viewer and live official stats for their verified account', async () => {
   getPlayerDisplayNames.mockResolvedValue({ [firstPlayer.uid]: 'Rapid Rebel' });
@@ -72,6 +79,7 @@ test('shows sign-in for a signed-out viewer and live official stats for their ve
   expect(screen.getByText('150')).toBeInTheDocument();
   expect(screen.getByText('75%')).toBeInTheDocument();
   expect(screen.queryByRole('link', { name: 'My account' })).not.toBeInTheDocument();
+  expect(global.fetch).not.toHaveBeenCalled();
 
   receiveRecord(0, { points: 175, wins: 4, losses: 1 });
   expect(screen.getByText('175')).toBeInTheDocument();
@@ -81,11 +89,28 @@ test('shows sign-in for a signed-out viewer and live official stats for their ve
   expect(screen.queryByText('Rapid Rebel')).not.toBeInTheDocument();
 });
 
+test('links to the current account Companion team when the website team is empty', async () => {
+  global.fetch.mockResolvedValueOnce(teamResponse(companionTeam));
+  const setPlayer = renderAccount();
+  setPlayer(firstPlayer);
+  receiveRecord(0, { name: 'Rapid Rebel', team: '', points: 150 });
+
+  expect(await screen.findByRole('link', { name: 'Rebels' })).toHaveAttribute(
+    'href', `/teams/${companionTeam.id}?source=companion`,
+  );
+  expect(global.fetch).toHaveBeenCalledTimes(1);
+  const [url, options] = global.fetch.mock.calls[0];
+  expect(new URL(url).searchParams.get('id')).toBe(firstPlayer.uid);
+  expect(options?.credentials).toBe('omit');
+});
+
 test('discards prior stats and pending names when a different account signs in', async () => {
   let resolveFirstName;
   getPlayerDisplayNames.mockImplementationOnce(() => new Promise(resolve => {
     resolveFirstName = resolve;
   }));
+  let resolveFirstTeam;
+  global.fetch.mockImplementationOnce(() => new Promise(resolve => { resolveFirstTeam = resolve; }));
   const setPlayer = renderAccount();
   setPlayer(firstPlayer);
   receiveRecord(0, { name: 'First record', points: 321 });
@@ -94,13 +119,17 @@ test('discards prior stats and pending names when a different account signs in',
   expect(onValue.mock.results[0].value).toHaveBeenCalled();
   expect(screen.queryByText('First record')).not.toBeInTheDocument();
   receiveRecord(0, { name: 'Outdated record', points: 321 });
-  await act(async () => resolveFirstName({ [firstPlayer.uid]: 'Outdated alias' }));
+  await act(async () => {
+    resolveFirstName({ [firstPlayer.uid]: 'Outdated alias' });
+    resolveFirstTeam(teamResponse(companionTeam));
+  });
 
   receiveRecord(1, null);
   expect(screen.getByRole('heading', { name: 'Second account' })).toBeInTheDocument();
   expect(screen.getByText('Your player stats are currently unavailable.')).toBeInTheDocument();
   expect(screen.queryByText('Outdated record')).not.toBeInTheDocument();
   expect(screen.queryByText('Outdated alias')).not.toBeInTheDocument();
+  expect(screen.queryByRole('link', { name: 'Rebels' })).not.toBeInTheDocument();
   expect(screen.queryByText('321')).not.toBeInTheDocument();
   expect(screen.queryByRole('link', { name: 'Sign in' })).not.toBeInTheDocument();
 });
