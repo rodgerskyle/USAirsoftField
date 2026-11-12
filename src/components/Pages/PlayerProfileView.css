@@ -307,6 +307,10 @@
   gap: 15px;
 }
 
+.player-profile__panels[hidden] {
+  display: none;
+}
+
 .player-profile__panel {
   min-width: 0;
   padding: clamp(15px, 3vw, 24px);

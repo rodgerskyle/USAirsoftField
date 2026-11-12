@@ -1,0 +1,114 @@
+.usaw-prestige-emblem {
+  display: block;
+  width: 60px;
+  height: 60px;
+  flex: 0 0 60px;
+  background-repeat: no-repeat;
+  background-size: 200% 200%;
+}
+
+.usaw-prestige-emblem--bronze { background-position: left top; }
+.usaw-prestige-emblem--silver { background-position: right top; }
+.usaw-prestige-emblem--gold { background-position: left bottom; }
+.usaw-prestige-emblem--crimson { background-position: right bottom; }
+
+.player-profile__prestige {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px clamp(12px, 2vw, 19px);
+  border: 1px solid #9f8245;
+  border-radius: 12px;
+  background: radial-gradient(ellipse at 15% 35%, #533d1e, #102538 72%);
+  color: #ffe3a7;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.ph-player-prestige {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #ffe3a7;
+  font-size: .9rem;
+  font-weight: 800;
+}
+
+.ph-player-prestige .usaw-prestige-emblem {
+  width: 34px;
+  height: 34px;
+  flex-basis: 34px;
+}
+
+.usaw-prestige-panel {
+  border-inline-start: 4px solid #9f8245;
+}
+
+.usaw-prestige-panel__header,
+.usaw-prestige-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.usaw-prestige-panel__header {
+  justify-content: space-between;
+}
+
+.usaw-prestige-panel p {
+  margin: 8px 0;
+}
+
+.usaw-prestige-panel__count strong {
+  margin-inline-start: .35em;
+  font-variant-numeric: tabular-nums;
+}
+
+.usaw-prestige-review {
+  margin-top: 14px;
+  padding: clamp(10px, 2vw, 16px);
+  border: 1px solid var(--usaw-line);
+  border-radius: 10px;
+  background: var(--usaw-raised);
+}
+
+.usaw-prestige-review h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.usaw-prestige-actions {
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.usaw-prestige-button {
+  min-height: 42px;
+  padding: .55rem .85rem;
+  border: 1px solid #9f8245;
+  border-radius: 8px;
+  background: #ffe3a7;
+  color: #292011;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.usaw-prestige-button--cancel {
+  border-color: var(--usaw-line);
+  background: transparent;
+  color: var(--usaw-text);
+}
+
+.usaw-prestige-button:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
+.usaw-prestige-button:focus-visible,
+.usaw-prestige-review h3:focus-visible,
+.usaw-prestige-panel [role="status"]:focus-visible {
+  outline: 2px solid var(--usaw-focus);
+  outline-offset: 3px;
+}

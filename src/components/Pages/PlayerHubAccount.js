@@ -4,9 +4,10 @@ import { onValue } from 'firebase/database';
 
 import { withFirebase } from '../Firebase';
 import { getPlayerDisplayNames } from '../constants/playerDisplayNames';
+import { prestigeCyclePoints, profileRank, usePlayerPrestige } from '../constants/playerPrestige';
 import rankImages from '../constants/rankimgs';
-import rankIncrements from '../constants/rankincrements';
 import rankNames from '../constants/ranks';
+import { PrestigeEmblem } from './PlayerPrestige';
 
 const numberFormat = new Intl.NumberFormat('en-US');
 
@@ -77,9 +78,9 @@ function usePlayerAccount(firebase) {
 
 function PlayerCard({ account }) {
   const { record } = account;
+  const { record: prestige } = usePlayerPrestige(account.uid);
   const displayName = account.displayName || record?.username || record?.name || account.fallbackName || 'USAW player';
-  const nextRank = record ? rankIncrements.findIndex(threshold => record.points < threshold) : -1;
-  const rank = nextRank === -1 ? rankNames.length - 1 : Math.max(0, nextRank - 1);
+  const rank = record ? profileRank(prestigeCyclePoints(record.points, prestige)) : 0;
   const winRate = record && record.wins + record.losses > 0
     ? Math.ceil(record.wins / (record.wins + record.losses) * 100) : 0;
 
@@ -91,6 +92,12 @@ function PlayerCard({ account }) {
           <p className="ph-kicker">Your player card</p>
           <h2 id="player-account-heading">{displayName}</h2>
           {record && <span className="ph-player-rank">{rankNames[rank]}</span>}
+          {prestige?.prestigeCount > 0 && (
+            <span className="ph-player-prestige">
+              <PrestigeEmblem count={prestige.prestigeCount} />
+              Prestige {numberFormat.format(prestige.prestigeCount)}
+            </span>
+          )}
         </div>
       </div>
       {record ? (
