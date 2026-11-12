@@ -1,22 +1,25 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Col, Row, Spinner } from 'react-bootstrap/';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Spinner } from 'react-bootstrap/';
 import { Helmet } from 'react-helmet-async';
-import Calendar from 'react-calendar';
-import '../constants/react-calendar.css';
-import { Add, Delete, Edit, Event as EventIcon, FiberManualRecord } from '@mui/icons-material';
-import { Box, Card, Container, IconButton, Paper, Typography } from '@mui/material';
+import { Add, ArrowDownward, ArrowForward, Delete, Edit, Event as EventIcon, Schedule as Clock } from '@mui/icons-material';
 import { child, get, onValue, push, remove, runTransaction, set } from 'firebase/database';
 import { withFirebase } from '../Firebase';
 import * as ROLES from '../constants/roles';
 import staticEvents from '../constants/staticcalendarevents';
 import useFieldResources from '../constants/useFieldResources';
 import { publishFieldEvents, readPostedFieldEvents } from '../constants/fieldCalendar';
+import FieldCalendarGrid from './FieldCalendarGrid';
+import './Schedule.css';
 
 const fields = ['date', 'name', 'time', 'additional'];
 const dateOnly = /^\d{4}-\d{2}-\d{2}$/;
 const pacificDate = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit',
 });
+const monthLabel = new Intl.DateTimeFormat('en-US', { month: 'short' });
+const weekdayLabel = new Intl.DateTimeFormat('en-US', { weekday: 'long' });
+const fullDayLabel = new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+const eventLabels = { posted: 'Posted event', regular: 'Open play', closure: 'Field closure' };
 
 function sameDate(first, second) {
     return first.getFullYear() === second.getFullYear()
@@ -49,40 +52,63 @@ function isCalendarEvent(event) {
 
 function regularEvent(date, hours) {
     const holiday = staticEvents.find(event => sameDate(date, new Date(event.date)));
-    if (holiday) return holiday;
+    if (holiday) return { ...holiday, kind: 'closure' };
 
     const year = date.getFullYear();
     const summer = date >= new Date(year, 4, 1) && date < new Date(year, 10, 2);
     const day = date.getDay();
     const time = hours?.[summer ? 'summer' : 'winter'].rows[(day + 6) % 7][1];
     return time && time.toLowerCase() !== 'closed'
-        ? { name: day === 5 ? 'Friday Night Gameplay' : 'Weekend Gameplay', time, static: true }
+        ? { name: day === 5 ? 'Friday Night Gameplay' : 'Weekend Gameplay', time, static: true, kind: 'regular' }
         : null;
 }
 
 function CalendarEvent({ event, onEdit, onDelete }) {
     return (
-        <Card sx={{ mb: 2, backgroundColor: event.static ? 'var(--usaw-subtle)' : 'var(--usaw-raised)', color: 'var(--usaw-text)' }}>
-            <Box sx={{ p: 2 }}>
-                <Typography variant="h6" gutterBottom>{event.name}</Typography>
-                <Typography variant="body2" sx={{ color: 'var(--usaw-muted)' }}>{event.time}</Typography>
-                {event.additional && <Typography variant="body2" sx={{ mt: 1, whiteSpace: 'pre-line' }}>{event.additional}</Typography>}
-                {(onEdit || onDelete) && (
-                    <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
-                        {onEdit && <IconButton onClick={onEdit} color="primary" aria-label={`Edit ${event.name}`}><Edit /></IconButton>}
-                        {onDelete && <IconButton onClick={onDelete} color="error" aria-label={`Delete ${event.name}`}><Delete /></IconButton>}
-                    </Box>
-                )}
-            </Box>
-        </Card>
+        <article className="field-schedule__event" data-kind={event.kind}>
+            <div className="field-schedule__event-body">
+                <span className="field-schedule__event-type">{eventLabels[event.kind]}</span>
+                <h3>{event.name}</h3>
+                {event.time && <p className="field-schedule__event-time"><Clock aria-hidden="true" />{event.time}</p>}
+                {event.additional && <p className="field-schedule__event-description">{event.additional}</p>}
+            </div>
+            {(onEdit || onDelete) && (
+                <div className="field-schedule__event-actions">
+                    {onEdit && <button type="button" className="field-schedule__action" onClick={onEdit} aria-label={`Edit ${event.name}`}><Edit aria-hidden="true" />Edit</button>}
+                    {onDelete && <button type="button" className="field-schedule__action field-schedule__action--danger" onClick={onDelete} aria-label={`Delete ${event.name}`}><Delete aria-hidden="true" />Remove</button>}
+                </div>
+            )}
+        </article>
+    );
+}
+
+function UpcomingEvent({ event, disabled, onSelect }) {
+    const day = calendarDate(event.day);
+    const label = `${monthLabel.format(day)} ${day.getDate()}, ${day.getFullYear()} · ${event.name}${event.time ? ` · ${event.time}` : ''}`;
+    return (
+        <li>
+            <button className="field-schedule__upcoming-card" type="button" disabled={disabled}
+                aria-label={label} onClick={() => onSelect(day)}>
+                <time className="field-schedule__date-block" dateTime={event.day} aria-hidden="true">
+                    <span>{monthLabel.format(day)}</span>
+                    <strong>{day.getDate()}</strong>
+                </time>
+                <span className="field-schedule__upcoming-info">
+                    <strong>{event.name}</strong>
+                    {event.time && <span className="field-schedule__event-time"><Clock aria-hidden="true" />{event.time}</span>}
+                    {event.additional && <span className="field-schedule__upcoming-description">{event.additional}</span>}
+                </span>
+                <ArrowForward className="field-schedule__upcoming-arrow" aria-hidden="true" />
+            </button>
+        </li>
     );
 }
 
 function EventEditor({ editor, date, saving, cancel, save }) {
     const event = editor.event;
     return (
-        <form key={event?.id ?? 'new'} onSubmit={save} className="d-grid gap-2 mt-3">
-            <Typography variant="h6">{event ? 'Edit field event' : 'Add field event'}</Typography>
+        <form key={event?.id ?? 'new'} onSubmit={save} className="field-schedule__editor">
+            <h3>{event ? 'Edit field event' : 'Add field event'}</h3>
             <label className="form-label mb-0">Date
                 <input className="form-control" type="date" name="date" required defaultValue={event ? fieldDate(event.date) : inputDate(date)} />
             </label>
@@ -96,8 +122,8 @@ function EventEditor({ editor, date, saving, cancel, save }) {
                 <textarea className="form-control" name="additional" rows={3} maxLength={800} defaultValue={event?.additional} />
             </label>
             <div className="d-flex flex-wrap gap-2">
-                <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save event'}</button>
-                <button className="btn btn-outline-secondary" type="button" disabled={saving} onClick={cancel}>Cancel</button>
+                <button className="field-schedule__action field-schedule__action--primary" type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save event'}</button>
+                <button className="field-schedule__action" type="button" disabled={saving} onClick={cancel}>Cancel</button>
             </div>
         </form>
     );
@@ -118,6 +144,7 @@ function Schedule({ firebase }) {
     const [publishing, setPublishing] = useState(false);
     const [feedback, setFeedback] = useState(null);
     const pendingCreate = useRef(null);
+    const dayHeading = useRef(null);
     const isAdmin = Boolean(admin);
     const { resources } = useFieldResources();
 
@@ -194,15 +221,27 @@ function Schedule({ firebase }) {
         };
     }, [firebase, refreshCount]);
 
-    const selectedDate = inputDate(date);
-    const calendarEvents = events.map(event => ({ ...event, day: fieldDate(event.date) }));
-    const markedDays = new Set(calendarEvents.map(event => event.day));
-    const displayed = calendarEvents.filter(event => event.day === selectedDate);
     const today = fieldDate(new Date());
-    const upcoming = calendarEvents.filter(event => event.day >= today)
-        .sort((first, second) => first.day.localeCompare(second.day) || first.name.localeCompare(second.name));
-    const regular = regularEvent(date, resources?.hours);
-    if (regular) displayed.push(regular);
+    const calendarEvents = useMemo(() => events.map(event => ({ ...event, day: fieldDate(event.date), kind: 'posted' }))
+        .sort((first, second) => first.day.localeCompare(second.day) || first.name.localeCompare(second.name)), [events]);
+    const postedByDay = useMemo(() => {
+        const byDay = new Map();
+        for (const event of calendarEvents) {
+            if (!byDay.has(event.day)) byDay.set(event.day, []);
+            byDay.get(event.day).push(event);
+        }
+        return byDay;
+    }, [calendarEvents]);
+    const upcoming = calendarEvents.filter(event => event.day >= today);
+    const busy = saving || publishing;
+
+    function eventsForDay(day) {
+        const posted = postedByDay.get(inputDate(day)) ?? [];
+        const regular = regularEvent(day, resources?.hours);
+        return regular ? [...posted, regular] : posted;
+    }
+
+    const displayed = eventsForDay(date);
 
     function showDate(next) {
         setDate(next);
@@ -210,12 +249,17 @@ function Schedule({ firebase }) {
     }
 
     function selectDate(next) {
-        if (!(next instanceof Date) || saving) return;
+        if (!(next instanceof Date) || busy) return;
         showDate(next);
         setShowDelete(false);
         setEditor(null);
         pendingCreate.current = null;
         setFeedback(null);
+    }
+
+    function openUpcomingDate(next) {
+        selectDate(next);
+        dayHeading.current?.focus();
     }
 
     function openEditor(event = null) {
@@ -298,97 +342,78 @@ function Schedule({ firebase }) {
     }
 
     return (
-        <Box className="background-static-all" sx={{ minHeight: '100vh' }}>
-            <Helmet><title>US Airsoft Field: Schedule</title></Helmet>
-            <Typography variant="h4" component="h2" sx={{ textAlign: 'center', py: 3, color: 'var(--usaw-text)' }}>
-                US Airsoft Schedule
-            </Typography>
+        <main className="field-schedule">
+            <Helmet><title>US Airsoft Field | Field Schedule</title></Helmet>
+            <header className="field-schedule__heading">
+                <div className="field-schedule__heading-copy">
+                    <p>US Airsoft World <span aria-hidden="true">/</span> Anderson, CA</p>
+                    <h1>Field Schedule</h1>
+                </div>
+                <a className="field-schedule__action field-schedule__jump" href="#upcoming-game-days">
+                    Upcoming events <ArrowDownward aria-hidden="true" />
+                </a>
+            </header>
             {loading ? (
-                <Box display="flex" justifyContent="center" p={5}><Spinner animation="border" /></Box>
+                <div className="field-schedule__loading"><Spinner animation="border" role="status"><span className="visually-hidden">Loading field schedule</span></Spinner></div>
             ) : (
-                <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3 } }}>
-                    <Paper elevation={3} sx={{ p: { xs: 2, sm: 3 }, backgroundColor: 'var(--usaw-surface)', color: 'var(--usaw-text)', borderRadius: { xs: '12px', sm: '16px' } }}>
-                        <Row>
-                            <Col xs={12} md={8} className="mb-4 mb-md-0">
-                                <Calendar
-                                    onChange={selectDate}
-                                    value={date}
-                                    activeStartDate={activeMonth}
-                                    onActiveStartDateChange={({ activeStartDate }) => setActiveMonth(activeStartDate)}
-                                    tileContent={({ date: day, view }) => view === 'month' && (
-                                        markedDays.has(inputDate(day)) || regularEvent(day, resources?.hours)
-                                    ) ? <Box sx={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)' }}><FiberManualRecord sx={{ fontSize: 10 }} /></Box> : null}
-                                    tileClassName={({ date: day }) => {
-                                        if (day.getDay() === 6 || day.getDay() === 0) return 'weekend-calendar-games';
-                                        if (day.getDay() === 5) return 'friday-night-calendar-games';
-                                        return 'non-event-calendar-days';
-                                    }}
-                                />
-                            </Col>
-                            <Col xs={12} md={4}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                                    <EventIcon sx={{ mr: 1 }} />
-                                    <Typography variant="h6">
-                                        {date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                                    </Typography>
-                                </Box>
-                                {scheduleUnavailable && <p role="status">Regular hours are shown. {viewer
-                                    ? 'Posted events are temporarily unavailable.'
-                                    : <> <a href="/login">Sign in</a> to view posted game days.</>}
-                                </p>}
-                                {displayed.map((event) => (
-                                    <CalendarEvent
-                                        key={event.id ?? event.name}
-                                        event={event}
-                                        onEdit={isAdmin && !event.static && !saving && !showDelete ? () => openEditor(event) : null}
-                                        onDelete={isAdmin && !event.static && !saving && showDelete ? () => deleteEvent(event.id) : null}
-                                    />
-                                ))}
-                                {isAdmin && (
-                                    <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-                                        <IconButton color="primary" aria-label="Add field event" disabled={saving || publishing} onClick={() => openEditor()}>
-                                            <Add />
-                                        </IconButton>
-                                        <IconButton color="error" aria-label="Show remove controls" aria-pressed={showDelete} disabled={saving || publishing} onClick={() => {
-                                            setShowDelete(current => !current);
-                                            setEditor(null);
-                                            setFeedback(null);
-                                        }}>
-                                            <Delete />
-                                        </IconButton>
-                                        <button type="button" className="btn btn-outline-secondary" disabled={saving || publishing}
-                                            onClick={() => syncPlayerCalendar('Player calendars are up to date.')}>
-                                            {publishing ? 'Publishing…' : 'Publish existing game days'}
-                                        </button>
-                                    </Box>
-                                )}
-                                {isAdmin && editor && <EventEditor editor={editor} date={date} saving={saving || publishing} cancel={() => setEditor(null)} save={saveEvent} />}
-                                {feedback && <p className="mt-3" role={feedback.error ? 'alert' : 'status'}>{feedback.text}</p>}
-                            </Col>
-                        </Row>
-                        <Box component="section" aria-labelledby="upcoming-game-days" sx={{ mt: 3, borderTop: '1px solid var(--usaw-border)', pt: 3 }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 2 }}>
-                                <Typography id="upcoming-game-days" variant="h6" component="h3">Upcoming posted game days</Typography>
-                                {!isAdmin && <button type="button" className="btn btn-outline-secondary btn-sm"
-                                    onClick={() => setRefreshCount(count => count + 1)}>Refresh</button>}
-                            </Box>
-                            {upcoming.length > 0 && <ul className="list-unstyled d-grid gap-2 mb-0">
-                                {upcoming.map(event => <li key={event.id}>
-                                    <button className="btn btn-outline-secondary text-start w-100" type="button"
-                                        disabled={saving} onClick={() => selectDate(calendarDate(event.day))}>
-                                        <time dateTime={event.day}>{calendarDate(event.day).toLocaleDateString('en-US', {
-                                            month: 'short', day: 'numeric', year: 'numeric',
-                                        })}</time>
-                                        {' · '}{event.name}{event.time ? ` · ${event.time}` : ''}
-                                    </button>
-                                </li>)}
-                            </ul>}
-                            {!upcoming.length && !scheduleUnavailable && <p className="mb-0">No additional game days are posted yet.</p>}
-                        </Box>
-                    </Paper>
-                </Container>
+                <>
+                    {scheduleUnavailable && <div className="field-schedule__notice" role="status">
+                        {viewer ? 'Posted events are temporarily unavailable. Regular field hours are shown.'
+                            : <><a href="/login">Sign in</a> to view posted game days. Regular field hours are shown.</>}
+                    </div>}
+                    <FieldCalendarGrid date={date} activeMonth={activeMonth} today={calendarDate(today)}
+                        onDateChange={selectDate} onMonthChange={setActiveMonth} eventsForDay={eventsForDay} disabled={busy} />
+                    <section className="field-schedule__section" aria-labelledby="field-schedule-day">
+                        <header className="field-schedule__section-header">
+                            <div className="field-schedule__day-heading">
+                                <span className="field-schedule__section-icon"><EventIcon aria-hidden="true" /></span>
+                                <div>
+                                    <p>{weekdayLabel.format(date)}</p>
+                                    <h2 id="field-schedule-day" ref={dayHeading} tabIndex={-1}>{fullDayLabel.format(date)}</h2>
+                                </div>
+                            </div>
+                            {isAdmin && <div className="field-schedule__staff-actions" aria-label="Field calendar tools">
+                                <button type="button" className="field-schedule__action field-schedule__action--primary"
+                                    aria-label="Add field event" disabled={busy} onClick={() => openEditor()}><Add aria-hidden="true" />Add event</button>
+                                <button type="button" className="field-schedule__action" aria-label="Show remove controls"
+                                    aria-pressed={showDelete} disabled={busy} onClick={() => {
+                                        setShowDelete(current => !current);
+                                        setEditor(null);
+                                        setFeedback(null);
+                                    }}>
+                                    <Delete aria-hidden="true" />{showDelete ? 'Hide remove controls' : 'Remove events'}
+                                </button>
+                                <button type="button" className="field-schedule__action" disabled={busy}
+                                    onClick={() => syncPlayerCalendar('Player calendars are up to date.')}>
+                                    {publishing ? 'Publishing…' : 'Publish existing game days'}
+                                </button>
+                            </div>}
+                        </header>
+                        {displayed.length > 0 ? <div className="field-schedule__day-events">
+                            {displayed.map(event => <CalendarEvent
+                                key={event.id ?? event.name}
+                                event={event}
+                                onEdit={isAdmin && !event.static && !busy && !showDelete ? () => openEditor(event) : null}
+                                onDelete={isAdmin && !event.static && !busy && showDelete ? () => deleteEvent(event.id) : null}
+                            />)}
+                        </div> : <p className="field-schedule__empty">No field events are listed for this date.</p>}
+                        {isAdmin && editor && <EventEditor editor={editor} date={date} saving={busy} cancel={() => setEditor(null)} save={saveEvent} />}
+                        {feedback && <p className="field-schedule__feedback" role={feedback.error ? 'alert' : 'status'}>{feedback.text}</p>}
+                    </section>
+                    <section className="field-schedule__section field-schedule__upcoming" aria-labelledby="upcoming-game-days">
+                        <header className="field-schedule__section-header">
+                            <h2 id="upcoming-game-days">Upcoming posted game days</h2>
+                            {!isAdmin && <button type="button" className="field-schedule__action"
+                                onClick={() => setRefreshCount(count => count + 1)}>Refresh calendar</button>}
+                        </header>
+                        {upcoming.length > 0 && <ul className="field-schedule__upcoming-list">
+                            {upcoming.map(event => <UpcomingEvent key={event.id} event={event} disabled={busy} onSelect={openUpcomingDate} />)}
+                        </ul>}
+                        {!upcoming.length && !scheduleUnavailable && <p className="field-schedule__empty">No additional game days are posted yet.</p>}
+                    </section>
+                </>
             )}
-        </Box>
+        </main>
     );
 }
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { HelmetProvider } from 'react-helmet-async';
 import { get, onValue, push, remove, set } from 'firebase/database';
 import { FirebaseContext } from '../Firebase';
@@ -72,7 +72,14 @@ test('shows the shared upcoming event to an ordinary player and opens the exact 
     expect(screen.queryByRole('button', { name: 'Publish existing game days' })).not.toBeInTheDocument();
     fireEvent.click(upcoming);
     expect(screen.getByText('February 7, 2099')).toBeInTheDocument();
-    expect(screen.getByText(event.additional)).toBeInTheDocument();
+    const day = screen.getByRole('region', { name: 'February 7, 2099' });
+    expect(within(day).getByText(event.additional)).toBeInTheDocument();
+    const grid = screen.getByRole('region', { name: 'Monthly field calendar' });
+    const tile = within(grid).getByRole('button', { name: /Spring game day, 9 AM/ });
+    expect(tile.querySelector('.field-calendar-grid__event-name')).toHaveTextContent('Spring game day');
+    expect(tile.querySelector('.field-calendar-grid__event-time')).toHaveTextContent('9 AM');
+    fireEvent.click(within(grid).getByRole('button', { name: 'Next month' }));
+    expect(within(grid).getByRole('heading', { name: 'March 2099' })).toBeInTheDocument();
 });
 
 test('preserves existing live Firebase reads for players with calendar access', async () => {

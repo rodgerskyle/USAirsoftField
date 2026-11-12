@@ -1,0 +1,400 @@
+.field-schedule {
+  --schedule-shadow: 0 12px 32px rgb(13 35 56 / 8%);
+  max-width: 1232px;
+  min-height: 70vh;
+  margin-inline: auto;
+  padding: clamp(1rem, 3.5vw, 2.5rem) clamp(.65rem, 2.5vw, 1.5rem) 3.5rem;
+  color: var(--usaw-text);
+  font-family: var(--usaw-font-body);
+}
+
+:root[data-bs-theme="dark"] .field-schedule {
+  --schedule-shadow: 0 12px 32px rgb(0 0 0 / 18%);
+}
+
+.field-schedule__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1.15rem;
+  margin-bottom: 1rem;
+  padding: clamp(1rem, 3vw, 2rem);
+  border: 1px solid var(--usaw-line);
+  border-inline-start: 5px solid var(--usaw-red);
+  border-radius: 14px;
+  background: linear-gradient(115deg, var(--usaw-surface) 20%, var(--usaw-subtle));
+  box-shadow: var(--schedule-shadow);
+}
+
+.field-schedule__heading-copy p {
+  margin: 0 0 .45rem;
+  color: var(--usaw-muted);
+  font-size: .81rem;
+  font-weight: 750;
+}
+
+.field-schedule__heading-copy p span {
+  margin-inline: .35rem;
+  color: var(--usaw-heading-red);
+}
+
+.field-schedule h1 {
+  margin: 0;
+  color: var(--usaw-text);
+  font-family: var(--usaw-font-display);
+  font-size: clamp(1.95rem, 5vw, 3.45rem);
+  line-height: 1.06;
+  letter-spacing: -.05em;
+}
+
+.field-schedule__loading {
+  display: grid;
+  place-items: center;
+  min-height: 20rem;
+  color: var(--usaw-accent);
+}
+
+.field-schedule__notice,
+.field-schedule__feedback,
+.field-schedule__empty {
+  margin: 0;
+  padding: .8rem 1rem;
+  border: 1px solid var(--usaw-line);
+  border-radius: 8px;
+  background: var(--usaw-raised);
+  color: var(--usaw-muted);
+}
+
+.field-schedule__notice {
+  margin-bottom: .8rem;
+}
+
+.field-schedule__notice a {
+  color: var(--usaw-accent);
+  font-weight: 750;
+}
+
+.field-schedule__section {
+  margin-top: 1rem;
+  padding: clamp(.8rem, 2.5vw, 1.4rem);
+  border: 1px solid var(--usaw-line);
+  border-radius: 14px;
+  background: var(--usaw-surface);
+  box-shadow: var(--schedule-shadow);
+}
+
+.field-schedule__section-header,
+.field-schedule__day-heading {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+}
+
+.field-schedule__section-header {
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-bottom: .9rem;
+}
+
+.field-schedule__section-header h2 {
+  margin: 0;
+  color: var(--usaw-text);
+  font-size: clamp(1.22rem, 2.4vw, 1.65rem);
+  font-weight: 800;
+  line-height: 1.23;
+}
+
+.field-schedule__day-heading p {
+  margin: 0 0 .1rem;
+  color: var(--usaw-muted);
+  font-size: .82rem;
+  font-weight: 680;
+}
+
+.field-schedule__section-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 8px;
+  background: var(--usaw-subtle);
+  color: var(--usaw-accent);
+}
+
+.field-schedule__staff-actions,
+.field-schedule__event-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .45rem;
+}
+
+.field-schedule__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
+  min-height: 44px;
+  padding: .45rem .7rem;
+  border: 1px solid var(--usaw-line);
+  border-radius: 7px;
+  background: var(--usaw-surface);
+  color: var(--usaw-text);
+  font: inherit;
+  font-size: .84rem;
+  font-weight: 720;
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+.field-schedule__action svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.field-schedule__action:hover:not(:disabled) {
+  border-color: var(--usaw-accent);
+  background: var(--usaw-subtle);
+  color: var(--usaw-text);
+}
+
+.field-schedule__action--primary {
+  border-color: #174a87;
+  background: #174a87;
+  color: #fff;
+}
+
+.field-schedule__action--primary:hover:not(:disabled) {
+  border-color: #123b6d;
+  background: #123b6d;
+  color: #fff;
+}
+
+.field-schedule__action--danger {
+  color: var(--usaw-heading-red);
+}
+
+.field-schedule :is(.field-schedule__action, .field-schedule__upcoming-card, #field-schedule-day):focus-visible {
+  outline: 2px solid var(--usaw-focus);
+  outline-offset: 3px;
+}
+
+.field-schedule__action:disabled,
+.field-schedule__upcoming-card:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
+.field-schedule__day-events,
+.field-schedule__upcoming-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+  gap: .75rem;
+}
+
+.field-schedule__event {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: .75rem;
+  min-width: 0;
+  padding: clamp(.8rem, 2vw, 1.1rem);
+  border: 1px solid var(--usaw-line);
+  border-inline-start: 4px solid var(--usaw-heading-red);
+  border-radius: 8px;
+  background: var(--usaw-raised);
+}
+
+.field-schedule__event[data-kind="regular"] {
+  border-inline-start-color: var(--usaw-accent);
+}
+
+.field-schedule__event[data-kind="closure"] {
+  border-inline-start-color: var(--usaw-muted);
+}
+
+.field-schedule__event-body {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.field-schedule__event-type {
+  color: var(--usaw-heading-red);
+  font-size: .74rem;
+  font-weight: 800;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+
+.field-schedule__event[data-kind="regular"] .field-schedule__event-type {
+  color: var(--usaw-accent);
+}
+
+.field-schedule__event[data-kind="closure"] .field-schedule__event-type {
+  color: var(--usaw-muted);
+}
+
+.field-schedule__event h3,
+.field-schedule__editor h3 {
+  margin: .2rem 0 0;
+  font-size: clamp(1rem, 2.5vw, 1.28rem);
+  font-weight: 800;
+  line-height: 1.22;
+}
+
+.field-schedule__event-time {
+  display: flex;
+  align-items: center;
+  gap: .33rem;
+  margin: .35rem 0 0;
+  color: var(--usaw-muted);
+  font-size: .88rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.field-schedule__event-time svg {
+  flex: none;
+  width: .96rem;
+  height: .96rem;
+}
+
+.field-schedule__event-description,
+.field-schedule__upcoming-description {
+  margin: .45rem 0 0;
+  color: var(--usaw-muted);
+  font-size: .91rem;
+  line-height: 1.46;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.field-schedule__upcoming-list {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18.5rem), 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.field-schedule__upcoming-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: .75rem;
+  width: 100%;
+  min-height: 6rem;
+  height: 100%;
+  padding: .78rem;
+  border: 1px solid var(--usaw-line);
+  border-radius: 9px;
+  background: var(--usaw-raised);
+  color: var(--usaw-text);
+  font: inherit;
+  text-align: start;
+}
+
+.field-schedule__upcoming-card:hover:not(:disabled) {
+  border-color: var(--usaw-accent);
+  background: var(--usaw-subtle);
+}
+
+.field-schedule__date-block {
+  display: grid;
+  place-content: center;
+  min-width: 3.1rem;
+  min-height: 3.45rem;
+  border: 1px solid var(--usaw-line);
+  border-top: 3px solid var(--usaw-red);
+  border-radius: 5px;
+  background: var(--usaw-surface);
+  text-align: center;
+  line-height: 1;
+}
+
+.field-schedule__date-block span {
+  color: var(--usaw-heading-red);
+  font-size: .67rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.field-schedule__date-block strong {
+  margin-top: .17rem;
+  font-size: 1.45rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+}
+
+.field-schedule__upcoming-info {
+  display: block;
+  min-width: 0;
+  padding-top: .1rem;
+  overflow-wrap: anywhere;
+}
+
+.field-schedule__upcoming-info > strong {
+  display: block;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.field-schedule__upcoming-description {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.field-schedule__upcoming-arrow {
+  width: 1.05rem !important;
+  height: 1.05rem !important;
+  margin-top: .1rem;
+  color: var(--usaw-accent);
+}
+
+.field-schedule__editor {
+  display: grid;
+  gap: .65rem;
+  max-width: 42rem;
+  margin-top: .85rem;
+  padding: 1rem;
+  border: 1px solid var(--usaw-line);
+  border-radius: 8px;
+  background: var(--usaw-raised);
+}
+
+.field-schedule__editor .form-control {
+  margin-top: .22rem;
+}
+
+.field-schedule__feedback {
+  margin-top: .8rem;
+}
+
+.field-schedule__feedback[role="alert"] {
+  border-inline-start: 4px solid var(--usaw-red);
+  color: var(--usaw-text);
+}
+
+#field-schedule-day,
+#upcoming-game-days {
+  scroll-margin-top: 5rem;
+}
+
+@media (max-width: 575px) {
+  .field-schedule__heading {
+    align-items: start;
+    gap: .8rem;
+  }
+
+  .field-schedule__jump {
+    min-height: 40px;
+  }
+
+  .field-schedule__section-header {
+    align-items: start;
+  }
+}

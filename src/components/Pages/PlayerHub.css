@@ -173,6 +173,123 @@
   margin: 7px 0 0;
 }
 
+.ph-player-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 19px;
+  padding: clamp(16px, 4vw, 29px);
+  border: 1px solid #49647f;
+  border-inline-start: 4px solid var(--ph-red);
+  background: linear-gradient(120deg, #0d2338 14%, #1a354f);
+}
+
+.ph-player-identity {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-width: 0;
+}
+
+.ph-player-identity h2,
+.ph-player-meta dd {
+  overflow-wrap: anywhere;
+}
+
+.ph-player-emblem {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: clamp(53px, 10vw, 70px);
+  aspect-ratio: 1;
+  padding: 8px;
+  border: 1px solid #5b7691;
+  border-radius: 9px;
+  background: #f0f6fd;
+}
+
+.ph-player-emblem img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ph-player-rank {
+  display: block;
+  color: var(--ph-light-blue);
+  font-size: .85rem;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.ph-player-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+}
+
+.ph-player-stats > div {
+  padding: 9px 11px;
+  border: 1px solid #59718b;
+  border-radius: 8px;
+  background: #0b1e31a6;
+}
+
+.ph-player-stats dt,
+.ph-player-meta dt {
+  color: #cbd9e9;
+  font-size: .73rem;
+  font-weight: 650;
+}
+
+.ph-player-stats dd {
+  margin: 1px 0 0;
+  color: white;
+  font-size: clamp(1.06rem, 3vw, 1.52rem);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.ph-player-wins dd { color: #9be5ae; }
+.ph-player-losses dd { color: #ffadb7; }
+
+.ph-player-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  grid-column: 1 / -1;
+  width: 100%;
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid #49647f;
+}
+
+.ph-player-meta dd {
+  margin: 1px 0 0;
+  color: white;
+  font-size: .84rem;
+}
+
+.ph-account-loading {
+  min-height: 92px;
+  justify-content: center;
+  color: #d3dfed;
+}
+
+@media (min-width: 480px) {
+  .ph-player-stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 840px) {
+  .ph-player-card {
+    grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
+  }
+}
+
 .ph-actions {
   display: flex;
   flex-wrap: wrap;
@@ -212,17 +329,6 @@
 .ph-button-primary:hover {
   background: #941926;
   color: #fff;
-}
-
-.ph-button-on-dark {
-  background: #091a2bbf;
-  border-color: #8495aa;
-  color: white;
-}
-
-.ph-button-on-dark:hover {
-  background: #174a87;
-  color: white;
 }
 
 .ph-button-secondary {

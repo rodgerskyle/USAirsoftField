@@ -129,7 +129,8 @@ function VirtualPatches({ firebase }) {
   const [params, setParams] = useSearchParams();
   const requestedBadge = badgeById[params.get('badge')];
   const badge = requestedBadge || BADGE_CATALOG[0];
-  const counts = useOwnPatchCounts(firebase, authUser?.roles?.[WAIVER] ? null : authUser?.uid);
+  const memberId = authUser?.roles?.[WAIVER] ? null : authUser?.uid;
+  const counts = useOwnPatchCounts(firebase, memberId);
   const detailHeading = useRef(null);
   const catalogHeading = useRef(null);
 
@@ -154,7 +155,10 @@ function VirtualPatches({ firebase }) {
       </header>
       <div className="virtual-patches__wrap virtual-patches__content">
         <section aria-labelledby="virtual-patch-catalog">
-          <h2 id="virtual-patch-catalog" tabIndex={-1} ref={catalogHeading}>Patch collection</h2>
+          <div className="virtual-patches__catalog-heading">
+            <h2 id="virtual-patch-catalog" tabIndex={-1} ref={catalogHeading}>Patch collection</h2>
+            {memberId && <Link className="virtual-patches__return" to="/account?section=badges">Manage featured badge</Link>}
+          </div>
           <ul className="virtual-patches__wall">
             {BADGE_CATALOG.map(patch => (
               <li key={patch.id}>

@@ -172,11 +172,21 @@ function Leaderboard({ firebase }) {
 
     useEffect(() => {
         if (!visiblePlayers.length) return undefined;
-        const controller = new AbortController();
-        getFeaturedBadges(visiblePlayers.map(player => player.uid), { signal: controller.signal })
-            .then((badges) => { if (!controller.signal.aborted) setFeatured(badges); })
-            .catch(() => { if (!controller.signal.aborted) setFeatured({}); });
-        return () => controller.abort();
+        let request;
+        function refreshFeatured() {
+            request?.abort();
+            const controller = new AbortController();
+            request = controller;
+            getFeaturedBadges(visiblePlayers.map(player => player.uid), { signal: controller.signal })
+                .then((badges) => { if (!controller.signal.aborted) setFeatured(badges); })
+                .catch(() => {});
+        }
+        refreshFeatured();
+        window.addEventListener('focus', refreshFeatured);
+        return () => {
+            request?.abort();
+            window.removeEventListener('focus', refreshFeatured);
+        };
     }, [visiblePlayers]);
 
     function changePeriod(view, month = currentMonth, year = currentYear) {

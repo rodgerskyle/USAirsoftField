@@ -2,6 +2,7 @@ import React from 'react';
 import '../../App.css';
 
 import { Container, Row, Col } from 'react-bootstrap/';
+import { Link } from 'react-router-dom';
 import AccountChangeForm from '../../AccountChange';
 import { AuthUserContext, withAuthentication, withAuthorization } from '../session';
 import ImageUpload from './ImageUpload';
@@ -53,6 +54,7 @@ const ProfileSettings = ({ firebase }) => {
                 </Col>
                 <Col md={8}>
                   {playerId && <DisplayNameForm key={playerId} firebase={firebase} playerId={playerId} />}
+                  {playerId && <Link className="btn btn-outline-light mb-3" to="/account?section=badges">Choose a featured badge</Link>}
                   <AccountChangeForm authUser={authUser} />
                 </Col>
               </Row>

@@ -124,6 +124,27 @@
   margin: 0;
 }
 
+.team-detail__stats--companion {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.75rem), 1fr));
+}
+
+.team-detail__stats .team-detail__wins :is(dt, dd) {
+  color: #24633e;
+}
+
+.team-detail__stats .team-detail__losses :is(dt, dd) {
+  color: var(--usaw-heading-red);
+}
+
+[data-bs-theme="dark"] .team-detail__stats .team-detail__wins :is(dt, dd) {
+  color: #9fdeb7;
+}
+
+.team-detail__score-note {
+  margin: -.75rem 0 0;
+  color: var(--usaw-muted);
+}
+
 .team-detail__stats > div,
 .team-detail__notice {
   margin: 0;

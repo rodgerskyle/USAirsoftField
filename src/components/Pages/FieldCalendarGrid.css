@@ -1,0 +1,278 @@
+.field-calendar-grid {
+    min-width: 0;
+    padding: clamp(.6rem, 2vw, 1.25rem);
+    color: var(--usaw-text);
+    background: var(--usaw-surface);
+    border: 1px solid var(--usaw-line);
+    border-radius: 1rem;
+}
+
+.field-calendar-grid__toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: .75rem 1rem;
+    margin-bottom: .85rem;
+}
+
+.field-calendar-grid__month {
+    margin: 0;
+    font-size: clamp(1.1rem, 3vw, 1.7rem);
+    line-height: 1.15;
+}
+
+.field-calendar-grid__actions,
+.field-calendar-grid__arrows {
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+}
+
+.field-calendar-grid__actions {
+    gap: .5rem;
+}
+
+.field-calendar-grid__actions button {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    padding: .2rem .45rem;
+    color: var(--usaw-text);
+    background: var(--usaw-raised);
+    border: 1px solid var(--usaw-line);
+    border-radius: .35rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1;
+    touch-action: manipulation;
+}
+
+.field-calendar-grid__actions .field-calendar-grid__today {
+    padding-inline: .75rem;
+    color: var(--usaw-accent);
+    font-size: .82rem;
+}
+
+.field-calendar-grid button:enabled:hover {
+    background-color: var(--usaw-subtle);
+}
+
+.field-calendar-grid button:focus-visible {
+    outline: 2px solid var(--usaw-focus);
+    outline-offset: 2px;
+    z-index: 1;
+}
+
+.field-calendar-grid button:disabled {
+    cursor: default;
+    opacity: .6;
+}
+
+.field-calendar-grid .react-calendar__month-view__weekdays,
+.field-calendar-grid .react-calendar__month-view__days {
+    display: grid !important;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: clamp(2px, .55vw, .4rem);
+}
+
+.field-calendar-grid .react-calendar__month-view__weekdays {
+    margin-bottom: .35rem;
+}
+
+.field-calendar-grid .react-calendar__month-view__weekdays__weekday {
+    padding: .4rem 0;
+    color: var(--usaw-muted);
+    text-align: center;
+    text-transform: uppercase;
+    font-size: clamp(.62rem, 1.6vw, .8rem);
+    font-weight: 750;
+    letter-spacing: .03em;
+}
+
+.field-calendar-grid .react-calendar__month-view abbr {
+    text-decoration: none;
+}
+
+.field-calendar-grid .react-calendar__month-view__days__day {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: .3rem;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    min-height: 4.4rem;
+    max-height: 8rem;
+    aspect-ratio: 1;
+    margin: 0;
+    padding: clamp(.18rem, .8vw, .55rem);
+    background: var(--usaw-raised);
+    color: var(--usaw-text);
+    border: 1px solid var(--usaw-line);
+    border-radius: .35rem;
+    text-align: start;
+    line-height: 1.14;
+    overflow: hidden;
+    touch-action: manipulation;
+}
+
+.field-calendar-grid .react-calendar__month-view__days__day > abbr {
+    align-self: flex-start;
+    padding: .12em .25em;
+    border-radius: .15rem;
+    font-size: clamp(.75rem, 1.6vw, 1rem);
+    font-weight: 800;
+    line-height: 1;
+}
+
+.field-calendar-grid .react-calendar__month-view__days__day--neighboringMonth {
+    color: var(--usaw-muted);
+    background: var(--usaw-surface);
+    border-style: dashed;
+}
+
+.field-calendar-grid .react-calendar__month-view__days__day.react-calendar__tile--active {
+    background: var(--usaw-subtle);
+    border-color: var(--usaw-heading-red);
+    box-shadow: inset 0 0 0 1px var(--usaw-heading-red);
+}
+
+.field-calendar-grid .field-calendar-grid__day--today > abbr {
+    color: var(--usaw-surface);
+    background: var(--usaw-accent);
+}
+
+.field-calendar-grid__events {
+    display: grid;
+    align-content: start;
+    gap: .2rem;
+    min-width: 0;
+}
+
+.field-calendar-grid__event {
+    display: block;
+    min-width: 0;
+    padding: .25rem .3rem;
+    background: var(--usaw-surface);
+    border-inline-start: 2px solid var(--usaw-accent);
+    border-radius: .15rem;
+    font-size: clamp(.62rem, 1.2vw, .85rem);
+    line-height: 1.16;
+}
+
+.field-calendar-grid__event--posted {
+    background: var(--usaw-subtle);
+    border-color: var(--usaw-heading-red);
+}
+
+.field-calendar-grid__event--closure {
+    color: var(--usaw-muted);
+    border-color: var(--usaw-muted);
+}
+
+.field-calendar-grid__event-name {
+    display: -webkit-box;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-weight: 750;
+}
+
+.field-calendar-grid__event:nth-of-type(2) .field-calendar-grid__event-name {
+    -webkit-line-clamp: 1;
+}
+
+.field-calendar-grid__event-short {
+    display: none;
+    font-weight: 750;
+    overflow-wrap: anywhere;
+}
+
+.field-calendar-grid__event-time,
+.field-calendar-grid__more {
+    display: block;
+    overflow: hidden;
+    color: var(--usaw-muted);
+    font-size: .88em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.field-calendar-grid__event-time {
+    margin-top: .12rem;
+}
+
+.field-calendar-grid__more {
+    padding-inline: .15rem;
+    font-size: clamp(.56rem, 1.1vw, .7rem);
+    font-weight: 650;
+}
+
+.field-calendar-grid__more--compact {
+    display: none;
+}
+
+.field-calendar-grid__sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+@media (max-width: 740px) {
+    .field-calendar-grid .react-calendar__month-view__days__day {
+        gap: .18rem;
+        max-height: 6rem;
+    }
+
+    .field-calendar-grid__events {
+        gap: .12rem;
+    }
+
+    .field-calendar-grid__event {
+        padding: .15rem .16rem;
+    }
+
+    .field-calendar-grid__event:nth-of-type(2),
+    .field-calendar-grid__more--wide {
+        display: none;
+    }
+
+    .field-calendar-grid__more--compact {
+        display: block;
+    }
+}
+
+@media (max-width: 460px) {
+    .field-calendar-grid__actions {
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .field-calendar-grid .react-calendar__month-view__days__day {
+        min-height: 4.25rem;
+        max-height: 4.8rem;
+        padding: .2rem .12rem;
+        border-radius: .18rem;
+    }
+
+    .field-calendar-grid__event {
+        padding: .14rem .1rem;
+        font-size: .6rem;
+    }
+
+    .field-calendar-grid__event:is(.field-calendar-grid__event--regular, .field-calendar-grid__event--closure) .field-calendar-grid__event-name {
+        display: none;
+    }
+
+    .field-calendar-grid__event-short {
+        display: block;
+    }
+}
