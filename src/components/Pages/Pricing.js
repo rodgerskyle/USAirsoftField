@@ -5,6 +5,7 @@ import { Helmet } from 'react-helmet-async';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faClock, faUsers, faShieldAlt, faTicketAlt } from '@fortawesome/free-solid-svg-icons';
 import '../../components/constants/pricing.css';
+import useFieldResources from '../constants/useFieldResources';
 
 const PRICING_SECTIONS = {
     GAMEPLAY: 'gameplay',
@@ -36,188 +37,6 @@ const SECTION_META = {
     },
 };
 
-const GAMEPLAY_CARDS = [
-    {
-        name: 'Member Gamepass',
-        price: '$30',
-        accent: 'red',
-        description: 'For current members who already have what they need to play.',
-        items: [
-            'Full day of gameplay at US Airsoft',
-            'Best value for active members',
-        ],
-    },
-    {
-        name: 'Non-Member Gamepass',
-        price: '$40',
-        accent: 'blue',
-        description: 'A straightforward option for players coming out for open play.',
-        items: [
-            'Full day of gameplay at US Airsoft',
-            'Great option for first-time or occasional players',
-        ],
-    },
-    {
-        name: 'Member Package',
-        price: '$50',
-        accent: 'red',
-        description: 'For members who want field entry plus the basics to play.',
-        items: [
-            'Full day of gameplay at US Airsoft',
-            'Equipment to play with: mask and gun',
-        ],
-    },
-    {
-        name: 'Non-Member Package',
-        price: '$60',
-        accent: 'blue',
-        description: 'An easy all-in starting point for new or visiting players.',
-        items: [
-            'Full day of gameplay at US Airsoft',
-            'Equipment to play with: mask and gun',
-        ],
-    },
-];
-
-const RENTAL_CARDS = [
-    {
-        name: 'Standard Rental',
-        price: '$20',
-        accent: 'highlight',
-        description: 'The main rental price customers should notice first.',
-        items: [
-            'Updated rental price for customers',
-            'Affordable option for new players',
-            'Comes with a fully loaded mag; bottles of BBs can be purchased separately',
-            'Great add-on for private parties and walk-ins',
-        ],
-    },
-    {
-        name: 'Popular Rental Options',
-        price: 'Loadout Options',
-        accent: 'blue',
-        description: 'Most commonly requested gear packages.',
-        items: [
-            '$20 - Regular Rifle (w/ Mask)',
-            '$35 - Pistol (w/ Mask)',
-            '$45 - Premier Rifle (w/ Mask)',
-            '$55 - Regular Rifle and Pistol (w/ Mask)',
-        ],
-    },
-    {
-        name: 'Extra Gear & Add-ons',
-        price: 'Add-ons',
-        accent: 'dark',
-        description: 'Additional equipment available to round out your setup.',
-        items: [
-            '$5 - Extra Magazine for M4',
-            '$5 - Sling Rental',
-            '$5 - Regular Full Face Mask',
-            '$6 - Extra Magazine for 1911 (EF)',
-            '$10 - 9.6v Battery 1600mAh',
-            '$10 - Dye I4 Mask',
-            '$15 - Dye I5 Mask',
-            '$15 - Vest Rental (Comes with 2 Magazines)',
-        ],
-    },
-];
-
-const MEMBERSHIP_FEATURES = [
-    'Unique identification card',
-    '$5 off rental equipment and gameplay',
-    'Saved waiver for easier check-in',
-    'Stat tracking to show progress and performance',
-    'Personal account access',
-    'Ability to create and join teams online',
-    'Free game for every 450 points earned',
-    'US Airsoft velcro patch',
-    'US Airsoft rank patch',
-];
-
-const PARTY_CARDS = [
-    {
-        name: 'Weekend Package #1',
-        price: '$300',
-        accent: 'red',
-        description: 'Smaller birthday or group package.',
-        items: [
-            '6 players',
-            '6 rentals with masks',
-            '1 large pizza',
-            '1 soda (2 liter)',
-            '1 US Airsoft birthday patch',
-            'Additional players are $50 each',
-        ],
-    },
-    {
-        name: 'Weekend Package #2',
-        price: '$400',
-        accent: 'blue',
-        description: 'Balanced option for a medium-sized group.',
-        items: [
-            '10 players',
-            '10 rentals with masks',
-            '2 large pizzas',
-            '2 sodas (2 liter)',
-            '1 US Airsoft birthday patch',
-            'Additional players are $40 each',
-        ],
-    },
-    {
-        name: 'Weekend Package #3',
-        price: '$760',
-        accent: 'red',
-        description: 'Built for larger parties and bigger groups.',
-        items: [
-            '20 players',
-            '20 rentals with masks',
-            '4 large pizzas',
-            '4 sodas (2 liter)',
-            '1 US Airsoft birthday patch',
-            'Additional players are $38 each',
-        ],
-    },
-];
-
-const WEEKDAY_PARTY_CARDS = [
-    {
-        name: 'Weekday Package #1',
-        price: '$1000',
-        accent: 'red',
-        description: 'Weekday private package for larger groups without rental distribution.',
-        items: [
-            '30 players',
-            'No rental equipment distributed',
-            'Additional players are $40 each',
-            'Game Time: 4 Hours',
-        ],
-    },
-    {
-        name: 'Weekday Package #2',
-        price: '$1200',
-        accent: 'blue',
-        description: 'Weekday private package with rental equipment included.',
-        items: [
-            '20 players',
-            'Rental equipment distributed',
-            'Additional players are $60 each',
-            'Game Time: 4 Hours',
-        ],
-    },
-    {
-        name: 'Weekday Package #3',
-        price: '$2200',
-        accent: 'red',
-        description: 'Largest weekday package for high-capacity private events.',
-        items: [
-            '40 players',
-            'Rental equipment distributed',
-            'Additional players are $55 each',
-            'Game Time: 4 Hours',
-        ],
-    },
-];
-
 const SECTION_BUTTONS = [
     { key: PRICING_SECTIONS.GAMEPLAY, label: 'Open Play', icon: faTicketAlt },
     { key: PRICING_SECTIONS.RENTALS, label: 'Rentals', icon: faShieldAlt },
@@ -248,10 +67,10 @@ const PricingCard = ({ name, price, accent, description, items, badge }) => (
     </div>
 );
 
-const GameplaySection = () => (
+const GameplaySection = ({ cards }) => (
     <div className="pricing-modern-section-body">
         <Row className="g-4">
-            {GAMEPLAY_CARDS.map((card) => (
+            {cards.map((card) => (
                 <Col key={card.name} md={6}>
                     <PricingCard {...card} />
                 </Col>
@@ -260,15 +79,15 @@ const GameplaySection = () => (
     </div>
 );
 
-const RentalSection = () => (
+const RentalSection = ({ cards }) => (
     <div className="pricing-modern-section-body">
         <Row className="g-4">
             <Col lg={5}>
-                <PricingCard {...RENTAL_CARDS[0]} badge="Most Requested" />
+                <PricingCard {...cards[0]} badge="Most Requested" />
             </Col>
             <Col lg={7}>
                 <Row className="g-4">
-                    {RENTAL_CARDS.slice(1).map((card) => (
+                    {cards.slice(1).map((card) => (
                         <Col key={card.name} md={12}>
                             <PricingCard {...card} />
                         </Col>
@@ -279,48 +98,45 @@ const RentalSection = () => (
     </div>
 );
 
-const MembershipSection = () => (
+const MembershipSection = ({ membership }) => (
     <div className="pricing-modern-section-body">
         <div className="pricing-modern-membership">
             <div className="pricing-modern-membership-side">
                 <p className="pricing-modern-card-name">Annual Membership</p>
-                <h3 className="pricing-modern-hero-price">$60</h3>
+                <h3 className="pricing-modern-hero-price">{membership.price}</h3>
                 <p className="pricing-modern-card-description">
                     Best for returning players who want discounts, stat tracking, easier check-in, and a more complete account experience.
                 </p>
-                <p className="pricing-modern-renewal-note">Renewals are also $60 per year.</p>
+                <p className="pricing-modern-renewal-note">Renewals are {membership.price === membership.renewalPrice ? 'also ' : ''}{membership.renewalPrice} per year.</p>
             </div>
             <div className="pricing-modern-membership-main">
-                <FeatureList items={MEMBERSHIP_FEATURES} />
+                <FeatureList items={membership.features} />
             </div>
         </div>
     </div>
 );
 
-const PartiesSection = () => (
+const PartiesSection = ({ parties }) => (
     <div className="pricing-modern-section-body">
         <div className="pricing-modern-callout">
             <div className="pricing-modern-callout-copy">
                 <p className="pricing-modern-callout-eyebrow">Nerf Arena</p>
                 <h3 className="pricing-modern-callout-title">Private Nerf arena booking</h3>
                 <p className="pricing-modern-card-description">
-                    Available Wednesday through Sunday, with two private Nerf session blocks for birthdays and groups.
+                    {parties.nerf.description}
                 </p>
                 <div className="pricing-modern-callout-pills">
-                    <span>Block 1: 8:30 AM - 12:00 PM</span>
-                    <span>Block 2: 12:30 PM - 4:00 PM</span>
-                    <span>Up to 10 players</span>
-                    <span>$25 each additional player</span>
+                    {parties.nerf.details.map((detail) => <span key={detail}>{detail}</span>)}
                 </div>
             </div>
             <div className="pricing-modern-callout-price">
-                <span className="pricing-modern-callout-amount">$400</span>
+                <span className="pricing-modern-callout-amount">{parties.nerf.price}</span>
                 <span className="pricing-modern-callout-caption">Private session</span>
             </div>
         </div>
 
         <Row className="g-4 mt-1">
-            {PARTY_CARDS.map((card) => (
+            {parties.weekend.map((card) => (
                 <Col key={card.name} lg={4}>
                     <PricingCard {...card} />
                 </Col>
@@ -333,7 +149,7 @@ const PartiesSection = () => (
                 <h3 className="pricing-modern-callout-title">Weekday private event options</h3>
             </div>
             <Row className="g-4 mt-1">
-                {WEEKDAY_PARTY_CARDS.map((card) => (
+                {parties.weekday.map((card) => (
                     <Col key={card.name} lg={4}>
                         <PricingCard {...card} />
                     </Col>
@@ -361,17 +177,21 @@ const ContactCta = () => (
 const Pricing = () => {
     const [activeSection, setActiveSection] = useState(null);
     const activeMeta = SECTION_META[activeSection];
+    const { resources, failed } = useFieldResources();
 
     const renderSection = () => {
+        if (!resources) {
+            return <p className="pricing-modern-copy" role="status">{failed ? 'Pricing is unavailable. Call (530) 365-1000 for current rates.' : 'Loading pricing…'}</p>;
+        }
         switch (activeSection) {
             case PRICING_SECTIONS.GAMEPLAY:
-                return <GameplaySection />;
+                return <GameplaySection cards={resources.pricing.gameplay} />;
             case PRICING_SECTIONS.RENTALS:
-                return <RentalSection />;
+                return <RentalSection cards={resources.pricing.rentals} />;
             case PRICING_SECTIONS.MEMBERSHIP:
-                return <MembershipSection />;
+                return <MembershipSection membership={resources.pricing.membership} />;
             case PRICING_SECTIONS.PARTIES:
-                return <PartiesSection />;
+                return <PartiesSection parties={resources.pricing.parties} />;
             default:
                 return null;
         }

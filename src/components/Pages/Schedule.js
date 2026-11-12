@@ -1,401 +1,261 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { Container, Col, Spinner, Row } from 'react-bootstrap/';
+import React, { useEffect, useRef, useState } from 'react';
+import { Col, Row, Spinner } from 'react-bootstrap/';
 import { Helmet } from 'react-helmet-async';
 import Calendar from 'react-calendar';
-import "../constants/react-calendar.css";
-import {
-    Add,
-    Delete,
-    FiberManualRecord,
-    Event as EventIcon
-} from '@mui/icons-material';
-import {
-    IconButton,
-    Card,
-    Typography,
-    Box,
-    Paper
-} from '@mui/material';
+import '../constants/react-calendar.css';
+import { Add, Delete, Edit, Event as EventIcon, FiberManualRecord } from '@mui/icons-material';
+import { Box, Card, Container, IconButton, Paper, Typography } from '@mui/material';
+import { onValue, push, remove, runTransaction, set } from 'firebase/database';
 import { withFirebase } from '../Firebase';
 import * as ROLES from '../constants/roles';
 import staticEvents from '../constants/staticcalendarevents';
-import { onValue, set } from 'firebase/database';
+import useFieldResources from '../constants/useFieldResources';
 
-const Schedule = ({ firebase }) => {
-    const [state, setState] = useState({
-        date: new Date(),
-        events: [],
-        eventsDisplayed: [],
-        showCreateEvent: false,
-        showDeleteEvent: false,
-        loading: true,
-        authUser: null,
-    });
+const fields = ['date', 'name', 'time', 'additional'];
+const pacificDate = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit',
+});
 
-    // Simplified state updates using custom hook
-    const updateState = (updates) => {
-        setState(prev => ({ ...prev, ...updates }));
-    };
+function sameDate(first, second) {
+    return first.getFullYear() === second.getFullYear()
+        && first.getMonth() === second.getMonth()
+        && first.getDate() === second.getDate();
+}
 
-    // Modernized setDate function
-    const setDate = useCallback((val) => {
-        const EventList = state.events.filter(event =>
-            compareDate(val, new Date(event.date), false)
-        );
-        addStaticEvents(EventList, val);
+function inputDate(date) {
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${date.getFullYear()}-${month}-${day}`;
+}
 
-        updateState({
-            date: val,
-            eventsDisplayed: EventList,
-            showCreateEvent: false,
-            showDeleteEvent: false,
-            loading: false,
-        });
-    }, [state.events]);
+function fieldDate(value) {
+    const date = new Date(value);
+    return Number.isFinite(date.getTime()) ? pacificDate.format(date) : '';
+}
 
-    // Modernized createEvent function
-    const createEvent = async (title, additional, time) => {
-        const event = {
-            name: title,
-            time,
-            additional,
-            date: state.date.toJSON(),
-        };
+function regularEvent(date, hours) {
+    const holiday = staticEvents.find(event => sameDate(date, new Date(event.date)));
+    if (holiday) return holiday;
 
-        try {
-            await set(firebase.scheduleEvent(state.events.length), event);
-            updateState({ showCreateEvent: false, loading: true });
-            setDate(state.date);
-        } catch (error) {
-            console.error('Error creating event:', error);
-        }
-    };
+    const year = date.getFullYear();
+    const summer = date >= new Date(year, 4, 1) && date < new Date(year, 10, 2);
+    const day = date.getDay();
+    const time = hours?.[summer ? 'summer' : 'winter'].rows[(day + 6) % 7][1];
+    return time && time.toLowerCase() !== 'closed'
+        ? { name: day === 5 ? 'Friday Night Gameplay' : 'Weekend Gameplay', time, static: true }
+        : null;
+}
 
-    // Compares the dates to check if they are the same day, month and year
-    // Unless the paramter for reoccuring yearly is set, it will not check year
-    const compareDate = (date1, date2, reoccuring) => {
-        // Date 1 is the selected date
-        let selectedYear = date1.getFullYear();
-        let selectedMonth = date1.getMonth();
-        let selectedDay = date1.getDate();
-
-        // Date 2 is the compared to from the event list
-        let comparedYear = date2.getFullYear();
-        let comparedMonth = date2.getMonth();
-        let comparedDay = date2.getDate();
-
-        if (!reoccuring)
-            return selectedYear === comparedYear && selectedMonth === comparedMonth && selectedDay === comparedDay
-        else
-            return selectedMonth === comparedMonth && selectedDay === comparedDay
-    }
-
-    // Show create Event tab so you can add more events
-    const showCreateEvent = (val) => {
-        updateState({ showCreateEvent: val })
-    };
-
-    // Deletes selected event from events list
-    const deleteEvent = (obj) => {
-        // splice event from object and call setdate function on cur date
-        let events = state.events
-        events.splice(obj.index, 1)
-        set(firebase.schedule(), events).then(() => {
-            updateState({
-                loading: true,
-            }, () => {
-                setDate(new Date(obj.date))
-            })
-        })
-    }
-
-    // Checks if the events array contains the date object
-    const checkForDate = (date) => {
-        const { events } = state;
-        for (let i = 0; i < events.length; i++) {
-            if (compareDate(date, new Date(events[i].date), false))
-                return true;
-        }
-        return checkForStaticEvent(date);
-    };
-
-    // Function to add event if there is not one on the given tile, this will be for 
-    // Saturday, Sunday and Friday night games
-    // WIP
-
-    // This function will return true or false depending on if the date
-    // meets the conditions of the static events hosted on at US Airsoft
-    const checkForStaticEvent = (date) => {
-        for (let i = 0; i < staticEvents.length; i++) {
-            if (compareDate(date, new Date(staticEvents[i].date), false))
-                return true;
-        }
-
-        const days = [];
-        if (checkSeason(date)) {
-            // Summer condition
-            days.push(5, 6, 0)
-        }
-        else {
-            // Winter condition
-            days.push(6, 0)
-        }
-
-        if (days.includes(date.getDay())) {
-            return true;
-        }
-
-        return false;
-    }
-
-    // Checks date to check for season if it is summer or not
-    const checkSeason = (date) => {
-        const summerStart = new Date(date.getFullYear(), 4, 1)
-        const summerEnd = new Date(date.getFullYear(), 10, 1)
-        return ((summerStart.getTime() <= date.getTime()) && (date.getTime() <= summerEnd.getTime()));
-    }
-
-    // This function will add static events into existing events array
-    // if the date matches with the date in the static event
-    const addStaticEvents = (events, date) => {
-        for (let i = 0; i < staticEvents.length; i++) {
-            if (compareDate(date, new Date(staticEvents[i].date), staticEvents[i].reoccuring)) {
-                events.push(staticEvents[i]);
-                return; // Set so it only adds the first event found in static events
-            }
-        }
-
-        const days = [];
-        if (checkSeason(date)) {
-            // Summer condition
-            days.push(5, 6, 0)
-        }
-        else {
-            // Winter condition
-            days.push(6, 0)
-        }
-
-        if (days.includes(date.getDay())) {
-            let time = ""
-            let name = "Weekend Gameplay"
-            if (checkSeason(date) && date.getDay() !== 5) {
-                time = "8am - 2pm"
-            }
-            else if (!checkSeason(date) && date.getDay() !== 5) {
-                time = "9am - 3pm"
-            }
-            else {
-                name = "Friday Night Gameplay"
-                time = "6pm - 11pm"
-            }
-            let event = {
-                date: date,
-                name: name,
-                time: time,
-                additional: "",
-                static: true,
-                reoccuring: false,
-            };
-            events.push(event)
-        }
-    }
-
-    useEffect(() => {
-        const unsubscribeEvents = onValue(firebase.schedule(), obj => {
-            const events = obj.val() || [];
-            const eventsObj = Object.keys(events).map(key => ({
-                ...events[key],
-                index: key,
-            }));
-
-            const today = new Date();
-            const EventList = events.length !== 0
-                ? events.filter(event => compareDate(today, new Date(event.date), false))
-                : [];
-
-            updateState({
-                events: eventsObj,
-                obj: obj.val(),
-                eventsDisplayed: EventList,
-            });
-        });
-
-        const unsubscribeAuth = firebase.onAuthUserListener(
-            (user) => updateState({ authUser: user, loading: false }),
-            () => updateState({ authUser: null, loading: false })
-        );
-
-        return () => {
-            unsubscribeEvents();
-            unsubscribeAuth();
-        };
-    }, [firebase]);
-
-    // Modernized calendar tile content
-    const renderTileContent = useCallback(({ date, view }) => {
-        if (view !== "month") return null;
-
-        const hasEvent = checkForDate(date);
-
-        return hasEvent ? (
-            <Box sx={{
-                position: 'absolute',
-                bottom: '0px',
-                left: '50%',
-                transform: 'translateX(-50%)'
-            }}>
-                <FiberManualRecord
-                    sx={{
-                        fontSize: '10px',
-                        color: 'currentColor'
-                    }}
-                />
-            </Box>
-        ) : null;
-    }, []);
-
-    // Modernized event display component
-    const EventElement = ({ event, deleteEvent, deleting }) => (
-        <Card
-            sx={{
-                mb: 2,
-                backgroundColor: event.static ? 'var(--usaw-subtle)' : 'var(--usaw-raised)',
-                color: 'var(--usaw-text)',
-                position: 'relative'
-            }}
-        >
+function CalendarEvent({ event, onEdit, onDelete }) {
+    return (
+        <Card sx={{ mb: 2, backgroundColor: event.static ? 'var(--usaw-subtle)' : 'var(--usaw-raised)', color: 'var(--usaw-text)' }}>
             <Box sx={{ p: 2 }}>
-                <Typography variant="h6" gutterBottom>
-                    {event.name}
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'var(--usaw-muted)' }}>
-                    {event.time}
-                </Typography>
-                {event.additional && (
-                    <Typography variant="body2" sx={{ mt: 1 }}>
-                        {event.additional}
-                    </Typography>
-                )}
-                {deleting && !event.static && (
-                    <IconButton
-                        onClick={deleteEvent}
-                        sx={{
-                            position: 'absolute',
-                            top: 8,
-                            right: 8
-                        }}
-                    >
-                        <Delete color="error" />
-                    </IconButton>
+                <Typography variant="h6" gutterBottom>{event.name}</Typography>
+                <Typography variant="body2" sx={{ color: 'var(--usaw-muted)' }}>{event.time}</Typography>
+                {event.additional && <Typography variant="body2" sx={{ mt: 1, whiteSpace: 'pre-line' }}>{event.additional}</Typography>}
+                {(onEdit || onDelete) && (
+                    <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
+                        {onEdit && <IconButton onClick={onEdit} color="primary" aria-label={`Edit ${event.name}`}><Edit /></IconButton>}
+                        {onDelete && <IconButton onClick={onDelete} color="error" aria-label={`Delete ${event.name}`}><Delete /></IconButton>}
+                    </Box>
                 )}
             </Box>
         </Card>
     );
+}
+
+function EventEditor({ editor, date, saving, cancel, save }) {
+    const event = editor.event;
+    return (
+        <form key={event?.id ?? 'new'} onSubmit={save} className="d-grid gap-2 mt-3">
+            <Typography variant="h6">{event ? 'Edit field event' : 'Add field event'}</Typography>
+            <label className="form-label mb-0">Date
+                <input className="form-control" type="date" name="date" required defaultValue={event ? fieldDate(event.date) : inputDate(date)} />
+            </label>
+            <label className="form-label mb-0">Event name
+                <input className="form-control" name="name" required maxLength={120} defaultValue={event?.name} />
+            </label>
+            <label className="form-label mb-0">Time
+                <input className="form-control" name="time" maxLength={80} defaultValue={event?.time} placeholder="9:00 AM – 3:00 PM" />
+            </label>
+            <label className="form-label mb-0">Details
+                <textarea className="form-control" name="additional" rows={3} maxLength={800} defaultValue={event?.additional} />
+            </label>
+            <div className="d-flex flex-wrap gap-2">
+                <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save event'}</button>
+                <button className="btn btn-outline-secondary" type="button" disabled={saving} onClick={cancel}>Cancel</button>
+            </div>
+        </form>
+    );
+}
+
+function Schedule({ firebase }) {
+    const [date, setDate] = useState(() => new Date());
+    const [events, setEvents] = useState([]);
+    const [authUser, setAuthUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [scheduleUnavailable, setScheduleUnavailable] = useState(false);
+    const [editor, setEditor] = useState(null);
+    const [showDelete, setShowDelete] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [feedback, setFeedback] = useState(null);
+    const pendingCreate = useRef(null);
+    const isAdmin = Boolean(authUser?.roles?.[ROLES.ADMIN]);
+    const { resources } = useFieldResources();
+
+    useEffect(() => {
+        let stopEvents = null;
+        const subscribe = (user) => {
+            stopEvents?.();
+            setAuthUser(user);
+            setLoading(true);
+            setScheduleUnavailable(false);
+            stopEvents = onValue(firebase.schedule(), (snapshot) => {
+                const rows = snapshot.val();
+                setEvents(Object.entries(rows && typeof rows === 'object' ? rows : {})
+                    .filter(([, event]) => typeof event?.name === 'string' && typeof event.date === 'string')
+                    .map(([id, event]) => ({ ...event, id })));
+                setLoading(false);
+            }, () => {
+                setEvents([]);
+                setScheduleUnavailable(true);
+                setLoading(false);
+            });
+        };
+        const stopAuth = firebase.onAuthUserListener(subscribe, () => subscribe(null));
+        return () => { stopEvents?.(); stopAuth(); };
+    }, [firebase]);
+
+    const selectedDate = inputDate(date);
+    const displayed = events.filter(event => fieldDate(event.date) === selectedDate);
+    const regular = regularEvent(date, resources?.hours);
+    if (regular) displayed.push(regular);
+
+    function selectDate(next) {
+        if (!(next instanceof Date) || saving) return;
+        setDate(next);
+        setShowDelete(false);
+        setEditor(null);
+        pendingCreate.current = null;
+        setFeedback(null);
+    }
+
+    function openEditor(event = null) {
+        setEditor({ event });
+        pendingCreate.current = null;
+        setShowDelete(false);
+        setFeedback(null);
+    }
+
+    async function saveEvent(event) {
+        event.preventDefault();
+        if (saving || !editor || !isAdmin) return;
+        const input = new FormData(event.currentTarget);
+        const day = input.get('date');
+        const when = new Date(day + 'T20:00:00Z');
+        const name = String(input.get('name')).trim();
+        if (!Number.isFinite(when.getTime()) || when.toISOString().slice(0, 10) !== day || !name) {
+            setFeedback({ error: true, text: 'Enter a valid date and event name.' });
+            return;
+        }
+        const data = { date: when.toISOString(), name, time: String(input.get('time')).trim(), additional: String(input.get('additional')).trim() };
+        setSaving(true);
+        setFeedback(null);
+        try {
+            if (editor.event) {
+                const original = editor.event;
+                const result = await runTransaction(firebase.scheduleEvent(original.id), (current) => {
+                    if (!current || fields.some(field => (current[field] ?? '') !== (original[field] ?? ''))) return undefined;
+                    return { ...current, ...data };
+                }, { applyLocally: false });
+                if (!result.committed) throw new Error('The event changed. Select it again before editing.');
+            } else {
+                pendingCreate.current ??= push(firebase.schedule());
+                await set(pendingCreate.current, data);
+            }
+            setDate(new Date(day + 'T12:00:00'));
+            setEditor(null);
+            pendingCreate.current = null;
+            setFeedback({ text: 'Event saved.' });
+        } catch (error) {
+            setFeedback({ error: true, text: error?.message === 'The event changed. Select it again before editing.'
+                ? error.message : 'The field calendar could not save this event. Check your access and try again.' });
+        } finally {
+            setSaving(false);
+        }
+    }
+
+    async function deleteEvent(id) {
+        if (!isAdmin || saving) return;
+        setSaving(true);
+        try {
+            await remove(firebase.scheduleEvent(id));
+            setFeedback({ text: 'Event removed.' });
+        } catch {
+            setFeedback({ error: true, text: 'The field calendar could not remove this event.' });
+        } finally {
+            setSaving(false);
+        }
+    }
 
     return (
         <Box className="background-static-all" sx={{ minHeight: '100vh' }}>
-            <Helmet>
-                <title>US Airsoft Field: Schedule</title>
-            </Helmet>
-
-            <Typography
-                variant="h4"
-                component="h2"
-                sx={{
-                    textAlign: 'center',
-                    py: 3,
-                    color: 'var(--usaw-text)'
-                }}
-            >
+            <Helmet><title>US Airsoft Field: Schedule</title></Helmet>
+            <Typography variant="h4" component="h2" sx={{ textAlign: 'center', py: 3, color: 'var(--usaw-text)' }}>
                 US Airsoft Schedule
             </Typography>
-
-            {state.loading ? (
-                <Box display="flex" justifyContent="center" p={5}>
-                    <Spinner animation="border" />
-                </Box>
+            {loading ? (
+                <Box display="flex" justifyContent="center" p={5}><Spinner animation="border" /></Box>
             ) : (
                 <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3 } }}>
-                    <Paper
-                        elevation={3}
-                        sx={{
-                            p: { xs: 2, sm: 3 },
-                            backgroundColor: 'var(--usaw-surface)',
-                            color: 'var(--usaw-text)',
-                            borderRadius: { xs: '12px', sm: '16px' }
-                        }}
-                    >
+                    <Paper elevation={3} sx={{ p: { xs: 2, sm: 3 }, backgroundColor: 'var(--usaw-surface)', color: 'var(--usaw-text)', borderRadius: { xs: '12px', sm: '16px' } }}>
                         <Row>
                             <Col xs={12} md={8} className="mb-4 mb-md-0">
                                 <Calendar
-                                    onChange={setDate}
-                                    value={state.date}
-                                    tileContent={renderTileContent}
-                                    tileClassName={({ date }) => {
-                                        const day = date.getDay();
-                                        if (day === 6 || day === 0) return 'weekend-calendar-games';
-                                        if (day === 5) return 'friday-night-calendar-games';
+                                    onChange={selectDate}
+                                    value={date}
+                                    tileContent={({ date: day, view }) => view === 'month' && (
+                                        events.some(event => fieldDate(event.date) === inputDate(day)) || regularEvent(day, resources?.hours)
+                                    ) ? <Box sx={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)' }}><FiberManualRecord sx={{ fontSize: 10 }} /></Box> : null}
+                                    tileClassName={({ date: day }) => {
+                                        if (day.getDay() === 6 || day.getDay() === 0) return 'weekend-calendar-games';
+                                        if (day.getDay() === 5) return 'friday-night-calendar-games';
                                         return 'non-event-calendar-days';
                                     }}
                                 />
                             </Col>
                             <Col xs={12} md={4}>
-                                <Box sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    mb: 3
-                                }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                                     <EventIcon sx={{ mr: 1 }} />
                                     <Typography variant="h6">
-                                        {state.date.toLocaleDateString('en-US', {
-                                            month: 'long',
-                                            day: 'numeric',
-                                            year: 'numeric'
-                                        })}
+                                        {date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                                     </Typography>
                                 </Box>
-
-                                {/* Events List */}
-                                <Box sx={{ mb: 3 }}>
-                                    {state.eventsDisplayed.map((event, i) => (
-                                        <EventElement
-                                            key={i}
-                                            event={event}
-                                            deleteEvent={() => deleteEvent(event)}
-                                            deleting={state.showDeleteEvent}
-                                        />
-                                    ))}
-                                </Box>
-
-                                {/* Admin Controls */}
-                                {state.authUser?.roles[ROLES.ADMIN] && (
-                                    <Box sx={{
-                                        display: 'flex',
-                                        justifyContent: 'center',
-                                        gap: 2
-                                    }}>
-                                        {!state.showDeleteEvent && (
-                                            <IconButton
-                                                onClick={() => updateState({
-                                                    showCreateEvent: !state.showCreateEvent
-                                                })}
-                                                color="primary"
-                                            >
-                                                <Add />
-                                            </IconButton>
-                                        )}
-                                        {!state.showCreateEvent && (
-                                            <IconButton
-                                                onClick={() => updateState({
-                                                    showDeleteEvent: !state.showDeleteEvent
-                                                })}
-                                                color="error"
-                                            >
-                                                <Delete />
-                                            </IconButton>
-                                        )}
+                                {scheduleUnavailable && <p role="status">Regular hours are shown. Posted events are unavailable.</p>}
+                                {displayed.map((event) => (
+                                    <CalendarEvent
+                                        key={event.id ?? event.name}
+                                        event={event}
+                                        onEdit={isAdmin && !event.static && !saving && !showDelete ? () => openEditor(event) : null}
+                                        onDelete={isAdmin && !event.static && !saving && showDelete ? () => deleteEvent(event.id) : null}
+                                    />
+                                ))}
+                                {isAdmin && (
+                                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
+                                        <IconButton color="primary" aria-label="Add field event" disabled={saving} onClick={() => openEditor()}>
+                                            <Add />
+                                        </IconButton>
+                                        <IconButton color="error" aria-label="Show remove controls" aria-pressed={showDelete} disabled={saving} onClick={() => {
+                                            setShowDelete(current => !current);
+                                            setEditor(null);
+                                            setFeedback(null);
+                                        }}>
+                                            <Delete />
+                                        </IconButton>
                                     </Box>
                                 )}
+                                {isAdmin && editor && <EventEditor editor={editor} date={date} saving={saving} cancel={() => setEditor(null)} save={saveEvent} />}
+                                {feedback && <p className="mt-3" role={feedback.error ? 'alert' : 'status'}>{feedback.text}</p>}
                             </Col>
                         </Row>
                     </Paper>
@@ -403,6 +263,6 @@ const Schedule = ({ firebase }) => {
             )}
         </Box>
     );
-};
+}
 
 export default withFirebase(Schedule);

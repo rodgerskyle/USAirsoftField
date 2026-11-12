@@ -1,0 +1,289 @@
+{
+  "schemaVersion": 1,
+  "venue": {
+    "name": "US Airsoft Field",
+    "address": "4506 Panorama Point Road",
+    "locality": "Anderson, CA 96007",
+    "phone": "(530) 365-1000",
+    "email": "support@usairsoft.com",
+    "latitude": 40.41987,
+    "longitude": -122.25496
+  },
+  "hours": {
+    "summer": {
+      "label": "May 1 – November 1",
+      "rows": [
+        [
+          "Monday",
+          "Closed",
+          "Closed"
+        ],
+        [
+          "Tuesday",
+          "Closed",
+          "Closed"
+        ],
+        [
+          "Wednesday",
+          "Closed",
+          "9:30AM - 6PM"
+        ],
+        [
+          "Thursday",
+          "Closed",
+          "9:30AM - 6PM"
+        ],
+        [
+          "Friday",
+          "6PM - 11PM",
+          "9:30AM - 11PM"
+        ],
+        [
+          "Saturday",
+          "8AM - 2PM",
+          "8AM - 4PM"
+        ],
+        [
+          "Sunday",
+          "8AM - 2PM",
+          "8AM - 4PM"
+        ]
+      ]
+    },
+    "winter": {
+      "label": "November 2 – April 30",
+      "rows": [
+        [
+          "Monday",
+          "Closed",
+          "Closed"
+        ],
+        [
+          "Tuesday",
+          "Closed",
+          "Closed"
+        ],
+        [
+          "Wednesday",
+          "Closed",
+          "9:30AM - 6PM"
+        ],
+        [
+          "Thursday",
+          "Closed",
+          "9:30AM - 6PM"
+        ],
+        [
+          "Friday",
+          "Closed",
+          "9:30AM - 6PM"
+        ],
+        [
+          "Saturday",
+          "9AM - 3PM",
+          "8AM - 4PM"
+        ],
+        [
+          "Sunday",
+          "9AM - 3PM",
+          "8AM - 4PM"
+        ]
+      ]
+    }
+  },
+  "pricing": {
+    "gameplay": [
+      {
+        "name": "Member Gamepass",
+        "price": "$30",
+        "accent": "red",
+        "description": "For current members who already have what they need to play.",
+        "items": [
+          "Full day of gameplay at US Airsoft",
+          "Best value for active members"
+        ]
+      },
+      {
+        "name": "Non-Member Gamepass",
+        "price": "$40",
+        "accent": "blue",
+        "description": "A straightforward option for players coming out for open play.",
+        "items": [
+          "Full day of gameplay at US Airsoft",
+          "Great option for first-time or occasional players"
+        ]
+      },
+      {
+        "name": "Member Package",
+        "price": "$50",
+        "accent": "red",
+        "description": "For members who want field entry plus the basics to play.",
+        "items": [
+          "Full day of gameplay at US Airsoft",
+          "Equipment to play with: mask and gun"
+        ]
+      },
+      {
+        "name": "Non-Member Package",
+        "price": "$60",
+        "accent": "blue",
+        "description": "An easy all-in starting point for new or visiting players.",
+        "items": [
+          "Full day of gameplay at US Airsoft",
+          "Equipment to play with: mask and gun"
+        ]
+      }
+    ],
+    "rentals": [
+      {
+        "name": "Standard Rental",
+        "price": "$20",
+        "accent": "highlight",
+        "description": "The main rental price customers should notice first.",
+        "items": [
+          "Updated rental price for customers",
+          "Affordable option for new players",
+          "Comes with a fully loaded mag; bottles of BBs can be purchased separately",
+          "Great add-on for private parties and walk-ins"
+        ]
+      },
+      {
+        "name": "Popular Rental Options",
+        "price": "Loadout Options",
+        "accent": "blue",
+        "description": "Most commonly requested gear packages.",
+        "items": [
+          "$20 - Regular Rifle (w/ Mask)",
+          "$35 - Pistol (w/ Mask)",
+          "$45 - Premier Rifle (w/ Mask)",
+          "$55 - Regular Rifle and Pistol (w/ Mask)"
+        ]
+      },
+      {
+        "name": "Extra Gear & Add-ons",
+        "price": "Add-ons",
+        "accent": "dark",
+        "description": "Additional equipment available to round out your setup.",
+        "items": [
+          "$5 - Extra Magazine for M4",
+          "$5 - Sling Rental",
+          "$5 - Regular Full Face Mask",
+          "$6 - Extra Magazine for 1911 (EF)",
+          "$10 - 9.6v Battery 1600mAh",
+          "$10 - Dye I4 Mask",
+          "$15 - Dye I5 Mask",
+          "$15 - Vest Rental (Comes with 2 Magazines)"
+        ]
+      }
+    ],
+    "membership": {
+      "price": "$60",
+      "renewalPrice": "$60",
+      "features": [
+        "Unique identification card",
+        "$5 off rental equipment and gameplay",
+        "Saved waiver for easier check-in",
+        "Stat tracking to show progress and performance",
+        "Personal account access",
+        "Ability to create and join teams online",
+        "Free game for every 450 points earned",
+        "US Airsoft velcro patch",
+        "US Airsoft rank patch"
+      ]
+    },
+    "parties": {
+      "weekend": [
+        {
+          "name": "Weekend Package #1",
+          "price": "$300",
+          "accent": "red",
+          "description": "Smaller birthday or group package.",
+          "items": [
+            "6 players",
+            "6 rentals with masks",
+            "1 large pizza",
+            "1 soda (2 liter)",
+            "1 US Airsoft birthday patch",
+            "Additional players are $50 each"
+          ]
+        },
+        {
+          "name": "Weekend Package #2",
+          "price": "$400",
+          "accent": "blue",
+          "description": "Balanced option for a medium-sized group.",
+          "items": [
+            "10 players",
+            "10 rentals with masks",
+            "2 large pizzas",
+            "2 sodas (2 liter)",
+            "1 US Airsoft birthday patch",
+            "Additional players are $40 each"
+          ]
+        },
+        {
+          "name": "Weekend Package #3",
+          "price": "$760",
+          "accent": "red",
+          "description": "Built for larger parties and bigger groups.",
+          "items": [
+            "20 players",
+            "20 rentals with masks",
+            "4 large pizzas",
+            "4 sodas (2 liter)",
+            "1 US Airsoft birthday patch",
+            "Additional players are $38 each"
+          ]
+        }
+      ],
+      "weekday": [
+        {
+          "name": "Weekday Package #1",
+          "price": "$1000",
+          "accent": "red",
+          "description": "Weekday private package for larger groups without rental distribution.",
+          "items": [
+            "30 players",
+            "No rental equipment distributed",
+            "Additional players are $40 each",
+            "Game Time: 4 Hours"
+          ]
+        },
+        {
+          "name": "Weekday Package #2",
+          "price": "$1200",
+          "accent": "blue",
+          "description": "Weekday private package with rental equipment included.",
+          "items": [
+            "20 players",
+            "Rental equipment distributed",
+            "Additional players are $60 each",
+            "Game Time: 4 Hours"
+          ]
+        },
+        {
+          "name": "Weekday Package #3",
+          "price": "$2200",
+          "accent": "red",
+          "description": "Largest weekday package for high-capacity private events.",
+          "items": [
+            "40 players",
+            "Rental equipment distributed",
+            "Additional players are $55 each",
+            "Game Time: 4 Hours"
+          ]
+        }
+      ],
+      "nerf": {
+        "price": "$400",
+        "description": "Available Wednesday through Sunday, with two private Nerf session blocks for birthdays and groups.",
+        "details": [
+          "Block 1: 8:30 AM - 12:00 PM",
+          "Block 2: 12:30 PM - 4:00 PM",
+          "Up to 10 players",
+          "$25 each additional player"
+        ]
+      }
+    }
+  }
+}

@@ -25,9 +25,10 @@ function TablePaginationActions(props) {
   const { count, page, rowsPerPage, onPageChange } = props;
   const actionButtonSx = {
     minWidth: '40px',
-    color: '#aab4c2',
+    color: 'var(--admin-subtext)',
     '&.Mui-disabled': {
-      color: 'rgba(170,180,194,0.3)',
+      color: 'var(--admin-subtext)',
+      opacity: 0.45,
     },
   };
 
@@ -72,57 +73,62 @@ function TablePaginationActions(props) {
 function UserRow({ user, page, rowsPerPage, index }) {
   const [open, setOpen] = React.useState(false);
   const expired = checkDate(user.renewal);
+  const playerName = [user.name, user.username].find(value => typeof value === 'string' && value.trim()) || 'Unnamed player';
+  const renewalStatus = expired === null ? 'Date unavailable' : expired ? 'Expired' : 'Clear';
+  const renewalColor = expired === null ? 'var(--admin-subtext)' : expired ? 'var(--staff-error)' : 'var(--staff-success)';
 
   return (
     <>
       <TableRow
         sx={{
           '& > *': { borderBottom: 'unset' },
-          backgroundColor: open ? 'rgba(31, 101, 199, 0.10)' : 'rgba(18, 23, 29, 0.96)',
+          backgroundColor: open ? 'var(--admin-accent-soft)' : 'var(--admin-surface)',
           transition: 'background-color 0.2s',
           '&:hover': {
-            backgroundColor: 'rgba(255,255,255,0.04)',
+            backgroundColor: 'var(--admin-surface-muted)',
           }
         }}
       >
-        <TableCell sx={{ width: 50, color: '#aab4c2' }}>
+        <TableCell sx={{ width: 50, color: 'var(--admin-subtext)' }}>
           <Button
             size="small"
             onClick={() => setOpen(!open)}
-            sx={{ minWidth: '40px', color: '#aab4c2' }}
+            aria-label={`Details for ${playerName}`}
+            aria-expanded={open}
+            sx={{ minWidth: '40px', color: 'var(--admin-subtext)' }}
           >
             <FontAwesomeIcon icon={open ? faChevronUp : faChevronDown} />
           </Button>
         </TableCell>
-        <TableCell sx={{ color: '#f4f7fb', fontWeight: 600 }}>
-          {`(${(index + 1) + (page * rowsPerPage)}) ${user.name}`}
+        <TableCell sx={{ color: 'var(--admin-text)', fontWeight: 600 }}>
+          {`(${(index + 1) + (page * rowsPerPage)}) ${playerName}`}
         </TableCell>
-        <TableCell align="right" sx={{ color: '#aab4c2' }}>{user.username}</TableCell>
-        <TableCell align="right" sx={{ color: '#aab4c2' }}>{user.email}</TableCell>
+        <TableCell align="right" sx={{ color: 'var(--admin-subtext)' }}>{typeof user.username === 'string' ? user.username : '—'}</TableCell>
+        <TableCell align="right" sx={{ color: 'var(--admin-subtext)' }}>{typeof user.email === 'string' ? user.email : '—'}</TableCell>
       </TableRow>
 
       <TableRow>
-        <TableCell colSpan={6} sx={{ py: 0, backgroundColor: 'rgba(10,14,19,0.88)' }}>
+        <TableCell colSpan={4} sx={{ py: 0, backgroundColor: 'var(--admin-surface-muted)' }}>
           <Collapse in={open} timeout="auto" unmountOnExit>
             <Box sx={{ py: 2 }}>
-              <Table size="small" sx={{ '& .MuiTableCell-root': { borderBottomColor: 'rgba(255,255,255,0.08)' } }}>
-                <TableHead>
+              <Table size="small" sx={{ '& .MuiTableCell-root': { borderBottomColor: 'var(--admin-border)' } }}>
+                <TableHead sx={{ backgroundColor: 'var(--admin-surface)' }}>
                   <TableRow>
-                    <TableCell sx={{ color: '#f4f7fb', width: 120, fontWeight: 700 }}>Renewal</TableCell>
-                    <TableCell sx={{ color: '#f4f7fb', width: 120, fontWeight: 700 }}>Warnings</TableCell>
+                    <TableCell sx={{ color: 'var(--admin-text)', width: 120, fontWeight: 700 }}>Renewal</TableCell>
+                    <TableCell sx={{ color: 'var(--admin-text)', width: 120, fontWeight: 700 }}>Warnings</TableCell>
                     <TableCell align="right" />
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   <TableRow>
-                    <TableCell sx={{ color: expired ? '#f87171' : '#86efac' }}>
+                    <TableCell sx={{ color: renewalColor }}>
                       <FontAwesomeIcon
-                        icon={expired ? faCircleXmark : faCircleCheck}
+                        icon={expired === null ? faCircleInfo : expired ? faCircleXmark : faCircleCheck}
                         className="me-2"
                       />
-                      {expired ? 'Expired' : 'Clear'}
+                      {renewalStatus}
                     </TableCell>
-                    <TableCell sx={{ color: '#86efac' }}>
+                    <TableCell sx={{ color: 'var(--staff-success)' }}>
                       <FontAwesomeIcon icon={faCircleCheck} className="me-2" />
                       Clean
                     </TableCell>
@@ -132,9 +138,10 @@ function UserRow({ user, page, rowsPerPage, index }) {
                         to={`/admin/useroptions/${user.uid}`}
                         variant="contained"
                         sx={{
-                          backgroundColor: '#1f65c7',
+                          backgroundColor: 'var(--usaw-red)',
+                          color: '#fff',
                           '&:hover': {
-                            backgroundColor: '#163e7d',
+                            backgroundColor: '#8e1824',
                           }
                         }}
                       >
@@ -153,7 +160,7 @@ function UserRow({ user, page, rowsPerPage, index }) {
   );
 }
 
-export default function UserTable({ users, index, search, length }) {
+export default function UserTable({ users, search, length }) {
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
 
@@ -167,13 +174,21 @@ export default function UserTable({ users, index, search, length }) {
     <TableContainer
       component={Paper}
       sx={{
-        backgroundColor: 'rgba(18, 23, 29, 0.96)',
-        border: '1px solid rgba(255,255,255,0.08)',
-        boxShadow: '0 18px 40px rgba(0, 0, 0, 0.22)',
-        borderRadius: '16px',
+        backgroundColor: 'var(--admin-surface)',
+        border: '1px solid var(--admin-border)',
+        boxShadow: 'none',
+        borderRadius: '10px',
       }}
     >
-      <Table>
+      <Table aria-label="Player directory">
+        <TableHead sx={{ backgroundColor: 'var(--admin-surface-muted)', '& .MuiTableCell-root': { color: 'var(--admin-text)', borderBottomColor: 'var(--admin-border)' } }}>
+          <TableRow>
+            <TableCell scope="col"><span className="visually-hidden">Details</span></TableCell>
+            <TableCell scope="col">Player</TableCell>
+            <TableCell scope="col" align="right">Username</TableCell>
+            <TableCell scope="col" align="right">Email</TableCell>
+          </TableRow>
+        </TableHead>
         <TableBody>
           {(rowsPerPage > 0
             ? users.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
@@ -190,7 +205,7 @@ export default function UserTable({ users, index, search, length }) {
 
           {emptyRows > 0 && (
             <TableRow style={{ height: 53 * emptyRows }}>
-              <TableCell colSpan={6} />
+              <TableCell colSpan={4} />
             </TableRow>
           )}
         </TableBody>
@@ -198,14 +213,14 @@ export default function UserTable({ users, index, search, length }) {
           <TableRow>
             <TablePagination
               rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
-              colSpan={6}
+              colSpan={4}
               count={length}
               rowsPerPage={rowsPerPage}
               page={page}
                 SelectProps={{
                 inputProps: { 'aria-label': 'rows per page' },
                 native: true,
-                sx: { color: '#aab4c2' }
+                sx: { color: 'var(--admin-subtext)' }
               }}
               onPageChange={(e, newPage) => setPage(newPage)}
               onRowsPerPageChange={(e) => {
@@ -214,15 +229,16 @@ export default function UserTable({ users, index, search, length }) {
               }}
               ActionsComponent={TablePaginationActions}
               sx={{
-                color: '#aab4c2',
+                color: 'var(--admin-subtext)',
+                borderTopColor: 'var(--admin-border)',
                 '& .MuiTablePagination-select': {
-                  color: '#aab4c2'
+                  color: 'var(--admin-subtext)'
                 },
                 '& .MuiTablePagination-selectIcon': {
-                  color: '#aab4c2'
+                  color: 'var(--admin-subtext)'
                 },
                 '& .MuiTablePagination-displayedRows, & .MuiTablePagination-selectLabel': {
-                  color: '#aab4c2'
+                  color: 'var(--admin-subtext)'
                 }
               }}
             />
@@ -236,8 +252,10 @@ export default function UserTable({ users, index, search, length }) {
 // Helper function to check if date is expired
 function checkDate(dt) {
   if (dt === 'N/A') return false;
-  const dateArray = dt.split('-');
-  const date = new Date(dateArray[2], dateArray[0] - 1, dateArray[1]);
-  const today = new Date();
-  return date < today;
+  const match = typeof dt === 'string' && /^(\d{1,2})-(\d{1,2})-(\d{4})$/.exec(dt);
+  if (!match) return null;
+  const [, month, day, year] = match.map(Number);
+  const date = new Date(year, month - 1, day);
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return null;
+  return date < new Date();
 }

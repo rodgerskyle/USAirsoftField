@@ -1,0 +1,45 @@
+.settings-display-name {
+  padding: 1rem;
+  border: 1px solid #41546c;
+  border-radius: .85rem;
+  color: #eef4fb;
+  background: #172330;
+}
+
+.settings-display-name label {
+  display: block;
+  margin-bottom: .25rem;
+  font-size: 1.1rem;
+  font-weight: 750;
+}
+
+.settings-display-name p {
+  margin-bottom: .75rem;
+  color: #c5d0dd;
+}
+
+.settings-display-name .form-control {
+  width: 100%;
+  max-width: 24rem;
+}
+
+.settings-display-name__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-top: .75rem;
+}
+
+.settings-display-name__actions p,
+.settings-display-name .settings-display-name__feedback {
+  margin-bottom: 0;
+}
+
+.settings-display-name__feedback {
+  margin-top: .75rem;
+}
+
+.settings-display-name p[role="alert"] {
+  color: #ffb5bb;
+}

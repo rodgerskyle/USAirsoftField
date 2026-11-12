@@ -2,12 +2,14 @@ import React from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { HelmetProvider } from 'react-helmet-async';
 import { MemoryRouter } from 'react-router-dom';
-import { get } from 'firebase/database';
+import { get, onValue } from 'firebase/database';
 import { FirebaseContext } from '../Firebase';
 import { AuthUserContext } from '../session';
-import { getBadgeStandings, getFeaturedBadgeDetails, getMyBadges } from '../constants/playerBadges';
+import { getBadgeStandings, getFeaturedBadges, getFeaturedBadgeDetails, getMyBadges } from '../constants/playerBadges';
+import { getAllPlayerDisplayNames, getPlayerDisplayNames } from '../constants/playerDisplayNames';
 import VirtualPatches from './VirtualPatches';
 import PlayerProfileView from './PlayerProfileView';
+import Leaderboard from './leaderboard';
 
 jest.mock('../Firebase', () => {
   const context = jest.requireActual('../Firebase/context');
@@ -16,17 +18,23 @@ jest.mock('../Firebase', () => {
 jest.mock('firebase/database', () => ({
   child: (ref, field) => `${ref}/${field}`,
   get: jest.fn(),
+  onValue: jest.fn(),
 }));
 jest.mock('firebase/storage', () => ({ getDownloadURL: jest.fn() }));
 jest.mock('../constants/playerBadges', () => ({
   ...jest.requireActual('../constants/playerBadges'),
   getBadgeStandings: jest.fn(),
+  getFeaturedBadges: jest.fn(),
   getFeaturedBadgeDetails: jest.fn(),
   getMyBadges: jest.fn(),
 }));
+jest.mock('../constants/playerDisplayNames', () => ({
+  getAllPlayerDisplayNames: jest.fn(),
+  getPlayerDisplayNames: jest.fn(),
+}));
 
 const playerId = 'test-player-123';
-const firebase = { user: id => `users/${id}` };
+const firebase = { user: id => `users/${id}`, users: () => 'users' };
 const user = { uid: playerId, username: 'Patch Hunter', roles: {} };
 
 function renderPage(page, { path = '/virtual-patches', authUser = null } = {}) {
@@ -44,6 +52,11 @@ function renderPage(page, { path = '/virtual-patches', authUser = null } = {}) {
 beforeEach(() => {
   jest.clearAllMocks();
   get.mockResolvedValue({ val: () => user.username });
+  getAllPlayerDisplayNames.mockResolvedValue({});
+  getPlayerDisplayNames.mockResolvedValue({});
+  getFeaturedBadges.mockResolvedValue({});
+  getFeaturedBadgeDetails.mockResolvedValue({ featured: {}, featuredCounts: {} });
+  getMyBadges.mockResolvedValue({ awards: [] });
   getBadgeStandings.mockImplementation(async (badgeId, { page }) => ({
     badgeId,
     page,
@@ -81,6 +94,52 @@ test('shows a public featured count without loading private badge records or a l
   expect(await screen.findByText('×4')).toBeVisible();
   expect(screen.queryByText('All-time leaderboard')).not.toBeInTheDocument();
   expect(getMyBadges).not.toHaveBeenCalled();
+});
+
+test('shows the custom public profile name without showing the account name', async () => {
+  getPlayerDisplayNames.mockResolvedValue({ [playerId]: 'Field Scout' });
+  const member = { ...user, name: 'Jordan Example' };
+  renderPage(<PlayerProfileView firebase={firebase} user={member} playerId={playerId} />);
+
+  expect(screen.queryByText(member.name)).not.toBeInTheDocument();
+  expect(await screen.findByRole('heading', { name: 'Field Scout' })).toBeVisible();
+  expect(screen.queryByText(member.name)).not.toBeInTheDocument();
+  expect(screen.queryByText(member.username)).not.toBeInTheDocument();
+});
+
+test('uses the public display name in patch standings', async () => {
+  getPlayerDisplayNames.mockResolvedValue({ [playerId]: 'Field Scout' });
+  renderPage(<VirtualPatches />);
+
+  expect(await screen.findByRole('link', { name: 'Field Scout' }))
+    .toHaveAttribute('href', `/profilelookup/${playerId}`);
+  expect(get).not.toHaveBeenCalled();
+});
+
+test('finds a display name on a later standings page without changing its rank', async () => {
+  const rankedPlayers = Object.fromEntries(Array.from({ length: 51 }, (_, index) => [
+    `ranked-player-${index}`, { name: `Ranked Player ${index}`, points: 100 - index },
+  ]));
+  rankedPlayers[playerId] = { name: 'Jordan Example', points: 1 };
+  onValue.mockImplementation((_ref, next) => {
+    next({ val: () => rankedPlayers });
+    return () => {};
+  });
+  getAllPlayerDisplayNames.mockResolvedValue({ [playerId]: 'Field Scout', 'ranked-player-0': 'Range Lead' });
+  renderPage(<Leaderboard />, { path: '/leaderboard' });
+
+  const leaders = screen.getByRole('region', { name: 'Field leaders' });
+  const standings = screen.getByRole('table', { name: 'All time player standings' });
+  expect(await within(leaders).findByText('Range Lead')).toBeVisible();
+  expect(within(standings).getByText('Range Lead')).toBeVisible();
+  const search = screen.getByRole('searchbox', { name: 'Search player names' });
+  expect(screen.queryByText('Field Scout')).not.toBeInTheDocument();
+  fireEvent.change(search, { target: { value: 'field scout' } });
+
+  const match = await screen.findByRole('link', { name: /Field Scout/ });
+  expect(match).toHaveAttribute('href', `/profilelookup/${playerId}`);
+  expect(within(match.closest('tr')).getByText('#52')).toBeVisible();
+  expect(screen.queryByText('Jordan Example')).not.toBeInTheDocument();
 });
 
 test('shows one earned patch with its count and preserves the first award reason', async () => {

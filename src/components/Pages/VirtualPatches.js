@@ -8,6 +8,7 @@ import { withFirebase } from '../Firebase';
 import { AuthUserContext } from '../session';
 import { WAIVER } from '../constants/roles';
 import { BADGE_CATALOG, badgeById, getBadgeStandings, getMyBadges } from '../constants/playerBadges';
+import { getPlayerDisplayNames } from '../constants/playerDisplayNames';
 import './VirtualPatches.css';
 
 const STANDINGS_PAGE_SIZE = 25;
@@ -55,10 +56,18 @@ function PatchStandings({ badge, firebase }) {
     const controller = new AbortController();
     getBadgeStandings(badge.id, { page, signal: controller.signal }).then(async ({ standings, hasMore }) => {
       if (controller.signal.aborted) return;
-      const players = await Promise.all(standings.map(async player => ({
-        ...player,
-        name: await publicPlayerName(firebase, player.playerId),
-      })));
+      const displayNames = standings.length
+        ? await getPlayerDisplayNames(standings.map(({ playerId }) => playerId), { signal: controller.signal })
+          .catch(() => ({}))
+        : {};
+      if (controller.signal.aborted) return;
+      const players = await Promise.all(standings.map(async player => {
+        const alias = displayNames[player.playerId];
+        return {
+          ...player,
+          name: typeof alias === 'string' ? alias : await publicPlayerName(firebase, player.playerId),
+        };
+      }));
       if (!controller.signal.aborted) setResult({ page, attempt, players, hasMore });
     }).catch(() => {
       if (!controller.signal.aborted) setResult({ page, attempt, error: true });

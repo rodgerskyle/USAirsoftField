@@ -11,6 +11,7 @@ import rankImages from '../constants/rankimgs';
 import * as ROLES from '../constants/roles';
 import SharePageLink from '../constants/SharePageLink';
 import { badgeById, getFeaturedBadges } from '../constants/playerBadges';
+import { getAllPlayerDisplayNames } from '../constants/playerDisplayNames';
 import { withFirebase } from '../Firebase';
 import { AuthUserContext } from '../session';
 import './leaderboard.css';
@@ -119,6 +120,15 @@ function Leaderboard({ firebase }) {
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
     const [featured, setFeatured] = useState({});
+    const [displayNames, setDisplayNames] = useState({});
+
+    useEffect(() => {
+        const controller = new AbortController();
+        getAllPlayerDisplayNames({ signal: controller.signal })
+            .then((names) => { if (!controller.signal.aborted) setDisplayNames(names); })
+            .catch(() => {});
+        return () => controller.abort();
+    }, []);
 
     useEffect(() => onValue(firebase.users(), snapshot => {
         const publicPlayers = Object.entries(snapshot.val() ?? {})
@@ -142,12 +152,13 @@ function Leaderboard({ firebase }) {
     const standings = useMemo(() => {
         const scoredPlayers = players.map(player => ({
             ...player,
+            name: typeof displayNames[player.uid] === 'string' ? displayNames[player.uid] : player.name,
             ...(monthly ? monthlyStats(player.games, currentMonth, currentYear) : { points: player.careerPoints }),
         }));
         // Match the original ordering for tied scores on the initial board.
         return scoredPlayers.reverse().sort((a, b) => b.points - a.points)
             .map((player, index) => ({ ...player, position: index + 1 }));
-    }, [players, monthly, currentMonth, currentYear]);
+    }, [players, displayNames, monthly, currentMonth, currentYear]);
     const personalPlayer = standings.find(player => player.uid === authUser?.uid && player.personalEligible);
     const leaders = standings.slice(0, 3).filter(player => !monthly || player.points > 0);
     const query = search.trim().toLowerCase();
