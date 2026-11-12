@@ -12,8 +12,10 @@ import * as ROLES from '../constants/roles';
 import SharePageLink from '../constants/SharePageLink';
 import { badgeById, getFeaturedBadges } from '../constants/playerBadges';
 import { getAllPlayerDisplayNames } from '../constants/playerDisplayNames';
+import { getLeaderboardPrestige, prestigeCyclePoints, profileRank } from '../constants/playerPrestige';
 import { withFirebase } from '../Firebase';
 import { AuthUserContext } from '../session';
+import { PrestigeEmblem } from './PlayerPrestige';
 import './leaderboard.css';
 
 const FIRST_YEAR = 2021;
@@ -21,10 +23,6 @@ const PAGE_SIZE = 50;
 const MONTHS = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December',
-];
-const RANK_THRESHOLDS = [
-    125, 225, 335, 450, 570, 690, 820, 960, 1110, 1270, 1440,
-    1640, 1840, 2090, 2340, 2615, 2890, 3190, 3490, 3790, 4115, 4500,
 ];
 const formatScore = new Intl.NumberFormat('en-US').format;
 
@@ -51,17 +49,37 @@ function profilePath(player) {
     return `/profilelookup/${encodeURIComponent(player.uid)}`;
 }
 
-function RankInsignia({ points }) {
-    const thresholdIndex = RANK_THRESHOLDS.findIndex(threshold => points < threshold);
-    const rank = thresholdIndex === -1 ? RANK_THRESHOLDS.length : thresholdIndex;
+function PlayerLink({ player, featuredBadge, prestige }) {
+    const rank = profileRank(prestigeCyclePoints(player.careerPoints, prestige));
     return (
-        <span className="field-lb-insignia" title={ranks[rank]}>
-            <img src={rankImages[rank]} alt={ranks[rank]} width="46" height="46" loading="lazy" />
-        </span>
+        <Link className="field-lb-player" to={profilePath(player)}>
+            <span className="field-lb-player-marks">
+                <span className="field-lb-insignia">
+                    <img src={rankImages[rank]} alt="" width="46" height="46" loading="lazy" />
+                </span>
+                {featuredBadge && (
+                    <img className="field-lb-featured-badge" loading="lazy" width="48" height="48"
+                        src={featuredBadge.thumbUrl} alt={`Featured badge: ${featuredBadge.name}`}
+                        title={featuredBadge.name} />
+                )}
+            </span>
+            <span className="field-lb-player-details">
+                <span>{player.name}</span>
+                <span className="field-lb-player-progression">
+                    <span>{ranks[rank]}</span>
+                    {prestige && (
+                        <span className="field-lb-prestige">
+                            {prestige.prestigeCount > 0 && <PrestigeEmblem count={prestige.prestigeCount} />}
+                            <span>Prestige {formatScore(prestige.prestigeCount)}</span>
+                        </span>
+                    )}
+                </span>
+            </span>
+        </Link>
     );
 }
 
-function LeaderboardTable({ players, personalUid, period, featured }) {
+function LeaderboardTable({ players, personalUid, period, featured, prestigeByPlayer }) {
     return (
         <table className="field-lb-table">
             <caption className="visually-hidden">{period} player standings</caption>
@@ -79,18 +97,8 @@ function LeaderboardTable({ players, personalUid, period, featured }) {
                     <tr key={player.uid} className={player.uid === personalUid ? 'field-lb-own-row' : undefined}>
                         <td><span className="field-lb-place">#{player.position}</span></td>
                         <th scope="row">
-                            <Link className="field-lb-player" to={profilePath(player)}>
-                                <span className="field-lb-player-marks">
-                                    <RankInsignia points={player.careerPoints} />
-                                    {badgeById[featured[player.uid]] && (
-                                        <img className="field-lb-featured-badge" loading="lazy" width="48" height="48"
-                                            src={badgeById[featured[player.uid]].thumbUrl}
-                                            alt={`Featured badge: ${badgeById[featured[player.uid]].name}`}
-                                            title={badgeById[featured[player.uid]].name} />
-                                    )}
-                                </span>
-                                <span>{player.name}</span>
-                            </Link>
+                            <PlayerLink player={player} featuredBadge={badgeById[featured[player.uid]]}
+                                prestige={prestigeByPlayer.get(player.uid)} />
                         </th>
                         <td className="field-lb-wins">{formatScore(player.wins)}</td>
                         <td className="field-lb-losses">{formatScore(player.losses)}</td>
@@ -121,6 +129,7 @@ function Leaderboard({ firebase }) {
     const [page, setPage] = useState(1);
     const [featured, setFeatured] = useState({});
     const [displayNames, setDisplayNames] = useState({});
+    const [prestigeByPlayer, setPrestigeByPlayer] = useState(() => new Map());
 
     useEffect(() => {
         const controller = new AbortController();
@@ -169,6 +178,27 @@ function Leaderboard({ firebase }) {
     const currentPage = Math.min(page, pageCount);
     const offset = (currentPage - 1) * PAGE_SIZE;
     const visiblePlayers = useMemo(() => results.slice(offset, offset + PAGE_SIZE), [results, offset]);
+    const visiblePlayerIdsKey = JSON.stringify(visiblePlayers.map(player => player.uid).sort());
+
+    useEffect(() => {
+        const ids = JSON.parse(visiblePlayerIdsKey);
+        if (!ids.length) return undefined;
+        let request;
+        function refreshPrestige() {
+            request?.abort();
+            const controller = new AbortController();
+            request = controller;
+            getLeaderboardPrestige(ids, { signal: controller.signal })
+                .then(records => { if (!controller.signal.aborted) setPrestigeByPlayer(records); })
+                .catch(() => {});
+        }
+        refreshPrestige();
+        window.addEventListener('focus', refreshPrestige);
+        return () => {
+            request?.abort();
+            window.removeEventListener('focus', refreshPrestige);
+        };
+    }, [visiblePlayerIdsKey]);
 
     useEffect(() => {
         if (!visiblePlayers.length) return undefined;
@@ -296,7 +326,7 @@ function Leaderboard({ firebase }) {
                     ) : (
                         <>
                             <LeaderboardTable players={visiblePlayers} personalUid={personalPlayer?.uid} period={period}
-                                featured={featured} />
+                                featured={featured} prestigeByPlayer={prestigeByPlayer} />
                             {pageCount > 1 && (
                                 <div className="field-lb-pagination">
                                     <Pagination count={pageCount} page={currentPage} onChange={(_, value) => setPage(value)}

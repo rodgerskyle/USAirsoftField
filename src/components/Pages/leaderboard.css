@@ -1,6 +1,7 @@
 .field-lb {
     --field-lb-win: #196236;
     --field-lb-loss: #a12235;
+    --field-lb-prestige: #694814;
     min-height: 70vh;
     color: var(--usaw-text);
     background: var(--usaw-page-bg);
@@ -9,6 +10,7 @@
 [data-bs-theme="dark"] .field-lb {
     --field-lb-win: #8cdeaa;
     --field-lb-loss: #ffa6b1;
+    --field-lb-prestige: #ffe3a7;
 }
 
 .field-lb-wrap {
@@ -412,6 +414,36 @@
     align-items: center;
     flex: 0 0 auto;
     gap: .4rem;
+}
+
+.field-lb-player-details {
+    display: grid;
+    min-width: 0;
+    gap: .2rem;
+}
+
+.field-lb-player-progression {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .2rem .55rem;
+    color: var(--usaw-muted);
+    font-size: .8em;
+    line-height: 1.2;
+}
+
+.field-lb-prestige {
+    display: inline-flex;
+    max-width: 100%;
+    align-items: center;
+    gap: .2rem;
+    color: var(--field-lb-prestige);
+}
+
+.field-lb-prestige .usaw-prestige-emblem {
+    width: 24px;
+    height: 24px;
+    flex-basis: 24px;
 }
 
 .field-lb-featured-badge {
