@@ -5,6 +5,7 @@ import { Container, Row, Col } from 'react-bootstrap/';
 import AccountChangeForm from '../../AccountChange';
 import { AuthUserContext, withAuthentication, withAuthorization } from '../session';
 import ImageUpload from './ImageUpload';
+import DisplayNameForm from './DisplayNameForm';
 
 
 
@@ -12,9 +13,10 @@ import * as ROLES from '../constants/roles';
 import { Helmet } from 'react-helmet-async';
 import { Paper, Tab, Tabs } from '@mui/material';
 
-const ProfileSettings = () => {
+const ProfileSettings = ({ firebase }) => {
 
   const [value, setValue] = React.useState(0);
+  const playerId = firebase.auth.currentUser?.uid;
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -31,7 +33,7 @@ const ProfileSettings = () => {
             <div className="settings-hero-card">
               <p className="p-header-about settings-page-title">Account Settings</p>
               <p className="settings-page-copy">
-                Update your profile photo, account details, and password from one place.
+                Update your public display name, profile photo, email, or password.
               </p>
             </div>
             <Paper square className="settings-tabs-shell">
@@ -50,6 +52,7 @@ const ProfileSettings = () => {
                   <ImageUpload />
                 </Col>
                 <Col md={8}>
+                  {playerId && <DisplayNameForm key={playerId} firebase={firebase} playerId={playerId} />}
                   <AccountChangeForm authUser={authUser} />
                 </Col>
               </Row>
@@ -65,7 +68,7 @@ const ProfileSettings = () => {
   );
 }
 
-const condition = authUser => !!authUser && !(!!authUser.roles[ROLES.WAIVER]);
+const condition = authUser => !!authUser && !authUser.roles?.[ROLES.WAIVER];
 
 export default withAuthorization(condition)(withAuthentication(ProfileSettings));
 

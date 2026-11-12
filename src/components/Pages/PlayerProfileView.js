@@ -12,6 +12,7 @@ import rankNames from '../constants/ranks';
 import rankIncrements from '../constants/rankincrements';
 import * as ROLES from '../constants/roles';
 import { badgeById, getFeaturedBadgeDetails, getMyBadges, setFeaturedBadge } from '../constants/playerBadges';
+import { getPlayerDisplayNames } from '../constants/playerDisplayNames';
 import SharePageLink from '../constants/SharePageLink';
 import PlayerBadgeCollection from './PlayerBadgeCollection';
 import './PlayerProfileView.css';
@@ -273,6 +274,19 @@ function GameFeed({ games }) {
 
 export default function PlayerProfileView({ firebase, user, playerId, account = false }) {
   const [section, setSection] = useState('overview');
+  const [nameRecord, setNameRecord] = useState(null);
+
+  useEffect(() => {
+    if (!playerId) return undefined;
+    const controller = new AbortController();
+    getPlayerDisplayNames([playerId], { signal: controller.signal })
+      .then((names) => {
+        if (!controller.signal.aborted) setNameRecord({ playerId, name: names[playerId] });
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [playerId]);
+
   const profileImage = useProfileImage(firebase, playerId, user.profilepic);
   const badgeEligible = !user.roles?.[ROLES.WAIVER];
   const canManageBadges = account && badgeEligible;
@@ -283,7 +297,10 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
     : badges.record?.featuredEarnedCount) || 1;
   const featuredCountText = numberFormat.format(featuredEarnedCount);
   const profileSections = canManageBadges ? [...sections, { id: 'badges', label: 'Badges' }] : sections;
-  const displayName = user.username || user.name || 'USAW player';
+  const nameResolved = Boolean(nameRecord && nameRecord.playerId === playerId);
+  const customName = nameResolved && typeof nameRecord.name === 'string' ? nameRecord.name : '';
+  const displayName = customName || user.username || user.name || 'USAW player';
+  const showRealName = (account || (nameResolved && !customName)) && user.name && user.name !== displayName;
   const team = typeof user.team === 'string' ? user.team.trim() : '';
   const points = count(user.points);
   const wins = count(user.wins);
@@ -298,7 +315,7 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
     ['Win rate', `${winRate}%`],
     ['Free games', count(user.freegames)],
   ];
-  const title = account ? 'US Airsoft Field: Account' : `US Airsoft Field: ${displayName} Profile`;
+  const title = account && !customName ? 'US Airsoft Field: Account' : `US Airsoft Field: ${displayName} Profile`;
 
   return (
     <main className="player-profile" aria-labelledby="player-profile-title">
@@ -325,7 +342,7 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
             <div className="player-profile__identity">
               <p className="player-profile__label">{account ? 'My profile' : 'Player profile'}</p>
               <h1 id="player-profile-title">{displayName}</h1>
-              {user.name && user.name !== displayName && <p className="player-profile__real-name">{user.name}</p>}
+              {showRealName && <p className="player-profile__real-name">{user.name}</p>}
               {team && <ProfileTeamCard key={team} firebase={firebase} team={team} />}
               {(!team || user.renewal) && (
                 <dl className="player-profile__metadata">
