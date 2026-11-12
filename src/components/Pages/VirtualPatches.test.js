@@ -6,8 +6,11 @@ import { get, onValue } from 'firebase/database';
 import { getDownloadURL } from 'firebase/storage';
 import { FirebaseContext } from '../Firebase';
 import { AuthUserContext } from '../session';
-import { getBadgeStandings, getFeaturedBadges, getFeaturedBadgeDetails, getMyBadges, setFeaturedBadge } from '../constants/playerBadges';
+import {
+  getBadgeStandings, getFeaturedBadges, getFeaturedBadgeDetails, getMyBadges, setFeaturedBadge, unlockBadgeStaff,
+} from '../constants/playerBadges';
 import { getAllPlayerDisplayNames, getPlayerDisplayNames } from '../constants/playerDisplayNames';
+import AdminBadgeAwards from './AdminBadgeAwards';
 import VirtualPatches from './VirtualPatches';
 import PlayerProfileView from './PlayerProfileView';
 import Leaderboard from './leaderboard';
@@ -29,6 +32,7 @@ jest.mock('../constants/playerBadges', () => ({
   getFeaturedBadgeDetails: jest.fn(),
   getMyBadges: jest.fn(),
   setFeaturedBadge: jest.fn(),
+  unlockBadgeStaff: jest.fn(),
 }));
 jest.mock('../constants/playerDisplayNames', () => ({
   getAllPlayerDisplayNames: jest.fn(),
@@ -93,7 +97,7 @@ afterEach(() => { global.fetch = originalFetch; });
 
 test('loads only the selected patch standings and keeps the full catalog visible', async () => {
   const { container } = renderPage(<VirtualPatches />);
-  expect(container.querySelectorAll('.virtual-patches__wall img')).toHaveLength(14);
+  expect(container.querySelectorAll('.virtual-patches__wall img')).toHaveLength(58);
   const firstPage = await screen.findByRole('table', { name: 'All-time leaderboard' });
   expect(within(firstPage).getByRole('link', { name: user.username }))
     .toHaveAttribute('href', `/profilelookup/${playerId}`);
@@ -109,6 +113,28 @@ test('loads only the selected patch standings and keeps the full catalog visible
   expect(await screen.findByText('No players have earned this patch yet.')).toBeVisible();
   expect(screen.getByRole('heading', { name: 'Countdown' })).toHaveFocus();
   expect(getBadgeStandings).toHaveBeenLastCalledWith('countdown', expect.objectContaining({ page: 1 }));
+
+  fireEvent.click(screen.getByRole('button', { name: 'Blackout Protocol' }));
+  expect(await screen.findByText('No players have earned this patch yet.')).toBeVisible();
+  expect(screen.getByRole('heading', { name: 'Blackout Protocol' })).toHaveFocus();
+  expect(getBadgeStandings).toHaveBeenLastCalledWith('blackout-protocol', expect.objectContaining({ page: 1 }));
+  expect(container.querySelector('.virtual-patches__brief img')).toHaveAttribute('src', '/badges/blackout-protocol.png');
+});
+
+test('offers the expanded patch collection in the unlocked staff award picker', async () => {
+  unlockBadgeStaff.mockResolvedValue({ staffToken: 'test-staff-token', expiresAt: new Date(Date.now() + 60_000).toISOString() });
+  renderPage(<AdminBadgeAwards firebase={firebase} players={[]} loading={false} directoryUnavailable={false} />);
+  fireEvent.change(screen.getByLabelText('Staff email'), { target: { value: 'staff@example.com' } });
+  fireEvent.change(screen.getByLabelText('Staff password'), { target: { value: 'test-password' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Unlock badge controls' }));
+
+  const picker = await screen.findByRole('combobox', { name: 'Badge' });
+  const patchIds = within(picker).getAllByRole('option').map(option => option.value).filter(Boolean);
+  expect(patchIds).toHaveLength(58);
+  expect(new Set(patchIds).size).toBe(patchIds.length);
+  expect(patchIds).toEqual(expect.arrayContaining(['countdown', 'medic', 'blackout-protocol', 'icy-killers']));
+  fireEvent.change(picker, { target: { value: 'blackout-protocol' } });
+  expect(screen.getByText('Blackout Protocol', { selector: 'strong' })).toBeVisible();
 });
 
 test('shows a public featured count without loading private badge records or a leaderboard', async () => {
