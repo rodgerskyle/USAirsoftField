@@ -68,5 +68,225 @@
     "id": "rookie-mentor",
     "name": "Rookie Mentor",
     "description": "Awarded for helping new players get ready and learn field etiquette, game rules, or how to play the objective."
+  },
+  {
+    "id": "the-enemy-within",
+    "name": "The Enemy within",
+    "description": "Recognized by staff for recovering the team flag, bringing it back to HQ, or supporting the return behind enemy lines."
+  },
+  {
+    "id": "medic",
+    "name": "Medic!",
+    "description": "Recognized by staff for reviving teammates at a decisive moment or protecting the team’s medic."
+  },
+  {
+    "id": "bottle-domination",
+    "name": "Bottle Domination",
+    "description": "Recognized by staff for flipping or holding bottle stations when it mattered most."
+  },
+  {
+    "id": "flag-domination-downtown",
+    "name": "Flag Domination “Downtown”",
+    "description": "Recognized by staff for planting or defending the team flag at the Downtown objective."
+  },
+  {
+    "id": "flag-domination-full-map",
+    "name": "Flag Domination “Full Map”",
+    "description": "Recognized by staff for raising team colors or holding key flagpoles across the field."
+  },
+  {
+    "id": "capture-the-flag",
+    "name": "Capture the Flag",
+    "description": "Recognized by staff for capturing the opposing flag, securing its return, or defending the team flag."
+  },
+  {
+    "id": "battle-buddy",
+    "name": "Battle Buddy",
+    "description": "Recognized by staff for keeping a partner in play and working together to secure the assigned area."
+  },
+  {
+    "id": "interrogation",
+    "name": "Interrogation",
+    "description": "Recognized by staff for protecting the intel asset or making a decisive play against the asset’s balloon lives."
+  },
+  {
+    "id": "pilot-rescue",
+    "name": "Pilot Rescue",
+    "description": "Recognized by staff for moving the pilot by stretcher, signaling extraction, or holding the extraction point."
+  },
+  {
+    "id": "wolf",
+    "name": "Wolf",
+    "description": "Recognized by staff for making a decisive play as a double agent or identifying the opposing team’s agent."
+  },
+  {
+    "id": "general",
+    "name": "General",
+    "description": "Recognized by staff for protecting the general, securing supplies, or helping eliminate the opposing general."
+  },
+  {
+    "id": "team-death-match",
+    "name": "Team Death Match",
+    "description": "Recognized by staff for making a decisive play or showing standout teamwork in Team Death Match."
+  },
+  {
+    "id": "vip-rescue",
+    "name": "VIP Rescue",
+    "description": "Recognized by staff for escorting the VIP, securing the extraction zone, or decisively stopping the opposing escort."
+  },
+  {
+    "id": "bomb-disarmament-bridge",
+    "name": "Bomb Disarmament “Bridge”",
+    "description": "Recognized by staff for helping secure Ryan’s Bridge or completing the field prop’s disarm sequence."
+  },
+  {
+    "id": "multiple-bomb-disarmament",
+    "name": "Multiple Bomb Disarmament",
+    "description": "Recognized by staff for clearing the team’s colored ties or securing one of the three disarm objectives."
+  },
+  {
+    "id": "red-city-siege",
+    "name": "Red City Siege",
+    "description": "Recognized by staff for breaching Red City, clearing its balloon targets, or leading a decisive defense."
+  },
+  {
+    "id": "the-purge",
+    "name": "The Purge",
+    "description": "Recognized by staff for securing a cure canister and surviving to the CDC red square."
+  },
+  {
+    "id": "pfrc",
+    "name": "P.F.R.C. “Pod Fired Rocket Cluster”",
+    "description": "Recognized by staff for activating the Pod Fired Rocket Cluster prop or defending it through the countdown."
+  },
+  {
+    "id": "icbm-first-strike",
+    "name": "ICBM “First Strike”",
+    "description": "Recognized by staff for recovering the power prop or helping activate and defend the launch objective."
+  },
+  {
+    "id": "demolition",
+    "name": "Demolition",
+    "description": "Recognized by staff for clearing the team’s markers, recovering the flag, or holding it at Scorpion."
+  },
+  {
+    "id": "sabotage",
+    "name": "Sabotage",
+    "description": "Recognized by staff for helping specialists reach the marked objective or defending the delivery."
+  },
+  {
+    "id": "operation-airstrike",
+    "name": "Operation Airstrike",
+    "description": "Recognized by staff for recovering radio parts, rebuilding the radio, or protecting the strike call."
+  },
+  {
+    "id": "broken-arrow",
+    "name": "Broken Arrow",
+    "description": "Recognized by staff for getting a survivor to the landing zone or holding the extraction route."
+  },
+  {
+    "id": "level-4-biohazard",
+    "name": "Level 4 Biohazard",
+    "description": "Recognized by staff for clearing team markers at the containment device or planting the team flag."
+  },
+  {
+    "id": "operation-first-strike",
+    "name": "Operation First Strike",
+    "description": "Recognized by staff for completing a HIVE mission objective or preventing a decisive opposing push."
+  },
+  {
+    "id": "detonation",
+    "name": "Detonation",
+    "description": "Recognized by staff for assembling the prop parts, delivering the case, or holding the marked zone."
+  },
+  {
+    "id": "zombie-attack",
+    "name": "Zombie Attack",
+    "description": "Recognized by staff for surviving a close encounter or making a decisive play during the infection round."
+  },
+  {
+    "id": "money-bag",
+    "name": "Money Bag",
+    "description": "Recognized by staff for finding the bag, radioing for delivery instructions, or getting it to the designated officer."
+  },
+  {
+    "id": "fuel-depot-demolition",
+    "name": "Fuel Depot “Demolition”",
+    "description": "Recognized by staff for defending the team’s depot or clearing marked targets at the opposing depot."
+  },
+  {
+    "id": "battle-flag",
+    "name": "Battle Flag",
+    "description": "Recognized by staff for a decisive flag play or coordinated support in Battle Flag."
+  },
+  {
+    "id": "scrambled-eggs",
+    "name": "Scrambled Eggs",
+    "description": "Recognized by staff for a standout objective play or coordinated team effort in Scrambled Eggs."
+  },
+  {
+    "id": "progressive-countdown",
+    "name": "Progressive Countdown",
+    "description": "Recognized by staff for securing or defending a key timer in the two-clock format."
+  },
+  {
+    "id": "blackout-protocol",
+    "name": "Blackout Protocol",
+    "description": "Recognized by staff for activating or defending the team’s EMP briefcase, or stopping the opposing activation."
+  },
+  {
+    "id": "center-flag",
+    "name": "Center Flag",
+    "description": "Recognized by staff for capturing the neutral flag or securing the route for a teammate in Center Flag."
+  },
+  {
+    "id": "horseshoes-and-hand-grenades",
+    "name": "Horseshoes and Hand Grenades",
+    "description": "Staff draft game mode. Recognized by staff for a standout contribution in Horseshoes and Hand Grenades."
+  },
+  {
+    "id": "flag-procurement",
+    "name": "Flag Procurement",
+    "description": "Staff draft game mode. Recognized by staff for capturing the opposing flag or helping hold it at base."
+  },
+  {
+    "id": "fondle-the-cone",
+    "name": "Fondle the Cone",
+    "description": "Staff draft game mode. Recognized by staff for making a decisive run to tag the cone or supporting a teammate’s run."
+  },
+  {
+    "id": "king-of-the-flag",
+    "name": "King of the Flag",
+    "description": "Staff draft game mode. Recognized by staff for planting the flag or holding the hill through a decisive push."
+  },
+  {
+    "id": "ribbon-flag",
+    "name": "Ribbon Flag",
+    "description": "Staff draft game mode. Recognized by staff for solving the ribbon sequence or securing the flag objective."
+  },
+  {
+    "id": "icy-killers",
+    "name": "Icy Killers",
+    "description": "Staff draft game mode. Recognized by staff for reviving frozen teammates or helping the team hold together under pressure."
+  },
+  {
+    "id": "search-and-destroy",
+    "name": "Search and Destroy",
+    "description": "Staff draft game mode. Recognized by staff for finding or clearing the objective, or helping defend it under pressure."
+  },
+  {
+    "id": "fallout",
+    "name": "Fallout",
+    "description": "Staff draft game mode. Recognized by staff for recovering the game’s launch codes or helping control the command room."
+  },
+  {
+    "id": "hvt",
+    "name": "HVT",
+    "description": "Staff draft game mode. Recognized by staff for identifying the opposing high-value target or making a decisive play around the target."
+  },
+  {
+    "id": "amoeba",
+    "name": "Amoeba",
+    "description": "Staff draft game mode. Recognized by staff for helping turn the round through timely tags and team conversions."
   }
 ]
