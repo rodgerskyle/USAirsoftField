@@ -24,7 +24,6 @@ import { uploadBytes } from 'firebase/storage';
 
 const INITIAL_STATE = {
     value: '',
-    loading: false,
     statusBox: [],
     search: "",
     showLander: false,
@@ -54,83 +53,81 @@ const INITIAL_STATE = {
     submitted: false,
 }
 
+function renewalDisplay(value) {
+    if (typeof value === 'string' && value.trim() === 'N/A') {
+        return { renewal: 'N/A', renewalOrder: 0 };
+    }
+    const parts = typeof value === 'string' && /^(\d{1,2})-(\d{1,2})-(\d{4})$/.exec(value.trim());
+    if (parts) {
+        const [, month, day, year] = parts;
+        const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+        if (date.getUTCFullYear() === Number(year) && date.getUTCMonth() + 1 === Number(month) && date.getUTCDate() === Number(day)) {
+            return {
+                renewal: `${month.padStart(2, '0')}-${day.padStart(2, '0')}-${year}`,
+                renewalOrder: Number(year) * 10000 + Number(month) * 100 + Number(day),
+            };
+        }
+    }
+    return { renewal: 'Unknown', renewalOrder: 0 };
+}
+
 class RenewSubscription extends Component {
     constructor(props) {
         super(props);
 
+        const uid = props.router.params.id || null;
         this.state = {
             ...INITIAL_STATE,
+            uid,
+            showWaiver: Boolean(uid),
+            loading: true,
+            directoryUnavailable: false,
             users: [],
-            usersObject: null,
-            UpdateUserState: this.updateUser,
         };
         this.completeWaiver = this.completeWaiver.bind(this);
         this.handleChange = this.handleChange.bind(this);
-        this.convertDate = this.convertDate.bind(this);
     }
 
     handleChange(event) {
         this.setState({ value: event.target.value });
     }
 
-    convertDate(date) {
-        if (date === "N/A")
-            return new Date(-621672192000001)
-        else {
-            let temp = date.split("-")
-            return (new Date(temp[2], temp[0], temp[1]))
-        }
-    }
-
     componentWillUnmount() {
-        // this.props.firebase.users().off();
-    }
-
-    // Checks date of users list to see which ones are expired
-    checkDate(date) {
-        if (date === "N/A") return false;
-        var split = date.split('-')
-        var today = (new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear());
-        today = today.split('-')
-        // Year
-        if (split[2] < today[2]) return true;
-        else if (split[2] > today[2]) return false;
-        else {
-            if (split[0] < today[0]) return true;
-            else if (split[0] > today[0]) return false;
-            else {
-                if (split[1] < today[1]) return true;
-                else if (split[1] > today[1]) return false;
-                else return true;
-            }
-        }
+        this.unsubscribeUsers?.();
     }
 
     componentDidMount() {
-        this.setState({ loading: true });
-
-        onValue(this.props.firebase.users(), snapshot => {
-            const usersObject = snapshot.val()
-
-            const usersList = Object.keys(usersObject).map(key => ({
-                ...usersObject[key],
-                uid: key,
-            }));
-            //     //const filteredList = usersList.filter(obj => this.checkDate(obj.renewal));
-            //     // Doesn't work right now anyways
-
+        this.unsubscribeUsers = onValue(this.props.firebase.users(), snapshot => {
+            const users = Object.entries(snapshot.val() ?? {})
+                .filter(([, user]) => user && typeof user === 'object' && !Array.isArray(user))
+                .map(([uid, user]) => {
+                    const username = typeof user.username === 'string' ? user.username.trim() : '';
+                    const name = typeof user.name === 'string' ? user.name.trim() : '';
+                    return {
+                        uid,
+                        name: name || username || 'Unnamed member',
+                        username,
+                        ...renewalDisplay(user.renewal),
+                    };
+                });
             this.setState({
-                usersObject,
-                users: usersList,
+                users,
                 loading: false,
+                directoryUnavailable: false,
             });
+        }, () => {
+            this.setState({ users: [], loading: false, directoryUnavailable: true });
         });
+    }
 
-        if (typeof this.props.router.params.id !== 'undefined') {
+    componentDidUpdate(previousProps) {
+        if (previousProps.router.params.id !== this.props.router.params.id) {
+            const uid = this.props.router.params.id || null;
             this.setState({
-                uid: this.props.router.params.id,
-                showWaiver: true,
-            })
+                ...INITIAL_STATE,
+                uid,
+                showWaiver: Boolean(uid),
+            });
         }
     }
 
@@ -169,17 +166,6 @@ class RenewSubscription extends Component {
         this.setState({ showWaiver: true, uid })
     }
 
-    // Pads date to look like a better format
-    pad = (date) => {
-        if (date !== "N/A") {
-            let date_arr = date.split("-")
-            date_arr[0] = date_arr[0].length === 1 ? ("0" + date_arr[0]) : date_arr[0]
-            date_arr[1] = date_arr[1].length === 1 ? ("0" + date_arr[1]) : date_arr[1]
-            return date_arr.join('-')
-        }
-        return date
-    }
-
     onChange = event => {
         this.setState({ [event.target.name]: event.target.value });
     };
@@ -208,9 +194,32 @@ class RenewSubscription extends Component {
             showLander,
             showWaiver,
             uid,
-            usersObject,
+            users,
+            loading,
+            directoryUnavailable,
             submitted,
         } = this.state
+        const selectedUser = uid ? users.find((user) => user.uid === uid) : null;
+        let directoryStatus = null;
+        if (loading) {
+            directoryStatus = (
+                <div className="d-flex align-items-center gap-2" role="status">
+                    <Spinner animation="border" size="sm" aria-hidden="true" />
+                    <span>Loading members…</span>
+                </div>
+            );
+        } else if (directoryUnavailable) {
+            directoryStatus = <p className="mb-0" role="alert">Could not load the member directory. Reload this page to try again.</p>;
+        } else if (showWaiver && !selectedUser) {
+            directoryStatus = (
+                <div role="alert">
+                    <p>This member could not be found.</p>
+                    <Button type="button" variant="secondary" onClick={() => this.setState({ ...INITIAL_STATE })}>
+                        Back to member list
+                    </Button>
+                </div>
+            );
+        }
         const myProps = { fname, lname, email, address, city, state, zipcode, phone, dob, pgname, pgphone, participantImg, pgImg, age }
         return (
             <AuthUserContext.Consumer>
@@ -223,8 +232,8 @@ class RenewSubscription extends Component {
                             <Container className="admin-content">
                                 <div className="admin-page-header">
                                 <h2 className="admin-header">Renew Member</h2>
-                                {uid && usersObject && <p className="admin-page-subtitle admin-renew-member-name">{usersObject[uid].name}</p>}
-                                {authUser && !!authUser.roles[ROLES.ADMIN] ?
+                                {selectedUser && <p className="admin-page-subtitle admin-renew-member-name">{selectedUser.name}</p>}
+                                {authUser?.roles?.[ROLES.ADMIN] ?
                                     <Breadcrumb className="admin-breadcrumb admin-page-breadcrumb">
                                         <LinkContainer to="/admin">
                                             <Breadcrumb.Item>Admin</Breadcrumb.Item>
@@ -236,11 +245,11 @@ class RenewSubscription extends Component {
                                 <Row className="waiver-row-renew">
                                     <Col>
                                         <Card className="waiver-cards admin-panel-card admin-renew-card">
-                                            {!showWaiver ?
+                                            {!showWaiver && !directoryStatus ?
                                                 <Card.Header>
                                                     <Form className="team-manage-text" onSubmit={e => { e.preventDefault(); }}>
                                                         <Form.Group controlId="input1">
-                                                            <Form.Label className="search-label-admin">Search by Username:</Form.Label>
+                                                            <Form.Label className="search-label-admin">Search by username or name:</Form.Label>
                                                             <Form.Control
                                                                 type="name"
                                                                 name="search"
@@ -256,9 +265,10 @@ class RenewSubscription extends Component {
                                                 </Card.Header>
                                                 : null
                                             }
-                                            {!showWaiver ?
-                                                <UserBox users={this.state.users} index={0} length={this.state.users.length} convert={this.convertDate}
-                                                    search={this.state.search} update={this.state.UpdateUserState} loading={this.state.loading} pad={this.pad.bind(this)} />
+                                            {directoryStatus ?
+                                                <Card.Body>{directoryStatus}</Card.Body>
+                                                : !showWaiver ?
+                                                <UserBox users={users} search={this.state.search} update={this.updateUser} />
                                                 :
                                                 <div className="admin-renew-detail">
                                                     <div className="admin-renew-layout">
@@ -596,101 +606,40 @@ class RenewSubscription extends Component {
     }
 }
 
-function UserBox({ users, index, search, update, loading, convert, pad }) {
+function UserBox({ users, search, update }) {
+    const query = search.trim().toLowerCase();
+    const matches = users
+        .filter((user) => user.username.toLowerCase().includes(query) || user.name.toLowerCase().includes(query))
+        .sort((a, b) => b.renewalOrder - a.renewalOrder);
+
     return (
         <Card.Body className="status-card-body-renew-admin">
-            {!loading ?
-                users.sort((a, b) =>
-                    (convert(b.renewal) - convert(a.renewal)))
-                    .map((user, i) => (
-                        search !== "" ? // Search query case
-                            user.username.toLowerCase().includes(search.toLowerCase()) ?
-                                index++ % 2 === 0 ?
-                                    <Row className="row-fg" key={index}>
-                                        <Col className="col-name-fg" md={5}>
-                                            <Card.Text>
-                                                {"(" + index + ") " + user.name}
-                                            </Card.Text>
-                                        </Col>
-                                        <Col className="col-name-fg" md={5}>
-                                            {"Renewal Date: " + pad(user.renewal)}
-                                        </Col>
-                                        <Col md={2}>
-                                            <Button className="button-submit-admin2" onClick={() => {
-                                                update(user.uid);
-                                            }}
-                                                type="submit" id="update" variant="success">
-                                                Renew
-                                            </Button>
-                                        </Col>
-                                    </Row>
-                                    :
-                                    <Row className="status-card-offrow-admin-fg" key={index}>
-                                        <Col className="col-name-fg" md={5}>
-                                            <Card.Text>
-                                                {"(" + index + ") " + user.name}
-                                            </Card.Text>
-                                        </Col>
-                                        <Col className="col-name-fg" md={5}>
-                                            {"Renewal Date: " + pad(user.renewal)}
-                                        </Col>
-                                        <Col md={2}>
-                                            <Button className="button-submit-admin2" onClick={() => {
-                                                update(user.uid);
-                                            }}
-                                                type="submit" id="update" variant="success">
-                                                Renew
-                                            </Button>
-                                        </Col>
-                                    </Row>
-                                : ""
-                            :
-                            index++ % 2 === 0 ?
-                                <Row className="row-fg" key={index}>
-                                    <Col className="col-name-fg" md={5}>
-                                        <Card.Text>
-                                            {"(" + index + ") " + user.name}
-                                        </Card.Text>
-                                    </Col>
-                                    <Col className="col-name-fg" md={5} style={{ color: 'white' }}>
-                                        {"Renewal Date: " + pad(user.renewal)}
-                                    </Col>
-                                    <Col md={2}>
-                                        <Button className="button-submit-admin2" onClick={() => {
-                                            update(user.uid);
-                                        }}
-                                            type="submit" id="update" variant="success">
-                                            Renew
-                                        </Button>
-                                    </Col>
-                                </Row>
-                                :
-                                <Row className="status-card-offrow-admin-fg" key={index}>
-                                    <Col className="col-name-fg" md={5}>
-                                        <Card.Text>
-                                            {"(" + index + ") " + user.name}
-                                        </Card.Text>
-                                    </Col>
-                                    <Col className="col-name-fg" md={5}>
-                                        {"Renewal Date: " + pad(user.renewal)}
-                                    </Col>
-                                    <Col md={2}>
-                                        <Button className="button-submit-admin2" onClick={() => {
-                                            update(user.uid);
-                                        }}
-                                            type="submit" id="update" variant="success">
-                                            Renew
-                                        </Button>
-                                    </Col>
-                                </Row>
-                    ))
-                : <Row className="justify-content-row padding-5px"><Spinner animation="border" /></Row>}
+            {matches.length === 0 && (
+                <p className="mb-0 py-2" role="status">
+                    {users.length ? 'No members match that search.' : 'No members found.'}
+                </p>
+            )}
+            {matches.map((user, index) => (
+                <Row className={index % 2 === 0 ? 'row-fg' : 'status-card-offrow-admin-fg'} key={user.uid}>
+                    <Col className="col-name-fg" md={5}>
+                        <Card.Text>{`(${index + 1}) ${user.name}`}</Card.Text>
+                    </Col>
+                    <Col className="col-name-fg" md={5}>
+                        {`Renewal Date: ${user.renewal}`}
+                    </Col>
+                    <Col md={2}>
+                        <Button className="button-submit-admin2" onClick={() => update(user.uid)} type="button" variant="success">
+                            Renew
+                        </Button>
+                    </Col>
+                </Row>
+            ))}
         </Card.Body>
-    )
-};
+    );
+}
 
 const condition = authUser =>
-    authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]);
+    !!(authUser?.roles?.[ROLES.ADMIN] || authUser?.roles?.[ROLES.WAIVER]);
 
 export default withRouter(withAuthorization(condition)(withFirebase(RenewSubscription)));
 

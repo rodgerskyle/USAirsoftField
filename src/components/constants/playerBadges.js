@@ -48,16 +48,33 @@ async function callBadgeApi({ query, firebase, body, staffToken, signal } = {}) 
     if (!response.ok || !result) {
         const error = new Error(result?.error || 'Badge services are temporarily unavailable. Please try again.');
         error.status = response.status;
+        error.code = result?.code;
+        error.membershipStatus = result?.membershipStatus;
         throw error;
     }
     return result;
 }
 
 export async function getFeaturedBadges(playerIds, { signal } = {}) {
+    return (await getFeaturedBadgeDetails(playerIds, { signal })).featured;
+}
+
+export async function getFeaturedBadgeDetails(playerIds, { signal } = {}) {
     const ids = [...new Set(playerIds)].filter((id) => typeof id === 'string' && /^[A-Za-z0-9_-]{10,128}$/.test(id));
-    if (!ids.length || !badgeServiceConfigured) return {};
-    const { featured } = await callBadgeApi({ query: { playerIds: ids.join(',') }, signal });
-    return Object.fromEntries(ids.filter((id) => badgeById[featured?.[id]]).map((id) => [id, featured[id]]));
+    if (!ids.length || !badgeServiceConfigured) return { featured: {}, featuredCounts: {} };
+    const result = await callBadgeApi({ query: { playerIds: ids.join(',') }, signal });
+    const found = ids.filter((id) => badgeById[result.featured?.[id]]);
+    return {
+        featured: Object.fromEntries(found.map((id) => [id, result.featured[id]])),
+        featuredCounts: Object.fromEntries(found.map((id) => {
+            const count = result.featuredCounts?.[id];
+            return [id, Number.isSafeInteger(count) && count > 0 ? count : 1];
+        })),
+    };
+}
+
+export function getBadgeStandings(badgeId, { page = 1, signal } = {}) {
+    return callBadgeApi({ query: { badgeId, page }, signal });
 }
 
 export function getMyBadges(firebase, { signal } = {}) {
@@ -72,6 +89,10 @@ export function unlockBadgeStaff(firebase, { email, password }) {
     return callBadgeApi({ firebase, body: { action: 'unlock', email, password } });
 }
 
-export function grantPlayerBadge(firebase, { playerId, badgeId, reason }, staffToken) {
-    return callBadgeApi({ firebase, staffToken, body: { action: 'award', playerId, badgeId, reason } });
+export function getStaffBadgeCounts(firebase, playerId, staffToken, { signal } = {}) {
+    return callBadgeApi({ firebase, staffToken, query: { playerId, awardCounts: '1' }, signal });
+}
+
+export function grantPlayerBadge(firebase, { playerId, badgeId, reason, grantId }, staffToken) {
+    return callBadgeApi({ firebase, staffToken, body: { action: 'award', playerId, badgeId, reason, grantId } });
 }

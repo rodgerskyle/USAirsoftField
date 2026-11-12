@@ -10,6 +10,7 @@ import AccountPage from './components/Pages/Account';
 import ProfileSettings from './components/Pages/Profilesettings';
 import Home from './components/Pages/home'
 import PlayerHub from './components/Pages/PlayerHub';
+import VirtualPatches from './components/Pages/VirtualPatches';
 import Admin from './components/Pages/Admin'
 import SignUpForm from './components/Pages/Signup'
 import WaiverForm from './components/Pages/FillOutWaiver'
@@ -71,6 +72,7 @@ const App = () => (
       <Route exact path="/events" element={<Navigate to="/pricing" replace />} />
       <Route exact path="/schedule" element={<Schedule />} />
       <Route path="/player-hub" element={<PlayerHub />} />
+      <Route path="/virtual-patches" element={<VirtualPatches />} />
       <Route exact path="/map" element={<Map />} />
       <Route exact path="/waiver" element={<Waiver />} />
       <Route exact path="/membership" element={<Membership />} />

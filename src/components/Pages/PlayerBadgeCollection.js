@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
+import { Link } from 'react-router-dom';
 
 const awardDateFormat = new Intl.DateTimeFormat('en-US', {
   month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Los_Angeles',
 });
+const countFormat = new Intl.NumberFormat('en-US');
 
 function FeatureBadgeControl({ badges, featuredBadgeId, onFeature, saving }) {
   const currentBadgeId = featuredBadgeId || '';
@@ -41,6 +43,7 @@ function FeatureBadgeControl({ badges, featuredBadgeId, onFeature, saving }) {
 function EarnedBadge({ award, badge, featured }) {
   const date = award.awardedAt ? new Date(award.awardedAt) : null;
   const awardDate = date && Number.isFinite(date.getTime()) ? awardDateFormat.format(date) : null;
+  const earnedCount = countFormat.format(award.earnedCount || 1);
 
   return (
     <li>
@@ -48,6 +51,10 @@ function EarnedBadge({ award, badge, featured }) {
         <summary>
           <span className="player-profile__badge-mount">
             <img src={badge.artUrl} alt="" width="144" height="144" loading="lazy" decoding="async" />
+          </span>
+          <span className="player-profile__badge-count">
+            <span aria-hidden="true">×{earnedCount}</span>
+            <span className="visually-hidden">Earned {earnedCount} {award.earnedCount > 1 ? 'times' : 'time'}</span>
           </span>
           <span className="player-profile__badge-name">
             <strong>{badge.name}</strong>
@@ -57,7 +64,7 @@ function EarnedBadge({ award, badge, featured }) {
         </summary>
         <div className="player-profile__badge-detail">
           <p>{award.reason || badge.description}</p>
-          {awardDate && <time dateTime={award.awardedAt}>Awarded {awardDate}</time>}
+          {awardDate && <time dateTime={award.awardedAt}>First awarded {awardDate}</time>}
         </div>
       </details>
     </li>
@@ -65,7 +72,7 @@ function EarnedBadge({ award, badge, featured }) {
 }
 
 export default function PlayerBadgeCollection({
-  awards, featuredBadgeId, getBadge, loading, error, onRetry, onFeature, saving, feedback,
+  awards, featuredBadgeId, getBadge, loading, error, membershipExpired, onRetry, onFeature, saving, feedback,
 }) {
   const badges = awards.flatMap((award) => {
     const badge = getBadge(award.badgeId);
@@ -79,7 +86,10 @@ export default function PlayerBadgeCollection({
     content = (
       <div className="player-profile__badge-error">
         <p className="player-profile__empty" role="alert">{error}</p>
-        <button type="button" className="player-profile__link" onClick={onRetry}>Try again</button>
+        {membershipExpired && <Link className="player-profile__link" to="/membership">Membership information</Link>}
+        <button type="button" className="player-profile__link" onClick={onRetry}>
+          {membershipExpired ? 'Check membership again' : 'Try again'}
+        </button>
       </div>
     );
   } else if (badges.length) {
@@ -108,7 +118,10 @@ export default function PlayerBadgeCollection({
 
   return (
     <section className="player-profile__panel player-profile__badges" aria-labelledby="player-profile-badges-title">
-      <h2 id="player-profile-badges-title">Earned badges</h2>
+      <div className="player-profile__panel-header player-profile__badge-header">
+        <h2 id="player-profile-badges-title">Earned badges</h2>
+        <Link className="player-profile__link" to="/virtual-patches">Explore Virtual Patches</Link>
+      </div>
       {content}
     </section>
   );

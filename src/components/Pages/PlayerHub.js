@@ -16,6 +16,7 @@ const FIELD_LINKS = [
   { to: '/information/gametypes', icon: 'flag', title: 'Game modes', copy: 'Learn the objectives for each game.' },
   { to: '/leaderboard', icon: 'trophy', title: 'Leaderboard', copy: 'Look up official player standings.' },
   { to: '/teams', icon: 'team', title: 'Teams', copy: 'Explore the USAW team directory.' },
+  { to: '/virtual-patches', icon: 'patch', title: 'Virtual Patches', copy: 'Explore earnable patches and their all-time standings.' },
 ];
 
 const ICONS = {
@@ -25,6 +26,7 @@ const ICONS = {
   shield: 'm12 3 8 4v5c0 5-8 9-8 9s-8-4-8-9V7Zm-3 9 2 2 4-4',
   flag: 'M5 22V4m0 0c4-4 10 4 15 0v11c-5 4-11-4-15 0',
   trophy: 'M8 3h8v6a4 4 0 0 1-8 0Zm0 2H4v2a4 4 0 0 0 4 4m8-6h4v2a4 4 0 0 1-4 4m-4 2v7m-4 0h8',
+  patch: 'm8 3-5 5v8l5 5h8l5-5V8l-5-5Zm1 9 2 2 4-4',
   team: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m20 0v-2a4 4 0 0 0-3-4M9 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8m8 0a4 4 0 0 1 0 8',
   pack: 'M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M5 9a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v11H5Zm0 5h14m-9 0v3m4-3v3',
   remove: 'M6 6l12 12M6 18 18 6',
