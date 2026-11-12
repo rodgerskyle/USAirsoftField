@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
+import { onValue } from 'firebase/database';
 import { getDownloadURL } from 'firebase/storage';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faChevronRight, faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
 
 import defaultProfile from '../../assets/default.png';
 import rankImages from '../constants/rankimgs';
@@ -121,6 +122,44 @@ function useProfileImage(firebase, playerId, hasProfilePicture) {
   }, [firebase, playerId, hasProfilePicture]);
 
   return hasProfilePicture && image?.playerId === playerId ? image.url : defaultProfile;
+}
+
+function ProfileTeamCard({ firebase, team }) {
+  const teamId = team.toLowerCase();
+  const [name, setName] = useState('');
+  const [logo, setLogo] = useState('');
+
+  useEffect(() => {
+    if (/[.#$[\]/]/.test(teamId)) return undefined;
+    let active = true;
+    const unsubscribe = onValue(firebase.team(teamId), (snapshot) => {
+      const teamName = snapshot.val()?.name;
+      if (active) setName(typeof teamName === 'string' ? teamName.trim() : '');
+    }, () => { if (active) setName(''); });
+
+    getDownloadURL(firebase.teamsPictures(`${teamId}.png`))
+      .then((url) => { if (active) setLogo(url); })
+      .catch(() => { if (active) setLogo(''); });
+
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [firebase, teamId]);
+
+  return (
+    <Link className="player-profile__team-card" to={`/teams/${encodeURIComponent(team)}`}>
+      <span className="player-profile__team-logo">
+        {logo ? <img src={logo} alt="" decoding="async" onError={() => setLogo('')} />
+          : <FontAwesomeIcon icon={faPeopleGroup} aria-hidden="true" />}
+      </span>
+      <span>
+        <span className="player-profile__label">Team</span>
+        <strong>{name || team}</strong>
+      </span>
+      <FontAwesomeIcon className="player-profile__team-arrow" icon={faChevronRight} aria-hidden="true" />
+    </Link>
+  );
 }
 
 export function ProfileState({ loading, missing }) {
@@ -280,17 +319,13 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
               <p className="player-profile__label">{account ? 'My profile' : 'Player profile'}</p>
               <h1 id="player-profile-title">{displayName}</h1>
               {user.name && user.name !== displayName && <p className="player-profile__real-name">{user.name}</p>}
-              <dl className="player-profile__metadata">
-                <div>
-                  <dt>Team</dt>
-                  <dd>{team ? (
-                    <Link to={`/teams/${encodeURIComponent(team)}`}>
-                      {team} <FontAwesomeIcon icon={faChevronRight} aria-hidden="true" />
-                    </Link>
-                  ) : 'Unaffiliated'}</dd>
-                </div>
-                {user.renewal && <div><dt>Renewal</dt><dd>{user.renewal}</dd></div>}
-              </dl>
+              {team && <ProfileTeamCard key={team} firebase={firebase} team={team} />}
+              {(!team || user.renewal) && (
+                <dl className="player-profile__metadata">
+                  {!team && <div><dt>Team</dt><dd>Unaffiliated</dd></div>}
+                  {user.renewal && <div><dt>Renewal</dt><dd>{user.renewal}</dd></div>}
+                </dl>
+              )}
             </div>
             <div className="player-profile__honors">
               <div className="player-profile__rank">
