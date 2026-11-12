@@ -12,34 +12,8 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import BackgroundVideo from '../constants/backgroundvideo';
+import useFieldResources from '../constants/useFieldResources';
 import './home.css';
-
-const HOURS = {
-  summer: {
-    label: 'May 1 – November 1',
-    rows: [
-      ['Monday', 'Closed', 'Closed'],
-      ['Tuesday', 'Closed', 'Closed'],
-      ['Wednesday', 'Closed', '9:30AM - 6PM'],
-      ['Thursday', 'Closed', '9:30AM - 6PM'],
-      ['Friday', '6PM - 11PM', '9:30AM - 11PM'],
-      ['Saturday', '8AM - 2PM', '8AM - 4PM'],
-      ['Sunday', '8AM - 2PM', '8AM - 4PM'],
-    ],
-  },
-  winter: {
-    label: 'November 2 – April 30',
-    rows: [
-      ['Monday', 'Closed', 'Closed'],
-      ['Tuesday', 'Closed', 'Closed'],
-      ['Wednesday', 'Closed', '9:30AM - 6PM'],
-      ['Thursday', 'Closed', '9:30AM - 6PM'],
-      ['Friday', 'Closed', '9:30AM - 6PM'],
-      ['Saturday', '9AM - 3PM', '8AM - 4PM'],
-      ['Sunday', '9AM - 3PM', '8AM - 4PM'],
-    ],
-  },
-};
 
 const VISIT_LINKS = [
   {
@@ -77,7 +51,8 @@ function currentSeason() {
 
 const Home = () => {
   const [seasonKey, setSeasonKey] = useState(currentSeason);
-  const season = HOURS[seasonKey];
+  const { resources, failed } = useFieldResources();
+  const season = resources?.hours[seasonKey];
   const hoursHeading = useRef(null);
 
   const showHours = () => {
@@ -151,7 +126,7 @@ const Home = () => {
             <div>
               <p className="field-home__eyebrow">Plan your day</p>
               <h2 id="field-home-hours" ref={hoursHeading} tabIndex={-1}>Hours of operation</h2>
-              <p className="field-home__hours-season" id="field-home-season" aria-live="polite">{season.label}</p>
+              <p className="field-home__hours-season" id="field-home-season" aria-live="polite">{season?.label}</p>
             </div>
             <div className="field-home__seasons" role="group" aria-label="Choose season">
               <button type="button" aria-pressed={seasonKey === 'summer'} onClick={() => setSeasonKey('summer')}>Summer</button>
@@ -169,13 +144,14 @@ const Home = () => {
                 </tr>
               </thead>
               <tbody>
-                {season.rows.map(([day, field, store]) => (
+                {season?.rows.map(([day, field, store]) => (
                   <tr key={day}>
                     <th scope="row">{day}</th>
                     <td>{field}</td>
                     <td>{store}</td>
                   </tr>
                 ))}
+                {!season && <tr><td colSpan={3} role="status">{failed ? 'Hours are unavailable. Call (530) 365-1000 to confirm.' : 'Loading field and store hours…'}</td></tr>}
               </tbody>
             </table>
           </div>

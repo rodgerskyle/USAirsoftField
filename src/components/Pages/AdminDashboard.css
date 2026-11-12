@@ -1,0 +1,270 @@
+.staff-dashboard {
+  --admin-bg: var(--usaw-page-bg);
+  --admin-surface: var(--usaw-surface);
+  --admin-surface-muted: var(--usaw-raised);
+  --admin-border: var(--usaw-line);
+  --admin-border-strong: var(--usaw-line);
+  --admin-text: var(--usaw-text);
+  --admin-subtext: var(--usaw-muted);
+  --admin-accent: var(--usaw-accent);
+  --admin-accent-soft: var(--usaw-subtle);
+  --admin-shadow: 0 10px 32px rgba(15, 35, 55, .08);
+  --staff-success: #176139;
+  --staff-error: #a3212c;
+  color: var(--admin-text);
+}
+
+[data-bs-theme="dark"] .staff-dashboard {
+  --admin-shadow: 0 10px 32px rgba(0, 0, 0, .18);
+  --staff-success: #8de1b0;
+  --staff-error: #ffabb1;
+}
+
+.staff-dashboard .admin-navbar {
+  position: sticky;
+  z-index: 1020;
+  top: 0;
+  padding: .55rem clamp(.5rem, 3vw, 2rem);
+  border-bottom-color: var(--admin-border);
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow);
+}
+
+.staff-dashboard .navbar-brand,
+.staff-dashboard__nav-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: .65rem;
+}
+
+.staff-dashboard .navbar-brand {
+  margin: 0;
+  padding: 0;
+}
+
+.staff-dashboard .admin-nav-logo {
+  height: 38px;
+  padding: 4px;
+  border-radius: 8px;
+  background: var(--usaw-chrome);
+}
+
+.staff-dashboard__site-link,
+.staff-dashboard .usaw-nav__appearance,
+.staff-dashboard__jump a {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  min-height: 44px;
+  padding: .35rem .7rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: var(--admin-surface);
+  color: var(--admin-text);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.staff-dashboard .usaw-nav__appearance-label {
+  display: inline;
+}
+
+.staff-dashboard :is(.staff-dashboard__site-link, .usaw-nav__appearance, .staff-dashboard__jump a):hover {
+  border-color: var(--admin-accent);
+  background: var(--admin-accent-soft);
+  color: var(--admin-text);
+}
+
+.staff-dashboard :is(a, button, input):focus-visible {
+  outline: 2px solid var(--usaw-focus);
+  outline-offset: 3px;
+}
+
+.staff-dashboard .admin-main-content {
+  padding-top: 0;
+}
+
+.staff-dashboard__content {
+  max-width: 1240px;
+  padding: clamp(.95rem, 3vw, 2rem) clamp(.75rem, 3vw, 1.75rem) 2.5rem;
+}
+
+.staff-dashboard__hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  margin-bottom: 1.35rem;
+  padding: clamp(1.1rem, 3vw, 2rem);
+  border: 1px solid var(--admin-border);
+  border-inline-start: 5px solid var(--usaw-red);
+  border-radius: 16px;
+  background: linear-gradient(112deg, var(--admin-surface), var(--admin-accent-soft));
+  box-shadow: var(--admin-shadow);
+}
+
+.staff-dashboard__hero h1 {
+  margin: 0;
+  font-size: clamp(1.85rem, 4vw, 3rem);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.staff-dashboard__jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-top: .85rem;
+}
+
+.staff-dashboard__count {
+  display: grid;
+  gap: .1rem;
+  min-width: 8rem;
+  padding: .65rem .9rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  background: var(--admin-surface);
+  color: var(--admin-subtext);
+}
+
+.staff-dashboard__count strong {
+  color: var(--admin-text);
+  font-size: 1.6rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.staff-dashboard__groups {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.7rem;
+}
+
+.staff-dashboard__group,
+.staff-dashboard__directory {
+  padding: clamp(.85rem, 2vw, 1.25rem);
+  border: 1px solid var(--admin-border);
+  border-radius: 14px;
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow);
+}
+
+.staff-dashboard__group h2,
+.staff-dashboard__directory h2,
+.staff-dashboard .admin-section-title {
+  margin: 0 0 .7rem;
+  color: var(--admin-text);
+  font-size: clamp(1.15rem, 2vw, 1.5rem);
+  font-weight: 700;
+}
+
+.staff-dashboard__actions {
+  display: grid;
+  gap: .45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.staff-dashboard__action {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .55rem;
+  min-height: 46px;
+  padding: .4rem .65rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: var(--admin-surface-muted);
+  color: var(--admin-text);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.staff-dashboard__action:hover {
+  border-color: var(--admin-accent);
+  background: var(--admin-accent-soft);
+  color: var(--admin-text);
+}
+
+.staff-dashboard__action--primary {
+  border-inline-start: 3px solid var(--usaw-red);
+  background: var(--admin-accent-soft);
+}
+
+.staff-dashboard__action-icon {
+  display: grid;
+  width: 1.75rem;
+  height: 1.75rem;
+  place-items: center;
+  border-radius: 6px;
+  background: var(--admin-accent-soft);
+  color: var(--admin-accent);
+}
+
+.staff-dashboard__action-chevron {
+  color: var(--admin-subtext);
+  font-size: .7rem;
+}
+
+.staff-dashboard :is(#staff-directory, #admin-badges-title) {
+  scroll-margin-top: 78px;
+}
+
+.staff-dashboard__search {
+  max-width: 27rem;
+}
+
+.staff-dashboard__search .form-label {
+  color: var(--admin-subtext);
+  font-weight: 650;
+}
+
+.staff-dashboard__search .form-control {
+  min-height: 44px;
+  border-color: var(--admin-border);
+  background: var(--admin-surface-muted);
+  color: var(--admin-text);
+}
+
+.staff-dashboard__search .form-control::placeholder {
+  color: var(--admin-subtext);
+}
+
+.staff-dashboard__directory-status {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  margin: 1rem 0 0;
+  color: var(--admin-subtext);
+}
+
+.staff-dashboard .MuiTableContainer-root {
+  margin-bottom: 0;
+}
+
+.staff-dashboard .MuiTablePagination-select {
+  background: var(--admin-surface-muted);
+}
+
+@media (max-width: 870px) {
+  .staff-dashboard__groups {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 580px) {
+  .staff-dashboard__groups {
+    grid-template-columns: 1fr;
+  }
+
+  .staff-dashboard__count {
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: .5rem;
+  }
+}
