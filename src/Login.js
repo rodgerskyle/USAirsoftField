@@ -84,9 +84,11 @@ class SignInFormBase extends Component {
           const snapshot = await get(this.props.firebase.user(this.props.firebase.uid()));
           const userObject = snapshot.val() || {};
 
-          this.props.history.push("/");
           if (userObject.roles && !!userObject.roles[ROLES.WAIVER]) {
             this.props.history.push("/dashboard");
+          } else {
+            const team = new URLSearchParams(this.props.router.location.search).get('team');
+            this.props.history.push(team ? `/jointeam?${new URLSearchParams({ team })}` : "/");
           }
         })
         .catch(error_p => {

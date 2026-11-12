@@ -27,3 +27,22 @@
   --usaw-heading-red: #ffabb1;
   --usaw-focus: #b4d3f7;
 }
+
+.usaw-share {
+  position: relative;
+}
+
+.usaw-share__status,
+.usaw-share__link {
+  position: absolute;
+  inset: calc(100% + .35rem) auto auto 0;
+  z-index: 2;
+  width: max-content;
+  max-width: min(15rem, 80vw);
+  padding: .4rem .65rem;
+  border: 1px solid var(--usaw-line);
+  border-radius: .4rem;
+  background: var(--usaw-surface);
+  color: var(--usaw-text);
+  font-size: .8rem;
+}
