@@ -1,59 +1,57 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faArrowRight, faPeopleGroup, faUser } from '@fortawesome/free-solid-svg-icons';
-import { onValue } from 'firebase/database';
-import { getDownloadURL } from 'firebase/storage';
+import { child, onValue } from 'firebase/database';
 import { withFirebase } from '../Firebase';
 import { AuthUserContext } from '../session';
 import SharePageLink from '../constants/SharePageLink';
+import { companionTeamWorkspace, useCompanionTeamDirectory, useTeamLogo } from '../constants/teamDirectory';
 import './team-detail.css';
 
 const pointFormat = new Intl.NumberFormat('en-US');
 
-function TeamDetail({ firebase, teamId }) {
+function TeamDetail({ firebase, teamId, source }) {
     const authUser = useContext(AuthUserContext);
-    const [team, setTeam] = useState(null);
-    const [status, setStatus] = useState('loading');
-    const [logo, setLogo] = useState('');
-    const [captain, setCaptain] = useState('');
+    const [fieldTeam, setFieldTeam] = useState(null);
+    const [fieldStatus, setFieldStatus] = useState('loading');
+    const [fieldCaptain, setFieldCaptain] = useState('');
+    const companion = source === 'companion';
+    const shared = useCompanionTeamDirectory(firebase, { enabled: companion, id: teamId });
+    const team = companion ? shared.record?.team : fieldTeam;
+    const status = companion ? shared.status : fieldStatus;
+    const { logo, clearLogo } = useTeamLogo(firebase, {
+        id: status === 'ready' ? teamId : null, source, hasLogo: team?.hasLogo, user: shared.user,
+    });
 
     useEffect(() => {
+        if (companion) return undefined;
         if (!teamId || /[.#$[\]/]/.test(teamId)) {
-            setStatus('missing');
+            setFieldStatus('missing');
             return undefined;
         }
         return onValue(firebase.team(teamId), (snapshot) => {
             const record = snapshot.val();
-            setTeam(record);
-            setStatus(record ? 'ready' : 'missing');
-        }, () => setStatus('error'));
-    }, [firebase, teamId]);
+            setFieldTeam(record);
+            setFieldStatus(record ? 'ready' : 'missing');
+        }, () => setFieldStatus('error'));
+    }, [companion, firebase, teamId]);
 
+    const captainId = companion ? team?.captainId : team?.leader;
     useEffect(() => {
-        if (status !== 'ready') return undefined;
-        let active = true;
-        getDownloadURL(firebase.teamsPictures(`${teamId}.png`)).then((url) => {
-            if (active) setLogo(url);
-        }).catch(() => {
-            if (active) setLogo('');
-        });
-        return () => { active = false; };
-    }, [firebase, teamId, status]);
+        setFieldCaptain('');
+        if (companion || !captainId) return undefined;
+        return onValue(child(firebase.user(captainId), 'name'), (snapshot) => {
+            setFieldCaptain(snapshot.val() || '');
+        }, () => setFieldCaptain(''));
+    }, [companion, firebase, captainId]);
 
-    const captainId = team?.leader;
-    useEffect(() => {
-        setCaptain('');
-        if (!captainId) return undefined;
-        return onValue(firebase.user(captainId), (snapshot) => {
-            setCaptain(snapshot.val()?.name || '');
-        }, () => setCaptain(''));
-    }, [firebase, captainId]);
-
-    const members = Object.values(team?.members || {}).filter(member =>
-        Array.isArray(member) && typeof member[0] === 'string' && typeof member[1] === 'string' && member[1]
-    );
+    const members = companion ? team?.members ?? []
+        : Object.values(team?.members || {}).filter(member =>
+            Array.isArray(member) && typeof member[0] === 'string' && typeof member[1] === 'string' && member[1]
+        ).map(([name, id]) => ({ name, id }));
+    const captain = fieldCaptain || members.find(member => member.id === captainId)?.name;
     const points = Number(team?.points);
     const title = team?.name || teamId;
     const joining = new URLSearchParams({ team: teamId }).toString();
@@ -71,14 +69,19 @@ function TeamDetail({ firebase, teamId }) {
                     {status === 'ready' ? (
                         <div className="team-detail__intro">
                             <div className="team-detail__logo">
-                                {logo ? <img src={logo} alt="" onError={() => setLogo('')} />
+                                {logo ? <img src={logo} alt="" onError={clearLogo} />
                                     : <FontAwesomeIcon icon={faPeopleGroup} />}
                             </div>
                             <div className="team-detail__identity">
                                 <h1>{title}</h1>
                                 {team.description && <p>{team.description}</p>}
                                 <div className="team-detail__actions">
-                                    {authUser?.uid && authUser.uid === captainId ? (
+                                    {companion ? (
+                                        <a className="team-detail__button team-detail__button--primary" href={companionTeamWorkspace(teamId)}>
+                                            {shared.user?.uid === captainId ? 'Manage in Companion'
+                                                : shared.record?.ownTeamId === teamId ? 'Open team workspace' : 'Open in Companion'}
+                                        </a>
+                                    ) : authUser?.uid && authUser.uid === captainId ? (
                                         <Link className="team-detail__button team-detail__button--primary" to="/manageteam">
                                             Manage team
                                         </Link>
@@ -102,11 +105,15 @@ function TeamDetail({ firebase, teamId }) {
                         {status === 'loading' && 'Loading team…'}
                         {status === 'missing' && 'This team could not be found.'}
                         {status === 'error' && 'Team details are temporarily unavailable. Try refreshing this page.'}
+                        {status === 'signed-out' && <><Link to="/login">Sign in</Link> with an active USAW membership to see this team.</>}
+                        {status === 'membership-required' && 'An active USAW membership is required to see this team.'}
                     </p>
                 ) : (
                     <>
-                        <dl className="team-detail__stats">
-                            <div><dt>Team points</dt><dd>{Number.isFinite(points) ? pointFormat.format(points) : '—'}</dd></div>
+                        <dl className={`team-detail__stats${companion ? ' team-detail__stats--companion' : ''}`}>
+                            <div><dt>{companion ? 'Earned points' : 'Team points'}</dt><dd>{Number.isFinite(points) ? pointFormat.format(points) : '—'}</dd></div>
+                            {companion && <div className="team-detail__wins"><dt>Wins</dt><dd>{pointFormat.format(team.wins)}</dd></div>}
+                            {companion && <div className="team-detail__losses"><dt>Losses</dt><dd>{pointFormat.format(team.losses)}</dd></div>}
                             <div><dt>Roster</dt><dd>{members.length}</dd></div>
                             <div>
                                 <dt>Team captain</dt>
@@ -115,11 +122,12 @@ function TeamDetail({ firebase, teamId }) {
                                     : '—'}</dd>
                             </div>
                         </dl>
+                        {companion && <p className="team-detail__score-note">Scores count games recorded after each player joined this team.</p>}
                         <section aria-labelledby="team-roster">
                             <h2 id="team-roster">Team roster</h2>
                             {members.length ? (
                                 <ul className="team-detail__roster">
-                                    {members.map(([name, uid]) => (
+                                    {members.map(({ name, id: uid }) => (
                                         <li key={uid}>
                                             <Link to={`/profilelookup/${encodeURIComponent(uid)}`}>
                                                 <span className="team-detail__member-icon"><FontAwesomeIcon icon={faUser} /></span>
@@ -143,8 +151,10 @@ function TeamDetail({ firebase, teamId }) {
 
 function Teampage({ firebase }) {
     const { team = '' } = useParams();
+    const [search] = useSearchParams();
+    const source = search.get('source') === 'companion' ? 'companion' : 'field';
     const teamId = team.toLowerCase();
-    return <TeamDetail key={teamId} firebase={firebase} teamId={teamId} />;
+    return <TeamDetail key={`${source}:${teamId}`} firebase={firebase} teamId={teamId} source={source} />;
 }
 
 export default withFirebase(Teampage);

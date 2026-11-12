@@ -5,7 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { get, onValue } from 'firebase/database';
 import { FirebaseContext } from '../Firebase';
 import { AuthUserContext } from '../session';
-import { getBadgeStandings, getFeaturedBadges, getFeaturedBadgeDetails, getMyBadges } from '../constants/playerBadges';
+import { getBadgeStandings, getFeaturedBadges, getFeaturedBadgeDetails, getMyBadges, setFeaturedBadge } from '../constants/playerBadges';
 import { getAllPlayerDisplayNames, getPlayerDisplayNames } from '../constants/playerDisplayNames';
 import VirtualPatches from './VirtualPatches';
 import PlayerProfileView from './PlayerProfileView';
@@ -27,6 +27,7 @@ jest.mock('../constants/playerBadges', () => ({
   getFeaturedBadges: jest.fn(),
   getFeaturedBadgeDetails: jest.fn(),
   getMyBadges: jest.fn(),
+  setFeaturedBadge: jest.fn(),
 }));
 jest.mock('../constants/playerDisplayNames', () => ({
   getAllPlayerDisplayNames: jest.fn(),
@@ -153,12 +154,52 @@ test('shows one earned patch with its count and preserves the first award reason
     }],
     featuredBadgeId: 'ambassador',
   });
-  renderPage(<PlayerProfileView firebase={firebase} user={user} playerId={playerId} account />);
-  fireEvent.click(screen.getByRole('button', { name: 'Badges' }));
+  renderPage(<PlayerProfileView firebase={firebase} user={user} playerId={playerId} account />, {
+    path: '/account?section=badges',
+  });
   const wall = await screen.findByRole('region', { name: 'Earned badges' });
+  expect(within(wall).getByRole('heading', { name: 'Earned badges' })).toHaveFocus();
   expect(within(wall).getByText('×3')).toBeVisible();
   expect(within(wall).getAllByRole('listitem')).toHaveLength(1);
   expect(within(wall).getByText('First award for sportsmanship.')).toBeInTheDocument();
+});
+
+test('features an earned badge from the profile shortcut and shows it when the leaderboard is revisited', async () => {
+  let featuredBadgeId = null;
+  getMyBadges.mockResolvedValue({ awards: [{ badgeId: 'ambassador', earnedCount: 2 }], featuredBadgeId });
+  setFeaturedBadge.mockImplementation(async (_, badgeId) => {
+    featuredBadgeId = badgeId;
+    return { featuredBadgeId };
+  });
+  onValue.mockImplementation((_ref, next) => {
+    next({ val: () => ({ [playerId]: { name: user.username, points: 10 } }) });
+    return () => {};
+  });
+  getFeaturedBadges.mockImplementation(async () => featuredBadgeId ? { [playerId]: featuredBadgeId } : {});
+
+  const board = renderPage(<Leaderboard />, { path: '/leaderboard' });
+  const standings = within(screen.getByRole('table', { name: 'All time player standings' }));
+  expect(standings.queryByAltText('Featured badge: USAW Ambassador')).not.toBeInTheDocument();
+  const profile = renderPage(<PlayerProfileView firebase={firebase} user={user} playerId={playerId} account />, { path: '/account' });
+  fireEvent.click(within(profile.container).getByRole('button', { name: 'Choose featured badge' }));
+  const selector = await within(profile.container).findByRole('combobox', { name: 'Featured badge' });
+  fireEvent.change(selector, { target: { value: 'ambassador' } });
+  fireEvent.click(within(profile.container).getByRole('button', { name: 'Save selection' }));
+  expect(await within(profile.container).findByText('Featured badge updated.')).toBeVisible();
+  expect(within(profile.container).getByRole('button', { name: 'Change featured badge' })).toBeVisible();
+  expect(setFeaturedBadge).toHaveBeenCalledWith(firebase, 'ambassador');
+
+  fireEvent(window, new Event('focus'));
+  expect(await within(board.container).findByAltText('Featured badge: USAW Ambassador')).toBeVisible();
+});
+
+test('the owner can reach badge settings from a public profile without exposing their collection there', async () => {
+  renderPage(<PlayerProfileView firebase={firebase} user={user} playerId={playerId} />, {
+    path: `/profilelookup/${playerId}`, authUser: user,
+  });
+  expect(await screen.findByRole('link', { name: 'Manage featured badge' }))
+    .toHaveAttribute('href', '/account?section=badges');
+  expect(getMyBadges).not.toHaveBeenCalled();
 });
 
 test('an expired member can find renewal information and the public patch collection', async () => {

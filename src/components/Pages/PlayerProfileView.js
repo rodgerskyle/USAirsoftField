@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { onValue } from 'firebase/database';
 import { getDownloadURL } from 'firebase/storage';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -14,6 +14,7 @@ import * as ROLES from '../constants/roles';
 import { badgeById, getFeaturedBadgeDetails, getMyBadges, setFeaturedBadge } from '../constants/playerBadges';
 import { getPlayerDisplayNames } from '../constants/playerDisplayNames';
 import SharePageLink from '../constants/SharePageLink';
+import { AuthUserContext } from '../session';
 import PlayerBadgeCollection from './PlayerBadgeCollection';
 import './PlayerProfileView.css';
 
@@ -273,7 +274,12 @@ function GameFeed({ games }) {
 }
 
 export default function PlayerProfileView({ firebase, user, playerId, account = false }) {
-  const [section, setSection] = useState('overview');
+  const authUser = useContext(AuthUserContext);
+  const [params] = useSearchParams();
+  const badgeHeading = useRef(null);
+  const badgeEligible = !user.roles?.[ROLES.WAIVER];
+  const canManageBadges = account && badgeEligible;
+  const [section, setSection] = useState(() => canManageBadges && params.get('section') === 'badges' ? 'badges' : 'overview');
   const [nameRecord, setNameRecord] = useState(null);
 
   useEffect(() => {
@@ -287,9 +293,11 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
     return () => controller.abort();
   }, [playerId]);
 
+  useEffect(() => {
+    if (section === 'badges' && canManageBadges) badgeHeading.current?.focus();
+  }, [canManageBadges, section]);
+
   const profileImage = useProfileImage(firebase, playerId, user.profilepic);
-  const badgeEligible = !user.roles?.[ROLES.WAIVER];
-  const canManageBadges = account && badgeEligible;
   const badges = useProfileBadges(firebase, playerId, canManageBadges, badgeEligible);
   const featuredBadge = getBadge(badges.record?.featuredBadgeId);
   const featuredEarnedCount = (canManageBadges
@@ -297,6 +305,13 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
     : badges.record?.featuredEarnedCount) || 1;
   const featuredCountText = numberFormat.format(featuredEarnedCount);
   const profileSections = canManageBadges ? [...sections, { id: 'badges', label: 'Badges' }] : sections;
+  const ownPublicProfile = !account && badgeEligible && authUser?.uid === playerId;
+
+  function openBadges() {
+    if (section === 'badges') badgeHeading.current?.focus();
+    else setSection('badges');
+  }
+
   const nameResolved = Boolean(nameRecord && nameRecord.playerId === playerId);
   const customName = nameResolved && typeof nameRecord.name === 'string' ? nameRecord.name : '';
   const displayName = customName || user.username || user.name || 'USAW player';
@@ -376,6 +391,14 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
                   </div>
                 </div>
               )}
+              {canManageBadges && (
+                <button type="button" className="player-profile__link" onClick={openBadges}>
+                  {featuredBadge ? 'Change featured badge' : 'Choose featured badge'}
+                </button>
+              )}
+              {ownPublicProfile && (
+                <Link className="player-profile__link" to="/account?section=badges">Manage featured badge</Link>
+              )}
             </div>
           </div>
         </div>
@@ -418,6 +441,7 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
         {section === 'game-feed' && <GameFeed games={user.games} />}
         {section === 'badges' && canManageBadges && (
           <PlayerBadgeCollection
+            headingRef={badgeHeading}
             awards={badges.record?.awards || []}
             featuredBadgeId={featuredBadge?.id}
             getBadge={getBadge}

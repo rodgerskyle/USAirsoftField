@@ -1,47 +1,38 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight, faSearch, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { onValue } from 'firebase/database';
-import { getDownloadURL } from 'firebase/storage';
 import { withFirebase } from '../Firebase';
+import { AuthUserContext } from '../session';
+import { teamPagePath, useCompanionTeamDirectory, useTeamLogo } from '../constants/teamDirectory';
 import './Teams.css';
 
 const TEAMS_PER_PAGE = 6;
 
-function TeamCard({ firebase, team }) {
-    const [logo, setLogo] = useState('');
-    const { id, points, rank } = team;
-
-    useEffect(() => {
-        let active = true;
-        getDownloadURL(firebase.teamsPictures(`${id}.png`)).then(
-            url => {
-                if (active) setLogo(url);
-            },
-            () => {} // Teams without an uploaded banner use the directory icon.
-        );
-        return () => {
-            active = false;
-        };
-    }, [firebase, id]);
+function TeamCard({ firebase, team, companionUser }) {
+    const { name, points, rank, source, memberCount } = team;
+    const companion = source === 'companion';
+    const { logo, clearLogo } = useTeamLogo(firebase, { ...team, user: companion ? companionUser : null });
 
     return (
         <li>
-            <Link className="team-directory__card" to={`/teams/${encodeURIComponent(id)}`}>
+            <Link className="team-directory__card" to={teamPagePath(team)}>
                 <div className="team-directory__banner">
                     <FontAwesomeIcon icon={faUsers} aria-hidden="true" />
-                    {logo && <img src={logo} alt="" onError={() => setLogo('')} />}
+                    {logo && <img src={logo} alt="" onError={clearLogo} />}
                 </div>
                 <div className="team-directory__card-copy">
                     <div className="team-directory__identity">
-                        <p className="team-directory__rank">Rank {rank}</p>
-                        <h3>{id}</h3>
+                        <p className="team-directory__rank">
+                            {companion ? `${memberCount} ${memberCount === 1 ? 'player' : 'players'}` : `Rank ${rank}`}
+                        </p>
+                        <h3>{name}</h3>
                     </div>
                     <div className="team-directory__points">
                         <strong>{points ?? '—'}</strong>
-                        <span>Points</span>
+                        <span>{companion ? 'Earned points' : 'Points'}</span>
                     </div>
                     <FontAwesomeIcon className="team-directory__arrow" icon={faArrowRight} aria-hidden="true" />
                 </div>
@@ -51,26 +42,38 @@ function TeamCard({ firebase, team }) {
 }
 
 function Teams({ firebase }) {
+    const authUser = useContext(AuthUserContext);
     const [teams, setTeams] = useState(null);
-    const [error, setError] = useState(false);
+    const [fieldError, setFieldError] = useState(false);
     const [attempt, setAttempt] = useState(0);
     const [search, setSearch] = useState('');
-    const [sort, setSort] = useState('rank');
+    const [sort, setSort] = useState('name');
     const [currentPage, setCurrentPage] = useState(1);
+    const companion = useCompanionTeamDirectory(firebase, { attempt });
 
     useEffect(() => onValue(firebase.teams(), snapshot => {
         const ranked = Object.entries(snapshot.val() ?? {})
-            .map(([id, team]) => ({ id, points: team?.points }))
+            .map(([id, team]) => ({
+                id, source: 'field', name: typeof team?.name === 'string' && team.name.trim() ? team.name : id,
+                points: team?.points,
+            }))
             // Preserve the existing points order, including its tie behavior.
             .sort((a, b) => a.points < b.points ? 1 : -1)
             .map((team, index) => ({ ...team, rank: index + 1 }));
 
         setTeams(ranked);
-    }, () => setError(true)), [firebase, attempt]);
+        setFieldError(false);
+    }, () => setFieldError(true)), [firebase, attempt]);
 
+    const companionTeams = Array.isArray(companion.record?.teams)
+        ? companion.record.teams.filter(team => team.source === 'companion') : [];
+    const ownTeamId = companion.record?.ownTeamId;
+    const managePath = ownTeamId && !authUser?.team
+        ? teamPagePath({ id: ownTeamId, source: 'companion' }) : '/manageteam';
     const query = search.trim().toLowerCase();
-    const results = (teams ?? []).filter(team => team.id.toLowerCase().includes(query));
-    if (sort === 'name') results.sort((a, b) => a.id.localeCompare(b.id, 'en', { sensitivity: 'base' }));
+    const results = [...(teams ?? []), ...companionTeams].filter(team =>
+        team.name.toLowerCase().includes(query) || team.id.toLowerCase().includes(query));
+    if (sort === 'name') results.sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }));
     const totalPages = Math.max(1, Math.ceil(results.length / TEAMS_PER_PAGE));
     const page = Math.min(currentPage, totalPages);
     const first = (page - 1) * TEAMS_PER_PAGE;
@@ -82,8 +85,7 @@ function Teams({ firebase }) {
     }
 
     function retry() {
-        setError(false);
-        setTeams(null);
+        setFieldError(false);
         setAttempt(value => value + 1);
     }
 
@@ -100,7 +102,7 @@ function Teams({ firebase }) {
                     <div className="team-directory__actions">
                         <Link className="team-directory__button team-directory__button--primary" to="/createteam">Create team</Link>
                         <Link className="team-directory__button" to="/jointeam">Join team</Link>
-                        <Link className="team-directory__button" to="/manageteam">Manage team</Link>
+                        <Link className="team-directory__button" to={managePath}>Manage team</Link>
                     </div>
                 </div>
             </section>
@@ -121,17 +123,25 @@ function Teams({ firebase }) {
                             setSort(event.target.value);
                             setCurrentPage(1);
                         }}>
-                            <option value="rank">Standings</option>
                             <option value="name">Team name A–Z</option>
+                            <option value="rank">Field standings first</option>
                         </select>
                     </label>
                 </div>
-                {error ? (
+                {(companion.status === 'signed-out' || companion.status === 'membership-required') && (
+                    <p className="team-directory__results">
+                        {companion.status === 'signed-out'
+                            ? <><Link to="/login">Sign in</Link> to see teams for active USAW members.</>
+                            : 'An active USAW membership unlocks additional teams.'}
+                    </p>
+                )}
+                {(fieldError || companion.status === 'error') && (
                     <div className="team-directory__notice" role="alert">
-                        <p>Team standings are temporarily unavailable.</p>
+                        <p>Some teams could not be loaded.</p>
                         <button type="button" className="team-directory__button" onClick={retry}>Try again</button>
                     </div>
-                ) : teams === null ? (
+                )}
+                {visibleTeams.length === 0 && ((teams === null && !fieldError) || companion.status === 'loading') ? (
                     <p className="team-directory__notice" role="status">Loading team standings…</p>
                 ) : visibleTeams.length === 0 ? (
                     <div className="team-directory__notice" role="status">
@@ -144,7 +154,8 @@ function Teams({ firebase }) {
                             Showing {first + 1}–{first + visibleTeams.length} of {results.length} {results.length === 1 ? 'team' : 'teams'}
                         </p>
                         <ul className="team-directory__grid">
-                            {visibleTeams.map(team => <TeamCard key={team.id} team={team} firebase={firebase} />)}
+                            {visibleTeams.map(team => <TeamCard key={`${team.source}:${team.id}`} team={team}
+                                firebase={firebase} companionUser={companion.user} />)}
                         </ul>
                         {totalPages > 1 && (
                             <nav className="team-directory__pagination" aria-label="Team standings pages">

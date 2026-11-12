@@ -72,7 +72,7 @@ function EarnedBadge({ award, badge, featured }) {
 }
 
 export default function PlayerBadgeCollection({
-  awards, featuredBadgeId, getBadge, loading, error, membershipExpired, onRetry, onFeature, saving, feedback,
+  headingRef, awards, featuredBadgeId, getBadge, loading, error, membershipExpired, onRetry, onFeature, saving, feedback,
 }) {
   const badges = awards.flatMap((award) => {
     const badge = getBadge(award.badgeId);
@@ -119,7 +119,7 @@ export default function PlayerBadgeCollection({
   return (
     <section className="player-profile__panel player-profile__badges" aria-labelledby="player-profile-badges-title">
       <div className="player-profile__panel-header player-profile__badge-header">
-        <h2 id="player-profile-badges-title">Earned badges</h2>
+        <h2 id="player-profile-badges-title" ref={headingRef} tabIndex={-1}>Earned badges</h2>
         <Link className="player-profile__link" to="/virtual-patches">Explore Virtual Patches</Link>
       </div>
       {content}

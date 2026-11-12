@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
+import PlayerHubAccount from './PlayerHubAccount';
 import './PlayerHub.css';
 
 const STORAGE_KEY = 'usaw-player-hub-v1';
@@ -310,6 +311,7 @@ export default function PlayerHub() {
         </div>
       </header>
       <div className="ph-wrap ph-content">
+        <PlayerHubAccount />
         <section aria-labelledby="player-field-links">
           <div className="ph-section-header">
             <p className="ph-kicker">At the field</p>
@@ -323,17 +325,6 @@ export default function PlayerHub() {
                 <Icon name="arrow" size={17} />
               </Link>
             ))}
-          </div>
-        </section>
-        <section className="ph-account" aria-labelledby="player-account-heading">
-          <div>
-            <p className="ph-kicker">USAW player account</p>
-            <h2 id="player-account-heading">Your profile and membership</h2>
-            <p>Use your existing USAW account to view your official player record.</p>
-          </div>
-          <div className="ph-actions">
-            <Link className="ph-button ph-button-primary" to="/account">My account <Icon name="arrow" size={18} /></Link>
-            <Link className="ph-button ph-button-on-dark" to="/login">Sign in</Link>
           </div>
         </section>
         <Loadouts planner={planner} updatePlanner={updatePlanner} storageError={storageError} />
