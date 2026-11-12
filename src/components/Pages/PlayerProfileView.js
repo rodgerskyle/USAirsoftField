@@ -14,6 +14,7 @@ import * as ROLES from '../constants/roles';
 import { badgeById, getFeaturedBadgeDetails, getMyBadges, setFeaturedBadge } from '../constants/playerBadges';
 import { getPlayerDisplayNames } from '../constants/playerDisplayNames';
 import { maximumRankPoints, prestigeCyclePoints, profileRank, usePlayerPrestige } from '../constants/playerPrestige';
+import { teamPagePath, usePlayerTeam, useTeamLogo } from '../constants/teamDirectory';
 import SharePageLink from '../constants/SharePageLink';
 import { AuthUserContext } from '../session';
 import PlayerBadgeCollection from './PlayerBadgeCollection';
@@ -132,37 +133,39 @@ function useProfileImage(firebase, playerId, hasProfilePicture) {
 }
 
 function ProfileTeamCard({ firebase, team }) {
-  const teamId = team.toLowerCase();
+  const teamId = team.id.toLowerCase();
   const [name, setName] = useState('');
-  const [logo, setLogo] = useState('');
+  const validId = !/[.#$[\]/]/.test(teamId);
+  const { logo, clearLogo } = useTeamLogo(firebase, {
+    id: validId ? teamId : null,
+    source: team.source,
+    hasLogo: team.hasLogo,
+    user: team.source === 'companion' ? firebase.auth?.currentUser : null,
+  });
 
   useEffect(() => {
-    if (/[.#$[\]/]/.test(teamId)) return undefined;
+    if (team.source !== 'field' || !validId) return undefined;
     let active = true;
     const unsubscribe = onValue(firebase.team(teamId), (snapshot) => {
       const teamName = snapshot.val()?.name;
       if (active) setName(typeof teamName === 'string' ? teamName.trim() : '');
     }, () => { if (active) setName(''); });
 
-    getDownloadURL(firebase.teamsPictures(`${teamId}.png`))
-      .then((url) => { if (active) setLogo(url); })
-      .catch(() => { if (active) setLogo(''); });
-
     return () => {
       active = false;
       unsubscribe();
     };
-  }, [firebase, teamId]);
+  }, [firebase, team.source, teamId, validId]);
 
   return (
-    <Link className="player-profile__team-card" to={`/teams/${encodeURIComponent(team)}`}>
+    <Link className="player-profile__team-card" to={teamPagePath(team)}>
       <span className="player-profile__team-logo">
-        {logo ? <img src={logo} alt="" decoding="async" onError={() => setLogo('')} />
+        {logo ? <img src={logo} alt="" decoding="async" onError={clearLogo} />
           : <FontAwesomeIcon icon={faPeopleGroup} aria-hidden="true" />}
       </span>
       <span>
         <span className="player-profile__label">Team</span>
-        <strong>{name || team}</strong>
+        <strong>{name || team.name}</strong>
       </span>
       <FontAwesomeIcon className="player-profile__team-arrow" icon={faChevronRight} aria-hidden="true" />
     </Link>
@@ -319,7 +322,9 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
   const customName = nameResolved && typeof nameRecord.name === 'string' ? nameRecord.name : '';
   const displayName = customName || user.username || user.name || 'USAW player';
   const showRealName = (account || (nameResolved && !customName)) && user.name && user.name !== displayName;
-  const team = typeof user.team === 'string' ? user.team.trim() : '';
+  const { team, status: teamStatus } = usePlayerTeam(playerId, user.team);
+  const teamStatusText = teamStatus === 'loading' ? 'Checking team…'
+    : teamStatus === 'error' ? 'Team unavailable' : 'Unaffiliated';
   const points = count(user.points);
   const cyclePoints = prestigeCyclePoints(points, prestige.record);
   const completedPrestiges = prestige.record?.prestigeCount ?? 0;
@@ -363,10 +368,10 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
               <p className="player-profile__label">{account ? 'My profile' : 'Player profile'}</p>
               <h1 id="player-profile-title">{displayName}</h1>
               {showRealName && <p className="player-profile__real-name">{user.name}</p>}
-              {team && <ProfileTeamCard key={team} firebase={firebase} team={team} />}
+              {team && <ProfileTeamCard key={`${team.source}:${team.id}`} firebase={firebase} team={team} />}
               {(!team || user.renewal) && (
                 <dl className="player-profile__metadata">
-                  {!team && <div><dt>Team</dt><dd>Unaffiliated</dd></div>}
+                  {!team && <div><dt>Team</dt><dd>{teamStatusText}</dd></div>}
                   {user.renewal && <div><dt>Renewal</dt><dd>{user.renewal}</dd></div>}
                 </dl>
               )}

@@ -4,6 +4,7 @@ import { getDownloadURL } from 'firebase/storage';
 const companion = 'https://usaw-field-companion.pink-bud-3735.chatgpt.site';
 const endpoint = `${companion}/api/team-directory`;
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
+const playerIdPattern = /^[A-Za-z0-9_-]{10,128}$/;
 const allowedImageTypes = new Set(['image/png', 'image/jpeg', 'image/webp']);
 
 export function teamPagePath({ id, source }) {
@@ -31,6 +32,61 @@ async function request(user, query, signal) {
 const pending = { status: 'loading' };
 const validTeam = team => team?.source === 'companion' && typeof team.id === 'string' && uuid.test(team.id)
     && typeof team.name === 'string';
+
+async function getCompanionPlayerTeam(playerId, signal) {
+    const url = new URL('/api/player-team', companion);
+    url.searchParams.set('id', playerId);
+    const response = await fetch(url, {
+        headers: { Accept: 'application/json' },
+        credentials: 'omit',
+        cache: 'no-store',
+        redirect: 'error',
+        signal,
+    });
+    if (!response.ok) throw new Error('Player team is unavailable.');
+    const { team } = await response.json();
+    if (team === null) return null;
+    if (typeof team?.id !== 'string' || !uuid.test(team.id) || typeof team.name !== 'string' || !team.name.trim()) {
+        throw new Error('Player team is unavailable.');
+    }
+    return { id: team.id, name: team.name.trim(), hasLogo: team.hasLogo === true, source: 'companion' };
+}
+
+export function usePlayerTeam(playerId, fieldTeam) {
+    const [record, setRecord] = useState(null);
+    const legacyTeam = typeof fieldTeam === 'string' ? fieldTeam.trim() : '';
+    const canLookup = !legacyTeam && typeof playerId === 'string' && playerIdPattern.test(playerId);
+
+    useEffect(() => {
+        if (!canLookup) {
+            setRecord(null);
+            return undefined;
+        }
+        let request;
+        function refresh() {
+            request?.abort();
+            request = new AbortController();
+            const { signal } = request;
+            getCompanionPlayerTeam(playerId, signal)
+                .then(team => {
+                    if (!signal.aborted) setRecord({ playerId, status: 'ready', team });
+                })
+                .catch(() => {
+                    if (!signal.aborted) setRecord({ playerId, status: 'error' });
+                });
+        }
+        refresh();
+        window.addEventListener('focus', refresh);
+        return () => {
+            request.abort();
+            window.removeEventListener('focus', refresh);
+        };
+    }, [canLookup, playerId]);
+
+    if (legacyTeam) return { status: 'ready', team: { id: legacyTeam, name: legacyTeam, source: 'field' } };
+    if (!canLookup) return { status: 'error' };
+    return record?.playerId === playerId ? record : pending;
+}
 
 export function useCompanionTeamDirectory(firebase, { enabled = true, id, attempt = 0 } = {}) {
     const [state, setState] = useState(pending);

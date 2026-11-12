@@ -17,6 +17,7 @@ const currentUser = { uid: playerId, getIdToken: jest.fn(async () => 'fixture-to
 const firebase = { auth: { currentUser } };
 const record = (prestigeCount, cycleStartPoints) => ({ prestigeCount, cycleStartPoints, lastPrestigedAt: null });
 const respond = data => Promise.resolve({ ok: true, json: async () => data });
+const isTeamLookup = url => new URL(url).pathname === '/api/player-team';
 const originalFetch = global.fetch;
 
 function renderProfile(user, account) {
@@ -35,7 +36,8 @@ afterEach(() => { global.fetch = originalFetch; });
 
 test('requires two confirmations and restarts only profile rank after Prestige', async () => {
   let persisted = record(0, 0);
-  global.fetch = jest.fn((_url, options) => {
+  global.fetch = jest.fn((url, options) => {
+    if (isTeamLookup(url)) return respond({ team: null });
     if (options.method !== 'POST') return respond(persisted);
     const action = JSON.parse(options.body).action;
     if (action === 'prepare') return respond({ challenge: 'fixture-review', nextPrestige: 1, pointsAtPreview: player.points });
@@ -75,7 +77,7 @@ test('requires two confirmations and restarts only profile rank after Prestige',
 });
 
 test('shows another player’s current cycle rank and emblem while keeping public controls read-only', async () => {
-  global.fetch = jest.fn(() => respond(record(11, 8100)));
+  global.fetch = jest.fn(url => respond(isTeamLookup(url) ? { team: null } : record(11, 8100)));
   renderProfile({ ...player, points: 8225 }, false);
   const label = await screen.findByText('Prestige 11', { selector: '.player-profile__prestige span' });
   expect(label.closest('.player-profile__prestige').querySelector('.usaw-prestige-emblem--crimson')).toBeInTheDocument();
@@ -84,9 +86,9 @@ test('shows another player’s current cycle rank and emblem while keeping publi
   fireEvent.click(screen.getByRole('button', { name: 'Progression' }));
   expect(within(screen.getByRole('region', { name: 'Prestige' })).getByText('11')).toBeVisible();
   expect(screen.queryByRole('button', { name: /start prestige/i })).not.toBeInTheDocument();
-  expect(global.fetch).toHaveBeenCalledTimes(1);
-  expect(global.fetch).toHaveBeenCalledWith(
+  const prestigeRequests = global.fetch.mock.calls.filter(([url]) => !isTeamLookup(url));
+  expect(prestigeRequests).toEqual([[
     `https://usaw-field-companion.pink-bud-3735.chatgpt.site/api/player-prestige?id=${playerId}`,
     expect.objectContaining({ credentials: 'omit' }),
-  );
+  ]]);
 });
