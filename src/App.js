@@ -115,11 +115,7 @@ const App = () => (
       <Route exact path="/login" element={<LoginRoute />} />
       <Route exact path="/logout" element={<Logout />} />
       <Route exact path="/leaderboard" element={<Leaderboard />} />
-      <Route exact path="/leaderboard/query=:query"
-        render={(props) => (
-          <Leaderboard {...props} />
-        )}
-      ></Route>
+      <Route path="/leaderboard/:view" element={<Leaderboard />} />
       <Route exact path="/pricing" element={<Pricing />} />
       <Route exact path="/information/pricing" element={<Navigate to="/pricing" replace />} />
       <Route exact path="/home" element={<Home />} />

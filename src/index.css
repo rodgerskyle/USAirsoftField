@@ -1,6 +1,7 @@
 @font-face {
   font-family: 'Archivo';
-  src: url('./assets/fonts/archivo-latin-variable.woff2') format('woff2');
+  src: url('./assets/fonts/archivo-latin-variable.woff2') format('woff2'),
+    url('https://fonts.gstatic.com/s/archivo/v25/k3kPo8UDI-1M0wlSV9XAw6lQkqWY8Q82sLydOxI.woff2') format('woff2');
   font-style: normal;
   font-weight: 100 900;
   font-display: swap;
@@ -8,7 +9,8 @@
 
 @font-face {
   font-family: 'Archivo Black';
-  src: url('./assets/fonts/archivo-black-latin.woff2') format('woff2');
+  src: url('./assets/fonts/archivo-black-latin.woff2') format('woff2'),
+    url('https://fonts.gstatic.com/s/archivoblack/v23/HTxqL289NzCGg4MzN6KJ7eW6CYyF_g.woff2') format('woff2');
   font-style: normal;
   font-weight: 900;
   font-display: swap;

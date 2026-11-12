@@ -15,6 +15,7 @@ import * as ROLES from '../constants/roles';
 import { Helmet } from 'react-helmet-async';
 import AdminDrawer from '../constants/admindrawer';
 import UserTable from '../constants/usertable';
+import AdminBadgeAwards from './AdminBadgeAwards';
 import { getDownloadURL, uploadBytes } from 'firebase/storage';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -58,6 +59,8 @@ class AdminPage extends Component {
       emailImg: null,
       users: [],
       usersSearchList: [],
+      badgePlayers: [],
+      directoryUnavailable: false,
       search: "",
       ul_status: null,
       ul_error: null,
@@ -72,8 +75,8 @@ class AdminPage extends Component {
   componentDidMount() {
     this.setState({ loading: true });
 
-    onValue(this.props.firebase.users(), snapshot => {
-      const usersObject = snapshot.val()
+    this.unsubscribeUsers = onValue(this.props.firebase.users(), snapshot => {
+      const usersObject = snapshot.val() || {};
 
       const usersList = Object.keys(usersObject).map(key => ({
         ...usersObject[key],
@@ -84,16 +87,20 @@ class AdminPage extends Component {
       this.setState({
         users: usersList,
         usersSearchList: usersList,
+        badgePlayers: usersList
+          .filter(user => !user.roles?.[ROLES.WAIVER])
+          .map(({ uid, name, username }) => ({ uid, name, username })),
+        directoryUnavailable: false,
         loading: false,
       });
-    });
+    }, () => this.setState({ loading: false, directoryUnavailable: true }));
   }
 
   componentDidUpdate() {
   }
 
   componentWillUnmount() {
-    // this.props.firebase.users().off();
+    this.unsubscribeUsers?.();
   }
 
   changeEmailBox = event => {
@@ -256,6 +263,14 @@ class AdminPage extends Component {
                   ))}
                 </Row>
               </section>
+
+              <AdminBadgeAwards
+                key={this.props.firebase.auth.currentUser?.uid}
+                firebase={this.props.firebase}
+                players={this.state.badgePlayers}
+                loading={loading}
+                directoryUnavailable={this.state.directoryUnavailable}
+              />
 
               {/* Users List Section */}
               <section className="admin-section-block admin-users-section">
@@ -520,8 +535,7 @@ class AdminPage extends Component {
 // };
 
 
-const condition = authUser =>
-  authUser && !!authUser.roles[ROLES.ADMIN];
+const condition = authUser => !!authUser?.roles?.[ROLES.ADMIN];
 
 // export default withAuthorization(condition)(AdminPage);
 export default withAuthorization(condition)(withFirebase(AdminPage))

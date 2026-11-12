@@ -1,564 +1,294 @@
-import React, { Component } from 'react';
-import { Table } from 'react-bootstrap/';
-import '../../App.css';
-
-import { Container, Row, Col, OverlayTrigger, Tooltip, Spinner, Dropdown } from 'react-bootstrap/';
-
-import ranks from '../constants/ranks';
-import rankimages from '../constants/rankimgs';
-import Td from '../constants/td';
-import * as ROLES from '../constants/roles';
-
-import CustomToggle from '../constants/customtoggle'
-import CustomMenu from '../constants/custommenu'
-
-import { withFirebase } from '../Firebase';
-import { AuthUserContext } from '../session';
-import { onValue } from "firebase/database";
-
-import { isMobile } from 'react-device-detect';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { onValue } from 'firebase/database';
 import { Helmet } from 'react-helmet-async';
 import { Pagination } from '@mui/material';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faMagnifyingGlass, faTrophy } from '@fortawesome/free-solid-svg-icons';
 
-class Leaderboards extends Component {
-    constructor(props) {
-        super(props);
+import ranks from '../constants/ranks';
+import rankImages from '../constants/rankimgs';
+import * as ROLES from '../constants/roles';
+import SharePageLink from '../constants/SharePageLink';
+import { badgeById, getFeaturedBadges } from '../constants/playerBadges';
+import { withFirebase } from '../Firebase';
+import { AuthUserContext } from '../session';
+import './leaderboard.css';
 
-        this.state = {
-            loading: true,
-            users: [],
-            displayUsers: [],
-            getRankState: this.getRank,
-            monthly: false,
-            currentMonth: new Date().getMonth(),
-            currentYear: new Date().getFullYear(),
-            thisMonth: "",
-            lastMonth: "",
-            curPage: 1,
-            numPages: 0,
-            usersPerPage: 50,
-            months: null,
-            tv: false,
-            usersObject: null,
-        };
-        this.handleClick = this.handleClick.bind(this);
-        this.handleLastClick = this.handleLastClick.bind(this);
-        this.handleFirstClick = this.handleFirstClick.bind(this);
-        this.findRanking = this.findRanking.bind(this);
-    }
+const FIRST_YEAR = 2021;
+const PAGE_SIZE = 50;
+const MONTHS = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+];
+const RANK_THRESHOLDS = [
+    125, 225, 335, 450, 570, 690, 820, 960, 1110, 1270, 1440,
+    1640, 1840, 2090, 2340, 2615, 2890, 3190, 3490, 3790, 4115, 4500,
+];
+const formatScore = new Intl.NumberFormat('en-US').format;
 
-    static getDerivedStateFromError(error) {
-        // Update state so the next render will show the fallback UI.
-        return { hasError: true };
-    }
-
-    componentDidCatch(error, errorInfo) {
-        // You can also log the error to an error reporting service
-        console.log(error);
-        console.log(errorInfo);
-    }
-
-
-    //Figuring out rank logic
-    getRank(points) {
-        var index = 1;
-        if (points < 125) {
-            index = 1;
-        }
-        else if (points < 225) {
-            index = 2;
-        }
-        else if (points < 335) {
-            index = 3;
-        }
-        else if (points < 450) {
-            index = 4;
-        }
-        else if (points < 570) {
-            index = 5;
-        }
-        else if (points < 690) {
-            index = 6;
-        }
-        else if (points < 820) {
-            index = 7;
-        }
-        else if (points < 960) {
-            index = 8;
-        }
-        else if (points < 1110) {
-            index = 9;
-        }
-        else if (points < 1270) {
-            index = 10;
-        }
-        else if (points < 1440) {
-            index = 11;
-        }
-        else if (points < 1640) {
-            index = 12;
-        }
-        else if (points < 1840) {
-            index = 13;
-        }
-        else if (points < 2090) {
-            index = 14;
-        }
-        else if (points < 2340) {
-            index = 15;
-        }
-        else if (points < 2615) {
-            index = 16;
-        }
-        else if (points < 2890) {
-            index = 17;
-        }
-        else if (points < 3190) {
-            index = 18;
-        }
-        else if (points < 3490) {
-            index = 19;
-        }
-        else if (points < 3790) {
-            index = 20;
-        }
-        else if (points < 4115) {
-            index = 21;
-        }
-        else if (points < 4500) {
-            index = 22;
-        }
-        else {
-            index = 23;
-        }
-        index--;
-        return index;
-    }
-
-    //Grabbing month and storing it
-    getMonths(month) {
-        if (month === 1)
-            this.setState({ thisMonth: "January", lastMonth: "December" })
-        else if (month === 2)
-            this.setState({ thisMonth: "February", lastMonth: "January" })
-        else if (month === 3)
-            this.setState({ thisMonth: "March", lastMonth: "February" })
-        else if (month === 4)
-            this.setState({ thisMonth: "April", lastMonth: "March" })
-        else if (month === 5)
-            this.setState({ thisMonth: "May", lastMonth: "April" })
-        else if (month === 6)
-            this.setState({ thisMonth: "June", lastMonth: "May" })
-        else if (month === 7)
-            this.setState({ thisMonth: "July", lastMonth: "June" })
-        else if (month === 8)
-            this.setState({ thisMonth: "August", lastMonth: "July" })
-        else if (month === 9)
-            this.setState({ thisMonth: "September", lastMonth: "August" })
-        else if (month === 10)
-            this.setState({ thisMonth: "October", lastMonth: "September" })
-        else if (month === 11)
-            this.setState({ thisMonth: "November", lastMonth: "October" })
-        else if (month === 12)
-            this.setState({ thisMonth: "December", lastMonth: "November" })
-    }
-
-    //Pagination Logic
-    handleClick(val) {
-        this.setState({
-            curPage: val
-        });
-    }
-
-    handleLastClick(event) {
-        event.preventDefault();
-        this.setState({
-            curPage: this.state.numPages
-        });
-    }
-    handleFirstClick(event) {
-        event.preventDefault();
-        this.setState({
-            curPage: 1
-        });
-    }
-
-    componentDidMount() {
-        if (this.props.match?.params.query === "monthly") {
-            this.setState({ monthly: true, tv: true, })
-        }
-        this.setState({ loading: true });
-        this.getMonths(parseInt(new Date().getMonth().toLocaleString()) + 1)
-        let date = new Date();
-
-        let months = [];
-        months.push("January")
-        months.push("February")
-        months.push("March")
-        months.push("April")
-        months.push("May")
-        months.push("June")
-        months.push("July")
-        months.push("August")
-        months.push("September")
-        months.push("October")
-        months.push("November")
-        months.push("December")
-        this.setState({ months })
-
-        let years = [];
-        for (let i = 2021; i < date.getFullYear() + 1; i++) {
-            years.push(i)
-        }
-        this.setState({ years, currentYear: date.getFullYear() })
-
-        onValue(this.props.firebase.users(), snapshot => {
-            const usersObject = snapshot.val();
-
-            let usersList = Object.keys(usersObject).map(key => ({
-                ...usersObject[key],
-                uid: key,
-            }));
-
-            usersList = usersList.filter(obj => typeof (obj.roles) === 'undefined' || !obj.roles[ROLES.WAIVER])
-
-            if (!this.state.monthly) {
-                this.setState({
-                    users: usersList.sort((a, b) => (a.points < b.points ? 1 : -1)),
-                    usersObject,
-                    numPages: Math.ceil(usersList.length / this.state.usersPerPage),
-                    loading: false,
-                });
-            }
-            else {
-                this.setState({
-                    users: usersList.sort((a, b) => this.sortArray(a, b, this.state.currentMonth, this.state.currentYear)),
-                    usersObject,
-                    numPages: Math.ceil(usersList.length / this.state.usersPerPage),
-                    loading: false,
-                });
-            }
-        });
-    }
-
-    componentWillUnmount() {
-        // this.props.firebase.users().off();
-    }
-
-    findRanking(uid) {
-        if (!uid) return null;
-        for (let i = 0; i < this.state.users.length; i++)
-            if (this.state.users[i].uid === uid) return i;
-        return null;
-    }
-
-    // Current month sorting
-    sortArray(a, b, month, year) {
-        let a_points = 0;
-        let b_points = 0;
-        if (typeof a.games !== 'undefined') {
-            Object.keys(a.games).forEach((date) => {
-                let l_date = date.split('-')
-                if (parseInt(l_date[1]) === month && parseInt(l_date[0]) === year) {
-                    a_points += +a.games[date].wins * 10 + +a.games[date].losses * 3
-                }
-            })
-        }
-        if (typeof b.games !== 'undefined') {
-            Object.keys(b.games).forEach((date) => {
-                let l_date = date.split('-')
-                if (parseInt(l_date[1]) === month && parseInt(l_date[0]) === year) {
-                    b_points += +b.games[date].wins * 10 + +b.games[date].losses * 3
-                }
-            })
-        }
-        return a_points < b_points ? 1 : -1
-    }
-
-
-    render() {
-        const { users, loading, getRankState, numPages, curPage, currentMonth, usersPerPage, currentYear, months, years, tv, usersObject } = this.state;
-        const pagedUsers = users.slice((curPage - 1) * usersPerPage, ((curPage - 1) * usersPerPage) + usersPerPage);
-        const currentUser = authUserSafe => authUserSafe ? usersObject?.[authUserSafe.uid] : null;
-
-        return (
-            <AuthUserContext.Consumer>
-                {authUser => (
-                    <div className="background-static-lb">
-                        <Helmet>
-                            <title>US Airsoft Field: Leaderboards</title>
-                        </Helmet>
-                        <Container className="leaderboard-page leaderboard-modern-page">
-                            <div className="leaderboard-modern-hero leaderboard-modern-hero-compact">
-                                <div className="leaderboard-hero-copy">
-                                    <p className="leaderboard-eyebrow">Competitive Rankings</p>
-                                    <h2 className="page-header-lb leaderboard-title-modern">Leaderboards</h2>
-                                    <p className="leaderboard-hero-text">
-                                        Track all-time standings, compare monthly performance, and see where you rank at US Airsoft.
-                                    </p>
-                                </div>
-                                <div className="leaderboard-filter-card leaderboard-filter-card-compact">
-                                    <div className="leaderboard-filter-top">
-                                        <span className="leaderboard-filter-label">View</span>
-                                        <div className="leaderboard-view-toggle">
-                                            <button
-                                                type="button"
-                                                className={`leaderboard-view-button ${!this.state.monthly ? 'active' : ''}`}
-                                                onClick={() => {
-                                                    if (this.state.monthly) {
-                                                        this.setState({
-                                                            monthly: false,
-                                                            users: users.sort((a, b) => (a.points < b.points ? 1 : -1))
-                                                        })
-                                                    }
-                                                }}
-                                            >
-                                                All Time
-                                            </button>
-                                            <button
-                                                type="button"
-                                                className={`leaderboard-view-button ${this.state.monthly ? 'active' : ''}`}
-                                                onClick={() => {
-                                                    if (!this.state.monthly) {
-                                                        this.setState({
-                                                            monthly: true,
-                                                            currentMonth: new Date().getMonth(),
-                                                            users: users.sort((a, b) => this.sortArray(a, b, new Date().getMonth(), currentYear))
-                                                        })
-                                                    }
-                                                }}
-                                            >
-                                                Monthly
-                                            </button>
-                                        </div>
-                                    </div>
-                                    {this.state.monthly === true && !tv ?
-                                        <div className="leaderboard-filter-row">
-                                            <Dropdown className="dropdown-lb leaderboard-modern-dropdown">
-                                                <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components">
-                                                    Month: {months[currentMonth]}
-                                                </Dropdown.Toggle>
-                                                <Dropdown.Menu as={CustomMenu} className="dropdown-waiverlookup">
-                                                    {months.map((month, i) => (
-                                                        <Dropdown.Item key={i} eventKey={i} active={i === currentMonth}
-                                                            onClick={() => {
-                                                                this.setState({
-                                                                    currentMonth: i,
-                                                                    users: users.sort((a, b) => this.sortArray(a, b, i, currentYear))
-                                                                })
-                                                            }
-                                                            }>
-                                                            {month}
-                                                        </Dropdown.Item>
-                                                    ))}
-                                                </Dropdown.Menu>
-                                            </Dropdown>
-                                            <Dropdown className="dropdown-lb leaderboard-modern-dropdown">
-                                                <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components">
-                                                    Year: {currentYear}
-                                                </Dropdown.Toggle>
-                                                <Dropdown.Menu as={CustomMenu} className="dropdown-waiverlookup">
-                                                    {years.map((year, i) => (
-                                                        <Dropdown.Item eventKey={i} key={i} active={year === currentYear}
-                                                            onClick={() => this.setState({
-                                                                currentYear: year,
-                                                                users: users.sort((a, b) => this.sortArray(a, b, currentMonth, year))
-                                                            })}>
-                                                            {year}
-                                                        </Dropdown.Item>
-                                                    ))}
-                                                </Dropdown.Menu>
-                                            </Dropdown>
-                                        </div> : null}
-                                </div>
-                            </div>
-
-                            {!loading && (
-                                <>
-                                    <div className="leaderboard-compact-bar">
-                                        <div className="leaderboard-compact-metrics">
-                                            <div className="leaderboard-compact-pill">
-                                                <span className="leaderboard-compact-label">Players</span>
-                                                <strong>{users.length}</strong>
-                                            </div>
-                                            <div className="leaderboard-compact-pill">
-                                                <span className="leaderboard-compact-label">Mode</span>
-                                                <strong>{this.state.monthly ? `${months[currentMonth]} ${currentYear}` : 'All Time'}</strong>
-                                            </div>
-                                            {authUser && currentUser(authUser) && !currentUser(authUser).roles && (
-                                                <div className="leaderboard-compact-pill leaderboard-compact-pill-highlight">
-                                                    <span className="leaderboard-compact-label">Your Rank</span>
-                                                    <strong>#{(this.findRanking(authUser.uid) ?? -1) + 1}</strong>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="leaderboard-table-shell">
-                                        <div className="leaderboard-table-header">
-                                            <div>
-                                                <h3 className="leaderboard-table-title">Full Standings</h3>
-                                                <p className="leaderboard-table-copy">
-                                                    {this.state.monthly ? `Showing ${months[currentMonth]} ${currentYear} results.` : 'Showing all-time player rankings.'}
-                                                </p>
-                                            </div>
-                                            <div className="leaderboard-pagination-top">
-                                                <Pagination count={numPages} page={curPage} onChange={(e, val) => this.handleClick(val)}
-                                                    showFirstButton showLastButton color="primary" variant="outlined" shape="rounded" size={isMobile ? 'small' : 'medium'} />
-                                            </div>
-                                        </div>
-                                        <UserList users={pagedUsers} getRank={getRankState}
-                                            monthly={this.state.monthly} currentMonth={currentMonth} currentYear={currentYear} start={usersPerPage * (curPage - 1)}
-                                            findRanking={this.findRanking} personalUser={authUser ? usersObject[authUser.uid] : null} personalUid={authUser?.uid} tv={tv} />
-                                    </div>
-                                </>
-                            )}
-
-                            {loading ?
-                                <Row className="justify-content-row">
-                                    <Spinner animation="border" />
-                                </Row> :
-                                <Row className="row-bottom leaderboard-pagination-bottom">
-                                    <Col className="pagination-col-lb">
-                                        <Pagination count={numPages} page={curPage} onChange={(e, val) => this.handleClick(val)}
-                                            showFirstButton showLastButton color="primary" variant="outlined" shape="rounded" size={isMobile ? 'small' : 'medium'} />
-                                    </Col>
-                                </Row>}
-                        </Container>
-                    </div>
-                )}
-            </AuthUserContext.Consumer>
-        );
-    }
+function scoreValue(value) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : 0;
 }
 
+function monthlyStats(games, month, year) {
+    let wins = 0;
+    let losses = 0;
+    for (const [date, game] of Object.entries(games ?? {})) {
+        // Match history uses zero-based months, as written by the win/loss tools.
+        const [gameYear, gameMonth] = date.split('-').map(Number);
+        if (gameYear === year && gameMonth === month) {
+            wins += scoreValue(game?.wins);
+            losses += scoreValue(game?.losses);
+        }
+    }
+    return { wins, losses, points: wins * 10 + losses * 3 };
+}
 
-function UserList({ users, getRank, monthly, currentMonth, currentYear, start, findRanking, personalUser, personalUid, tv }) {
-    const rank = findRanking(personalUid)
+function profilePath(player) {
+    return `/profilelookup/${encodeURIComponent(player.uid)}`;
+}
+
+function RankInsignia({ points }) {
+    const thresholdIndex = RANK_THRESHOLDS.findIndex(threshold => points < threshold);
+    const rank = thresholdIndex === -1 ? RANK_THRESHOLDS.length : thresholdIndex;
     return (
-        <Table className="table table-striped table-dark table-lb leaderboard-modern-table">
-            <thead className="header-lb">
+        <span className="field-lb-insignia" title={ranks[rank]}>
+            <img src={rankImages[rank]} alt={ranks[rank]} width="46" height="46" loading="lazy" />
+        </span>
+    );
+}
+
+function LeaderboardTable({ players, personalUid, period, featured }) {
+    return (
+        <table className="field-lb-table">
+            <caption className="visually-hidden">{period} player standings</caption>
+            <thead>
                 <tr>
-                    <th scope="col" className="header-th-lb">#</th>
-                    <th scope="col" className="header-th-lb">Rank</th>
-                    <th scope="col" className="name-header-th-lb">Name</th>
-                    <th scope="col" className="header-th-lb">Wins</th>
-                    <th scope="col" className="header-th-lb">Losses</th>
-                    <th scope="col" className="header-th-lb">Points</th>
+                    <th scope="col">Place</th>
+                    <th scope="col">Player</th>
+                    <th scope="col" className="field-lb-wins">Wins</th>
+                    <th scope="col" className="field-lb-losses">Losses</th>
+                    <th scope="col">Points</th>
                 </tr>
             </thead>
-            <tbody className="tbody-lb">
-                {personalUser !== null && start === 0 &&
-                    !!!personalUser.roles ?
-                    <tr className="tr-personal-rank-leaderboard">
-                        <Td cl={tv ? "td-tv-lb" : "td-lb"} scope="row"><p className={rank + 1 === 0 ? "firstPlace" : (rank + 1 === 1 ? "secondPlace" : (rank + 1 === 2 ? "thirdPlace" : "p-rank-leaderboard"))}>
-                            {rank + 1}</p></Td>
-                        <Td cl={tv ? "td-tv-lb" : "td-lb"}>
-                            <OverlayTrigger
-                                key='top'
-                                placement='top'
-                                overlay={
-                                    <Tooltip id={`tooltip-top`}>
-                                        {ranks[getRank(personalUser.points)]}
-                                    </Tooltip>
-                                }
-                            >
-                                <img src={rankimages.length !== 0 ? rankimages[getRank(personalUser.points)] : null}
-                                    alt="Player Rank" className="rank-image-lb img-small-rank" />
-                            </OverlayTrigger>
-                        </Td>
-                        <Td cl={tv ? "profilelink-lb td-tv-lb" : "profilelink-lb td-name-lb"} to={'/profilelookup/' + personalUid} ct="link-td-profile-lb">{personalUser.name}</Td>
-                        <Td cl={tv ? "wins-lb td-tv-lb" : "wins-lb td-lb"}>
-                            {monthly ? (countWins(personalUser, currentMonth, currentYear)) : personalUser.wins}
-                        </Td>
-                        <Td cl={tv ? "losses-lb td-tv-lb" : "losses-lb td-lb"}>
-                            {monthly ? (countLosses(personalUser, currentMonth, currentYear)) : personalUser.losses}
-                        </Td>
-                        <Td cl={tv ? "td-tv-lb" : "td-lb"}>
-                            {monthly ? (countPoints(personalUser, currentMonth, currentYear)) : personalUser.points}
-                        </Td>
-                    </tr> : null}
-                {users
-                    .map((user, i) => (
-                        <tr key={user.uid}>
-                            <Td cl={tv ? "td-tv-lb" : "td-lb"} scope="row"><p className={i + start === 0 ? "firstPlace" : (i + start === 1 ? "secondPlace" : (i + start === 2 ? "thirdPlace" : "p-rank-leaderboard"))}>
-                                {i + start + 1}</p></Td>
-                            <Td cl={tv ? "td-tv-lb" : "td-lb"}>
-                                <OverlayTrigger
-                                    transition={false}
-                                    key='top'
-                                    placement='top'
-                                    overlay={
-                                        <Tooltip id={`tooltip-top`}>
-                                            {ranks[getRank(user.points)]}
-                                        </Tooltip>
-                                    }
-                                >
-                                    <img src={rankimages.length !== 0 ? rankimages[getRank(user.points)] : null}
-                                        alt="Player Rank" className="rank-image-lb img-small-rank" />
-                                </OverlayTrigger>
-                            </Td>
-                            <Td cl={tv ? "profilelink-lb td-tv-lb" : "profilelink-lb td-name-lb"} to={'/profilelookup/' + user.uid} ct="link-td-lb">{user.name}</Td>
-                            <Td cl={tv ? "wins-lb td-tv-lb" : "wins-lb td-lb"}>
-                                {monthly ? (countWins(user, currentMonth, currentYear)) : user.wins}
-                            </Td>
-                            <Td cl={tv ? "losses-lb td-tv-lb" : "losses-lb td-lb"}>
-                                {monthly ? (countLosses(user, currentMonth, currentYear)) : user.losses}
-                            </Td>
-                            <Td cl={tv ? "td-tv-lb" : "td-lb"}>
-                                {monthly ? (countPoints(user, currentMonth, currentYear)) : user.points}
-                            </Td>
-                        </tr>
-                    ))}
+            <tbody>
+                {players.map(player => (
+                    <tr key={player.uid} className={player.uid === personalUid ? 'field-lb-own-row' : undefined}>
+                        <td><span className="field-lb-place">#{player.position}</span></td>
+                        <th scope="row">
+                            <Link className="field-lb-player" to={profilePath(player)}>
+                                <span className="field-lb-player-marks">
+                                    <RankInsignia points={player.careerPoints} />
+                                    {badgeById[featured[player.uid]] && (
+                                        <img className="field-lb-featured-badge" loading="lazy" width="48" height="48"
+                                            src={badgeById[featured[player.uid]].thumbUrl}
+                                            alt={`Featured badge: ${badgeById[featured[player.uid]].name}`}
+                                            title={badgeById[featured[player.uid]].name} />
+                                    )}
+                                </span>
+                                <span>{player.name}</span>
+                            </Link>
+                        </th>
+                        <td className="field-lb-wins">{formatScore(player.wins)}</td>
+                        <td className="field-lb-losses">{formatScore(player.losses)}</td>
+                        <td className="field-lb-points">{formatScore(player.points)}</td>
+                    </tr>
+                ))}
             </tbody>
-        </Table>
-    )
+        </table>
+    );
 }
 
-// Count points given object, for match history
-function countPoints(obj, month, year) {
-    let points = 0;
-    if (typeof obj.games !== 'undefined') {
-        Object.keys(obj.games).forEach((date) => {
-            let l_date = date.split('-')
-            if (parseInt(l_date[1]) === month && parseInt(l_date[0]) === year) {
-                points += obj.games[date].wins * 10 + obj.games[date].losses * 3
-            }
-        })
+function Leaderboard({ firebase }) {
+    const authUser = useContext(AuthUserContext);
+    const { view: legacyView } = useParams();
+    const [params, setParams] = useSearchParams();
+    const tv = legacyView === 'query=monthly';
+    const monthly = (params.get('view') ?? (tv ? 'monthly' : 'all')) === 'monthly';
+    const now = new Date();
+    const [monthYear, monthNumber] = (params.get('month') ?? '').split('-').map(Number);
+    const currentYear = monthYear >= FIRST_YEAR && monthYear <= now.getFullYear() && Number.isInteger(monthYear)
+        ? monthYear : now.getFullYear();
+    const currentMonth = monthNumber >= 1 && monthNumber <= MONTHS.length && Number.isInteger(monthNumber)
+        ? monthNumber - 1 : now.getMonth();
+    const period = monthly ? `${MONTHS[currentMonth]} ${currentYear}` : 'All time';
+    const [players, setPlayers] = useState([]);
+    const [status, setStatus] = useState('loading');
+    const [search, setSearch] = useState('');
+    const [page, setPage] = useState(1);
+    const [featured, setFeatured] = useState({});
+
+    useEffect(() => onValue(firebase.users(), snapshot => {
+        const publicPlayers = Object.entries(snapshot.val() ?? {})
+            .filter(([, player]) => player && !player.roles?.[ROLES.WAIVER])
+            .map(([uid, player]) => ({
+                uid,
+                name: typeof player.name === 'string' && player.name.trim() ? player.name : 'Unnamed player',
+                careerPoints: scoreValue(player.points),
+                wins: scoreValue(player.wins),
+                losses: scoreValue(player.losses),
+                games: player.games,
+                personalEligible: !player.roles,
+            }));
+        setPlayers(publicPlayers);
+        setStatus('ready');
+    }, () => {
+        setPlayers([]);
+        setStatus('error');
+    }), [firebase]);
+
+    const standings = useMemo(() => {
+        const scoredPlayers = players.map(player => ({
+            ...player,
+            ...(monthly ? monthlyStats(player.games, currentMonth, currentYear) : { points: player.careerPoints }),
+        }));
+        // Match the original ordering for tied scores on the initial board.
+        return scoredPlayers.reverse().sort((a, b) => b.points - a.points)
+            .map((player, index) => ({ ...player, position: index + 1 }));
+    }, [players, monthly, currentMonth, currentYear]);
+    const personalPlayer = standings.find(player => player.uid === authUser?.uid && player.personalEligible);
+    const leaders = standings.slice(0, 3).filter(player => !monthly || player.points > 0);
+    const query = search.trim().toLowerCase();
+    const results = useMemo(() => query
+        ? standings.filter(player => player.name.toLowerCase().includes(query))
+        : standings, [query, standings]);
+    const pageCount = Math.max(1, Math.ceil(results.length / PAGE_SIZE));
+    const currentPage = Math.min(page, pageCount);
+    const offset = (currentPage - 1) * PAGE_SIZE;
+    const visiblePlayers = useMemo(() => results.slice(offset, offset + PAGE_SIZE), [results, offset]);
+
+    useEffect(() => {
+        if (!visiblePlayers.length) return undefined;
+        const controller = new AbortController();
+        getFeaturedBadges(visiblePlayers.map(player => player.uid), { signal: controller.signal })
+            .then((badges) => { if (!controller.signal.aborted) setFeatured(badges); })
+            .catch(() => { if (!controller.signal.aborted) setFeatured({}); });
+        return () => controller.abort();
+    }, [visiblePlayers]);
+
+    function changePeriod(view, month = currentMonth, year = currentYear) {
+        const next = new URLSearchParams(params);
+        next.set('view', view);
+        if (view === 'monthly') next.set('month', `${year}-${String(month + 1).padStart(2, '0')}`);
+        else next.delete('month');
+        setParams(next);
+        setPage(1);
     }
-    return points
-}
 
-// Count wins given object, for match history
-function countWins(obj, month, year) {
-    let wins = 0;
-    if (typeof obj.games !== 'undefined') {
-        Object.keys(obj.games).forEach((date) => {
-            let l_date = date.split('-')
-            if (parseInt(l_date[1]) === month && parseInt(l_date[0]) === year) {
-                wins += obj.games[date].wins
-            }
-        })
+    function changeSearch(value) {
+        setSearch(value);
+        setPage(1);
     }
-    return wins
+
+    return (
+        <main className={`field-lb${tv ? ' field-lb-tv' : ''}`}>
+            <Helmet><title>US Airsoft Field: Leaderboards</title></Helmet>
+            <header className="field-lb-hero">
+                <div className="field-lb-wrap field-lb-hero-inner">
+                    <div>
+                        <Link className="field-lb-back" to="/player-hub">Player Hub</Link>
+                        <h1>Leaderboards</h1>
+                        <p>See who leads the field and track your progress over time.</p>
+                    </div>
+                    {status === 'ready' && (
+                        <dl className="field-lb-hero-stats">
+                            <div><dt>Ranked players</dt><dd>{formatScore(standings.length)}</dd></div>
+                            {personalPlayer && (
+                                <div>
+                                    <dt>Your position</dt>
+                                    <dd><Link to={profilePath(personalPlayer)}>#{personalPlayer.position}</Link></dd>
+                                </div>
+                            )}
+                        </dl>
+                    )}
+                </div>
+            </header>
+
+            <div className="field-lb-wrap field-lb-content">
+                <div className="field-lb-controls" role="group" aria-label="Standings filters">
+                    <div className="field-lb-period" role="group" aria-label="Ranking period">
+                        <button type="button" aria-pressed={!monthly} onClick={() => changePeriod('all')}>All time</button>
+                        <button type="button" aria-pressed={monthly} onClick={() => changePeriod('monthly')}>Monthly</button>
+                    </div>
+                    {monthly && !tv && (
+                        <div className="field-lb-date-controls">
+                            <label>
+                                <span>Month</span>
+                                <select value={currentMonth} onChange={event => changePeriod('monthly', Number(event.target.value))}>
+                                    {MONTHS.map((month, index) => <option key={month} value={index}>{month}</option>)}
+                                </select>
+                            </label>
+                            <label>
+                                <span>Year</span>
+                                <select value={currentYear} onChange={event => changePeriod('monthly', currentMonth, Number(event.target.value))}>
+                                    {Array.from({ length: now.getFullYear() - FIRST_YEAR + 1 }, (_, index) => now.getFullYear() - index)
+                                        .map(year => <option key={year} value={year}>{year}</option>)}
+                                </select>
+                            </label>
+                        </div>
+                    )}
+                    {!tv && (
+                        <label className="field-lb-search">
+                            <span className="visually-hidden">Search player names</span>
+                            <FontAwesomeIcon icon={faMagnifyingGlass} aria-hidden="true" />
+                            <input type="search" value={search} onChange={event => changeSearch(event.target.value)} placeholder="Search players" />
+                        </label>
+                    )}
+                </div>
+
+                {!tv && !query && leaders.length > 0 && (
+                    <section className="field-lb-leaders" aria-labelledby="field-lb-leaders-title">
+                        <h2 id="field-lb-leaders-title"><FontAwesomeIcon icon={faTrophy} aria-hidden="true" /> Field leaders</h2>
+                        <ol>
+                            {leaders.map(player => (
+                                <li key={player.uid} className={`field-lb-leader-${player.position}`}>
+                                    <Link to={profilePath(player)}>
+                                        <span className="field-lb-leader-place">#{player.position}</span>
+                                        <span className="field-lb-leader-name">{player.name}</span>
+                                        <span className="field-lb-leader-score"><strong>{formatScore(player.points)}</strong> pts</span>
+                                    </Link>
+                                </li>
+                            ))}
+                        </ol>
+                    </section>
+                )}
+
+                <section className="field-lb-standings" aria-labelledby="field-lb-standings-title">
+                    <div className="field-lb-standings-header">
+                        <div>
+                            <h2 id="field-lb-standings-title">{period} standings</h2>
+                            {status === 'ready' && (
+                                <p aria-live="polite">{formatScore(results.length)} {results.length === 1 ? 'player' : 'players'}{query && ' found'}</p>
+                            )}
+                        </div>
+                        {!tv && <SharePageLink title={`USAW ${period} standings`} label="Share standings" className="field-lb-share" />}
+                    </div>
+                    {status === 'loading' && <p className="field-lb-message" role="status">Loading standings…</p>}
+                    {status === 'error' && <p className="field-lb-message" role="alert">Standings are temporarily unavailable. Please try again later.</p>}
+                    {status === 'ready' && (results.length === 0 ? (
+                        <div className="field-lb-message">
+                            <p>{query ? 'No players match that name.' : 'No standings are available yet.'}</p>
+                            {query && <button type="button" onClick={() => changeSearch('')}>Clear search</button>}
+                        </div>
+                    ) : (
+                        <>
+                            <LeaderboardTable players={visiblePlayers} personalUid={personalPlayer?.uid} period={period}
+                                featured={featured} />
+                            {pageCount > 1 && (
+                                <div className="field-lb-pagination">
+                                    <Pagination count={pageCount} page={currentPage} onChange={(_, value) => setPage(value)}
+                                        showFirstButton showLastButton siblingCount={0} variant="outlined" shape="rounded" size="small"
+                                        aria-label="Standings pages" />
+                                </div>
+                            )}
+                        </>
+                    ))}
+                </section>
+            </div>
+        </main>
+    );
 }
 
-// Count losses given object, for match history
-function countLosses(obj, month, year) {
-    let losses = 0;
-    if (typeof obj.games !== 'undefined') {
-        Object.keys(obj.games).forEach((date) => {
-            let l_date = date.split('-')
-            if (parseInt(l_date[1]) === month && parseInt(l_date[0]) === year) {
-                losses += obj.games[date].losses
-            }
-        })
-    }
-    return losses
-}
-
-export default withFirebase(Leaderboards);
-
-// export default composeHooks(
-//     withFirebase,
-//     )(Leaderboards);
+export default withFirebase(Leaderboard);

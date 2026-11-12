@@ -23,6 +23,7 @@ const PLAY_LINKS = [
     ['/information/rules', 'Field rules'],
     ['/information/gametypes', 'Game modes'],
     ['/leaderboard', 'Leaderboard'],
+    ['/teams', 'Teams'],
 ];
 
 const SOCIAL_LINKS = [

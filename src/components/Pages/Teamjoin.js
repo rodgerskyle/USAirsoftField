@@ -1,165 +1,85 @@
-
-import React, { Component } from 'react';
-
-import { Container, Button, Row, Col } from 'react-bootstrap/';
-
+import React, { useContext, useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Typeahead } from 'react-bootstrap-typeahead';
-
-import logo from '../../assets/usairsoft-small-logo.png';
-
-import { AuthUserContext, withAuthorization } from '../session';
-
-import { withFirebase } from '../Firebase';
-
-import ReactLoading from 'react-loading';
-
-import 'react-bootstrap-typeahead/css/Typeahead.css';
-
-
-
 import { Helmet } from 'react-helmet-async';
 import { onValue } from 'firebase/database';
-import { getDownloadURL } from 'firebase/storage';
+import { AuthUserContext, withAuthorization } from '../session';
+import { withFirebase } from '../Firebase';
+import 'react-bootstrap-typeahead/css/Typeahead.css';
+import './team-detail.css';
 
-class TeamJoin extends Component {
-    constructor(props) {
-        super(props);
+function TeamJoin({ firebase }) {
+    const authUser = useContext(AuthUserContext);
+    const [searchParams] = useSearchParams();
+    const [teams, setTeams] = useState(null);
+    const [selected, setSelected] = useState(null);
+    const [unavailable, setUnavailable] = useState(false);
+    const [request, setRequest] = useState('idle');
+    const hasTeam = Boolean(authUser?.team);
+    const desiredTeam = selected ?? searchParams.get('team');
+    const teamId = teams?.includes(desiredTeam) ? desiredTeam : '';
 
-        this.state = {
-            authUser: null,
-            teamObject: '',
-            teams: [],
-            joinbox: [],
-            statustext: '',
-            loading: false,
-        };
+    useEffect(() => {
+        if (hasTeam) return undefined;
+        return onValue(firebase.teams(), (snapshot) => {
+            setTeams(Object.keys(snapshot.val() || {}).sort((a, b) => a.localeCompare(b)));
+            setUnavailable(false);
+        }, () => setUnavailable(true));
+    }, [firebase, hasTeam]);
+
+    async function submit(event) {
+        event.preventDefault();
+        if (!teamId || hasTeam || request === 'pending' || request === 'sent') return;
+        setRequest('pending');
+        try {
+            const result = await firebase.requestTeam()({ team: teamId, user: authUser });
+            setRequest(result.data?.message === 'Complete' ? 'sent' : 'failed');
+        } catch {
+            setRequest('failed');
+        }
     }
 
-    componentDidMount() {
-        this.authSubscription = 
-            this.props.firebase.onAuthUserListener((user) => {
-                if (user) {
-                    this.setState({authUser: user})
-                    if (user.team !== null) {
-                        //Figure out rank logic here
-                        onValue(this.props.firebase.teams(), snapshot => {
-                            const teamsObject = snapshot.val();
-                            const teamsList = Object.keys(teamsObject).map(key => ({
-                                ...teamsObject[key],
-                                teamname: key,
-                            }));
-                            let temp = [];
-                            for (var i=0; i<teamsList.length; i++) {
-                                temp.push(teamsList[i].teamname)
-                            }
-                            this.setState({
-                                teams: temp,
-                                teamObject: teamsObject,
-                            })
-                        });
-                    }
-            }
-        }, () => {
-            this.setState({authUser: null})
-        })
-    }
-
-    componentWillUnmount() {
-        // this.props.firebase.teams().off();
-        this.authSubscription()
-    }
-
-    // Call function to request to join team
-    RequestTeam = (e) => {
-        e.preventDefault();
-        this.setState({loading: true})
-        // Calling firebase function
-        const requestTeam = this.props.firebase.requestTeam();
-        requestTeam({team: this.state.joinbox[0], user: this.state.authUser
-        }).then((result) => {
-            //If complete finish loading
-                if(result.data.message === "Complete") {
-                    this.setState({loading: false, statustext: "Completed request"})
-            }
-        }).catch((error) =>{
-            console.log("error: " +error)
-            this.setState({loading: false})
-            //Stop loading icon
-        });
-    }
-
-    //Get image function for team image = teamname
-    getPicture(teamname) {
-        getDownloadURL(this.props.firebase.teamsPictures(`${teamname}.png`)).then((url) => {
-            this.setState({ teamicon: url })
-        }).catch((error) => {
-            // Handle any errors NOT DONE
-            this.setState({})
-        })
-    }
-
-
-    render() {
-        return (
-            <AuthUserContext.Consumer>
-                {authUser => (
-                    <div className="background-static-all team-form-page">
-                        <Helmet>
-                            <title>US Airsoft Field: Join Team</title>
-                        </Helmet>
-                        {authUser.team !== "" ?
-                            <Container className="notice-text-container">
-                                <Row className="row-success-rp">
-                                    <Col className="col-rp">
-                                        <Row className="row-notice">
-                                            <h2 className="page-header">Team Join Error:</h2>
-                                        </Row>
-                                        <Row className="row-notice">
-                                            <p className="notice-text">You already have a team, please leave your team to join another.</p>
-                                        </Row>
-                                        <Row className="row-notice">
-                                            <img src={logo} alt="US Airsoft logo" className="small-logo-home"/>
-                                        </Row>
-                                    </Col>
-                                </Row>
-                            </Container> 
-                            :
-                            <Container>
-                                <h2 className="page-header">Join Team</h2>
-                                <Typeahead
-                                    labelKey="teamjoin"
-                                    id="team-join"
-                                    onChange={(joinbox) => {
-                                        this.setState({joinbox});
-                                        }}
-                                    options={this.state.teams}
-                                    selected={this.state.joinbox}
-                                />
-                                {this.state.loading ? <Progress type="spin" color="var(--usaw-accent)"/> : ""}
-                                <p className="team-manage-text">{this.state.statustext}</p>
-                                <Button className="team-manage-button" variant="outline-success" type="button"
-                                onClick={(e) => this.RequestTeam(e)}>
-                                    Request to join
-                                </Button>
-                            </Container>
-                        }
-                    </div>
-                )
-                }
-            </AuthUserContext.Consumer>
-        )
-    }
+    return (
+        <main className="team-detail">
+            <Helmet><title>US Airsoft Field | Join a Team</title></Helmet>
+            <header className="team-detail__hero">
+                <div className="team-detail__wrap">
+                    <Link className="team-detail__back" to="/teams">Team directory</Link>
+                    <h1>Join a team</h1>
+                </div>
+            </header>
+            <div className="team-detail__wrap team-detail__content">
+                {hasTeam ? (
+                    <p className="team-detail__notice">Leave your current team before requesting to join another.</p>
+                ) : (
+                    <form className="team-detail__notice team-detail__join" onSubmit={submit}>
+                        <p>Choose a team to send a join request to its captain.</p>
+                        <label htmlFor="team-join">Team name</label>
+                        <Typeahead
+                            id="team-join"
+                            onChange={([team]) => {
+                                setSelected(team || '');
+                                setRequest('idle');
+                            }}
+                            options={teams || []}
+                            selected={teamId ? [teamId] : []}
+                            disabled={!teams || unavailable || request === 'pending'}
+                            inputProps={{ id: 'team-join' }}
+                            placeholder="Search teams"
+                        />
+                        {unavailable && <p role="alert">The team directory is temporarily unavailable.</p>}
+                        {!teams && !unavailable && <p role="status">Loading teams…</p>}
+                        {request === 'sent' && <p role="status">Join request sent.</p>}
+                        {request === 'failed' && <p role="alert">Could not send the request. Please try again.</p>}
+                        <button className="team-detail__button team-detail__button--primary" type="submit"
+                            disabled={!teamId || unavailable || request === 'pending' || request === 'sent'}>
+                            {request === 'pending' ? 'Sending…' : 'Request to join'}
+                        </button>
+                    </form>
+                )}
+            </div>
+        </main>
+    );
 }
 
-const Progress = ({ type, color }) => (
-    <ReactLoading type={type} color={color} height={'2%'} width={'2%'} />
-);
-
-const condition = authUser => !!authUser;
-
-export default withFirebase(withAuthorization(condition)(TeamJoin));
-
-// export default composeHooks(
-//     withFirebase,
-//     withAuthorization(condition),
-//     )(TeamJoin)
+export default withFirebase(withAuthorization(Boolean)(TeamJoin));

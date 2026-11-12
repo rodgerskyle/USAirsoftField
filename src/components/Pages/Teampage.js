@@ -1,268 +1,150 @@
-import React, { Component } from 'react';
-
-import { Container, Row, Col } from 'react-bootstrap/';
-
-import { Link } from 'react-router-dom';
-
-import { withRouter } from '../constants/withRouter';
-
-import { withFirebase } from '../Firebase';
-
-import rankimages from '../constants/rankimgs';
-
-
+import React, { useContext, useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowLeft, faArrowRight, faPeopleGroup, faUser } from '@fortawesome/free-solid-svg-icons';
 import { onValue } from 'firebase/database';
 import { getDownloadURL } from 'firebase/storage';
+import { withFirebase } from '../Firebase';
+import { AuthUserContext } from '../session';
+import SharePageLink from '../constants/SharePageLink';
+import './team-detail.css';
 
-class Teampage extends Component {
-    constructor(props) {
-        super(props);
+const pointFormat = new Intl.NumberFormat('en-US');
 
-        this.state = {
-            images: rankimages,
-            rank: '',
-            rankindex: 0,
-            teamicon: '',
-            teamObject: '',
-            members: '',
-            leader: '',
-        };
+function TeamDetail({ firebase, teamId }) {
+    const authUser = useContext(AuthUserContext);
+    const [team, setTeam] = useState(null);
+    const [status, setStatus] = useState('loading');
+    const [logo, setLogo] = useState('');
+    const [captain, setCaptain] = useState('');
 
-    }
+    useEffect(() => {
+        if (!teamId || /[.#$[\]/]/.test(teamId)) {
+            setStatus('missing');
+            return undefined;
+        }
+        return onValue(firebase.team(teamId), (snapshot) => {
+            const record = snapshot.val();
+            setTeam(record);
+            setStatus(record ? 'ready' : 'missing');
+        }, () => setStatus('error'));
+    }, [firebase, teamId]);
 
-    // function grabParams() {
-    //     const { team } = useParams();
-    //     return team;
-    // }
-
-    componentDidMount() {
-        //Figure out rank logic here
-        onValue(this.props.firebase.team(this.props.router.params.team.toLowerCase()), snapshot => {
-            const t_Object = snapshot.val();
-            // Need to strip space at the end of team name
-            // Need to strip space at the end during team creation
-            this.setState({
-                teamObject: t_Object,
-                members: typeof t_Object.members !== 'undefined' ? t_Object.members : '',
-            }, function () {
-                //After setstate, then grab points and profile
-                this.getPicture(this.props.router.params.team);
-                this.getUsers(this.props.router.params.team);
-            });
+    useEffect(() => {
+        if (status !== 'ready') return undefined;
+        let active = true;
+        getDownloadURL(firebase.teamsPictures(`${teamId}.png`)).then((url) => {
+            if (active) setLogo(url);
+        }).catch(() => {
+            if (active) setLogo('');
         });
-    }
+        return () => { active = false; };
+    }, [firebase, teamId, status]);
 
-    componentWillUnmount() {
-        // this.props.firebase.team(this.props.match.params.id).off();
-        // this.props.firebase.user(this.state.teamObject.leader).off();
-    }
+    const captainId = team?.leader;
+    useEffect(() => {
+        setCaptain('');
+        if (!captainId) return undefined;
+        return onValue(firebase.user(captainId), (snapshot) => {
+            setCaptain(snapshot.val()?.name || '');
+        }, () => setCaptain(''));
+    }, [firebase, captainId]);
 
+    const members = Object.values(team?.members || {}).filter(member =>
+        Array.isArray(member) && typeof member[0] === 'string' && typeof member[1] === 'string' && member[1]
+    );
+    const points = Number(team?.points);
+    const title = team?.name || teamId;
+    const joining = new URLSearchParams({ team: teamId }).toString();
+    const signedInTeam = typeof authUser?.team === 'string' && authUser.team.toLowerCase();
+    const joinLink = authUser ? `/jointeam?${joining}` : `/login?${joining}`;
 
-    //Figuring out rank logic
-    getRank() {
-        var points = this.state.authUser.points;
-        var tmp_rank = "";
-        var index = 1;
-        if (points < 125) {
-            tmp_rank = "Private";
-            index = 1;
-        }
-        else if (points < 225) {
-            tmp_rank = "Private First Class";
-            index = 2;
-        }
-        else if (points < 335) {
-            tmp_rank = "Specialist";
-            index = 3;
-        }
-        else if (points < 450) {
-            tmp_rank = "Corporal";
-            index = 4;
-        }
-        else if (points < 570) {
-            tmp_rank = "Sergeant";
-            index = 5;
-        }
-        else if (points < 690) {
-            tmp_rank = "Staff Sergeant";
-            index = 6;
-        }
-        else if (points < 820) {
-            tmp_rank = "Sergeant First Class";
-            index = 7;
-        }
-        else if (points < 960) {
-            tmp_rank = "Master Sergeant";
-            index = 8;
-        }
-        else if (points < 1110) {
-            tmp_rank = "First Sergeant";
-            index = 9;
-        }
-        else if (points < 1270) {
-            tmp_rank = "Sergeant Major";
-            index = 10;
-        }
-        else if (points < 1440) {
-            tmp_rank = "Command Sergeant Major";
-            index = 11;
-        }
-        else if (points < 1640) {
-            tmp_rank = "Sergeant Major of the Army";
-            index = 12;
-        }
-        else if (points < 1840) {
-            tmp_rank = "Second Lieutenant";
-            index = 13;
-        }
-        else if (points < 2090) {
-            tmp_rank = "First Lieutenant";
-            index = 14;
-        }
-        else if (points < 2340) {
-            tmp_rank = "Captain";
-            index = 15;
-        }
-        else if (points < 2615) {
-            tmp_rank = "Major";
-            index = 16;
-        }
-        else if (points < 2890) {
-            tmp_rank = "Lieutenant Colonel";
-            index = 17;
-        }
-        else if (points < 3190) {
-            tmp_rank = "Colonel";
-            index = 18;
-        }
-        else if (points < 3490) {
-            tmp_rank = "Brigadier General";
-            index = 19;
-        }
-        else if (points < 3790) {
-            tmp_rank = "Major General";
-            index = 20;
-        }
-        else if (points < 4115) {
-            tmp_rank = "Lieutenant General";
-            index = 21;
-        }
-        else if (points < 4500) {
-            tmp_rank = "General";
-            index = 22;
-        }
-        else {
-            tmp_rank = "General of the Army";
-            index = 23;
-        }
-        index--;
-        this.setState({ rank: tmp_rank, rankindex: index })
-    }
-
-
-    //Get image function for team image = teamname
-    getPicture(teamname) {
-        getDownloadURL(this.props.firebase.teamsPictures(`${teamname.toLowerCase()}.png`)).then((url) => {
-            this.setState({ teamicon: url })
-        }).catch((error) => {
-            // Handle any errors NOT DONE
-            this.setState({})
-        })
-    }
-
-    //Get users from team
-    getUsers() {
-        onValue(this.props.firebase.user(this.state.teamObject.leader), snapshot => {
-            const userObject = snapshot.val();
-
-            this.setState({
-                leader: userObject.name,
-            }
-            );
-        });
-    }
-
-
-    render() {
-        return (
-            <div className="background-static-all">
-                <Helmet>
-                    <title>{`US Airsoft Field: ${this.props.router.params.team} Team`}</title>
-                </Helmet>
-                <Container className="container-teampage">
-                    <div className="team-single">
-                        <Row className="team-info">
-                            <div className="team-info-first-div">
-                                <div className="team-single-img padding-2px">
-                                    <img className="team-icon-teamspage" src={this.state.teamicon} alt="" />
-                                </div>
-                                <Row className="row-teams">
-                                    <Col md={6} className="col-teampage">
-                                        <div className="counter set-width-100">
-                                            <i className="fa fa-users fa-2x text-black"></i>
-                                            <h2 className="timer count-title count-number" data-to="100" data-speed="1500">{(this.props.router.params.team).toUpperCase()}</h2>
-                                            <p className="count-text ">Team Name</p>
-                                        </div>
-                                    </Col>
-                                    <Col md={6} className="col-teampage">
-                                        <div className="counter set-width-100">
-                                            <i className="fa fa-user-circle fa-2x"></i>
-                                            <Link className="profilelink-tm" to={"/profilelookup/" + this.state.teamObject.leader}>
-                                                <h2 className="timer count-title count-number" data-to="1700" data-speed="1500">{this.state.leader}</h2>
-                                            </Link>
-                                            <p className="count-text ">Team Leader</p>
-                                        </div>
-                                    </Col>
-                                </Row>
-                                <Row className="description-row-teamspage stat-box row-teams">
-                                    <div className="counter description-teamspage">
-                                        <i className="fa fa-info-circle fa-2x text-black"></i>
-                                        <h2 className="timer count-title count-number h2-description-team" data-to="100" data-speed="1500">{
-                                            typeof this.state.teamObject.description !== 'undefined' ? this.state.teamObject.description : "N/A"
-                                        }</h2>
-                                        <p className="count-text ">Team Description</p>
-                                    </div>
-                                </Row>
-                                <Row className="members-row-teamspage row-teams">
-                                    <div className="members-textbox-teamspage">
-                                        <h2>
-                                            Members:
-                                        </h2>
-                                    </div>
-                                </Row>
-                                {this.state.members !== "" ?
-                                    <TeamUserlist users={this.state.members} /> : ""
-                                }
+    return (
+        <main className="team-detail">
+            <Helmet><title>{`US Airsoft Field | ${status === 'ready' ? title : 'Team'}`}</title></Helmet>
+            <header className="team-detail__hero">
+                <div className="team-detail__wrap">
+                    <Link className="team-detail__back" to="/teams">
+                        <FontAwesomeIcon icon={faArrowLeft} /> Team directory
+                    </Link>
+                    {status === 'ready' ? (
+                        <div className="team-detail__intro">
+                            <div className="team-detail__logo">
+                                {logo ? <img src={logo} alt="" onError={() => setLogo('')} />
+                                    : <FontAwesomeIcon icon={faPeopleGroup} />}
                             </div>
-                        </Row>
-                    </div>
-                </Container>
+                            <div className="team-detail__identity">
+                                <h1>{title}</h1>
+                                {team.description && <p>{team.description}</p>}
+                                <div className="team-detail__actions">
+                                    {authUser?.uid && authUser.uid === captainId ? (
+                                        <Link className="team-detail__button team-detail__button--primary" to="/manageteam">
+                                            Manage team
+                                        </Link>
+                                    ) : !signedInTeam && (
+                                        <Link className="team-detail__button team-detail__button--primary" to={joinLink}>
+                                            {authUser ? 'Request to join' : 'Sign in to request to join'}
+                                        </Link>
+                                    )}
+                                    <SharePageLink title={`${title} | USAW Teams`} label="Share team"
+                                        className="team-detail__button" />
+                                </div>
+                            </div>
+                        </div>
+                    ) : <h1>Team profile</h1>}
+                </div>
+            </header>
+
+            <div className="team-detail__wrap team-detail__content">
+                {status !== 'ready' ? (
+                    <p className="team-detail__notice" role={status === 'error' ? 'alert' : 'status'}>
+                        {status === 'loading' && 'Loading team…'}
+                        {status === 'missing' && 'This team could not be found.'}
+                        {status === 'error' && 'Team details are temporarily unavailable. Try refreshing this page.'}
+                    </p>
+                ) : (
+                    <>
+                        <dl className="team-detail__stats">
+                            <div><dt>Team points</dt><dd>{Number.isFinite(points) ? pointFormat.format(points) : '—'}</dd></div>
+                            <div><dt>Roster</dt><dd>{members.length}</dd></div>
+                            <div>
+                                <dt>Team captain</dt>
+                                <dd>{captain && captainId
+                                    ? <Link to={`/profilelookup/${encodeURIComponent(captainId)}`}>{captain}</Link>
+                                    : '—'}</dd>
+                            </div>
+                        </dl>
+                        <section aria-labelledby="team-roster">
+                            <h2 id="team-roster">Team roster</h2>
+                            {members.length ? (
+                                <ul className="team-detail__roster">
+                                    {members.map(([name, uid]) => (
+                                        <li key={uid}>
+                                            <Link to={`/profilelookup/${encodeURIComponent(uid)}`}>
+                                                <span className="team-detail__member-icon"><FontAwesomeIcon icon={faUser} /></span>
+                                                <span>
+                                                    <strong>{name}</strong>
+                                                    <small>{uid === captainId ? 'Captain' : 'Member'}</small>
+                                                </span>
+                                                <FontAwesomeIcon icon={faArrowRight} />
+                                            </Link>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : <p className="team-detail__notice">The roster is empty.</p>}
+                        </section>
+                    </>
+                )}
             </div>
-        )
-    }
+        </main>
+    );
 }
 
-const TeamUserlist = ({ users }) => (
-    <Row className="row-members-teams row-teams">
-        {users.map(user => (
-            <Col md={4} key={user[0]} className="col-team-user">
-                <div className="counter team-member-list">
-                    <i className="fa fa-users fa-2x text-black"></i>
-                    <Link className="profilelink-tm" to={"/profilelookup/" + user[1]}>
-                        <h2 className="timer count-title count-number" data-to="100" data-speed="1500">{user[0]}</h2>
-                    </Link>
-                    <p className="count-text ">Member</p>
-                </div>
-            </Col>
-        ))}
-    </Row>
-);
+function Teampage({ firebase }) {
+    const { team = '' } = useParams();
+    const teamId = team.toLowerCase();
+    return <TeamDetail key={teamId} firebase={firebase} teamId={teamId} />;
+}
 
-
-export default withRouter(withFirebase(Teampage));
-
-
-// export default composeHooks(
-//     withFirebase,
-//     )(Teampage);
+export default withFirebase(Teampage);

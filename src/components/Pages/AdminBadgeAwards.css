@@ -1,0 +1,184 @@
+.admin-badge-awards__card {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border-strong);
+  border-radius: 18px;
+  color: var(--admin-text);
+  color-scheme: dark;
+  padding: clamp(1rem, 3vw, 1.6rem);
+}
+
+.admin-badge-awards__fields {
+  border: 0;
+  display: grid;
+  gap: 1.35rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  min-inline-size: 0;
+  padding: 0;
+}
+
+.admin-badge-awards__card label {
+  display: block;
+  font-weight: 700;
+  margin: 0 0 .4rem;
+}
+
+.admin-badge-awards__card :is(input, select, textarea) {
+  background: var(--admin-surface-muted);
+  border: 1px solid var(--admin-border-strong);
+  border-radius: .55rem;
+  color: var(--admin-text);
+  font: inherit;
+  min-height: 2.75rem;
+  padding: .55rem .75rem;
+  width: 100%;
+}
+
+.admin-badge-awards__card select,
+.admin-badge-awards__card input {
+  margin-bottom: .7rem;
+}
+
+.admin-badge-awards__card option {
+  background: #18212b;
+}
+
+.admin-badge-awards__card input::placeholder,
+.admin-badge-awards__card p,
+.admin-badge-awards__card small {
+  color: var(--admin-subtext);
+}
+
+.admin-badge-awards__card p {
+  margin: .4rem 0 0;
+}
+
+.admin-badge-awards__card a {
+  color: #b4d3f7;
+}
+
+.admin-badge-awards__matches {
+  display: grid;
+  gap: .35rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.admin-badge-awards__matches button {
+  background: var(--admin-surface-muted);
+  border: 1px solid var(--admin-border);
+  border-radius: .55rem;
+  color: var(--admin-text);
+  display: grid;
+  padding: .55rem .75rem;
+  text-align: start;
+  width: 100%;
+}
+
+.admin-badge-awards__matches button:hover,
+.admin-badge-awards__change:hover {
+  background: var(--admin-accent-soft);
+  border-color: var(--admin-accent);
+}
+
+.admin-badge-awards__matches small,
+.admin-badge-awards__selection strong {
+  overflow-wrap: anywhere;
+}
+
+.admin-badge-awards__selection,
+.admin-badge-awards__preview {
+  align-items: center;
+  background: var(--admin-surface-muted);
+  border: 1px solid var(--admin-border-strong);
+  border-radius: .6rem;
+  display: flex;
+  gap: .8rem;
+  padding: .75rem;
+}
+
+.admin-badge-awards__selection {
+  justify-content: space-between;
+}
+
+.admin-badge-awards__selection strong {
+  display: block;
+}
+
+.admin-badge-awards__preview {
+  margin-bottom: .85rem;
+}
+
+.admin-badge-awards__preview img {
+  flex: 0 0 auto;
+  object-fit: contain;
+}
+
+.admin-badge-awards__change,
+.admin-badge-awards__actions button {
+  border: 1px solid var(--admin-border-strong);
+  border-radius: .55rem;
+  color: var(--admin-text);
+  font-weight: 700;
+  min-height: 2.75rem;
+  padding: .55rem .85rem;
+}
+
+.admin-badge-awards__change {
+  background: var(--admin-surface);
+}
+
+.admin-badge-awards__actions {
+  margin-top: .7rem;
+}
+
+.admin-badge-awards__session {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem 1.1rem;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.admin-badge-awards__unlock {
+  max-width: 760px;
+}
+
+.admin-badge-awards__unlock > p:first-child {
+  margin: 0 0 .85rem;
+}
+
+.admin-badge-awards__actions button {
+  background: var(--usaw-red);
+}
+
+.admin-badge-awards__actions button:disabled {
+  cursor: not-allowed;
+  opacity: .6;
+}
+
+.admin-badge-awards__card :is(a, button, input, select, textarea):focus-visible {
+  outline: 2px solid #b4d3f7;
+  outline-offset: 2px;
+}
+
+.admin-badge-awards__card p[role="alert"] {
+  color: #ffabb1;
+}
+
+.admin-badge-awards__offline {
+  display: grid;
+  gap: .65rem;
+}
+
+.admin-badge-awards__offline p {
+  margin: 0;
+}
+
+@media (max-width: 700px) {
+  .admin-badge-awards__fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

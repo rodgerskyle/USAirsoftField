@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import droneVideo from '../../assets/drone_video.mp4';
-import fieldPoster from '../../assets/field-showcase-poster.webp';
+import fieldPoster from '../../assets/field-showcase-poster.jpg';
 
 const BackgroundVideo = () => {
   const videoRef = useRef(null);

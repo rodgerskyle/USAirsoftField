@@ -1,478 +1,165 @@
-import React, { Component } from 'react';
-import '../../App.css';
-
-import { Container, Row, Col, Spinner } from 'react-bootstrap/';
-
-import { makeStyles } from '@mui/styles';
-import Paper from '@mui/material/Paper';
-import InputBase from '@mui/material/InputBase';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import Tune from '@mui/icons-material/Tune';
-import SearchIcon from '@mui/icons-material/Search';
-
-import default_profile from '../../assets/default.png';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-
-import { withFirebase } from '../Firebase';
-
-
 import { Helmet } from 'react-helmet-async';
-
-import MUIPagination from '@mui/lab/Pagination';
-import { isMobile } from 'react-device-detect';
-
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
-
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableRow from '@mui/material/TableRow';
-import { ButtonGroup, ClickAwayListener, Grow, MenuItem, MenuList, Popper, TableHead } from '@mui/material';
-import { LinkContainer } from 'react-router-bootstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowRight, faSearch, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { onValue } from 'firebase/database';
 import { getDownloadURL } from 'firebase/storage';
-import { get, onValue } from 'firebase/database';
+import { withFirebase } from '../Firebase';
+import './Teams.css';
 
-class Teams extends Component {
-    constructor(props) {
-        super(props);
+const TEAMS_PER_PAGE = 6;
 
-        this.state = {
-            loading: true,
-            teams: [],
-            teamObj: [],
-            teamicon: [],
-            usericons: [],
-            anchor: React.createRef(null),
-            open: false,
-            options: null,
-            selected: 0,
-            curPage: 1,
-            teamsPerPage: 6,
-            loadingTeams: false,
-            search: "",
-        };
-        this.handleClick = this.handleClick.bind(this);
-        this.handleSearch = this.handleSearch.bind(this);
-    }
+function TeamCard({ firebase, team }) {
+    const [logo, setLogo] = useState('');
+    const { id, points, rank } = team;
 
-    //Get image function for team image = teamname
-    getPicture(teamname) {
-        getDownloadURL(this.props.firebase.teamsPictures(`${teamname}.png`)).then((url) => {
-            let temp = this.state.teamicon;
-            temp[teamname.toString()] = url
-            this.setState({ teamicon: temp })
-        }).catch((error) => {
-            // Handle any errors NOT DONE
-            this.setState({})
-        })
-    }
-
-    //Get image function for profile image = uid
-    async getProfile(uid) {
-        return getDownloadURL(this.props.firebase.pictures(`${uid}/profilepic.png`)).then((url) => {
-            return url
-        })
-    }
-
-    // Get user images from each user
-    getUserPictures() {
-        const { teams } = this.state;
-        let usericons = {}
-        for (let i = 0; i < teams.length; i++) {
-            // Team leader case
-            get(this.props.firebase.user(teams[i].leader), obj => {
-                if (obj.val().profilepic) {
-                    this.props.firebase.pictures(`${teams[i].leader}/profilepic.png`).getDownloadURL().then((url) => {
-                        usericons[teams[i].leader] = url
-                    })
-                }
-                else
-                    usericons[teams[i].leader] = default_profile
-            })
-            // Team members case
-            if (teams[i].members) {
-                for (let z = 0; z < teams[i].members.length; z++) {
-                    get(this.props.firebase.user(teams[i].members[z][1]), obj => {
-                        if (obj.val().profilepic) {
-                            getDownloadURL(this.props.firebase.pictures(`${teams[i].members[z][1]}/profilepic.png`)).then((url) => {
-                                usericons[teams[i].members[z][1]] = url
-                            })
-                        }
-                        else
-                            usericons[teams[i].members[z][1]] = default_profile
-                    })
-                }
-            }
-        }
-        this.setState({ usericons }, () => {
-            this.setState({ loading: false })
-        })
-    }
-
-    componentWillUnmount() {
-        // this.props.firebase.teams().off();
-    }
-
-    componentDidMount() {
-        let options = []
-        let temp = { link: '/createteam', label: 'Create Team' }
-        options[0] = temp;
-        let temp2 = { link: '/jointeam', label: 'Join Team' }
-        options[1] = temp2
-        let temp3 = { link: '/manageteam', label: 'Manage Team' }
-        options[2] = temp3
-        this.setState({ options })
-
-        onValue(this.props.firebase.teams(), snapshot => {
-            const teamObject = snapshot.val();
-
-            let teamsList = Object.keys(teamObject).map(key => ({
-                ...teamObject[key],
-                teamname: key,
-            }));
-            teamsList = teamsList.sort((a, b) => a.points < b.points ? 1 : -1)
-
-            let teams = [];
-            for (var i = 0; i < teamsList.length; i++) {
-                teams.push({ index: i, ...teamsList[i] })
-            }
-
-            this.setState({
-                teams,
-                teamObj: (JSON.parse(JSON.stringify(teams))).filter(obj => obj.teamname.includes(this.state.search))
-            }, () => {
-                for (var i = 0; i < this.state.teams.length; i++) {
-                    this.getPicture(this.state.teams[i].teamname);
-                }
-                this.setState({ loading: false })
-                // this.getUserPictures()
-            });
-        });
-    }
-
-    // Toggles dropdown to open or not
-    handleToggle = () => {
-        this.setState({ open: !this.state.open })
-    }
-
-    // Handles closing of dropdown menu
-    handleClose = (event) => {
-        if (this.state.anchor.current && this.state.anchor.current.contains(event.target)) {
-            return
-        }
-        this.setState({ open: false })
-    }
-
-    // Handles clicking on item in dropdown
-    handleMenuItemClick = (e, i) => {
-        this.setState({ open: false, selected: i })
-    }
-
-    //Pagination Logic
-    handleClick(val) {
-        this.setState({
-            loadingTeams: true,
-            curPage: val,
-        }, () => {
-            setTimeout(() => {
-                this.setState({ loadingTeams: false })
-            }, 200);
-        });
-    }
-
-    //Handle search that filters out array and passes it to our render function
-    handleSearch(val) {
-        let teamObj = this.state.teamObj;
-        teamObj = this.state.teams.filter(obj => obj.teamname.includes(val.toLowerCase()))
-        this.setState({ search: val, teamObj })
-    }
-
-    render() {
-        const { anchor, open, options, selected, loading, usericons, curPage,
-            teamsPerPage, loadingTeams, teamObj } = this.state
-        return (
-            <div className="background-static-all">
-                <Helmet>
-                    <title>US Airsoft Field: Teams</title>
-                </Helmet>
-                {loading ?
-                    <Row className="justify-content-row padding-5px"><Spinner animation="border" /></Row> :
-                    <Container className="position-relative">
-                        <Row className="row-header-teams">
-                            <Col xs={"auto"} className="col-center-middle">
-                                <p className="p-header-teams">
-                                    TEAMS
-                                </p>
-                            </Col>
-                            <Col className="col-options-dropdown-teams">
-                                <ButtonGroup variant="contained" color="primary" ref={anchor}>
-                                    <LinkContainer to={options[selected].link}><Button>{options[selected].label}</Button></LinkContainer>
-                                    <Button
-                                        color="primary"
-                                        size="small"
-                                        onClick={this.handleToggle}>
-                                        {open ? <ArrowDropDownIcon /> : <ArrowDropUpIcon />}
-                                    </Button>
-                                </ButtonGroup>
-                                <Popper open={open} anchorEl={anchor.current} transition disablePortal style={{ zIndex: 1 }}>
-                                    {({ TransitionProps, placement }) => (
-                                        <Grow
-                                            {...TransitionProps}
-                                            style={{
-                                                transformOrigin: placement === 'bottom' ? 'center top' : 'center bottom',
-                                            }}>
-                                            <Paper>
-                                                <ClickAwayListener onClickAway={this.handleClose}>
-                                                    <MenuList>
-                                                        {options.map((option, i) => (
-                                                            <MenuItem
-                                                                key={i}
-                                                                selected={i === selected}
-                                                                onClick={(e) => this.handleMenuItemClick(e, i)}>
-                                                                {option.label}
-                                                            </MenuItem>
-                                                        ))}
-                                                    </MenuList>
-                                                </ClickAwayListener>
-                                            </Paper>
-                                        </Grow>
-                                    )}
-                                </Popper>
-                            </Col>
-                        </Row>
-                        <TeamList teams={teamObj.slice((curPage - 1) * teamsPerPage, ((curPage - 1) * teamsPerPage) + teamsPerPage)} teamsPerPage={teamsPerPage} loading={loadingTeams}
-                            teamicon={this.state.teamicon} numPages={Math.ceil(teamObj.length / teamsPerPage)} curPage={curPage} usericons={usericons} handleClick={this.handleClick}
-                            search={this.state.search} handleSearch={this.handleSearch} />
-                        <Row className="row-bottom"></Row>
-                    </Container>}
-            </div>
+    useEffect(() => {
+        let active = true;
+        getDownloadURL(firebase.teamsPictures(`${id}.png`)).then(
+            url => {
+                if (active) setLogo(url);
+            },
+            () => {} // Teams without an uploaded banner use the directory icon.
         );
-    }
-}
-
-const useStyles = makeStyles(() => ({
-    root: {
-        padding: '2px 4px',
-        display: 'flex',
-        alignItems: 'center',
-        backgroundColor: 'transparent',
-        border: '1px solid var(--usaw-line)',
-        '& > *': {
-            borderBottom: 'unset',
-        },
-    },
-    input: {
-        flex: 1,
-        color: 'var(--usaw-text)',
-    },
-    iconButton: {
-        padding: 10,
-        color: 'var(--usaw-text)',
-    },
-    divider: {
-        height: 28,
-        margin: 4,
-    },
-    table: {
-    },
-    tableCell: {
-        fontWeight: 300,
-        color: 'var(--usaw-muted)',
-        border: '1px solid var(--usaw-line)',
-        padding: 5,
-    },
-    tableCellIndex: {
-        width: '1%',
-        fontWeight: 300,
-        color: 'var(--usaw-muted)',
-        border: 'none',
-        textAlign: 'center',
-        fontSize: 20,
-    },
-    tableCellPoints: {
-        width: '1%',
-        fontWeight: 300,
-        color: 'var(--usaw-text)',
-        fontSize: 20,
-    },
-    tableHCell: {
-        fontWeight: 300,
-        color: 'var(--usaw-text)',
-        padding: 5,
-        backgroundColor: 'transparent',
-    },
-    tableHCellIndex: {
-        width: '1%',
-        fontWeight: 300,
-        color: 'var(--usaw-text)',
-        backgroundColor: 'transparent',
-        textAlign: 'center',
-    },
-    tableTeamNameCell: {
-        fontWeight: 300,
-        color: 'var(--usaw-text)',
-        border: '1px solid var(--usaw-line)',
-        padding: 5,
-        width: '20%',
-    },
-    tableRowHead: {
-        backgroundColor: 'transparent',
-    },
-    tableCellMember: {
-        border: 'none',
-    },
-    container: {
-        maxHeight: '100%',
-        display: 'flex',
-        justifyContent: 'center',
-    },
-    containerLoading: {
-        maxHeight: '100%',
-        display: 'flex',
-        justifyContent: 'center',
-        overflow: 'hidden',
-    },
-    tableBodyLoading: {
-        visibility: 'hidden',
-    },
-}));
-
-const TeamList = ({ teams, teamicon, numPages, teamsPerPage, curPage, usericons, handleClick, loading, search, handleSearch }) => {
-    const classes = useStyles();
-
-    // const isSelected = (name) => selected.indexOf(name) !== -1;
+        return () => {
+            active = false;
+        };
+    }, [firebase, id]);
 
     return (
-        <div>
-            <Row className="row-navigation-teams">
-                <Col md={8}>
-                    <Paper component="form" className={classes.root} onSubmit={(e) => { e.preventDefault() }}>
-                        <IconButton type="button" className={classes.iconButton} aria-label="search">
-                            <SearchIcon />
-                        </IconButton>
-                        <InputBase
-                            className={classes.input}
-                            placeholder="Search Teams"
-                            inputProps={{ 'aria-label': 'search teams' }}
-                            value={search}
-                            onChange={(e) => handleSearch(e.target.value)}
-                        />
-                        <IconButton className={classes.iconButton} aria-label="filter">
-                            <Tune />
-                        </IconButton>
-                    </Paper>
-                </Col>
-                <Col md={4} className="pagination-col-teams">
-                    <MUIPagination count={numPages} page={curPage} onChange={(e, val) => handleClick(val)}
-                        showFirstButton showLastButton color="primary" variant="outlined" shape="rounded" size={isMobile ? 'small' : 'medium'} />
-                </Col>
-            </Row>
-            <div className="div-parent-teams">
-                <TableContainer className={loading ? classes.containerLoading : classes.container}>
-                    <Table className={classes.table}>
-                        <TableHead>
-                            <TableRow className={classes.tableRowHead}>
-                                <TableCell className={classes.tableHCellIndex} colSpan={1}>RANK</TableCell>
-                                <TableCell className={classes.tableHCell} align="center">TEAM</TableCell>
-                                {/* <TableCell className={classes.tableHCell}>Banner</TableCell> */}
-                                {/* <TableCell className={classes.tableHCell} align="center">Members</TableCell> */}
-                                <TableCell className={classes.tableHCell} align="center">Points</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody className={loading ? classes.tableBodyLoading : null}>
-                            {teams.map((team, i) => {
-                                return (
-                                    <TableRow key={i}>
-                                        <TableCell className={classes.tableCellIndex}>{team.index + 1}</TableCell>
-                                        {/* <Td to={"/teams/" + team.teamname.toString()} ct={"link-team-name"}
-                                                cl={classes.tableTeamNameCell}>{team.teamname.toUpperCase()}</Td> */}
-                                        <TableCell className="td-team-imgname-teams">
-                                            <Row>
-                                                <Col xl={10} className="col-team-picture-teams">
-                                                    <Link to={"/teams/" + team.teamname.toString()}>
-                                                        <img className="team-pictures"
-                                                            src={teamicon[team.teamname.toString()]} alt={"Team " + team.teamname}></img>
-                                                    </Link>
-                                                </Col>
-                                                <Col className="col-team-name-teams" xl={2}>
-                                                    <Link to={"/teams/" + team.teamname.toString()}>
-                                                        {team.teamname.toUpperCase()}
-                                                    </Link>
-                                                </Col>
-                                            </Row>
-                                        </TableCell>
-                                        {/* <TableCell className={classes.tableCell}>
-                                                    <div>
-                                                        <div className="div-team-leader-teams">
-                                                            <img className="img-crown-teams" src={crown} alt="crown"/>
-                                                            <Tooltip title={"placeholder"}>
-                                                                <Link to={`/profilelookup/${team.leader}`}>
-                                                                    <img className="img-team-member-teams" src={usericons[team.leader]} />
-                                                                </Link>
-                                                            </Tooltip>
-                                                        </div>
-                                                    {typeof team.members !== 'undefined' ? 
-                                                        <TeamMembers members={team.members} usericons={usericons} classes={classes}/> 
-                                                    : null }
-                                                    </div>
-                                                </TableCell> */}
-                                        <TableCell className={classes.tableCellPoints} align="center">{team.points}</TableCell>
-                                    </TableRow>
-                                )
-                            })}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-                {loading ?
-                    <Row className="justify-content-row spinner-table-teams">
-                        <Spinner animation="border" />
-                    </Row> : null}
-            </div>
-            <Row className="row-pagination-bot-teams">
-                <Col md={4} className="pagination-col-teams">
-                    <MUIPagination count={numPages} page={curPage} onChange={(e, val) => handleClick(val)}
-                        showFirstButton showLastButton color="primary" variant="outlined" shape="rounded" size={isMobile ? 'small' : 'medium'} />
-                </Col>
-            </Row>
-        </div>
+        <li>
+            <Link className="team-directory__card" to={`/teams/${encodeURIComponent(id)}`}>
+                <div className="team-directory__banner">
+                    <FontAwesomeIcon icon={faUsers} aria-hidden="true" />
+                    {logo && <img src={logo} alt="" onError={() => setLogo('')} />}
+                </div>
+                <div className="team-directory__card-copy">
+                    <div className="team-directory__identity">
+                        <p className="team-directory__rank">Rank {rank}</p>
+                        <h3>{id}</h3>
+                    </div>
+                    <div className="team-directory__points">
+                        <strong>{points ?? '—'}</strong>
+                        <span>Points</span>
+                    </div>
+                    <FontAwesomeIcon className="team-directory__arrow" icon={faArrowRight} aria-hidden="true" />
+                </div>
+            </Link>
+        </li>
     );
 }
 
-// const TeamMembers = ({ members, usericons, classes }) => {
-//     return (
-//         <>
-//             {members.map((member, i) => {
-//                 return (
-//                     <Tooltip title={member[0]} key={i}>
-//                         <Link to={`/profilelookup/${member[1]}`}>
-//                             <img className="img-team-member-teams" src={usericons[member[1]]} />
-//                         </Link>
-//                     </Tooltip>
-//                 )
-//             })}
-//         </>
-//     )
-// }
+function Teams({ firebase }) {
+    const [teams, setTeams] = useState(null);
+    const [error, setError] = useState(false);
+    const [attempt, setAttempt] = useState(0);
+    const [search, setSearch] = useState('');
+    const [sort, setSort] = useState('rank');
+    const [currentPage, setCurrentPage] = useState(1);
 
-/* <tbody>
-    {/* {teams.map((team, i) => (
-        <tr key={team.teamname}>
-            <Td to={"/teams/" + team.teamname.toString()}>
-                <img className="team-pictures"
-                    src={teamicon[team.teamname.toString()]} alt={"Team " + team.teamname}></img>
-            </Td>
-            <Td cl="team-name" to={"/teams/" + team.teamname} ct={"link-team-name"}>
-                <strong>{(team.teamname).toUpperCase()}</strong>
-            </Td>
-        </tr>
-    ))} 
-</tbody> */
+    useEffect(() => onValue(firebase.teams(), snapshot => {
+        const ranked = Object.entries(snapshot.val() ?? {})
+            .map(([id, team]) => ({ id, points: team?.points }))
+            // Preserve the existing points order, including its tie behavior.
+            .sort((a, b) => a.points < b.points ? 1 : -1)
+            .map((team, index) => ({ ...team, rank: index + 1 }));
+
+        setTeams(ranked);
+    }, () => setError(true)), [firebase, attempt]);
+
+    const query = search.trim().toLowerCase();
+    const results = (teams ?? []).filter(team => team.id.toLowerCase().includes(query));
+    if (sort === 'name') results.sort((a, b) => a.id.localeCompare(b.id, 'en', { sensitivity: 'base' }));
+    const totalPages = Math.max(1, Math.ceil(results.length / TEAMS_PER_PAGE));
+    const page = Math.min(currentPage, totalPages);
+    const first = (page - 1) * TEAMS_PER_PAGE;
+    const visibleTeams = results.slice(first, first + TEAMS_PER_PAGE);
+
+    function updateSearch(value) {
+        setSearch(value);
+        setCurrentPage(1);
+    }
+
+    function retry() {
+        setError(false);
+        setTeams(null);
+        setAttempt(value => value + 1);
+    }
+
+    return (
+        <main className="team-directory">
+            <Helmet>
+                <title>US Airsoft Field: Teams</title>
+            </Helmet>
+            <section className="team-directory__hero" aria-labelledby="team-directory-title">
+                <div className="team-directory__wrap team-directory__hero-inner">
+                    <Link className="team-directory__hub" to="/player-hub">Player Hub</Link>
+                    <h1 id="team-directory-title">USAW Teams</h1>
+                    <p>Find a team, check the standings, or start a team of your own.</p>
+                    <div className="team-directory__actions">
+                        <Link className="team-directory__button team-directory__button--primary" to="/createteam">Create team</Link>
+                        <Link className="team-directory__button" to="/jointeam">Join team</Link>
+                        <Link className="team-directory__button" to="/manageteam">Manage team</Link>
+                    </div>
+                </div>
+            </section>
+            <section className="team-directory__wrap team-directory__content" aria-labelledby="team-standings-title">
+                <h2 id="team-standings-title">Team standings</h2>
+                <div className="team-directory__filters">
+                    <label className="team-directory__field" htmlFor="team-directory-search">
+                        Search teams
+                        <span className="team-directory__search">
+                            <FontAwesomeIcon icon={faSearch} aria-hidden="true" />
+                            <input id="team-directory-search" type="search" value={search} placeholder="Enter a team name"
+                                onChange={event => updateSearch(event.target.value)} />
+                        </span>
+                    </label>
+                    <label className="team-directory__field" htmlFor="team-directory-sort">
+                        Sort by
+                        <select id="team-directory-sort" value={sort} onChange={event => {
+                            setSort(event.target.value);
+                            setCurrentPage(1);
+                        }}>
+                            <option value="rank">Standings</option>
+                            <option value="name">Team name A–Z</option>
+                        </select>
+                    </label>
+                </div>
+                {error ? (
+                    <div className="team-directory__notice" role="alert">
+                        <p>Team standings are temporarily unavailable.</p>
+                        <button type="button" className="team-directory__button" onClick={retry}>Try again</button>
+                    </div>
+                ) : teams === null ? (
+                    <p className="team-directory__notice" role="status">Loading team standings…</p>
+                ) : visibleTeams.length === 0 ? (
+                    <div className="team-directory__notice" role="status">
+                        <p>{query ? 'No teams match that search.' : 'No teams are listed yet.'}</p>
+                        {query && <button type="button" className="team-directory__button" onClick={() => updateSearch('')}>Clear search</button>}
+                    </div>
+                ) : (
+                    <>
+                        <p className="team-directory__results" aria-live="polite">
+                            Showing {first + 1}–{first + visibleTeams.length} of {results.length} {results.length === 1 ? 'team' : 'teams'}
+                        </p>
+                        <ul className="team-directory__grid">
+                            {visibleTeams.map(team => <TeamCard key={team.id} team={team} firebase={firebase} />)}
+                        </ul>
+                        {totalPages > 1 && (
+                            <nav className="team-directory__pagination" aria-label="Team standings pages">
+                                <button type="button" className="team-directory__button" disabled={page === 1}
+                                    onClick={() => setCurrentPage(page - 1)}>Previous</button>
+                                <span>Page {page} of {totalPages}</span>
+                                <button type="button" className="team-directory__button" disabled={page === totalPages}
+                                    onClick={() => setCurrentPage(page + 1)}>Next</button>
+                            </nav>
+                        )}
+                    </>
+                )}
+            </section>
+        </main>
+    );
+}
 
 export default withFirebase(Teams);
-
-// export default composeHooks(
-//     withFirebase,
-//     )(Teams);
