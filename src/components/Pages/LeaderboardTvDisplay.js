@@ -6,20 +6,32 @@ import { faCompress, faExpand } from '@fortawesome/free-solid-svg-icons';
 import logo from '../../assets/usairsoft-small-logo.png';
 import './LeaderboardTvDisplay.css';
 
-export default function LeaderboardTvDisplay({ title, periodControls, status, playerCount, page, pageCount, onPageChange, children }) {
+export default function LeaderboardTvDisplay({ title, periodControls, status, playerCount, onLoadMore, children }) {
     const displayRef = useRef(null);
+    const standingsRef = useRef(null);
     const [fullscreen, setFullscreen] = useState(false);
     const [fullscreenError, setFullscreenError] = useState('');
     const hasStandings = status === 'ready' && playerCount > 0;
 
     useEffect(() => {
         function handleFullscreenChange() {
-            setFullscreen(document.fullscreenElement === displayRef.current);
+            const active = document.fullscreenElement === displayRef.current;
+            setFullscreen(active);
             setFullscreenError('');
+            if (active) standingsRef.current?.focus({ preventScroll: true });
         }
         document.addEventListener('fullscreenchange', handleFullscreenChange);
         return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
     }, []);
+
+    useEffect(() => {
+        standingsRef.current.scrollTop = 0;
+    }, [title]);
+
+    function loadMoreOnScroll(event) {
+        const { scrollTop, clientHeight, scrollHeight } = event.currentTarget;
+        if (scrollHeight - scrollTop - clientHeight <= clientHeight) onLoadMore?.();
+    }
 
     async function toggleFullscreen() {
         setFullscreenError('');
@@ -54,19 +66,13 @@ export default function LeaderboardTvDisplay({ title, periodControls, status, pl
                 </div>
             </header>
             {fullscreenError && <p className="field-lb-presentation-notice" role="status">{fullscreenError}</p>}
-            <section className="field-lb-standings field-lb-presentation-standings" aria-labelledby="field-lb-presentation-title">
+            <section ref={standingsRef} className="field-lb-standings field-lb-presentation-standings"
+                aria-labelledby="field-lb-presentation-title" tabIndex={0} onScroll={onLoadMore ? loadMoreOnScroll : undefined}>
                 {status === 'loading' && <p className="field-lb-message" role="status">Loading standings…</p>}
                 {status === 'error' && <p className="field-lb-message" role="alert">Standings are temporarily unavailable.</p>}
                 {status === 'ready' && !hasStandings && <p className="field-lb-message" role="status">No standings are available yet.</p>}
                 {hasStandings && children}
             </section>
-            {hasStandings && pageCount > 1 && (
-                <nav className="field-lb-presentation-pagination" aria-label="Standings pages">
-                    <button type="button" disabled={page === 1} onClick={() => onPageChange(page - 1)}>Previous</button>
-                    <span aria-live="polite">Page {page} of {pageCount}</span>
-                    <button type="button" disabled={page === pageCount} onClick={() => onPageChange(page + 1)}>Next</button>
-                </nav>
-            )}
         </main>
     );
 }
