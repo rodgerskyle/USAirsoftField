@@ -1,0 +1,173 @@
+.field-lb.field-lb-presentation {
+    --usaw-text: #f5f7f9;
+    --usaw-muted: #b7c5d3;
+    --usaw-page-bg: #0a141f;
+    --usaw-surface: #101e2d;
+    --usaw-raised: #182c3e;
+    --usaw-subtle: #142637;
+    --usaw-line: #31465a;
+    --usaw-accent: #f1ca76;
+    --usaw-focus: #b4d3f7;
+    --field-lb-win: #8cdeaa;
+    --field-lb-loss: #ffa6b1;
+    --field-lb-prestige: #ffe3a7;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: clamp(.6rem, 1.2vh, 1.35rem);
+    min-height: 100vh;
+    padding: clamp(.65rem, 2.1vw, 3rem);
+    color-scheme: dark;
+    background: radial-gradient(ellipse at top right, #172e43, transparent 57%), var(--usaw-page-bg);
+}
+
+.field-lb-presentation:fullscreen {
+    overflow: auto;
+}
+
+.field-lb-presentation-header,
+.field-lb-presentation-brand,
+.field-lb-presentation-controls,
+.field-lb-presentation-pagination {
+    display: flex;
+    align-items: center;
+    gap: clamp(.5rem, 1vw, 1.1rem);
+}
+
+.field-lb-presentation-header {
+    justify-content: space-between;
+    flex-wrap: wrap;
+    padding-bottom: clamp(.5rem, 1.35vh, 1.3rem);
+    border-bottom: 3px solid var(--usaw-red, #ba263f);
+}
+
+.field-lb-presentation-brand img {
+    width: clamp(2.5rem, 4.15vw, 6rem);
+    height: clamp(2.5rem, 6vh, 6rem);
+    object-fit: contain;
+}
+
+.field-lb-presentation-brand h1 {
+    margin: 0;
+    color: var(--usaw-text);
+    font-size: clamp(1.45rem, min(4.1vw, 6.5vh), 4.9rem);
+    line-height: 1.05;
+    letter-spacing: -.035em;
+}
+
+.field-lb-presentation-controls {
+    flex-wrap: wrap;
+}
+
+.field-lb-presentation :is(button, .field-lb-presentation-controls a) {
+    display: inline-flex;
+    align-items: center;
+    gap: .45em;
+    min-height: 44px;
+    padding: .4em .7em;
+    color: var(--usaw-text);
+    border: 1px solid var(--usaw-line);
+    border-radius: .4em;
+    background: var(--usaw-raised);
+    font-size: clamp(.85rem, 1.25vw, 1.4rem);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.field-lb-presentation :is(button:enabled, .field-lb-presentation-controls a):hover {
+    border-color: var(--usaw-focus);
+}
+
+.field-lb-presentation button:disabled {
+    opacity: .5;
+}
+
+.field-lb-presentation-pagination {
+    justify-content: center;
+    color: var(--usaw-muted);
+    font-size: clamp(.95rem, 1.25vw, 1.4rem);
+    font-variant-numeric: tabular-nums;
+}
+
+.field-lb-presentation-notice {
+    margin: 0;
+    color: var(--usaw-muted);
+}
+
+.field-lb-presentation .field-lb-presentation-standings {
+    overflow: hidden;
+}
+
+.field-lb-presentation .field-lb-table {
+    font-size: clamp(1.05rem, min(2.5vw, 4.4vh), 3.35rem);
+    line-height: 1.12;
+}
+
+.field-lb-presentation .field-lb-table thead {
+    font-size: .6em;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.field-lb-presentation .field-lb-table :is(th, td) {
+    padding: clamp(.2rem, .8vh, .8rem) clamp(.35rem, 1.25vw, 1.65rem);
+    vertical-align: middle;
+}
+
+.field-lb-presentation .field-lb-table th:first-child {
+    width: 12%;
+}
+
+.field-lb-presentation .field-lb-table th:nth-child(n + 3) {
+    width: 15%;
+}
+
+.field-lb-presentation .field-lb-table th:last-child {
+    width: 18%;
+}
+
+.field-lb-presentation .field-lb-player {
+    min-height: 0;
+    gap: clamp(.35rem, 1.05vw, 1.35rem);
+}
+
+.field-lb-presentation .field-lb-player:hover {
+    color: var(--usaw-text);
+    text-decoration: none;
+}
+
+.field-lb-presentation .field-lb-player-details > :first-child {
+    font-weight: 850;
+}
+
+.field-lb-presentation .field-lb-player-progression {
+    font-size: .48em;
+}
+
+.field-lb-presentation .field-lb-insignia,
+.field-lb-presentation .field-lb-featured-badge {
+    width: clamp(1.7rem, min(3.7vw, 6.5vh), 5.2rem);
+    height: clamp(1.7rem, min(3.7vw, 6.5vh), 5.2rem);
+}
+
+.field-lb-presentation .field-lb-insignia img {
+    width: 85%;
+    height: 85%;
+}
+
+.field-lb-presentation .field-lb-prestige .usaw-prestige-emblem {
+    width: clamp(.85rem, 1.5vw, 1.9rem);
+    height: clamp(.85rem, 1.5vw, 1.9rem);
+    flex-basis: auto;
+}
+
+@media (max-width: 760px) {
+    .field-lb-presentation .field-lb-table tbody {
+        font-size: .85em;
+    }
+
+    .field-lb-presentation .field-lb-player-progression {
+        font-size: .7em;
+    }
+}

@@ -14,12 +14,14 @@ import { badgeById, getFeaturedBadges } from '../constants/playerBadges';
 import { getAllPlayerDisplayNames } from '../constants/playerDisplayNames';
 import { getLeaderboardPrestige, prestigeCyclePoints, profileRank } from '../constants/playerPrestige';
 import { withFirebase } from '../Firebase';
-import { AuthUserContext } from '../session';
+import { AuthUserContext, withAuthorization } from '../session';
+import LeaderboardTvDisplay from './LeaderboardTvDisplay';
 import { PrestigeEmblem } from './PlayerPrestige';
 import './leaderboard.css';
 
 const FIRST_YEAR = 2021;
 const PAGE_SIZE = 50;
+const TV_PAGE_SIZE = 8;
 const MONTHS = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December',
@@ -49,10 +51,10 @@ function profilePath(player) {
     return `/profilelookup/${encodeURIComponent(player.uid)}`;
 }
 
-function PlayerLink({ player, featuredBadge, prestige }) {
+function LeaderboardPlayer({ player, featuredBadge, prestige, readOnly }) {
     const rank = profileRank(prestigeCyclePoints(player.careerPoints, prestige));
-    return (
-        <Link className="field-lb-player" to={profilePath(player)}>
+    const details = (
+        <>
             <span className="field-lb-player-marks">
                 <span className="field-lb-insignia">
                     <img src={rankImages[rank]} alt="" width="46" height="46" loading="lazy" />
@@ -75,11 +77,14 @@ function PlayerLink({ player, featuredBadge, prestige }) {
                     )}
                 </span>
             </span>
-        </Link>
+        </>
     );
+    return readOnly
+        ? <div className="field-lb-player">{details}</div>
+        : <Link className="field-lb-player" to={profilePath(player)}>{details}</Link>;
 }
 
-function LeaderboardTable({ players, personalUid, period, featured, prestigeByPlayer }) {
+function LeaderboardTable({ players, personalUid, period, featured, prestigeByPlayer, readOnly = false }) {
     return (
         <table className="field-lb-table">
             <caption className="visually-hidden">{period} player standings</caption>
@@ -97,8 +102,8 @@ function LeaderboardTable({ players, personalUid, period, featured, prestigeByPl
                     <tr key={player.uid} className={player.uid === personalUid ? 'field-lb-own-row' : undefined}>
                         <td><span className="field-lb-place">#{player.position}</span></td>
                         <th scope="row">
-                            <PlayerLink player={player} featuredBadge={badgeById[featured[player.uid]]}
-                                prestige={prestigeByPlayer.get(player.uid)} />
+                            <LeaderboardPlayer player={player} featuredBadge={badgeById[featured[player.uid]]}
+                                prestige={prestigeByPlayer.get(player.uid)} readOnly={readOnly} />
                         </th>
                         <td className="field-lb-wins">{formatScore(player.wins)}</td>
                         <td className="field-lb-losses">{formatScore(player.losses)}</td>
@@ -110,12 +115,12 @@ function LeaderboardTable({ players, personalUid, period, featured, prestigeByPl
     );
 }
 
-function Leaderboard({ firebase }) {
+function Leaderboard({ firebase, presentation = false }) {
     const authUser = useContext(AuthUserContext);
     const { view: legacyView } = useParams();
     const [params, setParams] = useSearchParams();
     const tv = legacyView === 'query=monthly';
-    const monthly = (params.get('view') ?? (tv ? 'monthly' : 'all')) === 'monthly';
+    const monthly = !presentation && (params.get('view') ?? (tv ? 'monthly' : 'all')) === 'monthly';
     const now = new Date();
     const [monthYear, monthNumber] = (params.get('month') ?? '').split('-').map(Number);
     const currentYear = monthYear >= FIRST_YEAR && monthYear <= now.getFullYear() && Number.isInteger(monthYear)
@@ -174,10 +179,11 @@ function Leaderboard({ firebase }) {
     const results = useMemo(() => query
         ? standings.filter(player => player.name.toLowerCase().includes(query))
         : standings, [query, standings]);
-    const pageCount = Math.max(1, Math.ceil(results.length / PAGE_SIZE));
+    const pageSize = presentation ? TV_PAGE_SIZE : PAGE_SIZE;
+    const pageCount = Math.max(1, Math.ceil(results.length / pageSize));
     const currentPage = Math.min(page, pageCount);
-    const offset = (currentPage - 1) * PAGE_SIZE;
-    const visiblePlayers = useMemo(() => results.slice(offset, offset + PAGE_SIZE), [results, offset]);
+    const offset = (currentPage - 1) * pageSize;
+    const visiblePlayers = useMemo(() => results.slice(offset, offset + pageSize), [results, offset, pageSize]);
     const visiblePlayerIdsKey = JSON.stringify(visiblePlayers.map(player => player.uid).sort());
 
     useEffect(() => {
@@ -231,6 +237,16 @@ function Leaderboard({ firebase }) {
     function changeSearch(value) {
         setSearch(value);
         setPage(1);
+    }
+
+    if (presentation) {
+        return (
+            <LeaderboardTvDisplay status={status} playerCount={standings.length}
+                page={currentPage} pageCount={pageCount} onPageChange={setPage}>
+                <LeaderboardTable players={visiblePlayers} period={period} featured={featured}
+                    prestigeByPlayer={prestigeByPlayer} readOnly />
+            </LeaderboardTvDisplay>
+        );
     }
 
     return (
@@ -341,5 +357,12 @@ function Leaderboard({ firebase }) {
         </main>
     );
 }
+
+export const LEADERBOARD_TV_PATH = '/admin/leaderboard-tv';
+export const AdminLeaderboardTv = withAuthorization(user => Boolean(user?.roles?.[ROLES.ADMIN]), { verifyOnMount: true })(
+    function AuthorizedLeaderboardTv(props) {
+        return <Leaderboard {...props} presentation />;
+    },
+);
 
 export default withFirebase(Leaderboard);
