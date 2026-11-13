@@ -15,21 +15,18 @@
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    gap: clamp(.6rem, 1.2vh, 1.35rem);
-    min-height: 100vh;
-    padding: clamp(.65rem, 2.1vw, 3rem);
+    gap: clamp(.45rem, .9vh, 1rem);
+    min-height: 0;
+    height: 100vh;
+    height: 100dvh;
+    padding: clamp(.55rem, 1.65vw, 2.5rem);
     color-scheme: dark;
     background: radial-gradient(ellipse at top right, #172e43, transparent 57%), var(--usaw-page-bg);
 }
 
-.field-lb-presentation:fullscreen {
-    overflow: auto;
-}
-
 .field-lb-presentation-header,
 .field-lb-presentation-brand,
-.field-lb-presentation-controls,
-.field-lb-presentation-pagination {
+.field-lb-presentation-controls {
     display: flex;
     align-items: center;
     gap: clamp(.5rem, 1vw, 1.1rem);
@@ -38,20 +35,20 @@
 .field-lb-presentation-header {
     justify-content: space-between;
     flex-wrap: wrap;
-    padding-bottom: clamp(.5rem, 1.35vh, 1.3rem);
+    padding-bottom: clamp(.35rem, .9vh, .95rem);
     border-bottom: 3px solid var(--usaw-red, #ba263f);
 }
 
 .field-lb-presentation-brand img {
-    width: clamp(2.5rem, 4.15vw, 6rem);
-    height: clamp(2.5rem, 6vh, 6rem);
+    width: clamp(2.25rem, 3.65vw, 5.25rem);
+    height: clamp(2.25rem, 5.25vh, 5.25rem);
     object-fit: contain;
 }
 
 .field-lb-presentation-brand h1 {
     margin: 0;
     color: var(--usaw-text);
-    font-size: clamp(1.45rem, min(4.1vw, 6.5vh), 4.9rem);
+    font-size: clamp(1.35rem, min(3.55vw, 5.65vh), 4.3rem);
     line-height: 1.05;
     letter-spacing: -.035em;
 }
@@ -85,28 +82,27 @@
     background: var(--usaw-accent);
 }
 
-.field-lb-presentation button:disabled {
-    opacity: .5;
-}
-
-.field-lb-presentation-pagination {
-    justify-content: center;
-    color: var(--usaw-muted);
-    font-size: clamp(.95rem, 1.25vw, 1.4rem);
-    font-variant-numeric: tabular-nums;
-}
-
 .field-lb-presentation-notice {
     margin: 0;
     color: var(--usaw-muted);
 }
 
 .field-lb-presentation .field-lb-presentation-standings {
-    overflow: hidden;
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+}
+
+.field-lb-presentation-standings:focus-visible {
+    outline: 2px solid var(--usaw-focus);
+    outline-offset: -2px;
 }
 
 .field-lb-presentation .field-lb-table {
-    font-size: clamp(1.05rem, min(2.5vw, 4.4vh), 3.35rem);
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: clamp(.98rem, min(2.2vw, 3.85vh), 2.95rem);
     line-height: 1.12;
 }
 
@@ -116,8 +112,15 @@
     letter-spacing: .05em;
 }
 
+.field-lb-presentation .field-lb-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--usaw-raised);
+}
+
 .field-lb-presentation .field-lb-table :is(th, td) {
-    padding: clamp(.2rem, .8vh, .8rem) clamp(.35rem, 1.25vw, 1.65rem);
+    padding: clamp(.16rem, .55vh, .62rem) clamp(.3rem, 1.05vw, 1.4rem);
     vertical-align: middle;
 }
 
@@ -153,8 +156,8 @@
 
 .field-lb-presentation .field-lb-insignia,
 .field-lb-presentation .field-lb-featured-badge {
-    width: clamp(1.7rem, min(3.7vw, 6.5vh), 5.2rem);
-    height: clamp(1.7rem, min(3.7vw, 6.5vh), 5.2rem);
+    width: clamp(1.55rem, min(3.2vw, 5.65vh), 4.5rem);
+    height: clamp(1.55rem, min(3.2vw, 5.65vh), 4.5rem);
 }
 
 .field-lb-presentation .field-lb-insignia img {

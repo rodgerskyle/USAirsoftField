@@ -381,11 +381,11 @@
     text-align: right;
 }
 
-.field-lb-table tbody tr:last-child :first-child {
+.field-lb-table tbody:last-child tr:last-child :first-child {
     border-bottom-left-radius: .75rem;
 }
 
-.field-lb-table tbody tr:last-child :last-child {
+.field-lb-table tbody:last-child tr:last-child :last-child {
     border-bottom-right-radius: .75rem;
 }
 

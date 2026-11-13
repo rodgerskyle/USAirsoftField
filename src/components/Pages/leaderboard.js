@@ -21,7 +21,6 @@ import './leaderboard.css';
 
 const FIRST_YEAR = 2021;
 const PAGE_SIZE = 50;
-const TV_PAGE_SIZE = 8;
 const MONTHS = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December',
@@ -84,7 +83,52 @@ function LeaderboardPlayer({ player, featuredBadge, prestige, readOnly }) {
         : <Link className="field-lb-player" to={profilePath(player)}>{details}</Link>;
 }
 
-function LeaderboardTable({ players, personalUid, period, featured, prestigeByPlayer, readOnly = false }) {
+function LeaderboardRows({ players, personalUid, readOnly }) {
+    const [featured, setFeatured] = useState({});
+    const [prestigeByPlayer, setPrestigeByPlayer] = useState(() => new Map());
+    const playerIdsKey = JSON.stringify(players.map(player => player.uid).sort());
+
+    useEffect(() => {
+        const ids = JSON.parse(playerIdsKey);
+        let request;
+        function refreshPlayerDetails() {
+            request?.abort();
+            request = new AbortController();
+            const { signal } = request;
+            getLeaderboardPrestige(ids, { signal })
+                .then(records => { if (!signal.aborted) setPrestigeByPlayer(records); })
+                .catch(() => {});
+            getFeaturedBadges(ids, { signal })
+                .then(badges => { if (!signal.aborted) setFeatured(badges); })
+                .catch(() => {});
+        }
+        refreshPlayerDetails();
+        window.addEventListener('focus', refreshPlayerDetails);
+        return () => {
+            request?.abort();
+            window.removeEventListener('focus', refreshPlayerDetails);
+        };
+    }, [playerIdsKey]);
+
+    return (
+        <tbody>
+            {players.map(player => (
+                <tr key={player.uid} className={player.uid === personalUid ? 'field-lb-own-row' : undefined}>
+                    <td><span className="field-lb-place">#{player.position}</span></td>
+                    <th scope="row">
+                        <LeaderboardPlayer player={player} featuredBadge={badgeById[featured[player.uid]]}
+                            prestige={prestigeByPlayer.get(player.uid)} readOnly={readOnly} />
+                    </th>
+                    <td className="field-lb-wins">{formatScore(player.wins)}</td>
+                    <td className="field-lb-losses">{formatScore(player.losses)}</td>
+                    <td className="field-lb-points">{formatScore(player.points)}</td>
+                </tr>
+            ))}
+        </tbody>
+    );
+}
+
+function LeaderboardTable({ playerBatches, personalUid, period, readOnly = false }) {
     return (
         <table className="field-lb-table">
             <caption className="visually-hidden">{period} player standings</caption>
@@ -97,20 +141,9 @@ function LeaderboardTable({ players, personalUid, period, featured, prestigeByPl
                     <th scope="col">Points</th>
                 </tr>
             </thead>
-            <tbody>
-                {players.map(player => (
-                    <tr key={player.uid} className={player.uid === personalUid ? 'field-lb-own-row' : undefined}>
-                        <td><span className="field-lb-place">#{player.position}</span></td>
-                        <th scope="row">
-                            <LeaderboardPlayer player={player} featuredBadge={badgeById[featured[player.uid]]}
-                                prestige={prestigeByPlayer.get(player.uid)} readOnly={readOnly} />
-                        </th>
-                        <td className="field-lb-wins">{formatScore(player.wins)}</td>
-                        <td className="field-lb-losses">{formatScore(player.losses)}</td>
-                        <td className="field-lb-points">{formatScore(player.points)}</td>
-                    </tr>
-                ))}
-            </tbody>
+            {playerBatches.map((players, index) => (
+                <LeaderboardRows key={index} players={players} personalUid={personalUid} readOnly={readOnly} />
+            ))}
         </table>
     );
 }
@@ -132,9 +165,8 @@ function Leaderboard({ firebase, presentation = false }) {
     const [status, setStatus] = useState('loading');
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
-    const [featured, setFeatured] = useState({});
     const [displayNames, setDisplayNames] = useState({});
-    const [prestigeByPlayer, setPrestigeByPlayer] = useState(() => new Map());
+    const [tvBatchCount, setTvBatchCount] = useState(1);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -179,59 +211,19 @@ function Leaderboard({ firebase, presentation = false }) {
     const results = useMemo(() => query
         ? standings.filter(player => player.name.toLowerCase().includes(query))
         : standings, [query, standings]);
-    const pageSize = presentation ? TV_PAGE_SIZE : PAGE_SIZE;
-    const pageCount = Math.max(1, Math.ceil(results.length / pageSize));
+    const pageCount = Math.max(1, Math.ceil(results.length / PAGE_SIZE));
     const currentPage = Math.min(page, pageCount);
-    const offset = (currentPage - 1) * pageSize;
-    const visiblePlayers = useMemo(() => results.slice(offset, offset + pageSize), [results, offset, pageSize]);
-    const visiblePlayerIdsKey = JSON.stringify(visiblePlayers.map(player => player.uid).sort());
-
-    useEffect(() => {
-        const ids = JSON.parse(visiblePlayerIdsKey);
-        if (!ids.length) return undefined;
-        let request;
-        function refreshPrestige() {
-            request?.abort();
-            const controller = new AbortController();
-            request = controller;
-            getLeaderboardPrestige(ids, { signal: controller.signal })
-                .then(records => { if (!controller.signal.aborted) setPrestigeByPlayer(records); })
-                .catch(() => {});
-        }
-        refreshPrestige();
-        window.addEventListener('focus', refreshPrestige);
-        return () => {
-            request?.abort();
-            window.removeEventListener('focus', refreshPrestige);
-        };
-    }, [visiblePlayerIdsKey]);
-
-    useEffect(() => {
-        if (!visiblePlayers.length) return undefined;
-        let request;
-        function refreshFeatured() {
-            request?.abort();
-            const controller = new AbortController();
-            request = controller;
-            getFeaturedBadges(visiblePlayers.map(player => player.uid), { signal: controller.signal })
-                .then((badges) => { if (!controller.signal.aborted) setFeatured(badges); })
-                .catch(() => {});
-        }
-        refreshFeatured();
-        window.addEventListener('focus', refreshFeatured);
-        return () => {
-            request?.abort();
-            window.removeEventListener('focus', refreshFeatured);
-        };
-    }, [visiblePlayers]);
+    const offset = (currentPage - 1) * PAGE_SIZE;
 
     function changePeriod(view, month = currentMonth, year = currentYear) {
+        if (presentation && monthly === (view === 'monthly')) return;
         const next = new URLSearchParams(params);
         next.set('view', view);
         if (view === 'monthly') next.set('month', `${year}-${String(month + 1).padStart(2, '0')}`);
         else next.delete('month');
         setParams(next, { replace: presentation });
         setPage(1);
+        if (presentation) setTvBatchCount(1);
     }
 
     function changeSearch(value) {
@@ -247,12 +239,15 @@ function Leaderboard({ firebase, presentation = false }) {
     );
 
     if (presentation) {
+        // Both badge and Prestige lookups accept at most PAGE_SIZE players per request.
+        const totalBatches = Math.ceil(standings.length / PAGE_SIZE);
+        const playerBatches = Array.from({ length: Math.min(tvBatchCount, totalBatches) }, (_, index) =>
+            standings.slice(index * PAGE_SIZE, (index + 1) * PAGE_SIZE));
         return (
             <LeaderboardTvDisplay status={status} playerCount={standings.length}
                 title={monthly ? `${period} Leaderboard` : 'All-Time Leaderboard'} periodControls={periodControls}
-                page={currentPage} pageCount={pageCount} onPageChange={setPage}>
-                <LeaderboardTable players={visiblePlayers} period={period} featured={featured}
-                    prestigeByPlayer={prestigeByPlayer} readOnly />
+                onLoadMore={tvBatchCount < totalBatches ? () => setTvBatchCount(tvBatchCount + 1) : undefined}>
+                <LeaderboardTable playerBatches={playerBatches} period={period} readOnly />
             </LeaderboardTvDisplay>
         );
     }
@@ -346,8 +341,8 @@ function Leaderboard({ firebase, presentation = false }) {
                         </div>
                     ) : (
                         <>
-                            <LeaderboardTable players={visiblePlayers} personalUid={personalPlayer?.uid} period={period}
-                                featured={featured} prestigeByPlayer={prestigeByPlayer} />
+                            <LeaderboardTable playerBatches={[results.slice(offset, offset + PAGE_SIZE)]}
+                                personalUid={personalPlayer?.uid} period={period} />
                             {pageCount > 1 && (
                                 <div className="field-lb-pagination">
                                     <Pagination count={pageCount} page={currentPage} onChange={(_, value) => setPage(value)}

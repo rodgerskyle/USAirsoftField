@@ -113,14 +113,14 @@ test('renders and updates the same all-time standings as read-only TV rows', asy
     expect(stopScores).toHaveBeenCalledTimes(1);
 });
 
-test('switches periods and resets pages without leaving fullscreen', async () => {
+test('scrolls through additional standings and resets to the top when switching periods in fullscreen', async () => {
     const session = renderTv(admin);
     session.verify(admin);
     const now = new Date();
     const month = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     const gameDate = `${now.getFullYear()}-${now.getMonth()}-1`;
-    const extraPlayers = Object.fromEntries(Array.from({ length: 8 }, (_, index) => [
-        `extra-${index}`, { name: `Player ${index}`, points: 10 - index },
+    const extraPlayers = Object.fromEntries(Array.from({ length: 53 }, (_, index) => [
+        `extra-player-${index}`, { name: `Player ${index}`, points: 60 - index },
     ]));
     await act(async () => publish({
         ...fixtures,
@@ -129,12 +129,16 @@ test('switches periods and resets pages without leaving fullscreen', async () =>
         bravo: { ...fixtures.bravo, games: { [gameDate]: { wins: 1, losses: 2 } } },
     }));
     const board = screen.getByRole('table', { name: 'All time player standings' });
-    expect(within(board).getAllByRole('row')).toHaveLength(9);
+    expect(within(board).getAllByRole('row')).toHaveLength(51);
     expect(within(board).getAllByRole('row')[1]).toHaveTextContent('Bravo');
-    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Next' })));
-    expect(within(board).getAllByRole('row')).toHaveLength(3);
-    expect(within(board).getByText('#9')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    expect(screen.queryByRole('navigation', { name: 'Standings pages' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Next' })).not.toBeInTheDocument();
+    const scroller = screen.getByRole('region', { name: 'All-Time Leaderboard' });
+    expect(scroller).toHaveAttribute('tabindex', '0');
+    Object.defineProperties(scroller, {
+        clientHeight: { configurable: true, value: 600 },
+        scrollHeight: { configurable: true, value: 2400 },
+    });
 
     const display = screen.getByRole('main');
     const fullscreenDescriptor = Object.getOwnPropertyDescriptor(document, 'fullscreenElement');
@@ -156,6 +160,21 @@ test('switches periods and resets pages without leaving fullscreen', async () =>
         expect(display.requestFullscreen).toHaveBeenCalledTimes(1);
         expect(screen.getByRole('button', { name: 'Exit full screen' })).toBeInTheDocument();
         expect(screen.queryByRole('link', { name: 'Back to staff' })).not.toBeInTheDocument();
+        expect(scroller).toHaveFocus();
+
+        getLeaderboardPrestige.mockClear();
+        getFeaturedBadges.mockClear();
+        scroller.scrollTop = 400;
+        await act(async () => fireEvent.scroll(scroller));
+        expect(within(board).queryByText('#51')).not.toBeInTheDocument();
+        scroller.scrollTop = 1750;
+        await act(async () => fireEvent.scroll(scroller));
+        expect(within(board).getAllByRole('row')).toHaveLength(56);
+        expect(within(board).getByText('#55')).toBeInTheDocument();
+        for (const fetchDetails of [getLeaderboardPrestige, getFeaturedBadges]) {
+            expect(fetchDetails).toHaveBeenCalledTimes(1);
+            expect(fetchDetails.mock.calls[0][0]).toHaveLength(5);
+        }
 
         const monthly = screen.getByRole('button', { name: 'Monthly', pressed: false });
         await act(async () => fireEvent.click(monthly));
@@ -165,7 +184,8 @@ test('switches periods and resets pages without leaving fullscreen', async () =>
         const firstRow = within(monthlyBoard).getAllByRole('row')[1];
         expect(firstRow).toHaveTextContent('Alpha');
         expect(within(firstRow).getByText('33')).toHaveClass('field-lb-points');
-        expect(screen.getByText('Page 1 of 2')).toBeInTheDocument();
+        expect(scroller.scrollTop).toBe(0);
+        expect(within(monthlyBoard).queryByText('#51')).not.toBeInTheDocument();
         expect(screen.getByRole('main')).toBe(display);
         expect(document.fullscreenElement).toBe(display);
 
