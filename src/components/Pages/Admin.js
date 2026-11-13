@@ -6,7 +6,7 @@ import { onValue } from 'firebase/database';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCalendar, faCalendarDays, faChevronRight, faClipboardList, faGift, faQrcode,
-  faSearch, faTimesCircle, faTrophy, faUserGear, faUserPen, faUserPlus,
+  faSearch, faTimesCircle, faTrophy, faTv, faUserGear, faUserPen, faUserPlus,
 } from '@fortawesome/free-solid-svg-icons';
 
 import { withFirebase } from '../Firebase';
@@ -15,6 +15,7 @@ import * as ROLES from '../constants/roles';
 import AdminDrawer from '../constants/admindrawer';
 import UserTable from '../constants/usertable';
 import AdminBadgeAwards from './AdminBadgeAwards';
+import { LEADERBOARD_TV_PATH } from './leaderboard';
 import '../../App.css';
 import '../constants/admin.css';
 import './AdminDashboard.css';
@@ -25,6 +26,7 @@ const ACTION_GROUPS = [
     title: 'Game day',
     actions: [
       { title: 'Field Game Days', path: '/schedule', icon: faCalendarDays, primary: true },
+      { title: 'Leaderboard TV Display', path: LEADERBOARD_TV_PATH, icon: faTv },
       { title: 'Enter Wins', path: '/admin/enterwins', icon: faTrophy },
       { title: 'Enter Losses', path: '/admin/enterlosses', icon: faTimesCircle },
       { title: 'Check Free Games', path: '/admin/freegames', icon: faGift },

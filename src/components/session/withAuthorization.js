@@ -6,16 +6,22 @@ import { withFirebase } from '../Firebase';
 import AuthUserContext from './context';
 
 
-const withAuthorization = condition => Component => {
+const withAuthorization = (condition, { verifyOnMount = false } = {}) => Component => {
     class WithAuthorization extends React.Component {
+        state = { verifiedUid: null };
+
         componentDidMount() {
+            const deny = () => {
+                if (verifyOnMount) this.setState({ verifiedUid: null });
+                this.props.router.navigate("/login");
+            };
             this.listener = this.props.firebase.onAuthUserListener((authUser) => {
                 if (!condition(authUser)) {
-                    this.props.router.navigate("/login");
+                    deny();
+                } else if (verifyOnMount) {
+                    this.setState({ verifiedUid: authUser.uid });
                 }
-            }, () => {
-                this.props.router.navigate("/login");
-            });
+            }, deny);
         }
 
         componentWillUnmount() {
@@ -26,7 +32,9 @@ const withAuthorization = condition => Component => {
             return (
                 <AuthUserContext.Consumer>
                     {authUser =>
-                        condition(authUser) ? <Component {...this.props} /> : null
+                        condition(authUser) && (!verifyOnMount ||
+                            (this.state.verifiedUid && this.state.verifiedUid === authUser.uid))
+                            ? <Component {...this.props} /> : null
                     }
                 </AuthUserContext.Consumer>
             );

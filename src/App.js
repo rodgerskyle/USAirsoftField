@@ -1,6 +1,6 @@
 import React from 'react';
 import './App.css';
-import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, useLocation, useMatch, Navigate } from "react-router-dom";
 import Login from "./Login"
 import Navigation from "./Navigation"
 import Footer from "./components/Pages/Footer";
@@ -18,7 +18,7 @@ import EnterWins from './components/Pages/enterwins';
 import EnterLosses from './components/Pages/enterlosses';
 import FreeGames from './components/Pages/freegames';
 // import Migration from './components/Pages/migrate';
-import Leaderboard from './components/Pages/leaderboard';
+import Leaderboard, { AdminLeaderboardTv, LEADERBOARD_TV_PATH } from './components/Pages/leaderboard';
 import ProfileLookup from './components/Pages/Profilelookup';
 import Pricing from './components/Pages/Pricing';
 import Teams from './components/Pages/Teams';
@@ -91,6 +91,7 @@ const App = () => (
       <Route exact path="/profilelookup/:id" element={<ProfileLookup />} />
       <Route exact path="/profilesettings" element={<ProfileSettings />} />
       <Route exact path="/admin" element={<Admin />} />
+      <Route path={LEADERBOARD_TV_PATH} element={<AdminLeaderboardTv />} />
       <Route exact path="/admin/signup" element={<SignUpForm />} />
       <Route exact path="/admin/waiverform" element={<WaiverForm />} />
       <Route exact path="/admin/waiverlookup" element={<WaiverLookup />} />
@@ -126,7 +127,7 @@ const App = () => (
     </Routes>
     </div>
     <FooterRoute />
-    <CookieConsent>This website uses cookies to enhance the user experience.</CookieConsent>
+    <CookieConsentRoute />
   </Router>
 );
 
@@ -142,7 +143,13 @@ function LoginRoute() {
   return <div><Login /></div>
 }
 
+function CookieConsentRoute() {
+  const tvDisplay = useMatch(LEADERBOARD_TV_PATH);
+  return tvDisplay ? null : <CookieConsent>This website uses cookies to enhance the user experience.</CookieConsent>;
+}
+
 function NavigationRoute() {
+  const tvDisplay = useMatch(LEADERBOARD_TV_PATH);
   const [nav, showNav] = useState(true);
   let location = useLocation();
   React.useEffect(() => {
@@ -154,10 +161,11 @@ function NavigationRoute() {
     }
   }, [location]);
 
-  return <div>{nav ? <Navigation /> : (null)}</div>
+  return <div>{!tvDisplay && nav && <Navigation />}</div>
 }
 
 function FooterRoute() {
+  const tvDisplay = useMatch(LEADERBOARD_TV_PATH);
   const [footer, showFooter] = useState(true);
   let location = useLocation();
   React.useEffect(() => {
@@ -169,7 +177,7 @@ function FooterRoute() {
     }
   }, [location]);
 
-  return <div>{footer ? <Footer /> : (null)}</div>
+  return <div>{!tvDisplay && footer && <Footer />}</div>
 }
 
 export default withAuthentication(App);
