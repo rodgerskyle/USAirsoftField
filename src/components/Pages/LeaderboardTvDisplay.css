@@ -79,6 +79,12 @@
     border-color: var(--usaw-focus);
 }
 
+.field-lb-presentation .field-lb-period button[aria-pressed="true"] {
+    color: #101e2d;
+    border-color: var(--usaw-accent);
+    background: var(--usaw-accent);
+}
+
 .field-lb-presentation button:disabled {
     opacity: .5;
 }

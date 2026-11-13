@@ -46,7 +46,7 @@ function renderTv(cachedUser) {
         },
     };
     render(
-        <MemoryRouter initialEntries={[LEADERBOARD_TV_PATH + '?view=monthly']}
+        <MemoryRouter initialEntries={[LEADERBOARD_TV_PATH]}
             future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <FirebaseContext.Provider value={firebase}>
                 <AuthUserContext.Provider value={cachedUser}>
@@ -113,15 +113,24 @@ test('renders and updates the same all-time standings as read-only TV rows', asy
     expect(stopScores).toHaveBeenCalledTimes(1);
 });
 
-test('paginates the TV board and follows native fullscreen entry and exit', async () => {
+test('switches periods and resets pages without leaving fullscreen', async () => {
     const session = renderTv(admin);
     session.verify(admin);
+    const now = new Date();
+    const month = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    const gameDate = `${now.getFullYear()}-${now.getMonth()}-1`;
     const extraPlayers = Object.fromEntries(Array.from({ length: 8 }, (_, index) => [
         `extra-${index}`, { name: `Player ${index}`, points: 10 - index },
     ]));
-    await act(async () => publish({ ...fixtures, ...extraPlayers }));
+    await act(async () => publish({
+        ...fixtures,
+        ...extraPlayers,
+        alpha: { ...fixtures.alpha, games: { [gameDate]: { wins: 3, losses: 1 } } },
+        bravo: { ...fixtures.bravo, games: { [gameDate]: { wins: 1, losses: 2 } } },
+    }));
     const board = screen.getByRole('table', { name: 'All time player standings' });
     expect(within(board).getAllByRole('row')).toHaveLength(9);
+    expect(within(board).getAllByRole('row')[1]).toHaveTextContent('Bravo');
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Next' })));
     expect(within(board).getAllByRole('row')).toHaveLength(3);
     expect(within(board).getByText('#9')).toBeInTheDocument();
@@ -147,6 +156,25 @@ test('paginates the TV board and follows native fullscreen entry and exit', asyn
         expect(display.requestFullscreen).toHaveBeenCalledTimes(1);
         expect(screen.getByRole('button', { name: 'Exit full screen' })).toBeInTheDocument();
         expect(screen.queryByRole('link', { name: 'Back to staff' })).not.toBeInTheDocument();
+
+        const monthly = screen.getByRole('button', { name: 'Monthly', pressed: false });
+        await act(async () => fireEvent.click(monthly));
+        expect(monthly).toHaveAttribute('aria-pressed', 'true');
+        expect(screen.getByRole('heading', { name: `${month} Leaderboard` })).toBeInTheDocument();
+        const monthlyBoard = screen.getByRole('table', { name: `${month} player standings` });
+        const firstRow = within(monthlyBoard).getAllByRole('row')[1];
+        expect(firstRow).toHaveTextContent('Alpha');
+        expect(within(firstRow).getByText('33')).toHaveClass('field-lb-points');
+        expect(screen.getByText('Page 1 of 2')).toBeInTheDocument();
+        expect(screen.getByRole('main')).toBe(display);
+        expect(document.fullscreenElement).toBe(display);
+
+        await act(async () => fireEvent.click(screen.getByRole('button', { name: 'All time', pressed: false })));
+        expect(screen.getByRole('heading', { name: 'All-Time Leaderboard' })).toBeInTheDocument();
+        expect(within(board).getAllByRole('row')[1]).toHaveTextContent('Bravo');
+        expect(document.fullscreenElement).toBe(display);
+        expect(onValue).toHaveBeenCalledTimes(1);
+
         await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Exit full screen' })));
         expect(exitFullscreen).toHaveBeenCalledTimes(1);
         expect(screen.getByRole('button', { name: 'Full screen' })).toBeInTheDocument();
