@@ -6,7 +6,7 @@ import { faCompress, faExpand } from '@fortawesome/free-solid-svg-icons';
 import logo from '../../assets/usairsoft-small-logo.png';
 import './LeaderboardTvDisplay.css';
 
-export default function LeaderboardTvDisplay({ status, playerCount, page, pageCount, onPageChange, children }) {
+export default function LeaderboardTvDisplay({ title, periodControls, status, playerCount, page, pageCount, onPageChange, children }) {
     const displayRef = useRef(null);
     const [fullscreen, setFullscreen] = useState(false);
     const [fullscreenError, setFullscreenError] = useState('');
@@ -38,13 +38,14 @@ export default function LeaderboardTvDisplay({ status, playerCount, page, pageCo
 
     return (
         <main ref={displayRef} className="field-lb field-lb-presentation">
-            <Helmet><title>USAW All-Time Leaderboard TV Display</title></Helmet>
+            <Helmet><title>{`USAW ${title} TV Display`}</title></Helmet>
             <header className="field-lb-presentation-header">
                 <div className="field-lb-presentation-brand">
                     <img src={logo} alt="US Airsoft" />
-                    <h1>All-Time Leaderboard</h1>
+                    <h1 id="field-lb-presentation-title">{title}</h1>
                 </div>
                 <div className="field-lb-presentation-controls">
+                    {periodControls}
                     {!fullscreen && <Link to="/admin">Back to staff</Link>}
                     <button type="button" onClick={toggleFullscreen}>
                         <FontAwesomeIcon icon={fullscreen ? faCompress : faExpand} aria-hidden="true" />
@@ -53,7 +54,7 @@ export default function LeaderboardTvDisplay({ status, playerCount, page, pageCo
                 </div>
             </header>
             {fullscreenError && <p className="field-lb-presentation-notice" role="status">{fullscreenError}</p>}
-            <section className="field-lb-standings field-lb-presentation-standings" aria-label="All-time standings">
+            <section className="field-lb-standings field-lb-presentation-standings" aria-labelledby="field-lb-presentation-title">
                 {status === 'loading' && <p className="field-lb-message" role="status">Loading standings…</p>}
                 {status === 'error' && <p className="field-lb-message" role="alert">Standings are temporarily unavailable.</p>}
                 {status === 'ready' && !hasStandings && <p className="field-lb-message" role="status">No standings are available yet.</p>}

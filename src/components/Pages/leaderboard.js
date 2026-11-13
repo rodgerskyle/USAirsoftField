@@ -120,7 +120,7 @@ function Leaderboard({ firebase, presentation = false }) {
     const { view: legacyView } = useParams();
     const [params, setParams] = useSearchParams();
     const tv = legacyView === 'query=monthly';
-    const monthly = !presentation && (params.get('view') ?? (tv ? 'monthly' : 'all')) === 'monthly';
+    const monthly = (params.get('view') ?? (tv ? 'monthly' : 'all')) === 'monthly';
     const now = new Date();
     const [monthYear, monthNumber] = (params.get('month') ?? '').split('-').map(Number);
     const currentYear = monthYear >= FIRST_YEAR && monthYear <= now.getFullYear() && Number.isInteger(monthYear)
@@ -230,7 +230,7 @@ function Leaderboard({ firebase, presentation = false }) {
         next.set('view', view);
         if (view === 'monthly') next.set('month', `${year}-${String(month + 1).padStart(2, '0')}`);
         else next.delete('month');
-        setParams(next);
+        setParams(next, { replace: presentation });
         setPage(1);
     }
 
@@ -239,9 +239,17 @@ function Leaderboard({ firebase, presentation = false }) {
         setPage(1);
     }
 
+    const periodControls = (
+        <div className="field-lb-period" role="group" aria-label="Ranking period">
+            <button type="button" aria-pressed={!monthly} onClick={() => changePeriod('all')}>All time</button>
+            <button type="button" aria-pressed={monthly} onClick={() => changePeriod('monthly')}>Monthly</button>
+        </div>
+    );
+
     if (presentation) {
         return (
             <LeaderboardTvDisplay status={status} playerCount={standings.length}
+                title={monthly ? `${period} Leaderboard` : 'All-Time Leaderboard'} periodControls={periodControls}
                 page={currentPage} pageCount={pageCount} onPageChange={setPage}>
                 <LeaderboardTable players={visiblePlayers} period={period} featured={featured}
                     prestigeByPlayer={prestigeByPlayer} readOnly />
@@ -275,10 +283,7 @@ function Leaderboard({ firebase, presentation = false }) {
 
             <div className="field-lb-wrap field-lb-content">
                 <div className="field-lb-controls" role="group" aria-label="Standings filters">
-                    <div className="field-lb-period" role="group" aria-label="Ranking period">
-                        <button type="button" aria-pressed={!monthly} onClick={() => changePeriod('all')}>All time</button>
-                        <button type="button" aria-pressed={monthly} onClick={() => changePeriod('monthly')}>Monthly</button>
-                    </div>
+                    {periodControls}
                     {monthly && !tv && (
                         <div className="field-lb-date-controls">
                             <label>
