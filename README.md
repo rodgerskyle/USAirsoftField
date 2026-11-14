@@ -1,3 +1,7 @@
+# USAW website
+
+The [maintainer guide](docs/MAINTAINERS.md) covers local setup, website routes, shared player data, staff workflows, and releases.
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts

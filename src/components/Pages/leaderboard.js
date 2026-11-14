@@ -359,7 +359,7 @@ function Leaderboard({ firebase, presentation = false }) {
 }
 
 export const LEADERBOARD_TV_PATH = '/admin/leaderboard-tv';
-export const AdminLeaderboardTv = withAuthorization(user => Boolean(user?.roles?.[ROLES.ADMIN]), { verifyOnMount: true })(
+export const AdminLeaderboardTv = withAuthorization(user => Boolean(user?.roles?.[ROLES.ADMIN]))(
     function AuthorizedLeaderboardTv(props) {
         return <Leaderboard {...props} presentation />;
     },

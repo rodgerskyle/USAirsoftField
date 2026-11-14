@@ -4,7 +4,7 @@ import '../../App.css';
 import { Container, Row, Col } from 'react-bootstrap/';
 import { Link } from 'react-router-dom';
 import AccountChangeForm from '../../AccountChange';
-import { AuthUserContext, withAuthentication, withAuthorization } from '../session';
+import { AuthUserContext, withAuthorization } from '../session';
 import ImageUpload from './ImageUpload';
 import DisplayNameForm from './DisplayNameForm';
 
@@ -72,9 +72,4 @@ const ProfileSettings = ({ firebase }) => {
 
 const condition = authUser => !!authUser && !authUser.roles?.[ROLES.WAIVER];
 
-export default withAuthorization(condition)(withAuthentication(ProfileSettings));
-
-// export default composeHooks(
-//   withAuthorization(condition),
-//   withAuthentication,
-//   )(ProfileSettings);
+export default withAuthorization(condition)(ProfileSettings);
