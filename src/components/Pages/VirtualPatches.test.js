@@ -99,7 +99,7 @@ afterEach(() => { global.fetch = originalFetch; });
 
 test('loads only the selected patch standings and keeps the full catalog visible', async () => {
   const { container } = renderPage(<VirtualPatches />);
-  expect(container.querySelectorAll('.virtual-patches__wall img')).toHaveLength(61);
+  expect(container.querySelectorAll('.virtual-patches__wall img')).toHaveLength(72);
   const firstPage = await screen.findByRole('table', { name: 'All-time leaderboard' });
   expect(within(firstPage).getByRole('link', { name: user.username }))
     .toHaveAttribute('href', `/profilelookup/${playerId}`);
@@ -178,6 +178,43 @@ test('keeps kiosk accounts on the waiver form', async () => {
   expect(screen.queryByRole('heading', { name: 'Virtual Patches' })).not.toBeInTheDocument();
 });
 
+test('shows achievement criteria and standings for a public patch', async () => {
+  const { container } = renderPage(<VirtualPatches />, { path: '/virtual-patches?badge=buzzer-beater' });
+
+  expect(screen.getByRole('heading', { name: 'Buzzer Beater' })).toBeVisible();
+  expect(screen.getByText(/10 seconds or less on the official game clock/)).toBeVisible();
+  expect(container.querySelector('.virtual-patches__brief img')).toHaveAttribute('src', '/badges/buzzer-beater.png');
+  expect(await screen.findByText('No players have earned this patch yet.')).toBeVisible();
+  expect(getBadgeStandings).toHaveBeenLastCalledWith('buzzer-beater', expect.objectContaining({ page: 1 }));
+});
+
+test('keeps a signed-out viewer from seeing a secret patch on a direct link', () => {
+  const { container } = renderPage(<VirtualPatches />, { path: '/virtual-patches?badge=no-shots-fired' });
+
+  expect(screen.getByRole('heading', { name: 'Secret Achievement 1' })).toHaveFocus();
+  expect(screen.getByRole('button', { name: 'Secret Achievement 2' })).toBeVisible();
+  expect(screen.queryByText('No Shots Fired')).not.toBeInTheDocument();
+  expect(screen.queryByText(/without firing a single BB/)).not.toBeInTheDocument();
+  expect(container.querySelector('.virtual-patches__brief img')).toHaveAttribute('src', '/badges/secret-achievement.png');
+  expect(getMyBadges).not.toHaveBeenCalled();
+  expect(getBadgeStandings).not.toHaveBeenCalled();
+});
+
+test('reveals only the secret patch already earned by a signed-in player', async () => {
+  getMyBadges.mockResolvedValue({ awards: [{ badgeId: 'no-shots-fired', earnedCount: 2 }] });
+  const { container } = renderPage(<VirtualPatches />, { authUser: user });
+  const patch = await screen.findByRole('button', { name: /No Shots Fired/ });
+  expect(within(patch).getByText('Earned ×2')).toBeVisible();
+  expect(screen.getByRole('button', { name: /Secret Achievement 2/ })).toBeVisible();
+
+  fireEvent.click(patch);
+  expect(screen.getByRole('heading', { name: 'No Shots Fired' })).toHaveFocus();
+  expect(screen.getByText(/without firing a single BB/)).toBeVisible();
+  expect(container.querySelector('.virtual-patches__brief img')).toHaveAttribute('src', '/badges/no-shots-fired.png');
+  expect(await screen.findByText('No players have earned this patch yet.')).toBeVisible();
+  expect(getBadgeStandings).toHaveBeenLastCalledWith('no-shots-fired', expect.objectContaining({ page: 1 }));
+});
+
 test('offers the expanded patch collection in the unlocked staff award picker', async () => {
   unlockBadgeStaff.mockResolvedValue({ staffToken: 'test-staff-token', expiresAt: new Date(Date.now() + 60_000).toISOString() });
   renderPage(<AdminBadgeAwards firebase={firebase} players={[]} loading={false} directoryUnavailable={false} />);
@@ -187,14 +224,17 @@ test('offers the expanded patch collection in the unlocked staff award picker', 
 
   const picker = await screen.findByRole('combobox', { name: 'Badge' });
   const patchIds = within(picker).getAllByRole('option').map(option => option.value).filter(Boolean);
-  expect(patchIds).toHaveLength(61);
+  expect(patchIds).toHaveLength(72);
   expect(new Set(patchIds).size).toBe(patchIds.length);
   expect(patchIds).toEqual(expect.arrayContaining([
     'countdown', 'medic', 'blackout-protocol', 'icy-killers',
     'power-rush', 'light-domination', 'six-flag',
+    'tactical-potato', 'spawn-tourist', 'bb-confetti', 'tactical-click', 'bush-camo',
+    'buzzer-beater', 'return-to-sender', 'second-wind', 'human-decoy', 'no-shots-fired', 'wrong-pocket',
   ]));
-  fireEvent.change(picker, { target: { value: 'light-domination' } });
-  expect(screen.getByText('Light Domination', { selector: 'strong' })).toBeVisible();
+  expect(within(picker).getByRole('option', { name: 'Wrong Pocket' })).toHaveValue('wrong-pocket');
+  fireEvent.change(picker, { target: { value: 'wrong-pocket' } });
+  expect(screen.getByText('Wrong Pocket', { selector: 'strong' })).toBeVisible();
 });
 
 test('shows a public featured count without loading private badge records or a leaderboard', async () => {

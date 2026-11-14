@@ -303,5 +303,73 @@
     "id": "amoeba",
     "name": "Amoeba",
     "description": "Staff draft game mode. Recognized by staff for helping turn the round through timely tags and team conversions."
+  },
+  {
+    "id": "tactical-potato",
+    "name": "Tactical Potato",
+    "label": "FIELD ANTICS",
+    "description": "Miss an easy shot, then help capture or defend an objective in the same round."
+  },
+  {
+    "id": "spawn-tourist",
+    "name": "Spawn Tourist",
+    "label": "FIELD ANTICS",
+    "description": "Show up at the wrong spawn and get directions from a referee before the round starts."
+  },
+  {
+    "id": "bb-confetti",
+    "name": "BB Confetti",
+    "label": "FIELD ANTICS",
+    "description": "Finish a round and discover loose BBs collected in your boot or pouch."
+  },
+  {
+    "id": "tactical-click",
+    "name": "Tactical Click",
+    "label": "FIELD ANTICS",
+    "description": "Start a live round with an empty magazine, hear the click, then reload and get back in the game."
+  },
+  {
+    "id": "bush-camo",
+    "name": "Bush Camo",
+    "label": "FIELD ANTICS",
+    "description": "Finish a round and have a teammate point out the twig or leaves your kit picked up along the way."
+  },
+  {
+    "id": "buzzer-beater",
+    "name": "Buzzer Beater",
+    "label": "FIELD ACHIEVEMENT",
+    "description": "Score the tying or winning objective with 10 seconds or less on the official game clock."
+  },
+  {
+    "id": "return-to-sender",
+    "name": "Return to Sender",
+    "label": "FIELD ACHIEVEMENT",
+    "description": "Stop the opposing flag carrier from scoring and complete the flag return under the mode’s rules."
+  },
+  {
+    "id": "second-wind",
+    "name": "Second Wind",
+    "label": "FIELD ACHIEVEMENT",
+    "description": "Get revived by a teammate in a mode that allows revives and score an objective on that same life."
+  },
+  {
+    "id": "human-decoy",
+    "name": "Human Decoy",
+    "label": "FIELD ACHIEVEMENT",
+    "description": "Draw defenders away from an objective so a teammate can score on the same play."
+  },
+  {
+    "id": "no-shots-fired",
+    "name": "No Shots Fired",
+    "label": "SECRET ACHIEVEMENT",
+    "description": "Capture or deliver an objective without firing a single BB that round.",
+    "secret": true
+  },
+  {
+    "id": "wrong-pocket",
+    "name": "Wrong Pocket",
+    "label": "SECRET ACHIEVEMENT",
+    "description": "Reach for a spare magazine, pull out a snack by mistake, and still finish the objective play.",
+    "secret": true
   }
 ]
