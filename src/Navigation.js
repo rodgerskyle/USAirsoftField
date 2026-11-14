@@ -163,7 +163,10 @@ function NavigationLayout({ authUser, profilePic }) {
                 </SiteLink>
                 <nav aria-label="Main navigation" className="usaw-nav__desktop">
                     {waiverOnly ? (
-                        <SiteLink className="usaw-nav__control" to="/dashboard">Dashboard</SiteLink>
+                        <>
+                            <SiteLink className="usaw-nav__control" to="/dashboard">Dashboard</SiteLink>
+                            {!waiverKiosk && <SiteLink className="usaw-nav__control" to="/virtual-patches">Virtual Patches</SiteLink>}
+                        </>
                     ) : (
                         <>
                             {group('visit', 'Plan your visit', VISIT_LINKS)}
@@ -213,6 +216,11 @@ function NavigationLayout({ authUser, profilePic }) {
             {!waiverKiosk && (
                 <nav id="usaw-nav-drawer" className="usaw-nav__drawer" aria-label="Mobile navigation" hidden={open !== 'mobile'}>
                     <div className="usaw-nav__shell usaw-nav__drawer-content">
+                        {waiverOnly && (
+                            <ul className="usaw-nav__links usaw-nav__quick">
+                                <li><SiteLink to="/virtual-patches" onClick={close}>Virtual Patches</SiteLink></li>
+                            </ul>
+                        )}
                         {!waiverOnly && (
                             <>
                                 <ul className="usaw-nav__links usaw-nav__quick">

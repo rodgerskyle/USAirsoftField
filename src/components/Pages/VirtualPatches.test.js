@@ -1,7 +1,7 @@
 import React from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { HelmetProvider } from 'react-helmet-async';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { get, onValue } from 'firebase/database';
 import { getDownloadURL } from 'firebase/storage';
 import { FirebaseContext } from '../Firebase';
@@ -10,7 +10,9 @@ import {
   getBadgeStandings, getFeaturedBadges, getFeaturedBadgeDetails, getMyBadges, setFeaturedBadge, unlockBadgeStaff,
 } from '../constants/playerBadges';
 import { getAllPlayerDisplayNames, getPlayerDisplayNames } from '../constants/playerDisplayNames';
+import Redirect from '../constants/redirect';
 import AdminBadgeAwards from './AdminBadgeAwards';
+import Pricing from './Pricing';
 import VirtualPatches from './VirtualPatches';
 import PlayerProfileView from './PlayerProfileView';
 import Leaderboard from './leaderboard';
@@ -125,6 +127,55 @@ test('loads only the selected patch standings and keeps the full catalog visible
   expect(screen.getByRole('heading', { name: 'Power Rush' })).toHaveFocus();
   expect(getBadgeStandings).toHaveBeenLastCalledWith('power-rush', expect.objectContaining({ page: 1 }));
   expect(container.querySelector('.virtual-patches__brief img')).toHaveAttribute('src', '/badges/power-rush.png');
+});
+
+function renderWaiverViewer(roles) {
+  const waiverUser = { ...user, roles };
+  const session = {
+    ...firebase,
+    onAuthUserListener: (next) => {
+      next(waiverUser);
+      return () => {};
+    },
+  };
+
+  return render(
+    <MemoryRouter initialEntries={['/virtual-patches']} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <FirebaseContext.Provider value={session}>
+        <AuthUserContext.Provider value={waiverUser}>
+          <HelmetProvider>
+            <Redirect />
+            <Routes>
+              <Route path="/virtual-patches" element={<VirtualPatches />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/dashboard/waiverform" element={<h1>Waiver kiosk</h1>} />
+              <Route path="/dashboard" element={<h1>Dashboard</h1>} />
+            </Routes>
+          </HelmetProvider>
+        </AuthUserContext.Provider>
+      </FirebaseContext.Provider>
+    </MemoryRouter>,
+  );
+}
+
+test('lets signed-in waiver players browse standings and open membership pricing', async () => {
+  global.fetch.mockResolvedValue({ ok: false });
+  renderWaiverViewer({ WAIVER: true });
+
+  expect(screen.getByText(/An active USAW membership is required to earn patches/)).toBeVisible();
+  expect(await screen.findByRole('table', { name: 'All-time leaderboard' })).toBeVisible();
+  expect(getMyBadges).not.toHaveBeenCalled();
+  expect(screen.queryByRole('link', { name: 'Manage featured badge' })).not.toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute('href', '/dashboard');
+  fireEvent.click(screen.getByRole('link', { name: 'See membership pricing' }));
+  expect(await screen.findByRole('heading', { name: 'Membership Pricing' })).toBeVisible();
+});
+
+test('keeps kiosk accounts on the waiver form', async () => {
+  renderWaiverViewer({ WAIVER: true, STATIC: true });
+
+  expect(await screen.findByRole('heading', { name: 'Waiver kiosk' })).toBeVisible();
+  expect(screen.queryByRole('heading', { name: 'Virtual Patches' })).not.toBeInTheDocument();
 });
 
 test('offers the expanded patch collection in the unlocked staff award picker', async () => {

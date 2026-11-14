@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useLocation } from 'react-router-dom';
+import { matchPath, useNavigate, useLocation } from 'react-router-dom';
 import { withFirebase } from '../Firebase';
 import * as ROLES from "./roles";
 
@@ -31,13 +31,17 @@ const Redirect = ({ firebase }) => {
 
     useEffect(() => {
         if (user && user.roles[ROLES.WAIVER]) {
+            const { pathname, search } = location;
+            const canBrowsePatches = matchPath('/virtual-patches', pathname);
+            const canViewMembership = matchPath('/pricing', pathname)
+                && new URLSearchParams(search).get('section') === 'membership';
             if (user.roles[ROLES.STATIC] && !staticlocations.includes(location.pathname)) {
                 navigate("/dashboard/waiverform");
-            } else if (!waiverlocations.includes(location.pathname)) {
+            } else if (!waiverlocations.includes(pathname) && !canBrowsePatches && !canViewMembership) {
                 navigate("/dashboard");
             }
         }
-    }, [user, location.pathname, navigate]);
+    }, [user, location, navigate]);
 
     return null;
 };
