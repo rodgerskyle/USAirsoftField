@@ -235,6 +235,21 @@
     "description": "Recognized by staff for activating or defending the team’s EMP briefcase, or stopping the opposing activation."
   },
   {
+    "id": "power-rush",
+    "name": "Power Rush",
+    "description": "Recognized by staff for planting the timed prop, defending a marked objective, or keeping the forward respawn in play."
+  },
+  {
+    "id": "light-domination",
+    "name": "Light Domination",
+    "description": "Recognized by staff for flipping or defending objective lights during a decisive stretch of the round."
+  },
+  {
+    "id": "six-flag",
+    "name": "Six Flag",
+    "description": "Recognized by staff for a decisive flag carry, interception, or supporting play in Six Flag."
+  },
+  {
     "id": "center-flag",
     "name": "Center Flag",
     "description": "Recognized by staff for capturing the neutral flag or securing the route for a teammate in Center Flag."
