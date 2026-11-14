@@ -97,7 +97,7 @@ afterEach(() => { global.fetch = originalFetch; });
 
 test('loads only the selected patch standings and keeps the full catalog visible', async () => {
   const { container } = renderPage(<VirtualPatches />);
-  expect(container.querySelectorAll('.virtual-patches__wall img')).toHaveLength(58);
+  expect(container.querySelectorAll('.virtual-patches__wall img')).toHaveLength(61);
   const firstPage = await screen.findByRole('table', { name: 'All-time leaderboard' });
   expect(within(firstPage).getByRole('link', { name: user.username }))
     .toHaveAttribute('href', `/profilelookup/${playerId}`);
@@ -119,6 +119,12 @@ test('loads only the selected patch standings and keeps the full catalog visible
   expect(screen.getByRole('heading', { name: 'Blackout Protocol' })).toHaveFocus();
   expect(getBadgeStandings).toHaveBeenLastCalledWith('blackout-protocol', expect.objectContaining({ page: 1 }));
   expect(container.querySelector('.virtual-patches__brief img')).toHaveAttribute('src', '/badges/blackout-protocol.png');
+
+  fireEvent.click(screen.getByRole('button', { name: 'Power Rush' }));
+  expect(await screen.findByText('No players have earned this patch yet.')).toBeVisible();
+  expect(screen.getByRole('heading', { name: 'Power Rush' })).toHaveFocus();
+  expect(getBadgeStandings).toHaveBeenLastCalledWith('power-rush', expect.objectContaining({ page: 1 }));
+  expect(container.querySelector('.virtual-patches__brief img')).toHaveAttribute('src', '/badges/power-rush.png');
 });
 
 test('offers the expanded patch collection in the unlocked staff award picker', async () => {
@@ -130,11 +136,14 @@ test('offers the expanded patch collection in the unlocked staff award picker', 
 
   const picker = await screen.findByRole('combobox', { name: 'Badge' });
   const patchIds = within(picker).getAllByRole('option').map(option => option.value).filter(Boolean);
-  expect(patchIds).toHaveLength(58);
+  expect(patchIds).toHaveLength(61);
   expect(new Set(patchIds).size).toBe(patchIds.length);
-  expect(patchIds).toEqual(expect.arrayContaining(['countdown', 'medic', 'blackout-protocol', 'icy-killers']));
-  fireEvent.change(picker, { target: { value: 'blackout-protocol' } });
-  expect(screen.getByText('Blackout Protocol', { selector: 'strong' })).toBeVisible();
+  expect(patchIds).toEqual(expect.arrayContaining([
+    'countdown', 'medic', 'blackout-protocol', 'icy-killers',
+    'power-rush', 'light-domination', 'six-flag',
+  ]));
+  fireEvent.change(picker, { target: { value: 'light-domination' } });
+  expect(screen.getByText('Light Domination', { selector: 'strong' })).toBeVisible();
 });
 
 test('shows a public featured count without loading private badge records or a leaderboard', async () => {
