@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Container, Row, Col, Button } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faClock, faUsers, faShieldAlt, faTicketAlt } from '@fortawesome/free-solid-svg-icons';
@@ -175,7 +175,9 @@ const ContactCta = () => (
 );
 
 const Pricing = () => {
-    const [activeSection, setActiveSection] = useState(null);
+    const [params] = useSearchParams();
+    const [activeSection, setActiveSection] = useState(() =>
+        params.get('section') === PRICING_SECTIONS.MEMBERSHIP ? PRICING_SECTIONS.MEMBERSHIP : null);
     const activeMeta = SECTION_META[activeSection];
     const { resources, failed } = useFieldResources();
 

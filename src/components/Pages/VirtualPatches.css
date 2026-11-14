@@ -31,6 +31,15 @@
   color: #e0e9f3;
 }
 
+.virtual-patches__hero .virtual-patches__membership {
+  margin-top: 12px;
+}
+
+.virtual-patches__membership a {
+  color: #cbe2ff;
+  text-underline-offset: 3px;
+}
+
 .virtual-patches__back {
   display: inline-flex;
   align-items: center;

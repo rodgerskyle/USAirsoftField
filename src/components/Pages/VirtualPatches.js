@@ -129,7 +129,8 @@ function VirtualPatches({ firebase }) {
   const [params, setParams] = useSearchParams();
   const requestedBadge = badgeById[params.get('badge')];
   const badge = requestedBadge || BADGE_CATALOG[0];
-  const memberId = authUser?.roles?.[WAIVER] ? null : authUser?.uid;
+  const waiverOnly = Boolean(authUser?.roles?.[WAIVER]);
+  const memberId = waiverOnly ? null : authUser?.uid;
   const counts = useOwnPatchCounts(firebase, memberId);
   const detailHeading = useRef(null);
   const catalogHeading = useRef(null);
@@ -146,11 +147,15 @@ function VirtualPatches({ firebase }) {
       </Helmet>
       <header className="virtual-patches__hero">
         <div className="virtual-patches__wrap">
-          <Link className="virtual-patches__back" to="/player-hub">
-            <FontAwesomeIcon icon={faArrowLeft} aria-hidden="true" /> Player Hub
+          <Link className="virtual-patches__back" to={waiverOnly ? '/dashboard' : '/player-hub'}>
+            <FontAwesomeIcon icon={faArrowLeft} aria-hidden="true" /> {waiverOnly ? 'Dashboard' : 'Player Hub'}
           </Link>
           <h1 id="virtual-patches-title">Virtual Patches</h1>
           <p>Select a patch for its award criteria and all-time standings.</p>
+          <p className="virtual-patches__membership">
+            Anyone can browse. An active USAW membership is required to earn patches.{' '}
+            <Link to="/pricing?section=membership">See membership pricing</Link>
+          </p>
         </div>
       </header>
       <div className="virtual-patches__wrap virtual-patches__content">
