@@ -13,6 +13,19 @@ import './VirtualPatches.css';
 
 const STANDINGS_PAGE_SIZE = 25;
 const formatCount = new Intl.NumberFormat('en-US');
+const secretPatches = BADGE_CATALOG.filter(patch => patch.secret);
+const secretPatchArt = `${process.env.PUBLIC_URL || ''}/badges/secret-achievement.png`;
+
+function patchDisplay(patch, earnedCount) {
+  if (!patch.secret || earnedCount) return patch;
+  const secretSlot = secretPatches.indexOf(patch) + 1;
+  return {
+    name: `Secret Achievement ${secretSlot}`,
+    artUrl: secretPatchArt,
+    description: 'Earn this patch to reveal its artwork and unlock condition.',
+    secretSlot,
+  };
+}
 
 function useOwnPatchCounts(firebase, memberId) {
   const [record, setRecord] = useState(null);
@@ -127,11 +140,12 @@ function PatchStandings({ badge, firebase }) {
 function VirtualPatches({ firebase }) {
   const authUser = useContext(AuthUserContext);
   const [params, setParams] = useSearchParams();
-  const requestedBadge = badgeById[params.get('badge')];
+  const requestedBadge = badgeById[params.get('badge')] || secretPatches[Number(params.get('secret')) - 1];
   const badge = requestedBadge || BADGE_CATALOG[0];
   const waiverOnly = Boolean(authUser?.roles?.[WAIVER]);
   const memberId = waiverOnly ? null : authUser?.uid;
   const counts = useOwnPatchCounts(firebase, memberId);
+  const displayedBadge = patchDisplay(badge, counts?.[badge.id]);
   const detailHeading = useRef(null);
   const catalogHeading = useRef(null);
 
@@ -165,35 +179,39 @@ function VirtualPatches({ firebase }) {
             {memberId && <Link className="virtual-patches__return" to="/account?section=badges">Manage featured badge</Link>}
           </div>
           <ul className="virtual-patches__wall">
-            {BADGE_CATALOG.map(patch => (
-              <li key={patch.id}>
-                <button className="virtual-patches__tile" type="button" aria-pressed={badge.id === patch.id}
-                  aria-controls="virtual-patch-detail"
-                  onClick={() => {
-                    if (requestedBadge === patch) detailHeading.current?.focus();
-                    else setParams({ badge: patch.id });
-                  }}>
-                  <img src={patch.artUrl} alt="" width="144" height="144" loading="lazy" decoding="async" />
-                  <strong>{patch.name}</strong>
-                  {counts && (
-                    <span className="virtual-patches__personal-count" data-earned={Boolean(counts[patch.id])}>
-                      {counts[patch.id] ? `Earned ×${formatCount.format(counts[patch.id])}` : 'Not yet earned'}
-                    </span>
-                  )}
-                </button>
-              </li>
-            ))}
+            {BADGE_CATALOG.map(patch => {
+              const display = patchDisplay(patch, counts?.[patch.id]);
+              return (
+                <li key={patch.id}>
+                  <button className="virtual-patches__tile" type="button" aria-pressed={badge.id === patch.id}
+                    aria-controls="virtual-patch-detail"
+                    onClick={() => {
+                      if (requestedBadge === patch) detailHeading.current?.focus();
+                      else if (display.secretSlot) setParams({ secret: display.secretSlot });
+                      else setParams({ badge: patch.id });
+                    }}>
+                    <img src={display.artUrl} alt="" width="144" height="144" loading="lazy" decoding="async" />
+                    <strong>{display.name}</strong>
+                    {counts && (
+                      <span className="virtual-patches__personal-count" data-earned={Boolean(counts[patch.id])}>
+                        {counts[patch.id] ? `Earned ×${formatCount.format(counts[patch.id])}` : 'Not yet earned'}
+                      </span>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </section>
         <section className="virtual-patches__detail" id="virtual-patch-detail" aria-labelledby="virtual-patch-detail-title">
           <header className="virtual-patches__brief">
-            <img src={badge.artUrl} alt="" width="144" height="144" decoding="async" />
+            <img src={displayedBadge.artUrl} alt="" width="144" height="144" decoding="async" />
             <div>
-              <h2 id="virtual-patch-detail-title" tabIndex={-1} ref={detailHeading}>{badge.name}</h2>
-              <p>{badge.description}</p>
+              <h2 id="virtual-patch-detail-title" tabIndex={-1} ref={detailHeading}>{displayedBadge.name}</h2>
+              <p>{displayedBadge.description}</p>
             </div>
           </header>
-          <PatchStandings key={badge.id} badge={badge} firebase={firebase} />
+          {!displayedBadge.secretSlot && <PatchStandings key={badge.id} badge={badge} firebase={firebase} />}
           <button className="virtual-patches__return" type="button" onClick={() => catalogHeading.current?.focus()}>
             Back to patch collection
           </button>
