@@ -14,7 +14,7 @@ import { badgeById, getFeaturedBadges } from '../constants/playerBadges';
 import { getAllPlayerDisplayNames } from '../constants/playerDisplayNames';
 import { getLeaderboardPrestige, prestigeCyclePoints, profileRank } from '../constants/playerPrestige';
 import { withFirebase } from '../Firebase';
-import { AuthUserContext, withAuthorization } from '../session';
+import { AuthUserContext } from '../session';
 import LeaderboardTvDisplay from './LeaderboardTvDisplay';
 import { PrestigeEmblem } from './PlayerPrestige';
 import './leaderboard.css';
@@ -246,6 +246,7 @@ function Leaderboard({ firebase, presentation = false }) {
         return (
             <LeaderboardTvDisplay status={status} playerCount={standings.length}
                 title={monthly ? `${period} Leaderboard` : 'All-Time Leaderboard'} periodControls={periodControls}
+                showStaffLink={Boolean(authUser?.roles?.[ROLES.ADMIN])}
                 onLoadMore={tvBatchCount < totalBatches ? () => setTvBatchCount(tvBatchCount + 1) : undefined}>
                 <LeaderboardTable playerBatches={playerBatches} period={period} readOnly />
             </LeaderboardTvDisplay>
@@ -359,10 +360,8 @@ function Leaderboard({ firebase, presentation = false }) {
 }
 
 export const LEADERBOARD_TV_PATH = '/admin/leaderboard-tv';
-export const AdminLeaderboardTv = withAuthorization(user => Boolean(user?.roles?.[ROLES.ADMIN]), { verifyOnMount: true })(
-    function AuthorizedLeaderboardTv(props) {
-        return <Leaderboard {...props} presentation />;
-    },
-);
+export const PublicLeaderboardTv = withFirebase(function PublicLeaderboardTv(props) {
+    return <Leaderboard {...props} presentation />;
+});
 
 export default withFirebase(Leaderboard);

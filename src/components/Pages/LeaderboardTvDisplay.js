@@ -6,7 +6,7 @@ import { faCompress, faExpand } from '@fortawesome/free-solid-svg-icons';
 import logo from '../../assets/usairsoft-small-logo.png';
 import './LeaderboardTvDisplay.css';
 
-export default function LeaderboardTvDisplay({ title, periodControls, status, playerCount, onLoadMore, children }) {
+export default function LeaderboardTvDisplay({ title, periodControls, status, playerCount, onLoadMore, showStaffLink, children }) {
     const displayRef = useRef(null);
     const standingsRef = useRef(null);
     const [fullscreen, setFullscreen] = useState(false);
@@ -50,7 +50,10 @@ export default function LeaderboardTvDisplay({ title, periodControls, status, pl
 
     return (
         <main ref={displayRef} className="field-lb field-lb-presentation">
-            <Helmet><title>{`USAW ${title} TV Display`}</title></Helmet>
+            <Helmet>
+                <title>{`USAW ${title} TV Display`}</title>
+                <meta name="robots" content="noindex, nofollow" />
+            </Helmet>
             <header className="field-lb-presentation-header">
                 <div className="field-lb-presentation-brand">
                     <img src={logo} alt="US Airsoft" />
@@ -58,7 +61,7 @@ export default function LeaderboardTvDisplay({ title, periodControls, status, pl
                 </div>
                 <div className="field-lb-presentation-controls">
                     {periodControls}
-                    {!fullscreen && <Link to="/admin">Back to staff</Link>}
+                    {showStaffLink && !fullscreen && <Link to="/admin">Back to staff</Link>}
                     <button type="button" onClick={toggleFullscreen}>
                         <FontAwesomeIcon icon={fullscreen ? faCompress : faExpand} aria-hidden="true" />
                         {fullscreen ? 'Exit full screen' : 'Full screen'}

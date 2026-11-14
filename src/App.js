@@ -18,7 +18,7 @@ import EnterWins from './components/Pages/enterwins';
 import EnterLosses from './components/Pages/enterlosses';
 import FreeGames from './components/Pages/freegames';
 // import Migration from './components/Pages/migrate';
-import Leaderboard, { AdminLeaderboardTv, LEADERBOARD_TV_PATH } from './components/Pages/leaderboard';
+import Leaderboard, { PublicLeaderboardTv, LEADERBOARD_TV_PATH } from './components/Pages/leaderboard';
 import ProfileLookup from './components/Pages/Profilelookup';
 import Pricing from './components/Pages/Pricing';
 import Teams from './components/Pages/Teams';
@@ -57,7 +57,7 @@ const App = () => (
   <Router>
     <a className="field-skip-link" href="#field-content" onClick={focusContent}>Skip to content</a>
     <ScrollToTop />
-    <Redirect />
+    <AccountRedirectRoute />
     <NavigationRoute />
     <div id="field-content" tabIndex={-1}>
     <Routes>
@@ -91,7 +91,7 @@ const App = () => (
       <Route exact path="/profilelookup/:id" element={<ProfileLookup />} />
       <Route exact path="/profilesettings" element={<ProfileSettings />} />
       <Route exact path="/admin" element={<Admin />} />
-      <Route path={LEADERBOARD_TV_PATH} element={<AdminLeaderboardTv />} />
+      <Route path={LEADERBOARD_TV_PATH} element={<PublicLeaderboardTv />} />
       <Route exact path="/admin/signup" element={<SignUpForm />} />
       <Route exact path="/admin/waiverform" element={<WaiverForm />} />
       <Route exact path="/admin/waiverlookup" element={<WaiverLookup />} />
@@ -141,6 +141,11 @@ function focusContent(event) {
 
 function LoginRoute() {
   return <div><Login /></div>
+}
+
+function AccountRedirectRoute() {
+  const tvDisplay = useMatch(LEADERBOARD_TV_PATH);
+  return tvDisplay ? null : <Redirect />;
 }
 
 function CookieConsentRoute() {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { HelmetProvider } from 'react-helmet-async';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { onValue } from 'firebase/database';
@@ -8,7 +8,7 @@ import { AuthUserContext } from '../session';
 import { getFeaturedBadges } from '../constants/playerBadges';
 import { getAllPlayerDisplayNames } from '../constants/playerDisplayNames';
 import { getLeaderboardPrestige } from '../constants/playerPrestige';
-import { AdminLeaderboardTv, LEADERBOARD_TV_PATH } from './leaderboard';
+import { PublicLeaderboardTv, LEADERBOARD_TV_PATH } from './leaderboard';
 
 jest.mock('../Firebase', () => {
     const context = jest.requireActual('../Firebase/context');
@@ -33,36 +33,31 @@ const fixtures = {
     hidden: { name: 'Waiver Only', points: 700, roles: { WAIVER: true } },
 };
 
-function renderTv(cachedUser) {
-    let onAuthChange;
-    let onSignedOut;
-    const unsubscribe = jest.fn();
+function renderTv(user = null) {
     const firebase = {
         users: () => 'players',
-        onAuthUserListener: (success, fallback) => {
-            onAuthChange = success;
-            onSignedOut = fallback;
-            return unsubscribe;
-        },
+        onAuthUserListener: jest.fn(),
     };
-    render(
+    const route = authUser => (
         <MemoryRouter initialEntries={[LEADERBOARD_TV_PATH]}
             future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <FirebaseContext.Provider value={firebase}>
-                <AuthUserContext.Provider value={cachedUser}>
+                <AuthUserContext.Provider value={authUser}>
                     <HelmetProvider>
                         <Routes>
-                            <Route path={LEADERBOARD_TV_PATH} element={<AdminLeaderboardTv />} />
+                            <Route path={LEADERBOARD_TV_PATH} element={<PublicLeaderboardTv />} />
                             <Route path="/login" element={<h1>Sign in</h1>} />
                         </Routes>
                     </HelmetProvider>
                 </AuthUserContext.Provider>
             </FirebaseContext.Provider>
-        </MemoryRouter>,
+        </MemoryRouter>
     );
+    const { rerender, unmount } = render(route(user));
     return {
-        verify: user => act(() => user ? onAuthChange(user) : onSignedOut()),
-        unsubscribe,
+        setUser: next => rerender(route(next)),
+        onAuthUserListener: firebase.onAuthUserListener,
+        unmount,
     };
 }
 
@@ -81,19 +76,20 @@ beforeEach(() => {
     });
 });
 
-test.each([null, member])('requires fresh website admin verification for a direct TV URL', verifiedUser => {
-    const session = renderTv(admin);
-    expect(screen.queryByText('All-Time Leaderboard')).not.toBeInTheDocument();
-    expect(onValue).not.toHaveBeenCalled();
-    session.verify(verifiedUser);
-    expect(screen.getByRole('heading', { name: 'Sign in' })).toBeInTheDocument();
-    expect(onValue).not.toHaveBeenCalled();
-    expect(session.unsubscribe).toHaveBeenCalledTimes(1);
+test.each([null, member])('opens the direct TV URL without admin access (%p)', async user => {
+    const session = renderTv(user);
+    const board = screen.getByRole('table', { name: 'All time player standings' });
+    expect(await within(board).findByText('Prestige 2')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'All-Time Leaderboard' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Sign in' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Back to staff' })).not.toBeInTheDocument();
+    expect(session.onAuthUserListener).not.toHaveBeenCalled();
+    await waitFor(() => expect(document.head.querySelector('meta[name="robots"]'))
+        .toHaveAttribute('content', 'noindex, nofollow'));
 });
 
 test('renders and updates the same all-time standings as read-only TV rows', async () => {
-    const session = renderTv(admin);
-    session.verify(admin);
+    const session = renderTv();
     const board = screen.getByRole('table', { name: 'All time player standings' });
     expect(within(board).getAllByRole('row')[1]).toHaveTextContent('Bravo');
     expect(within(board).queryByText('Waiver Only')).not.toBeInTheDocument();
@@ -108,14 +104,13 @@ test('renders and updates the same all-time standings as read-only TV rows', asy
 
     await act(async () => publish({ ...fixtures, alpha: { ...fixtures.alpha, points: 160 } }));
     expect(within(board).getAllByRole('row')[1]).toHaveTextContent('Alpha');
-    session.verify(null);
+    session.unmount();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
     expect(stopScores).toHaveBeenCalledTimes(1);
 });
 
 test('scrolls through additional standings and resets to the top when switching periods in fullscreen', async () => {
-    const session = renderTv(admin);
-    session.verify(admin);
+    renderTv();
     const now = new Date();
     const month = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     const gameDate = `${now.getFullYear()}-${now.getMonth()}-1`;
@@ -205,7 +200,7 @@ test('scrolls through additional standings and resets to the top when switching 
             document.dispatchEvent(new Event('fullscreenchange'));
         });
         expect(screen.getByRole('button', { name: 'Full screen' })).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'Back to staff' })).toHaveAttribute('href', '/admin');
+        expect(screen.queryByRole('link', { name: 'Back to staff' })).not.toBeInTheDocument();
     } finally {
         if (fullscreenDescriptor) Object.defineProperty(document, 'fullscreenElement', fullscreenDescriptor);
         else delete document.fullscreenElement;
@@ -214,9 +209,17 @@ test('scrolls through additional standings and resets to the top when switching 
     }
 });
 
-test('keeps the presentation visible when the browser rejects fullscreen', async () => {
+test('keeps the TV display open when staff signs out', async () => {
     const session = renderTv(admin);
-    session.verify(admin);
+    expect(screen.getByRole('link', { name: 'Back to staff' })).toHaveAttribute('href', '/admin');
+    await act(async () => session.setUser(null));
+    expect(screen.queryByRole('link', { name: 'Back to staff' })).not.toBeInTheDocument();
+    expect(screen.getByRole('table', { name: 'All time player standings' })).toBeInTheDocument();
+    expect(onValue).toHaveBeenCalledTimes(1);
+});
+
+test('keeps the presentation visible when the browser rejects fullscreen', async () => {
+    renderTv();
     screen.getByRole('main').requestFullscreen = jest.fn().mockRejectedValue(new Error('Permission denied'));
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Full screen' })));
     expect(screen.getByRole('status')).toHaveTextContent('Use your browser’s full screen option');
