@@ -1,27 +1,25 @@
 import React from 'react';
 import { withRouter } from '../constants/withRouter';
-
-
 import { withFirebase } from '../Firebase';
 import AuthUserContext from './context';
 
-
-const withAuthorization = (condition, { verifyOnMount = false } = {}) => Component => {
+const withAuthorization = condition => Component => {
     class WithAuthorization extends React.Component {
         state = { verifiedUid: null };
 
         componentDidMount() {
+            const clearVerification = () => this.setState({ verifiedUid: null });
             const deny = () => {
-                if (verifyOnMount) this.setState({ verifiedUid: null });
+                clearVerification();
                 this.props.router.navigate("/login");
             };
             this.listener = this.props.firebase.onAuthUserListener((authUser) => {
-                if (!condition(authUser)) {
+                if (!authUser?.uid || !condition(authUser)) {
                     deny();
-                } else if (verifyOnMount) {
+                } else {
                     this.setState({ verifiedUid: authUser.uid });
                 }
-            }, deny);
+            }, deny, { watchProfile: true, onPending: clearVerification });
         }
 
         componentWillUnmount() {
@@ -32,9 +30,8 @@ const withAuthorization = (condition, { verifyOnMount = false } = {}) => Compone
             return (
                 <AuthUserContext.Consumer>
                     {authUser =>
-                        condition(authUser) && (!verifyOnMount ||
-                            (this.state.verifiedUid && this.state.verifiedUid === authUser.uid))
-                            ? <Component {...this.props} /> : null
+                        this.state.verifiedUid && this.state.verifiedUid === authUser?.uid && condition(authUser)
+                            ? <Component key={authUser.uid} {...this.props} /> : null
                     }
                 </AuthUserContext.Consumer>
             );
@@ -42,11 +39,6 @@ const withAuthorization = (condition, { verifyOnMount = false } = {}) => Compone
     }
 
     return withRouter(withFirebase(WithAuthorization));
-
-    // return composeHooks(
-    //     withRouter,
-    //     withFirebase,
-    // )(WithAuthorization);
 };
 
 export default withAuthorization;

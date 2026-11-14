@@ -5,24 +5,19 @@ import { withFirebase } from '../Firebase';
 
 const withAuthentication = Component => {
     class WithAuthentication extends React.Component {
-        constructor(props) {
-            super(props);
-
-            this.state = {
-                authUser: JSON.parse(localStorage.getItem('authUser')),
-            };
-        }
+        state = { authUser: null };
 
         componentDidMount() {
+            try {
+                localStorage.removeItem('authUser');
+            } catch {
+                // The auth context also works when browser storage is blocked.
+            }
+            const clearUser = () => this.setState({ authUser: null });
             this.listener = this.props.firebase.onAuthUserListener(
-                authUser => {
-                    localStorage.setItem('authUser', JSON.stringify(authUser));
-                    this.setState({ authUser });
-                },
-                () => {
-                    localStorage.removeItem('authUser');
-                    this.setState({ authUser: null });
-                },
+                authUser => this.setState({ authUser }),
+                clearUser,
+                { watchProfile: true, onPending: clearUser },
             );
         }
 

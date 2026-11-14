@@ -230,4 +230,4 @@ function ScoreEntry({ firebase, outcome }) {
 
 const isAdmin = user => Boolean(user?.roles?.[ADMIN]);
 
-export default withAuthorization(isAdmin, { verifyOnMount: true })(withFirebase(ScoreEntry));
+export default withAuthorization(isAdmin)(withFirebase(ScoreEntry));

@@ -4,8 +4,7 @@ import {
     signOut, sendPasswordResetEmail, updatePassword, updateEmail,
     reauthenticateWithCredential
 } from 'firebase/auth';
-import { ref as db_ref } from 'firebase/database';
-import { get, getDatabase } from 'firebase/database';
+import { get, getDatabase, onValue, ref as db_ref } from 'firebase/database';
 import { ref as st_ref } from 'firebase/storage';
 import { getStorage } from 'firebase/storage';
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -59,28 +58,61 @@ class Firebase {
         reauthenticateWithCredential(this.auth.currentUser, this.ns_auth.EmailAuthProvider.credential(email, password));
 
     // *** Merge Auth and DB User API *** //
-    onAuthUserListener = (next, fallback) =>
-        this.auth.onAuthStateChanged(authUser => {
-            if (authUser) {
-                get(this.user(authUser.uid))
-                    .then((snapshot) => {
-                        const dbUser = snapshot.val();
-                        // default empty roles
-                        if (!dbUser.roles) {
-                            dbUser.roles = [];
-                        }
-                        // merge auth and db user
-                        authUser = {
-                            uid: authUser.uid,
-                            email: authUser.email,
-                            ...dbUser,
-                        };
-                        next(authUser);
-                    });
-            } else {
+    onAuthUserListener = (next, fallback, { watchProfile = false, onPending } = {}) => {
+        let active = true;
+        let request = 0;
+        let stopProfile;
+
+        const stopAuth = this.auth.onAuthStateChanged(authUser => {
+            if (!active || this.auth.currentUser?.uid !== authUser?.uid) return;
+            const current = ++request;
+            stopProfile?.();
+            stopProfile = undefined;
+
+            if (!authUser) {
                 fallback();
+                return;
+            }
+
+            onPending?.();
+            const isCurrent = () => request === current && this.auth.currentUser?.uid === authUser.uid;
+            const handleUnavailable = () => {
+                if (isCurrent()) fallback();
+            };
+            const handleProfile = snapshot => {
+                if (!isCurrent()) return;
+                const dbUser = snapshot.val();
+                if (!dbUser || typeof dbUser !== 'object' || Array.isArray(dbUser)) {
+                    fallback();
+                    return;
+                }
+
+                const roles = dbUser.roles;
+                next({
+                    ...dbUser,
+                    roles: roles && typeof roles === 'object' && !Array.isArray(roles) ? roles : {},
+                    uid: authUser.uid,
+                    email: this.auth.currentUser.email,
+                });
+            };
+
+            const accountRef = this.user(authUser.uid);
+            if (watchProfile) {
+                const unsubscribe = onValue(accountRef, handleProfile, handleUnavailable);
+                if (isCurrent()) stopProfile = unsubscribe;
+                else unsubscribe();
+            } else {
+                get(accountRef).then(handleProfile, handleUnavailable);
             }
         });
+
+        return () => {
+            active = false;
+            request += 1;
+            stopAuth();
+            stopProfile?.();
+        };
+    };
 
     // Functions API
 

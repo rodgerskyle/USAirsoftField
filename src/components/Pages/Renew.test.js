@@ -21,6 +21,7 @@ jest.mock('react-signature-canvas', () => {
 });
 
 function renderRenewal(path = '/admin/renewal', authUser = { roles: { ADMIN: true } }) {
+    const signedInUser = authUser && { uid: 'staff-account', ...authUser };
     const unsubscribeUsers = jest.fn();
     onValue.mockImplementation(() => unsubscribeUsers);
     const firebase = {
@@ -29,7 +30,7 @@ function renderRenewal(path = '/admin/renewal', authUser = { roles: { ADMIN: tru
             let active = true;
             Promise.resolve().then(() => {
                 if (!active) return;
-                if (authUser) next(authUser);
+                if (signedInUser) next(signedInUser);
                 else fallback();
             });
             return () => { active = false; };
@@ -39,7 +40,7 @@ function renderRenewal(path = '/admin/renewal', authUser = { roles: { ADMIN: tru
     const view = render(
         <MemoryRouter initialEntries={[path]} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <FirebaseContext.Provider value={firebase}>
-                <AuthUserContext.Provider value={authUser}>
+                <AuthUserContext.Provider value={signedInUser}>
                     <HelmetProvider>
                         <Routes>
                             <Route path="/admin/renewal/:id?" element={<RenewSubscription />} />
@@ -62,8 +63,9 @@ function renderRenewal(path = '/admin/renewal', authUser = { roles: { ADMIN: tru
 
 beforeEach(() => onValue.mockReset());
 
-test('lists legacy members safely and preserves renewal date order and formatting', () => {
+test('lists legacy members safely and preserves renewal date order and formatting', async () => {
     const { loadUsers } = renderRenewal();
+    await screen.findByRole('status');
     loadUsers({
         latest: { name: 'Latest Player', username: 'latest', renewal: '12-4-2026' },
         legacy: { name: 'Legacy Player' },
@@ -89,9 +91,9 @@ test('lists legacy members safely and preserves renewal date order and formattin
     expect(screen.queryByText(/Latest Player/)).not.toBeInTheDocument();
 });
 
-test('handles a missing member link without exposing the waiver', () => {
+test('handles a missing member link without exposing the waiver', async () => {
     const { loadUsers } = renderRenewal('/admin/renewal/missing');
-    expect(screen.getByRole('status')).toHaveTextContent('Loading members');
+    expect(await screen.findByRole('status')).toHaveTextContent('Loading members');
     expect(screen.queryByText('Renewal Agreement')).not.toBeInTheDocument();
     loadUsers({ found: { name: 'Existing Player', username: 'existing', renewal: 'N/A' } });
 
@@ -102,24 +104,26 @@ test('handles a missing member link without exposing the waiver', () => {
     expect(screen.getByText(/Existing Player/)).toBeInTheDocument();
 });
 
-test('reports an empty directory and unsubscribes on unmount', () => {
+test('reports an empty directory and unsubscribes on unmount', async () => {
     const { loadUsers, unsubscribeUsers, unmount } = renderRenewal();
-    expect(screen.getByRole('status')).toHaveTextContent('Loading members');
+    expect(await screen.findByRole('status')).toHaveTextContent('Loading members');
     loadUsers(null);
     expect(screen.getByText('No members found.')).toBeInTheDocument();
     unmount();
     expect(unsubscribeUsers).toHaveBeenCalledTimes(1);
 });
 
-test('reports a directory read failure', () => {
+test('reports a directory read failure', async () => {
     const { failLoad } = renderRenewal();
+    await screen.findByRole('status');
     failLoad();
     expect(screen.getByRole('alert')).toHaveTextContent('Could not load the member directory');
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
 });
 
-test('opens the existing signed-waiver form when waiver staff select a member', () => {
+test('opens the existing signed-waiver form when waiver staff select a member', async () => {
     const { loadUsers } = renderRenewal('/dashboard/renewal', { roles: { WAIVER: true } });
+    await screen.findByRole('status');
     loadUsers({ found: { name: 'Existing Player', username: 'existing', renewal: 'N/A' } });
     fireEvent.click(screen.getByRole('button', { name: 'Renew' }));
     expect(screen.getByText('Renewal Agreement')).toBeInTheDocument();
