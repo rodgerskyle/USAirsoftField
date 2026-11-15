@@ -18,7 +18,8 @@ import EnterWins from './components/Pages/enterwins';
 import EnterLosses from './components/Pages/enterlosses';
 import FreeGames from './components/Pages/freegames';
 // import Migration from './components/Pages/migrate';
-import Leaderboard, { PublicLeaderboardTv, LEADERBOARD_TV_PATH } from './components/Pages/leaderboard';
+import Leaderboard, { LegacyLeaderboardTvRedirect, LEGACY_LEADERBOARD_TV_PATH } from './components/Pages/leaderboard';
+import TeamLeaderboard from './components/Pages/TeamLeaderboard';
 import ProfileLookup from './components/Pages/Profilelookup';
 import Pricing from './components/Pages/Pricing';
 import Teams from './components/Pages/Teams';
@@ -57,7 +58,7 @@ const App = () => (
   <Router>
     <a className="field-skip-link" href="#field-content" onClick={focusContent}>Skip to content</a>
     <ScrollToTop />
-    <AccountRedirectRoute />
+    <Redirect />
     <NavigationRoute />
     <div id="field-content" tabIndex={-1}>
     <Routes>
@@ -91,7 +92,7 @@ const App = () => (
       <Route exact path="/profilelookup/:id" element={<ProfileLookup />} />
       <Route exact path="/profilesettings" element={<ProfileSettings />} />
       <Route exact path="/admin" element={<Admin />} />
-      <Route path={LEADERBOARD_TV_PATH} element={<PublicLeaderboardTv />} />
+      <Route path={LEGACY_LEADERBOARD_TV_PATH} element={<LegacyLeaderboardTvRedirect />} />
       <Route exact path="/admin/signup" element={<SignUpForm />} />
       <Route exact path="/admin/waiverform" element={<WaiverForm />} />
       <Route exact path="/admin/waiverlookup" element={<WaiverLookup />} />
@@ -119,6 +120,7 @@ const App = () => (
       <Route exact path="/logout" element={<Logout />} />
       <Route exact path="/leaderboard" element={<Leaderboard />} />
       <Route path="/leaderboard/:view" element={<Leaderboard />} />
+      <Route path="/team-leaderboard" element={<TeamLeaderboard />} />
       <Route exact path="/pricing" element={<Pricing />} />
       <Route exact path="/information/pricing" element={<Navigate to="/pricing" replace />} />
       <Route exact path="/home" element={<Home />} />
@@ -143,18 +145,20 @@ function LoginRoute() {
   return <div><Login /></div>
 }
 
-function AccountRedirectRoute() {
-  const tvDisplay = useMatch(LEADERBOARD_TV_PATH);
-  return tvDisplay ? null : <Redirect />;
+function useLeaderboardTvDisplay() {
+  const legacy = useMatch(LEGACY_LEADERBOARD_TV_PATH);
+  const leaderboard = useMatch('/leaderboard/:view?');
+  const { search } = useLocation();
+  return Boolean(legacy || (leaderboard && new URLSearchParams(search).get('display') === 'tv'));
 }
 
 function CookieConsentRoute() {
-  const tvDisplay = useMatch(LEADERBOARD_TV_PATH);
+  const tvDisplay = useLeaderboardTvDisplay();
   return tvDisplay ? null : <CookieConsent>This website uses cookies to enhance the user experience.</CookieConsent>;
 }
 
 function NavigationRoute() {
-  const tvDisplay = useMatch(LEADERBOARD_TV_PATH);
+  const tvDisplay = useLeaderboardTvDisplay();
   const [nav, showNav] = useState(true);
   let location = useLocation();
   React.useEffect(() => {
@@ -170,7 +174,7 @@ function NavigationRoute() {
 }
 
 function FooterRoute() {
-  const tvDisplay = useMatch(LEADERBOARD_TV_PATH);
+  const tvDisplay = useLeaderboardTvDisplay();
   const [footer, showFooter] = useState(true);
   let location = useLocation();
   React.useEffect(() => {

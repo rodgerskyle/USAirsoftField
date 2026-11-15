@@ -16,6 +16,7 @@ const FIELD_LINKS = [
   { to: '/information/rules', icon: 'shield', title: 'Field rules', copy: 'Know the safety rules and equipment requirements.' },
   { to: '/information/gametypes', icon: 'flag', title: 'Game modes', copy: 'Learn the objectives for each game.' },
   { to: '/leaderboard', icon: 'trophy', title: 'Leaderboard', copy: 'Look up official player standings.' },
+  { to: '/team-leaderboard', icon: 'trophy', title: 'Team leaderboard', copy: 'See casual and competitive team standings.' },
   { to: '/teams', icon: 'team', title: 'Teams', copy: 'Explore the USAW team directory.' },
   { to: '/virtual-patches', icon: 'patch', title: 'Virtual Patches', copy: 'Explore earnable patches and their all-time standings.' },
 ];

@@ -100,6 +100,7 @@ function Teams({ firebase }) {
                     <h1 id="team-directory-title">USAW Teams</h1>
                     <p>Find a team, check the standings, or start a team of your own.</p>
                     <div className="team-directory__actions">
+                        <Link className="team-directory__button" to="/team-leaderboard">Team leaderboard</Link>
                         <Link className="team-directory__button team-directory__button--primary" to="/createteam">Create team</Link>
                         <Link className="team-directory__button" to="/jointeam">Join team</Link>
                         <Link className="team-directory__button" to={managePath}>Manage team</Link>

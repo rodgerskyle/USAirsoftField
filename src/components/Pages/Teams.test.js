@@ -77,6 +77,7 @@ beforeEach(() => {
 
 test('shows both teams with the same name and keeps their identities and score labels distinct', async () => {
     const changeAccount = mount(account(captainId));
+    expect(screen.getByRole('link', { name: 'Team leaderboard' })).toHaveAttribute('href', '/team-leaderboard');
     const standings = screen.getByRole('region', { name: 'Team standings' });
     const member = await within(standings).findByRole('link', { name: /Rebels.*Earned points/i });
     const field = within(standings).getByRole('link', { name: /Rank 1.*Rebels.*Points/i });

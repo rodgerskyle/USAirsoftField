@@ -8,7 +8,8 @@ import { AuthUserContext } from '../session';
 import { getFeaturedBadges } from '../constants/playerBadges';
 import { getAllPlayerDisplayNames } from '../constants/playerDisplayNames';
 import { getLeaderboardPrestige } from '../constants/playerPrestige';
-import { PublicLeaderboardTv, LEADERBOARD_TV_PATH } from './leaderboard';
+import Redirect from '../constants/redirect';
+import Leaderboard, { LegacyLeaderboardTvRedirect, LEGACY_LEADERBOARD_TV_PATH } from './leaderboard';
 
 jest.mock('../Firebase', () => {
     const context = jest.requireActual('../Firebase/context');
@@ -27,26 +28,34 @@ jest.mock('../constants/playerPrestige', () => ({
 
 const admin = { uid: 'field-admin', roles: { ADMIN: true } };
 const member = { uid: 'player-member', roles: {} };
+const waiver = { uid: 'player-waiver', roles: { WAIVER: true } };
 const fixtures = {
     alpha: { name: 'Alpha', points: 130, wins: 12, losses: 3 },
     bravo: { name: 'Bravo', points: 150, wins: 15, losses: 2 },
     hidden: { name: 'Waiver Only', points: 700, roles: { WAIVER: true } },
 };
 
-function renderTv(user = null) {
+function renderTv(user = null, path = '/leaderboard?display=tv', withRedirect = false) {
     const firebase = {
         users: () => 'players',
-        onAuthUserListener: jest.fn(),
+        onAuthUserListener: jest.fn(onUser => {
+            onUser(user);
+            return jest.fn();
+        }),
     };
     const route = authUser => (
-        <MemoryRouter initialEntries={[LEADERBOARD_TV_PATH]}
+        <MemoryRouter initialEntries={[path]}
             future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <FirebaseContext.Provider value={firebase}>
                 <AuthUserContext.Provider value={authUser}>
                     <HelmetProvider>
+                        {withRedirect && <Redirect />}
                         <Routes>
-                            <Route path={LEADERBOARD_TV_PATH} element={<PublicLeaderboardTv />} />
+                            <Route path="/leaderboard" element={<Leaderboard />} />
+                            <Route path={LEGACY_LEADERBOARD_TV_PATH} element={<LegacyLeaderboardTvRedirect />} />
                             <Route path="/login" element={<h1>Sign in</h1>} />
+                            <Route path="/dashboard" element={<h1>Dashboard</h1>} />
+                            <Route path="/dashboard/waiverform" element={<h1>Waiver kiosk</h1>} />
                         </Routes>
                     </HelmetProvider>
                 </AuthUserContext.Provider>
@@ -86,6 +95,38 @@ test.each([null, member])('opens the direct TV URL without admin access (%p)', a
     expect(session.onAuthUserListener).not.toHaveBeenCalled();
     await waitFor(() => expect(document.head.querySelector('meta[name="robots"]'))
         .toHaveAttribute('content', 'noindex, nofollow'));
+});
+
+test('guests can toggle the TV display on and off from monthly standings', async () => {
+    renderTv(null, '/leaderboard?view=monthly&month=2024-06');
+    expect(screen.getByRole('heading', { name: 'June 2024 standings' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Team leaderboard' })).toHaveAttribute('href', '/team-leaderboard');
+    const switchOff = screen.getByRole('switch', { name: 'TV mode', checked: false });
+    await act(async () => fireEvent.click(switchOff));
+    expect(screen.getByRole('heading', { name: 'June 2024 Leaderboard' })).toBeInTheDocument();
+    const switchOn = screen.getByRole('switch', { name: 'TV mode', checked: true });
+    expect(switchOn).toHaveFocus();
+    expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Team leaderboard' })).not.toBeInTheDocument();
+    await act(async () => fireEvent.click(switchOn));
+    expect(screen.getByRole('heading', { name: 'June 2024 standings' })).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'TV mode', checked: false })).toHaveFocus();
+    expect(screen.getByRole('searchbox')).toBeInTheDocument();
+    expect(onValue).toHaveBeenCalledTimes(1);
+});
+
+test('legacy TV links keep their period and open for signed-in waiver players', async () => {
+    renderTv(waiver, `${LEGACY_LEADERBOARD_TV_PATH}?view=monthly&month=2024-06`, true);
+    expect(await screen.findByRole('heading', { name: 'June 2024 Leaderboard' })).toBeInTheDocument();
+    await act(async () => fireEvent.click(screen.getByRole('switch', { name: 'TV mode', checked: true })));
+    expect(screen.getByRole('heading', { name: 'June 2024 standings' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Dashboard' })).not.toBeInTheDocument();
+});
+
+test('the public TV view keeps the waiver kiosk confined to the waiver form', async () => {
+    renderTv({ ...waiver, roles: { ...waiver.roles, STATIC: true } }, '/leaderboard?display=tv', true);
+    expect(await screen.findByRole('heading', { name: 'Waiver kiosk' })).toBeInTheDocument();
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
 });
 
 test('renders and updates the same all-time standings as read-only TV rows', async () => {
@@ -211,7 +252,7 @@ test('scrolls through additional standings and resets to the top when switching 
 
 test('keeps the TV display open when staff signs out', async () => {
     const session = renderTv(admin);
-    expect(screen.getByRole('link', { name: 'Back to staff' })).toHaveAttribute('href', '/admin');
+    expect(screen.queryByRole('link', { name: 'Back to staff' })).not.toBeInTheDocument();
     await act(async () => session.setUser(null));
     expect(screen.queryByRole('link', { name: 'Back to staff' })).not.toBeInTheDocument();
     expect(screen.getByRole('table', { name: 'All time player standings' })).toBeInTheDocument();

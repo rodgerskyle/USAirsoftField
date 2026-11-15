@@ -1,12 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCompress, faExpand } from '@fortawesome/free-solid-svg-icons';
 import logo from '../../assets/usairsoft-small-logo.png';
 import './LeaderboardTvDisplay.css';
 
-export default function LeaderboardTvDisplay({ title, periodControls, status, playerCount, onLoadMore, showStaffLink, children }) {
+export default function LeaderboardTvDisplay({ title, periodControls, status, playerCount, onLoadMore, tvControl, children }) {
     const displayRef = useRef(null);
     const standingsRef = useRef(null);
     const [fullscreen, setFullscreen] = useState(false);
@@ -61,7 +60,7 @@ export default function LeaderboardTvDisplay({ title, periodControls, status, pl
                 </div>
                 <div className="field-lb-presentation-controls">
                     {periodControls}
-                    {showStaffLink && !fullscreen && <Link to="/admin">Back to staff</Link>}
+                    {tvControl}
                     <button type="button" onClick={toggleFullscreen}>
                         <FontAwesomeIcon icon={fullscreen ? faCompress : faExpand} aria-hidden="true" />
                         {fullscreen ? 'Exit full screen' : 'Full screen'}

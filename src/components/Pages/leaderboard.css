@@ -152,6 +152,53 @@
     background: var(--usaw-red);
 }
 
+.field-lb button.field-lb-tv-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: .5em;
+    white-space: nowrap;
+}
+
+.field-lb-view-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin-inline-start: auto;
+}
+
+.field-lb-view-controls a {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.field-lb-tv-track {
+    position: relative;
+    flex: none;
+    width: 1.9em;
+    height: 1.025em;
+    border: 1px solid currentColor;
+    border-radius: 1em;
+}
+
+.field-lb-tv-track::after {
+    position: absolute;
+    inset: .14em auto auto .14em;
+    width: .62em;
+    height: .62em;
+    border-radius: 50%;
+    background: currentColor;
+    content: '';
+}
+
+[role="switch"][aria-checked="true"] .field-lb-tv-track {
+    color: var(--usaw-accent);
+}
+
+[role="switch"][aria-checked="true"] .field-lb-tv-track::after {
+    transform: translateX(.85em);
+}
+
 .field-lb-date-controls label {
     display: flex;
     align-items: center;

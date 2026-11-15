@@ -23,6 +23,7 @@ const PLAY_LINKS = [
     ['/information/rules', 'Field rules'],
     ['/information/gametypes', 'Game modes'],
     ['/leaderboard', 'Leaderboard'],
+    ['/team-leaderboard', 'Team leaderboard'],
     ['/teams', 'Teams'],
 ];
 
@@ -165,7 +166,12 @@ function NavigationLayout({ authUser, profilePic }) {
                     {waiverOnly ? (
                         <>
                             <SiteLink className="usaw-nav__control" to="/dashboard">Dashboard</SiteLink>
-                            {!waiverKiosk && <SiteLink className="usaw-nav__control" to="/virtual-patches">Virtual Patches</SiteLink>}
+                            {!waiverKiosk && (
+                                <>
+                                    <SiteLink className="usaw-nav__control" to="/leaderboard">Leaderboard</SiteLink>
+                                    <SiteLink className="usaw-nav__control" to="/virtual-patches">Virtual Patches</SiteLink>
+                                </>
+                            )}
                         </>
                     ) : (
                         <>
@@ -218,6 +224,7 @@ function NavigationLayout({ authUser, profilePic }) {
                     <div className="usaw-nav__shell usaw-nav__drawer-content">
                         {waiverOnly && (
                             <ul className="usaw-nav__links usaw-nav__quick">
+                                <li><SiteLink to="/leaderboard" onClick={close}>Leaderboard</SiteLink></li>
                                 <li><SiteLink to="/virtual-patches" onClick={close}>Virtual Patches</SiteLink></li>
                             </ul>
                         )}
