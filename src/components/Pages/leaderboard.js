@@ -59,8 +59,11 @@ function LeaderboardPlayer({ player, featuredBadge, prestige, readOnly }) {
                     <img src={rankImages[rank]} alt="" width="46" height="46" loading="lazy" />
                 </span>
                 {featuredBadge && (
-                    <img className="field-lb-featured-badge" loading="lazy" width="48" height="48"
-                        src={featuredBadge.thumbUrl} alt={`Featured badge: ${featuredBadge.name}`}
+                    <img className="field-lb-featured-badge" loading="lazy" decoding="async" width="60" height="60"
+                        src={featuredBadge.thumbUrl}
+                        srcSet={`${featuredBadge.thumbUrl} 72w, ${featuredBadge.artUrl} 256w`}
+                        sizes={readOnly ? 'clamp(40px, min(4vw, 7.5vh), 76px)' : '(max-width: 760px) 48px, 60px'}
+                        alt={`Featured badge: ${featuredBadge.name}`}
                         title={featuredBadge.name} />
                 )}
             </span>

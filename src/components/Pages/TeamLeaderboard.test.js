@@ -34,9 +34,9 @@ test('loads public team scores and separates the Casual and Competitive division
     mount();
     const board = await screen.findByRole('table', { name: 'Casual team standings' });
     expect(screen.getByRole('radio', { name: 'Casual', checked: true })).toBeInTheDocument();
-    expect(within(board).getByRole('link', { name: 'Rebels Field team' })).toHaveAttribute('href', '/teams/rebels');
-    expect(within(board).getByRole('link', { name: 'Rebels Companion team' }))
-        .toHaveAttribute('href', `/teams/${id}?source=companion`);
+    expect(within(board).getAllByRole('link', { name: 'Rebels Field team' }).map(link => link.getAttribute('href')))
+        .toEqual(['/teams/rebels', `/teams/${id}?source=companion`]);
+    expect(screen.getByText(/10 points per win and 3 per loss/)).toBeInTheDocument();
     expect(within(board).getAllByText('—')).toHaveLength(2);
     expect(within(board).getByText('2')).toHaveClass('field-lb-wins');
     expect(within(board).getByText('1')).toHaveClass('field-lb-losses');
@@ -73,7 +73,7 @@ test('reports incomplete scores, supports retry, and preserves the selected divi
     expect(await screen.findByRole('alert')).toHaveTextContent('Team standings could not be loaded.');
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByText('Some team scores could not be loaded. These rankings are incomplete.')).toBeInTheDocument();
-    expect(screen.getByText('Some Companion teams are showing their last recorded scores.')).toBeInTheDocument();
+    expect(screen.getByText('Some teams are showing their last recorded scores.')).toBeInTheDocument();
     expect(screen.getByRole('table', { name: 'Casual team standings' })).toBeInTheDocument();
 });
 

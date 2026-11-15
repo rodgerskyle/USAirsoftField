@@ -154,10 +154,14 @@
     font-size: .48em;
 }
 
-.field-lb-presentation .field-lb-insignia,
-.field-lb-presentation .field-lb-featured-badge {
+.field-lb-presentation .field-lb-insignia {
     width: clamp(1.55rem, min(3.2vw, 5.65vh), 4.5rem);
     height: clamp(1.55rem, min(3.2vw, 5.65vh), 4.5rem);
+}
+
+.field-lb-presentation .field-lb-featured-badge {
+    width: clamp(2.5rem, min(4vw, 7.5vh), 4.75rem);
+    height: clamp(2.5rem, min(4vw, 7.5vh), 4.75rem);
 }
 
 .field-lb-presentation .field-lb-insignia img {

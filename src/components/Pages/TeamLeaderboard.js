@@ -8,7 +8,7 @@ import './TeamLeaderboard.css';
 
 const ENDPOINT = 'https://app.usairsoftfield.com/api/team-leaderboard';
 const DIVISIONS = { casual: 'Casual', competitive: 'Competitive' };
-const SOURCES = { field: 'Field team', companion: 'Companion team' };
+const SOURCES = new Set(['field', 'companion']);
 const formatScore = new Intl.NumberFormat('en-US').format;
 
 function isCount(value) {
@@ -16,7 +16,7 @@ function isCount(value) {
 }
 
 function isStanding(team) {
-    return team && Object.prototype.hasOwnProperty.call(SOURCES, team.source)
+    return team && SOURCES.has(team.source)
         && typeof team.id === 'string' && team.id.length > 0
         && typeof team.name === 'string' && team.name.trim()
         && isCount(team.rank) && team.rank > 0 && Number.isFinite(team.points)
@@ -63,7 +63,7 @@ function TeamStandingsTable({ teams, division }) {
                             <Link className="field-lb-player" to={teamPagePath(team)}>
                                 <span className="field-lb-player-details">
                                     <span>{team.name}</span>
-                                    <small className="field-lb-player-progression">{SOURCES[team.source]}</small>
+                                    <small className="field-lb-player-progression">Field team</small>
                                 </span>
                             </Link>
                         </th>
@@ -132,7 +132,7 @@ export default function TeamLeaderboard() {
                         ))}
                     </fieldset>
                     <p>{division === 'casual'
-                        ? 'Field and Companion teams ranked by their existing points.'
+                        ? 'Where wins and losses are shown, teams earn 10 points per win and 3 per loss recorded after each player joins. Other teams use their saved field totals.'
                         : 'Official series standings for TTCS and future USAW competitions.'}</p>
                 </div>
 
@@ -156,7 +156,7 @@ export default function TeamLeaderboard() {
                         </div>
                     )}
                     {standings?.recordedScores && (
-                        <p className="team-lb-note" role="status">Some Companion teams are showing their last recorded scores.</p>
+                        <p className="team-lb-note" role="status">Some teams are showing their last recorded scores.</p>
                     )}
                     {standings && (standings.teams.length ? <TeamStandingsTable teams={standings.teams} division={division} />
                         : <p className="field-lb-message" role="status">{division === 'competitive'
