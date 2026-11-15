@@ -129,6 +129,58 @@ test('loads only the selected patch standings and keeps the full catalog visible
   expect(container.querySelector('.virtual-patches__brief img')).toHaveAttribute('src', '/badges/power-rush.png');
 });
 
+test('shows the overall patch totals and ranks to signed-out players with separate pagination', async () => {
+  global.fetch.mockImplementation(async url => {
+    const page = Number(new URL(url).searchParams.get('page'));
+    return { ok: true, json: async () => ({
+      page, hasMore: page === 1,
+      standings: page === 1
+        ? [{ playerId, name: 'Patch Hunter', rank: 1, totalPatches: 42 }]
+        : [{ playerId: 'another-player-42', name: null, rank: 25, totalPatches: 10 }],
+    }) };
+  });
+  renderPage(<VirtualPatches />, { path: '/virtual-patches?badge=countdown' });
+
+  expect(await screen.findByText('No players have earned this patch yet.')).toBeVisible();
+  expect(global.fetch).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('link', { name: 'Overall patch leaderboard' }));
+
+  const table = await screen.findByRole('table', { name: 'Overall patch leaderboard' });
+  expect(screen.getByRole('heading', { name: 'Overall patch leaderboard' })).toHaveFocus();
+  expect(within(table).getByRole('columnheader', { name: 'Total patches' })).toBeVisible();
+  expect(within(table).getByText('42')).toBeVisible();
+  expect(within(table).getByRole('link', { name: 'Patch Hunter' })).toHaveAttribute('href', `/profilelookup/${playerId}`);
+  expect(screen.getByText('All-time totals include repeat awards.')).toBeVisible();
+  expect(getBadgeStandings).toHaveBeenCalledTimes(1);
+  expect(getMyBadges).not.toHaveBeenCalled();
+  const [firstUrl, firstOptions] = global.fetch.mock.calls[0];
+  expect(firstUrl.href).toBe('https://app.usairsoftfield.com/api/patch-leaderboard?page=1');
+  expect(firstOptions.credentials).toBe('omit');
+  expect(firstOptions.headers.Authorization).toBeUndefined();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+  const secondPage = await screen.findByRole('table', { name: 'Overall patch leaderboard' });
+  expect(within(secondPage).getByRole('link', { name: 'USAW player' })).toBeVisible();
+  expect(within(secondPage).getByText('25')).toBeVisible();
+  expect(global.fetch.mock.calls[1][0].searchParams.get('page')).toBe('2');
+
+  fireEvent.click(screen.getByRole('link', { name: 'Patch collection' }));
+  expect(screen.getByRole('heading', { name: 'Countdown' })).toHaveFocus();
+  expect(await screen.findByText('No players have earned this patch yet.')).toBeVisible();
+});
+
+test('opens the overall patch leaderboard directly and allows retrying the public request', async () => {
+  global.fetch.mockResolvedValueOnce({ ok: false })
+    .mockResolvedValueOnce({ ok: true, json: async () => ({ page: 1, hasMore: false, standings: [] }) });
+  renderPage(<VirtualPatches />, { path: '/virtual-patches?view=leaderboard', authUser: user });
+
+  expect(await screen.findByRole('alert')).toHaveTextContent('Patch standings are temporarily unavailable.');
+  fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+  expect(await screen.findByText('No patches have been earned yet.')).toBeVisible();
+  expect(getBadgeStandings).not.toHaveBeenCalled();
+  expect(getMyBadges).not.toHaveBeenCalled();
+});
+
 function renderWaiverViewer(roles) {
   const waiverUser = { ...user, roles };
   const session = {

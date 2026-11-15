@@ -1,6 +1,7 @@
 import catalog from './badgeCatalog.json';
 
 const apiUrl = process.env.REACT_APP_USAW_BADGE_API_URL ?? 'https://usaw-badge-service.pink-bud-3735.chatgpt.site/api/player-badges';
+const patchLeaderboardUrl = 'https://app.usairsoftfield.com/api/patch-leaderboard';
 const artPath = `${process.env.PUBLIC_URL || ''}/badges`;
 
 export const badgeServiceConfigured = /^https:\/\/[^?#]+$/i.test(apiUrl);
@@ -75,6 +76,27 @@ export async function getFeaturedBadgeDetails(playerIds, { signal } = {}) {
 
 export function getBadgeStandings(badgeId, { page = 1, signal } = {}) {
     return callBadgeApi({ query: { badgeId, page }, signal });
+}
+
+export async function getPatchLeaderboard({ page = 1, signal } = {}) {
+    const url = new URL(patchLeaderboardUrl);
+    url.searchParams.set('page', page);
+    const response = await fetch(url, {
+        headers: { Accept: 'application/json' },
+        credentials: 'omit',
+        redirect: 'error',
+        signal,
+    });
+    if (!response.ok) throw new Error('Patch leaderboard is unavailable.');
+    const result = await response.json();
+    if (result?.page !== page || typeof result.hasMore !== 'boolean' || !Array.isArray(result.standings)
+        || !result.standings.every(row => row && typeof row.playerId === 'string'
+            && /^[A-Za-z0-9_-]{10,128}$/.test(row.playerId)
+            && Number.isSafeInteger(row.rank) && row.rank > 0
+            && Number.isSafeInteger(row.totalPatches) && row.totalPatches > 0)) {
+        throw new Error('Patch leaderboard is unavailable.');
+    }
+    return result;
 }
 
 export function getMyBadges(firebase, { signal } = {}) {
