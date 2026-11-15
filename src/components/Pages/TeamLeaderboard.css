@@ -1,0 +1,81 @@
+.team-lb-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem 1.3rem;
+}
+
+.team-lb-controls p {
+    margin: 0;
+    color: var(--usaw-muted);
+    font-size: .9rem;
+}
+
+.team-lb-division {
+    position: relative;
+    isolation: isolate;
+    display: inline-grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: .25rem;
+    border: 1px solid var(--usaw-line);
+    border-radius: .75rem;
+    background: var(--usaw-raised);
+}
+
+.team-lb-division::before {
+    position: absolute;
+    z-index: -1;
+    inset: .25rem calc(50% + .12rem) .25rem .25rem;
+    border-radius: .5rem;
+    background: var(--usaw-red);
+    content: '';
+    transition: transform .16s ease;
+}
+
+.team-lb-division[data-division="competitive"]::before {
+    transform: translateX(calc(100% + .24rem));
+}
+
+.team-lb-division label {
+    margin: 0;
+    cursor: pointer;
+}
+
+.team-lb-division label span {
+    display: grid;
+    min-height: 44px;
+    padding: .45rem .9rem;
+    place-items: center;
+    border-radius: .5rem;
+    color: var(--usaw-text);
+    font-size: .88rem;
+    font-weight: 750;
+}
+
+.team-lb-division input:checked + span {
+    color: #fff;
+}
+
+.team-lb-division input:focus-visible + span {
+    outline: 2px solid var(--usaw-focus);
+    outline-offset: 2px;
+}
+
+.team-lb-note {
+    padding: .7rem 1rem;
+    margin: 0;
+    border-top: 1px solid var(--usaw-line);
+    color: var(--usaw-muted);
+    font-size: .85rem;
+}
+
+.team-lb .team-lb-pagination {
+    margin: 0;
+    padding: .7rem 1rem;
+    border-top: 1px solid var(--usaw-line);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .team-lb-division::before {
+        transition: none;
+    }
+}

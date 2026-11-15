@@ -1,5 +1,5 @@
-import React, { useContext, useEffect, useMemo, useState } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { onValue } from 'firebase/database';
 import { Helmet } from 'react-helmet-async';
 import { Pagination } from '@mui/material';
@@ -148,12 +148,13 @@ function LeaderboardTable({ playerBatches, personalUid, period, readOnly = false
     );
 }
 
-function Leaderboard({ firebase, presentation = false }) {
+function Leaderboard({ firebase }) {
     const authUser = useContext(AuthUserContext);
     const { view: legacyView } = useParams();
     const [params, setParams] = useSearchParams();
-    const tv = legacyView === 'query=monthly';
-    const monthly = (params.get('view') ?? (tv ? 'monthly' : 'all')) === 'monthly';
+    const presentation = params.get('display') === 'tv';
+    const legacyMonthly = legacyView === 'query=monthly';
+    const monthly = (params.get('view') ?? (legacyMonthly ? 'monthly' : 'all')) === 'monthly';
     const now = new Date();
     const [monthYear, monthNumber] = (params.get('month') ?? '').split('-').map(Number);
     const currentYear = monthYear >= FIRST_YEAR && monthYear <= now.getFullYear() && Number.isInteger(monthYear)
@@ -167,6 +168,13 @@ function Leaderboard({ firebase, presentation = false }) {
     const [page, setPage] = useState(1);
     const [displayNames, setDisplayNames] = useState({});
     const [tvBatchCount, setTvBatchCount] = useState(1);
+    const tvSwitch = useRef(null);
+    const restoreSwitchFocus = useRef(false);
+
+    useEffect(() => {
+        if (restoreSwitchFocus.current) tvSwitch.current?.focus();
+        restoreSwitchFocus.current = false;
+    }, [presentation]);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -231,6 +239,22 @@ function Leaderboard({ firebase, presentation = false }) {
         setPage(1);
     }
 
+    function toggleTv() {
+        const next = new URLSearchParams(params);
+        if (presentation) next.delete('display');
+        else next.set('display', 'tv');
+        restoreSwitchFocus.current = true;
+        setTvBatchCount(1);
+        setParams(next);
+    }
+
+    const tvControl = (
+        <button ref={tvSwitch} className="field-lb-tv-switch" type="button" role="switch"
+            aria-checked={presentation} onClick={toggleTv}>
+            <span className="field-lb-tv-track" aria-hidden="true" /> TV mode
+        </button>
+    );
+
     const periodControls = (
         <div className="field-lb-period" role="group" aria-label="Ranking period">
             <button type="button" aria-pressed={!monthly} onClick={() => changePeriod('all')}>All time</button>
@@ -246,7 +270,7 @@ function Leaderboard({ firebase, presentation = false }) {
         return (
             <LeaderboardTvDisplay status={status} playerCount={standings.length}
                 title={monthly ? `${period} Leaderboard` : 'All-Time Leaderboard'} periodControls={periodControls}
-                showStaffLink={Boolean(authUser?.roles?.[ROLES.ADMIN])}
+                tvControl={tvControl}
                 onLoadMore={tvBatchCount < totalBatches ? () => setTvBatchCount(tvBatchCount + 1) : undefined}>
                 <LeaderboardTable playerBatches={playerBatches} period={period} readOnly />
             </LeaderboardTvDisplay>
@@ -254,7 +278,7 @@ function Leaderboard({ firebase, presentation = false }) {
     }
 
     return (
-        <main className={`field-lb${tv ? ' field-lb-tv' : ''}`}>
+        <main className={`field-lb${legacyMonthly ? ' field-lb-tv' : ''}`}>
             <Helmet><title>US Airsoft Field: Leaderboards</title></Helmet>
             <header className="field-lb-hero">
                 <div className="field-lb-wrap field-lb-hero-inner">
@@ -278,9 +302,9 @@ function Leaderboard({ firebase, presentation = false }) {
             </header>
 
             <div className="field-lb-wrap field-lb-content">
-                <div className="field-lb-controls" role="group" aria-label="Standings filters">
+                <div className="field-lb-controls" role="group" aria-label="Standings controls">
                     {periodControls}
-                    {monthly && !tv && (
+                    {monthly && !legacyMonthly && (
                         <div className="field-lb-date-controls">
                             <label>
                                 <span>Month</span>
@@ -297,16 +321,20 @@ function Leaderboard({ firebase, presentation = false }) {
                             </label>
                         </div>
                     )}
-                    {!tv && (
+                    {!legacyMonthly && (
                         <label className="field-lb-search">
                             <span className="visually-hidden">Search player names</span>
                             <FontAwesomeIcon icon={faMagnifyingGlass} aria-hidden="true" />
                             <input type="search" value={search} onChange={event => changeSearch(event.target.value)} placeholder="Search players" />
                         </label>
                     )}
+                    <div className="field-lb-view-controls">
+                        <Link className="field-lb-share" to="/team-leaderboard">Team leaderboard</Link>
+                        {tvControl}
+                    </div>
                 </div>
 
-                {!tv && !query && leaders.length > 0 && (
+                {!legacyMonthly && !query && leaders.length > 0 && (
                     <section className="field-lb-leaders" aria-labelledby="field-lb-leaders-title">
                         <h2 id="field-lb-leaders-title"><FontAwesomeIcon icon={faTrophy} aria-hidden="true" /> Field leaders</h2>
                         <ol>
@@ -331,7 +359,7 @@ function Leaderboard({ firebase, presentation = false }) {
                                 <p aria-live="polite">{formatScore(results.length)} {results.length === 1 ? 'player' : 'players'}{query && ' found'}</p>
                             )}
                         </div>
-                        {!tv && <SharePageLink title={`USAW ${period} standings`} label="Share standings" className="field-lb-share" />}
+                        {!legacyMonthly && <SharePageLink title={`USAW ${period} standings`} label="Share standings" className="field-lb-share" />}
                     </div>
                     {status === 'loading' && <p className="field-lb-message" role="status">Loading standings…</p>}
                     {status === 'error' && <p className="field-lb-message" role="alert">Standings are temporarily unavailable. Please try again later.</p>}
@@ -359,9 +387,12 @@ function Leaderboard({ firebase, presentation = false }) {
     );
 }
 
-export const LEADERBOARD_TV_PATH = '/admin/leaderboard-tv';
-export const PublicLeaderboardTv = withFirebase(function PublicLeaderboardTv(props) {
-    return <Leaderboard {...props} presentation />;
-});
+export const LEGACY_LEADERBOARD_TV_PATH = '/admin/leaderboard-tv';
+export function LegacyLeaderboardTvRedirect() {
+    const [params] = useSearchParams();
+    const next = new URLSearchParams(params);
+    next.set('display', 'tv');
+    return <Navigate to={{ pathname: '/leaderboard', search: `?${next}` }} replace />;
+}
 
 export default withFirebase(Leaderboard);

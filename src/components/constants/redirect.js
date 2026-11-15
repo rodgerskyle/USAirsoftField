@@ -33,11 +33,14 @@ const Redirect = ({ firebase }) => {
         if (user && user.roles[ROLES.WAIVER]) {
             const { pathname, search } = location;
             const canBrowsePatches = matchPath('/virtual-patches', pathname);
+            const canBrowseLeaderboard = matchPath('/leaderboard/:view?', pathname)
+                || matchPath('/team-leaderboard', pathname)
+                || matchPath('/admin/leaderboard-tv', pathname);
             const canViewMembership = matchPath('/pricing', pathname)
                 && new URLSearchParams(search).get('section') === 'membership';
             if (user.roles[ROLES.STATIC] && !staticlocations.includes(location.pathname)) {
                 navigate("/dashboard/waiverform");
-            } else if (!waiverlocations.includes(pathname) && !canBrowsePatches && !canViewMembership) {
+            } else if (!waiverlocations.includes(pathname) && !canBrowsePatches && !canBrowseLeaderboard && !canViewMembership) {
                 navigate("/dashboard");
             }
         }

@@ -57,7 +57,7 @@
     flex-wrap: wrap;
 }
 
-.field-lb-presentation :is(button, .field-lb-presentation-controls a) {
+.field-lb-presentation button {
     display: inline-flex;
     align-items: center;
     gap: .45em;
@@ -72,7 +72,7 @@
     text-decoration: none;
 }
 
-.field-lb-presentation :is(button:enabled, .field-lb-presentation-controls a):hover {
+.field-lb-presentation button:enabled:hover {
     border-color: var(--usaw-focus);
 }
 
