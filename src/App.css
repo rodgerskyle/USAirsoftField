@@ -4624,25 +4624,22 @@ a.nav-link:hover {
 .admin-birthday-page .div-main-birthday {
   padding: 20px;
   border-radius: 18px;
-  background: linear-gradient(180deg, rgba(24, 29, 37, 0.94) 0%, rgba(15, 19, 25, 0.98) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 22px 52px rgba(0, 0, 0, 0.28);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  box-shadow: var(--admin-shadow);
 }
 
-.admin-birthday-page .admin-header {
-  color: #f4f7fb;
-}
-
+.admin-birthday-page .admin-header,
 .admin-birthday-page .div-main-birthday .rbc-calendar {
-  color: #f4f7fb;
+  color: var(--admin-text);
 }
 
 .admin-birthday-page .div-main-birthday .rbc-month-view {
   height: 70vh;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--admin-border);
   border-radius: 18px;
-  background: rgba(11, 14, 18, 0.92);
+  background: var(--admin-surface);
 }
 
 .admin-birthday-page .div-main-birthday .rbc-toolbar {
@@ -4656,7 +4653,7 @@ a.nav-link:hover {
 }
 
 .admin-birthday-page .div-main-birthday .rbc-toolbar-label {
-  color: #f4f7fb;
+  color: var(--admin-text);
   font-size: 1.65rem;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -4672,110 +4669,137 @@ a.nav-link:hover {
   min-height: 40px;
   padding: 0 14px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(27, 34, 44, 0.96);
-  color: #dce4f2;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-surface-muted);
+  color: var(--admin-text);
   transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
 }
 
 .admin-birthday-page .div-main-birthday .rbc-toolbar button:hover,
 .admin-birthday-page .div-main-birthday .rbc-toolbar button:focus {
-  background: rgba(39, 52, 70, 0.96);
-  border-color: rgba(42, 131, 255, 0.42);
-  color: #ffffff;
+  background: var(--admin-surface-hover);
+  border-color: var(--admin-accent-text);
+  color: var(--admin-text);
 }
 
 .admin-birthday-page .div-main-birthday .rbc-toolbar button:active,
 .admin-birthday-page .div-main-birthday .rbc-toolbar button.rbc-active {
-  background: linear-gradient(135deg, #1c4f96 0%, #2672d8 100%);
-  border-color: rgba(58, 145, 255, 0.78);
-  color: #ffffff;
+  background: var(--admin-accent);
+  border-color: var(--admin-accent);
+  color: var(--admin-on-accent);
   box-shadow: none;
 }
 
 .admin-birthday-page .div-main-birthday .rbc-header {
   padding: 12px 8px;
-  color: #e7edf7;
+  color: var(--admin-text);
   font-weight: 600;
-  background: rgba(21, 26, 33, 0.94);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--admin-surface-muted);
+  border-bottom: 1px solid var(--admin-border);
 }
 
 .admin-birthday-page .div-main-birthday .rbc-header.rbc-today {
-  color: #ffffff;
-  background: rgba(38, 114, 216, 0.22);
-}
-
-.admin-birthday-page .div-main-birthday .rbc-month-row+.rbc-month-row,
-.admin-birthday-page .div-main-birthday .rbc-day-bg+.rbc-day-bg,
-.admin-birthday-page .div-main-birthday .rbc-header+.rbc-header {
-  border-left-color: rgba(255, 255, 255, 0.06);
+  color: var(--admin-accent-text);
+  background: var(--admin-accent-soft);
 }
 
 .admin-birthday-page .div-main-birthday .rbc-month-row,
 .admin-birthday-page .div-main-birthday .rbc-header,
 .admin-birthday-page .div-main-birthday .rbc-day-bg {
-  border-color: rgba(255, 255, 255, 0.06);
+  border-color: var(--admin-border);
 }
 
 .admin-birthday-page .div-main-birthday .rbc-day-bg {
-  background: rgba(15, 19, 25, 0.94);
+  background: var(--admin-surface);
 }
 
 .admin-birthday-page .div-main-birthday .rbc-off-range-bg {
-  background: rgba(9, 12, 16, 0.88);
+  background: var(--admin-surface-muted);
 }
 
 .admin-birthday-page .div-main-birthday .rbc-date-cell {
   padding: 8px 10px 0;
 }
 
-.admin-birthday-page .div-main-birthday .rbc-off-range .rbc-date-cell {
-  color: rgba(179, 191, 208, 0.45);
+.admin-birthday-page .div-main-birthday .rbc-date-cell.rbc-off-range {
+  color: var(--admin-subtext);
 }
 
-.admin-birthday-page .div-main-birthday .rbc-day-bg+.rbc-day-bg+.rbc-today,
 .admin-birthday-page .div-main-birthday .rbc-today {
-  background: rgba(33, 95, 176, 0.22);
+  background: var(--admin-accent-soft);
 }
 
-.admin-birthday-page .div-main-birthday .rbc-event {
+:is(.admin-birthday-page .div-main-birthday, body:has(.admin-birthday-page) .rbc-overlay) .rbc-event {
   padding: 3px 8px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: linear-gradient(135deg, rgba(162, 66, 71, 0.92) 0%, rgba(121, 38, 42, 0.96) 100%);
-  color: #ffffff;
+  border: 1px solid var(--admin-danger-border);
+  background: var(--admin-danger-bg);
+  color: var(--admin-danger);
   font-size: 0.85rem;
   font-weight: 600;
 }
 
-.admin-birthday-page .div-main-birthday .rbc-event:focus,
-.admin-birthday-page .div-main-birthday .rbc-event:hover {
-  outline: none;
-  background: linear-gradient(135deg, rgba(181, 75, 80, 0.96) 0%, rgba(138, 47, 52, 0.98) 100%);
+:is(.admin-birthday-page .div-main-birthday, body:has(.admin-birthday-page) .rbc-overlay) .rbc-event:hover {
+  border-color: var(--admin-danger);
+}
+
+:is(.admin-birthday-page .div-main-birthday, body:has(.admin-birthday-page) .rbc-overlay) :is(button, .rbc-event):focus-visible {
+  outline: 2px solid var(--admin-focus);
+  outline-offset: 2px;
 }
 
 .admin-birthday-page .div-main-birthday .rbc-show-more {
-  color: #76b1ff;
+  color: var(--admin-accent-text);
   background: transparent;
 }
 
-.admin-birthday-page .div-main-birthday .rbc-overlay {
-  color: #f4f7fb;
-  background: #151a21;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+.admin-birthday-page .div-main-birthday :is(.rbc-time-view, .rbc-agenda-view) {
+  background: var(--admin-surface);
+}
+
+.admin-birthday-page .div-main-birthday :is(
+  .rbc-time-view, .rbc-time-content, .rbc-time-header-content,
+  .rbc-time-header.rbc-overflowing, .rbc-timeslot-group,
+  .rbc-time-header > .rbc-row:first-child,
+  .rbc-time-content > * + * > *, .rbc-day-slot .rbc-time-slot,
+  .rbc-allday-cell + .rbc-allday-cell
+) {
+  border-color: var(--admin-border);
+}
+
+.admin-birthday-page .div-main-birthday .rbc-agenda-view table.rbc-agenda-table,
+.admin-birthday-page .div-main-birthday .rbc-agenda-view table.rbc-agenda-table :is(
+  thead > tr > th, tbody > tr + tr, tbody > tr > td + td
+) {
+  border-color: var(--admin-border);
+}
+
+.admin-birthday-page .div-main-birthday .rbc-agenda-view th {
+  background: var(--admin-surface-muted);
+}
+
+.admin-birthday-page .div-main-birthday .rbc-current-time-indicator {
+  background: var(--admin-success);
+}
+
+/* React Big Calendar portals the extra-events popup to the document body. */
+body:has(.admin-birthday-page) .rbc-overlay {
+  color: var(--admin-text);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
   border-radius: 14px;
-  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.34);
+  box-shadow: var(--admin-shadow);
   overflow: hidden;
+  z-index: 1025;
 }
 
-.admin-birthday-page .div-main-birthday .rbc-overlay-header {
-  color: #f4f7fb;
-  background: rgba(27, 33, 42, 0.98);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+body:has(.admin-birthday-page) .rbc-overlay-header {
+  color: var(--admin-text);
+  background: var(--admin-surface-muted);
+  border-bottom: 1px solid var(--admin-border);
 }
 
-.admin-birthday-page .div-main-birthday .rbc-overlay .rbc-event {
+body:has(.admin-birthday-page) .rbc-overlay .rbc-event {
   margin: 6px 8px;
 }
 
@@ -4783,41 +4807,37 @@ a.nav-link:hover {
   z-index: 2;
 }
 
-.admin-birthday-page .div-main-birthday .rbc-overlay {
-  z-index: 20;
-}
-
 .admin-birthday-page .div-main-birthday .rbc-agenda-event-cell,
 .admin-birthday-page .div-main-birthday .rbc-agenda-time-cell,
 .admin-birthday-page .div-main-birthday .rbc-agenda-date-cell,
 .admin-birthday-page .div-main-birthday .rbc-label {
-  color: rgba(235, 240, 247, 0.82);
+  color: var(--admin-text);
 }
 
 .dialog-create-birthday .MuiDialog-paper,
 .dialog-edit-birthday .MuiDialog-paper {
-  color: #f4f7fb;
-  background: #151a21;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--admin-text);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
   border-radius: 18px;
-  box-shadow: 0 26px 60px rgba(0, 0, 0, 0.36);
+  box-shadow: var(--admin-shadow);
   width: min(560px, calc(100vw - 32px));
   max-width: 560px;
 }
 
 .dialog-create-birthday .MuiDialogTitle-root,
 .dialog-edit-birthday .MuiDialogTitle-root {
-  color: #f4f7fb;
+  color: var(--admin-text);
   padding: 18px 24px 16px;
   font-size: 1.12rem;
   font-weight: 600;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--admin-border);
 }
 
 .dialog-create-birthday .content-create-birthday,
 .dialog-edit-birthday .content-create-birthday {
-  color: #dfe7f4;
-  background: #151a21;
+  color: var(--admin-text);
+  background: var(--admin-surface);
   padding: 18px 24px 20px !important;
 }
 
@@ -4830,7 +4850,7 @@ a.nav-link:hover {
 .dialog-create-birthday .content-create-birthday>.row:first-child,
 .dialog-edit-birthday .content-create-birthday>.row:first-child {
   margin-bottom: 8px;
-  color: #9fb0c9;
+  color: var(--admin-subtext);
   font-size: 0.76rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -4844,8 +4864,8 @@ a.nav-link:hover {
 
 .dialog-create-birthday .MuiDialogActions-root,
 .dialog-edit-birthday .MuiDialogActions-root {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(20, 25, 32, 0.98);
+  border-top: 1px solid var(--admin-border);
+  background: var(--admin-surface-muted);
   padding: 14px 24px !important;
   display: flex;
   align-items: center;
@@ -4855,13 +4875,13 @@ a.nav-link:hover {
 
 .dialog-create-birthday .actions-create-birthday .MuiButton-textPrimary,
 .dialog-edit-birthday .actions-create-birthday .MuiButton-textPrimary {
-  color: #e7edf7;
+  color: var(--admin-accent-text);
 }
 
 .dialog-create-birthday .actions-create-birthday .MuiButton-textPrimary:hover,
 .dialog-edit-birthday .actions-create-birthday .MuiButton-textPrimary:hover {
-  color: #ffffff;
-  background: rgba(42, 131, 255, 0.12);
+  color: var(--admin-accent-text);
+  background: var(--admin-accent-soft);
 }
 
 .dialog-create-birthday .actions-create-birthday .MuiButton-label,
@@ -4908,22 +4928,22 @@ a.nav-link:hover {
 .dialog-edit-birthday .content-create-birthday .MuiSvgIcon-root,
 .dialog-edit-birthday .content-create-birthday .MuiTypography-root,
 .dialog-edit-birthday .content-create-birthday p {
-  color: #e5ecf7;
+  color: var(--admin-text);
 }
 
 .dialog-create-birthday .content-create-birthday .MuiFormLabel-root.Mui-focused,
 .dialog-create-birthday .content-create-birthday .MuiInputLabel-root.Mui-focused,
 .dialog-edit-birthday .content-create-birthday .MuiFormLabel-root.Mui-focused,
 .dialog-edit-birthday .content-create-birthday .MuiInputLabel-root.Mui-focused {
-  color: #68a6ff;
+  color: var(--admin-accent-text);
 }
 
 .dialog-create-birthday .content-create-birthday .MuiInputBase-root,
 .dialog-create-birthday .content-create-birthday .MuiOutlinedInput-root,
 .dialog-edit-birthday .content-create-birthday .MuiInputBase-root,
 .dialog-edit-birthday .content-create-birthday .MuiOutlinedInput-root {
-  background: rgba(27, 33, 42, 0.96);
-  color: #f4f7fb;
+  background: var(--admin-surface-muted);
+  color: var(--admin-text);
   border-radius: 12px;
 }
 
@@ -4953,27 +4973,27 @@ a.nav-link:hover {
 
 .dialog-create-birthday .content-create-birthday .MuiOutlinedInput-notchedOutline,
 .dialog-edit-birthday .content-create-birthday .MuiOutlinedInput-notchedOutline {
-  border-color: rgba(255, 255, 255, 0.1);
+  border-color: var(--admin-border);
 }
 
 .dialog-create-birthday .content-create-birthday .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline,
 .dialog-edit-birthday .content-create-birthday .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
-  border-color: rgba(104, 166, 255, 0.45);
+  border-color: var(--admin-border-strong);
 }
 
 .dialog-create-birthday .content-create-birthday .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline,
 .dialog-edit-birthday .content-create-birthday .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-  border-color: #68a6ff;
+  border-color: var(--admin-accent-text);
 }
 
 .dialog-create-birthday .content-create-birthday .MuiCheckbox-colorSecondary.Mui-checked,
 .dialog-edit-birthday .content-create-birthday .MuiCheckbox-colorSecondary.Mui-checked {
-  color: #68a6ff;
+  color: var(--admin-accent-text);
 }
 
 .dialog-create-birthday .content-create-birthday .MuiIconButton-colorSecondary:hover,
 .dialog-edit-birthday .content-create-birthday .MuiIconButton-colorSecondary:hover {
-  background: rgba(42, 131, 255, 0.12);
+  background: var(--admin-accent-soft);
 }
 
 .dialog-create-birthday .content-create-birthday .MuiInputLabel-outlined,
@@ -5009,7 +5029,7 @@ a.nav-link:hover {
   padding-left: 0;
   padding-top: 6px;
   margin-bottom: 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--admin-border);
 }
 
 @media (max-width: 767px) {
@@ -7333,7 +7353,7 @@ div .p-nav-profile-active {
 .background-static-all.admin-container {
   background: radial-gradient(1300px 520px at 12% -8%, rgba(14, 165, 233, 0.14) 0%, transparent 60%),
     radial-gradient(1200px 480px at 92% -10%, rgba(59, 130, 246, 0.12) 0%, transparent 60%),
-    #f3f6fb !important;
+    var(--admin-bg) !important;
   min-height: 100vh;
 }
 
@@ -7358,47 +7378,47 @@ div .p-nav-profile-active {
 }
 
 .admin-breadcrumb li {
-  color: #64748b !important;
+  color: var(--admin-subtext) !important;
 }
 
 .admin-breadcrumb a {
-  color: #aab4c2 !important;
+  color: var(--admin-subtext) !important;
   text-decoration: none;
   font-weight: 600;
 }
 
 .admin-breadcrumb a:hover {
-  color: #9ec4ff !important;
+  color: var(--admin-accent-text) !important;
 }
 
 .row-users-card-admin,
 .row-users-card-offrow-admin {
-  background-color: rgba(18, 23, 29, 0.96) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: var(--admin-surface) !important;
+  border-bottom: 1px solid var(--admin-border);
 }
 
 .row-users-card-active-admin,
 .row-users-card-offrow-active-admin {
-  background-color: rgba(31, 101, 199, 0.12) !important;
-  border-bottom: 1px solid rgba(143, 184, 255, 0.16);
+  background-color: var(--admin-accent-soft) !important;
+  border-bottom: 1px solid var(--admin-border-strong);
 }
 
 .row-users-card-admin:hover,
 .row-users-card-offrow-admin:hover {
-  background-color: rgba(255, 255, 255, 0.04) !important;
+  background-color: var(--admin-surface-hover) !important;
 }
 
 .admin-container .modern-card {
-  background: linear-gradient(180deg, rgba(20, 23, 29, 0.98) 0%, rgba(14, 17, 22, 0.98) 100%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: var(--admin-surface) !important;
+  border: 1px solid var(--admin-border) !important;
 }
 
 .admin-container .card-title {
-  color: #f4f7fb !important;
+  color: var(--admin-text) !important;
 }
 
 .admin-container .card-icon {
-  color: #9ec4ff !important;
+  color: var(--admin-accent-text) !important;
 }
 
 .admin-container .users-card .card-body {

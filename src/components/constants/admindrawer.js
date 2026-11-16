@@ -1,38 +1,62 @@
-import React from 'react';
-import { Link } from "react-router-dom";
+import React, { useContext, useMemo } from 'react';
+import { Link, Outlet } from 'react-router-dom';
 import { Navbar, Nav, Container } from 'react-bootstrap';
+import { createTheme, ThemeProvider, useTheme } from '@mui/material/styles';
 import { useAppearance } from '../../Appearance';
 import AppearanceControl from '../../AppearanceControl';
 import logo from '../../assets/usairsoft-small-logo.png';
-import '../constants/admin.css';
+import { AuthUserContext } from '../session';
+import { ADMIN } from './roles';
+import './admin-theme.css';
 
-const AdminNav = ({ component }) => {
-  const appearance = useAppearance();
-
-  return (
-    <div className="admin-layout">
-      <Navbar className="admin-navbar" aria-label="Staff navigation">
-        <Container fluid>
-          <Navbar.Brand as={Link} to="/admin">
-            <img
-              src={logo}
-              alt=""
-              className="admin-nav-logo"
-            />
-            <span>Staff</span>
-          </Navbar.Brand>
-          <Nav className="staff-dashboard__nav-actions">
-            <Link to="/" className="staff-dashboard__site-link" aria-label="Back to website">Website</Link>
-            {appearance && <AppearanceControl {...appearance} />}
-          </Nav>
-        </Container>
-      </Navbar>
-
-      <div className="admin-main-content">
-        {component}
-      </div>
-    </div>
-  );
+const adminPalettes = {
+  light: {
+    mode: 'light',
+    primary: { main: '#174a87' },
+    background: { default: '#f2f5f8', paper: '#fff' },
+    text: { primary: '#0d2338', secondary: '#496078' },
+    divider: '#d3dfe9',
+  },
+  dark: {
+    mode: 'dark',
+    primary: { main: '#b4d3f7' },
+    background: { default: '#0b1622', paper: '#142638' },
+    text: { primary: '#f1f6fd', secondary: '#b7c9dc' },
+    divider: '#38516a',
+  },
 };
 
-export default AdminNav;
+export function AdminThemeRoute({ children }) {
+  const palette = adminPalettes[useAppearance()?.theme ?? 'light'];
+  const { typography } = useTheme();
+  const theme = useMemo(() => createTheme({ typography, palette }), [typography, palette]);
+
+  return (
+    <ThemeProvider theme={theme}>{children ?? <Outlet />}</ThemeProvider>
+  );
+}
+
+export default function AdminLayout() {
+  const appearance = useAppearance();
+  const isAdmin = Boolean(useContext(AuthUserContext)?.roles?.[ADMIN]);
+
+  return (
+    <AdminThemeRoute>
+      <div className="admin-layout">
+        <Navbar className="admin-navbar" aria-label="Staff navigation">
+          <Container fluid>
+            <Navbar.Brand as={Link} to={isAdmin ? '/admin' : '/'}>
+              <img src={logo} alt="" className="admin-nav-logo" />
+              <span>{isAdmin ? 'Staff' : 'US Airsoft'}</span>
+            </Navbar.Brand>
+            <Nav className="admin-nav-actions">
+              <Link to="/" className="admin-site-link" aria-label="Back to website">Website</Link>
+              {appearance && <AppearanceControl {...appearance} />}
+            </Nav>
+          </Container>
+        </Navbar>
+        <div className="admin-main-content"><Outlet /></div>
+      </div>
+    </AdminThemeRoute>
+  );
+}

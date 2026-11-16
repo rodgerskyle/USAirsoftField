@@ -340,7 +340,7 @@ const ReturnForm = (props) => {
                 <ListItem className="corrupted-form-item">
                     <ListItemAvatar>
                         <Avatar className="warning-avatar">
-                            <Warning color="error" />
+                            <Warning />
                         </Avatar>
                     </ListItemAvatar>
                     <ListItemText
@@ -397,7 +397,7 @@ const ReturnForm = (props) => {
                 className="complete-button"
                 disabled={loading}
             >
-                {loading ? <CircularProgress size={32} style={{ color: '#fff' }} /> : 'Complete Form'}
+                {loading ? <CircularProgress size={32} color="inherit" /> : 'Complete Form'}
             </Button>
             <img src={logo} alt="US Airsoft logo" className="company-logo" />
         </Paper>
@@ -414,7 +414,7 @@ const ReturnForm = (props) => {
                 >
                     Back
                 </Button>
-                <Typography variant="h6" color={'#fff'}>
+                <Typography variant="h6" color="text.primary">
                     Transaction #{rentalForms[index]?.transaction}
                 </Typography>
             </div>

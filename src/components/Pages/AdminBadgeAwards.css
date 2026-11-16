@@ -79,7 +79,7 @@
 .admin-badge-awards__matches button:hover,
 .admin-badge-awards__change:hover {
   background: var(--admin-accent-soft);
-  border-color: var(--admin-accent);
+  border-color: var(--admin-accent-text);
 }
 
 .admin-badge-awards__matches small,

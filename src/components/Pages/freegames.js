@@ -151,7 +151,7 @@ function UserBox({ users, index, search, update, length }) {
                 </Col>
                 <Col>
                     <Row>
-                        <Col className="col-name-fg" style={{ color: "white" }}>
+                        <Col className="col-name-fg">
                             {user.freegames + " Free Game(s)"}
                         </Col>
                         {ButtonArray[i] === false ? (

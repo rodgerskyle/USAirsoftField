@@ -115,7 +115,7 @@ class EditForm extends Component {
                             >
                                 Back to Forms
                             </MUIButton>
-                            <h3 style={{ color: '#fff' }}>Editing: {this.state.rentalForm?.name}</h3>
+                            <h3>Editing: {this.state.rentalForm?.name}</h3>
                         </div>
                         <EditSelectedForm
                             index={index}

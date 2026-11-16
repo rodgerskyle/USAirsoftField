@@ -10,9 +10,9 @@ const EmptyState = () => (
             textAlign: 'center',
             maxWidth: 600,
             margin: '40px auto',
-            backgroundColor: '#12171d',
-            color: '#f4f7fb',
-            border: '1px solid rgba(255,255,255,0.08)'
+            backgroundColor: 'var(--admin-surface)',
+            color: 'var(--admin-text)',
+            border: '1px solid var(--admin-border)'
         }}
     >
         <img
@@ -28,7 +28,7 @@ const EmptyState = () => (
             variant="h5"
             sx={{
                 mb: 2,
-                color: '#f4f7fb',
+                color: 'var(--admin-text)',
                 fontWeight: 500
             }}
         >
@@ -38,7 +38,7 @@ const EmptyState = () => (
             variant="body1"
             sx={{
                 mb: 3,
-                color: '#9fb0c4',
+                color: 'var(--admin-subtext)',
                 maxWidth: 400,
                 mx: 'auto'
             }}

@@ -1,57 +1,9 @@
 .staff-dashboard {
-  --admin-bg: var(--usaw-page-bg);
-  --admin-surface: var(--usaw-surface);
-  --admin-surface-muted: var(--usaw-raised);
-  --admin-border: var(--usaw-line);
-  --admin-border-strong: var(--usaw-line);
-  --admin-text: var(--usaw-text);
-  --admin-subtext: var(--usaw-muted);
-  --admin-accent: var(--usaw-accent);
-  --admin-accent-soft: var(--usaw-subtle);
-  --admin-shadow: 0 10px 32px rgba(15, 35, 55, .08);
-  --staff-success: #176139;
-  --staff-error: #a3212c;
+  --staff-success: var(--admin-success);
+  --staff-error: var(--admin-danger);
   color: var(--admin-text);
 }
 
-[data-bs-theme="dark"] .staff-dashboard {
-  --admin-shadow: 0 10px 32px rgba(0, 0, 0, .18);
-  --staff-success: #8de1b0;
-  --staff-error: #ffabb1;
-}
-
-.staff-dashboard .admin-navbar {
-  position: sticky;
-  z-index: 1020;
-  top: 0;
-  padding: .55rem clamp(.5rem, 3vw, 2rem);
-  border-bottom-color: var(--admin-border);
-  background: var(--admin-surface);
-  box-shadow: var(--admin-shadow);
-}
-
-.staff-dashboard .navbar-brand,
-.staff-dashboard__nav-actions {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: .65rem;
-}
-
-.staff-dashboard .navbar-brand {
-  margin: 0;
-  padding: 0;
-}
-
-.staff-dashboard .admin-nav-logo {
-  height: 38px;
-  padding: 4px;
-  border-radius: 8px;
-  background: var(--usaw-chrome);
-}
-
-.staff-dashboard__site-link,
-.staff-dashboard .usaw-nav__appearance,
 .staff-dashboard__jump a {
   display: inline-flex;
   align-items: center;
@@ -67,23 +19,15 @@
   text-decoration: none;
 }
 
-.staff-dashboard .usaw-nav__appearance-label {
-  display: inline;
-}
-
-.staff-dashboard :is(.staff-dashboard__site-link, .usaw-nav__appearance, .staff-dashboard__jump a):hover {
-  border-color: var(--admin-accent);
+.staff-dashboard__jump a:hover {
+  border-color: var(--admin-accent-text);
   background: var(--admin-accent-soft);
   color: var(--admin-text);
 }
 
 .staff-dashboard :is(a, button, input):focus-visible {
-  outline: 2px solid var(--usaw-focus);
+  outline: 2px solid var(--admin-focus);
   outline-offset: 3px;
-}
-
-.staff-dashboard .admin-main-content {
-  padding-top: 0;
 }
 
 .staff-dashboard__content {
@@ -186,7 +130,7 @@
 }
 
 .staff-dashboard__action:hover {
-  border-color: var(--admin-accent);
+  border-color: var(--admin-accent-text);
   background: var(--admin-accent-soft);
   color: var(--admin-text);
 }
@@ -203,7 +147,7 @@
   place-items: center;
   border-radius: 6px;
   background: var(--admin-accent-soft);
-  color: var(--admin-accent);
+  color: var(--admin-accent-text);
 }
 
 .staff-dashboard__action-chevron {
