@@ -39,7 +39,7 @@ export default function BarracksTV({ request = requestPublicFieldTool }) {
     const round = current || upcoming[0];
     const next = current ? upcoming[0] : upcoming[1];
     const timeRemaining = round ? Date.parse(current ? round.endsAt : round.startsAt) - now : 0;
-    const showTimer = Boolean(current || round && Date.parse(round.startsAt) > displayTime);
+    const showTimer = Boolean(current || (round && Date.parse(round.startsAt) > displayTime));
 
     useEffect(() => {
         function updateFullscreen() {

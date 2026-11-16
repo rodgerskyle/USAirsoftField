@@ -42,10 +42,10 @@ export function liveRounds(games, now) {
     const visible = (Array.isArray(games) ? games : [])
         .filter(game => Number.isFinite(Date.parse(game.startsAt)) && Number.isFinite(Date.parse(game.endsAt)))
         .filter(game => ['queued', 'delayed'].includes(game.status) ||
-            ['scheduled', 'live'].includes(game.status) && Date.parse(game.endsAt) > now)
+            (['scheduled', 'live'].includes(game.status) && Date.parse(game.endsAt) > now))
         .sort((left, right) => Date.parse(left.startsAt) - Date.parse(right.startsAt));
     const active = visible.filter(game => game.status === 'live' ||
-        game.status === 'scheduled' && Date.parse(game.startsAt) <= now);
+        (game.status === 'scheduled' && Date.parse(game.startsAt) <= now));
     const current = active.find(game => game.status === 'live') || active[0];
     const upcoming = visible.filter(game => !active.includes(game));
     return { current, active, upcoming };
