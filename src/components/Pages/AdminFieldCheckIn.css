@@ -56,9 +56,10 @@
   font-size: .83rem;
 }
 
-.admin-checkin__team dl div[data-talent="elite"] { color: #593906; background: #ffedbf; }
-.admin-checkin__team dl div[data-talent="veteran"] { color: #213754; background: #e4edf9; }
+.admin-checkin__team dl div[data-talent="a"] { color: #593906; background: #ffedbf; }
+.admin-checkin__team dl div[data-talent="b"] { color: #213754; background: #e4edf9; }
 .admin-checkin__team dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.admin-checkin__unverified { margin: .55rem 0 0; }
 
 .admin-checkin__explanation { margin-block: .75rem 1rem; }
 .admin-checkin__explanation summary, .admin-checkin__walk-on summary { cursor: pointer; font-weight: 700; }
