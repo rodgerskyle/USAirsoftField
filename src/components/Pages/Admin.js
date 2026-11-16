@@ -5,8 +5,9 @@ import { Helmet } from 'react-helmet-async';
 import { onValue } from 'firebase/database';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faCalendar, faCalendarDays, faChevronRight, faClipboardList, faGift, faQrcode,
-  faSearch, faTimesCircle, faTrophy, faUserGear, faUserPen, faUserPlus,
+  faArrowUpRightFromSquare, faCalendar, faCalendarDays, faChevronRight, faClipboardList,
+  faComments, faGift, faIdCard, faPeopleGroup, faQrcode, faSearch, faStopwatch,
+  faTimesCircle, faTrophy, faTv, faUserGear, faUserPen, faUserPlus,
 } from '@fortawesome/free-solid-svg-icons';
 
 import { withFirebase } from '../Firebase';
@@ -19,11 +20,14 @@ import '../../App.css';
 import '../constants/admin.css';
 import './AdminDashboard.css';
 
+const companionOrigin = 'https://app.usairsoftfield.com';
 const ACTION_GROUPS = [
   {
     id: 'game-day',
     title: 'Game day',
     actions: [
+      { title: 'Player Check-In', companion: '#staff/tool/check-in', icon: faPeopleGroup, primary: true },
+      { title: 'Round Controls', companion: '#staff/tool/round-controls', icon: faStopwatch },
       { title: 'Field Game Days', path: '/schedule', icon: faCalendarDays, primary: true },
       { title: 'Enter Wins', path: '/admin/enterwins', icon: faTrophy },
       { title: 'Enter Losses', path: '/admin/enterlosses', icon: faTimesCircle },
@@ -36,6 +40,7 @@ const ACTION_GROUPS = [
     actions: [
       { title: 'New Member', path: '/admin/signup', icon: faUserPlus },
       { title: 'Renew Member', path: '/admin/renewal', icon: faUserGear },
+      { title: 'Verify Membership', companion: '#staff/tool/verify-membership', icon: faIdCard },
       { title: 'Sign Waiver', path: '/admin/waiverform', icon: faUserPen },
       { title: 'Scan Waiver', path: '/admin/scanwaiver', icon: faQrcode },
       { title: 'Search Waiver', path: '/admin/waiverlookup', icon: faSearch },
@@ -47,6 +52,8 @@ const ACTION_GROUPS = [
     actions: [
       { title: 'Rental Form', path: '/admin/rentalform', icon: faClipboardList },
       { title: 'Calendar', path: '/admin/birthday', icon: faCalendar },
+      { title: 'Team Reports', companion: '#staff/tool/team-reports', icon: faComments },
+      { title: 'Barracks Game Day TV', companion: '#game-day-tv', icon: faTv },
     ],
   },
 ];
@@ -67,15 +74,22 @@ function ActionGroup({ group }) {
     <section className="staff-dashboard__group" aria-labelledby={`staff-${group.id}`}>
       <h2 id={`staff-${group.id}`}>{group.title}</h2>
       <ul className="staff-dashboard__actions">
-        {group.actions.map(({ title, path, icon, primary }) => (
-          <li key={path}>
-            <Link to={path} className={primary ? 'staff-dashboard__action staff-dashboard__action--primary' : 'staff-dashboard__action'}>
-              <span className="staff-dashboard__action-icon"><FontAwesomeIcon icon={icon} aria-hidden="true" /></span>
-              <span>{title}</span>
-              <FontAwesomeIcon className="staff-dashboard__action-chevron" icon={faChevronRight} aria-hidden="true" />
-            </Link>
-          </li>
-        ))}
+        {group.actions.map(({ title, path, companion, icon, primary }) => {
+          const ActionLink = companion ? 'a' : Link;
+          const destination = companion ? { href: `${companionOrigin}/${companion}` } : { to: path };
+          return (
+            <li key={path || companion}>
+              <ActionLink {...destination} className={primary ? 'staff-dashboard__action staff-dashboard__action--primary' : 'staff-dashboard__action'}>
+                <span className="staff-dashboard__action-icon"><FontAwesomeIcon icon={icon} aria-hidden="true" /></span>
+                <span>
+                  {title}
+                  {companion && <small className="staff-dashboard__action-destination">Companion</small>}
+                </span>
+                <FontAwesomeIcon className="staff-dashboard__action-chevron" icon={companion ? faArrowUpRightFromSquare : faChevronRight} aria-hidden="true" />
+              </ActionLink>
+            </li>
+          );
+        })}
       </ul>
     </section>
   );
