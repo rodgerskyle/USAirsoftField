@@ -54,19 +54,19 @@ beforeEach(() => {
   });
 });
 
-test('links each new Companion tool once and keeps website scoring, scheduling, waivers, and awards', () => {
+test('links each native field tool once and keeps website scoring, scheduling, waivers, and awards', () => {
   openAdmin(admin)();
   expect(screen.getByRole('heading', { name: 'Staff operations' })).toBeInTheDocument();
 
-  const companionTools = [
-    ['Player Check-In Companion', '#staff/tool/check-in'],
-    ['Round Controls Companion', '#staff/tool/round-controls'],
-    ['Verify Membership Companion', '#staff/tool/verify-membership'],
-    ['Team Reports Companion', '#staff/tool/team-reports'],
-    ['Barracks Game Day TV Companion', '#game-day-tv'],
+  const fieldTools = [
+    ['Player Check-In', '/admin/field/check-in'],
+    ['Round Controls', '/admin/field/rounds'],
+    ['Verify Membership', '/admin/field/membership'],
+    ['Team Reports', '/admin/field/reports'],
+    ['Barracks Game Day TV', '/barracks-tv'],
   ];
-  for (const [name, fragment] of companionTools) {
-    expect(screen.getByRole('link', { name })).toHaveAttribute('href', `https://app.usairsoftfield.com/${fragment}`);
+  for (const [name, path] of fieldTools) {
+    expect(screen.getByRole('link', { name })).toHaveAttribute('href', path);
   }
   const websiteTools = [
     ['Field Game Days', '/schedule'],

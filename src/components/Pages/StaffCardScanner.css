@@ -1,0 +1,20 @@
+.field-staff-scanner {
+  display: grid;
+  justify-items: start;
+  gap: .55rem;
+  margin-block: .65rem;
+}
+
+.field-staff-scanner__video {
+  width: min(100%, 36rem);
+  max-height: 19rem;
+  aspect-ratio: 16 / 9;
+  border-radius: .55rem;
+  object-fit: contain;
+  background: #111a25;
+}
+
+.field-staff-scanner__status {
+  margin: 0;
+  font-size: .9rem;
+}

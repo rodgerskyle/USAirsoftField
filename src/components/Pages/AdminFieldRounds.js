@@ -1,0 +1,343 @@
+import React, { useEffect, useRef, useState } from 'react';
+import {
+    fieldTimeInput, fieldTimeISO, formatFieldTime, formatRoundCountdown, isOpenVote, liveRounds,
+    LIVE_ROUNDS_PATH, ROUND_CATALOG_PATH, RoundRespawns, useLiveFieldBoard,
+} from './FieldRoundsShared';
+import './FieldRounds.css';
+
+const defaultVoteModes = ['countdown', 'three-flag', 'downed-pilot'];
+const actions = {
+    startRound: 'Round started. The countdown is live.',
+    delayRound: 'Round delayed by five minutes.',
+    endRound: 'Round ended.',
+    cancelGame: 'Round removed from the schedule.',
+    updateSpawns: 'Respawn locations updated.',
+    createGame: 'Round added to the field schedule.',
+    createPoll: 'Player voting is open.',
+    closePoll: 'Voting closed.',
+    publishWinner: 'Winning round added to the field schedule.',
+};
+
+function formText(data, name) {
+    return String(data.get(name) ?? '').trim();
+}
+
+function roundFormData(form) {
+    const data = new FormData(form);
+    return {
+        modeId: formText(data, 'modeId'),
+        startsAt: fieldTimeISO(formText(data, 'startsAt')),
+        durationMinutes: Number(data.get('durationMinutes')),
+        location: formText(data, 'location'),
+        briefingLocation: formText(data, 'briefingLocation'),
+        notes: formText(data, 'notes'),
+        camoSpawn: formText(data, 'camoSpawn'),
+        solidSpawn: formText(data, 'solidSpawn'),
+        staffControlled: data.has('staffControlled'),
+    };
+}
+
+function SpawnInputs({ round }) {
+    return (
+        <div className="field-rounds-fields">
+            <label>Camo respawn<input name="camoSpawn" defaultValue={round?.camoSpawn} maxLength={100} placeholder="e.g. Alpha HQ" /></label>
+            <label>Solid respawn<input name="solidSpawn" defaultValue={round?.solidSpawn} maxLength={100} placeholder="e.g. Foxtrot HQ" /></label>
+        </div>
+    );
+}
+
+function RoundForm({ catalog, poll, now, disabled, onSave }) {
+    const winners = poll?.options.filter(option => poll.winnerModeIds.includes(option.modeId));
+    const defaultMode = winners ? winners[0]?.modeId : catalog.sections.flatMap(section => section.modes)
+        .find(mode => mode.id === 'countdown')?.id;
+    const [error, setError] = useState('');
+    async function submit(event) {
+        event.preventDefault();
+        const form = event.currentTarget;
+        try {
+            const values = roundFormData(form);
+            setError('');
+            const saved = await onSave(poll
+                ? { ...values, action: 'publishWinner', pollId: poll.id }
+                : { ...values, action: 'createGame' });
+            if (saved && !poll) {
+                form.reset();
+                form.elements.startsAt.value = fieldTimeInput(now + 15 * 60000);
+            }
+        } catch (failure) {
+            setError(failure.message);
+        }
+    }
+
+    return (
+        <form className="field-rounds-form" onSubmit={submit}>
+            <fieldset disabled={disabled}>
+                <label>
+                    {winners ? 'Winning mode' : 'Game mode'}
+                    <select name="modeId" defaultValue={defaultMode} required>
+                        {winners ? winners.map(option => <option key={option.modeId} value={option.modeId}>{option.label}</option>)
+                            : catalog.sections.map(section => <optgroup key={section.name} label={section.name}>
+                                {section.modes.map(mode => <option key={mode.id} value={mode.id}>{mode.name}</option>)}
+                            </optgroup>)}
+                    </select>
+                </label>
+                <div className="field-rounds-fields">
+                    <label>Start time · California<input name="startsAt" type="datetime-local" defaultValue={fieldTimeInput(now + 15 * 60000)} required /></label>
+                    <label>Duration (minutes)<input name="durationMinutes" type="number" min={5} max={90} defaultValue={25} required /></label>
+                    <label>Field location<input name="location" maxLength={80} defaultValue="Main field" /></label>
+                    <label>Briefing location<input name="briefingLocation" maxLength={80} placeholder="e.g. Barracks" /></label>
+                </div>
+                <SpawnInputs />
+                <label>Briefing notes<textarea name="notes" rows={2} maxLength={300} placeholder="Objective details or gear reminders" /></label>
+                <label className="field-rounds-option"><input type="checkbox" name="staffControlled" defaultChecked /> Wait for staff to start the round</label>
+                <button className="btn btn-primary" type="submit">{poll ? 'Publish winning round' : 'Add to field schedule'}</button>
+            </fieldset>
+            {error && <p className="field-rounds-error" role="alert">{error}</p>}
+        </form>
+    );
+}
+
+function PollForm({ catalog, now, disabled, onSave }) {
+    const [query, setQuery] = useState('');
+    const available = catalog.sections.flatMap(section => section.modes.map(mode => mode.id));
+    const initial = defaultVoteModes.filter(id => available.includes(id));
+    const [selected, setSelected] = useState(initial);
+    const [error, setError] = useState('');
+    const search = query.trim().toLowerCase();
+    const sections = catalog.sections.map(section => ({
+        ...section, modes: section.modes.filter(mode => mode.name.toLowerCase().includes(search)),
+    })).filter(section => section.modes.length);
+
+    function toggle(id) {
+        setSelected(current => current.includes(id) ? current.filter(mode => mode !== id) : [...current, id]);
+        setError('');
+    }
+
+    async function submit(event) {
+        event.preventDefault();
+        const form = event.currentTarget;
+        try {
+            if (selected.length < catalog.minOptions || selected.length > catalog.maxOptions) {
+                throw new Error(`Choose ${catalog.minOptions}–${catalog.maxOptions} different modes.`);
+            }
+            const data = new FormData(form);
+            setError('');
+            await onSave({
+                action: 'createPoll', title: formText(data, 'title'), options: selected,
+                closesAt: fieldTimeISO(formText(data, 'closesAt')),
+            });
+        } catch (failure) {
+            setError(failure.message);
+        }
+    }
+
+    return (
+        <form className="field-rounds-form" onSubmit={submit}>
+            <fieldset disabled={disabled}>
+                <label>Poll question<input name="title" maxLength={100} defaultValue="What should we play next?" required /></label>
+                <label>Voting closes · California<input name="closesAt" type="datetime-local" defaultValue={fieldTimeInput(now + 10 * 60000)} required /></label>
+                <label>Find game modes<input type="search" value={query} onChange={event => setQuery(event.target.value)} onKeyDown={event => { if (event.key === 'Enter') event.preventDefault(); }} /></label>
+                <p>{selected.length} selected. Choose {catalog.minOptions}–{catalog.maxOptions} modes.</p>
+                <div className="field-rounds-mode-list" role="group" aria-label="Game modes for voting">
+                    {sections.map(section => (
+                        <div key={section.name}>
+                            <strong>{section.name}</strong>
+                            {section.modes.map(mode => (
+                                <label className="field-rounds-option" key={mode.id}>
+                                    <input type="checkbox" checked={selected.includes(mode.id)}
+                                        disabled={selected.length >= catalog.maxOptions && !selected.includes(mode.id)}
+                                        onChange={() => toggle(mode.id)} />
+                                    {mode.name}
+                                </label>
+                            ))}
+                        </div>
+                    ))}
+                    {!sections.length && <p>No matching game modes.</p>}
+                </div>
+                <button className="btn btn-primary" type="submit" disabled={selected.length < catalog.minOptions}>Open voting</button>
+            </fieldset>
+            {error && <p className="field-rounds-error" role="alert">{error}</p>}
+        </form>
+    );
+}
+
+function RoundCard({ round, live, hasCurrentRound, now, disabled, onSave }) {
+    function change(action) {
+        const prompt = { endRound: 'End this round now?', cancelGame: 'Remove this round from the schedule?' }[action];
+        if (prompt && !window.confirm(prompt)) return;
+        void onSave({ action, gameId: round.id, revision: round.revision });
+    }
+    function saveSpawns(event) {
+        event.preventDefault();
+        const data = new FormData(event.currentTarget);
+        void onSave({
+            action: 'updateSpawns', gameId: round.id, revision: round.revision,
+            camoSpawn: formText(data, 'camoSpawn'), solidSpawn: formText(data, 'solidSpawn'),
+        });
+    }
+    const kind = live ? 'In play' : round.status === 'delayed' ? 'Delayed'
+        : round.status === 'scheduled' ? 'Automatic start' : 'Staff start';
+    const roundMinutes = Math.round((Date.parse(round.endsAt) - Date.parse(round.startsAt)) / 60000);
+
+    return (
+        <article className="field-rounds-card" data-live={live}>
+            <div className="field-rounds-card-header">
+                <div>
+                    <h3>{round.title || 'Field round'}</h3>
+                    <p>{kind} · {formatFieldTime(round.startsAt)} · {roundMinutes} min</p>
+                    <p>{round.location || 'Main field'} · Briefing at {round.briefingLocation || round.location || 'the field'}</p>
+                    {round.notes && <p>{round.notes}</p>}
+                </div>
+                {live && <span className="field-rounds-countdown" role="timer" aria-label="Round time remaining">
+                    {disabled ? '—' : formatRoundCountdown(Date.parse(round.endsAt) - now)}
+                </span>}
+            </div>
+            <RoundRespawns round={round} />
+            <div className="field-rounds-actions">
+                {live ? <button className="btn btn-outline-danger" type="button" disabled={disabled} onClick={() => change('endRound')}>End round</button>
+                    : <>
+                        <button className="btn btn-primary" type="button" disabled={disabled || hasCurrentRound} onClick={() => change('startRound')}>Start now</button>
+                        <button className="btn btn-outline-secondary" type="button" disabled={disabled} onClick={() => change('delayRound')}>Delay 5 min</button>
+                        <button className="btn btn-outline-danger" type="button" disabled={disabled} onClick={() => change('cancelGame')}>Cancel round</button>
+                    </>}
+            </div>
+            <details>
+                <summary>Edit respawns</summary>
+                <form className="field-rounds-form" onSubmit={saveSpawns}>
+                    <fieldset disabled={disabled}>
+                        <SpawnInputs round={round} />
+                        <button className="btn btn-outline-secondary" type="submit">Save respawns</button>
+                    </fieldset>
+                </form>
+            </details>
+        </article>
+    );
+}
+
+export default function AdminFieldRounds({ request }) {
+    const { board, error, now, refresh } = useLiveFieldBoard(request);
+    const [catalog, setCatalog] = useState(null);
+    const [catalogError, setCatalogError] = useState('');
+    const [catalogAttempt, setCatalogAttempt] = useState(0);
+    const [busy, setBusy] = useState(false);
+    const [notice, setNotice] = useState(null);
+    const mutation = useRef(null);
+
+    useEffect(() => {
+        const controller = new AbortController();
+        request(ROUND_CATALOG_PATH, { signal: controller.signal }).then(result => {
+            if (controller.signal.aborted) return;
+            if (!Array.isArray(result?.sections) || !result.sections.length ||
+                !Number.isInteger(result.minOptions) || !Number.isInteger(result.maxOptions) ||
+                result.minOptions < 2 || result.maxOptions < result.minOptions ||
+                result.sections.some(section => typeof section?.name !== 'string' || !Array.isArray(section.modes) ||
+                    section.modes.some(mode => typeof mode?.id !== 'string' || typeof mode.name !== 'string'))) {
+                throw new Error('The game mode list could not be verified.');
+            }
+            setCatalog(result);
+            setCatalogError('');
+        }).catch(failure => {
+            if (!controller.signal.aborted) setCatalogError(failure.message || 'The game mode list is unavailable.');
+        });
+        return () => controller.abort();
+    }, [catalogAttempt, request]);
+
+    useEffect(() => () => {
+        const controller = mutation.current;
+        mutation.current = null;
+        controller?.abort();
+    }, []);
+
+    async function save(body) {
+        if (mutation.current || error || board?.isStaff !== true) return false;
+        const controller = new AbortController();
+        const timeout = window.setTimeout(() => controller.abort(), 15000);
+        mutation.current = controller;
+        setBusy(true);
+        setNotice(null);
+        let saved = false;
+        try {
+            const result = await request(LIVE_ROUNDS_PATH, { method: 'POST', body, signal: controller.signal });
+            if (controller.signal.aborted) throw new Error('The update was not confirmed. Check the board before trying again.');
+            if (result?.ok !== true) throw new Error('The field board did not confirm the action.');
+            saved = true;
+            setNotice({ text: actions[body.action] });
+        } catch (failure) {
+            if (mutation.current === controller) setNotice({
+                error: true,
+                text: controller.signal.aborted ? 'The update was not confirmed. Check the board before trying again.' :
+                    failure.message || 'The update could not be verified. Check the board before trying again.',
+            });
+        } finally {
+            window.clearTimeout(timeout);
+            if (mutation.current === controller) await refresh();
+            if (mutation.current === controller) {
+                mutation.current = null;
+                setBusy(false);
+            }
+        }
+        return saved;
+    }
+
+    const rounds = liveRounds(board?.games, error && board ? Date.parse(board.serverNow) : now);
+    const poll = board?.poll;
+    const open = isOpenVote(poll, now);
+    const disabled = busy || Boolean(error);
+    const canManage = board?.isStaff === true;
+    const canPublish = poll && !open && !poll.publishedGameId && poll.winnerModeIds?.length > 0;
+    function closePoll() {
+        if (window.confirm('Close this vote? Players will no longer be able to vote.')) {
+            void save({ action: 'closePoll', pollId: poll.id });
+        }
+    }
+
+    return (
+        <div className="field-rounds" aria-busy={busy}>
+            <div className="field-rounds-status">
+                <p role="status">{busy ? 'Saving update…' : board ? `Updated ${formatFieldTime(board.serverNow)}` : 'Loading live field board…'}</p>
+                <button className="btn btn-outline-secondary" type="button" onClick={() => void refresh()} disabled={busy}>Refresh board</button>
+            </div>
+            {error && <p className="field-rounds-error" role="alert">{error} {board && 'Round controls will resume when the board reconnects.'}</p>}
+            {notice && <p role={notice.error ? 'alert' : 'status'} className={notice.error ? 'field-rounds-error' : 'field-rounds-success'}>{notice.text}</p>}
+            {board && !canManage && <p role="alert">Staff access has expired. Unlock staff tools to continue.</p>}
+            {canManage && <>
+                <section className="field-rounds-panel" aria-labelledby="field-rounds-current">
+                    <h2 id="field-rounds-current">Current and scheduled rounds</h2>
+                    {!rounds.active.length && !rounds.upcoming.length && <p>No rounds are scheduled in the next 48 hours.</p>}
+                    {rounds.active.map(round => <RoundCard key={round.id + ':' + round.revision}
+                        round={round} live now={now} disabled={disabled} onSave={save} />)}
+                    {rounds.upcoming.map(round => <RoundCard key={round.id + ':' + round.revision}
+                        round={round} hasCurrentRound={Boolean(rounds.current)} now={now} disabled={disabled} onSave={save} />)}
+                </section>
+                {canPublish && <section className="field-rounds-panel" aria-labelledby="field-rounds-publish">
+                    <h2 id="field-rounds-publish">Publish the vote winner</h2>
+                    {poll.winnerModeIds.length > 1 && <p>The vote is tied. Choose one of the winning modes.</p>}
+                    <RoundForm key={poll.id} poll={poll} now={now} disabled={disabled} onSave={save} />
+                </section>}
+                {catalogError && <div className="field-rounds-error" role="alert">
+                    <p>{catalogError}</p>
+                    <button className="btn btn-outline-secondary" type="button" onClick={() => setCatalogAttempt(value => value + 1)}>Reload game modes</button>
+                </div>}
+                <div className="field-rounds-workbench">
+                    <section className="field-rounds-panel" aria-labelledby="field-rounds-schedule">
+                        <h2 id="field-rounds-schedule">Schedule a round</h2>
+                        {catalog ? <RoundForm catalog={catalog} now={now} disabled={disabled} onSave={save} /> :
+                            !catalogError && <p role="status">Loading game modes…</p>}
+                    </section>
+                    <section className="field-rounds-panel" aria-labelledby="field-rounds-vote">
+                        <h2 id="field-rounds-vote">Player voting</h2>
+                        {poll && <div className="field-rounds-vote-results">
+                            <h3>{poll.title}</h3>
+                            <p>{open ? `Closes ${formatFieldTime(poll.closesAt)}` : 'Voting closed'} · {poll.totalVotes} votes</p>
+                            <ul>{poll.options.map(option => <li key={option.modeId}><span>{option.label}</span><strong>{option.votes}</strong></li>)}</ul>
+                            {poll.publishedGameId && <p>Winning round published.</p>}
+                        </div>}
+                        {open ? <button className="btn btn-outline-danger" type="button" disabled={disabled} onClick={closePoll}>Close this vote</button> :
+                            catalog ? <PollForm key={poll?.id ?? 'new'} catalog={catalog} now={now} disabled={disabled} onSave={save} /> :
+                                !catalogError && <p role="status">Loading game modes…</p>}
+                    </section>
+                </div>
+            </>}
+        </div>
+    );
+}

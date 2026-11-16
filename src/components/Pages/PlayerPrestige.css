@@ -12,11 +12,14 @@
 .usaw-prestige-emblem > span {
   position: absolute;
   left: 50%;
-  top: 49%;
+  /* Centroid of the transparent opening in the five-star artwork. */
+  top: 51.1%;
   transform: translate(-50%, -50%);
   color: #fff1c9;
   font: 700 15px / 1 Georgia, 'Times New Roman', serif;
   font-size: min(var(--prestige-numeral-size, 27cqw), var(--prestige-numeral-fit, 32cqw));
+  text-box-trim: trim-both;
+  text-box-edge: cap alphabetic;
   white-space: nowrap;
   text-shadow: 0 1px 2px #051119, 0 0 3px #051119;
 }
