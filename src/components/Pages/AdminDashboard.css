@@ -206,6 +206,13 @@
   color: var(--admin-accent);
 }
 
+.staff-dashboard__action-destination {
+  display: block;
+  color: var(--admin-subtext);
+  font-size: .75rem;
+  font-weight: 500;
+}
+
 .staff-dashboard__action-chevron {
   color: var(--admin-subtext);
   font-size: .7rem;

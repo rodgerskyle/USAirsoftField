@@ -7,6 +7,7 @@ const format = new Intl.NumberFormat('en-US');
 const generalInsignia = rankImages[rankImages.length - 1];
 const romanDigits = [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],
   [10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
+const romanWidths = { I: .42, V: .77, X: .77, L: .68, C: .77, D: .8, M: 1 };
 
 function romanNumeral(value) {
   if (value >= 4000) return romanNumeral(Math.floor(value / 1000)).replace(/[IVXLCDM]/g, '$&\u0305') + romanNumeral(value % 1000);
@@ -23,10 +24,12 @@ function romanNumeral(value) {
 export function PrestigeEmblem({ count }) {
   if (!Number.isSafeInteger(count) || count < 1) return null;
   const numeral = romanNumeral(count);
+  const size = numeral.length === 1 ? 'single' : numeral.length === 3 ? 'triple' : numeral.length > 5 ? 'long' : numeral.length > 3 ? 'medium' : 'short';
+  const width = [...numeral].reduce((sum, glyph) => sum + (romanWidths[glyph] ?? 0), 0);
   return (
     <span className="usaw-prestige-emblem" aria-hidden="true">
       <img src={generalInsignia} alt="" width="60" height="60" decoding="async" />
-      <span data-numeral-size={numeral.length > 5 ? 'long' : numeral.length > 3 ? 'medium' : 'short'}>{numeral}</span>
+      <span data-numeral-size={size} style={{ '--prestige-numeral-fit': `${Math.floor(36 / width)}cqw` }}>{numeral}</span>
     </span>
   );
 }
