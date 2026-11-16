@@ -72,7 +72,10 @@ function lookupInput(raw) {
 function putResult(board, data) {
   if (board?.date && data.date < board.date) return board;
   const { date, counts, balance, classifications } = data;
-  return { date, counts, balance, classifications, players: data.players ?? (date === board?.date ? board.players : []) };
+  const sameDay = date === board?.date;
+  const rosterVersion = data.rosterVersion ?? (sameDay ? board.rosterVersion : undefined);
+  const previousPlayers = sameDay && rosterVersion === board.rosterVersion ? board.players : [];
+  return { date, counts, balance, classifications, rosterVersion, players: data.players ?? previousPlayers };
 }
 
 function assignmentMessage({ outcome, player }) {
@@ -209,12 +212,16 @@ export default function AdminFieldCheckIn({ request }) {
   const [rosterError, setRosterError] = useState('');
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
+  const [clearConfirmation, setClearConfirmation] = useState(null);
   const lifecycle = useRef(null);
   const operation = useRef(null);
   const refreshCall = useRef(null);
   const generation = useRef(0);
   const memberInput = useRef(null);
   const guestInput = useRef(null);
+  const clearTrigger = useRef(null);
+  const cancelClear = useRef(null);
+  const restoreClearFocus = useRef(false);
 
   const refreshRoster = useCallback(async () => {
     const signal = lifecycle.current?.signal;
@@ -254,8 +261,21 @@ export default function AdminFieldCheckIn({ request }) {
     if (selected && board?.date && selected.date < board.date) {
       setSelected(null);
       setStatus('A new field day has started. Look up the player again.');
+    } else if (selected?.rosterVersion && board?.rosterVersion && selected.rosterVersion !== board.rosterVersion) {
+      setSelected(null);
+      setStatus('The roster was cleared. Look up the player again.');
     }
   }, [board, selected]);
+
+  useEffect(() => {
+    if (working) return;
+    if (clearConfirmation) {
+      cancelClear.current?.focus({ preventScroll: true });
+    } else if (restoreClearFocus.current) {
+      restoreClearFocus.current = false;
+      (clearTrigger.current ?? memberInput.current)?.focus({ preventScroll: true });
+    }
+  }, [clearConfirmation, working]);
 
   async function run(work) {
     const signal = lifecycle.current?.signal;
@@ -278,6 +298,7 @@ export default function AdminFieldCheckIn({ request }) {
   }
 
   function lookup(input, guest = false) {
+    if (clearConfirmation) return;
     void run(async signal => {
       setSelected(null);
       setMatches([]);
@@ -290,7 +311,7 @@ export default function AdminFieldCheckIn({ request }) {
         if (signal.aborted) return;
         if (data.counts && data.balance) setBoard(current => putResult(current, data));
         if (data.player) {
-          setSelected({ date: data.date, player: data.player });
+          setSelected({ date: data.date, rosterVersion: data.rosterVersion, player: data.player });
           setStatus(data.player.side ? 'This player is already checked in.' : 'Choose a side to check in.');
         } else if (data.matches?.length) {
           setMatches(data.matches);
@@ -299,7 +320,12 @@ export default function AdminFieldCheckIn({ request }) {
           setStatus('No matching player. Try another spelling, enter a player ID, or add a walk-on.');
         }
       } catch (failure) {
-        if (!signal.aborted) setStatus('');
+        if (!signal.aborted) {
+          if (failure.status === 409 && failure.data?.counts && failure.data?.players) {
+            setBoard(current => putResult(current, failure.data));
+          }
+          setStatus('');
+        }
         throw failure;
       }
     });
@@ -310,6 +336,7 @@ export default function AdminFieldCheckIn({ request }) {
     if (data.player) {
       setSelected({
         date: data.date,
+        rosterVersion: data.rosterVersion,
         player: {
           canSetExperience: player.canSetExperience, experienceOptions: player.experienceOptions, ...data.player,
           assignedBalanceScore: data.player.balanceScore, assignedExperienceBand: data.player.experienceBand,
@@ -320,8 +347,8 @@ export default function AdminFieldCheckIn({ request }) {
   }
 
   function assign(side) {
-    if (!selected) return;
-    const { player, date } = selected;
+    if (!selected || clearConfirmation) return;
+    const { player, date, rosterVersion } = selected;
     const newGuest = player.membershipStatus === 'guest' && !player.side;
     const action = player.side ? 'reassign' : newGuest ? 'guestCheckIn' : 'checkIn';
     void run(async signal => {
@@ -331,6 +358,7 @@ export default function AdminFieldCheckIn({ request }) {
           method: 'POST', signal,
           body: {
             action, date, side,
+            ...(rosterVersion ? { rosterVersion } : {}),
             ...(newGuest ? { displayName: player.displayName } : { playerId: player.playerId, revision: player.revision }),
             ...(player.canSetExperience ? { experienceBand: player.experienceBand } : {}),
           },
@@ -345,10 +373,50 @@ export default function AdminFieldCheckIn({ request }) {
         }
       } catch (failure) {
         if (!signal.aborted) {
-          if (failure.data?.player) applyAssignment(failure.data, player);
+          if (rosterVersion && failure.data?.rosterVersion && failure.data.rosterVersion !== rosterVersion) {
+            if (failure.data.counts && failure.data.players) setBoard(current => putResult(current, failure.data));
+            setSelected(null);
+          } else if (failure.data?.player) {
+            applyAssignment(failure.data, player);
+          }
           setStatus('');
         }
         throw failure;
+      }
+    });
+  }
+
+  function openClearConfirmation() {
+    setRosterError('');
+    setClearConfirmation({ date: board.date, rosterVersion: board.rosterVersion });
+  }
+
+  function dismissClearConfirmation() {
+    restoreClearFocus.current = true;
+    setClearConfirmation(null);
+  }
+
+  function clearPlayers() {
+    if (!clearConfirmation) return;
+    void run(async signal => {
+      setRosterError('');
+      setStatus('');
+      try {
+        const data = await request(path, { method: 'POST', signal, body: { action: 'clearPlayers', ...clearConfirmation } });
+        if (signal.aborted) return;
+        setBoard(current => putResult(current, data));
+        setSelected(null);
+        setMatches([]);
+        if (memberInput.current) memberInput.current.value = '';
+        if (guestInput.current) guestInput.current.value = '';
+        setClearConfirmation(null);
+        setStatus(`Cleared ${countFormat.format(data.clearedCount)} ${data.clearedCount === 1 ? 'check-in' : 'check-ins'} for today.`);
+        memberInput.current?.focus({ preventScroll: true });
+      } catch (failure) {
+        if (signal.aborted) return;
+        if (failure.data?.counts && failure.data?.players) setBoard(current => putResult(current, failure.data));
+        setRosterError(failure.message || 'The check-ins could not be cleared. Refresh the roster and try again.');
+        dismissClearConfirmation();
       }
     });
   }
@@ -372,6 +440,8 @@ export default function AdminFieldCheckIn({ request }) {
   }
 
   const players = board?.players ?? [];
+  const checkInLocked = working || Boolean(clearConfirmation);
+  const canClear = Boolean(board?.rosterVersion && board.counts?.total > 0);
   const dateLabel = board?.date ? `${fieldDate.format(new Date(board.date + 'T00:00:00Z'))} · Pacific time` : 'Today at the field · Pacific time';
   const recommendation = selected?.date === board?.date ? recommendPlacement(board, selected?.player) : null;
 
@@ -385,11 +455,11 @@ export default function AdminFieldCheckIn({ request }) {
           <form className="admin-checkin__form" onSubmit={submitLookup}>
             <label htmlFor="admin-checkin-player">
               Player name, ID or card link
-              <input id="admin-checkin-player" ref={memberInput} type="text" maxLength={500} autoCapitalize="none" autoComplete="off" autoCorrect="off" spellCheck={false} required readOnly={working} />
+              <input id="admin-checkin-player" ref={memberInput} type="text" maxLength={500} autoCapitalize="none" autoComplete="off" autoCorrect="off" spellCheck={false} required readOnly={checkInLocked} />
             </label>
-            <button className="btn btn-primary" type="submit" disabled={working}>Find player</button>
+            <button className="btn btn-primary" type="submit" disabled={checkInLocked}>Find player</button>
           </form>
-          <StaffCardScanner disabled={working} onScan={lookup} />
+          <StaffCardScanner disabled={checkInLocked} onScan={lookup} />
           <p className="admin-checkin__hint">Scan with the camera or a connected reader, or enter the player’s name or ID.</p>
           <details className="admin-checkin__walk-on">
             <summary>Add a walk-on</summary>
@@ -399,27 +469,50 @@ export default function AdminFieldCheckIn({ request }) {
             }}>
               <label htmlFor="admin-checkin-guest">
                 Walk-on name or callsign
-                <input id="admin-checkin-guest" ref={guestInput} type="text" minLength={2} maxLength={80} autoComplete="off" required readOnly={working}
+                <input id="admin-checkin-guest" ref={guestInput} type="text" minLength={2} maxLength={80} autoComplete="off" required readOnly={checkInLocked}
                   onChange={() => { if (selected?.player.membershipStatus === 'guest' && !selected.player.side) setSelected(null); }} />
               </label>
-              <button className="btn btn-outline-primary" type="submit" disabled={working}>Continue</button>
+              <button className="btn btn-outline-primary" type="submit" disabled={checkInLocked}>Continue</button>
             </form>
           </details>
           {status && <p className="admin-checkin__status" role="status">{status}</p>}
           {error && <p className="alert alert-danger" role="alert">{error}</p>}
-          {matches.length > 0 && <PlayerRows players={matches} onSelect={lookup} disabled={working} />}
-          {selected && <SelectedPlayer player={selected.player} suggestion={recommendation} working={working} onAssessment={updateAssessment} onAssign={assign} />}
+          {matches.length > 0 && <PlayerRows players={matches} onSelect={lookup} disabled={checkInLocked} />}
+          {selected && <SelectedPlayer player={selected.player} suggestion={recommendation} working={checkInLocked} onAssessment={updateAssessment} onAssign={assign} />}
         </section>
         <section className="admin-checkin__card" aria-labelledby="admin-checkin-roster">
           <div className="admin-checkin__heading">
             <h2 id="admin-checkin-roster">Recent check-ins</h2>
-            <button className="btn btn-outline-primary" type="button" disabled={working || refreshing} onClick={refreshRoster}>Refresh</button>
+            <div className="admin-checkin__buttons">
+              <button className="btn btn-outline-primary" type="button" disabled={working || refreshing} onClick={refreshRoster}>Refresh</button>
+              {canClear && (
+                <button className="btn btn-outline-danger admin-checkin__clear-button" type="button" ref={clearTrigger}
+                  disabled={checkInLocked} onClick={openClearConfirmation}>
+                  Clear players
+                </button>
+              )}
+            </div>
           </div>
+          {clearConfirmation && (
+            <section className="admin-checkin__clear-confirmation" aria-labelledby="admin-checkin-clear-title" aria-describedby="admin-checkin-clear-description">
+              <h3 id="admin-checkin-clear-title">Clear today’s check-ins?</h3>
+              <p id="admin-checkin-clear-description">Clear every Camo and Solid check-in for today and start over with an empty roster.</p>
+              <div className="admin-checkin__buttons">
+                <button className="btn btn-outline-secondary" type="button" ref={cancelClear}
+                  disabled={working} onClick={dismissClearConfirmation}>
+                  Cancel
+                </button>
+                <button className="btn btn-danger" type="button" disabled={working} onClick={clearPlayers}>
+                  {working ? 'Clearing…' : 'Clear check-ins'}
+                </button>
+              </div>
+            </section>
+          )}
           {rosterError && <p className="alert alert-danger" role="alert">{rosterError}</p>}
           {!board && !rosterError && <p role="status">Loading today’s roster…</p>}
-          {board && players.length === 0 && <p>No players have checked in today.</p>}
+          {board?.counts?.total === 0 && <p>No players have checked in today.</p>}
           {players.length < (board?.counts?.total ?? 0) && <p>Showing the latest {players.length} of {board.counts.total} check-ins.</p>}
-          {players.length > 0 && <PlayerRows players={players} onSelect={lookup} checkedIn disabled={working} />}
+          {players.length > 0 && <PlayerRows players={players} onSelect={lookup} checkedIn disabled={checkInLocked} />}
         </section>
       </div>
     </div>
