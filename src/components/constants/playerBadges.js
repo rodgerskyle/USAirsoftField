@@ -1,4 +1,5 @@
 import catalog from './badgeCatalog.json';
+import { patchDifficulty } from './patchDifficulty';
 
 const apiUrl = process.env.REACT_APP_USAW_BADGE_API_URL ?? 'https://usaw-badge-service.pink-bud-3735.chatgpt.site/api/player-badges';
 const patchLeaderboardUrl = 'https://app.usairsoftfield.com/api/patch-leaderboard';
@@ -6,11 +7,16 @@ const artPath = `${process.env.PUBLIC_URL || ''}/badges`;
 
 export const badgeServiceConfigured = /^https:\/\/[^?#]+$/i.test(apiUrl);
 
-export const BADGE_CATALOG = catalog.map((badge) => ({
-    ...badge,
-    artUrl: `${artPath}/${badge.id}.png`,
-    thumbUrl: `${artPath}/thumbs/${badge.id}.png`,
-}));
+export const BADGE_CATALOG = catalog.map((badge) => {
+    const difficulty = patchDifficulty(badge.id);
+    return {
+        ...badge,
+        difficultyFactor: difficulty.factor,
+        difficultyName: difficulty.name,
+        artUrl: `${artPath}/${badge.id}.png`,
+        thumbUrl: `${artPath}/thumbs/${badge.id}.png`,
+    };
+});
 
 export const badgeById = Object.assign(Object.create(null), Object.fromEntries(
     BADGE_CATALOG.map((badge) => [badge.id, badge])

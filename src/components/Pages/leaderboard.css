@@ -487,12 +487,6 @@
     color: var(--field-lb-prestige);
 }
 
-.field-lb-prestige .usaw-prestige-emblem {
-    width: 24px;
-    height: 24px;
-    flex-basis: 24px;
-}
-
 .field-lb-featured-badge {
     width: 60px;
     height: 60px;
@@ -514,6 +508,15 @@
     width: 46px;
     height: 46px;
     object-fit: contain;
+}
+
+.field-lb-insignia .usaw-prestige-emblem {
+    --prestige-emblem-size: 100%;
+}
+
+.field-lb-insignia .usaw-prestige-emblem img {
+    width: 90%;
+    height: 90%;
 }
 
 .field-lb-points {

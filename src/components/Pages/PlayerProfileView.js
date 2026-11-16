@@ -13,7 +13,7 @@ import rankIncrements from '../constants/rankincrements';
 import * as ROLES from '../constants/roles';
 import { badgeById, getFeaturedBadgeDetails, getMyBadges, setFeaturedBadge } from '../constants/playerBadges';
 import { getPlayerDisplayNames } from '../constants/playerDisplayNames';
-import { maximumRankPoints, prestigeCyclePoints, profileRank, usePlayerPrestige } from '../constants/playerPrestige';
+import { canEarnPrestige, profileRank, usePlayerPrestige } from '../constants/playerPrestige';
 import { teamPagePath, usePlayerTeam, useTeamLogo } from '../constants/teamDirectory';
 import SharePageLink from '../constants/SharePageLink';
 import { AuthUserContext } from '../session';
@@ -189,7 +189,7 @@ export function ProfileState({ loading, missing }) {
   );
 }
 
-function RankProgress({ points, rank }) {
+function RankProgress({ points, rank, completedPrestiges }) {
   const next = rank + 1;
   const hasNextRank = next < rankNames.length;
   const needed = hasNextRank ? rankIncrements[next] - points : 0;
@@ -204,7 +204,8 @@ function RankProgress({ points, rank }) {
           <p className="player-profile__label">{hasNextRank ? 'Next rank' : 'Highest rank'}</p>
           <h2>{rankNames[hasNextRank ? next : rank]}</h2>
         </div>
-        <img className="player-profile__progress-emblem" src={rankImages[hasNextRank ? next : rank]} alt="" />
+        {completedPrestiges > 0 ? <PrestigeEmblem count={completedPrestiges} />
+          : <img className="player-profile__progress-emblem" src={rankImages[hasNextRank ? next : rank]} alt="" />}
       </div>
       <progress className="player-profile__progress" value={progress} max="100" aria-label="Rank progress" />
       <div className="player-profile__progress-caption">
@@ -303,7 +304,8 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
   }, [canManageBadges, section]);
 
   const profileImage = useProfileImage(firebase, playerId, user.profilepic);
-  const prestige = usePlayerPrestige(playerId);
+  const canManagePrestige = account && !user.roles?.[ROLES.WAIVER];
+  const prestige = usePlayerPrestige(playerId, canManagePrestige ? firebase : undefined);
   const badges = useProfileBadges(firebase, playerId, canManageBadges, badgeEligible);
   const featuredBadge = getBadge(badges.record?.featuredBadgeId);
   const featuredEarnedCount = (canManageBadges
@@ -326,13 +328,11 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
   const teamStatusText = teamStatus === 'loading' ? 'Checking team…'
     : teamStatus === 'error' ? 'Team unavailable' : 'Unaffiliated';
   const points = count(user.points);
-  const cyclePoints = prestigeCyclePoints(points, prestige.record);
   const completedPrestiges = prestige.record?.prestigeCount ?? 0;
-  const canManagePrestige = account && !user.roles?.[ROLES.WAIVER];
   const wins = count(user.wins);
   const losses = count(user.losses);
   const winRate = wins + losses > 0 ? Math.ceil(wins / (wins + losses) * 100) : 0;
-  const rank = profileRank(cyclePoints);
+  const rank = profileRank(points, prestige.record);
   const stats = [
     ['Points', points],
     ['Wins', wins],
@@ -378,7 +378,7 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
             </div>
             <div className="player-profile__honors">
               <div className="player-profile__rank">
-                <img src={rankImages[rank]} alt="" />
+                {completedPrestiges > 0 ? <PrestigeEmblem count={completedPrestiges} /> : <img src={rankImages[rank]} alt="" />}
                 <div>
                   <p className="player-profile__label">Current rank</p>
                   <strong>{rankNames[rank]}</strong>
@@ -386,11 +386,10 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
               </div>
               {completedPrestiges > 0 && (
                 <div className="player-profile__prestige">
-                  <PrestigeEmblem count={completedPrestiges} />
                   <span>Prestige {numberFormat.format(completedPrestiges)}</span>
                 </div>
               )}
-              {canManagePrestige && prestige.record && cyclePoints >= maximumRankPoints && section !== 'progression' && (
+              {canManagePrestige && canEarnPrestige(prestige.record, points) && section !== 'progression' && (
                 <button type="button" className="player-profile__link" onClick={() => setSection('progression')}>
                   Prestige available
                 </button>
@@ -449,11 +448,11 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
                 ))}
               </dl>
             </section>
-            <RankProgress points={cyclePoints} rank={rank} />
+            <RankProgress points={points} rank={rank} completedPrestiges={completedPrestiges} />
           </div>
         )}
         <div className="player-profile__panels" hidden={section !== 'progression'}>
-          {section === 'progression' && <RankProgress points={cyclePoints} rank={rank} />}
+          {section === 'progression' && <RankProgress points={points} rank={rank} completedPrestiges={completedPrestiges} />}
           <PlayerPrestige
             key={playerId}
             firebase={firebase}

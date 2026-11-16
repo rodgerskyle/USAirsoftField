@@ -131,6 +131,22 @@
   border-color: var(--usaw-accent);
 }
 
+.virtual-patches__difficulty-filter {
+  display: grid;
+  gap: 3px;
+  color: var(--usaw-muted);
+  font-size: .82rem;
+  font-weight: 700;
+}
+
+.virtual-patches__difficulty-filter select {
+  padding: .45rem;
+  color: var(--usaw-text);
+  background: var(--usaw-raised);
+  border: 1px solid var(--usaw-line);
+  border-radius: .4rem;
+}
+
 .virtual-patches__wall {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 123px), 1fr));
@@ -189,7 +205,8 @@
   overflow-wrap: anywhere;
 }
 
-.virtual-patches__personal-count {
+.virtual-patches__personal-count,
+.virtual-patches__tile .virtual-patches__difficulty {
   color: #bed1e3;
   font-size: .72rem;
   line-height: 1.2;
@@ -227,6 +244,8 @@
   color: var(--usaw-muted);
   line-height: 1.45;
 }
+
+.virtual-patches__brief .virtual-patches__difficulty { font-weight: 750; }
 
 .virtual-patches__standings {
   margin-top: 17px;

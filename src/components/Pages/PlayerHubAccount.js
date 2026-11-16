@@ -4,7 +4,7 @@ import { onValue } from 'firebase/database';
 
 import { withFirebase } from '../Firebase';
 import { getPlayerDisplayNames } from '../constants/playerDisplayNames';
-import { prestigeCyclePoints, profileRank, usePlayerPrestige } from '../constants/playerPrestige';
+import { profileRank, usePlayerPrestige } from '../constants/playerPrestige';
 import { teamPagePath, usePlayerTeam } from '../constants/teamDirectory';
 import rankImages from '../constants/rankimgs';
 import rankNames from '../constants/ranks';
@@ -82,21 +82,22 @@ function PlayerCard({ account }) {
   const { record: prestige } = usePlayerPrestige(account.uid);
   const { team } = usePlayerTeam(record ? account.uid : null, record?.team);
   const displayName = account.displayName || record?.username || record?.name || account.fallbackName || 'USAW player';
-  const rank = record ? profileRank(prestigeCyclePoints(record.points, prestige)) : 0;
+  const rank = record ? profileRank(record.points, prestige) : 0;
   const winRate = record && record.wins + record.losses > 0
     ? Math.ceil(record.wins / (record.wins + record.losses) * 100) : 0;
 
   return (
     <section className="ph-account ph-player-card" aria-labelledby="player-account-heading">
       <div className="ph-player-identity">
-        {record && <span className="ph-player-emblem"><img src={rankImages[rank]} alt="" /></span>}
+        {record && <span className="ph-player-emblem">
+          {prestige?.prestigeCount > 0 ? <PrestigeEmblem count={prestige.prestigeCount} /> : <img src={rankImages[rank]} alt="" />}
+        </span>}
         <div>
           <p className="ph-kicker">Your player card</p>
           <h2 id="player-account-heading">{displayName}</h2>
           {record && <span className="ph-player-rank">{rankNames[rank]}</span>}
           {prestige?.prestigeCount > 0 && (
             <span className="ph-player-prestige">
-              <PrestigeEmblem count={prestige.prestigeCount} />
               Prestige {numberFormat.format(prestige.prestigeCount)}
             </span>
           )}

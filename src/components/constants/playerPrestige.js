@@ -5,13 +5,16 @@ const endpoint = 'https://usaw-field-companion.pink-bud-3735.chatgpt.site/api/pl
 const playerIdPattern = /^[a-z0-9_-]{10,128}$/i;
 export const maximumRankPoints = rankIncrements[rankIncrements.length - 1];
 
-export function prestigeCyclePoints(lifetimePoints, record) {
-  return Math.max(0, lifetimePoints - (record?.cycleStartPoints ?? 0));
-}
-
-export function profileRank(points) {
+export function profileRank(points, record) {
+  if (record?.prestigeCount > 0) return rankIncrements.length - 1;
   const nextRank = rankIncrements.findIndex(threshold => points < threshold);
   return nextRank === -1 ? rankIncrements.length - 1 : Math.max(0, nextRank - 1);
+}
+
+export function canEarnPrestige(record, lifetimePoints) {
+  if (!record) return false;
+  return record.progress?.eligible === true
+    || (!record.progress && record.prestigeCount === 0 && lifetimePoints >= maximumRankPoints);
 }
 
 function isRecord(data) {
@@ -42,6 +45,28 @@ export async function getPlayerPrestige(id, signal) {
   const result = await readPublicPrestige({ id }, signal);
   if (!isRecord(result)) throw new Error('Prestige information is unavailable.');
   return result;
+}
+
+async function getMyPlayerPrestige(firebase, playerId, signal) {
+  const user = firebase.auth.currentUser;
+  if (user?.uid !== playerId) throw new Error('Sign in to your USAW account to continue.');
+  const token = await user.getIdToken();
+  if (signal.aborted || firebase.auth.currentUser !== user) throw new DOMException('Account changed.', 'AbortError');
+  try {
+    const result = await readResponse(await fetch(`${endpoint}?me=1`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+      credentials: 'omit',
+      cache: 'no-store',
+      redirect: 'error',
+      signal,
+    }));
+    if (isRecord(result)) return result;
+    throw new Error('Prestige information is unavailable.');
+  } catch (error) {
+    // A website rollout can briefly overlap the older Companion endpoint.
+    if (error.status === 400) return getPlayerPrestige(playerId, signal);
+    throw error;
+  }
 }
 
 export async function getLeaderboardPrestige(playerIds, { signal } = {}) {
@@ -88,7 +113,7 @@ export async function confirmPrestige(firebase, playerId, challenge, signal) {
   return result;
 }
 
-export function usePlayerPrestige(playerId) {
+export function usePlayerPrestige(playerId, ownerFirebase) {
   const [state, setState] = useState(null);
   const request = useRef(null);
 
@@ -99,7 +124,10 @@ export function usePlayerPrestige(playerId) {
       const controller = new AbortController();
       request.current = controller;
       const { signal } = controller;
-      getPlayerPrestige(playerId, signal)
+      const lookup = ownerFirebase
+        ? getMyPlayerPrestige(ownerFirebase, playerId, signal)
+        : getPlayerPrestige(playerId, signal);
+      lookup
         .then(record => { if (!signal.aborted) setState({ playerId, record, failed: false }); })
         .catch(() => {
           if (!signal.aborted) setState(previous => ({
@@ -113,7 +141,7 @@ export function usePlayerPrestige(playerId) {
       request.current?.abort();
       window.removeEventListener('focus', refresh);
     };
-  }, [playerId]);
+  }, [ownerFirebase, playerId]);
 
   function replace(record) {
     request.current?.abort();
