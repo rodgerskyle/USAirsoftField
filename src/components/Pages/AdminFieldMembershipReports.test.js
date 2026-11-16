@@ -12,15 +12,17 @@ jest.mock('./StaffCardScanner', () => ({
 }));
 
 const playerId = 'Wi23kdJBktOzimVScc29CA728S4k';
+const secondPlayerId = 'AnotherMemberEvenWhenNameMatches';
 const cardToken = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef';
 const endpoint = '/api/member-card/verify?staff=1';
+const lookupEndpoint = '/api/game-day-check-in';
 const expiredMember = {
   status: 'expired', playerId, displayName: 'USAW Member', renewal: '11-14-2026',
   checkedAt: '2026-11-16T19:00:00.000Z',
 };
 
-function enterCard(value) {
-  const input = screen.getByLabelText('Scan or enter a membership card');
+function enterLookup(value) {
+  const input = screen.getByLabelText('Player name, ID, or card link');
   fireEvent.change(input, { target: { value } });
   fireEvent.click(screen.getByRole('button', { name: 'Verify membership' }));
   return input;
@@ -30,10 +32,14 @@ function verification(body) {
   return [endpoint, { method: 'POST', body, signal: expect.anything() }];
 }
 
+function nameSearch(query) {
+  return [lookupEndpoint, { method: 'POST', body: { action: 'lookup', query }, signal: expect.anything() }];
+}
+
 it('reads a connected Code 128 scanner and shows the official expiration date', async () => {
   const request = jest.fn().mockResolvedValue(expiredMember);
   render(<AdminFieldMembership request={request} />);
-  const input = enterCard(']C1' + playerId);
+  const input = enterLookup(']C1' + playerId);
   await screen.findByText('Expired membership');
   expect(screen.getByText('Nov 14, 2026')).toBeTruthy();
   expect(screen.getByText(playerId)).toBeTruthy();
@@ -44,7 +50,7 @@ it('reads a connected Code 128 scanner and shows the official expiration date', 
 it('verifies official card links and camera QR scans using the QR token', async () => {
   const request = jest.fn().mockResolvedValue({ ...expiredMember, status: 'active', renewal: 'N/A' });
   render(<AdminFieldMembership request={request} />);
-  enterCard('https://app.usairsoftfield.com/#verify/' + cardToken);
+  enterLookup('https://app.usairsoftfield.com/#verify/' + cardToken);
   await screen.findByText('No expiration date');
   expect(request).toHaveBeenNthCalledWith(1, ...verification({ token: cardToken }));
 
@@ -58,7 +64,7 @@ it('handles unprefixed raw QR tokens only after an exact player ID misses', asyn
     .mockRejectedValueOnce(Object.assign(new Error('Not found'), { status: 404 }))
     .mockResolvedValueOnce(expiredMember);
   render(<AdminFieldMembership request={request} />);
-  enterCard(cardToken);
+  enterLookup(cardToken);
   await screen.findByText('Expired membership');
   expect(request).toHaveBeenNthCalledWith(1, ...verification({ playerId: cardToken }));
   expect(request).toHaveBeenNthCalledWith(2, ...verification({ token: cardToken }));
@@ -68,13 +74,57 @@ it('clears the prior result and keeps an authorization failure visible', async (
   const request = jest.fn().mockResolvedValueOnce(expiredMember)
     .mockRejectedValueOnce(Object.assign(new Error('Unlock field tools.'), { status: 403 }));
   render(<AdminFieldMembership request={request} />);
-  enterCard(playerId);
+  enterLookup(playerId);
   await screen.findByText('Expired membership');
-  enterCard(cardToken);
+  enterLookup(cardToken);
   const error = await screen.findByRole('alert');
   expect(error.textContent).toBe('Unlock field tools.');
   expect(screen.queryByText('Expired membership')).toBeNull();
   expect(request).toHaveBeenCalledTimes(2);
+});
+
+it('shows players with the same name separately and verifies only the selected player', async () => {
+  const displayName = 'Jordan Rivera';
+  const request = jest.fn()
+    .mockResolvedValueOnce({ matches: [{ playerId, displayName }, { playerId: secondPlayerId, displayName }] })
+    .mockResolvedValueOnce({ ...expiredMember, playerId: secondPlayerId, displayName });
+  render(<AdminFieldMembership request={request} />);
+  enterLookup('Jordan Ri');
+
+  const heading = await screen.findByRole('heading', { name: 'Matching players' });
+  expect(heading).toHaveFocus();
+  expect(request).toHaveBeenCalledTimes(1);
+  expect(request).toHaveBeenNthCalledWith(1, ...nameSearch('Jordan Ri'));
+  expect(screen.getByRole('button', { name: new RegExp(`${displayName}.*${playerId}`) })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: new RegExp(`${displayName}.*${secondPlayerId}`) }));
+  await screen.findByText('Expired membership');
+  expect(request).toHaveBeenNthCalledWith(2, ...verification({ playerId: secondPlayerId }));
+  expect(screen.queryByRole('heading', { name: 'Matching players' })).not.toBeInTheDocument();
+});
+
+it('searches for a one-word name when a manually entered ID-like value has no exact match', async () => {
+  const displayName = 'LongCallsign';
+  const request = jest.fn()
+    .mockRejectedValueOnce(Object.assign(new Error('No ID match'), { status: 404 }))
+    .mockResolvedValueOnce({ matches: [{ playerId, displayName }] });
+  render(<AdminFieldMembership request={request} />);
+  enterLookup(displayName);
+  await screen.findByRole('button', { name: new RegExp(displayName) });
+  expect(request).toHaveBeenNthCalledWith(1, ...verification({ playerId: displayName }));
+  expect(request).toHaveBeenNthCalledWith(2, ...nameSearch(displayName));
+  expect(request).toHaveBeenCalledTimes(2);
+  expect(screen.queryByText('Active membership')).not.toBeInTheDocument();
+});
+
+it('shows that a name search returned no matches without verifying a player', async () => {
+  const request = jest.fn().mockResolvedValueOnce({ matches: [] });
+  render(<AdminFieldMembership request={request} />);
+  const input = enterLookup('Unknown Name');
+  await screen.findByText('No matching players. Try another name or enter a player ID.');
+  expect(request).toHaveBeenCalledTimes(1);
+  expect(request).toHaveBeenCalledWith(...nameSearch('Unknown Name'));
+  expect(input).toHaveValue('Unknown Name');
+  expect(input).toHaveFocus();
 });
 
 const report = {

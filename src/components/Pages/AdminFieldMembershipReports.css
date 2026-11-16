@@ -46,6 +46,26 @@
   font-weight: 700;
 }
 
+.field-membership__matches {
+  display: grid;
+  gap: .5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.field-membership__matches button {
+  display: grid;
+  width: 100%;
+  gap: .15rem;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.field-membership__matches button span {
+  font-size: .875rem;
+}
+
 .field-membership__details,
 .field-reports__people {
   display: flex;
