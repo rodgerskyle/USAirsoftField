@@ -13,17 +13,26 @@ const memberships = {
   unconfirmed: 'Membership unconfirmed',
   guest: 'Walk-on',
 };
-const talent = { elite: 'Elite', veteran: 'Veteran', regular: 'Regular', limited: 'Limited', unrated: 'Unrated' };
-const assessmentOrder = ['unrated', 'limited', 'regular', 'veteran', 'elite'];
+const classifications = { a: 'A Tier', b: 'B Tier', c: 'C Tier', d: 'D Tier', unrated: 'Unrated' };
+const assessments = {
+  unrated: 'No estimate', limited: 'New to airsoft', regular: 'Some experience',
+  veteran: 'Experienced', elite: 'Highly experienced',
+};
 const reasons = {
   headcount: 'closer headcounts',
-  elite: 'spreads Elite players',
-  talent: 'spreads top talent',
+  tierA: 'spreads A Tier players',
+  topTiers: 'spreads A and B Tier players',
   strength: 'closer estimated strength',
 };
 const fieldDate = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' });
+const countFormat = new Intl.NumberFormat('en-US');
+
+function classificationLabel(player) {
+  return classifications[player.classificationBand] || 'Classification unavailable';
+}
 
 function smallestGap(gap, contribution, reason) {
+  if (!Number.isFinite(gap) || !Number.isFinite(contribution)) return null;
   const camo = Math.abs(gap + contribution);
   const solid = Math.abs(gap - contribution);
   return camo === solid ? null : { side: camo < solid ? 'camo' : 'solid', reason };
@@ -31,20 +40,21 @@ function smallestGap(gap, contribution, reason) {
 
 // Use the same order as the Companion check-in recommendation.
 function recommendPlacement(board, player) {
-  if (!board?.balance || !player) return null;
-  const { camo, solid } = board.balance;
-  if (![camo?.strength, solid?.strength, board.counts?.camo, board.counts?.solid].every(Number.isFinite)) return null;
+  if (!board || !player) return null;
   const currentSide = player.side === 'camo' ? 1 : player.side === 'solid' ? -1 : 0;
-  const headcount = board.counts.camo - board.counts.solid - currentSide;
-  const elite = camo.elite - solid.elite - (player.assignedExperienceBand === 'elite' ? currentSide : 0);
-  const veteran = camo.veteran - solid.veteran - (player.assignedExperienceBand === 'veteran' ? currentSide : 0);
-  const strength = camo.strength - solid.strength - currentSide * (player.assignedBalanceScore ?? 100);
-  const isElite = player.experienceBand === 'elite';
-  const isTopTalent = isElite || player.experienceBand === 'veteran';
+  const headcount = board.counts?.camo - board.counts?.solid - currentSide;
+  const camo = board.classifications?.camo;
+  const solid = board.classifications?.solid;
+  const tierA = camo?.a - solid?.a - (player.assignedClassificationBand === 'a' ? currentSide : 0);
+  const tierB = camo?.b - solid?.b - (player.assignedClassificationBand === 'b' ? currentSide : 0);
+  const strength = board.balance?.camo?.strength - board.balance?.solid?.strength
+    - currentSide * (player.assignedBalanceScore ?? 100);
+  const isTierA = player.classificationBand === 'a';
+  const isTopTier = isTierA || player.classificationBand === 'b';
 
   return smallestGap(headcount, 1, 'headcount')
-    || (isElite && smallestGap(elite, 1, 'elite'))
-    || (isTopTalent && smallestGap(elite + veteran, 1, 'talent'))
+    || (isTierA && smallestGap(tierA, 1, 'tierA'))
+    || (isTopTier && smallestGap(tierA + tierB, 1, 'topTiers'))
     || smallestGap(strength, player.balanceScore ?? 100, 'strength');
 }
 
@@ -61,14 +71,14 @@ function lookupInput(raw) {
 
 function putResult(board, data) {
   if (board?.date && data.date < board.date) return board;
-  const { date, counts, balance } = data;
-  return { date, counts, balance, players: data.players ?? (date === board?.date ? board.players : []) };
+  const { date, counts, balance, classifications } = data;
+  return { date, counts, balance, classifications, players: data.players ?? (date === board?.date ? board.players : []) };
 }
 
 function assignmentMessage({ outcome, player }) {
   const { displayName, side } = player;
   if (outcome === 'reassigned') return `${displayName} moved to ${sides[side]}.`;
-  if (outcome === 'updated') return `Talent assessment updated for ${displayName}.`;
+  if (outcome === 'updated') return `Team balance estimate updated for ${displayName}.`;
   if (outcome === 'already-checked-in') return `${displayName} is already checked in as ${sides[side]}.`;
   return `${displayName} checked in as ${sides[side]}.`;
 }
@@ -85,6 +95,8 @@ function TeamTalent({ board }) {
       <div className="admin-checkin__teams">
         {Object.entries(sides).map(([side, name]) => {
           const share = camoShare === null ? null : side === 'camo' ? camoShare : 100 - camoShare;
+          const tierCounts = board?.classifications?.[side];
+          const unverified = tierCounts ? board.counts[side] - Object.values(tierCounts).reduce((total, count) => total + count, 0) : 0;
           return (
             <section className="admin-checkin__team" data-side={side} key={side}>
               <div className="admin-checkin__heading">
@@ -94,12 +106,15 @@ function TeamTalent({ board }) {
               <span>Estimated strength share {share === null ? '—' : `${share}%`}</span>
               <progress aria-label={`${name} estimated strength share`} value={share ?? 0} max={100} />
               <dl>
-                {Object.entries(talent).map(([level, label]) => (
+                {Object.entries(classifications).map(([level, label]) => (
                   <div key={level} data-talent={level}>
-                    <dt>{label}</dt><dd>{board?.balance?.[side]?.[level] ?? '—'}</dd>
+                    <dt>{label}</dt><dd>{tierCounts?.[level] ?? '—'}</dd>
                   </div>
                 ))}
               </dl>
+              {unverified > 0 && <p className="admin-checkin__hint admin-checkin__unverified">
+                {unverified} {unverified === 1 ? 'player' : 'players'} without a verified tier
+              </p>}
             </section>
           );
         })}
@@ -107,10 +122,12 @@ function TeamTalent({ board }) {
       <details className="admin-checkin__explanation">
         <summary>How team balance works</summary>
         <p>
-          Suggestions prioritize even headcounts, then spread Elite and Veteran players and compare
-          estimated strength. Regular starts at 15 recorded games, Veteran at 60, and Elite requires
-          120 games with a 60% adjusted win rate. Staff can assess walk-ons and players who have no
-          recorded games. Unrated players receive a neutral estimate. Staff choose the final side.
+          Logged wins and losses count toward a player’s classification. Unrated has 0 logged games.
+          D Tier covers 1–99, C Tier 100–199, B Tier 200–299, and A Tier 300 or more.
+        </p>
+        <p>
+          Suggestions prioritize even headcounts, then spread A Tier and B Tier players and compare
+          estimated strength. Staff can enter a team balance estimate for Unrated players and choose the final side.
         </p>
       </details>
     </section>
@@ -125,7 +142,7 @@ function PlayerRows({ players, onSelect, checkedIn, disabled }) {
           <button type="button" disabled={disabled} onClick={() => onSelect({ playerId: player.playerId })}>
             <span>
               <strong>{player.displayName}</strong>
-              <small>{checkedIn ? `${memberships[player.membershipStatus] || memberships.unconfirmed} · ${talent[player.experienceBand] || 'Unrated'}` : player.playerId}</small>
+              <small>{checkedIn ? `${memberships[player.membershipStatus] || memberships.unconfirmed} · ${classificationLabel(player)}` : player.playerId}</small>
             </span>
             <span className={checkedIn ? 'admin-checkin__pill' : undefined} data-side={checkedIn ? player.side : undefined} aria-hidden={checkedIn ? undefined : true}>
               {checkedIn ? sides[player.side] : '›'}
@@ -138,7 +155,7 @@ function PlayerRows({ players, onSelect, checkedIn, disabled }) {
 }
 
 function SelectedPlayer({ player, suggestion, working, onAssessment, onAssign }) {
-  const { side, membershipStatus, experienceBand, assignedExperienceBand, canSetExperience } = player;
+  const { side, membershipStatus, experienceBand, assignedExperienceBand, canSetExperience, gamesLogged } = player;
   const oppositeSide = side === 'camo' ? 'solid' : 'camo';
   const choices = side ? [oppositeSide] : Object.keys(sides);
   const membership = memberships[membershipStatus] || memberships.unconfirmed;
@@ -152,13 +169,16 @@ function SelectedPlayer({ player, suggestion, working, onAssessment, onAssign })
         <span className="admin-checkin__pill" data-side={side || undefined}>
           {side ? `Checked in · ${sides[side]}` : 'Awaiting check-in'}
         </span>
-        {!canSetExperience && <span className="admin-checkin__pill">{talent[experienceBand] || 'Unrated'}</span>}
+        <span className="admin-checkin__pill">{classificationLabel(player)}</span>
+        {Number.isSafeInteger(gamesLogged) && <span className="admin-checkin__hint">
+          {countFormat.format(gamesLogged)} {gamesLogged === 1 ? 'game' : 'games'} logged
+        </span>}
       </div>
       {canSetExperience && (
         <label className="admin-checkin__rating" htmlFor="admin-checkin-rating">
-          Talent assessment
+          Team balance estimate
           <select id="admin-checkin-rating" value={experienceBand || 'unrated'} disabled={working} onChange={event => onAssessment(event.target.value)}>
-            {assessmentOrder.map(band => <option value={band} key={band}>{talent[band]}</option>)}
+            {Object.entries(assessments).map(([band, label]) => <option value={band} key={band}>{label}</option>)}
           </select>
         </label>
       )}
@@ -173,7 +193,7 @@ function SelectedPlayer({ player, suggestion, working, onAssessment, onAssign })
           </button>
         ))}
         {side && canSetExperience && ratingChanged && (
-          <button type="button" className="btn btn-primary" disabled={working} onClick={() => onAssign(side)}>Save talent assessment</button>
+          <button type="button" className="btn btn-primary" disabled={working} onClick={() => onAssign(side)}>Save balance estimate</button>
         )}
       </div>
     </section>
@@ -293,6 +313,7 @@ export default function AdminFieldCheckIn({ request }) {
         player: {
           canSetExperience: player.canSetExperience, experienceOptions: player.experienceOptions, ...data.player,
           assignedBalanceScore: data.player.balanceScore, assignedExperienceBand: data.player.experienceBand,
+          assignedClassificationBand: data.player.classificationBand ?? null,
         },
       });
     }
