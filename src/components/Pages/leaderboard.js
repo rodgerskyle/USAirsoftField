@@ -189,7 +189,7 @@ function Leaderboard({ firebase }) {
 
     useEffect(() => onValue(firebase.users(), snapshot => {
         const publicPlayers = Object.entries(snapshot.val() ?? {})
-            .filter(([, player]) => player && !player.roles?.[ROLES.WAIVER])
+            .filter(([, player]) => player && !player.accountRemovedAt && !player.roles?.[ROLES.WAIVER])
             .map(([uid, player]) => ({
                 uid,
                 name: typeof player.name === 'string' && player.name.trim() ? player.name : 'Unnamed player',

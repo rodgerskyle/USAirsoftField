@@ -5,7 +5,7 @@ import {
     reauthenticateWithCredential
 } from 'firebase/auth';
 import { ref as db_ref } from 'firebase/database';
-import { get, getDatabase } from 'firebase/database';
+import { getDatabase, onValue } from 'firebase/database';
 import { ref as st_ref } from 'firebase/storage';
 import { getStorage } from 'firebase/storage';
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -59,28 +59,30 @@ class Firebase {
         reauthenticateWithCredential(this.auth.currentUser, this.ns_auth.EmailAuthProvider.credential(email, password));
 
     // *** Merge Auth and DB User API *** //
-    onAuthUserListener = (next, fallback) =>
-        this.auth.onAuthStateChanged(authUser => {
-            if (authUser) {
-                get(this.user(authUser.uid))
-                    .then((snapshot) => {
-                        const dbUser = snapshot.val();
-                        // default empty roles
-                        if (!dbUser.roles) {
-                            dbUser.roles = [];
-                        }
-                        // merge auth and db user
-                        authUser = {
-                            uid: authUser.uid,
-                            email: authUser.email,
-                            ...dbUser,
-                        };
-                        next(authUser);
-                    });
-            } else {
+    onAuthUserListener = (next, fallback) => {
+        let unsubscribePlayer;
+        const unsubscribeAuth = this.auth.onAuthStateChanged(authUser => {
+            unsubscribePlayer?.();
+            if (!authUser) {
                 fallback();
+                return;
             }
+            unsubscribePlayer = onValue(this.user(authUser.uid), snapshot => {
+                if (this.auth.currentUser !== authUser) return;
+                const dbUser = snapshot.val();
+                if (!dbUser || dbUser.accountRemovedAt) {
+                    fallback();
+                    if (dbUser?.accountRemovedAt) void this.doSignOut().catch(() => {});
+                    return;
+                }
+                next({ email: authUser.email, ...dbUser, roles: dbUser.roles || [], uid: authUser.uid });
+            }, fallback);
         });
+        return () => {
+            unsubscribeAuth();
+            unsubscribePlayer?.();
+        };
+    };
 
     // Functions API
 

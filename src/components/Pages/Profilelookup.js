@@ -23,7 +23,7 @@ function ProfileLookup({ firebase }) {
         firebase.user(id),
         (snapshot) => {
           const user = snapshot.val();
-          setResult(user
+          setResult(user && !user.accountRemovedAt
             ? { id, status: 'ready', user }
             : { id, status: 'missing' });
         },

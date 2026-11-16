@@ -15,3 +15,42 @@
     text-align: left;
     overflow-wrap: anywhere;
 }
+
+.score-entry-mode,
+.score-entry-recent,
+.score-entry-history li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+}
+
+.score-entry-recent,
+.score-entry-history li {
+    justify-content: space-between;
+}
+
+.score-entry-history {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.score-entry-history li + li {
+    border-top: 1px solid var(--admin-border);
+}
+
+.score-entry-history li {
+    padding: 0.6rem 0;
+}
+
+.score-entry-history small {
+    display: block;
+    color: var(--admin-subtext);
+}
+
+.score-entry-mode .btn,
+.score-entry-recent .btn,
+.score-entry-history .btn {
+    min-height: 44px;
+}

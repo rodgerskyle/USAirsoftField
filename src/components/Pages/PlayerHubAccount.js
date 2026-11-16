@@ -22,7 +22,7 @@ function count(value) {
 }
 
 function playerRecord(record) {
-  if (!record || typeof record !== 'object' || Array.isArray(record)) return null;
+  if (!record || typeof record !== 'object' || Array.isArray(record) || record.accountRemovedAt) return null;
   return {
     name: readText(record.name),
     username: readText(record.username),

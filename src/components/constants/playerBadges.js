@@ -124,3 +124,13 @@ export function getStaffBadgeCounts(firebase, playerId, staffToken, { signal } =
 export function grantPlayerBadge(firebase, { playerId, badgeId, reason, grantId }, staffToken) {
     return callBadgeApi({ firebase, staffToken, body: { action: 'award', playerId, badgeId, reason, grantId } });
 }
+
+export function getStaffBadgeGrantHistory(firebase, { playerId, badgeId, before }, staffToken, { signal } = {}) {
+    return callBadgeApi({
+        firebase, staffToken, signal, query: { playerId, badgeId, grantHistory: '1', ...(before && { before }) },
+    });
+}
+
+export function revokePlayerBadgeGrant(firebase, { playerId, badgeId, grantId }, staffToken) {
+    return callBadgeApi({ firebase, staffToken, body: { action: 'revoke-one', playerId, badgeId, grantId } });
+}
