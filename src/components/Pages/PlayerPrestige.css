@@ -15,14 +15,15 @@
   top: 49%;
   transform: translate(-50%, -50%);
   color: #fff1c9;
-  font: 900 12px / 1 Arial, sans-serif;
-  font-size: 22cqw;
+  font: 700 15px / 1 Georgia, 'Times New Roman', serif;
+  font-size: 27cqw;
   white-space: nowrap;
   text-shadow: 0 1px 2px #051119, 0 0 3px #051119;
-  -webkit-text-stroke: .3px #051119;
 }
-.usaw-prestige-emblem > [data-numeral-size="medium"] { font-size: 16cqw; }
-.usaw-prestige-emblem > [data-numeral-size="long"] { font-size: 12cqw; }
+.usaw-prestige-emblem > [data-numeral-size="single"] { font-size: 32cqw; }
+.usaw-prestige-emblem > [data-numeral-size="triple"] { font-size: 24cqw; }
+.usaw-prestige-emblem > [data-numeral-size="medium"] { font-size: 18cqw; }
+.usaw-prestige-emblem > [data-numeral-size="long"] { font-size: 13cqw; }
 
 .player-profile__rank .usaw-prestige-emblem { --prestige-emblem-size: clamp(56px, 7vw, 76px); }
 .ph-player-emblem .usaw-prestige-emblem { --prestige-emblem-size: 100%; }

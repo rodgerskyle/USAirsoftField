@@ -23,10 +23,11 @@ function romanNumeral(value) {
 export function PrestigeEmblem({ count }) {
   if (!Number.isSafeInteger(count) || count < 1) return null;
   const numeral = romanNumeral(count);
+  const size = numeral.length === 1 ? 'single' : numeral.length === 3 ? 'triple' : numeral.length > 5 ? 'long' : numeral.length > 3 ? 'medium' : 'short';
   return (
     <span className="usaw-prestige-emblem" aria-hidden="true">
       <img src={generalInsignia} alt="" width="60" height="60" decoding="async" />
-      <span data-numeral-size={numeral.length > 5 ? 'long' : numeral.length > 3 ? 'medium' : 'short'}>{numeral}</span>
+      <span data-numeral-size={size}>{numeral}</span>
     </span>
   );
 }
