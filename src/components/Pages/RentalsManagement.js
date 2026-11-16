@@ -131,7 +131,7 @@ function RentalsManagement(props) {
     return (
         <AuthUserContext.Consumer>
             {viewer => (
-                <div className="admin-container admin-compact-page">
+                <div className="admin-container admin-compact-page admin-rentals-page">
                     <Helmet>
                         <title>US Airsoft Field: Rental Forms</title>
                     </Helmet>
@@ -181,25 +181,25 @@ function RentalsManagement(props) {
                                         p: 1.25,
                                         mb: 2,
                                         borderRadius: 3,
-                                        background: 'linear-gradient(180deg, rgba(20, 23, 29, 0.98) 0%, rgba(14, 17, 22, 0.98) 100%)',
-                                        border: '1px solid rgba(255,255,255,0.08)',
-                                        color: '#f4f7fb'
+                                        background: 'var(--admin-surface)',
+                                        border: '1px solid var(--admin-border)',
+                                        color: 'var(--admin-text)'
                                     }}
                                 >
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                            <Typography variant="h6" sx={{ fontWeight: 700, color: '#f4f7fb', fontSize: '1.2rem' }}>
+                                            <Typography variant="h6" sx={{ fontWeight: 700, color: 'var(--admin-text)', fontSize: '1.2rem' }}>
                                                 Rental Operations
                                             </Typography>
-                                            <Chip label={`${rentalForms.length} total`} size="small" sx={{ backgroundColor: 'rgba(31,101,199,0.18)', color: '#dbeafe' }} />
-                                            <Chip label={`${activeFormsCount} active`} size="small" sx={{ backgroundColor: 'rgba(34,197,94,0.18)', color: '#bbf7d0' }} />
-                                            <Chip label={`${pendingFormsCount} pending`} size="small" sx={{ backgroundColor: 'rgba(245,158,11,0.18)', color: '#fde68a' }} />
+                                            <Chip label={`${rentalForms.length} total`} size="small" sx={{ backgroundColor: 'var(--admin-accent-soft)', color: 'var(--admin-accent-text)' }} />
+                                            <Chip label={`${activeFormsCount} active`} size="small" sx={{ backgroundColor: 'var(--admin-success-bg)', color: 'var(--admin-success)' }} />
+                                            <Chip label={`${pendingFormsCount} pending`} size="small" sx={{ backgroundColor: 'var(--admin-warning-bg)', color: 'var(--admin-warning)' }} />
                                         </Box>
 
                                         <IconButton
                                             onClick={toggleNavVisibility}
                                             title={isNavHidden ? 'Show navigation' : 'Hide navigation'}
-                                            sx={{ border: '1px solid rgba(255,255,255,0.12)', color: '#aab4c2', backgroundColor: 'rgba(255,255,255,0.04)' }}
+                                            sx={{ border: '1px solid var(--admin-border)', color: 'var(--admin-subtext)', backgroundColor: 'var(--admin-surface-muted)' }}
                                         >
                                             {isNavHidden ? <LockOpen /> : <Lock />}
                                         </IconButton>
@@ -214,16 +214,16 @@ function RentalsManagement(props) {
                                             sx={{
                                                 mt: 1,
                                                 minHeight: 44,
-                                                '.MuiTabs-indicator': { backgroundColor: '#1f65c7' },
+                                                '.MuiTabs-indicator': { backgroundColor: 'var(--admin-accent)' },
                                                 '.MuiTab-root': {
                                                     minHeight: 44,
                                                     textTransform: 'none',
                                                     fontWeight: 600,
-                                                    color: '#aab4c2',
+                                                    color: 'var(--admin-subtext)',
                                                     borderRadius: '10px'
                                                 },
                                                 '.Mui-selected': {
-                                                    color: '#f4f7fb !important'
+                                                    color: 'var(--admin-text) !important'
                                                 }
                                             }}
                                         >

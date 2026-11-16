@@ -30,12 +30,12 @@ const RentalRow = ({ rental, onMaxChange }) => {
             sx={{
                 mb: 2,
                 border: '1px solid',
-                borderColor: 'rgba(255,255,255,0.08)',
+                borderColor: 'var(--admin-border)',
                 borderRadius: 2,
-                backgroundColor: '#12171d',
+                backgroundColor: 'var(--admin-surface)',
                 transition: 'all 0.2s ease',
                 '&:hover': {
-                    boxShadow: '0 10px 24px rgba(0, 0, 0, 0.24)',
+                    boxShadow: 'var(--admin-shadow)',
                     transform: 'translateY(-2px)'
                 }
             }}
@@ -46,7 +46,7 @@ const RentalRow = ({ rental, onMaxChange }) => {
                         <Typography
                             variant="h6"
                             sx={{
-                                color: '#f4f7fb',
+                                color: 'var(--admin-text)',
                                 fontWeight: 500
                             }}
                         >
@@ -62,20 +62,20 @@ const RentalRow = ({ rental, onMaxChange }) => {
                             disabled
                             variant="outlined"
                             InputProps={{
-                                startAdornment: <Inventory2 sx={{ color: '#9fb0c4', mr: 1 }} />
+                                startAdornment: <Inventory2 sx={{ color: 'var(--admin-subtext)', mr: 1 }} />
                             }}
                             sx={{
                                 '& .MuiInputLabel-root': {
-                                    color: '#9fb0c4'
+                                    color: 'var(--admin-subtext)'
                                 },
                                 '& .MuiInputLabel-root.Mui-focused': {
-                                    color: '#f4f7fb'
+                                    color: 'var(--admin-text)'
                                 },
                                 '& .MuiOutlinedInput-root': {
-                                    backgroundColor: '#161d25',
-                                    color: '#f4f7fb',
+                                    backgroundColor: 'var(--admin-surface-muted)',
+                                    color: 'var(--admin-text)',
                                     '& fieldset': {
-                                        borderColor: 'rgba(255,255,255,0.12)'
+                                        borderColor: 'var(--admin-border)'
                                     }
                                 }
                             }}
@@ -92,22 +92,22 @@ const RentalRow = ({ rental, onMaxChange }) => {
                             color="primary"
                             sx={{
                                 '& .MuiInputLabel-root': {
-                                    color: '#9fb0c4'
+                                    color: 'var(--admin-subtext)'
                                 },
                                 '& .MuiInputLabel-root.Mui-focused': {
-                                    color: '#f4f7fb'
+                                    color: 'var(--admin-text)'
                                 },
                                 '& .MuiOutlinedInput-root': {
-                                    backgroundColor: '#161d25',
-                                    color: '#f4f7fb',
+                                    backgroundColor: 'var(--admin-surface-muted)',
+                                    color: 'var(--admin-text)',
                                     '& fieldset': {
-                                        borderColor: 'rgba(255,255,255,0.12)'
+                                        borderColor: 'var(--admin-border)'
                                     },
                                     '&:hover fieldset': {
-                                        borderColor: 'rgba(255,255,255,0.22)'
+                                        borderColor: 'var(--admin-border-strong)'
                                     },
                                     '&.Mui-focused fieldset': {
-                                        borderColor: '#1f65c7'
+                                        borderColor: 'var(--admin-accent)'
                                     }
                                 }
                             }}
@@ -189,7 +189,7 @@ const RentalOptions = (props) => {
                         variant="h4"
                         sx={{
                             fontWeight: 600,
-                            color: '#f4f7fb',
+                            color: 'var(--admin-text)',
                             mb: 1
                         }}
                     >
@@ -198,7 +198,7 @@ const RentalOptions = (props) => {
                     <Typography
                         variant="body1"
                         sx={{
-                            color: '#9fb0c4',
+                            color: 'var(--admin-subtext)',
                             mb: 4
                         }}
                     >

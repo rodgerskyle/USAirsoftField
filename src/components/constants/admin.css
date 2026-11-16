@@ -1,24 +1,10 @@
-:root {
-    --admin-bg: #0b0d10;
-    --admin-surface: rgba(18, 23, 29, 0.96);
-    --admin-surface-muted: rgba(24, 33, 43, 0.96);
-    --admin-border: rgba(255, 255, 255, 0.08);
-    --admin-border-strong: rgba(143, 184, 255, 0.16);
-    --admin-text: #f4f7fb;
-    --admin-subtext: #aab4c2;
-    --admin-accent: #1f65c7;
-    --admin-accent-dark: #163e7d;
-    --admin-accent-soft: rgba(31, 101, 199, 0.14);
-    --admin-danger: #a44347;
-    --admin-shadow: 0 24px 60px rgba(0, 0, 0, 0.34);
-}
-
 .admin-container {
     min-height: 100vh;
     background:
         radial-gradient(1100px 420px at 15% -12%, rgba(31, 101, 199, 0.16) 0%, transparent 58%),
         radial-gradient(950px 420px at 90% -14%, rgba(164, 67, 71, 0.14) 0%, transparent 60%),
         var(--admin-bg);
+    color: var(--admin-text);
 }
 
 .admin-compact-page {
@@ -81,7 +67,7 @@
 .admin-panel-card,
 .admin-compact-page .waiver-cards,
 .admin-compact-page .usa-waiver-card {
-    background: linear-gradient(180deg, rgba(20, 23, 29, 0.98) 0%, rgba(14, 17, 22, 0.98) 100%) !important;
+    background: var(--admin-surface) !important;
     border: 1px solid var(--admin-border) !important;
     border-radius: 18px !important;
     box-shadow: var(--admin-shadow);
@@ -90,7 +76,7 @@
 
 .admin-panel-card .card-header,
 .admin-compact-page .waiver-cards .card-header {
-    background: rgba(255, 255, 255, 0.02) !important;
+    background-color: var(--admin-surface-muted) !important;
     border-bottom: 1px solid var(--admin-border) !important;
     color: var(--admin-text) !important;
 }
@@ -102,33 +88,30 @@
     color: var(--admin-text);
 }
 
-.admin-compact-page .form-control,
-.admin-compact-page .form-select,
-.admin-compact-page input,
-.admin-compact-page textarea,
-.admin-compact-page select {
-    background: rgba(255, 255, 255, 0.04) !important;
-    border: 1px solid var(--admin-border) !important;
+.admin-compact-page :is(.form-control, .form-select, .pincode-input-text) {
+    background-color: var(--admin-surface-muted) !important;
+    border: 1px solid var(--admin-border-strong) !important;
     color: var(--admin-text) !important;
     -webkit-text-fill-color: var(--admin-text) !important;
     border-radius: 12px !important;
 }
 
-.admin-compact-page .form-control:focus,
-.admin-compact-page .form-select:focus,
-.admin-compact-page input:focus,
-.admin-compact-page textarea:focus,
-.admin-compact-page select:focus {
-    background: rgba(255, 255, 255, 0.06) !important;
-    border-color: rgba(143, 184, 255, 0.34) !important;
-    box-shadow: 0 0 0 3px rgba(31, 101, 199, 0.18) !important;
+.admin-compact-page :is(.form-control, .form-select, .pincode-input-text):focus {
+    background-color: var(--admin-surface) !important;
+    border-color: var(--admin-focus) !important;
+    box-shadow: 0 0 0 3px var(--admin-focus-ring) !important;
     color: var(--admin-text) !important;
 }
 
-.admin-compact-page .form-control::placeholder,
-.admin-compact-page input::placeholder,
-.admin-compact-page textarea::placeholder {
-    color: #7d8a9c !important;
+.admin-compact-page :is(.form-control, .pincode-input-text)::placeholder {
+    color: var(--admin-subtext) !important;
+}
+
+.admin-compact-page .form-control.form-control-expired-uo {
+    background-color: var(--admin-danger-bg) !important;
+    border-color: var(--admin-danger-border) !important;
+    color: var(--admin-danger) !important;
+    -webkit-text-fill-color: var(--admin-danger) !important;
 }
 
 .admin-compact-page .form-label,
@@ -136,8 +119,24 @@
 .admin-compact-page .search-label-admin,
 .admin-compact-page .team-manage-text,
 .admin-compact-page .waiver-header-rp,
-.admin-compact-page .header-sig-rp {
+.admin-compact-page .header-sig-rp,
+.admin-compact-page .form-rp,
+.admin-compact-page .waiver-form-rp {
     color: var(--admin-text) !important;
+}
+
+.admin-compact-page .form-text {
+    color: var(--admin-subtext);
+}
+
+.admin-compact-page :is(a, button):focus-visible {
+    outline: 2px solid var(--admin-focus);
+    outline-offset: 2px;
+}
+
+.admin-compact-page .row-success-rp {
+    background-color: var(--admin-surface);
+    color: var(--admin-text);
 }
 
 .admin-compact-page .btn-outline-primary,
@@ -150,43 +149,45 @@
 .admin-compact-page .button-options-style-admin.btn-primary {
     background: var(--admin-accent);
     border-color: var(--admin-accent);
+    color: var(--admin-on-accent);
 }
 
 .admin-compact-page .btn-primary:hover,
 .admin-compact-page .button-options-style-admin.btn-primary:hover {
     background: var(--admin-accent-dark);
     border-color: var(--admin-accent-dark);
+    color: var(--admin-on-accent);
 }
 
 .admin-compact-page .btn-outline-primary {
-    color: #9ec4ff;
-    border-color: rgba(143, 184, 255, 0.35);
+    color: var(--admin-accent-text);
+    border-color: var(--admin-border-strong);
 }
 
 .admin-compact-page .btn-outline-primary:hover {
-    background: rgba(31, 101, 199, 0.16);
-    border-color: rgba(143, 184, 255, 0.5);
-    color: #ffffff;
+    background-color: var(--admin-accent-soft);
+    border-color: var(--admin-focus);
+    color: var(--admin-accent-text);
 }
 
 .admin-compact-page .btn-outline-info {
-    color: #9ec4ff;
-    border-color: rgba(143, 184, 255, 0.35);
+    color: var(--admin-accent-text);
+    border-color: var(--admin-border-strong);
 }
 
 .admin-compact-page .btn-outline-info:hover {
-    background: rgba(31, 101, 199, 0.16);
-    color: #ffffff;
+    background-color: var(--admin-accent-soft);
+    color: var(--admin-accent-text);
 }
 
 .admin-compact-page .btn-outline-danger {
-    color: #ffb4b7;
-    border-color: rgba(164, 67, 71, 0.45);
+    color: var(--admin-danger);
+    border-color: var(--admin-danger-border);
 }
 
 .admin-compact-page .btn-outline-danger:hover {
-    background: rgba(164, 67, 71, 0.18);
-    color: #ffffff;
+    background: var(--admin-danger-bg);
+    color: var(--admin-danger);
 }
 
 .admin-compact-page .row-buttons-uo,
@@ -199,13 +200,13 @@
 .admin-compact-page .super-status-uo-admin,
 .admin-compact-page .status-email-admin,
 .admin-compact-page .status-ul-admin {
-    color: #86efac !important;
+    color: var(--admin-success) !important;
 }
 
 .admin-compact-page .error-oo-admin,
 .admin-compact-page .error-ul-admin,
 .admin-compact-page .text-red {
-    color: #fca5a5 !important;
+    color: var(--admin-danger) !important;
 }
 
 .admin-compact-page .admin-points-card,
@@ -243,7 +244,7 @@
 .admin-compact-page .button-submit-admin {
     background: var(--admin-accent);
     border-color: var(--admin-accent);
-    color: #ffffff;
+    color: var(--admin-on-accent);
 }
 
 .admin-compact-page .button-submit-admin:hover,
@@ -251,28 +252,28 @@
 .admin-compact-page .button-submit-admin:active {
     background: var(--admin-accent-dark) !important;
     border-color: var(--admin-accent-dark) !important;
-    color: #ffffff !important;
+    color: var(--admin-on-accent) !important;
 }
 
 .admin-compact-page .button-submit-admin2 {
-    border-color: rgba(143, 184, 255, 0.35);
+    border-color: var(--admin-border-strong);
 }
 
 .admin-compact-page .button-submit-admin2.btn-success {
-    background: rgba(22, 163, 74, 0.18);
-    border-color: rgba(74, 222, 128, 0.32);
-    color: #d4ffe1;
+    background: var(--admin-success-bg);
+    border-color: var(--admin-success-border);
+    color: var(--admin-success);
 }
 
 .admin-compact-page .button-submit-admin2.btn-danger {
-    background: rgba(164, 67, 71, 0.18);
-    border-color: rgba(252, 165, 165, 0.3);
-    color: #ffe0e1;
+    background: var(--admin-danger-bg);
+    border-color: var(--admin-danger-border);
+    color: var(--admin-danger);
 }
 
 .admin-compact-page .status-card-admin,
 .admin-compact-page .admin-freegames-card {
-    background: linear-gradient(180deg, rgba(20, 23, 29, 0.98) 0%, rgba(14, 17, 22, 0.98) 100%) !important;
+    background: var(--admin-surface) !important;
     border: 1px solid var(--admin-border) !important;
     border-radius: 18px !important;
 }
@@ -284,24 +285,28 @@
     color: var(--admin-text);
 }
 
+.admin-compact-page .status-card-body-renew-admin {
+    color: var(--admin-text);
+}
+
 .admin-compact-page .status-card-row-admin,
 .admin-compact-page .status-card-offrow-admin,
 .admin-compact-page .row-fg,
 .admin-compact-page .status-card-offrow-admin-fg {
     margin: 0;
     padding: 0.95rem 1rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-top: 1px solid var(--admin-border);
     color: var(--admin-text) !important;
 }
 
 .admin-compact-page .status-card-row-admin,
 .admin-compact-page .row-fg {
-    background: rgba(255, 255, 255, 0.025) !important;
+    background-color: var(--admin-surface) !important;
 }
 
 .admin-compact-page .status-card-offrow-admin,
 .admin-compact-page .status-card-offrow-admin-fg {
-    background: rgba(255, 255, 255, 0.04) !important;
+    background-color: var(--admin-surface-muted) !important;
 }
 
 .admin-compact-page .status-card-row-admin:last-child,
@@ -376,7 +381,7 @@
     gap: 0.55rem;
     padding: 0.6rem 0.9rem;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.03);
+    background-color: var(--admin-surface-muted);
     border: 1px solid var(--admin-border);
     color: var(--admin-subtext);
 }
@@ -384,11 +389,11 @@
 .admin-compact-page.admin-signup-page .admin-signup-step.active,
 .admin-compact-page.admin-signup-page .admin-signup-step.complete {
     color: var(--admin-text);
-    border-color: rgba(143, 184, 255, 0.22);
+    border-color: var(--admin-border-strong);
 }
 
 .admin-compact-page.admin-signup-page .admin-signup-step.active {
-    background: rgba(31, 101, 199, 0.16);
+    background-color: var(--admin-accent-soft);
 }
 
 .admin-compact-page.admin-signup-page .admin-signup-step-number {
@@ -398,7 +403,7 @@
     align-items: center;
     justify-content: center;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.07);
+    background-color: var(--admin-surface-hover);
     font-weight: 700;
 }
 
@@ -418,7 +423,7 @@
     padding: 1.1rem 1.15rem 1.2rem;
     border-radius: 18px;
     border: 1px solid var(--admin-border);
-    background: linear-gradient(180deg, rgba(20, 23, 29, 0.98) 0%, rgba(14, 17, 22, 0.98) 100%);
+    background: var(--admin-surface);
     box-shadow: var(--admin-shadow);
 }
 
@@ -448,7 +453,7 @@
     border-radius: 16px;
     overflow: hidden;
     border: 1px solid var(--admin-border);
-    background: rgba(255, 255, 255, 0.02);
+    background-color: var(--admin-surface-muted);
 }
 
 .admin-compact-page.admin-signup-page .waiver-rp {
@@ -501,7 +506,7 @@
     width: 100%;
     height: 180px;
     background: #ffffff;
-    border: 1px solid rgba(143, 184, 255, 0.24);
+    border: 1px solid var(--admin-border-strong);
     border-radius: 16px;
     position: static;
     top: auto;
@@ -518,7 +523,7 @@
 .admin-compact-page.admin-signup-page .admin-signup-guardian-section {
     margin-top: 1rem;
     padding-top: 1rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid var(--admin-border);
 }
 
 .admin-compact-page.admin-signup-page .sig-row-rp {
@@ -547,15 +552,15 @@
 }
 
 .admin-compact-page.admin-signup-page .button-row-rp2 .btn-secondary {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.12);
-    color: #f4f7fb;
+    background-color: var(--admin-surface-muted);
+    border-color: var(--admin-border);
+    color: var(--admin-text);
 }
 
 .admin-compact-page.admin-signup-page .button-row-rp2 .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.14);
-    border-color: rgba(143, 184, 255, 0.24);
-    color: #ffffff;
+    background-color: var(--admin-surface-hover);
+    border-color: var(--admin-border-strong);
+    color: var(--admin-text);
 }
 
 .admin-compact-page.admin-signup-page .error-text-rp {
@@ -563,9 +568,9 @@
     margin: 0.9rem 0 0;
     padding: 0.8rem 0.95rem;
     border-radius: 12px;
-    background: rgba(164, 67, 71, 0.16);
-    border: 1px solid rgba(252, 165, 165, 0.2);
-    color: #ffb4b7 !important;
+    background-color: var(--admin-danger-bg);
+    border: 1px solid var(--admin-danger-border);
+    color: var(--admin-danger) !important;
     text-align: center;
     font-weight: 500;
 }
@@ -635,7 +640,7 @@
     border-radius: 16px;
     border: 1px solid var(--admin-border);
     background: #ffffff;
-    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.26);
+    box-shadow: var(--admin-shadow);
 }
 
 .admin-compact-page.admin-sign-waiver-page .waiver-hidden-rp {
@@ -664,7 +669,7 @@
     padding: 1.1rem 1.15rem 1.2rem;
     border-radius: 18px;
     border: 1px solid var(--admin-border);
-    background: linear-gradient(180deg, rgba(20, 23, 29, 0.98) 0%, rgba(14, 17, 22, 0.98) 100%);
+    background: var(--admin-surface);
     box-shadow: var(--admin-shadow);
 }
 
@@ -678,7 +683,7 @@
     width: 100%;
     height: 180px;
     background: #ffffff;
-    border: 1px solid rgba(143, 184, 255, 0.24);
+    border: 1px solid var(--admin-border-strong);
     border-radius: 16px;
     position: static;
     top: auto;
@@ -720,15 +725,15 @@
 }
 
 .admin-compact-page.admin-sign-waiver-page .button-row-rp2 .btn-secondary {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.12);
-    color: #f4f7fb;
+    background-color: var(--admin-surface-muted);
+    border-color: var(--admin-border);
+    color: var(--admin-text);
 }
 
 .admin-compact-page.admin-sign-waiver-page .button-row-rp2 .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.14);
-    border-color: rgba(143, 184, 255, 0.24);
-    color: #ffffff;
+    background-color: var(--admin-surface-hover);
+    border-color: var(--admin-border-strong);
+    color: var(--admin-text);
 }
 
 .admin-compact-page.admin-sign-waiver-page .error-text-rp {
@@ -736,9 +741,9 @@
     margin: 0.9rem 0 0;
     padding: 0.8rem 0.95rem;
     border-radius: 12px;
-    background: rgba(164, 67, 71, 0.16);
-    border: 1px solid rgba(252, 165, 165, 0.2);
-    color: #ffb4b7 !important;
+    background-color: var(--admin-danger-bg);
+    border: 1px solid var(--admin-danger-border);
+    color: var(--admin-danger) !important;
     text-align: center;
     font-weight: 500;
 }
@@ -765,7 +770,7 @@
     padding: 1.1rem 1.15rem 1.2rem;
     border-radius: 18px;
     border: 1px solid var(--admin-border);
-    background: linear-gradient(180deg, rgba(20, 23, 29, 0.98) 0%, rgba(14, 17, 22, 0.98) 100%);
+    background: var(--admin-surface);
     box-shadow: var(--admin-shadow);
 }
 
@@ -783,7 +788,7 @@
     width: 100%;
     padding: 1.35rem 1.25rem 1.5rem;
     border-radius: 18px;
-    background: linear-gradient(180deg, rgba(20, 23, 29, 0.98) 0%, rgba(14, 17, 22, 0.98) 100%);
+    background: var(--admin-surface);
     border: 1px solid var(--admin-border);
     box-shadow: var(--admin-shadow);
 }
@@ -813,7 +818,7 @@
     padding: 1.1rem 1.15rem 1.2rem;
     border-radius: 18px;
     border: 1px solid var(--admin-border);
-    background: rgba(255, 255, 255, 0.02);
+    background-color: var(--admin-surface-muted);
 }
 
 .admin-compact-page.admin-renew-page .admin-renew-panel-header {
@@ -841,22 +846,22 @@
 .admin-compact-page.admin-renew-page .admin-renew-toggle {
     white-space: nowrap;
     border-radius: 12px;
-    color: #9ec4ff;
-    border-color: rgba(143, 184, 255, 0.35);
-    background: rgba(255, 255, 255, 0.04);
+    color: var(--admin-accent-text);
+    border-color: var(--admin-border-strong);
+    background-color: var(--admin-surface-muted);
 }
 
 .admin-compact-page.admin-renew-page .admin-renew-toggle:hover {
-    background: rgba(31, 101, 199, 0.16);
-    color: #ffffff;
-    border-color: rgba(143, 184, 255, 0.5);
+    background-color: var(--admin-accent-soft);
+    color: var(--admin-accent-text);
+    border-color: var(--admin-focus);
 }
 
 .admin-compact-page.admin-renew-page .admin-renew-waiver-image-shell {
     border-radius: 16px;
     overflow: hidden;
     border: 1px solid var(--admin-border);
-    background: rgba(255, 255, 255, 0.02);
+    background-color: var(--admin-surface-muted);
 }
 
 .admin-compact-page.admin-renew-page .waiver-row-renew {
@@ -885,16 +890,16 @@
 .admin-compact-page.admin-renew-page .text-block-waiver-rp .btn,
 .admin-compact-page.admin-renew-page .button-hidden-rp.btn {
     border-radius: 12px;
-    color: #9ec4ff;
-    border-color: rgba(143, 184, 255, 0.35);
-    background: rgba(255, 255, 255, 0.04);
+    color: var(--admin-accent-text);
+    border-color: var(--admin-border-strong);
+    background-color: var(--admin-surface-muted);
 }
 
 .admin-compact-page.admin-renew-page .button-hidden-rp:hover,
 .admin-compact-page.admin-renew-page .text-block-waiver-rp .btn:hover {
-    background: rgba(31, 101, 199, 0.16);
-    color: #ffffff;
-    border-color: rgba(143, 184, 255, 0.5);
+    background-color: var(--admin-accent-soft);
+    color: var(--admin-accent-text);
+    border-color: var(--admin-focus);
 }
 
 .admin-compact-page.admin-renew-page .waiver-rp,
@@ -905,7 +910,7 @@
     object-fit: contain;
     border-radius: 16px;
     border: 1px solid var(--admin-border);
-    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.26);
+    box-shadow: var(--admin-shadow);
 }
 
 .admin-compact-page.admin-renew-page .participant-sig-rp,
@@ -915,7 +920,7 @@
     height: 180px;
     min-height: 180px;
     background: #ffffff;
-    border: 1px solid rgba(143, 184, 255, 0.24);
+    border: 1px solid var(--admin-border-strong);
     border-radius: 16px;
     position: static;
     top: auto;
@@ -944,15 +949,15 @@
 }
 
 .admin-compact-page.admin-renew-page .button-row-rp2 .btn-secondary {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.12);
-    color: #f4f7fb;
+    background-color: var(--admin-surface-muted);
+    border-color: var(--admin-border);
+    color: var(--admin-text);
 }
 
 .admin-compact-page.admin-renew-page .button-row-rp2 .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.14);
-    border-color: rgba(143, 184, 255, 0.24);
-    color: #ffffff;
+    background-color: var(--admin-surface-hover);
+    border-color: var(--admin-border-strong);
+    color: var(--admin-text);
 }
 
 .admin-compact-page.admin-renew-page .signBox-image-rt {
@@ -967,9 +972,9 @@
     margin: 0.9rem 0 0;
     padding: 0.8rem 0.95rem;
     border-radius: 12px;
-    background: rgba(164, 67, 71, 0.16);
-    border: 1px solid rgba(252, 165, 165, 0.2);
-    color: #ffb4b7 !important;
+    background-color: var(--admin-danger-bg);
+    border: 1px solid var(--admin-danger-border);
+    color: var(--admin-danger) !important;
     text-align: center;
     font-weight: 500;
 }
@@ -977,7 +982,7 @@
 .admin-compact-page.admin-renew-page .admin-renew-guardian-section {
     margin-top: 1rem;
     padding-top: 1rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid var(--admin-border);
 }
 
 .admin-compact-page.admin-renew-page .admin-renew-nav {
@@ -1036,7 +1041,7 @@
     padding: 1.1rem;
     border-radius: 18px;
     border: 1px solid var(--admin-border);
-    background: linear-gradient(180deg, rgba(20, 23, 29, 0.98) 0%, rgba(14, 17, 22, 0.98) 100%);
+    background: var(--admin-surface);
     box-shadow: var(--admin-shadow);
 }
 
@@ -1051,7 +1056,7 @@
     align-items: center;
     min-height: 240px;
     border-radius: 18px;
-    background: rgba(255, 255, 255, 0.03);
+    background-color: var(--admin-surface-muted);
     border: 1px solid var(--admin-border);
     margin-bottom: 0.9rem;
 }
@@ -1102,7 +1107,7 @@
     background:
         radial-gradient(circle at top right, rgba(31, 101, 199, 0.18), transparent 30%),
         radial-gradient(circle at top left, rgba(164, 67, 71, 0.16), transparent 28%),
-        linear-gradient(180deg, rgba(12, 15, 19, 0.98), rgba(9, 11, 15, 0.96));
+        var(--admin-surface);
     box-shadow: var(--admin-shadow);
 }
 
@@ -1113,7 +1118,7 @@
 .admin-eyebrow,
 .admin-section-kicker {
     margin-bottom: 0.45rem;
-    color: #90b8ff;
+    color: var(--admin-accent-text);
     font-size: 0.78rem;
     font-weight: 700;
     letter-spacing: 0.2rem;
@@ -1154,7 +1159,7 @@
     padding: 0.85rem 0.95rem;
     border-radius: 16px;
     border: 1px solid var(--admin-border);
-    background: rgba(255, 255, 255, 0.03);
+    background-color: var(--admin-surface-muted);
 }
 
 .admin-stat-value {
@@ -1210,7 +1215,7 @@
 }
 
 .modern-card {
-    background: linear-gradient(180deg, rgba(20, 23, 29, 0.98) 0%, rgba(14, 17, 22, 0.98) 100%) !important;
+    background: var(--admin-surface) !important;
     border: 1px solid var(--admin-border) !important;
     border-radius: 18px !important;
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
@@ -1220,8 +1225,8 @@
 
 .modern-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
-    border-color: rgba(143, 184, 255, 0.22) !important;
+    box-shadow: var(--admin-shadow);
+    border-color: var(--admin-border-strong) !important;
 }
 
 .modern-card .card-body {
@@ -1236,8 +1241,8 @@
     padding: 1.15rem 1.2rem;
 }
 
-.card-icon {
-    color: #9ec4ff !important;
+.admin-container .card-icon {
+    color: var(--admin-accent-text) !important;
     font-size: 1.2rem;
     width: auto;
     text-align: left;
@@ -1246,7 +1251,7 @@
     background: var(--admin-accent-soft);
 }
 
-.card-title {
+.admin-container .card-title {
     color: var(--admin-text) !important;
     font-size: 0.98rem;
     text-align: left;
@@ -1259,9 +1264,9 @@
 }
 
 .users-card .card-header {
-    background: linear-gradient(90deg, rgba(11, 56, 136, 0.86) 0%, rgba(22, 62, 125, 0.88) 100%) !important;
+    background: var(--admin-accent-soft) !important;
     color: var(--admin-text);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--admin-border);
     font-weight: 700;
     letter-spacing: 0.02em;
     text-transform: uppercase;
@@ -1274,7 +1279,7 @@
 }
 
 .search-form input {
-    background: rgba(255, 255, 255, 0.04);
+    background-color: var(--admin-surface-muted);
     border: 1px solid var(--admin-border);
     color: var(--admin-text);
     padding: 0.7rem 0.85rem;
@@ -1282,41 +1287,18 @@
 }
 
 .search-form input:focus {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(143, 184, 255, 0.34);
+    background-color: var(--admin-surface);
+    border-color: var(--admin-focus);
     color: var(--admin-text);
-    box-shadow: 0 0 0 3px rgba(31, 101, 199, 0.18);
+    box-shadow: 0 0 0 3px var(--admin-focus-ring);
 }
 
 .search-form input::placeholder {
-    color: #7d8a9c;
+    color: var(--admin-subtext);
 }
 
 .users-card-container {
     justify-content: center;
-}
-
-.admin-layout {
-    min-height: 100vh;
-    background: var(--admin-bg);
-}
-
-.admin-navbar {
-    background: rgba(9, 11, 15, 0.96);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
-    padding: 0.7rem 1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(12px);
-}
-
-.admin-nav-logo {
-    height: 35px;
-    width: auto;
-}
-
-.admin-main-content {
-    padding-top: 88px;
-    min-height: calc(100vh - 56px);
 }
 
 .nav-link-light {
@@ -1326,11 +1308,6 @@
 
 .nav-link-light:hover {
     color: white !important;
-}
-
-.admin-navbar .navbar-brand {
-    color: var(--admin-text) !important;
-    font-weight: 600;
 }
 
 @media (max-width: 992px) {

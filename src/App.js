@@ -12,6 +12,7 @@ import Home from './components/Pages/home'
 import PlayerHub from './components/Pages/PlayerHub';
 import VirtualPatches from './components/Pages/VirtualPatches';
 import Admin from './components/Pages/Admin'
+import AdminLayout, { AdminThemeRoute } from './components/constants/admindrawer';
 import AdminFieldTools from './components/Pages/AdminFieldTools';
 import BarracksTV from './components/Pages/BarracksTV';
 import { fieldStaffPaths } from './components/constants/fieldStaffApi';
@@ -54,7 +55,6 @@ import Logout from './components/constants/logout';
 import Schedule from './components/Pages/Schedule';
 import PartiesAndEvents from './components/Pages/PartiesAndEvents';
 // import EmailDashboard from './components/Pages/EmailDashboard';
-import { useState } from 'react';
 import RentalsManagement from './components/Pages/RentalsManagement';
 
 const App = () => (
@@ -94,31 +94,35 @@ const App = () => (
       <Route exact path="/jointeam" element={<Teamjoin />} />
       <Route exact path="/profilelookup/:id" element={<ProfileLookup />} />
       <Route exact path="/profilesettings" element={<ProfileSettings />} />
-      <Route exact path="/admin" element={<Admin />} />
-      <Route path="/admin/field/:tool" element={<AdminFieldTools />} />
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route index element={<Admin />} />
+        <Route path="field/:tool" element={<AdminFieldTools />} />
+        <Route path="signup" element={<SignUpForm />} />
+        <Route path="waiverform" element={<WaiverForm />} />
+        <Route path="waiverlookup" element={<WaiverLookup />} />
+        <Route path="renewal" element={<RenewSubscription />} />
+        <Route path="renewal/:id" element={<RenewSubscription />} />
+        <Route path="enterwins" element={<EnterWins />} />
+        <Route path="enterlosses" element={<EnterLosses />} />
+        <Route path="freegames" element={<FreeGames />} />
+        <Route path="scanwaiver" element={<ScanWaiver />} />
+        <Route path="rentalform" element={<RentalsManagement />} />
+        <Route path="birthday" element={<Birthday />} />
+        <Route path="useroptions/:id" element={<UserOptions />} />
+      </Route>
       <Route path={fieldStaffPaths.tv} element={<BarracksTV />} />
       <Route path={LEGACY_LEADERBOARD_TV_PATH} element={<LegacyLeaderboardTvRedirect />} />
-      <Route exact path="/admin/signup" element={<SignUpForm />} />
-      <Route exact path="/admin/waiverform" element={<WaiverForm />} />
-      <Route exact path="/admin/waiverlookup" element={<WaiverLookup />} />
-      <Route exact path="/admin/renewal" element={<RenewSubscription />} />
-      <Route exact path="/admin/renewal/:id" element={<RenewSubscription />} />
-      <Route exact path="/admin/enterwins" element={<EnterWins />} />
-      <Route exact path="/admin/enterlosses" element={<EnterLosses />} />
-      <Route exact path="/admin/freegames" element={<FreeGames />} />
-      <Route exact path="/admin/scanwaiver" element={<ScanWaiver />} />
-      <Route exact path="/admin/rentalform" element={<RentalsManagement />} />
-      <Route exact path="/admin/birthday" element={<Birthday />} />
-      <Route exact path="/admin/useroptions/:id" element={<UserOptions />} />
-      <Route exact path="/dashboard" element={<WaiverDashboard />} />
-      <Route exact path="/dashboard/waiverform" element={<WaiverForm />} />
-      <Route exact path="/dashboard/scanwaiver" element={<ScanWaiver />} />
-      <Route exact path="/dashboard/waiverlookup" element={<WaiverLookup />} />
-      <Route exact path="/dashboard/signup" element={<SignUpForm />} />
-      <Route exact path="/dashboard/renewal" element={<RenewSubscription />} />
-      <Route exact path="/dashboard/rentalform" element={<RentalsManagement />} />
-      <Route exact path="/dashboard/freegames" element={<FreeGames />} />
-      <Route exact path="/dashboard/birthday" element={<Birthday />} />
+      <Route path="/dashboard" element={<AdminThemeRoute />}>
+        <Route index element={<WaiverDashboard />} />
+        <Route path="waiverform" element={<WaiverForm />} />
+        <Route path="scanwaiver" element={<ScanWaiver />} />
+        <Route path="waiverlookup" element={<WaiverLookup />} />
+        <Route path="signup" element={<SignUpForm />} />
+        <Route path="renewal" element={<RenewSubscription />} />
+        <Route path="rentalform" element={<RentalsManagement />} />
+        <Route path="freegames" element={<FreeGames />} />
+        <Route path="birthday" element={<Birthday />} />
+      </Route>
       <Route exact path="/account" element={<AccountPage />} />
       <Route exact path="/forgotpassword" element={<PasswordForgetForm />} />
       <Route exact path="/login" element={<LoginRoute />} />
@@ -165,34 +169,14 @@ function CookieConsentRoute() {
 
 function NavigationRoute() {
   const tvDisplay = useTvDisplay();
-  const [nav, showNav] = useState(true);
-  let location = useLocation();
-  React.useEffect(() => {
-    if (location.pathname.includes('/admin')) {
-      showNav(false)
-    }
-    else {
-      showNav(true)
-    }
-  }, [location]);
-
-  return <div>{!tvDisplay && nav && <Navigation />}</div>
+  const admin = useMatch('/admin/*');
+  return tvDisplay || admin ? null : <Navigation />;
 }
 
 function FooterRoute() {
   const tvDisplay = useTvDisplay();
-  const [footer, showFooter] = useState(true);
-  let location = useLocation();
-  React.useEffect(() => {
-    if (location.pathname.includes('/admin')) {
-      showFooter(false)
-    }
-    else {
-      showFooter(true)
-    }
-  }, [location]);
-
-  return <div>{!tvDisplay && footer && <Footer />}</div>
+  const admin = useMatch('/admin/*');
+  return tvDisplay || admin ? null : <Footer />;
 }
 
 export default withAuthentication(App);

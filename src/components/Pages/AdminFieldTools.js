@@ -6,7 +6,6 @@ import { withFirebase } from '../Firebase';
 import { AuthUserContext, withAuthorization } from '../session';
 import { ADMIN } from '../constants/roles';
 import { fieldStaffPaths, requestStaffFieldTool } from '../constants/fieldStaffApi';
-import AdminDrawer from '../constants/admindrawer';
 import AdminFieldCheckIn from './AdminFieldCheckIn';
 import AdminFieldRounds from './AdminFieldRounds';
 import AdminFieldMembership from './AdminFieldMembership';
@@ -152,58 +151,56 @@ function StaffToolsWorkspace({ firebase, uid, tool }) {
   return (
     <div className="admin-container staff-dashboard field-tools">
       <Helmet><title>{title} | US Airsoft Field</title></Helmet>
-      <AdminDrawer component={(
-        <main className="admin-content staff-dashboard__content">
-          <header className="staff-dashboard__hero field-tools__hero">
-            <div>
-              <Link to="/admin" className="field-tools__return">Staff Operations</Link>
-              <h1>{title}</h1>
-            </div>
-            {unlocked && (
-              <button type="button" className="btn btn-outline-secondary" onClick={() => void updateSession('DELETE')}>
-                Lock field tools
-              </button>
-            )}
-          </header>
+      <main className="admin-content staff-dashboard__content">
+        <header className="staff-dashboard__hero field-tools__hero">
+          <div>
+            <Link to="/admin" className="field-tools__return">Staff Operations</Link>
+            <h1>{title}</h1>
+          </div>
+          {unlocked && (
+            <button type="button" className="btn btn-outline-secondary" onClick={() => void updateSession('DELETE')}>
+              Lock field tools
+            </button>
+          )}
+        </header>
 
-          <nav className="field-tools__nav" aria-label="Field staff tools">
-            {fieldTools.map(({ id, title: label, path }) => <NavLink key={id} to={path}>{label}</NavLink>)}
-            <Link to={fieldStaffPaths.tv}>Barracks TV</Link>
-          </nav>
+        <nav className="field-tools__nav" aria-label="Field staff tools">
+          {fieldTools.map(({ id, title: label, path }) => <NavLink key={id} to={path}>{label}</NavLink>)}
+          <Link to={fieldStaffPaths.tv}>Barracks TV</Link>
+        </nav>
 
-          {notice && <p className="field-tools__notice" role="alert">{notice}</p>}
-          {unlocked
-            ? <Panel key={tool.id} firebase={firebase} request={request} />
-            : (
-              <section className="field-tool__panel" aria-label="Field staff access" aria-busy={pending !== ''}>
-                {access.kind === 'checking' && <p role="status">Checking your field staff access…</p>}
-                {access.kind === 'locking' && <p role="status">Locking field tools…</p>}
-                {access.kind === 'locked' && (
-                  <>
-                    <h2>Unlock field tools</h2>
-                    <p>Use your USAW staff unlock credentials for check-in, live rounds, membership, and team reports.</p>
-                    <StaffUnlockForm busy={pending !== ''} onSubmit={submitUnlock} />
-                  </>
-                )}
-                {access.kind === 'unavailable' && <h2>Field staff access is unavailable</h2>}
-                {access.kind === 'denied' && <h2>Sign in with your authorized USAW staff account</h2>}
-                {access.kind === 'denied' && <Link to="/login">Sign in to USAW</Link>}
-                {canReview && (
-                  <button type="button" className="btn btn-outline-secondary field-tools__check" disabled={pending !== ''}
-                    onClick={() => void updateSession('GET')}>
-                    {pending === 'GET' ? 'Checking access…' : 'Check access'}
-                  </button>
-                )}
-                {access.kind === 'lock-error' && (
-                  <button type="button" className="btn btn-outline-secondary" disabled={pending !== ''}
-                    onClick={() => void updateSession('DELETE')}>
-                    Retry locking field tools
-                  </button>
-                )}
-              </section>
-            )}
-        </main>
-      )} />
+        {notice && <p className="field-tools__notice" role="alert">{notice}</p>}
+        {unlocked
+          ? <Panel key={tool.id} firebase={firebase} request={request} />
+          : (
+            <section className="field-tool__panel" aria-label="Field staff access" aria-busy={pending !== ''}>
+              {access.kind === 'checking' && <p role="status">Checking your field staff access…</p>}
+              {access.kind === 'locking' && <p role="status">Locking field tools…</p>}
+              {access.kind === 'locked' && (
+                <>
+                  <h2>Unlock field tools</h2>
+                  <p>Use your USAW staff unlock credentials for check-in, live rounds, membership, and team reports.</p>
+                  <StaffUnlockForm busy={pending !== ''} onSubmit={submitUnlock} />
+                </>
+              )}
+              {access.kind === 'unavailable' && <h2>Field staff access is unavailable</h2>}
+              {access.kind === 'denied' && <h2>Sign in with your authorized USAW staff account</h2>}
+              {access.kind === 'denied' && <Link to="/login">Sign in to USAW</Link>}
+              {canReview && (
+                <button type="button" className="btn btn-outline-secondary field-tools__check" disabled={pending !== ''}
+                  onClick={() => void updateSession('GET')}>
+                  {pending === 'GET' ? 'Checking access…' : 'Check access'}
+                </button>
+              )}
+              {access.kind === 'lock-error' && (
+                <button type="button" className="btn btn-outline-secondary" disabled={pending !== ''}
+                  onClick={() => void updateSession('DELETE')}>
+                  Retry locking field tools
+                </button>
+              )}
+            </section>
+          )}
+      </main>
     </div>
   );
 }

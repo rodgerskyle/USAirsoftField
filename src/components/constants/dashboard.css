@@ -15,23 +15,23 @@
 }
 
 .waiver-dashboard-card {
-    background: linear-gradient(180deg, rgba(20, 23, 29, 0.98) 0%, rgba(14, 17, 22, 0.98) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--admin-surface);
+    border: 1px solid var(--admin-border);
     border-radius: 18px;
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.34);
+    box-shadow: var(--admin-shadow);
     transition: transform 0.2s, border-color 0.2s, background-color 0.2s;
 }
 
 .waiver-dashboard-card:hover {
     transform: translateY(-4px);
-    border-color: rgba(143, 184, 255, 0.22);
+    border-color: var(--admin-border-strong);
 }
 
 .waiver-dashboard-card-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    color: #f4f7fb;
+    color: var(--admin-text);
     padding: 0.35rem 0.1rem;
 }
 
@@ -42,5 +42,5 @@
 
 .waiver-dashboard-card-icon {
     font-size: 1.25rem;
-    color: #9ec4ff;
+    color: var(--admin-accent-text);
 }

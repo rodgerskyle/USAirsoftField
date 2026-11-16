@@ -30,7 +30,7 @@
 }
 
 .field-membership__result {
-  border-inline-start: .25rem solid var(--admin-accent);
+  border-inline-start: .25rem solid var(--admin-accent-text);
 }
 
 .field-membership__result[data-status='active'] {
@@ -108,7 +108,7 @@
 
 .field-reports__report blockquote {
   margin: .9rem 0;
-  border-inline-start: 3px solid var(--admin-accent);
+  border-inline-start: 3px solid var(--admin-accent-text);
   padding: .65rem .75rem;
   background: var(--admin-surface);
 }

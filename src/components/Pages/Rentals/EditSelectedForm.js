@@ -83,12 +83,12 @@ const AddParticipantModal = ({
             maxHeight: '92vh',
             overflow: 'auto',
             p: 3,
-            bgcolor: '#111821',
-            color: '#f4f7fb',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            boxShadow: '0 18px 40px rgba(0, 0, 0, 0.32)'
+            bgcolor: 'var(--admin-surface)',
+            color: 'var(--admin-text)',
+            border: '1px solid var(--admin-border)',
+            boxShadow: 'var(--admin-shadow)'
         }}>
-            <div className="modal-header">
+            <div className="rental-dialog-header">
                 <Typography variant="h6">Add Participant</Typography>
                 <IconButton onClick={onClose}>
                     <Close />
@@ -246,9 +246,9 @@ const AddParticipantModal = ({
                     <Box sx={{
                         position: 'sticky',
                         bottom: 0,
-                        bgcolor: '#111821',
+                        bgcolor: 'var(--admin-surface)',
                         borderTop: 1,
-                        borderColor: 'rgba(255,255,255,0.08)'
+                        borderColor: 'var(--admin-border)'
                     }}>
                         <TablePagination
                             component="div"
@@ -274,7 +274,7 @@ const AddParticipantModal = ({
                             flexDirection: 'column',
                             justifyContent: 'center',
                             alignItems: 'center',
-                            background: 'rgba(11,13,16,0.72)',
+                            background: 'color-mix(in srgb, var(--admin-surface) 82%, transparent)',
                             backdropFilter: 'blur(1px)',
                             zIndex: 5,
                             borderRadius: 1
@@ -300,8 +300,8 @@ const TransactionDialog = ({ open, onClose, onSubmit, error, value, onChange }) 
             onClose={onClose}
             aria-labelledby="transaction-dialog"
         >
-            <Paper className="add-participant-modal" sx={{ bgcolor: '#111821', color: '#f4f7fb' }}>
-                <div className="modal-header">
+            <Paper className="add-participant-modal" sx={{ bgcolor: 'var(--admin-surface)', color: 'var(--admin-text)' }}>
+                <div className="rental-dialog-header">
                     <Typography variant="h6">Complete Rental Form</Typography>
                     <IconButton onClick={onClose}>
                         <Close />
@@ -495,8 +495,8 @@ const SizeEditModal = ({ open, onClose, currentSize, onSave }) => {
                 transform: 'translate(-50%, -50%)',
                 width: '300px',
                 p: 3,
-                bgcolor: '#111821',
-                color: '#f4f7fb'
+                bgcolor: 'var(--admin-surface)',
+                color: 'var(--admin-text)'
             }}>
                 <Typography variant="h6" mb={2}>Edit Group Size</Typography>
                 <TextField
@@ -575,8 +575,8 @@ const InventoryEditModal = ({ open, onClose, available, onSave, currentOptions }
                 p: 3,
                 maxHeight: '90vh',
                 overflow: 'auto',
-                bgcolor: '#111821',
-                color: '#f4f7fb'
+                bgcolor: 'var(--admin-surface)',
+                color: 'var(--admin-text)'
             }}>
                 <Typography variant="h6" mb={2}>Edit Available Inventory</Typography>
 

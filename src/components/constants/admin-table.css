@@ -1,63 +1,59 @@
 /* Table Container Styles */
-.MuiTableContainer-root {
+.staff-dashboard__directory .MuiTableContainer-root {
     margin: 1rem 0;
     overflow-x: auto;
 }
 
 /* Table Header Styles */
-.MuiTableHead-root {
-    background-color: rgba(0, 0, 0, 0.2);
+.staff-dashboard__directory .MuiTableHead-root {
+    background-color: var(--admin-surface-muted);
 }
 
-.MuiTableHead-root .MuiTableCell-root {
+.staff-dashboard__directory .MuiTableHead-root .MuiTableCell-root {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     font-size: 0.875rem;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 2px solid var(--admin-border);
 }
 
 /* Table Body Styles */
-.MuiTableBody-root .MuiTableRow-root:not(:last-child) {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+.staff-dashboard__directory .MuiTableBody-root .MuiTableRow-root:not(:last-child) {
+    border-bottom: 1px solid var(--admin-border);
 }
 
-.MuiTableCell-root {
+.staff-dashboard__directory .MuiTableCell-root {
     padding: 16px;
     border: none;
 }
 
 /* Expanded Row Content */
-.MuiCollapse-root {
-    background-color: rgba(0, 0, 0, 0.1);
+.staff-dashboard__directory .MuiCollapse-root {
+    background-color: var(--admin-surface-muted);
 }
 
-.MuiCollapse-root .MuiTable-root {
-    /* margin: 0 1rem; */
-}
-
-.MuiCollapse-root .MuiTableCell-root {
+.staff-dashboard__directory .MuiCollapse-root .MuiTableCell-root {
     padding: 12px 16px;
 }
 
 /* Pagination Styles */
-.MuiTablePagination-root {
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+.staff-dashboard__directory .MuiTablePagination-root {
+    border-top: 1px solid var(--admin-border);
 }
 
-.MuiTablePagination-selectLabel,
-.MuiTablePagination-displayedRows {
-    color: rgba(255, 255, 255, 0.7);
+.staff-dashboard__directory .MuiTablePagination-selectLabel,
+.staff-dashboard__directory .MuiTablePagination-displayedRows {
+    color: var(--admin-subtext);
 }
 
-.MuiTablePagination-select {
+.staff-dashboard__directory .MuiTablePagination-select {
     padding: 8px 32px 8px 12px !important;
     border-radius: 4px;
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--admin-surface-hover);
 }
 
 /* Button Styles */
-.MuiButton-contained {
+.staff-dashboard__directory .MuiButton-contained {
     text-transform: none;
     font-weight: 500;
     padding: 6px 16px;
@@ -66,7 +62,7 @@
 }
 
 /* Status Indicators */
-.status-indicator {
+.staff-dashboard__directory .status-indicator {
     display: inline-flex;
     align-items: center;
     padding: 4px 8px;
@@ -75,70 +71,66 @@
     font-weight: 500;
 }
 
-.status-expired {
-    background-color: rgba(255, 68, 68, 0.1);
-    color: #ff4444;
+.staff-dashboard__directory .status-expired {
+    background-color: var(--admin-danger-bg);
+    color: var(--admin-danger);
 }
 
-.status-clear {
-    background-color: rgba(76, 175, 80, 0.1);
-    color: #4CAF50;
+.staff-dashboard__directory .status-clear {
+    background-color: var(--admin-success-bg);
+    color: var(--admin-success);
 }
 
 /* Responsive Adjustments */
 @media (max-width: 600px) {
-    .MuiTableCell-root {
+    .staff-dashboard__directory .MuiTableCell-root {
         padding: 12px;
     }
 
-    .MuiTableCell-root:last-child {
+    .staff-dashboard__directory .MuiTableCell-root:last-child {
         padding-right: 12px;
     }
 
-    .MuiButton-contained {
+    .staff-dashboard__directory .MuiButton-contained {
         padding: 4px 12px;
         font-size: 0.875rem;
     }
 }
 
 /* Animation for row expansion */
-.MuiCollapse-root {
+.staff-dashboard__directory .MuiCollapse-root {
     transition: height 300ms cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 /* Table Row Hover Effect */
-.MuiTableRow-root.hoverable {
+.staff-dashboard__directory .MuiTableRow-root.hoverable {
     transition: background-color 0.2s ease;
 }
 
-.MuiTableRow-root.hoverable:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+.staff-dashboard__directory .MuiTableRow-root.hoverable:hover {
+    background-color: var(--admin-surface-hover);
 }
 
 /* Icon Button Styles */
-.MuiIconButton-root {
+.staff-dashboard__directory .MuiIconButton-root {
     padding: 8px;
     transition: background-color 0.2s ease;
 }
 
-.MuiIconButton-root:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+.staff-dashboard__directory .MuiIconButton-root:hover {
+    background-color: var(--admin-surface-hover);
 }
 
 /* Empty Row Styles */
-.empty-row {
+.staff-dashboard__directory .empty-row {
     height: 53px;
     background-color: transparent;
 }
 
-.card-header {
-    color: white !important;
-}
-
-p.MuiTablePagination-displayedRows.css-levciy-MuiTablePagination-displayedRows {
+.staff-dashboard__directory .MuiTablePagination-displayedRows {
     margin-bottom: unset;
 }
 
-.MuiToolbar-root .MuiTablePagination-selectLabel {
+.staff-dashboard__directory .MuiToolbar-root .MuiTablePagination-selectLabel {
     margin-bottom: unset;
 }

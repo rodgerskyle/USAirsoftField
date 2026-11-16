@@ -11,38 +11,38 @@ import { withStyles } from '@mui/styles';
 const TextFieldCard = withStyles({
     root: {
         '& label.Mui-focused': {
-            color: '#f4f7fb',
+            color: 'var(--admin-text)',
         },
         '& .MuiInput-underline:after': {
-            borderBottomColor: '#1f65c7',
+            borderBottomColor: 'var(--admin-accent)',
         },
         '& .MuiOutlinedInput-root': {
-            backgroundColor: '#161d25',
+            backgroundColor: 'var(--admin-surface-muted)',
             '& fieldset': {
-                borderColor: 'rgba(255, 255, 255, 0.12)',
+                borderColor: 'var(--admin-border)',
             },
             '&:hover fieldset': {
-                borderColor: 'rgba(255, 255, 255, 0.22)',
+                borderColor: 'var(--admin-border-strong)',
             },
             '&.Mui-focused fieldset': {
-                borderColor: '#1f65c7',
+                borderColor: 'var(--admin-accent)',
             },
         },
         '& .MuiInputBase-input': {
-            color: '#f4f7fb',
-            borderColor: 'rgba(255, 255, 255, 0.12)',
+            color: 'var(--admin-text)',
+            borderColor: 'var(--admin-border)',
         },
         '&.MuiInputBase-root': {
-            color: '#f4f7fb',
+            color: 'var(--admin-text)',
         },
         '& .MuiFormLabel-root': {
-            color: '#9fb0c4',
+            color: 'var(--admin-subtext)',
         },
         '& .MuiFormHelperText-root': {
-            color: '#9fb0c4',
+            color: 'var(--admin-subtext)',
         },
         '& .MuiFormHelperText-root.Mui-error': {
-            color: '#ff8f8f',
+            color: 'var(--admin-danger)',
         },
     },
 })(TextField);
