@@ -1,9 +1,14 @@
 const companionOrigin = 'https://usaw-field-companion.pink-bud-3735.chatgpt.site';
 const cardOrigins = new Set([companionOrigin, 'https://app.usairsoftfield.com']);
 const cardHostnames = new Set([...cardOrigins].map(origin => new URL(origin).hostname));
+const websiteOrigin = 'https://www.usairsoftfield.com';
+const profileOrigins = new Set([websiteOrigin, 'https://usairsoftfield.com']);
 const cardToken = /^[A-Za-z0-9_-]{32}$/;
 const playerId = /^[A-Za-z0-9_-]{10,128}$/;
+const profilePlayerId = /^[A-Za-z0-9_-]{1,128}$/;
+const legacyCardName = /^[A-Za-z]{2,128}$/;
 const invalidCard = 'Scan a valid USAW Companion card, or enter the player’s name or ID.';
+const invalidProfile = 'Enter a valid USAW player profile link, name, or ID.';
 const verificationUnavailable = 'Card verification is unavailable. Try again or enter the player’s name or ID.';
 
 export function readScannedMemberCard(input) {
@@ -24,6 +29,28 @@ export function readScannedMemberCard(input) {
         throw new Error(invalidCard);
     }
     return token;
+}
+
+export function readScannedPlayerProfile(input) {
+    const value = typeof input === 'string' ? input.trim() : '';
+    if (!value.startsWith('/profilelookup/') && !/^https?:\/\//i.test(value)) return null;
+    let url;
+    let uid;
+    try {
+        url = new URL(value, websiteOrigin);
+        const match = /^\/profilelookup\/([^/]+)\/?$/.exec(url.pathname);
+        uid = match && decodeURIComponent(match[1]);
+    } catch {
+        throw new Error(invalidProfile);
+    }
+    if (!profileOrigins.has(url.origin) || url.username || url.password || !uid || !profilePlayerId.test(uid)) {
+        throw new Error(invalidProfile);
+    }
+    return uid;
+}
+
+export function isLegacyCardName(value) {
+    return typeof value === 'string' && legacyCardName.test(value);
 }
 
 export async function verifyScannedMemberCard(firebase, token, { signal } = {}) {

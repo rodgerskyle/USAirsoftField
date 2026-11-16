@@ -66,6 +66,41 @@
   font-size: .875rem;
 }
 
+.field-membership__waiver-ban {
+  display: inline-block;
+  width: fit-content;
+  max-width: 100%;
+  padding: .2rem .55rem;
+  border: 1px solid var(--admin-border);
+  border-radius: .4rem;
+  background: var(--admin-surface-muted);
+  color: var(--admin-subtext);
+  font-size: .875rem;
+  font-weight: 600;
+}
+
+.field-membership__waiver-ban[data-waiver-ban-status='exact-name'] {
+  background: var(--admin-danger-bg);
+  border-color: var(--admin-danger-border);
+  color: var(--admin-danger);
+}
+
+.field-membership__waiver-ban[data-waiver-ban-status='possible-name'] {
+  background: var(--admin-warning-bg);
+  border-color: var(--admin-warning-border);
+  color: var(--admin-warning);
+}
+
+.field-membership__waiver-ban[data-waiver-ban-status='clear'] {
+  background: var(--admin-success-bg);
+  border-color: var(--admin-success-border);
+  color: var(--admin-success);
+}
+
+.field-membership__waiver-followup {
+  margin: .5rem 0 0;
+}
+
 .field-membership__details,
 .field-reports__people {
   display: flex;

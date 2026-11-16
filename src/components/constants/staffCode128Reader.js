@@ -51,7 +51,7 @@ function bestPattern(runs, offset, unit, codes) {
 
 const characters = Array.from({ length: 103 }, (_, value) => value);
 
-function playerId(symbols) {
+function decodeSymbols(symbols, acceptsAdditionalValue) {
   const checksum = symbols.pop();
   const start = symbols.shift();
   const sum = symbols.reduce((total, code, index) => total + (index + 1) * code, start);
@@ -74,10 +74,10 @@ function playerId(symbols) {
       return null;
     }
   }
-  return UID.test(value) ? value : null;
+  return UID.test(value) || acceptsAdditionalValue(value) ? value : null;
 }
 
-function decodeRuns(runs) {
+function decodeRuns(runs, acceptsAdditionalValue) {
   // White space precedes and follows a real symbol. The scanner can tolerate
   // a tight crop when at least half the normal quiet zone remains.
   for (let start = 1; start + 19 < runs.length; start += 2) {
@@ -90,7 +90,7 @@ function decodeRuns(runs) {
       const stopUnit = unitWidth(runs, offset, 7, 13);
       if (symbols.length > 2 && runs[offset + 7] >= 5 * stopUnit &&
           Math.abs(stopUnit / unit - 1) < 0.35 && patternError(runs, offset, PATTERNS[STOP], stopUnit) < 0.4) {
-        const value = playerId(symbols);
+        const value = decodeSymbols(symbols, acceptsAdditionalValue);
         if (value) return value;
         break;
       }
@@ -105,7 +105,7 @@ function decodeRuns(runs) {
   return null;
 }
 
-function decodeLine(samples, count, low, high) {
+function decodeLine(samples, count, low, high, acceptsAdditionalValue) {
   if (count < 100 || high - low < 65) return null;
   const cutoff = (high + low) / 2;
   const runs = [];
@@ -121,10 +121,10 @@ function decodeLine(samples, count, low, high) {
     width++;
   }
   runs.push(width);
-  const value = decodeRuns(runs);
+  const value = decodeRuns(runs, acceptsAdditionalValue);
   if (value) return value;
   if (dark) runs.push(0);
-  return decodeRuns(runs.reverse());
+  return decodeRuns(runs.reverse(), acceptsAdditionalValue);
 }
 
 const angles = [0, 90, 6, -6, 84, 96, 12, -12, 78, 102, 25, -25, 65, 115, 45, 135]
@@ -134,7 +134,7 @@ function luminance(data, offset) {
   return (77 * data[offset] + 150 * data[offset + 1] + 29 * data[offset + 2]) / 256;
 }
 
-export function readPlayerIdBarcode(image) {
+export function readPlayerIdBarcode(image, acceptsAdditionalValue = () => false) {
   const { width, height, data } = image;
   const radius = Math.ceil(Math.hypot(width, height));
   const samples = new Uint8Array(radius * 2 + 1);
@@ -159,7 +159,7 @@ export function readPlayerIdBarcode(image) {
         low = Math.min(low, gray);
         high = Math.max(high, gray);
       }
-      const value = decodeLine(samples, count, low, high);
+      const value = decodeLine(samples, count, low, high, acceptsAdditionalValue);
       if (value) return value;
     }
   }

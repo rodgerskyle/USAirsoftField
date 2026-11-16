@@ -1,4 +1,4 @@
-import { readScannedMemberCard, verifyScannedMemberCard } from './scoreCards';
+import { readScannedMemberCard, readScannedPlayerProfile, verifyScannedMemberCard } from './scoreCards';
 
 const token = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ012345';
 const playerId = 'PlayerFirebaseId123456789012';
@@ -26,6 +26,17 @@ test('recognizes current and branded card URLs while leaving manual IDs and name
     expect(readScannedMemberCard(`https://other.example/#verify/${token}`)).toBeNull();
     expect(() => readScannedMemberCard(`${branded}/#verify/invalid`)).toThrow(/valid USAW Companion card/);
     expect(() => readScannedMemberCard(`http://app.usairsoftfield.com/#verify/${token}`)).toThrow(/valid USAW Companion card/);
+});
+
+test('only accepts profile links on the official HTTPS origins and validates their player IDs', () => {
+    expect(readScannedPlayerProfile(`https://www.usairsoftfield.com/profilelookup/${playerId}`)).toBe(playerId);
+    expect(readScannedPlayerProfile(`https://usairsoftfield.com/profilelookup/${playerId}/`)).toBe(playerId);
+    expect(readScannedPlayerProfile(`/profilelookup/${playerId}`)).toBe(playerId);
+    expect(readScannedPlayerProfile('A Member')).toBeNull();
+    expect(() => readScannedPlayerProfile(`http://www.usairsoftfield.com/profilelookup/${playerId}`)).toThrow(/valid USAW player profile/);
+    expect(() => readScannedPlayerProfile(`https://www.usairsoftfield.com.other.example/profilelookup/${playerId}`)).toThrow(/valid USAW player profile/);
+    expect(() => readScannedPlayerProfile(`https://user@www.usairsoftfield.com/profilelookup/${playerId}`)).toThrow(/valid USAW player profile/);
+    expect(() => readScannedPlayerProfile('https://www.usairsoftfield.com/profilelookup/id%2Fother')).toThrow(/valid USAW player profile/);
 });
 
 test('verifies an active card at the fixed Companion endpoint using the current Firebase token', async () => {

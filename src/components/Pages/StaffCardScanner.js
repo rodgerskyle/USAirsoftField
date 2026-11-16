@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { readScannedMemberCard } from '../constants/scoreCards';
+import { isLegacyCardName, readScannedMemberCard, readScannedPlayerProfile } from '../constants/scoreCards';
 import { readPlayerIdBarcode } from '../constants/staffCode128Reader';
 import './StaffCardScanner.css';
 
@@ -7,13 +7,18 @@ const playerId = /^[A-Za-z0-9_-]{10,128}$/;
 const qrToken = /^[A-Za-z0-9_-]{32}$/;
 let qrDecoder;
 
-function scannedValue(raw, format) {
-    if (format === 'code_128') return playerId.test(raw) ? { playerId: raw } : null;
+function scannedValue(raw, format, verifyLegacyCards) {
+    if (format === 'code_128') {
+        if (verifyLegacyCards && isLegacyCardName(raw)) return { barcodeValue: raw };
+        return playerId.test(raw) ? { playerId: raw } : null;
+    }
     if (format !== 'qr_code') return null;
     if (qrToken.test(raw)) return { cardToken: raw };
     try {
         const cardToken = readScannedMemberCard(raw);
-        return cardToken ? { cardToken } : null;
+        if (cardToken) return { cardToken };
+        const profileId = verifyLegacyCards && readScannedPlayerProfile(raw);
+        return profileId && playerId.test(profileId) ? { playerId: profileId } : null;
     } catch {
         return null;
     }
@@ -36,7 +41,7 @@ function loadQRReader() {
     return qrDecoder;
 }
 
-async function createReader() {
+async function createReader(verifyLegacyCards) {
     let detector;
     let formats = [];
     try {
@@ -55,7 +60,7 @@ async function createReader() {
         if (detector) {
             try {
                 for (const { rawValue, format } of await detector.detect(video)) {
-                    const value = scannedValue(rawValue, format);
+                    const value = scannedValue(rawValue, format, verifyLegacyCards);
                     if (value) return value;
                 }
             } catch { /* A browser decoder can skip an unreadable frame. */ }
@@ -68,14 +73,14 @@ async function createReader() {
         if (!frame) return null;
         frame.drawImage(video, 0, 0, canvas.width, canvas.height);
         const image = frame.getImageData(0, 0, canvas.width, canvas.height);
-        const id = decodeBarcode && readPlayerIdBarcode(image);
-        if (id) return { playerId: id };
+        const code = decodeBarcode && readPlayerIdBarcode(image, verifyLegacyCards ? isLegacyCardName : undefined);
+        if (code) return scannedValue(code, 'code_128', verifyLegacyCards);
         const qr = decodeQr?.(image.data, image.width, image.height, { inversionAttempts: 'dontInvert' })?.data;
-        return qr ? scannedValue(qr, 'qr_code') : null;
+        return qr ? scannedValue(qr, 'qr_code', verifyLegacyCards) : null;
     };
 }
 
-export function StaffCardScanner({ disabled = false, onScan }) {
+export function StaffCardScanner({ disabled = false, onScan, verifyLegacyCards = false }) {
     const video = useRef(null);
     const camera = useRef(null);
     const callback = useRef(onScan);
@@ -127,7 +132,7 @@ export function StaffCardScanner({ disabled = false, onScan }) {
             current.stream = stream;
             video.current.srcObject = stream;
             await video.current.play();
-            const read = await createReader();
+            const read = await createReader(verifyLegacyCards);
             if (camera.current !== current) return;
             setStatus('Hold a USAW QR code or Code 128 barcode steady in the frame.');
 

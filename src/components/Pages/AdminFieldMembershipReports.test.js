@@ -5,9 +5,14 @@ import AdminFieldReports from './AdminFieldReports';
 
 jest.mock('./StaffCardScanner', () => ({
   StaffCardScanner: ({ disabled, onScan }) => (
-    <button type="button" disabled={disabled} onClick={() => onScan({ cardToken: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef' })}>
-      Scan with camera
-    </button>
+    <>
+      <button type="button" disabled={disabled} onClick={() => onScan({ cardToken: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef' })}>
+        Scan with camera
+      </button>
+      <button type="button" disabled={disabled} onClick={() => onScan({ barcodeValue: 'jordanrivera' })}>
+        Scan a legacy barcode
+      </button>
+    </>
   ),
 }));
 
@@ -33,7 +38,7 @@ function verification(body) {
 }
 
 function nameSearch(query) {
-  return [lookupEndpoint, { method: 'POST', body: { action: 'lookup', query }, signal: expect.anything() }];
+  return [lookupEndpoint, { method: 'POST', body: { action: 'lookup', query, includeWaiverBan: true }, signal: expect.anything() }];
 }
 
 it('reads a connected Code 128 scanner and shows the official expiration date', async () => {
@@ -57,6 +62,48 @@ it('verifies official card links and camera QR scans using the QR token', async 
   fireEvent.click(screen.getByRole('button', { name: 'Scan with camera' }));
   await screen.findByText('Active membership');
   expect(request).toHaveBeenNthCalledWith(2, ...verification({ token: cardToken }));
+});
+
+it('resolves a USAW profile QR link by its exact ID without falling back to name search', async () => {
+  const request = jest.fn().mockRejectedValueOnce(Object.assign(new Error('No profile match'), { status: 404 }));
+  render(<AdminFieldMembership request={request} />);
+  enterLookup('https://www.usairsoftfield.com/profilelookup/' + playerId);
+  await screen.findByText('Record not found');
+  expect(request).toHaveBeenCalledWith(...verification({ playerId }));
+  expect(request).toHaveBeenCalledTimes(1);
+});
+
+it('rejects unrelated profile links before making a verification or lookup request', () => {
+  const request = jest.fn();
+  render(<AdminFieldMembership request={request} />);
+  enterLookup('https://other.example/profilelookup/' + playerId);
+  expect(screen.getByRole('alert')).toHaveTextContent('Scan a USAW card');
+  expect(request).not.toHaveBeenCalled();
+});
+
+it('tries the exact ID before finding candidates for a scanned compact name', async () => {
+  const request = jest.fn()
+    .mockRejectedValueOnce(Object.assign(new Error('No ID match'), { status: 404 }))
+    .mockResolvedValueOnce({ matches: [{ playerId, displayName: 'Jordan Rivera', waiverBanStatus: 'clear' }] })
+    .mockResolvedValueOnce({ ...expiredMember, displayName: 'Jordan Rivera', waiverBanStatus: 'clear' });
+  render(<AdminFieldMembership request={request} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Scan a legacy barcode' }));
+  const choice = await screen.findByRole('button', { name: /Jordan Rivera/ });
+  expect(request).toHaveBeenNthCalledWith(1, ...verification({ playerId: 'jordanrivera' }));
+  expect(request).toHaveBeenNthCalledWith(2, ...nameSearch('jordanrivera'));
+  expect(request).toHaveBeenCalledTimes(2);
+  fireEvent.click(choice);
+  await screen.findByText('Expired membership');
+  expect(request).toHaveBeenNthCalledWith(3, ...verification({ playerId }));
+});
+
+it('looks up a short compact name directly when a connected scanner includes an AIM prefix', async () => {
+  const request = jest.fn().mockResolvedValueOnce({ matches: [] });
+  render(<AdminFieldMembership request={request} />);
+  enterLookup(']C1ab');
+  await screen.findByText('No matching players. Try another name or enter a player ID.');
+  expect(request).toHaveBeenCalledWith(...nameSearch('ab'));
+  expect(request).toHaveBeenCalledTimes(1);
 });
 
 it('handles unprefixed raw QR tokens only after an exact player ID misses', async () => {
@@ -86,8 +133,11 @@ it('clears the prior result and keeps an authorization failure visible', async (
 it('shows players with the same name separately and verifies only the selected player', async () => {
   const displayName = 'Jordan Rivera';
   const request = jest.fn()
-    .mockResolvedValueOnce({ matches: [{ playerId, displayName }, { playerId: secondPlayerId, displayName }] })
-    .mockResolvedValueOnce({ ...expiredMember, playerId: secondPlayerId, displayName });
+    .mockResolvedValueOnce({ matches: [
+      { playerId, displayName, waiverBanStatus: 'exact-name' },
+      { playerId: secondPlayerId, displayName, waiverBanStatus: 'possible-name' },
+    ] })
+    .mockResolvedValueOnce({ ...expiredMember, playerId: secondPlayerId, displayName, waiverBanStatus: 'possible-name' });
   render(<AdminFieldMembership request={request} />);
   enterLookup('Jordan Ri');
 
@@ -95,9 +145,14 @@ it('shows players with the same name separately and verifies only the selected p
   expect(heading).toHaveFocus();
   expect(request).toHaveBeenCalledTimes(1);
   expect(request).toHaveBeenNthCalledWith(1, ...nameSearch('Jordan Ri'));
-  expect(screen.getByRole('button', { name: new RegExp(`${displayName}.*${playerId}`) })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: new RegExp(`${displayName}.*${playerId}`) }))
+    .toHaveTextContent('Exact name match on the waiver ban list');
+  expect(screen.getByRole('button', { name: new RegExp(`${displayName}.*${secondPlayerId}`) }))
+    .toHaveTextContent('Possible waiver ban match');
   fireEvent.click(screen.getByRole('button', { name: new RegExp(`${displayName}.*${secondPlayerId}`) }));
   await screen.findByText('Expired membership');
+  expect(screen.getByText('Possible waiver ban match')).toBeInTheDocument();
+  expect(screen.getByText('Confirm the player’s identity in Waiver Search.')).toBeInTheDocument();
   expect(request).toHaveBeenNthCalledWith(2, ...verification({ playerId: secondPlayerId }));
   expect(screen.queryByRole('heading', { name: 'Matching players' })).not.toBeInTheDocument();
 });
@@ -113,6 +168,7 @@ it('searches for a one-word name when a manually entered ID-like value has no ex
   expect(request).toHaveBeenNthCalledWith(1, ...verification({ playerId: displayName }));
   expect(request).toHaveBeenNthCalledWith(2, ...nameSearch(displayName));
   expect(request).toHaveBeenCalledTimes(2);
+  expect(screen.getByText('Waiver ban check unavailable')).toBeInTheDocument();
   expect(screen.queryByText('Active membership')).not.toBeInTheDocument();
 });
 
@@ -125,6 +181,22 @@ it('shows that a name search returned no matches without verifying a player', as
   expect(request).toHaveBeenCalledWith(...nameSearch('Unknown Name'));
   expect(input).toHaveValue('Unknown Name');
   expect(input).toHaveFocus();
+});
+
+it.each([
+  ['exact-name', 'Exact name match on the waiver ban list', true],
+  ['clear', 'No waiver ban match', false],
+  ['unavailable', 'Waiver ban check unavailable', false],
+  [undefined, 'Waiver ban check unavailable', false],
+])('shows the waiver ban check separately from active membership when the status is %s', async (waiverBanStatus, label, flagged) => {
+  const request = jest.fn().mockResolvedValue({ ...expiredMember, status: 'active', waiverBanStatus });
+  render(<AdminFieldMembership request={request} />);
+  enterLookup(playerId);
+  await screen.findByText('Active membership');
+  expect(screen.getByText(label)).toBeInTheDocument();
+  const followup = screen.queryByText('Confirm the player’s identity in Waiver Search.');
+  if (flagged) expect(followup).toBeInTheDocument();
+  else expect(followup).not.toBeInTheDocument();
 });
 
 const report = {

@@ -8,7 +8,7 @@ import { withFirebase } from '../Firebase';
 import { AuthUserContext, withAuthorization } from '../session';
 import { ADMIN, WAIVER } from '../constants/roles';
 import { getAllPlayerDisplayNames } from '../constants/playerDisplayNames';
-import { readScannedMemberCard, verifyScannedMemberCard } from '../constants/scoreCards';
+import { readScannedMemberCard, readScannedPlayerProfile, verifyScannedMemberCard } from '../constants/scoreCards';
 import { isCurrentScoreOperation, recordPlayerResult } from '../constants/scoreRecording';
 import '../constants/admin.css';
 import './ScoreEntry.css';
@@ -19,8 +19,6 @@ const maxRecentResults = 20;
 const scannerRepeatWindow = 2000;
 const pendingScorePrefix = 'usaw-score-pending-v1:';
 const memoryAttempts = new Map();
-const websiteOrigin = 'https://www.usairsoftfield.com';
-const profileOrigins = new Set([websiteOrigin, 'https://usairsoftfield.com']);
 const textValue = value => typeof value === 'string' ? value.trim().replace(/\s+/g, ' ') : '';
 const normalized = value => textValue(value).toLowerCase();
 const nameOf = member => member.name || member.username || member.uid;
@@ -31,25 +29,8 @@ function memberDirectory(snapshot) {
     ).map(([uid, member]) => ({ uid, name: textValue(member.name), username: textValue(member.username) }));
 }
 
-function profileIdFromInput(value) {
-    if (!value.startsWith('/profilelookup/') && !/^https?:\/\//i.test(value)) return null;
-    let url;
-    let uid;
-    try {
-        url = new URL(value, websiteOrigin);
-        const match = /^\/profilelookup\/([^/]+)\/?$/.exec(url.pathname);
-        uid = match && decodeURIComponent(match[1]);
-    } catch {
-        throw new Error('Enter a valid USAW player profile link, name, or ID.');
-    }
-    if (!profileOrigins.has(url.origin) || url.username || url.password || !uid || !playerId.test(uid)) {
-        throw new Error('Enter a valid USAW player profile link, name, or ID.');
-    }
-    return uid;
-}
-
 function findMembers(members, displayNames, value) {
-    const uid = profileIdFromInput(value);
+    const uid = readScannedPlayerProfile(value);
     // Some Code 128 readers include the AIM symbology prefix before the ID.
     const barcodeId = /^\]C[01]([A-Za-z0-9_-]{10,128})$/.exec(value)?.[1];
     const direct = members.find(member => member.uid === (uid ?? barcodeId ?? value));
