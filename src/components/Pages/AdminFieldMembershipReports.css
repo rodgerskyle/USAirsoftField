@@ -34,15 +34,25 @@
 }
 
 .field-membership__result[data-status='active'] {
-  border-inline-start-color: var(--staff-success, #14734d);
+  --membership-status-color: var(--admin-success);
+  border-color: var(--admin-success-border);
+  background: var(--admin-success-bg);
 }
 
 .field-membership__result[data-status='expired'] {
-  border-inline-start-color: var(--staff-error, #b8493e);
+  --membership-status-color: var(--admin-danger);
+  border-color: var(--admin-danger-border);
+  background: var(--admin-danger-bg);
+}
+
+.field-membership__result[data-status='active'],
+.field-membership__result[data-status='expired'] {
+  border-inline-start-color: var(--membership-status-color);
 }
 
 .field-membership__status {
   margin-bottom: .3rem;
+  color: var(--membership-status-color, var(--admin-text));
   font-weight: 700;
 }
 

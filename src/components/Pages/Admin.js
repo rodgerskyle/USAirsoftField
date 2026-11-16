@@ -91,6 +91,7 @@ function AdminPage({ firebase }) {
   const [users, setUsers] = useState([]);
   const [directoryStatus, setDirectoryStatus] = useState('loading');
   const [search, setSearch] = useState('');
+  const [showRemoved, setShowRemoved] = useState(false);
 
   useEffect(() => {
     return onValue(firebase.users(), snapshot => {
@@ -106,12 +107,12 @@ function AdminPage({ firebase }) {
   }, [firebase]);
 
   const badgePlayers = useMemo(() => users
-    .filter(user => !user.roles?.[ROLES.WAIVER])
+    .filter(user => !user.accountRemovedAt && !user.roles?.[ROLES.WAIVER])
     .map(({ uid, name, username }) => ({ uid, name, username })), [users]);
   const filteredUsers = useMemo(() => {
     const query = normalized(search).trim();
-    return users.filter(user => matchesQuery(user, query));
-  }, [search, users]);
+    return users.filter(user => (showRemoved || !user.accountRemovedAt) && matchesQuery(user, query));
+  }, [search, showRemoved, users]);
 
   const loading = directoryStatus === 'loading';
   const directoryUnavailable = directoryStatus === 'unavailable';
@@ -129,7 +130,7 @@ function AdminPage({ firebase }) {
             </nav>
           </div>
           <div className="staff-dashboard__count">
-            <strong>{directoryStatus === 'ready' ? userCount.format(users.length) : '—'}</strong>
+            <strong>{directoryStatus === 'ready' ? userCount.format(users.filter(user => !user.accountRemovedAt).length) : '—'}</strong>
             <span>Directory records</span>
           </div>
         </header>
@@ -157,6 +158,8 @@ function AdminPage({ firebase }) {
               value={search}
               onChange={event => setSearch(event.target.value)}
             />
+            <Form.Check id="staff-directory-show-removed" label="Include removed accounts"
+              checked={showRemoved} onChange={event => setShowRemoved(event.target.checked)} />
           </Form>
           {loading ? (
             <p className="staff-dashboard__directory-status" role="status">

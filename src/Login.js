@@ -79,10 +79,15 @@ class SignInFormBase extends Component {
 
       this.props.firebase
         .doSignInWithEmailAndPassword(email, password)
-        .then(async () => {
+        .then(async ({ user }) => {
+          const snapshot = await get(this.props.firebase.user(user.uid));
+          const userObject = snapshot.val();
+          if (!userObject || userObject.accountRemovedAt) {
+            await this.props.firebase.doSignOut();
+            this.setState({ ...INITIAL_STATE, error: 'This USAW player account is unavailable. Contact the field for help.' });
+            return;
+          }
           this.setState({ ...INITIAL_STATE });
-          const snapshot = await get(this.props.firebase.user(this.props.firebase.uid()));
-          const userObject = snapshot.val() || {};
 
           if (userObject.roles && !!userObject.roles[ROLES.WAIVER]) {
             this.props.history.push("/dashboard");

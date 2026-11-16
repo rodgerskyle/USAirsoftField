@@ -9,6 +9,7 @@ export const fieldStaffPaths = Object.freeze({
 
 const staffEndpoints = new Set([
   '/api/staff-session',
+  '/api/staff-player-accounts',
   '/api/game-day-check-in',
   '/api/live-games',
   '/api/member-card/verify',

@@ -99,7 +99,7 @@ class RenewSubscription extends Component {
     componentDidMount() {
         this.unsubscribeUsers = onValue(this.props.firebase.users(), snapshot => {
             const users = Object.entries(snapshot.val() ?? {})
-                .filter(([, user]) => user && typeof user === 'object' && !Array.isArray(user))
+                .filter(([, user]) => user && typeof user === 'object' && !Array.isArray(user) && !user.accountRemovedAt)
                 .map(([uid, user]) => {
                     const username = typeof user.username === 'string' ? user.username.trim() : '';
                     const name = typeof user.name === 'string' ? user.name.trim() : '';

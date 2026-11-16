@@ -38,7 +38,7 @@ class FreeGames extends Component {
                 ...usersObject[key],
                 uid: key,
             }));
-            const filteredList = usersList.filter(obj => obj.freegames > 0);
+            const filteredList = usersList.filter(obj => !obj.accountRemovedAt && obj.freegames > 0);
 
             this.setState({
                 users: filteredList,
@@ -50,7 +50,7 @@ class FreeGames extends Component {
     // Updates User's free game
     updateUser = (user) => {
         get(this.props.firebase.user(user)).then(snapshot => {
-            if (snapshot.exists()) {
+            if (snapshot.exists() && !snapshot.val().accountRemovedAt) {
                 const userData = snapshot.val();
                 const freegames = Math.max(0, userData.freegames - 1);
                 update(this.props.firebase.user(user), { freegames })

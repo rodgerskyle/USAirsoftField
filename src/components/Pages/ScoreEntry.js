@@ -9,7 +9,7 @@ import { AuthUserContext, withAuthorization } from '../session';
 import { ADMIN, WAIVER } from '../constants/roles';
 import { getAllPlayerDisplayNames } from '../constants/playerDisplayNames';
 import { readScannedMemberCard, readScannedPlayerProfile, verifyScannedMemberCard } from '../constants/scoreCards';
-import { isCurrentScoreOperation, recordPlayerResult } from '../constants/scoreRecording';
+import { isCurrentScoreOperation, loadPlayerScoreHistory, recordPlayerResult, voidPlayerResult } from '../constants/scoreRecording';
 import '../constants/admin.css';
 import './ScoreEntry.css';
 
@@ -19,13 +19,15 @@ const maxRecentResults = 20;
 const scannerRepeatWindow = 2000;
 const pendingScorePrefix = 'usaw-score-pending-v1:';
 const memoryAttempts = new Map();
+const scoreDate = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'UTC' });
 const textValue = value => typeof value === 'string' ? value.trim().replace(/\s+/g, ' ') : '';
 const normalized = value => textValue(value).toLowerCase();
 const nameOf = member => member.name || member.username || member.uid;
+const dateOf = row => scoreDate.format(new Date(`${row.date}T00:00:00Z`));
 
 function memberDirectory(snapshot) {
     return Object.entries(snapshot.val() ?? {}).filter(([uid, member]) =>
-        playerId.test(uid) && member && typeof member === 'object' && !Array.isArray(member) && !member.roles?.[WAIVER]
+        playerId.test(uid) && member && typeof member === 'object' && !Array.isArray(member) && !member.roles?.[WAIVER] && !member.accountRemovedAt
     ).map(([uid, member]) => ({ uid, name: textValue(member.name), username: textValue(member.username) }));
 }
 
@@ -116,6 +118,11 @@ function ScoreEntry({ firebase, outcome }) {
     const [error, setError] = useState('');
     const [status, setStatus] = useState('');
     const [recent, setRecent] = useState([]);
+    const [correcting, setCorrecting] = useState(false);
+    const [playerHistory, setPlayerHistory] = useState(null);
+    const [correction, setCorrection] = useState(null);
+    const [retryRemoval, setRetryRemoval] = useState(false);
+    const counter = isWin ? 'wins' : 'losses';
 
     useEffect(() => {
         mounted.current = true;
@@ -138,12 +145,12 @@ function ScoreEntry({ firebase, outcome }) {
         };
     }, [firebase]);
 
-    async function submitResult(rawInput, selectedMember) {
+    async function submitResult(rawInput, selectedMember, review = correcting) {
         const query = rawInput.trim();
-        if (!query || !members || pending.current) return;
+        if (!query || !members || pending.current || retryRemoval) return;
         const staffUser = firebase.auth.currentUser;
         if (!staffUser || staffUser.uid !== admin?.uid) {
-            setError('Sign in again to record a result.');
+            setError('Sign in again to manage results.');
             return;
         }
         const controller = new AbortController();
@@ -153,6 +160,8 @@ function ScoreEntry({ firebase, outcome }) {
         setBusy(true);
         setError('');
         setStatus('');
+        setPlayerHistory(null);
+        setCorrection(null);
         try {
             let member = selectedMember && members.find(entry => entry.uid === selectedMember.uid);
             if (selectedMember && !member) throw new Error('This player is no longer in the member directory. Search again.');
@@ -171,7 +180,15 @@ function ScoreEntry({ firebase, outcome }) {
             }
             if (!member) throw new Error('No matching USAW member. Check the name, player ID, or card.');
 
-            if (firebase.auth.currentUser !== staffUser) throw new Error('The admin session changed. Sign in again to record a result.');
+            if (firebase.auth.currentUser !== staffUser) throw new Error('The admin session changed. Sign in again to manage results.');
+            if (review) {
+                const { history } = await loadPlayerScoreHistory(firebase, member.uid);
+                if (!mounted.current || controller.signal.aborted || firebase.auth.currentUser !== staffUser) return;
+                setPlayerHistory({ member, history });
+                setValue('');
+                setMatches([]);
+                return;
+            }
             const previous = lastScan.current;
             if (!selectedMember && previous?.uid === member.uid && previous.outcome === outcome &&
                 submittedClock - previous.clock < scannerRepeatWindow) {
@@ -187,21 +204,91 @@ function ScoreEntry({ firebase, outcome }) {
             clearPendingScore(key, operation);
             if (!mounted.current || controller.signal.aborted) return;
             if (!selectedMember) lastScan.current = { uid: member.uid, outcome, clock: performance.now() };
-            const item = { id: ++resultSequence.current, text: `${resultName} recorded for ${nameOf(member)}.` };
+            const item = { id: ++resultSequence.current, uid: member.uid, text: `${resultName} recorded for ${nameOf(member)}.` };
             setRecent(items => [item, ...items].slice(0, maxRecentResults));
             setValue('');
             setMatches([]);
         } catch (failure) {
             if (mounted.current && !controller.signal.aborted) {
-                setError(failure?.message || 'The result could not be recorded. Try again.');
+                setError(failure?.message || (review ? 'Could not load recorded results. Try again.' : 'The result could not be recorded. Try again.'));
             }
         } finally {
             if (pending.current === controller) pending.current = null;
             if (mounted.current && !controller.signal.aborted) {
                 setBusy(false);
-                input.current?.focus();
+                if (!review) input.current?.focus();
             }
         }
+    }
+
+    async function removeResult() {
+        if (pending.current || !playerHistory || !correction) return;
+        const { member } = playerHistory;
+        const staffUser = firebase.auth.currentUser;
+        if (!staffUser || staffUser.uid !== admin?.uid) {
+            setError('Sign in again to correct a result.');
+            return;
+        }
+
+        const controller = new AbortController();
+        const expectedCount = correction[counter];
+        const key = `${pendingScorePrefix}${staffUser.uid}:void:${outcome}:${member.uid}:${correction.day}:${expectedCount}`;
+        const operation = getPendingScore(key, Date.now());
+        savePendingScore(key, operation);
+        pending.current = controller;
+        setBusy(true);
+        setError('');
+        setStatus('');
+        const current = () => mounted.current && !controller.signal.aborted && firebase.auth.currentUser === staffUser;
+        try {
+            const removed = await voidPlayerResult(firebase, member.uid, {
+                day: correction.day, result: outcome, expectedCount, operationId: operation.id, operationAt: operation.at,
+            });
+            clearPendingScore(key, operation);
+            if (!current()) return;
+            setRetryRemoval(false);
+            setCorrection(null);
+            setPlayerHistory({ member, history: removed.history });
+            const message = `${resultName} on ${dateOf(correction)} ${removed.duplicate ? 'already ' : ''}removed for ${nameOf(member)}.`;
+            setStatus(message);
+            const item = { id: ++resultSequence.current, uid: member.uid, text: message };
+            setRecent(items => [item, ...items].slice(0, maxRecentResults));
+        } catch (failure) {
+            if (failure?.retryable !== true) clearPendingScore(key, operation);
+            if (!current()) return;
+            if (failure?.retryable === true) {
+                setRetryRemoval(true);
+                setError('Could not confirm the removal. Retry this same correction to check it.');
+                return;
+            }
+            setRetryRemoval(false);
+            setCorrection(null);
+            if (failure?.code === 'score_changed') {
+                setPlayerHistory(null);
+                try {
+                    const { history } = await loadPlayerScoreHistory(firebase, member.uid);
+                    if (current()) setPlayerHistory({ member, history });
+                } catch { /* The staff member can search for the player again. */ }
+                if (current()) setError('That day’s results changed. Review the current list before trying again.');
+                return;
+            }
+            setError(failure?.message || 'The result could not be removed. Try again.');
+        } finally {
+            if (pending.current === controller) pending.current = null;
+            if (mounted.current && !controller.signal.aborted) setBusy(false);
+        }
+    }
+
+    function changeMode(review) {
+        if (pending.current || retryRemoval) return;
+        setCorrecting(review);
+        setValue('');
+        setMatches([]);
+        setPlayerHistory(null);
+        setCorrection(null);
+        setError('');
+        setStatus('');
+        input.current?.focus();
     }
 
     function submit(event) {
@@ -213,6 +300,8 @@ function ScoreEntry({ firebase, outcome }) {
     function changeValue(event) {
         setValue(event.target.value);
         setMatches([]);
+        setPlayerHistory(null);
+        setCorrection(null);
         setError('');
         setStatus('');
     }
@@ -237,13 +326,21 @@ function ScoreEntry({ firebase, outcome }) {
                 <Card className="admin-panel-card admin-points-card">
                     <Card.Body>
                         <Form className="admin-points-form" onSubmit={submit}>
+                            <div className="score-entry-mode" role="group" aria-label="Score entry mode">
+                                <Button variant={correcting ? 'outline-secondary' : 'secondary'} type="button"
+                                    aria-pressed={!correcting} disabled={busy || retryRemoval} onClick={() => changeMode(false)}>Record {counter}</Button>
+                                <Button variant={correcting ? 'secondary' : 'outline-secondary'} type="button"
+                                    aria-pressed={correcting} disabled={busy || retryRemoval} onClick={() => changeMode(true)}>Correct {counter}</Button>
+                            </div>
                             <Form.Group controlId="score-entry-player" className="admin-points-field">
                                 <Form.Label>Scan a card or find a player</Form.Label>
                                 <Form.Control ref={input} value={value} onChange={changeValue} onKeyDown={handleInputKey}
                                     autoFocus autoComplete="off" autoCorrect="off" autoCapitalize="none" spellCheck={false}
-                                    inputMode="text" name="scorePlayer" readOnly={busy} aria-describedby="score-entry-help"
+                                    inputMode="text" name="scorePlayer" readOnly={busy || retryRemoval} aria-describedby="score-entry-help"
                                     placeholder="Name, callsign, player ID, or profile link" />
-                                <Form.Text id="score-entry-help">Scan a card with this field focused. For a name or callsign, select the matching player before recording.</Form.Text>
+                                <Form.Text id="score-entry-help">{correcting
+                                    ? `Find a player to review their dated ${counter}. You’ll confirm the removal separately.`
+                                    : 'Scan a card with this field focused. For a name or callsign, select the matching player before recording.'}</Form.Text>
                             </Form.Group>
                             {directoryUnavailable ? <p role="alert">Could not load the member directory. Reload this page to try again.</p>
                                 : !members ? <p role="status">Loading members…</p> : null}
@@ -251,7 +348,7 @@ function ScoreEntry({ firebase, outcome }) {
                             {status && <p role="status">{status}</p>}
                             {matches.length > 0 && (
                                 <div className="score-entry-matches">
-                                    <p>Select the player to record this result.</p>
+                                    <p>{correcting ? `Select the player to review their ${counter}.` : 'Select the player to record this result.'}</p>
                                     <ul aria-label="Matching players">
                                         {matches.slice(0, maxMatches).map(member => (
                                             <li key={member.uid}>
@@ -269,20 +366,52 @@ function ScoreEntry({ firebase, outcome }) {
                                 </div>
                             )}
                             <div className="admin-submit-row">
-                                <Button className="button-submit-admin" type="submit" disabled={busy || !members}>
-                                    {busy ? 'Recording…' : `Record ${outcome}`}
+                                <Button className="button-submit-admin" type="submit" disabled={busy || !members || retryRemoval}>
+                                    {busy ? (correcting ? 'Working…' : 'Recording…') : correcting ? `Find ${counter}` : `Record ${outcome}`}
                                 </Button>
                             </div>
                         </Form>
                     </Card.Body>
                 </Card>
+                {correcting && playerHistory && (
+                    <Card className="admin-panel-card">
+                        <Card.Header>{nameOf(playerHistory.member)} · Recorded {counter}</Card.Header>
+                        <Card.Body>
+                            {correction ? (
+                                <div className="score-entry-correction" aria-live="polite">
+                                    <p><strong>Remove one {outcome} on {dateOf(correction)}?</strong></p>
+                                    <p>This updates {nameOf(playerHistory.member)}’s leaderboard totals.</p>
+                                    <div className="score-entry-mode">
+                                        <Button variant="danger" type="button" disabled={busy} onClick={removeResult}>
+                                            {retryRemoval ? 'Retry removal' : `Remove ${outcome}`}
+                                        </Button>
+                                        <Button variant="outline-secondary" type="button" disabled={busy || retryRemoval}
+                                            onClick={() => setCorrection(null)}>Cancel</Button>
+                                    </div>
+                                </div>
+                            ) : playerHistory.history.some(row => row[counter] > 0) ? (
+                                <ul className="score-entry-history" aria-label={`Dated ${counter}`}>
+                                    {playerHistory.history.filter(row => row[counter] > 0).map(row => (
+                                        <li key={row.day}>
+                                            <span><strong>{dateOf(row)}</strong><small>{row[counter]} {row[counter] === 1 ? outcome : counter}</small></span>
+                                            <Button variant="outline-danger" type="button" disabled={busy}
+                                                onClick={() => setCorrection(row)}>Remove one {outcome}</Button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : <p>No dated {counter} are available to correct.</p>}
+                        </Card.Body>
+                    </Card>
+                )}
                 <Card className="status-card-admin admin-panel-card admin-status-card">
                     <Card.Header>Recent results</Card.Header>
                     <Card.Body className="status-card-body-admin" aria-live="polite" aria-relevant="additions text">
                         {recent.length ? recent.map((item, index) => (
-                            <Card.Text className={index % 2 ? 'status-card-row-admin' : 'status-card-offrow-admin'} key={item.id}>
-                                {item.text}
-                            </Card.Text>
+                            <div className={`${index % 2 ? 'status-card-row-admin' : 'status-card-offrow-admin'} score-entry-recent`} key={item.id}>
+                                <span>{item.text}</span>
+                                <Button variant="outline-secondary" type="button" disabled={busy || retryRemoval}
+                                    onClick={() => { changeMode(true); submitResult(item.uid, null, true); }}>Review {counter}</Button>
+                            </div>
                         )) : <Card.Text className="status-card-row-admin">No results recorded in this session.</Card.Text>}
                     </Card.Body>
                 </Card>

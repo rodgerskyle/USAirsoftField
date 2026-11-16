@@ -17,6 +17,7 @@ function TeamDetail({ firebase, teamId, source }) {
     const [fieldTeam, setFieldTeam] = useState(null);
     const [fieldStatus, setFieldStatus] = useState('loading');
     const [fieldCaptain, setFieldCaptain] = useState('');
+    const [removedMembers, setRemovedMembers] = useState({});
     const companion = source === 'companion';
     const shared = useCompanionTeamDirectory(firebase, { enabled: companion, id: teamId });
     const team = companion ? shared.record?.team : fieldTeam;
@@ -47,10 +48,19 @@ function TeamDetail({ firebase, teamId, source }) {
         }, () => setFieldCaptain(''));
     }, [companion, firebase, captainId]);
 
-    const members = companion ? team?.members ?? []
-        : Object.values(team?.members || {}).filter(member =>
+    const fieldMembers = companion ? [] : Object.values(team?.members || {}).filter(member =>
             Array.isArray(member) && typeof member[0] === 'string' && typeof member[1] === 'string' && member[1]
         ).map(([name, id]) => ({ name, id }));
+    const fieldMemberIds = fieldMembers.map(member => member.id).filter(id => /^[A-Za-z0-9_-]{10,128}$/.test(id)).join(',');
+    useEffect(() => {
+        setRemovedMembers({});
+        if (!fieldMemberIds) return undefined;
+        const stops = fieldMemberIds.split(',').map(id => onValue(child(firebase.user(id), 'accountRemovedAt'), snapshot => {
+            setRemovedMembers(previous => ({ ...previous, [id]: Boolean(snapshot.val()) }));
+        }, () => {}));
+        return () => stops.forEach(stop => stop());
+    }, [fieldMemberIds, firebase]);
+    const members = companion ? team?.members ?? [] : fieldMembers.filter(member => !removedMembers[member.id]);
     const captain = fieldCaptain || members.find(member => member.id === captainId)?.name;
     const points = Number(team?.points);
     const title = team?.name || teamId;

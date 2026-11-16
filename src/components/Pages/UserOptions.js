@@ -4,7 +4,6 @@ import '../../App.css';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/lab/Alert';
 
-import { withFirebase } from '../Firebase';
 import { withAuthorization, AuthUserContext } from '../session';
 
 
@@ -13,7 +12,7 @@ import { Button, Form, Container, Row, Col, Breadcrumb } from 'react-bootstrap/'
 import default_profile from '../../assets/default.png';
 
 import * as ROLES from '../constants/roles';
-import { withRouter } from '../constants/withRouter';
+import { requestStaffFieldTool } from '../constants/fieldStaffApi';
 import { LinkContainer } from 'react-router-bootstrap';
 import { Link } from 'react-router-dom';
 
@@ -21,13 +20,14 @@ import { encode } from 'firebase-encode';
 import { Helmet } from 'react-helmet-async';
 import { get, onValue, update } from 'firebase/database';
 import { getDownloadURL } from 'firebase/storage';
+import './UserOptions.css';
 
 class UserOptions extends Component {
     constructor(props) {
         super(props);
 
         this.state = {
-            loading: false,
+            loading: true,
             user: null,
             username: "",
             name: "",
@@ -45,6 +45,10 @@ class UserOptions extends Component {
             status: null,
             error: null,
             notification: null,
+            removing: false,
+            removeOpen: false,
+            removeConfirm: '',
+            removeError: null,
         };
         this.handleChange = this.handleChange.bind(this);
     }
@@ -53,24 +57,30 @@ class UserOptions extends Component {
         this.setState({ value: event.target.value });
     }
 
-    componentDidMount() {
-        //Figure out rank logic here
-        onValue(this.props.firebase.user(this.props.router.params.id), snapshot => {
+    loadAccount() {
+        this.unsubscribeUser?.();
+        this.setState({ loading: true, user: null, error: null, password: '', removing: false, removeOpen: false, removeConfirm: '', removeError: null });
+        this.unsubscribeUser = onValue(this.props.firebase.user(this.props.router.params.id), snapshot => {
             const userObject = snapshot.val();
+            if (!userObject || userObject.accountRemovedAt) {
+                this.setState({ loading: false, user: userObject });
+                return;
+            }
 
             this.setState({
+                loading: false,
                 user: userObject,
-                username: userObject.username,
-                name: userObject.name,
-                team: userObject.team.toUpperCase(),
+                username: userObject.username ?? '',
+                name: userObject.name ?? '',
+                team: userObject.team?.toUpperCase() ?? '',
                 wins: userObject.wins,
                 losses: userObject.losses,
                 points: userObject.points,
                 freegames: userObject.freegames,
                 profilepic: userObject.profilepic,
-                renewal: userObject.renewal,
-                email: userObject.email,
-                oldEmail: userObject.email,
+                renewal: userObject.renewal ?? '',
+                email: userObject.email ?? '',
+                oldEmail: userObject.email ?? '',
             }, function () {
                 //After setstate, then grab points and profile
                 if (userObject.profilepic)
@@ -78,11 +88,80 @@ class UserOptions extends Component {
                 else
                     this.setState({ profileicon: default_profile })
             });
-        });
+        }, () => this.setState({ loading: false, user: null, error: 'The player account is temporarily unavailable.' }));
+    }
+
+    componentDidMount() {
+        this.loadAccount();
+    }
+
+    componentDidUpdate(previousProps) {
+        if (previousProps.router.params.id !== this.props.router.params.id) {
+            this.removeRequest?.abort();
+            this.loadAccount();
+        }
     }
 
     componentWillUnmount() {
-        // this.props.firebase.user(this.props.router.params.id).off();
+        this.unsubscribeUser?.();
+        this.removeRequest?.abort();
+    }
+
+    removeAccount = async (event, actorId) => {
+        event.preventDefault();
+        const playerId = this.props.router.params.id;
+        const { removeConfirm, removing, user } = this.state;
+        if (removing || this.removeRequest || !user || removeConfirm !== playerId || actorId === playerId) return;
+        const request = new AbortController();
+        this.removeRequest = request;
+        this.setState({ removing: true, removeError: null });
+        try {
+            const result = await requestStaffFieldTool(this.props.firebase, actorId, '/api/staff-player-accounts', {
+                method: 'POST', body: { playerId, confirmation: removeConfirm }, signal: request.signal,
+            });
+            if (request.signal.aborted) return;
+            if (!result.removed || result.playerId !== playerId) throw new Error('Account removal could not be confirmed.');
+            this.setState(current => ({
+                user: { ...current.user, accountRemovedAt: true }, removing: false, removeOpen: false,
+            }));
+        } catch (error) {
+            if (!request.signal.aborted) this.setState({ removing: false, removeError: error.message });
+        } finally {
+            if (this.removeRequest === request) this.removeRequest = null;
+        }
+    };
+
+    renderAccountRemoval(authUser) {
+        const playerId = this.props.router.params.id;
+        const { user, removeOpen, removeConfirm, removeError, removing } = this.state;
+        if (!user || !authUser || authUser.uid === playerId || Object.values(user.roles ?? {}).some(Boolean)) return null;
+        return (
+            <section className="admin-account-removal" aria-labelledby="admin-account-removal-title">
+                <h3 id="admin-account-removal-title">Remove player account</h3>
+                <p>Blocks access to this player account in the website and Companion. Signed waivers and historical records are retained.</p>
+                {!removeOpen ? (
+                    <Button variant="outline-danger" onClick={() => this.setState({ removeOpen: true })}>Review removal</Button>
+                ) : (
+                    <Form onSubmit={event => this.removeAccount(event, authUser.uid)}>
+                        <p><strong>{user.name || user.username || 'Player'}</strong> {user.email && <span>({user.email})</span>}</p>
+                        <Form.Group controlId="admin-remove-player-confirmation">
+                            <Form.Label>Type the player ID <code>{playerId}</code> to confirm.</Form.Label>
+                            <Form.Control autoFocus autoComplete="off" autoCapitalize="none" spellCheck={false} required
+                                value={removeConfirm} disabled={removing}
+                                onChange={event => this.setState({ removeConfirm: event.target.value, removeError: null })} />
+                        </Form.Group>
+                        {removeError && <p role="alert">{removeError}</p>}
+                        <div className="admin-account-removal__actions">
+                            <Button type="submit" variant="danger" disabled={removing || removeConfirm !== playerId}>
+                                {removing ? 'Removing account…' : 'Remove account'}
+                            </Button>
+                            <Button type="button" variant="outline-secondary" disabled={removing}
+                                onClick={() => this.setState({ removeOpen: false, removeConfirm: '', removeError: null })}>Cancel</Button>
+                        </div>
+                    </Form>
+                )}
+            </section>
+        );
     }
 
     //Get image function for profile image = uid
@@ -133,7 +212,7 @@ class UserOptions extends Component {
         this.setState({
             username: this.state.user.username,
             name: this.state.user.name,
-            team: this.state.user.team.toUpperCase(),
+            team: this.state.user.team?.toUpperCase() ?? '',
             wins: this.state.user.wins,
             losses: this.state.user.losses,
             points: this.state.user.points,
@@ -223,7 +302,7 @@ class UserOptions extends Component {
     }
 
     render() {
-        const { notification } = this.state
+        const { notification, user, error } = this.state
         return (
             <AuthUserContext.Consumer>
                 {authUser =>
@@ -242,6 +321,12 @@ class UserOptions extends Component {
                                     <Breadcrumb.Item active>User Options</Breadcrumb.Item>
                                 </Breadcrumb>
                                 </div>
+                                {!user || user.accountRemovedAt ? (
+                                    <section className="admin-account-removal">
+                                        <p role="status">{user?.accountRemovedAt ? 'This player account was removed.' : error || 'This player account was not found.'}</p>
+                                        {user?.accountRemovedAt && <Button variant="outline-info" onClick={() => this.openWaiver()}>Open retained waiver</Button>}
+                                    </section>
+                                ) : <>
                                 <Row className="row-uo admin-user-options-card">
                                     <Col md={4} className="admin-user-options-sidebar">
                                         <div className="team-single-img">
@@ -447,6 +532,8 @@ class UserOptions extends Component {
                                         <p className="super-status-uo-admin">{this.state.super_status}</p>
                                     </Col> : null}
                                 </Row> : null}
+                                {this.renderAccountRemoval(authUser)}
+                                </>}
                             </Container>
                             : <h2 className="pagePlaceholder">Loading...</h2>}
                         <Snackbar open={notification !== null} autoHideDuration={6000} onClose={() => this.setState({ notification: null })}>

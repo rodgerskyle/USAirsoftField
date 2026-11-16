@@ -74,7 +74,7 @@ function UserRow({ user, page, rowsPerPage, index }) {
   const [open, setOpen] = React.useState(false);
   const expired = checkDate(user.renewal);
   const playerName = [user.name, user.username].find(value => typeof value === 'string' && value.trim()) || 'Unnamed player';
-  const renewalStatus = expired === null ? 'Date unavailable' : expired ? 'Expired' : 'Clear';
+  const renewalStatus = user.accountRemovedAt ? 'Account removed' : expired === null ? 'Date unavailable' : expired ? 'Expired' : 'Clear';
   const renewalColor = expired === null ? 'var(--admin-subtext)' : expired ? 'var(--staff-error)' : 'var(--staff-success)';
 
   return (

@@ -7,7 +7,8 @@ import { getDownloadURL } from 'firebase/storage';
 import { FirebaseContext } from '../Firebase';
 import { AuthUserContext } from '../session';
 import {
-  getBadgeStandings, getFeaturedBadges, getFeaturedBadgeDetails, getMyBadges, setFeaturedBadge, unlockBadgeStaff,
+  getBadgeStandings, getFeaturedBadges, getFeaturedBadgeDetails, getMyBadges, getStaffBadgeCounts,
+  getStaffBadgeGrantHistory, revokePlayerBadgeGrant, setFeaturedBadge, unlockBadgeStaff,
 } from '../constants/playerBadges';
 import { getAllPlayerDisplayNames, getPlayerDisplayNames } from '../constants/playerDisplayNames';
 import Redirect from '../constants/redirect';
@@ -33,6 +34,9 @@ jest.mock('../constants/playerBadges', () => ({
   getFeaturedBadges: jest.fn(),
   getFeaturedBadgeDetails: jest.fn(),
   getMyBadges: jest.fn(),
+  getStaffBadgeCounts: jest.fn(),
+  getStaffBadgeGrantHistory: jest.fn(),
+  revokePlayerBadgeGrant: jest.fn(),
   setFeaturedBadge: jest.fn(),
   unlockBadgeStaff: jest.fn(),
 }));
@@ -291,6 +295,45 @@ test('offers the expanded patch collection in the unlocked staff award picker', 
   expect(within(picker).getByRole('option', { name: 'Wrong Pocket' })).toHaveValue('wrong-pocket');
   fireEvent.change(picker, { target: { value: 'wrong-pocket' } });
   expect(screen.getByText('Wrong Pocket', { selector: 'strong' })).toBeVisible();
+});
+
+test('removes only the explicitly confirmed award from a repeated badge', async () => {
+  unlockBadgeStaff.mockResolvedValue({ staffToken: 'test-staff-token', expiresAt: new Date(Date.now() + 60_000).toISOString() });
+  getStaffBadgeCounts.mockResolvedValue({ counts: { countdown: 2 } });
+  getStaffBadgeGrantHistory.mockResolvedValue({ grants: [
+    { id: 'new-grant', awardedAt: '2026-01-03T21:30:00.000Z' },
+    { id: 'first-grant', awardedAt: '2026-01-01T20:15:00.000Z' },
+  ], nextCursor: null });
+  revokePlayerBadgeGrant.mockResolvedValue({ revoked: true, award: { earnedCount: 1 } });
+  const confirm = jest.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true);
+  try {
+    renderPage(<AdminBadgeAwards firebase={firebase} players={[user]} loading={false} directoryUnavailable={false} />);
+    fireEvent.change(screen.getByLabelText('Staff email'), { target: { value: 'staff@example.com' } });
+    fireEvent.change(screen.getByLabelText('Staff password'), { target: { value: 'test-password' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Unlock badge controls' }));
+
+    fireEvent.change(await screen.findByRole('searchbox', { name: 'Find a player' }), { target: { value: user.username } });
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(user.username) }));
+    fireEvent.change(screen.getByRole('combobox', { name: 'Badge' }), { target: { value: 'countdown' } });
+    fireEvent.click(await screen.findByRole('button', { name: 'Review awards to remove' }));
+
+    const history = screen.getByRole('region', { name: 'Award history' });
+    const oldGrant = (await within(history).findByText(/Jan 1, 2026/)).closest('li');
+    const remove = within(oldGrant).getByRole('button', { name: 'Remove award' });
+    fireEvent.click(remove);
+    expect(revokePlayerBadgeGrant).not.toHaveBeenCalled();
+    fireEvent.click(remove);
+    expect(revokePlayerBadgeGrant).toHaveBeenCalledTimes(1);
+    expect(revokePlayerBadgeGrant).toHaveBeenCalledWith(firebase, {
+      playerId, badgeId: 'countdown', grantId: 'first-grant',
+    }, 'test-staff-token');
+    expect(await screen.findByText('One Countdown award removed from Patch Hunter. 1 remaining.')).toBeVisible();
+    expect(within(history).queryByText(/Jan 1, 2026/)).not.toBeInTheDocument();
+    expect(within(history).getByText(/Jan 3, 2026/)).toBeVisible();
+    expect(screen.getByText('Earned 1 time')).toBeVisible();
+  } finally {
+    confirm.mockRestore();
+  }
 });
 
 test('shows a public featured count without loading private badge records or a leaderboard', async () => {

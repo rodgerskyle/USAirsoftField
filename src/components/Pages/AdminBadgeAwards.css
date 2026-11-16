@@ -116,7 +116,8 @@
 }
 
 .admin-badge-awards__change,
-.admin-badge-awards__actions button {
+.admin-badge-awards__actions button,
+.admin-badge-awards__remove {
   border: 1px solid var(--admin-border-strong);
   border-radius: .55rem;
   color: var(--admin-text);
@@ -130,7 +131,49 @@
 }
 
 .admin-badge-awards__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
   margin-top: .7rem;
+}
+
+.admin-badge-awards__history {
+  background: var(--admin-surface-muted);
+  border: 1px solid var(--admin-border);
+  border-radius: .65rem;
+  margin-top: .8rem;
+  padding: .75rem;
+}
+
+.admin-badge-awards__history h3 {
+  font-size: 1rem;
+  margin: 0 0 .45rem;
+}
+
+.admin-badge-awards__history ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.admin-badge-awards__history li {
+  align-items: center;
+  border-top: 1px solid var(--admin-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem .75rem;
+  justify-content: space-between;
+  padding: .45rem 0;
+}
+
+.admin-badge-awards__history > button {
+  margin-top: .45rem;
+}
+
+.admin-badge-awards__remove {
+  background: var(--admin-danger-bg);
+  border-color: var(--admin-danger-border);
+  color: var(--admin-danger);
 }
 
 .admin-badge-awards__counts-error {
@@ -159,6 +202,11 @@
 .admin-badge-awards__actions button {
   background: var(--usaw-red);
   color: #fff;
+}
+
+.admin-badge-awards__actions .admin-badge-awards__history-toggle {
+  background: var(--admin-surface);
+  color: var(--admin-text);
 }
 
 .admin-badge-awards__actions button:disabled {
