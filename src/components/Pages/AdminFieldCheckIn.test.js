@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import AdminFieldCheckIn from './AdminFieldCheckIn';
 
 jest.mock('./StaffCardScanner', () => ({ StaffCardScanner: () => null }), { virtual: true });
@@ -24,11 +24,25 @@ const guest = {
   classificationBand: 'unrated', assignedClassificationBand: null, gamesLogged: 0,
   canSetExperience: true, experienceOptions: estimates,
 };
+const checkedInPlayer = {
+  playerId: 'RegisteredMember1', displayName: 'Registered Member', membershipStatus: 'active',
+  experienceBand: 'elite', balanceScore: 150, side: 'camo', revision: 1,
+  classificationBand: 'a', gamesLogged: 300,
+};
+const versionedRoster = { ...initialRoster, rosterVersion: 'initial', players: [checkedInPlayer] };
+const emptyTierCounts = { a: 0, b: 0, c: 0, d: 0, unrated: 0 };
+const emptyStrength = { elite: 0, veteran: 0, regular: 0, limited: 0, unrated: 0, strength: 0 };
+const clearedRoster = {
+  date, rosterVersion: 'after-reset', counts: { camo: 0, solid: 0, total: 0 }, players: [], clearedCount: 2,
+  balance: { camo: emptyStrength, solid: emptyStrength },
+  classifications: { camo: emptyTierCounts, solid: emptyTierCounts },
+};
 
 test('uses a walk-on team balance estimate while their classification stays Unrated', async () => {
   const saved = { ...guest, side: 'solid', experienceBand: 'veteran', balanceScore: 125, revision: 1 };
   const withGuest = {
     ...initialRoster,
+    rosterVersion: 'initial',
     counts: { camo: 1, solid: 2, total: 3 },
     balance: {
       ...initialRoster.balance,
@@ -40,10 +54,10 @@ test('uses a walk-on team balance estimate while their classification stays Unra
     },
   };
   const request = jest.fn()
-    .mockResolvedValueOnce(initialRoster)
-    .mockResolvedValueOnce({ ...initialRoster, player: guest })
+    .mockResolvedValueOnce(versionedRoster)
+    .mockResolvedValueOnce({ ...versionedRoster, player: guest })
     .mockResolvedValueOnce({ ...withGuest, players: [saved], player: saved, outcome: 'checked-in' })
-    .mockResolvedValueOnce({ ...initialRoster, players: [{ ...saved, side: 'camo' }], player: { ...saved, side: 'camo', revision: 2 }, outcome: 'reassigned' });
+    .mockResolvedValueOnce({ ...versionedRoster, players: [{ ...saved, side: 'camo' }], player: { ...saved, side: 'camo', revision: 2 }, outcome: 'reassigned' });
 
   render(<AdminFieldCheckIn request={request} />);
   await screen.findByText('2 checked in');
@@ -60,7 +74,7 @@ test('uses a walk-on team balance estimate while their classification stays Unra
   fireEvent.click(screen.getByRole('button', { name: 'Check in as Solid' }));
   await screen.findByText('Field Guest checked in as Solid.');
   expect(request.mock.calls[2][1].body).toEqual({
-    action: 'guestCheckIn', date, side: 'solid', displayName: 'Field Guest', experienceBand: 'veteran',
+    action: 'guestCheckIn', date, side: 'solid', displayName: 'Field Guest', experienceBand: 'veteran', rosterVersion: 'initial',
   });
   expect(within(screen.getByRole('list', { name: 'Recent players' })).getByText('Walk-on · Unrated')).toBeTruthy();
   expect(screen.getByRole('progressbar', { name: 'Solid estimated strength share' })).toHaveValue(60);
@@ -68,7 +82,7 @@ test('uses a walk-on team balance estimate while their classification stays Unra
   fireEvent.click(screen.getByRole('button', { name: 'Move to Camo' }));
   await screen.findByText('Field Guest moved to Camo.');
   expect(request.mock.calls[3][1].body).toEqual({
-    action: 'reassign', date, side: 'camo', playerId: guest.playerId, revision: 1, experienceBand: 'veteran',
+    action: 'reassign', date, side: 'camo', playerId: guest.playerId, revision: 1, experienceBand: 'veteran', rosterVersion: 'initial',
   });
 });
 
@@ -87,6 +101,7 @@ test('resolves a connected scanner Code 128 or an official card link on the webs
 
   render(<AdminFieldCheckIn request={request} />);
   await screen.findByText('2 checked in');
+  expect(screen.queryByRole('button', { name: 'Clear players' })).not.toBeInTheDocument();
   const input = screen.getByLabelText('Player name, ID or card link');
   const search = screen.getByRole('button', { name: 'Find player' });
 
@@ -130,4 +145,98 @@ test('shows the five official tier ranges and leaves an unverified prior check-i
     'D Tier covers 1–99, C Tier 100–199, B Tier 200–299, and A Tier 300 or more.',
   );
   expect(screen.getByText('Membership active · Classification unavailable')).toBeTruthy();
+});
+
+test('requires confirmation to clear players and restores focus when cancelled', async () => {
+  const request = jest.fn().mockResolvedValueOnce(versionedRoster);
+  render(<AdminFieldCheckIn request={request} />);
+
+  const trigger = await screen.findByRole('button', { name: 'Clear players' });
+  fireEvent.click(trigger);
+  const confirmation = screen.getByRole('region', { name: 'Clear today’s check-ins?' });
+  expect(confirmation).toHaveAccessibleDescription(/every Camo and Solid check-in for today/);
+  const cancel = within(confirmation).getByRole('button', { name: 'Cancel' });
+  expect(cancel).toHaveFocus();
+  expect(request).toHaveBeenCalledTimes(1);
+
+  fireEvent.click(cancel);
+  expect(screen.queryByRole('region', { name: 'Clear today’s check-ins?' })).not.toBeInTheDocument();
+  expect(trigger).toHaveFocus();
+  expect(screen.getByText('2 checked in')).toBeInTheDocument();
+  expect(request).toHaveBeenCalledTimes(1);
+});
+
+test('clears both sides and the current lookup without letting an older refresh restore players', async () => {
+  let finishRefresh;
+  const pendingRefresh = new Promise(resolve => { finishRefresh = resolve; });
+  const request = jest.fn()
+    .mockResolvedValueOnce(versionedRoster)
+    .mockResolvedValueOnce({ ...versionedRoster, player: checkedInPlayer })
+    .mockReturnValueOnce(pendingRefresh)
+    .mockResolvedValueOnce(clearedRoster);
+  render(<AdminFieldCheckIn request={request} />);
+
+  const trigger = await screen.findByRole('button', { name: 'Clear players' });
+  const input = screen.getByLabelText('Player name, ID or card link');
+  fireEvent.change(input, { target: { value: 'Registered Member' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Find player' }));
+  await screen.findByRole('heading', { name: checkedInPlayer.displayName });
+  fireEvent.click(screen.getByText('Add a walk-on'));
+  const walkOn = screen.getByLabelText('Walk-on name or callsign');
+  fireEvent.change(walkOn, { target: { value: 'A draft walk-on' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+  fireEvent.click(trigger);
+  fireEvent.click(screen.getByRole('button', { name: 'Clear check-ins' }));
+
+  await screen.findByText('Cleared 2 check-ins for today.');
+  expect(request.mock.calls[3][1].body).toEqual({ action: 'clearPlayers', date, rosterVersion: 'initial' });
+  await act(async () => { finishRefresh(versionedRoster); });
+
+  expect(screen.getByText('No players have checked in today.')).toBeInTheDocument();
+  expect(screen.getByText('0 checked in')).toBeInTheDocument();
+  expect(screen.getAllByText('0 players')).toHaveLength(2);
+  expect(screen.getAllByRole('definition').map(definition => definition.textContent)).toEqual(Array(10).fill('0'));
+  expect(screen.queryByText(checkedInPlayer.displayName)).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Clear players' })).not.toBeInTheDocument();
+  expect(input).toHaveValue('');
+  expect(walkOn).toHaveValue('');
+  expect(input).toHaveFocus();
+});
+
+test('shows the current roster after a stale clear and requires a new confirmation', async () => {
+  const newPlayer = { ...checkedInPlayer, playerId: 'RegisteredMember2', displayName: 'New Check-in', side: 'solid' };
+  const currentRoster = { ...versionedRoster, rosterVersion: 'other-reset', players: [newPlayer] };
+  const failure = Object.assign(new Error('Another device cleared the roster.'), { status: 409, data: currentRoster });
+  const request = jest.fn()
+    .mockResolvedValueOnce(versionedRoster)
+    .mockRejectedValueOnce(failure)
+    .mockResolvedValueOnce(clearedRoster);
+  render(<AdminFieldCheckIn request={request} />);
+
+  fireEvent.click(await screen.findByRole('button', { name: 'Clear players' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Clear check-ins' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('Another device cleared the roster.');
+  expect(screen.getByText(newPlayer.displayName)).toBeInTheDocument();
+  expect(screen.queryByText(checkedInPlayer.displayName)).not.toBeInTheDocument();
+  expect(screen.queryByRole('region', { name: 'Clear today’s check-ins?' })).not.toBeInTheDocument();
+  expect(request).toHaveBeenCalledTimes(2);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Clear players' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Clear check-ins' }));
+  await screen.findByText('0 checked in');
+  expect(request.mock.calls[2][1].body).toEqual({ action: 'clearPlayers', date, rosterVersion: 'other-reset' });
+});
+
+test('loads the current board when a reset races a lookup', async () => {
+  const failure = Object.assign(new Error('The roster was cleared. Look up the player again.'), {
+    status: 409, data: clearedRoster,
+  });
+  const request = jest.fn().mockResolvedValueOnce(versionedRoster).mockRejectedValueOnce(failure);
+  render(<AdminFieldCheckIn request={request} />);
+  await screen.findByText(checkedInPlayer.displayName);
+
+  fireEvent.click(screen.getByRole('button', { name: new RegExp(checkedInPlayer.displayName) }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('The roster was cleared. Look up the player again.');
+  expect(screen.getByText('0 checked in')).toBeInTheDocument();
+  expect(screen.queryByText(checkedInPlayer.displayName)).not.toBeInTheDocument();
 });

@@ -102,6 +102,25 @@
 .admin-checkin__id { overflow-wrap: anywhere; color: var(--usaw-muted, #48566a); margin: 0 0 .6rem; }
 .admin-checkin__status, .admin-checkin__suggestion { font-weight: 700; margin: .75rem 0 .5rem; }
 
+.admin-checkin .admin-checkin__clear-button {
+  --bs-btn-color: var(--admin-danger, #a3212c);
+  --bs-btn-border-color: var(--admin-danger, #a3212c);
+  --bs-btn-disabled-color: var(--admin-danger, #a3212c);
+  --bs-btn-disabled-border-color: var(--admin-danger, #a3212c);
+}
+
+.admin-checkin__clear-confirmation {
+  margin-block: .7rem 1rem;
+  padding: .85rem;
+  border: 1px solid var(--admin-danger-border, #e2acb4);
+  border-radius: .5rem;
+  background: var(--admin-danger-bg, #fbecee);
+  color: var(--usaw-text, #172335);
+}
+
+.admin-checkin__clear-confirmation h3 { font-size: 1rem; font-weight: 700; }
+.admin-checkin__clear-confirmation p { margin-bottom: .65rem; }
+
 .admin-checkin__pill {
   display: inline-flex;
   align-items: center;
