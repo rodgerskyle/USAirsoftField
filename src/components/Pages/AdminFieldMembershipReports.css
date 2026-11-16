@@ -1,0 +1,119 @@
+.field-membership,
+.field-reports,
+.field-reports__queue {
+  display: grid;
+  gap: 1rem;
+}
+
+.field-membership__scan {
+  display: grid;
+  gap: 1rem;
+}
+
+.field-membership label {
+  display: block;
+  margin-bottom: .5rem;
+  font-weight: 600;
+}
+
+.field-membership__entry {
+  display: flex;
+  align-items: stretch;
+  gap: .75rem;
+  flex-wrap: wrap;
+}
+
+.field-membership__entry input {
+  width: auto;
+  min-width: min(100%, 16rem);
+  flex: 1;
+}
+
+.field-membership__result {
+  border-inline-start: .25rem solid var(--admin-accent);
+}
+
+.field-membership__result[data-status='active'] {
+  border-inline-start-color: var(--staff-success, #14734d);
+}
+
+.field-membership__result[data-status='expired'] {
+  border-inline-start-color: var(--staff-error, #b8493e);
+}
+
+.field-membership__status {
+  margin-bottom: .3rem;
+  font-weight: 700;
+}
+
+.field-membership__details,
+.field-reports__people {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 1.5rem;
+  row-gap: .5rem;
+  margin: .8rem 0 0;
+}
+
+.field-membership__details dt,
+.field-reports__people dt,
+.field-reports time {
+  color: var(--admin-subtext);
+  font-size: .875rem;
+}
+
+.field-membership__details dd,
+.field-reports__people dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.field-membership__error,
+.field-reports__error {
+  color: var(--staff-error, #b8493e);
+  font-weight: 600;
+}
+
+.field-reports__heading,
+.field-reports__report > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .65rem;
+}
+
+.field-reports__heading h2,
+.field-reports__report h3,
+.field-reports__reason {
+  margin: 0;
+}
+
+.field-reports__report {
+  padding: 1rem;
+  border: 1px solid var(--admin-border);
+  border-radius: .55rem;
+  background: var(--admin-surface-muted);
+  overflow-wrap: anywhere;
+}
+
+.field-reports__report h3 {
+  font-size: 1.1rem;
+}
+
+.field-reports__reason {
+  color: var(--admin-subtext);
+  font-weight: 600;
+}
+
+.field-reports__report blockquote {
+  margin: .9rem 0;
+  border-inline-start: 3px solid var(--admin-accent);
+  padding: .65rem .75rem;
+  background: var(--admin-surface);
+}
+
+.field-reports__report blockquote,
+.field-reports__note {
+  white-space: pre-wrap;
+}

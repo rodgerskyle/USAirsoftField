@@ -12,6 +12,9 @@ import Home from './components/Pages/home'
 import PlayerHub from './components/Pages/PlayerHub';
 import VirtualPatches from './components/Pages/VirtualPatches';
 import Admin from './components/Pages/Admin'
+import AdminFieldTools from './components/Pages/AdminFieldTools';
+import BarracksTV from './components/Pages/BarracksTV';
+import { fieldStaffPaths } from './components/constants/fieldStaffApi';
 import SignUpForm from './components/Pages/Signup'
 import WaiverForm from './components/Pages/FillOutWaiver'
 import EnterWins from './components/Pages/enterwins';
@@ -92,6 +95,8 @@ const App = () => (
       <Route exact path="/profilelookup/:id" element={<ProfileLookup />} />
       <Route exact path="/profilesettings" element={<ProfileSettings />} />
       <Route exact path="/admin" element={<Admin />} />
+      <Route path="/admin/field/:tool" element={<AdminFieldTools />} />
+      <Route path={fieldStaffPaths.tv} element={<BarracksTV />} />
       <Route path={LEGACY_LEADERBOARD_TV_PATH} element={<LegacyLeaderboardTvRedirect />} />
       <Route exact path="/admin/signup" element={<SignUpForm />} />
       <Route exact path="/admin/waiverform" element={<WaiverForm />} />
@@ -145,20 +150,21 @@ function LoginRoute() {
   return <div><Login /></div>
 }
 
-function useLeaderboardTvDisplay() {
+function useTvDisplay() {
   const legacy = useMatch(LEGACY_LEADERBOARD_TV_PATH);
   const leaderboard = useMatch('/leaderboard/:view?');
+  const barracks = useMatch(fieldStaffPaths.tv);
   const { search } = useLocation();
-  return Boolean(legacy || (leaderboard && new URLSearchParams(search).get('display') === 'tv'));
+  return Boolean(barracks || legacy || (leaderboard && new URLSearchParams(search).get('display') === 'tv'));
 }
 
 function CookieConsentRoute() {
-  const tvDisplay = useLeaderboardTvDisplay();
+  const tvDisplay = useTvDisplay();
   return tvDisplay ? null : <CookieConsent>This website uses cookies to enhance the user experience.</CookieConsent>;
 }
 
 function NavigationRoute() {
-  const tvDisplay = useLeaderboardTvDisplay();
+  const tvDisplay = useTvDisplay();
   const [nav, showNav] = useState(true);
   let location = useLocation();
   React.useEffect(() => {
@@ -174,7 +180,7 @@ function NavigationRoute() {
 }
 
 function FooterRoute() {
-  const tvDisplay = useLeaderboardTvDisplay();
+  const tvDisplay = useTvDisplay();
   const [footer, showFooter] = useState(true);
   let location = useLocation();
   React.useEffect(() => {

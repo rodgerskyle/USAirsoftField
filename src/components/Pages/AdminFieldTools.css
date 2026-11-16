@@ -1,0 +1,99 @@
+.field-tools .field-tools__hero {
+  margin-bottom: .85rem;
+}
+
+.field-tools__return {
+  display: inline-block;
+  margin-bottom: .4rem;
+  color: var(--admin-accent);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: .2em;
+}
+
+.field-tools__nav,
+.field-tool__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .45rem;
+}
+
+.field-tools__nav {
+  margin-bottom: 1rem;
+}
+
+.field-tools__nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: .45rem .65rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: var(--admin-surface);
+  color: var(--admin-text);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.field-tools__nav a:hover,
+.field-tools__nav a[aria-current="page"] {
+  border-color: var(--admin-accent);
+  background: var(--admin-accent-soft);
+  color: var(--admin-text);
+}
+
+.field-tools__nav a[aria-current="page"] {
+  box-shadow: inset 0 -2px var(--admin-accent);
+}
+
+.field-tool__panel,
+.field-tools__notice {
+  padding: clamp(.9rem, 2vw, 1.3rem);
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow);
+}
+
+.field-tool__panel h2 {
+  color: var(--admin-text);
+  font-size: clamp(1.2rem, 2.5vw, 1.55rem);
+}
+
+.field-tool__panel > :last-child {
+  margin-bottom: 0;
+}
+
+.field-tools__notice {
+  border-inline-start: 4px solid var(--staff-error);
+  color: var(--admin-text);
+}
+
+.field-tools__unlock-form,
+.field-tool__controls {
+  display: grid;
+  align-items: end;
+  gap: .7rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+}
+
+.field-tools__unlock-form {
+  max-width: 45rem;
+}
+
+.field-tools__check {
+  margin-top: .85rem;
+}
+
+.field-tools .form-control,
+.field-tools .form-select {
+  min-height: 44px;
+  border-color: var(--admin-border);
+  background-color: var(--admin-surface-muted);
+  color: var(--admin-text);
+}
+
+.field-tools .btn {
+  min-height: 44px;
+}

@@ -1,0 +1,146 @@
+.admin-checkin {
+  color: var(--usaw-text, #172335);
+}
+
+.admin-checkin__date, .admin-checkin__hint, .admin-checkin__explanation p {
+  color: var(--usaw-muted, #48566a);
+}
+
+.admin-checkin__date { margin-block: 0 1rem; }
+
+.admin-checkin__heading, .admin-checkin__buttons, .admin-checkin__badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .6rem;
+}
+
+.admin-checkin__heading { justify-content: space-between; margin-bottom: .7rem; }
+.admin-checkin__heading h2, .admin-checkin__heading h3 { margin: 0; }
+.admin-checkin__heading h2, .admin-checkin__card > h2 { font-size: clamp(1.15rem, 3vw, 1.6rem); }
+
+.admin-checkin__teams, .admin-checkin__columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .95rem;
+}
+
+.admin-checkin__team, .admin-checkin__card {
+  min-width: 0;
+  padding: clamp(.9rem, 3vw, 1.3rem);
+  border: 1px solid var(--usaw-line, #ccd6e1);
+  border-radius: .8rem;
+  background: var(--usaw-surface, #fff);
+}
+
+.admin-checkin__team[data-side="camo"] { border-top: 3px solid #779848; }
+.admin-checkin__team[data-side="solid"] { border-top: 3px solid #597fb0; }
+
+.admin-checkin__team progress { display: block; width: 100%; margin-block: .45rem .6rem; }
+.admin-checkin__team[data-side="camo"] progress { accent-color: #779848; }
+.admin-checkin__team[data-side="solid"] progress { accent-color: #597fb0; }
+
+.admin-checkin__team dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
+  gap: .45rem;
+  margin: 0;
+}
+
+.admin-checkin__team dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: .4rem;
+  border-radius: .3rem;
+  padding: .18rem .4rem;
+  font-size: .83rem;
+}
+
+.admin-checkin__team dl div[data-talent="elite"] { color: #593906; background: #ffedbf; }
+.admin-checkin__team dl div[data-talent="veteran"] { color: #213754; background: #e4edf9; }
+.admin-checkin__team dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.admin-checkin__explanation { margin-block: .75rem 1rem; }
+.admin-checkin__explanation summary, .admin-checkin__walk-on summary { cursor: pointer; font-weight: 700; }
+.admin-checkin__explanation p { max-width: 76ch; margin: .45rem 0 0; }
+
+.admin-checkin__form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: .6rem;
+  margin-block: .8rem .5rem;
+}
+
+.admin-checkin__form label, .admin-checkin__rating { display: grid; gap: .3rem; font-weight: 700; }
+.admin-checkin__form label { flex: 1 1 15rem; min-width: 0; }
+.admin-checkin__rating { margin-top: .7rem; max-width: 15rem; }
+
+.admin-checkin input, .admin-checkin select {
+  width: 100%;
+  min-height: 44px;
+  padding: .4rem .55rem;
+  border: 1px solid var(--usaw-line, #abc0d4);
+  border-radius: .4rem;
+  background: var(--usaw-page-bg, #f0f4f8);
+  color: var(--usaw-text, #172335);
+}
+
+.admin-checkin__walk-on {
+  margin-top: .9rem;
+  padding: .6rem .75rem;
+  border: 1px solid var(--usaw-line, #ccd6e1);
+  border-radius: .5rem;
+  background: var(--usaw-raised, #f0f4f8);
+}
+
+.admin-checkin__walk-on summary { min-height: 30px; line-height: 30px; }
+.admin-checkin__hint { font-size: .88rem; }
+.admin-checkin__selection { border-top: 1px solid var(--usaw-line, #ccd6e1); padding-top: .85rem; margin-top: .9rem; }
+.admin-checkin__selection h3 { font-size: 1.25rem; }
+.admin-checkin__id { overflow-wrap: anywhere; color: var(--usaw-muted, #48566a); margin: 0 0 .6rem; }
+.admin-checkin__status, .admin-checkin__suggestion { font-weight: 700; margin: .75rem 0 .5rem; }
+
+.admin-checkin__pill {
+  display: inline-flex;
+  align-items: center;
+  padding: .23rem .52rem;
+  border-radius: .35rem;
+  border: 1px solid var(--usaw-line, #ccd6e1);
+  font-weight: 700;
+  font-size: .78rem;
+  white-space: nowrap;
+}
+
+.admin-checkin__pill[data-side="camo"], .admin-checkin__pill[data-membership="active"] { color: #29461c; border-color: #abc292; background: #e4eed6; }
+.admin-checkin__pill[data-side="solid"] { color: #223f66; border-color: #a1bbe1; background: #e1edff; }
+.admin-checkin__pill[data-membership="guest"] { color: #4b3574; border-color: #c2b2e2; background: #ece6fa; }
+
+.admin-checkin__players { padding: 0; margin: .65rem 0 0; list-style: none; }
+.admin-checkin__players li + li { border-top: 1px solid var(--usaw-line, #ccd6e1); }
+.admin-checkin__players button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: .7rem;
+  width: 100%;
+  min-height: 44px;
+  padding: .5rem .1rem;
+  border: 0;
+  color: inherit;
+  background: none;
+  text-align: left;
+}
+
+.admin-checkin__players button:hover { color: var(--usaw-accent, #2d5382); }
+.admin-checkin__players strong, .admin-checkin__players small { display: block; overflow-wrap: anywhere; }
+.admin-checkin__players small { color: var(--usaw-muted, #48566a); }
+.admin-checkin .btn { min-height: 44px; }
+
+@media (max-width: 800px) {
+  .admin-checkin__columns { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 380px) {
+  .admin-checkin__teams { grid-template-columns: 1fr; }
+}

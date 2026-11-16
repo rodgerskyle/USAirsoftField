@@ -35,7 +35,8 @@ const Redirect = ({ firebase }) => {
             const canBrowsePatches = matchPath('/virtual-patches', pathname);
             const canBrowseLeaderboard = matchPath('/leaderboard/:view?', pathname)
                 || matchPath('/team-leaderboard', pathname)
-                || matchPath('/admin/leaderboard-tv', pathname);
+                || matchPath('/admin/leaderboard-tv', pathname)
+                || matchPath('/barracks-tv', pathname);
             const canViewMembership = matchPath('/pricing', pathname)
                 && new URLSearchParams(search).get('section') === 'membership';
             if (user.roles[ROLES.STATIC] && !staticlocations.includes(location.pathname)) {
