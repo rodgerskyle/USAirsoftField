@@ -9,13 +9,17 @@ import AdminLayout, { AdminThemeRoute } from './admindrawer';
 
 const preferenceKey = 'usaw-field-theme';
 
-function Page({ name }) {
+function DialogTheme() {
   const { palette } = useTheme();
+  return <output aria-label="Dialog theme">{palette.mode}</output>;
+}
+
+function Page({ name }) {
   return (
     <>
       <h1>{name}</h1>
       <Link to="/admin/field/rounds">Open rounds</Link>
-      {createPortal(<output aria-label="Dialog theme">{palette.mode}</output>, document.body)}
+      {createPortal(<DialogTheme />, document.body)}
     </>
   );
 }
