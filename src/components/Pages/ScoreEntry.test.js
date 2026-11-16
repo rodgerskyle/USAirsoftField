@@ -19,6 +19,7 @@ jest.mock('../Firebase', () => {
 jest.mock('firebase/database', () => ({ onValue: jest.fn() }));
 jest.mock('../constants/playerDisplayNames', () => ({ getAllPlayerDisplayNames: jest.fn() }));
 jest.mock('../constants/scoreCards', () => ({
+    ...jest.requireActual('../constants/scoreCards'),
     readScannedMemberCard: jest.fn(),
     verifyScannedMemberCard: jest.fn(),
 }));
