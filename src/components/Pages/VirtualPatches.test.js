@@ -99,6 +99,7 @@ afterEach(() => { global.fetch = originalFetch; });
 
 test('loads only the selected patch standings and keeps the full catalog visible', async () => {
   const { container } = renderPage(<VirtualPatches />);
+  const tileTitle = name => screen.getByText(name, { selector: '.virtual-patches__tile strong' });
   expect(container.querySelectorAll('.virtual-patches__wall img')).toHaveLength(72);
   const firstPage = await screen.findByRole('table', { name: 'All-time leaderboard' });
   expect(within(firstPage).getByRole('link', { name: user.username }))
@@ -111,22 +112,25 @@ test('loads only the selected patch standings and keeps the full catalog visible
   expect(within(secondPage).getByText('26')).toBeVisible();
   expect(getBadgeStandings).toHaveBeenLastCalledWith('ambassador', expect.objectContaining({ page: 2 }));
 
-  fireEvent.click(screen.getByRole('button', { name: 'Countdown' }));
+  fireEvent.click(tileTitle('Countdown').closest('button'));
   expect(await screen.findByText('No players have earned this patch yet.')).toBeVisible();
   expect(screen.getByRole('heading', { name: 'Countdown' })).toHaveFocus();
   expect(getBadgeStandings).toHaveBeenLastCalledWith('countdown', expect.objectContaining({ page: 1 }));
 
-  fireEvent.click(screen.getByRole('button', { name: 'Blackout Protocol' }));
+  fireEvent.click(tileTitle('Blackout Protocol').closest('button'));
   expect(await screen.findByText('No players have earned this patch yet.')).toBeVisible();
   expect(screen.getByRole('heading', { name: 'Blackout Protocol' })).toHaveFocus();
   expect(getBadgeStandings).toHaveBeenLastCalledWith('blackout-protocol', expect.objectContaining({ page: 1 }));
   expect(container.querySelector('.virtual-patches__brief img')).toHaveAttribute('src', '/badges/blackout-protocol.png');
 
-  fireEvent.click(screen.getByRole('button', { name: 'Power Rush' }));
+  fireEvent.click(tileTitle('Power Rush').closest('button'));
   expect(await screen.findByText('No players have earned this patch yet.')).toBeVisible();
   expect(screen.getByRole('heading', { name: 'Power Rush' })).toHaveFocus();
   expect(getBadgeStandings).toHaveBeenLastCalledWith('power-rush', expect.objectContaining({ page: 1 }));
   expect(container.querySelector('.virtual-patches__brief img')).toHaveAttribute('src', '/badges/power-rush.png');
+  fireEvent.change(screen.getByLabelText('Prestige difficulty'), { target: { value: '2' } });
+  expect(tileTitle('Blackout Protocol').closest('button')).toHaveTextContent('Factor 2 · Specialist');
+  expect(screen.queryByText('Countdown', { selector: '.virtual-patches__tile strong' })).not.toBeInTheDocument();
 });
 
 test('shows the overall patch totals and ranks to signed-out players with separate pagination', async () => {
@@ -244,7 +248,7 @@ test('keeps a signed-out viewer from seeing a secret patch on a direct link', ()
   const { container } = renderPage(<VirtualPatches />, { path: '/virtual-patches?badge=no-shots-fired' });
 
   expect(screen.getByRole('heading', { name: 'Secret Achievement 1' })).toHaveFocus();
-  expect(screen.getByRole('button', { name: 'Secret Achievement 2' })).toBeVisible();
+  expect(screen.getByText('Secret Achievement 2', { selector: '.virtual-patches__tile strong' }).closest('button')).toBeVisible();
   expect(screen.queryByText('No Shots Fired')).not.toBeInTheDocument();
   expect(screen.queryByText(/without firing a single BB/)).not.toBeInTheDocument();
   expect(container.querySelector('.virtual-patches__brief img')).toHaveAttribute('src', '/badges/secret-achievement.png');
@@ -410,7 +414,7 @@ test('updates profile rank and Prestige without moving a player on the all-time 
   });
 
   renderPage(<Leaderboard />, { path: '/leaderboard', authUser: user });
-  const table = within(screen.getByRole('table', { name: 'All time player standings' }));
+  const table = within(await screen.findByRole('table', { name: 'All time player standings' }));
   const [firstRow, secondRow] = table.getAllByRole('row').slice(1);
   const firstPlayer = within(firstRow);
   expect(firstPlayer.getByText(user.username)).toBeVisible();
@@ -428,8 +432,8 @@ test('updates profile rank and Prestige without moving a player on the all-time 
   fireEvent(window, new Event('focus'));
 
   expect(await firstPlayer.findByText('Prestige 1')).toBeVisible();
-  expect(firstPlayer.getByText('Private')).toBeVisible();
-  expect(firstRow.querySelector('.usaw-prestige-emblem--bronze')).toBeInTheDocument();
+  expect(firstPlayer.getByText('General Of The Army')).toBeVisible();
+  expect(firstPlayer.getByText('I', { selector: '.usaw-prestige-emblem > span' })).toBeInTheDocument();
   expect(firstPlayer.getByText('#1')).toBeVisible();
   expect(firstPlayer.getByText('5,100')).toBeVisible();
   expect(firstPlayer.getByText('42')).toHaveClass('field-lb-wins');

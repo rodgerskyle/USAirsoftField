@@ -1,18 +1,53 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { confirmPrestige, maximumRankPoints, preparePrestige, prestigeCyclePoints } from '../constants/playerPrestige';
+import { canEarnPrestige, confirmPrestige, maximumRankPoints, preparePrestige } from '../constants/playerPrestige';
+import rankImages from '../constants/rankimgs';
 import './PlayerPrestige.css';
 
 const format = new Intl.NumberFormat('en-US');
-const artwork = `${process.env.PUBLIC_URL || ''}/prestige-emblems.png`;
+const generalInsignia = rankImages[rankImages.length - 1];
+const romanDigits = [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],
+  [10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
+
+function romanNumeral(value) {
+  if (value >= 4000) return romanNumeral(Math.floor(value / 1000)).replace(/[IVXLCDM]/g, '$&\u0305') + romanNumeral(value % 1000);
+  let output = '';
+  for (const [weight, digit] of romanDigits) {
+    while (value >= weight) {
+      output += digit;
+      value -= weight;
+    }
+  }
+  return output;
+}
 
 export function PrestigeEmblem({ count }) {
-  const tier = count < 4 ? 'bronze' : count < 7 ? 'silver' : count < 10 ? 'gold' : 'crimson';
+  if (!Number.isSafeInteger(count) || count < 1) return null;
+  const numeral = romanNumeral(count);
   return (
-    <span
-      className={`usaw-prestige-emblem usaw-prestige-emblem--${tier}`}
-      style={{ backgroundImage: `url("${artwork}")` }}
-      aria-hidden="true"
-    />
+    <span className="usaw-prestige-emblem" aria-hidden="true">
+      <img src={generalInsignia} alt="" width="60" height="60" decoding="async" />
+      <span data-numeral-size={numeral.length > 5 ? 'long' : numeral.length > 3 ? 'medium' : 'short'}>{numeral}</span>
+    </span>
+  );
+}
+
+function Requirements({ progress }) {
+  const goals = [
+    { label: 'Points since your last Prestige', ...progress.points },
+    ...progress.patches.map(tier => ({ label: `Factor ${tier.factor} · ${tier.name} patches`, ...tier })),
+  ];
+  return (
+    <div className="usaw-prestige-goals">
+      <h3>Prestige {format.format(progress.nextPrestige)} requirements</h3>
+      <ul>{goals.map(({ label, earned, required }) => (
+        <li key={label}>
+          <span>{label}</span>
+          <strong>{format.format(earned)} / {format.format(required)}</strong>
+          <progress aria-label={label} value={earned} max={required} />
+        </li>
+      ))}</ul>
+      <p>Earn points and distinct qualifying patches after your latest Prestige.</p>
+    </div>
   );
 }
 
@@ -35,10 +70,12 @@ export default function PlayerPrestige({ firebase, playerId, lifetimePoints, pre
   }, [feedback]);
 
   const completed = record?.prestigeCount ?? 0;
-  const cyclePoints = prestigeCyclePoints(lifetimePoints, record);
-  const eligible = canManage && Boolean(record) && cyclePoints >= maximumRankPoints;
+  const eligible = canManage && canEarnPrestige(record, lifetimePoints);
   const next = preview?.nextPrestige ?? completed + 1;
-  const remaining = Math.max(0, maximumRankPoints - cyclePoints);
+  const initialGoal = record?.progress?.points;
+  const remaining = initialGoal
+    ? Math.max(0, initialGoal.required - initialGoal.earned)
+    : Math.max(0, maximumRankPoints - lifetimePoints);
 
   function begin() {
     setFeedback(null);
@@ -67,7 +104,7 @@ export default function PlayerPrestige({ firebase, playerId, lifetimePoints, pre
           replace(updated);
           setReview(false);
           setPreview(null);
-          setFeedback({ text: `Prestige ${format.format(updated.prestigeCount)} earned. Your profile rank is now Private.` });
+          setFeedback({ text: `Prestige ${format.format(updated.prestigeCount)} earned. Your five-star rank carries forward.` });
         }
       }
     } catch (error) {
@@ -93,12 +130,15 @@ export default function PlayerPrestige({ firebase, playerId, lifetimePoints, pre
       {record ? (
         <>
           <p className="usaw-prestige-panel__count">Prestiges completed <strong>{format.format(completed)}</strong></p>
-          {canManage && (
+          {canManage && completed === 0 && (
             <p>
-              Each time you reach General Of The Army, you can start a new profile rank cycle.
+              Prestige is optional once you reach General of the Army.
               {remaining > 0 ? ` ${format.format(remaining)} rank points to your next Prestige.` : ' Prestige is available.'}
             </p>
           )}
+          {canManage && completed > 0 && (record.progress
+            ? <Requirements progress={record.progress} />
+            : <p>Next Prestige requirements are temporarily unavailable.</p>)}
         </>
       ) : <p role="status">{failed ? 'Prestige information is temporarily unavailable.' : 'Loading Prestige information…'}</p>}
       {eligible && !review && <button type="button" className="usaw-prestige-button" onClick={begin}>Start Prestige</button>}
@@ -113,7 +153,7 @@ export default function PlayerPrestige({ firebase, playerId, lifetimePoints, pre
             </div>
             <PrestigeEmblem count={next} />
           </div>
-          <p>Your profile rank starts at Private. You keep your lifetime points, game record, and leaderboard standing.</p>
+          <p>You keep your five-star rank, lifetime points, game record, and leaderboard standing. Your next Prestige begins a new points and patch goal.</p>
           <div className="usaw-prestige-actions">
             <button type="button" className="usaw-prestige-button" disabled={busy} onClick={advance}>
               {busy ? 'Please wait…' : preview ? `Confirm Prestige ${format.format(next)}` : 'Continue to final confirmation'}

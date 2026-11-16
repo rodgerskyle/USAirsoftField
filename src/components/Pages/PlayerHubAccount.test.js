@@ -141,7 +141,8 @@ test('shows the current profile rank and Prestige count beside lifetime points',
   setPlayer(firstPlayer);
   receiveRecord(0, { name: 'Original name', points: 16225, wins: 12, losses: 8 });
   expect(await screen.findByRole('heading', { name: 'Field Veteran' })).toBeInTheDocument();
-  expect(screen.getByText('Private First Class')).toBeInTheDocument();
+  expect(screen.getByText('General Of The Army')).toBeInTheDocument();
+  expect(screen.getByText('III', { selector: '.ph-player-emblem .usaw-prestige-emblem > span' })).toBeInTheDocument();
   expect(screen.getByText('Prestige 3')).toBeInTheDocument();
   expect(screen.getByText('16,225')).toBeInTheDocument();
 });

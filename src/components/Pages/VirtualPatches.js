@@ -9,6 +9,7 @@ import { AuthUserContext } from '../session';
 import { WAIVER } from '../constants/roles';
 import { BADGE_CATALOG, badgeById, getBadgeStandings, getMyBadges, getPatchLeaderboard } from '../constants/playerBadges';
 import { getPlayerDisplayNames } from '../constants/playerDisplayNames';
+import { PATCH_DIFFICULTIES } from '../constants/patchDifficulty';
 import './VirtualPatches.css';
 
 const STANDINGS_PAGE_SIZE = 25;
@@ -162,6 +163,7 @@ function PatchStandings({ badge, firebase, overallHeading }) {
 function VirtualPatches({ firebase }) {
   const authUser = useContext(AuthUserContext);
   const [params, setParams] = useSearchParams();
+  const [difficulty, setDifficulty] = useState('');
   const overall = params.get('view') === 'leaderboard';
   const catalogParams = new URLSearchParams(params);
   catalogParams.delete('view');
@@ -216,9 +218,18 @@ function VirtualPatches({ firebase }) {
               <div className="virtual-patches__catalog-heading">
                 <h2 id="virtual-patch-catalog" tabIndex={-1} ref={catalogHeading}>Patch collection</h2>
                 {memberId && <Link className="virtual-patches__return" to="/account?section=badges">Manage featured badge</Link>}
+                <label className="virtual-patches__difficulty-filter">
+                  Prestige difficulty
+                  <select value={difficulty} onChange={event => setDifficulty(event.target.value)}>
+                    <option value="">All difficulties</option>
+                    {PATCH_DIFFICULTIES.map(tier => (
+                      <option key={tier.factor} value={tier.factor}>Factor {tier.factor} · {tier.name}</option>
+                    ))}
+                  </select>
+                </label>
               </div>
               <ul className="virtual-patches__wall">
-                {BADGE_CATALOG.map(patch => {
+                {BADGE_CATALOG.filter(patch => !difficulty || String(patch.difficultyFactor) === difficulty).map(patch => {
                   const display = patchDisplay(patch, counts?.[patch.id]);
                   return (
                     <li key={patch.id}>
@@ -231,6 +242,7 @@ function VirtualPatches({ firebase }) {
                         }}>
                         <img src={display.artUrl} alt="" width="144" height="144" loading="lazy" decoding="async" />
                         <strong>{display.name}</strong>
+                        <span className="virtual-patches__difficulty">Factor {patch.difficultyFactor} · {patch.difficultyName}</span>
                         {counts && (
                           <span className="virtual-patches__personal-count" data-earned={Boolean(counts[patch.id])}>
                             {counts[patch.id] ? `Earned ×${formatCount.format(counts[patch.id])}` : 'Not yet earned'}
@@ -247,6 +259,7 @@ function VirtualPatches({ firebase }) {
                 <img src={displayedBadge.artUrl} alt="" width="144" height="144" decoding="async" />
                 <div>
                   <h2 id="virtual-patch-detail-title" tabIndex={-1} ref={detailHeading}>{displayedBadge.name}</h2>
+                  <p className="virtual-patches__difficulty">Factor {badge.difficultyFactor} · {badge.difficultyName}</p>
                   <p>{displayedBadge.description}</p>
                 </div>
               </header>

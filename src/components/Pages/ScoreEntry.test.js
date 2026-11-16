@@ -1,4 +1,5 @@
 import React from 'react';
+import { webcrypto } from 'crypto';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { onValue } from 'firebase/database';
 import { HelmetProvider } from 'react-helmet-async';
@@ -21,7 +22,10 @@ jest.mock('../constants/scoreCards', () => ({
     readScannedMemberCard: jest.fn(),
     verifyScannedMemberCard: jest.fn(),
 }));
-jest.mock('../constants/scoreRecording', () => ({ recordPlayerResult: jest.fn() }));
+jest.mock('../constants/scoreRecording', () => ({
+    ...jest.requireActual('../constants/scoreRecording'),
+    recordPlayerResult: jest.fn(),
+}));
 
 const admin = { uid: 'field-admin', roles: { ADMIN: true } };
 const member = { uid: 'regular-member', roles: {} };
@@ -76,6 +80,14 @@ function renderScore(path = '/admin/enterwins', cachedUser = admin) {
 const scanField = () => screen.getByRole('textbox', { name: 'Scan a card or find a player' });
 
 let stopDirectory;
+const previousCrypto = Object.getOwnPropertyDescriptor(globalThis, 'crypto');
+beforeAll(() => {
+    Object.defineProperty(globalThis, 'crypto', { configurable: true, value: webcrypto });
+});
+afterAll(() => {
+    if (previousCrypto) Object.defineProperty(globalThis, 'crypto', previousCrypto);
+    else delete globalThis.crypto;
+});
 beforeEach(() => {
     jest.resetAllMocks();
     stopDirectory = jest.fn();
@@ -106,12 +118,18 @@ test('records a keyboard card scan through the native form and refocuses the cle
     await page.verify(admin);
     const input = scanField();
     expect(input).toHaveFocus();
+    expect(input).toHaveAttribute('autocomplete', 'off');
+    expect(input).toHaveAttribute('autocorrect', 'off');
+    expect(input).toHaveAttribute('autocapitalize', 'none');
+    expect(input).toHaveAttribute('spellcheck', 'false');
     expect(screen.getByRole('button', { name: 'Record win' })).toHaveAttribute('type', 'submit');
-    fireEvent.change(input, { target: { value: 'RIVCARD' } });
+    // Deliver a scanner value straight into the native field before React sees it.
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, `]C0${firstId}`);
     fireEvent.submit(input.form);
 
     expect(await screen.findByText('Win recorded for River Lane.')).toBeInTheDocument();
     expect(recordPlayerResult.mock.calls[0].slice(0, 3)).toEqual([page.firebase, firstId, 'win']);
+    expect(recordPlayerResult.mock.calls[0][4]).toMatch(/^[\da-f-]{36}$/i);
     expect(recordPlayerResult).toHaveBeenCalledTimes(1);
     expect(input).toHaveValue('');
     expect(input).toHaveFocus();
@@ -120,10 +138,10 @@ test('records a keyboard card scan through the native form and refocuses the cle
 });
 
 test.each([
-    [firstId, firstId, 'River Lane'],
-    ['  sky  cameron  ', fourthId, 'Sky Cameron'],
-    ['Range Scout', secondId, 'Sam Hayes'],
-])('records a loss using manual lookup %s', async (query, uid, name) => {
+    [firstId, firstId, 'River Lane', null],
+    ['  sky  cameron  ', fourthId, 'Sky Cameron', /Sky Cameron/],
+    ['Range Scout', secondId, 'Sam Hayes', /Range Scout/],
+])('records a loss using manual lookup %s', async (query, uid, name, choice) => {
     getAllPlayerDisplayNames.mockResolvedValue({ [secondId]: 'Range Scout' });
     const page = renderScore('/admin/enterlosses');
     await page.verify(admin);
@@ -131,6 +149,10 @@ test.each([
 
     fireEvent.change(scanField(), { target: { value: query } });
     fireEvent.click(screen.getByRole('button', { name: 'Record loss' }));
+    if (choice) {
+        expect(recordPlayerResult).not.toHaveBeenCalled();
+        fireEvent.click(await screen.findByRole('button', { name: choice }));
+    }
 
     expect(await screen.findByText(`Loss recorded for ${name}.`)).toBeInTheDocument();
     expect(recordPlayerResult.mock.calls[0].slice(0, 3)).toEqual([page.firebase, uid, 'loss']);
@@ -203,8 +225,51 @@ test('blocks a duplicate submit while saving and reports a failed write without 
     expect(screen.queryByText('Win recorded for River Lane.')).not.toBeInTheDocument();
     expect(input).toHaveFocus();
 
-    fireEvent.change(input, { target: { value: firstId } });
+    fireEvent.change(input, { target: { value: `]C0${firstId}` } });
     fireEvent.submit(input.form);
     expect(await screen.findByText('Win recorded for River Lane.')).toBeInTheDocument();
     expect(recordPlayerResult).toHaveBeenCalledTimes(2);
+    expect(recordPlayerResult.mock.calls[1].slice(3)).toEqual(recordPlayerResult.mock.calls[0].slice(3));
+});
+
+test('ignores an immediate second scan of the same card after a successful write', async () => {
+    const page = renderScore();
+    await page.verify(admin);
+    const input = scanField();
+    fireEvent.change(input, { target: { value: firstId } });
+    fireEvent.submit(input.form);
+    expect(await screen.findByText('Win recorded for River Lane.')).toBeInTheDocument();
+
+    fireEvent.change(input, { target: { value: firstId } });
+    fireEvent.submit(input.form);
+    expect(await screen.findByText('Repeat scan ignored for River Lane. Scan the next card.')).toBeInTheDocument();
+    expect(recordPlayerResult).toHaveBeenCalledTimes(1);
+    expect(input).toHaveValue('');
+    expect(input).toHaveFocus();
+});
+
+test('preserves a pending player retry through another score and reopening Score Entry', async () => {
+    recordPlayerResult.mockRejectedValueOnce(new Error('The result could not be confirmed.'));
+    let page = renderScore();
+    await page.verify(admin);
+    fireEvent.change(scanField(), { target: { value: firstId } });
+    fireEvent.submit(scanField().form);
+    expect(await screen.findByText('The result could not be confirmed.')).toBeInTheDocument();
+    const pendingKey = `usaw-score-pending-v1:${admin.uid}:win:${firstId}`;
+    const attempt = JSON.parse(sessionStorage.getItem(pendingKey));
+    expect(attempt.id).toBe(recordPlayerResult.mock.calls[0][4]);
+
+    fireEvent.change(scanField(), { target: { value: secondId } });
+    fireEvent.submit(scanField().form);
+    expect(await screen.findByText('Win recorded for Sam Hayes.')).toBeInTheDocument();
+    expect(JSON.parse(sessionStorage.getItem(pendingKey))).toEqual(attempt);
+    page.unmount();
+
+    page = renderScore();
+    await page.verify(admin);
+    fireEvent.change(scanField(), { target: { value: firstId } });
+    fireEvent.submit(scanField().form);
+    expect(await screen.findByText('Win recorded for River Lane.')).toBeInTheDocument();
+    expect(recordPlayerResult.mock.calls[2].slice(3)).toEqual(recordPlayerResult.mock.calls[0].slice(3));
+    expect(sessionStorage.getItem(pendingKey)).toBeNull();
 });

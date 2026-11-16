@@ -12,7 +12,7 @@ import * as ROLES from '../constants/roles';
 import SharePageLink from '../constants/SharePageLink';
 import { badgeById, getFeaturedBadges } from '../constants/playerBadges';
 import { getAllPlayerDisplayNames } from '../constants/playerDisplayNames';
-import { getLeaderboardPrestige, prestigeCyclePoints, profileRank } from '../constants/playerPrestige';
+import { getLeaderboardPrestige, profileRank } from '../constants/playerPrestige';
 import { withFirebase } from '../Firebase';
 import { AuthUserContext } from '../session';
 import LeaderboardTvDisplay from './LeaderboardTvDisplay';
@@ -51,12 +51,13 @@ function profilePath(player) {
 }
 
 function LeaderboardPlayer({ player, featuredBadge, prestige, readOnly }) {
-    const rank = profileRank(prestigeCyclePoints(player.careerPoints, prestige));
+    const rank = profileRank(player.careerPoints, prestige);
     const details = (
         <>
             <span className="field-lb-player-marks">
                 <span className="field-lb-insignia">
-                    <img src={rankImages[rank]} alt="" width="46" height="46" loading="lazy" />
+                    {prestige?.prestigeCount > 0 ? <PrestigeEmblem count={prestige.prestigeCount} />
+                        : <img src={rankImages[rank]} alt="" width="46" height="46" loading="lazy" />}
                 </span>
                 {featuredBadge && (
                     <img className="field-lb-featured-badge" loading="lazy" decoding="async" width="60" height="60"
@@ -73,7 +74,6 @@ function LeaderboardPlayer({ player, featuredBadge, prestige, readOnly }) {
                     <span>{ranks[rank]}</span>
                     {prestige && (
                         <span className="field-lb-prestige">
-                            {prestige.prestigeCount > 0 && <PrestigeEmblem count={prestige.prestigeCount} />}
                             <span>Prestige {formatScore(prestige.prestigeCount)}</span>
                         </span>
                     )}

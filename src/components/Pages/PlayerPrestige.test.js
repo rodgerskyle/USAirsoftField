@@ -16,6 +16,12 @@ const player = { uid: playerId, username: 'Field Player', points: 5100, wins: 9,
 const currentUser = { uid: playerId, getIdToken: jest.fn(async () => 'fixture-token') };
 const firebase = { auth: { currentUser } };
 const record = (prestigeCount, cycleStartPoints) => ({ prestigeCount, cycleStartPoints, lastPrestigedAt: null });
+const prestigeTwoProgress = (points, patches) => ({
+  nextPrestige: 2,
+  eligible: points >= 500 && patches >= 10,
+  points: { earned: points, required: 500 },
+  patches: [{ factor: 1, name: 'Fieldcraft', earned: patches, required: 10 }],
+});
 const respond = data => Promise.resolve({ ok: true, json: async () => data });
 const isTeamLookup = url => new URL(url).pathname === '/api/player-team';
 const originalFetch = global.fetch;
@@ -32,16 +38,17 @@ function renderProfile(user, account) {
   return next => page.rerender(profile(next));
 }
 
+beforeEach(() => { currentUser.getIdToken.mockResolvedValue('fixture-token'); });
 afterEach(() => { global.fetch = originalFetch; });
 
-test('requires two confirmations and restarts only profile rank after Prestige', async () => {
+test('requires two confirmations and keeps the five-star rank after Prestige', async () => {
   let persisted = record(0, 0);
   global.fetch = jest.fn((url, options) => {
     if (isTeamLookup(url)) return respond({ team: null });
     if (options.method !== 'POST') return respond(persisted);
     const action = JSON.parse(options.body).action;
     if (action === 'prepare') return respond({ challenge: 'fixture-review', nextPrestige: 1, pointsAtPreview: player.points });
-    persisted = record(1, player.points);
+    persisted = { ...record(1, player.points), progress: prestigeTwoProgress(0, 0) };
     return respond(persisted);
   });
   const updateProfile = renderProfile(player, true);
@@ -63,25 +70,37 @@ test('requires two confirmations and restarts only profile rank after Prestige',
   fireEvent.click(within(progression).getByRole('button', { name: 'Start Prestige' }));
   fireEvent.click(within(progression).getByRole('button', { name: 'Continue to final confirmation' }));
   fireEvent.click(await within(progression).findByRole('button', { name: 'Confirm Prestige 1' }));
-  expect(await within(progression).findByRole('status')).toHaveTextContent('Prestige 1 earned. Your profile rank is now Private.');
+  expect(await within(progression).findByRole('status')).toHaveTextContent('Prestige 1 earned. Your five-star rank carries forward.');
   expect(transactions()).toEqual([{ action: 'prepare' }, { action: 'prepare' }, { action: 'confirm', challenge: 'fixture-review' }]);
   expect(screen.getByText('Prestige 1', { selector: '.player-profile__prestige span' })).toBeVisible();
-  expect(screen.getByText('Private', { selector: '.player-profile__rank strong' })).toBeVisible();
+  expect(screen.getByText('General Of The Army', { selector: '.player-profile__rank strong' })).toBeVisible();
+  expect(within(progression).getByRole('progressbar', { name: 'Points since your last Prestige' })).toHaveAttribute('max', '500');
+  expect(within(progression).getByRole('progressbar', { name: 'Factor 1 · Fieldcraft patches' })).toHaveAttribute('max', '10');
   expect(within(progression).queryByRole('button', { name: 'Start Prestige' })).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Overview' }));
   expect(screen.getByText('5,100')).toBeVisible();
   expect(screen.getByText('9', { selector: 'dd' })).toBeVisible();
   expect(screen.getByText('4', { selector: 'dd' })).toBeVisible();
-  updateProfile({ ...player, points: player.points + 4500 });
-  expect(screen.getByRole('button', { name: 'Prestige available' })).toBeVisible();
+  updateProfile({ ...player, points: player.points + 500 });
+  persisted = { ...persisted, progress: prestigeTwoProgress(500, 9) };
+  fireEvent(window, new Event('focus'));
+  expect(await within(progression).findByText('9 / 10')).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Prestige available' })).not.toBeInTheDocument();
+  persisted = { ...persisted, progress: prestigeTwoProgress(500, 10) };
+  fireEvent(window, new Event('focus'));
+  expect(await screen.findByRole('button', { name: 'Prestige available' })).toBeVisible();
+  expect(global.fetch).toHaveBeenCalledWith(
+    'https://usaw-field-companion.pink-bud-3735.chatgpt.site/api/player-prestige?me=1',
+    expect.objectContaining({ headers: expect.objectContaining({ Authorization: 'Bearer fixture-token' }) }),
+  );
 });
 
-test('shows another player’s current cycle rank and emblem while keeping public controls read-only', async () => {
+test('shows another player’s five-star rank and Roman numeral in the emblem', async () => {
   global.fetch = jest.fn(url => respond(isTeamLookup(url) ? { team: null } : record(11, 8100)));
   renderProfile({ ...player, points: 8225 }, false);
-  const label = await screen.findByText('Prestige 11', { selector: '.player-profile__prestige span' });
-  expect(label.closest('.player-profile__prestige').querySelector('.usaw-prestige-emblem--crimson')).toBeInTheDocument();
-  expect(screen.getByText('Private First Class', { selector: '.player-profile__rank strong' })).toBeVisible();
+  await screen.findByText('Prestige 11', { selector: '.player-profile__prestige span' });
+  expect(screen.getByText('XI', { selector: '.player-profile__rank .usaw-prestige-emblem > span' })).toBeInTheDocument();
+  expect(screen.getByText('General Of The Army', { selector: '.player-profile__rank strong' })).toBeVisible();
   expect(screen.getByText('8,225')).toBeVisible();
   fireEvent.click(screen.getByRole('button', { name: 'Progression' }));
   expect(within(screen.getByRole('region', { name: 'Prestige' })).getByText('11')).toBeVisible();

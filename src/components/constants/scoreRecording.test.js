@@ -95,3 +95,48 @@ test('rejects unsafe paths and reports a server rejection', async () => {
     runTransaction.mockRejectedValueOnce(new Error('PERMISSION_DENIED'));
     await expect(recordPlayerResult(firebase, playerId, 'win', scoringTime)).rejects.toThrow('score could not be saved');
 });
+
+test('records a scan once across retries while preserving the original Pacific date', async () => {
+    const clock = jest.spyOn(Date, 'now').mockReturnValue(scoringTime.getTime());
+    const operationId = '94f1ada5-8134-45d8-9ec4-70db1f5cbadc';
+    const expired = 'ad6f9529-a400-4a99-bb34-ef7282a09815';
+    const original = {
+        username: 'Member',
+        points: 445,
+        freegames: 0,
+        scoreOperations: { [expired]: { outcome: 'loss', day: '2026-10-20', at: Date.parse('2026-11-20') } },
+    };
+    let stored;
+    runTransaction.mockImplementationOnce(async (_reference, update) => {
+        stored = update(original);
+        return transactionResult(stored);
+    });
+    try {
+        await expect(recordPlayerResult(firebase, playerId, 'win', scoringTime, operationId)).resolves.toEqual({ replayed: false });
+        expect(stored).toEqual({
+            ...original,
+            points: 455,
+            wins: 1,
+            freegames: 1,
+            games: { '2026-10-30': { wins: 1, losses: 0 } },
+            scoreOperations: { [operationId]: { outcome: 'win', day: '2026-10-30', at: Date.parse('2026-12-01') } },
+        });
+
+        clock.mockReturnValue(scoringTime.getTime() + 5000);
+        runTransaction.mockImplementationOnce(async (_reference, update) => {
+            const retried = update(stored);
+            expect(retried).toBe(stored);
+            return transactionResult(retried);
+        });
+        await expect(recordPlayerResult(firebase, playerId, 'win', scoringTime, operationId)).resolves.toEqual({ replayed: true });
+
+        runTransaction.mockImplementationOnce(async (_reference, update) => {
+            expect(update(stored)).toBeUndefined();
+            return transactionResult(stored, false);
+        });
+        await expect(recordPlayerResult(firebase, playerId, 'loss', scoringTime, operationId)).rejects
+            .toThrow('already used for a different entry');
+    } finally {
+        clock.mockRestore();
+    }
+});

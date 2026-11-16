@@ -1,16 +1,31 @@
 .usaw-prestige-emblem {
-  display: block;
-  width: 60px;
-  height: 60px;
-  flex: 0 0 60px;
-  background-repeat: no-repeat;
-  background-size: 200% 200%;
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: var(--prestige-emblem-size, 60px);
+  aspect-ratio: 1;
+  flex: none;
+  container-type: inline-size;
 }
 
-.usaw-prestige-emblem--bronze { background-position: left top; }
-.usaw-prestige-emblem--silver { background-position: right top; }
-.usaw-prestige-emblem--gold { background-position: left bottom; }
-.usaw-prestige-emblem--crimson { background-position: right bottom; }
+.usaw-prestige-emblem img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.usaw-prestige-emblem > span {
+  position: absolute;
+  left: 50%;
+  top: 49%;
+  transform: translate(-50%, -50%);
+  color: #fff1c9;
+  font: 900 12px / 1 Arial, sans-serif;
+  font-size: 22cqw;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px #051119, 0 0 3px #051119;
+  -webkit-text-stroke: .3px #051119;
+}
+.usaw-prestige-emblem > [data-numeral-size="medium"] { font-size: 16cqw; }
+.usaw-prestige-emblem > [data-numeral-size="long"] { font-size: 12cqw; }
+
+.player-profile__rank .usaw-prestige-emblem { --prestige-emblem-size: clamp(56px, 7vw, 76px); }
+.ph-player-emblem .usaw-prestige-emblem { --prestige-emblem-size: 100%; }
 
 .player-profile__prestige {
   display: flex;
@@ -33,12 +48,6 @@
   color: #ffe3a7;
   font-size: .9rem;
   font-weight: 800;
-}
-
-.ph-player-prestige .usaw-prestige-emblem {
-  width: 34px;
-  height: 34px;
-  flex-basis: 34px;
 }
 
 .usaw-prestige-panel {
@@ -64,6 +73,26 @@
   margin-inline-start: .35em;
   font-variant-numeric: tabular-nums;
 }
+
+.usaw-prestige-goals {
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid var(--usaw-line);
+  border-radius: 10px;
+}
+
+.usaw-prestige-goals h3 { margin: 0; font-size: 1rem; }
+.usaw-prestige-goals ul { display: grid; gap: 9px; margin: 10px 0 0; padding: 0; }
+.usaw-prestige-goals li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 10px;
+  font-size: .88rem;
+}
+.usaw-prestige-goals li strong { font-variant-numeric: tabular-nums; }
+.usaw-prestige-goals progress { grid-column: 1 / -1; width: 100%; height: 9px; accent-color: #a36c24; }
+.usaw-prestige-goals p { color: var(--usaw-muted); font-size: .82rem; }
 
 .usaw-prestige-review {
   margin-top: 14px;
