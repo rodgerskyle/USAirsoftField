@@ -3,7 +3,7 @@ import '../../App.css';
 
 import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
-import { set, onValue } from "firebase/database";
+import { onValue } from "firebase/database";
 
 import { Container, Col, Breadcrumb, Spinner, Row } from 'react-bootstrap/';
 
@@ -20,6 +20,9 @@ import {
     TextField, Checkbox, Select, MenuItem, InputLabel, FormControl
 } from '@mui/material';
 import { Add, ArrowForward, Delete, Save } from '@mui/icons-material';
+import PartyBookingCheckInLink from './PartyBookingCheckInLink';
+import { requestStaffFieldTool } from '../constants/fieldStaffApi';
+import { mutatePartyCalendar, newPartyBookingId } from '../constants/partyCalendarRecords';
 
 class Birthday extends Component {
     constructor(props) {
@@ -29,6 +32,10 @@ class Birthday extends Component {
             events: [],
             obj: null,
             loading: true,
+            saving: false,
+            saveError: '',
+            refreshFailures: [],
+            refreshing: false,
             start: null,
             end: null,
             showDialog: false,
@@ -48,128 +55,105 @@ class Birthday extends Component {
     }
 
     // Handles the logic on click for each day on the Calendar
-    handleSelect = ({ start, end }) => {
-        let temp = new Date(start.setHours(6))
-        let tempEnd = new Date(start.setHours(20))
-        end.setHours(20)
-        this.setState({ start: temp, end: tempEnd, showDialog: true })
+    handleSelect = ({ start }) => {
+        const opens = new Date(start);
+        const closes = new Date(start);
+        opens.setHours(6, 0, 0, 0);
+        closes.setHours(20, 0, 0, 0);
+        this.setState({
+            start: opens, end: closes, startTimeHours: 6, startTimeMinutes: 0,
+            endTimeHours: 20, endTimeMinutes: 0, showDialog: true, saveError: '',
+        });
     }
 
     // Handles the logic on click for existing event
     handleEdit = (event) => {
-        // need to set all the states to the items in the event
+        // Use the last saved booking for the check-in link while staff edit the form.
         this.setState({
+            index: event.index,
+            title: event.title ?? '',
+            size: event.size ?? '',
+            notes: event.notes ?? '',
+            receipt: event.receipt ?? null,
+            deposit: event.deposit ?? false,
+            depositAmt: event.depositAmt ?? 0,
+            start: new Date(event.start),
+            end: new Date(event.end),
+            savedBooking: this.state.obj?.[event.index],
+            originalCalendar: this.state.obj,
             startTimeHours: event.start.getHours(),
             startTimeMinutes: event.start.getMinutes(),
             endTimeHours: event.end.getHours(),
-            endTimeMinutes: event.end.getMinutes()
-        })
-        this.setState(event)
-        this.setState({ editDialog: true })
+            endTimeMinutes: event.end.getMinutes(),
+            editDialog: true,
+            saveError: '',
+        });
     }
 
-    // Handles the creation of event on selected calendar date
-    createEvent = (e) => {
-        e.preventDefault()
-        const { start, end, title, size, receipt, deposit, depositAmt, notes, events } = this.state
-        if (title) {
-            // Update database here
-            let event = {
-                start: start.toJSON(),
-                end: end.toJSON(),
-                title,
-                size,
-                receipt,
-                deposit,
-                depositAmt,
-                notes,
-            }
-            set(this.props.firebase.calendarEvent(events.length), (event)).then(() => {
-                this.setState({ showDialog: false }, () => {
-                    this.setState({
-                        title: '',
-                        size: '',
-                        receipt: null,
-                        deposit: false,
-                        depositAmt: 0,
-                        notes: '',
-                        startTimeHours: '',
-                        startTimeMinutes: '',
-                        endTimeHours: '',
-                        endTimeMinutes: '',
-                    })
-                })
-            })
+    refreshLinkedGroups = async (bookingId, uid) => {
+        try {
+            await requestStaffFieldTool(this.props.firebase, uid, '/api/check-in-groups', {
+                method: 'POST', body: { action: 'refreshPartyCalendar', bookingId },
+            });
+            if (this.mounted) this.setState(state => ({
+                refreshFailures: state.refreshFailures.filter(id => id !== bookingId),
+            }));
+        } catch {
+            if (this.mounted) this.setState(state => ({
+                refreshFailures: [...new Set([...state.refreshFailures, bookingId])],
+            }));
         }
     }
 
-    // Handles updating of the event
-    handleUpdate = () => {
-        const { index, title, size, receipt, deposit, depositAmt, notes } = this.state
-        let event = this.state.events[index];
-        event.title = title
-        event.size = size
-        event.receipt = receipt
-        event.deposit = deposit
-        event.depositAmt = depositAmt
-        event.notes = notes
-        event.start = event.start.toJSON()
-        event.end = event.end.toJSON()
-        // this.setState(events)
-        set(this.props.firebase.calendarEvent(index), (event)).then(() => {
-            this.handleEditClose()
-        })
+    retryRefresh = async () => {
+        if (this.state.refreshing) return;
+        this.setState({ refreshing: true });
+        const uid = this.props.firebase.auth.currentUser?.uid;
+        for (const id of this.state.refreshFailures) await this.refreshLinkedGroups(id, uid);
+        if (this.mounted) this.setState({ refreshing: false });
     }
 
-    // Handles removal of the given event
-    handleRemoval = () => {
-        let events = this.state.obj
-        events.splice(this.state.index, 1)
-        set(this.props.firebase.calendar(), (events)).then(() => {
-            this.handleEditClose()
-        })
+    saveBooking = async action => {
+        if (this.writePending) return;
+        const { index, savedBooking, originalCalendar, title, size, receipt, deposit, depositAmt, notes, start, end } = this.state;
+        const uid = this.props.firebase.auth.currentUser?.uid;
+        if (!uid) {
+            this.setState({ saveError: 'Sign in again to update the Party Calendar.' });
+            return;
+        }
+        const values = { title, size, receipt, deposit, depositAmt, notes, start: start?.toJSON(), end: end?.toJSON() };
+        this.writePending = true;
+        this.setState({ saving: true, saveError: '' });
+        try {
+            if (action === 'create' && !this.draftBookingId) this.draftBookingId = newPartyBookingId();
+            const { refreshBookingIds } = await mutatePartyCalendar(this.props.firebase.calendar(), {
+                action, original: savedBooking, originalCalendar, index, values,
+                bookingId: action === 'create' ? this.draftBookingId : undefined,
+            });
+            if (this.mounted) this.resetDialog();
+            for (const bookingId of refreshBookingIds) await this.refreshLinkedGroups(bookingId, uid);
+        } catch (error) {
+            if (this.mounted) this.setState({ saveError: error.message || 'The booking could not be saved. Reopen it and try again.' });
+        } finally {
+            this.writePending = false;
+            if (this.mounted) this.setState({ saving: false });
+        }
     }
 
-    // Handles the closing of the dialog
-    handleClose = () => {
-        this.setState({ showDialog: false }, () => {
-            this.setState({
-                title: '',
-                size: '',
-                receipt: null,
-                deposit: false,
-                depositAmt: 0,
-                notes: '',
-                index: null,
-                start: null,
-                startTimeHours: '',
-                startTimeMinutes: '',
-                endTimeHours: '',
-                endTimeMinutes: '',
-                end: null,
-            })
-        })
-    }
+    createEvent = () => this.saveBooking('create');
+    handleUpdate = () => this.saveBooking('edit');
+    handleRemoval = () => this.saveBooking('remove');
+    handleClose = () => { if (!this.writePending) this.resetDialog(); };
+    handleEditClose = this.handleClose;
 
-    // Handles the closing of the edit dialog
-    handleEditClose = () => {
-        this.setState({ editDialog: false }, () => {
-            this.setState({
-                title: '',
-                size: '',
-                receipt: null,
-                deposit: false,
-                depositAmt: 0,
-                notes: '',
-                index: null,
-                start: null,
-                startTimeHours: '',
-                startTimeMinutes: '',
-                endTimeHours: '',
-                endTimeMinutes: '',
-                end: null,
-            })
-        })
+    resetDialog = () => {
+        this.draftBookingId = null;
+        this.setState({
+            showDialog: false, editDialog: false, savedBooking: null, originalCalendar: null, saveError: '',
+            title: '', size: '', receipt: null, deposit: false, depositAmt: 0, notes: '',
+            index: null, start: null, end: null,
+            startTimeHours: '', startTimeMinutes: '', endTimeHours: '', endTimeMinutes: '',
+        });
     }
 
     // Handles dialog change for title (group name)
@@ -239,26 +223,19 @@ class Birthday extends Component {
     }
 
     componentDidMount() {
-        onValue(this.props.firebase.calendar(), obj => {
-            let events = obj.val() || [];
-            for (let i = 0; i < events.length; i++) {
-                events[i].start = new Date(events[i].start)
-                events[i].end = new Date(events[i].end)
-            }
-
-            let eventsObj = Object.keys(events).map(key => ({
-                ...events[key],
-                index: key,
-            }));
-
-            this.setState({ events: eventsObj, obj: obj.val() }, () => {
-                this.setState({ loading: false, })
-            })
-        })
+        this.mounted = true;
+        this.unsubscribe = onValue(this.props.firebase.calendar(), snapshot => {
+            const rows = snapshot.val() || {};
+            const events = Object.entries(rows)
+                .filter(([, row]) => row && typeof row === 'object')
+                .map(([index, row]) => ({ ...row, index, start: new Date(row.start), end: new Date(row.end) }));
+            this.setState({ events, obj: rows, loading: false });
+        });
     }
 
     componentWillUnmount() {
-        // this.props.firebase.calendar().off()
+        this.mounted = false;
+        this.unsubscribe?.();
     }
 
     render() {
@@ -272,12 +249,12 @@ class Birthday extends Component {
         return (
             <div className="admin-container admin-compact-page admin-birthday-page">
                 <Helmet>
-                    <title>US Airsoft Field: Birthday</title>
+                    <title>Party Calendar | US Airsoft World</title>
                 </Helmet>
                 {loading ?
                     <Row className="justify-content-row padding-5px"><Spinner animation="border" /></Row> :
                     <Container className="admin-content">
-                        <h2 className="admin-header">Calendar - Birthday</h2>
+                        <h2 className="admin-header">Party Calendar</h2>
                         <Breadcrumb className="admin-breadcrumb">
                             {window.location.href.indexOf("admin") > -1 ?
                                 <LinkContainer to="/admin">
@@ -288,8 +265,14 @@ class Birthday extends Component {
                                     <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
                                 </LinkContainer>
                             }
-                            <Breadcrumb.Item active>Calendar</Breadcrumb.Item>
+                            <Breadcrumb.Item active>Party Calendar</Breadcrumb.Item>
                         </Breadcrumb>
+                        {this.state.refreshFailures.length > 0 && <div role="status" className="alert alert-warning">
+                            The booking change is saved. Linked group details still need to refresh.{' '}
+                            <button type="button" className="btn btn-sm btn-outline-primary" disabled={this.state.refreshing} onClick={this.retryRefresh}>
+                                {this.state.refreshing ? 'Refreshing…' : 'Retry group update'}
+                            </button>
+                        </div>}
                         <div className="div-main-birthday admin-panel-card">
                             <Calendar
                                 selectable
@@ -315,6 +298,7 @@ class Birthday extends Component {
                                     {`Selected Date: ${start !== null ? start.toDateString() : start}`}
                                 </DialogTitle>
                                 <DialogContent className="content-create-birthday">
+                                    {this.state.saveError && <p role="alert" className="alert alert-warning">{this.state.saveError}</p>}
                                     <Row>
                                         <Col md={7}>
                                             Start Time
@@ -513,7 +497,7 @@ class Birthday extends Component {
                                 </DialogContent>
                                 <DialogActions className="actions-create-birthday">
                                     <Col md={8}>
-                                        <Button onClick={this.createEvent} type="button" color="primary"
+                                        <Button disabled={this.state.saving} onClick={this.createEvent} type="button" color="primary"
                                             endIcon={<Add />}>
                                             Create
                                         </Button>
@@ -535,6 +519,8 @@ class Birthday extends Component {
                                     {`Selected Date: ${start !== null ? start.toDateString() : start}`}
                                 </DialogTitle>
                                 <DialogContent className="content-create-birthday">
+                                    {this.state.saveError && <p role="alert" className="alert alert-warning">{this.state.saveError}</p>}
+                                    {editDialog && <PartyBookingCheckInLink booking={this.state.savedBooking} />}
                                     <Row>
                                         <Col md={7}>
                                             Start Time
@@ -737,11 +723,11 @@ class Birthday extends Component {
                                 </DialogContent>
                                 <DialogActions className="actions-create-birthday">
                                     <Col md={8}>
-                                        <Button onClick={this.handleUpdate} type="button" color="primary"
+                                        <Button disabled={this.state.saving} onClick={this.handleUpdate} type="button" color="primary"
                                             endIcon={<Save />}>
                                             Update
                                         </Button>
-                                        <Button onClick={this.handleRemoval} color="primary"
+                                        <Button disabled={this.state.saving} onClick={this.handleRemoval} color="primary"
                                             endIcon={<Delete />}>
                                             Remove
                                         </Button>

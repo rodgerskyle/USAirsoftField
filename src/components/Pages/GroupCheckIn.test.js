@@ -83,3 +83,87 @@ test('staff group lookup hands members and walk-ons to individual verification w
   expect(request).toHaveBeenCalledTimes(1);
   expect(request.mock.calls[0][1].method).toBeUndefined();
 });
+
+const booking = { key: 'a'.repeat(64), title: 'Reserved room fixture', date: group.date,
+  start: '2026-12-05T20:00:00.000Z', end: '2026-12-05T22:00:00.000Z', size: 12 };
+const partyGroup = { ...group, kind: 'party', party: null, partyKey: null };
+
+test('party organizers create a preparation list and share their group code for calendar confirmation', async () => {
+  global.fetch.mockResolvedValueOnce(reply({ groups: [] }))
+    .mockResolvedValueOnce(reply({ group: partyGroup }))
+    .mockResolvedValueOnce(reply({ groups: [{ ...partyGroup, memberCount: 2 }] }));
+  setup();
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Create group' })).toBeEnabled());
+  fireEvent.change(screen.getByLabelText('Visit type'), { target: { value: 'party' } });
+  fireEvent.change(screen.getByLabelText('Game-day date'), { target: { value: group.date } });
+  fireEvent.click(screen.getByRole('button', { name: 'Create group' }));
+  expect(await screen.findByText('Awaiting staff confirmation')).toBeVisible();
+  expect(JSON.parse(global.fetch.mock.calls[1][1].body)).toEqual(expect.objectContaining({ kind: 'party', date: group.date }));
+  expect(screen.getByText(group.code)).toBeInTheDocument();
+  expect(global.fetch.mock.calls.some(([url]) => url.includes('parties='))).toBe(false);
+});
+
+test('staff calendar handoff preselects a verified booking and requires explicit confirmation', async () => {
+  const { pathname, search, hash } = window.location;
+  window.history.replaceState(null, '', '/admin/field/check-in?partyDate=' + group.date + '&booking=' + booking.key + '#arriving-group');
+  const linked = { ...partyGroup, party: { ...booking, confirmedAt: booking.start }, partyKey: booking.key };
+  const request = jest.fn()
+    .mockResolvedValueOnce({ group: partyGroup, today: group.date })
+    .mockResolvedValueOnce({ parties: [booking, { ...booking, key: 'b'.repeat(64), title: 'Duplicate', ambiguous: true }], today: group.date })
+    .mockResolvedValueOnce({ group: linked, today: group.date })
+    .mockResolvedValueOnce({ group: partyGroup, today: group.date });
+  try {
+    const { container } = render(<StaffGroupLookup request={request} onSelect={jest.fn()} disabled={false} />);
+    expect(container.querySelector('#arriving-group')).toHaveAttribute('open');
+    fireEvent.change(screen.getByLabelText('Group code'), { target: { value: group.code } });
+    fireEvent.submit(screen.getByRole('button', { name: 'Find group' }).closest('form'));
+    const picker = await screen.findByLabelText('Party Calendar booking', { exact: false, selector: 'select' });
+    expect(picker).toHaveValue(booking.key);
+    expect(picker.querySelector('option[disabled]')).not.toBeNull();
+    expect(request.mock.calls.map(([path]) => path)).toEqual([
+      '/api/check-in-groups?staff=1&code=' + group.code, '/api/check-in-groups?staff=1&parties=' + group.date,
+    ]);
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm booking for group' }));
+    expect(await screen.findByText('Schedule confirmed by staff')).toBeVisible();
+    expect(screen.getByText('Booked party size: 12')).toBeVisible();
+    expect(screen.getByText(/12:00 PM PST.*2:00 PM PST/)).toBeVisible();
+    expect(request.mock.calls[2][1].body).toEqual({ action: 'linkParty', id: group.id, partyKey: booking.key, previousPartyKey: null });
+    fireEvent.click(screen.getByRole('button', { name: 'Unlink booking' }));
+    expect(request).toHaveBeenCalledTimes(3);
+    fireEvent.click(screen.getByRole('button', { name: 'Yes, unlink booking' }));
+    await screen.findByText('Awaiting staff confirmation');
+    expect(request.mock.calls[3][1].body).toEqual({ action: 'unlinkParty', id: group.id, previousPartyKey: booking.key });
+  } finally { window.history.replaceState(null, '', pathname + search + hash); }
+});
+
+test('a calendar handoff for a different visit date never selects a booking', async () => {
+  const { pathname, search, hash } = window.location;
+  window.history.replaceState(null, '', '/admin/field/check-in?partyDate=2026-12-08&booking=' + booking.key + '#arriving-group');
+  try {
+    const request = jest.fn().mockResolvedValue({ group: partyGroup, today: group.date });
+    render(<StaffGroupLookup request={request} onSelect={jest.fn()} disabled={false} />);
+    fireEvent.change(screen.getByLabelText('Group code'), { target: { value: group.code } });
+    fireEvent.submit(screen.getByRole('button', { name: 'Find group' }).closest('form'));
+    expect(await screen.findByText(/different date from the selected Party Calendar booking/)).toBeVisible();
+    expect(request).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: 'Confirm booking for group' })).toBeNull();
+  } finally { window.history.replaceState(null, '', pathname + search + hash); }
+});
+
+test('a rescheduled party hides old times and staff can unlink its previous booking', async () => {
+  const result = { group: {
+    ...partyGroup, partyStatus: 'review', party: null, partyKey: booking.key,
+  }, today: group.date };
+  const request = jest.fn().mockResolvedValueOnce(result)
+    .mockResolvedValueOnce({ group: partyGroup, today: group.date });
+  render(<StaffGroupLookup request={request} onSelect={jest.fn()} disabled={false} />);
+  fireEvent.change(screen.getByLabelText('Group code'), { target: { value: group.code } });
+  fireEvent.submit(screen.getByRole('button', { name: 'Find group' }).closest('form'));
+  expect(await screen.findByText('Booking needs staff review')).toBeInTheDocument();
+  expect(screen.queryByText('Schedule confirmed by staff')).toBeNull();
+  expect(screen.queryByText(/12:00 PM/)).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Unlink booking' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Yes, unlink booking' }));
+  await screen.findByText('Awaiting staff confirmation');
+  expect(request.mock.calls[1][1].body).toEqual({ action: 'unlinkParty', id: group.id, previousPartyKey: booking.key });
+});

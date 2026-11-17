@@ -115,7 +115,7 @@ class WaiverDashboard extends Component {
                         <Card className="waiver-dashboard-card">
                           <Card.Body>
                             <div className="waiver-dashboard-card-content">
-                              <span className="waiver-dashboard-card-title">Calendar</span>
+                              <span className="waiver-dashboard-card-title">Party Calendar</span>
                               <i className="fa fa-angle-double-right waiver-dashboard-card-icon"></i>
                             </div>
                           </Card.Body>

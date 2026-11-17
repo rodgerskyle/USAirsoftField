@@ -59,3 +59,40 @@ test('milestone timestamps use Pacific dates while date-only game dates retain t
   expect(milestoneDate('2026-11-17T02:00:00.000Z')).toBe('Nov 16, 2026');
   expect(milestoneDate('2026-11-17')).toBe('Nov 17, 2026');
 });
+
+test('registered-name lookup disambiguates matching names across pages and confirms the selected profile', async () => {
+  const first = { id: left, name: 'Rapid Rebel', rank: 5, rankName: 'General', prestigeCount: 1, careerPoints: 6570 };
+  const second = { ...first, id: right, rank: 42, rankName: 'Sergeant', careerPoints: 210 };
+  global.fetch.mockImplementation(async url => {
+    const query = new URL(url).searchParams;
+    expect(query.get('lookup')).toBe('players');
+    expect(query.get('q')).toBe('Nikolas Bradley');
+    const page = Number(query.get('page'));
+    return reply({ players: [page === 1 ? first : second], page, totalPages: 2, totalPlayers: 9 });
+  });
+  show(<PlayerComparison />);
+  const picker = within(screen.getByRole('region', { name: 'Player 1' }));
+  const input = picker.getByRole('searchbox', { name: 'Find a player' });
+  fireEvent.change(input, { target: { value: 'Nikolas Bradley' } });
+  fireEvent.click(picker.getByRole('button', { name: 'Find player' }));
+  expect(await picker.findByText(left)).toBeInTheDocument();
+  fireEvent.click(picker.getByRole('button', { name: 'Next' }));
+  expect(await picker.findByText(right)).toBeInTheDocument();
+  expect(picker.queryByText(left)).not.toBeInTheDocument();
+  fireEvent.click(picker.getByRole('button', { name: /Rapid Rebel.*Sergeant.*#42 all time.*Select/ }));
+  expect(picker.getByText('Selected player')).toBeInTheDocument();
+  expect(picker.getByRole('link', { name: 'View player record' })).toHaveAttribute('href', '/player-milestones/' + right);
+  expect(picker.getByText(right)).toBeInTheDocument();
+  expect(picker.queryByRole('list')).toBeNull();
+  fireEvent.change(input, { target: { value: 'Someone else' } });
+  expect(picker.queryByText('Selected player')).not.toBeInTheDocument();
+});
+
+test('a single player linked from a profile is identified before selecting an opponent', async () => {
+  global.fetch.mockResolvedValueOnce(reply({ players: [{ id: left, name: 'Alias', rank: 7, careerPoints: 1200 }] }));
+  show(<PlayerComparison />, '/?left=' + left);
+  const picker = within(screen.getByRole('region', { name: 'Player 1' }));
+  expect(await picker.findByText('Alias')).toBeInTheDocument();
+  expect(picker.getByText(left)).toBeInTheDocument();
+  expect(picker.getByText(/#7 all time/)).toBeInTheDocument();
+});

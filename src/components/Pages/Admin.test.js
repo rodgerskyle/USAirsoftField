@@ -69,6 +69,7 @@ test('links each native field tool once and keeps website scoring, scheduling, w
     expect(screen.getByRole('link', { name })).toHaveAttribute('href', path);
   }
   const websiteTools = [
+    ['Party Calendar', '/admin/birthday'],
     ['Field Game Days', '/schedule'],
     ['Enter Wins', '/admin/enterwins'],
     ['Enter Losses', '/admin/enterlosses'],
