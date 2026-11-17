@@ -1,0 +1,30 @@
+.player-suggestions .field-schedule__heading-copy p:last-child { margin-top: .65rem; }
+.player-suggestions__panel { max-width: 850px; margin-inline: auto; border-top: 3px solid var(--usaw-accent); }
+.player-suggestions__panel h2 { font-size: clamp(1.25rem, 3vw, 1.8rem); font-weight: 800; }
+.player-suggestions__panel > p { color: var(--usaw-muted); line-height: 1.7; max-width: 65ch; }
+.player-feedback__form { display: grid; gap: .9rem; justify-items: start; width: 100%; }
+.player-feedback__form fieldset { display: grid; gap: .5rem; border: 0; margin: 0; padding: 0; min-width: 0; width: 100%; }
+.player-feedback__form label { margin-top: .3rem; font-size: .92rem; font-weight: 750; }
+.player-feedback__form input,
+.player-feedback__form select,
+.player-feedback__form textarea {
+  width: 100%; min-height: 44px; padding: .65rem .75rem; border: 1px solid var(--usaw-line);
+  border-radius: 7px; color: var(--usaw-text); background: var(--usaw-raised); font: inherit;
+}
+.player-feedback__form textarea { resize: vertical; line-height: 1.6; }
+.player-feedback__form :is(select, textarea, input):focus-visible { outline: 2px solid var(--usaw-focus); outline-offset: 3px; }
+.player-feedback__form button:disabled { opacity: .65; cursor: default; }
+.player-feedback__length { justify-self: end; color: var(--usaw-muted); font-size: .78rem; }
+.player-feedback__trap { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.player-feedback__ratings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+.player-feedback__ratings label { display: grid; align-content: start; gap: .4rem; }
+.player-feedback__confirmation { display: grid; gap: .75rem; justify-items: start; padding-block: .8rem; }
+.player-feedback__confirmation h3 { margin: 0; font-size: 1.25rem; font-weight: 800; }
+.player-feedback__confirmation p { margin: 0; color: var(--usaw-muted); }
+.game-recap-feedback { display: grid; gap: .75rem; border-top: 1px solid var(--usaw-line); padding-top: 1rem; }
+.game-recap-feedback__heading { display: flex; flex-wrap: wrap; gap: .65rem 1rem; align-items: center; justify-content: space-between; }
+.game-recap-feedback h3 { margin: 0 0 .25rem; font-size: 1rem; font-weight: 800; }
+.player-feedback__privacy { font-size: .83rem; }
+.game-recap p.player-feedback__error,
+.player-suggestions p.player-feedback__error { color: var(--usaw-heading-red); }
+@media (max-width: 500px) { .player-feedback__ratings { grid-template-columns: 1fr; } }

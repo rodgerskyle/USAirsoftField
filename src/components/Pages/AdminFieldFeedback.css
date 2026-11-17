@@ -1,0 +1,107 @@
+.field-feedback,
+.field-feedback__queue {
+  display: grid;
+  gap: 1rem;
+}
+
+.field-feedback__heading,
+.field-feedback__item > header,
+.field-feedback__item > footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: .75rem;
+}
+
+.field-feedback__heading h2,
+.field-feedback__item h3,
+.field-feedback__context {
+  margin: 0;
+}
+
+.field-feedback__heading p,
+.field-feedback__context,
+.field-feedback__item time,
+.field-feedback__ratings dt {
+  color: var(--admin-subtext);
+}
+
+.field-feedback__heading p {
+  margin: .4rem 0 0;
+}
+
+.field-feedback__item {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  background: var(--admin-surface-muted);
+  color: var(--admin-text);
+  overflow-wrap: anywhere;
+}
+
+.field-feedback__item h3 {
+  font-size: 1.1rem;
+}
+
+.field-feedback__status {
+  padding: .2rem .6rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 5px;
+  color: var(--admin-subtext);
+  font-size: .8rem;
+  font-weight: 700;
+}
+
+.field-feedback__status[data-status='new'] {
+  border-color: var(--admin-accent-text);
+  background: var(--admin-accent-soft);
+  color: var(--admin-accent-text);
+}
+
+.field-feedback__ratings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem 1.5rem;
+  margin: 0;
+}
+
+.field-feedback__ratings dt,
+.field-feedback__item time {
+  font-size: .875rem;
+}
+
+.field-feedback__ratings dd {
+  margin: .2rem 0 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.field-feedback__message {
+  margin: 0;
+  padding-inline-start: .8rem;
+  border-inline-start: 3px solid var(--admin-border);
+  white-space: pre-wrap;
+  line-height: 1.7;
+}
+
+.field-feedback__item > footer {
+  align-items: center;
+}
+
+.field-feedback__error {
+  color: var(--admin-danger);
+  font-weight: 600;
+}
+
+.field-feedback__summary {
+  padding: 1rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  background: var(--admin-surface-muted);
+}
+.field-feedback__summary h3 { margin: 0; font-size: 1rem; font-weight: 800; }
+.field-feedback__summary p { margin: .45rem 0 1rem; color: var(--admin-subtext); }

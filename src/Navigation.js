@@ -17,6 +17,7 @@ const VISIT_LINKS = [
     ['/schedule', 'Schedule'],
     ['/map', 'Field map'],
     ['/contact', 'Contact & directions'],
+    ['/suggestions', 'Suggestion box'],
 ];
 
 const PLAY_LINKS = [
@@ -172,6 +173,7 @@ function NavigationLayout({ authUser, profilePic }) {
                                     <SiteLink className="usaw-nav__control" to="/live-polls">Live polls</SiteLink>
                                     <SiteLink className="usaw-nav__control" to="/leaderboard">Leaderboard</SiteLink>
                                     <SiteLink className="usaw-nav__control" to="/virtual-patches">Virtual Patches</SiteLink>
+                                    <SiteLink className="usaw-nav__control" to="/suggestions">Suggestion box</SiteLink>
                                 </>
                             )}
                         </>
@@ -229,6 +231,7 @@ function NavigationLayout({ authUser, profilePic }) {
                                 <li><SiteLink to="/live-polls" onClick={close}>Live polls</SiteLink></li>
                                 <li><SiteLink to="/leaderboard" onClick={close}>Leaderboard</SiteLink></li>
                                 <li><SiteLink to="/virtual-patches" onClick={close}>Virtual Patches</SiteLink></li>
+                                <li><SiteLink to="/suggestions" onClick={close}>Suggestion box</SiteLink></li>
                             </ul>
                         )}
                         {!waiverOnly && (

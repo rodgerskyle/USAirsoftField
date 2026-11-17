@@ -20,6 +20,7 @@ const FIELD_LINKS = [
   { to: '/team-leaderboard', icon: 'trophy', title: 'Team leaderboard', copy: 'See casual and competitive team standings.' },
   { to: '/teams', icon: 'team', title: 'Teams', copy: 'Explore the USAW team directory.' },
   { to: '/virtual-patches', icon: 'patch', title: 'Virtual Patches', copy: 'Explore earnable patches and their all-time standings.' },
+  { to: '/suggestions', icon: 'flag', title: 'Suggestion box', copy: 'Share an anonymous idea with the field crew.' },
 ];
 
 const ICONS = {

@@ -4,6 +4,7 @@ export const fieldStaffPaths = Object.freeze({
   rounds: '/admin/field/rounds',
   membership: '/admin/field/membership',
   reports: '/admin/field/reports',
+  feedback: '/admin/field/feedback',
   tv: '/barracks-tv',
 });
 
@@ -14,6 +15,7 @@ const staffEndpoints = new Set([
   '/api/live-games',
   '/api/member-card/verify',
   '/api/teams',
+  '/api/player-feedback',
 ]);
 
 export class FieldStaffError extends Error {

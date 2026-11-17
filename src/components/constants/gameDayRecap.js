@@ -76,3 +76,22 @@ export async function gameDayRecapNotifications(firebase, playerId, { enabled, s
   if (typeof result.enabled !== 'boolean') throw new Error('Notification settings could not be read.');
   return { enabled: result.enabled, configured: result.configured === true };
 }
+
+export async function getGameDayFeedback(firebase, playerId, date, { signal } = {}) {
+  const url = new URL('/api/game-day-feedback', recapUrl);
+  url.searchParams.set('date', date);
+  const result = await requestRecap(firebase, playerId, url.href, { signal });
+  if (result.feedback !== null && (!isObject(result.feedback) || result.feedback.date !== date)) {
+    throw new Error('Game-day feedback could not be read.');
+  }
+  return result.feedback;
+}
+
+export async function saveGameDayFeedback(firebase, playerId, date, values, { signal } = {}) {
+  const url = new URL('/api/game-day-feedback', recapUrl);
+  const result = await requestRecap(firebase, playerId, url.href, { body: { date, ...values }, signal });
+  if (result.ok !== true || !isObject(result.feedback) || result.feedback.date !== date) {
+    throw new Error('Your feedback could not be confirmed.');
+  }
+  return result.feedback;
+}
