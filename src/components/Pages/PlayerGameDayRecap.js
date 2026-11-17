@@ -5,6 +5,7 @@ import {
   formatFieldClose, formatFieldDate, gameDayRecapNotifications, getGameDayRecap, recapNotificationSetupUrl, todayAtField,
 } from '../constants/gameDayRecap';
 import { PrestigeRequirements } from './PlayerPrestige';
+import GameDayFeedback from './GameDayFeedback';
 import './GameDayRecap.css';
 
 const numbers = new Intl.NumberFormat('en-US');
@@ -125,7 +126,10 @@ export function PlayerGameDayRecap({ firebase, playerId }) {
       {error && <p className="game-recap-error" role="alert">Could not load your recap. Try again.</p>}
       {!busy && !error && data && (
         <>
-          {data.recap ? <RecapDetails recap={data.recap} /> : (
+          {data.recap ? <>
+            <RecapDetails recap={data.recap} />
+            <GameDayFeedback key={`${playerId}:${data.recap.date}`} firebase={firebase} playerId={playerId} date={data.recap.date} />
+          </> : (
             <p role="status">{availableAt ? `Game-day recaps open after ${availableAt}.` : 'No game-day activity was recorded for this recap.'}</p>
           )}
           <NextGameDay gameDay={data.nextGameDay} />

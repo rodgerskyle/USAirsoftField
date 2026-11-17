@@ -15,6 +15,7 @@ const FOOTER_LINKS = [
   { label: 'Store', href: 'https://www.usairsoft.com', external: true },
   { label: 'About Us', href: '/about' },
   { label: 'Contact Us', href: '/contact' },
+  { label: 'Suggestion Box', href: '/suggestions' },
 ];
 
 const SOCIAL_LINKS = [

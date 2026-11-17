@@ -10,6 +10,7 @@ import AdminFieldCheckIn from './AdminFieldCheckIn';
 import AdminFieldRounds from './AdminFieldRounds';
 import AdminFieldMembership from './AdminFieldMembership';
 import AdminFieldReports from './AdminFieldReports';
+import AdminFieldFeedback from './AdminFieldFeedback';
 import '../constants/admin.css';
 import './AdminDashboard.css';
 import './AdminFieldTools.css';
@@ -19,6 +20,7 @@ const fieldTools = [
   { id: 'rounds', title: 'Round Controls', path: fieldStaffPaths.rounds, Panel: AdminFieldRounds },
   { id: 'membership', title: 'Verify Membership', path: fieldStaffPaths.membership, Panel: AdminFieldMembership },
   { id: 'reports', title: 'Team Reports', path: fieldStaffPaths.reports, Panel: AdminFieldReports },
+  { id: 'feedback', title: 'Player Feedback', path: fieldStaffPaths.feedback, Panel: AdminFieldFeedback },
 ];
 const staffSessionPath = '/api/staff-session';
 const refreshPeriod = 60_000;
@@ -179,7 +181,7 @@ function StaffToolsWorkspace({ firebase, uid, tool }) {
               {access.kind === 'locked' && (
                 <>
                   <h2>Unlock field tools</h2>
-                  <p>Use your USAW staff unlock credentials for check-in, live rounds, membership, and team reports.</p>
+                  <p>Use your USAW staff unlock credentials for check-in, live rounds, membership, team reports, and player feedback.</p>
                   <StaffUnlockForm busy={pending !== ''} onSubmit={submitUnlock} />
                 </>
               )}
