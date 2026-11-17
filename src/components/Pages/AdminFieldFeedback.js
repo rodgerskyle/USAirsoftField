@@ -57,12 +57,12 @@ export default function AdminFieldFeedback({ request }) {
   const [notice, setNotice] = useState(null);
   const operation = useRef(null);
 
-  const load = useCallback(async (cursor) => {
+  const load = useCallback(async (cursor, confirmation = null) => {
     operation.current?.abort();
     const controller = new AbortController();
     operation.current = controller;
     setBusy(true);
-    setNotice(null);
+    setNotice(confirmation);
     if (!cursor) {
       setItems(null);
       setNextCursor(null);
@@ -117,12 +117,8 @@ export default function AdminFieldFeedback({ request }) {
       });
       if (controller.signal.aborted) return;
       if (result?.ok !== true) throw new Error('The review could not be confirmed.');
-      setSummary(null);
-      setItems(previous => previous.flatMap(existing => {
-        if (existing.id !== item.id || existing.kind !== item.kind) return [existing];
-        return status === 'all' || status === nextStatus ? [{ ...existing, status: nextStatus }] : [];
-      }));
-      setNotice({ text: nextStatus === 'reviewed' ? 'Marked reviewed.' : 'Feedback reopened.' });
+      operation.current = null;
+      await load(undefined, { text: nextStatus === 'reviewed' ? 'Marked reviewed.' : 'Feedback reopened.' });
     } catch (failure) {
       if (!controller.signal.aborted) {
         if (failure.status === 401 || failure.status === 403) {

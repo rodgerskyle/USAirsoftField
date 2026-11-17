@@ -16,7 +16,8 @@ test('paginates shared feedback and changes review state without rendering ident
   const request = jest.fn()
     .mockResolvedValueOnce({ items: [suggestion], nextCursor: 'next-page' })
     .mockResolvedValueOnce({ items: [recap], nextCursor: null })
-    .mockResolvedValueOnce({ ok: true });
+    .mockResolvedValueOnce({ ok: true })
+    .mockResolvedValueOnce({ items: [], nextCursor: null });
   render(<AdminFieldFeedback request={request} />);
   expect(await screen.findByText(suggestion.message)).toBeInTheDocument();
   expect(request).toHaveBeenNthCalledWith(1, '/api/player-feedback?kind=all&status=new', expect.any(Object));
@@ -87,16 +88,45 @@ test('clears private entries when access fails and aborts requests when the pane
   expect(pendingSignal.aborted).toBe(true);
 });
 
-test('shows averages for the selected filters and clears them after a review changes that subset', async () => {
+test('refreshes averages for the selected filters after reviewing changes that subset', async () => {
   const request = jest.fn().mockResolvedValueOnce({
     items: [suggestion], nextCursor: null,
     summary: { recaps: 2, suggestions: 1, unreviewed: 3, averages: { overall: 4.5, gameVariety: 4, breakTimes: null, teamBalance: 3.5 } },
-  }).mockResolvedValueOnce({ ok: true });
+  }).mockResolvedValueOnce({ ok: true }).mockResolvedValueOnce({
+    items: [], nextCursor: null,
+    summary: { recaps: 2, suggestions: 0, unreviewed: 2, averages: { overall: 4.5, gameVariety: 4, breakTimes: null, teamBalance: 3.5 } },
+  });
   render(<AdminFieldFeedback request={request} />);
   expect(await screen.findByRole('heading', { name: 'Filtered feedback overview' })).toBeInTheDocument();
   expect(screen.getByText('4.5 / 5')).toBeInTheDocument();
   expect(screen.getByText('No ratings')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Mark reviewed' }));
   await screen.findByText('Marked reviewed.');
-  expect(screen.queryByText('4.5 / 5')).not.toBeInTheDocument();
+  expect(await screen.findByText('2 game-day responses · 0 suggestions')).toBeInTheDocument();
+  expect(screen.getByText('4.5 / 5')).toBeInTheDocument();
+});
+
+test('review followed by reopen uses the refreshed revision without a manual refresh', async () => {
+  let entry = { ...suggestion };
+  const request = jest.fn(async (path, options) => {
+    if (options.method === 'POST') {
+      if (options.body.updatedAt !== entry.updatedAt) throw Object.assign(new Error('Entry changed.'), { status: 409 });
+      entry = { ...entry, status: options.body.status, updatedAt: entry.status === 'new' ? '2026-11-15T22:00:01Z' : '2026-11-15T22:00:02Z' };
+      return { ok: true };
+    }
+    return { items: [{ ...entry }], nextCursor: null };
+  });
+  render(<AdminFieldFeedback request={request} />);
+  await screen.findByText(suggestion.message);
+  fireEvent.change(screen.getByLabelText('Review status'), { target: { value: 'all' } });
+  fireEvent.click(await screen.findByRole('button', { name: 'Mark reviewed' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Reopen' }));
+  expect(await screen.findByText('Feedback reopened.')).toBeInTheDocument();
+  expect(await screen.findByRole('button', { name: 'Mark reviewed' })).toBeEnabled();
+  const writes = request.mock.calls.filter(([, options]) => options.method === 'POST');
+  expect(writes).toHaveLength(2);
+  expect(writes[1][1].body).toEqual({
+    kind: 'suggestion', id: suggestion.id, status: 'new', updatedAt: '2026-11-15T22:00:01Z',
+  });
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 });
