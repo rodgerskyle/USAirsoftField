@@ -3,8 +3,8 @@ import { WAIVER } from './roles';
 import rankThresholds from './rankincrements';
 import rankNames from './ranks';
 import { scoreRankMilestones } from './scoreRankMilestones';
+import { newScoreId, pointsPerFreeGame, scoreHistoryFields } from './scoreHistory';
 
-const POINTS_PER_FREE_GAME = 450;
 const playerIdPattern = /^[A-Za-z0-9_-]{1,128}$/;
 const operationIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SCORE_RETRY_WINDOW_MS = 48 * 60 * 60 * 1000;
@@ -112,6 +112,7 @@ async function transactScore(firebase, uid, change, now) {
     const earliestReceipt = Math.floor((now - SCORE_RETRY_WINDOW_MS) / DAY_MS) * DAY_MS;
     const counter = outcome === 'win' ? 'wins' : 'losses';
     const delta = removing ? -1 : 1;
+    const eventId = removing ? null : newScoreId();
 
     let result;
     let replayed = false;
@@ -165,14 +166,15 @@ async function transactScore(firebase, uid, change, now) {
                 return undefined;
             }
             const freeGamesChange = removing
-                ? Math.floor(nextPoints / POINTS_PER_FREE_GAME) - Math.floor(points / POINTS_PER_FREE_GAME)
-                : Number(nextPoints % POINTS_PER_FREE_GAME < points % POINTS_PER_FREE_GAME);
+                ? Math.floor(nextPoints / pointsPerFreeGame) - Math.floor(points / pointsPerFreeGame)
+                : Number(nextPoints % pointsPerFreeGame < points % pointsPerFreeGame);
             const freeGames = scoreValue(player.freegames) + freeGamesChange;
 
             const rankMilestones = scoreRankMilestones(player.rankMilestones, points, nextPoints, operationAt, rankThresholds, rankNames);
             return {
                 ...player,
                 ...(Object.keys(rankMilestones).length || player.rankMilestones !== undefined ? { rankMilestones } : {}),
+                ...scoreHistoryFields(player, { day, outcome, at: operationAt, eventId, dailyCount, removing, previousPoints: points, nextPoints }),
                 ...operationFields,
                 points: nextPoints,
                 [counter]: careerCount + delta,

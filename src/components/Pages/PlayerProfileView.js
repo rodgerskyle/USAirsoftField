@@ -20,12 +20,13 @@ import { AuthUserContext } from '../session';
 import PlayerBadgeCollection from './PlayerBadgeCollection';
 import PlayerPrestige, { PrestigeEmblem } from './PlayerPrestige';
 import PlayerMilestones from './PlayerMilestones';
+import PlayerGameHistory from './PlayerGameHistory';
 import './PlayerProfileView.css';
 
 const sections = [
   { id: 'overview', label: 'Overview' },
   { id: 'progression', label: 'Progression' },
-  { id: 'game-feed', label: 'Game feed' },
+  { id: 'game-feed', label: 'Game history' },
   { id: 'milestones', label: 'Milestones' },
 ];
 
@@ -191,31 +192,37 @@ export function ProfileState({ loading, missing }) {
   );
 }
 
-function RankProgress({ points, rank, completedPrestiges }) {
+function RankProgress({ points, rank, completedPrestiges, unavailable }) {
+  if (unavailable) return <section className="player-profile__panel"><h2>Rank progress</h2><p role="status">{unavailable}</p></section>;
   const next = rank + 1;
-  const hasNextRank = next < rankNames.length;
-  const needed = hasNextRank ? rankIncrements[next] - points : 0;
-  const progress = hasNextRank
-    ? Math.max(0, (points - rankIncrements[rank]) / (rankIncrements[next] - rankIncrements[rank]) * 100)
-    : 100;
-
-  return (
-    <section className="player-profile__panel">
-      <div className="player-profile__panel-header">
-        <div>
-          <p className="player-profile__label">{hasNextRank ? 'Next rank' : 'Highest rank'}</p>
-          <h2>{rankNames[hasNextRank ? next : rank]}</h2>
-        </div>
-        {completedPrestiges > 0 ? <PrestigeEmblem count={completedPrestiges} />
-          : <img className="player-profile__progress-emblem" src={rankImages[hasNextRank ? next : rank]} alt="" />}
-      </div>
-      <progress className="player-profile__progress" value={progress} max="100" aria-label="Rank progress" />
-      <div className="player-profile__progress-caption">
-        <span>{Math.round(progress)}% complete</span>
-        <span>{hasNextRank ? `${numberFormat.format(needed)} rank points to go` : 'Maximum rank reached'}</span>
-      </div>
-    </section>
-  );
+  const hasNext = next < rankNames.length;
+  const span = hasNext ? rankIncrements[next] - rankIncrements[rank] : 1;
+  const earned = hasNext ? Math.min(span, Math.max(0, points - rankIncrements[rank])) : span;
+  const remaining = span - earned;
+  const caption = hasNext
+    ? `${numberFormat.format(remaining)} ${remaining === 1 ? 'point' : 'points'} to ${rankNames[next]}`
+    : 'Maximum rank reached';
+  function endpoint(index, label) {
+    return <div className="player-profile__rank-end">
+      <span className="player-profile__label">{label}</span>
+      {completedPrestiges > 0 ? <PrestigeEmblem count={completedPrestiges} /> :
+        <img className="player-profile__progress-emblem" src={rankImages[index]} width="52" height="52" alt="" decoding="async" />}
+      <strong>{rankNames[index]}</strong>
+      {completedPrestiges > 0 && <small>Prestige {numberFormat.format(completedPrestiges)}</small>}
+    </div>;
+  }
+  return <section className="player-profile__panel">
+    <h2>Rank progress</h2>
+    <div className="player-profile__rank-ends">
+      {endpoint(rank, 'Current rank')}
+      {hasNext ? endpoint(next, 'Next rank') : <strong className="player-profile__rank-cap">Highest rank reached</strong>}
+    </div>
+    <progress className="player-profile__progress" value={earned} max={span} aria-label="Rank progress"
+      aria-valuetext={hasNext ? `${rankNames[rank]} to ${rankNames[next]}, ${earned} of ${span} points` : caption} />
+    <div className="player-profile__progress-caption">
+      <span>{Math.floor(earned / span * 100)}% complete</span><span>{caption}</span>
+    </div>
+  </section>;
 }
 
 function RankGroup({ title, start, end, currentRank }) {
@@ -246,7 +253,7 @@ function GameFeed({ games }) {
   return (
     <section className="player-profile__panel">
       <div className="player-profile__panel-header">
-        <h2>Game feed</h2>
+        <h2>Game history</h2>
         {days.length > 0 && (
           <p className="player-profile__muted">
             {numberFormat.format(days.length)} {days.length === 1 ? 'game day' : 'game days'} · {numberFormat.format(earned)} points earned
@@ -335,6 +342,10 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
   const losses = count(user.losses);
   const winRate = wins + losses > 0 ? Math.ceil(wins / (wins + losses) * 100) : 0;
   const rank = profileRank(points, prestige.record);
+  const validPoints = (typeof user.points === 'number' || (typeof user.points === 'string' && user.points.trim() !== ''))
+    && Number.isFinite(Number(user.points)) && Number(user.points) >= 0;
+  const rankProgressUnavailable = (!validPoints && !completedPrestiges) || prestige.failed
+    ? 'Rank progress is temporarily unavailable.' : !prestige.record ? 'Checking rank progress…' : null;
   const stats = [
     ['Points', points],
     ['Wins', wins],
@@ -451,11 +462,11 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
                 ))}
               </dl>
             </section>
-            <RankProgress points={points} rank={rank} completedPrestiges={completedPrestiges} />
+            <RankProgress points={points} rank={rank} completedPrestiges={completedPrestiges} unavailable={rankProgressUnavailable} />
           </div>
         )}
         <div className="player-profile__panels" hidden={section !== 'progression'}>
-          {section === 'progression' && <RankProgress points={points} rank={rank} completedPrestiges={completedPrestiges} />}
+          {section === 'progression' && <RankProgress points={points} rank={rank} completedPrestiges={completedPrestiges} unavailable={rankProgressUnavailable} />}
           <PlayerPrestige
             key={playerId}
             firebase={firebase}
@@ -471,7 +482,7 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
             </>
           )}
         </div>
-        {section === 'game-feed' && <GameFeed games={user.games} />}
+        {section === 'game-feed' && (badgeEligible ? <PlayerGameHistory key={playerId} playerId={playerId} /> : <GameFeed games={user.games} />)}
         {section === 'milestones' && badgeEligible && <PlayerMilestones playerId={playerId} embedded />}
         {section === 'badges' && canManageBadges && (
           <PlayerBadgeCollection

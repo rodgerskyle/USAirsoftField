@@ -1,31 +1,132 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import AuthUserContext from '../session/context';
-import { ADMIN } from '../constants/roles';
-import { fieldStaffPaths } from '../constants/fieldStaffApi';
+import { ADMIN, WAIVER } from '../constants/roles';
+import { fieldStaffPaths, requestStaffFieldTool } from '../constants/fieldStaffApi';
 import { normalizePartyBooking, partyBookingKey } from '../constants/partyBookingKey';
+import './PartyBookingCheckInLink.css';
 
-export default function PartyBookingCheckInLink({ booking }) {
+const endpoint = '/api/party-check-in';
+const inviteCode = /^[A-Za-z0-9_-]{16}$/;
+
+function CheckInLink({ date, partyKey }) {
+  const params = new URLSearchParams({ partyDate: date });
+  if (partyKey) params.set('booking', partyKey);
+  return <a className="btn btn-outline-primary" href={`${fieldStaffPaths.checkIn}?${params}#arriving-group`} target="_blank" rel="noopener noreferrer">
+    Open group check-in <span className="visually-hidden">(opens in a new tab)</span>
+  </a>;
+}
+
+function CodeControls({ firebase, uid, date, partyKey, isAdmin }) {
+  const [group, setGroup] = useState(undefined);
+  const [needsReview, setNeedsReview] = useState(false);
+  const [code, setCode] = useState('');
+  const [busy, setBusy] = useState(true);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const operation = useRef(null);
+  const codeInput = useRef(null);
+
+  const request = useCallback(async (action, invitation) => {
+    if (operation.current) return;
+    const controller = new AbortController();
+    operation.current = controller;
+    setBusy(true);
+    setMessage('');
+    setError('');
+    const options = { signal: controller.signal };
+    let path = endpoint;
+    if (action === 'load') {
+      path += '?' + new URLSearchParams({ date, partyKey });
+    } else {
+      options.method = 'POST';
+      options.body = { action, date, partyKey, ...(action === 'link' && { code: invitation }) };
+    }
+    try {
+      const result = await requestStaffFieldTool(firebase, uid, path, options);
+      if (controller.signal.aborted) return;
+      setNeedsReview(result.needsReview === true);
+      if (result.group === null && action === 'load') {
+        setGroup(null);
+      } else if (inviteCode.test(result.group?.code) && (result.group.date === date || result.needsReview === true)) {
+        setGroup(result.group);
+        setCode('');
+        if (action !== 'load') setMessage('The group code is ready to use at check-in.');
+      } else {
+        throw new Error('The party group status could not be verified. Refresh to check again.');
+      }
+    } catch (failure) {
+      if (!controller.signal.aborted) setError(failure.message || 'The party group could not be loaded. Try again.');
+    } finally {
+      if (operation.current === controller) {
+        operation.current = null;
+        setBusy(false);
+      }
+    }
+  }, [firebase, uid, date, partyKey]);
+
+  useEffect(() => {
+    request('load');
+    return () => { operation.current?.abort(); operation.current = null; };
+  }, [request]);
+
+  async function copyCode() {
+    const input = codeInput.current;
+    try {
+      await navigator.clipboard.writeText(input.value);
+      if (input.isConnected) setMessage('Group code copied.');
+    } catch {
+      if (!input.isConnected) return;
+      input.focus();
+      input.select();
+      setMessage('Code selected. Use your device’s Copy command.');
+    }
+  }
+
+  return <div className="party-code-controls" aria-busy={busy}>
+    {group && <>
+      {needsReview && <p role="status">The reservation changed. Staff should review this link in group check-in before checking players in.</p>}
+      <p>Linked group <strong>{group.name}</strong></p>
+      <div className="party-code-row"><label>Group code<input ref={codeInput} className="form-control" readOnly value={group.code} onFocus={event => event.target.select()} /></label>
+        <button type="button" className="btn btn-primary" onClick={copyCode}>Copy code</button></div>
+      <small>Paste this code into staff check-in to find the group.</small>
+      {isAdmin && group.id && <a href={`/admin/field/groups?group=${encodeURIComponent(group.id)}`} target="_blank" rel="noopener noreferrer">Manage this group <span className="visually-hidden">(opens in a new tab)</span></a>}
+    </>}
+    {group === null && <>
+      <form className="party-code-row" onSubmit={event => { event.preventDefault(); request('link', code.trim()); }}>
+        <label>Organizer’s group code<input className="form-control" value={code} onChange={event => setCode(event.target.value)} required minLength={16} maxLength={16} autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} /></label>
+        <button className="btn btn-primary" disabled={busy || !inviteCode.test(code.trim())}>Link existing group</button>
+      </form>
+      <div className="party-code-create"><span>Party has no group yet?</span> <button type="button" className="btn btn-outline-primary" disabled={busy} onClick={() => request('create')}>Create group code</button></div>
+    </>}
+    {busy && <p role="status">{group === undefined ? 'Looking up the party’s group…' : 'Updating the party’s group…'}</p>}
+    {message && <p role="status">{message}</p>}
+    {error && <div role="alert"><p>{error}</p><button type="button" className="btn btn-outline-primary" disabled={busy} onClick={() => request('load')}>Refresh group status</button></div>}
+  </div>;
+}
+
+export default function PartyBookingCheckInLink({ firebase, booking, afterSave = false }) {
   const account = useContext(AuthUserContext);
   const isAdmin = Boolean(account?.roles?.[ADMIN]);
+  const canEdit = isAdmin || Boolean(account?.roles?.[WAIVER]);
+  const uid = account?.uid;
   const [selection, setSelection] = useState(null);
 
   useEffect(() => {
-    if (!isAdmin || !booking) return undefined;
-    const saved = normalizePartyBooking(booking);
-    if (!saved) return undefined;
+    if (!uid || !canEdit || !booking) return undefined;
     let active = true;
-    const params = new URLSearchParams({ partyDate: saved.date });
-    const publishLink = key => {
-      if (!active) return;
-      if (key) params.set('booking', key);
-      setSelection({ booking, href: fieldStaffPaths.checkIn + '?' + params + '#arriving-group' });
-    };
-    partyBookingKey(booking).then(publishLink, () => publishLink(null));
+    const saved = normalizePartyBooking(booking);
+    if (saved) partyBookingKey(booking).then(key => {
+      if (active) setSelection({ uid, booking, date: saved.date, key });
+    }).catch(() => { if (active) setSelection({ uid, booking, date: saved.date, key: null }); });
     return () => { active = false; };
-  }, [booking, isAdmin]);
+  }, [booking, canEdit, uid]);
 
-  if (!isAdmin || !booking || selection?.booking !== booking) return null;
-  return <a className="btn btn-outline-primary" href={selection.href} target="_blank" rel="noopener noreferrer">
-    Open group check-in <span className="visually-hidden">(opens in a new tab)</span>
-  </a>;
+  if (!uid || !canEdit || !booking) return null;
+  const selected = selection?.uid === uid && selection.booking === booking ? selection : null;
+  return <section className="party-booking-code" aria-label="Party group check-in">
+    <h3>{afterSave ? 'Party saved' : 'Group check-in'}</h3>
+    {afterSave && <p>{booking.title}</p>}
+    {selected?.key ? <CodeControls key={uid + selected.key} firebase={firebase} uid={uid} isAdmin={isAdmin} date={selected.date} partyKey={selected.key} /> : <p role="status">{selected || !normalizePartyBooking(booking) ? 'A valid saved booking is needed to manage its group code. Reopen the Party Calendar entry to check its details.' : 'Opening group details…'}</p>}
+    {isAdmin && selected && <CheckInLink date={selected.date} partyKey={selected.key} />}
+  </section>;
 }

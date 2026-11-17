@@ -52,6 +52,7 @@ const ACTION_GROUPS = [
     actions: [
       { title: 'Rental Form', path: '/admin/rentalform', icon: faClipboardList },
       { title: 'Party Calendar', path: '/admin/birthday', icon: faCalendar },
+      { title: 'Manage Groups', path: fieldStaffPaths.groups, icon: faPeopleGroup },
       { title: 'Team Reports', path: fieldStaffPaths.reports, icon: faComments },
       { title: 'Player Feedback', path: fieldStaffPaths.feedback, icon: faComments },
       { title: 'Barracks Game Day TV', path: fieldStaffPaths.tv, icon: faTv },

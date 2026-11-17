@@ -3,8 +3,20 @@ import { Helmet } from 'react-helmet-async';
 import { Link, useParams } from 'react-router-dom';
 import { badgeById } from '../constants/playerBadges';
 import { milestoneDate, playerCount, playerIdPattern, requestPlayerExperience } from '../constants/playerExperience';
+import { mergeMilestonePage } from '../constants/milestoneHistory';
 import { PrestigeEmblem } from './PlayerPrestige';
 import './PlayerExperience.css';
+
+function MilestoneList({ items, dated = true }) {
+  return <ol className="player-milestones__list">{items.map(item => {
+    const label = milestoneDate(item.date, item.datePrecision);
+    const badge = badgeById[item.badgeId];
+    return <li key={item.id}>
+      <span className="player-milestones__marker" aria-hidden="true">{badge?.thumbUrl ? <img src={badge.thumbUrl} alt="" width="56" height="56" loading="lazy" /> : item.type === 'prestige' ? '★' : item.type === 'team' ? '◆' : '●'}</span>
+      <div>{dated && (label === 'Date unavailable' ? <span>{label}</span> : <time dateTime={item.date}>{label}</time>)}<h3>{item.title}</h3><p>{item.detail}</p></div>
+    </li>;
+  })}</ol>;
+}
 
 export default function PlayerMilestones({ playerId, embedded = false }) {
   const { id: routeId } = useParams();
@@ -16,24 +28,24 @@ export default function PlayerMilestones({ playerId, embedded = false }) {
   const [reload, setReload] = useState(0);
 
   useEffect(() => {
-    if (!playerIdPattern.test(id)) return undefined;
+    operation.current?.abort();
+    operation.current = null;
+    setError('');
+    setRecord(null);
+    if (!playerIdPattern.test(id)) { setBusy(false); return undefined; }
     const controller = new AbortController();
     operation.current = controller;
     setBusy(true);
-    setError('');
-    setRecord(null);
     requestPlayerExperience('/api/player-milestones?' + new URLSearchParams({ id }), controller.signal).then(data => {
       if (controller.signal.aborted) return;
-      if (data.player?.id !== id || !Array.isArray(data.items)) throw new Error('The player milestones could not be verified.');
-      setRecord(data);
+      setRecord(mergeMilestonePage(id, data));
     }).catch(failure => { if (!controller.signal.aborted) setError(failure.message); })
       .finally(() => { if (!controller.signal.aborted) { setBusy(false); operation.current = null; } });
-    return () => controller.abort();
+    return () => { operation.current?.abort(); operation.current = null; };
   }, [id, reload]);
 
-  useEffect(() => () => operation.current?.abort(), []);
   async function earlier() {
-    if (operation.current || record?.player.id !== id || !record.nextCursor) return;
+    if (operation.current || record?.player?.id !== id || !record.nextCursor) return;
     const controller = new AbortController();
     operation.current = controller;
     setBusy(true);
@@ -41,8 +53,7 @@ export default function PlayerMilestones({ playerId, embedded = false }) {
     try {
       const data = await requestPlayerExperience('/api/player-milestones?' + new URLSearchParams({ id, cursor: record.nextCursor }), controller.signal);
       if (controller.signal.aborted) return;
-      if (data.player?.id !== id || !Array.isArray(data.items)) throw new Error('The milestone page could not be verified.');
-      setRecord(previous => ({ ...data, items: [...new Map([...previous.items, ...data.items].map(item => [item.id, item])).values()] }));
+      setRecord(mergeMilestonePage(id, data, record));
     } catch (failure) { if (!controller.signal.aborted) setError(failure.message); }
     finally { if (!controller.signal.aborted) { operation.current = null; setBusy(false); } }
   }
@@ -63,13 +74,13 @@ export default function PlayerMilestones({ playerId, embedded = false }) {
           {!embedded && <Link to={'/profilelookup/' + encodeURIComponent(id)}>Player profile</Link>}
         </div>
         <p className="player-experience__note">{current.historyNote}</p>
-        {current.items.length ? <ol className="player-milestones__list">{current.items.map(item => (
-          <li key={item.id}>
-            <span className="player-milestones__marker" aria-hidden="true">{badgeById[item.badgeId] ? <img src={badgeById[item.badgeId].thumbUrl} alt="" width="56" height="56" loading="lazy" /> : item.type === 'prestige' ? '★' : item.type === 'team' ? '◆' : '●'}</span>
-            <div><time dateTime={item.date}>{milestoneDate(item.date)}</time><h3>{item.title}</h3><p>{item.detail}</p></div>
-          </li>
-        ))}</ol> : <p>Recorded milestones will appear as you play and earn awards.</p>}
-        {current.nextCursor && <button type="button" className="player-experience__button" disabled={busy} onClick={earlier}>{busy ? 'Loading…' : 'Load earlier milestones'}</button>}
+        {current.items.length > 0 && <MilestoneList items={current.items} />}
+        {current.items.length + current.undatedItems.length === 0 && <p>Recorded milestones will appear as you play and earn awards.</p>}
+        <p className="visually-hidden" role="status">{current.items.length} dated milestones shown.</p>
+        {current.nextCursor && !error && <button type="button" className="player-experience__button" disabled={busy} onClick={earlier}>{busy ? 'Loading…' : 'Load earlier milestones'}</button>}
+        {current.undatedItems.length > 0 && <section aria-label="Achievements without a recorded date">
+          <h3>Achievements without a recorded date</h3><MilestoneList items={current.undatedItems} dated={false} />
+        </section>}
       </>}
       {error && <div role="alert"><p>{error}</p><button className="player-experience__button" type="button" disabled={busy} onClick={() => current ? earlier() : setReload(value => value + 1)}>Try again</button></div>}
     </Wrapper>

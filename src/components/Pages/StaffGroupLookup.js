@@ -97,8 +97,8 @@ export default function StaffGroupLookup({ request, onSelect, disabled }) {
   }
 
   return <details id="arriving-group" className="admin-group-lookup" open={hint ? true : undefined}><summary>Find an arriving group</summary>
-    {hint && <p>Party Calendar booking for {hint.date}. Look up the organizer’s group code to confirm the match.</p>}
-    <p>Enter the organizer’s group code to verify arrivals or link a scheduled birthday or event.</p>
+    {hint && <p>Party Calendar booking for {hint.date}. Enter its invitation code to find the group.</p>}
+    <p>Enter the invitation code from the organizer or Party Calendar to find the arriving group. <a href="/admin/field/groups">Manage groups</a></p>
     <form onSubmit={lookup}><label>Group code<input name="code" minLength={16} maxLength={16} autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} required disabled={locked} /></label><button className="btn btn-secondary" disabled={locked}>{busy ? 'Working…' : 'Find group'}</button></form>
     {group && <><h3>{group.name}</h3><p>{group.date}</p>{!current && <p>This group is planned for a different date.</p>}
       <GroupPartySchedule group={group} staff />

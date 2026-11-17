@@ -70,6 +70,7 @@ test('links each native field tool once and keeps website scoring, scheduling, w
   }
   const websiteTools = [
     ['Party Calendar', '/admin/birthday'],
+    ['Manage Groups', '/admin/field/groups'],
     ['Field Game Days', '/schedule'],
     ['Enter Wins', '/admin/enterwins'],
     ['Enter Losses', '/admin/enterlosses'],

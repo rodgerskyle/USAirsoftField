@@ -7,11 +7,12 @@ import { TextEncoder } from 'util';
 import { onValue, runTransaction } from 'firebase/database';
 import { requestStaffFieldTool } from '../constants/fieldStaffApi';
 import Birthday from './Birthday';
+import AuthUserContext from '../session/context';
 
 jest.mock('../Firebase', () => ({ withFirebase: Component => Component }));
 jest.mock('../session', () => ({ withAuthorization: () => Component => Component }));
 jest.mock('firebase/database', () => ({ onValue: jest.fn(), runTransaction: jest.fn() }));
-jest.mock('../constants/fieldStaffApi', () => ({ requestStaffFieldTool: jest.fn() }));
+jest.mock('../constants/fieldStaffApi', () => ({ ...jest.requireActual('../constants/fieldStaffApi'), requestStaffFieldTool: jest.fn() }));
 // Use the real editor and save flows with explicit slot/event selections.
 jest.mock('react-big-calendar', () => ({
   Views: { MONTH: 'month' },
@@ -25,7 +26,7 @@ jest.mock('react-big-calendar', () => ({
 const ref = {};
 const staff = { auth: { currentUser: { uid: 'fixture-staff' } }, calendar: () => ref };
 const clone = value => JSON.parse(JSON.stringify(value));
-const openPage = () => render(<HelmetProvider><MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><Birthday firebase={staff} /></MemoryRouter></HelmetProvider>);
+const openPage = (actor = null) => render(<AuthUserContext.Provider value={actor}><HelmetProvider><MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><Birthday firebase={staff} /></MemoryRouter></HelmetProvider></AuthUserContext.Provider>);
 let records;
 let listener;
 let loseAck;
@@ -103,4 +104,30 @@ test('edits the selected saved booking, retries group refresh alone, and rejects
   expect(records[4].title).toBe('Updated party');
   expect(records[4].staffOnly).toBe('concurrent fixture');
   expect(requestStaffFieldTool).toHaveBeenCalledTimes(2);
+});
+
+
+test('staff can create and copy a code immediately after saving, reopen it, and never see the old code after a reservation changes', async () => {
+  let group = null;
+  requestStaffFieldTool.mockImplementation(async (_firebase, _uid, path, options) => {
+    expect(path.startsWith('/api/party-check-in')).toBe(true);
+    if (options.method === 'POST') {
+      expect(options.body.action).toBe('create');
+      group = { id: 'group-id', name: 'Party group', date: options.body.date, code: 'Group123456789AZ' };
+    }
+    return { group };
+  });
+  openPage({ uid: 'fixture-staff', roles: { ADMIN: true } });
+  fireEvent.click(await screen.findByRole('button', { name: 'Select game-day slot' }));
+  fireEvent.change(screen.getByLabelText('Group Name'), { target: { value: 'Fixture birthday' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Create' }));
+  expect(await screen.findByRole('heading', { name: 'Party saved' })).toBeVisible();
+  fireEvent.click(await screen.findByRole('button', { name: 'Create group code' }));
+  expect(await screen.findByLabelText('Group code')).toHaveValue('Group123456789AZ');
+  fireEvent.click(screen.getByRole('button', { name: 'Fixture birthday' }));
+  expect(await screen.findByLabelText('Group code')).toHaveValue('Group123456789AZ');
+  expect(screen.queryByRole('heading', { name: 'Party saved' })).toBeNull();
+  act(() => { records = { 4: { ...records[0], title: 'Rescheduled fixture' } }; listener(); });
+  expect(screen.queryByLabelText('Group code')).toBeNull();
+  expect(screen.getByText(/reopen it on the calendar to manage its group code/i)).toBeVisible();
 });

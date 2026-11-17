@@ -1,0 +1,17 @@
+.party-booking-code {
+  margin: 0 0 1rem;
+  padding: 1rem;
+  border: 1px solid var(--admin-border);
+  border-radius: .6rem;
+  color: var(--admin-text);
+  background: var(--admin-surface-muted);
+}
+.party-booking-code h3 { margin: 0 0 .6rem; font-size: 1.15rem; }
+.party-booking-code p { margin: 0 0 .4rem; }
+.party-code-controls { display: grid; gap: .5rem; }
+.party-code-row { display: flex; flex-wrap: wrap; gap: .5rem; align-items: end; }
+.party-code-row label { display: grid; gap: .2rem; margin: 0; }
+.party-code-row input { font-family: monospace; color: var(--admin-text); background: var(--admin-surface); border-color: var(--admin-border); }
+.party-code-row input[readonly] { background: var(--admin-surface); }
+.party-code-create { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
+.party-booking-code > a { margin-top: .65rem; }
