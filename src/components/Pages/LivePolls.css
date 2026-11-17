@@ -1,0 +1,85 @@
+.live-polls .field-schedule__heading-copy p:last-child { margin: .55rem 0 0; }
+
+.live-polls__ballot {
+  border-top: 3px solid var(--usaw-accent);
+}
+
+.live-polls__timer {
+  display: inline-flex;
+  gap: .45rem;
+  align-items: center;
+  padding: .35rem .65rem;
+  border-radius: .42rem;
+  background: var(--usaw-subtle);
+  color: var(--usaw-accent);
+  font-weight: 750;
+  font-size: .84rem;
+}
+
+.live-polls__timer strong { font-variant-numeric: tabular-nums; }
+
+.live-polls__notice {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: .55rem;
+}
+
+.live-polls__form {
+  display: grid;
+  gap: .75rem;
+  justify-items: start;
+}
+
+.live-polls__form p { margin: 0; color: var(--usaw-muted); }
+.live-polls__form p.live-polls__error { color: var(--usaw-heading-red); }
+
+.live-polls__form fieldset {
+  min-inline-size: 0;
+  width: 100%;
+}
+
+.live-polls__form legend {
+  color: var(--usaw-muted);
+  font-size: .88rem;
+  font-weight: 700;
+}
+
+.live-polls__options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 21rem), 1fr));
+  gap: .6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.live-polls__option {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .3rem .65rem;
+  min-height: 48px;
+  padding: .55rem .75rem;
+  border: 1px solid var(--usaw-line);
+  border-radius: .65rem;
+  background: var(--usaw-raised);
+}
+
+label.live-polls__option { cursor: pointer; }
+.live-polls__option[data-selected="true"] {
+  border-color: var(--usaw-accent);
+  background: var(--usaw-subtle);
+}
+
+.live-polls__option input { flex: none; accent-color: var(--usaw-accent); }
+.live-polls__option input:focus-visible { outline: 2px solid var(--usaw-focus); outline-offset: 3px; }
+.live-polls__option span { font-weight: 750; overflow-wrap: anywhere; }
+.live-polls__option strong {
+  margin-inline-start: auto;
+  color: var(--usaw-muted);
+  font-size: .81rem;
+  font-variant-numeric: tabular-nums;
+}
+.live-polls__winner { color: var(--usaw-accent); font-size: .75rem; }

@@ -9,6 +9,7 @@ import { teamPagePath, usePlayerTeam } from '../constants/teamDirectory';
 import rankImages from '../constants/rankimgs';
 import rankNames from '../constants/ranks';
 import { PrestigeEmblem } from './PlayerPrestige';
+import { PlayerGameDayRecap } from './PlayerGameDayRecap';
 
 const numberFormat = new Intl.NumberFormat('en-US');
 
@@ -134,7 +135,12 @@ function PlayerHubAccount({ firebase }) {
   if (account === undefined || account?.loading) {
     return <section className="ph-account ph-account-loading" aria-label="Player account" role="status">Loading your player card…</section>;
   }
-  if (account) return <PlayerCard account={account} />;
+  if (account) return (
+    <>
+      <PlayerCard account={account} />
+      <PlayerGameDayRecap key={account.uid} firebase={firebase} playerId={account.uid} />
+    </>
+  );
 
   return (
     <section className="ph-account" aria-labelledby="player-account-heading">

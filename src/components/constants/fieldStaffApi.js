@@ -90,3 +90,20 @@ export async function requestPublicFieldTool(path, { signal } = {}) {
   });
   return readResponse(response);
 }
+
+export async function requestPlayerPoll(user, { vote, signal } = {}) {
+  const headers = { Accept: 'application/json' };
+  if (user) headers.Authorization = `Bearer ${await user.getIdToken()}`;
+  if (signal?.aborted) throw new DOMException('Request canceled', 'AbortError');
+  if (vote) headers['Content-Type'] = 'application/json';
+  const response = await fetch(companionEndpoint('/api/live-games').href, {
+    method: vote ? 'POST' : 'GET',
+    headers,
+    ...(vote && { body: JSON.stringify({ action: 'vote', pollId: vote.pollId, modeId: vote.modeId }) }),
+    credentials: 'include',
+    cache: 'no-store',
+    redirect: 'error',
+    signal,
+  });
+  return readResponse(response);
+}

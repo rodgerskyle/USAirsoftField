@@ -349,9 +349,12 @@ function Schedule({ firebase }) {
                     <p>US Airsoft World <span aria-hidden="true">/</span> Anderson, CA</p>
                     <h1>Field Schedule</h1>
                 </div>
-                <a className="field-schedule__action field-schedule__jump" href="#upcoming-game-days">
-                    Upcoming events <ArrowDownward aria-hidden="true" />
-                </a>
+                <div className="field-schedule__header-actions">
+                    <a className="field-schedule__action field-schedule__action--primary" href="/live-polls">Live polls</a>
+                    <a className="field-schedule__action field-schedule__jump" href="#upcoming-game-days">
+                        Upcoming events <ArrowDownward aria-hidden="true" />
+                    </a>
+                </div>
             </header>
             {loading ? (
                 <div className="field-schedule__loading"><Spinner animation="border" role="status"><span className="visually-hidden">Loading field schedule</span></Spinner></div>

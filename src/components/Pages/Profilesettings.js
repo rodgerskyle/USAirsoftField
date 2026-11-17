@@ -7,6 +7,7 @@ import AccountChangeForm from '../../AccountChange';
 import { AuthUserContext, withAuthentication, withAuthorization } from '../session';
 import ImageUpload from './ImageUpload';
 import DisplayNameForm from './DisplayNameForm';
+import { GameDayRecapNotificationSettings } from './PlayerGameDayRecap';
 
 
 
@@ -55,6 +56,7 @@ const ProfileSettings = ({ firebase }) => {
                 <Col md={8}>
                   {playerId && <DisplayNameForm key={playerId} firebase={firebase} playerId={playerId} />}
                   {playerId && <Link className="btn btn-outline-light mb-3" to="/account?section=badges">Choose a featured badge</Link>}
+                  {playerId && <GameDayRecapNotificationSettings key={playerId} firebase={firebase} playerId={playerId} />}
                   <AccountChangeForm authUser={authUser} />
                 </Col>
               </Row>

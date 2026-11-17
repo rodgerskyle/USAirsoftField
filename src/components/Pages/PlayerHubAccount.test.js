@@ -67,6 +67,7 @@ test('shows sign-in for a signed-out viewer and live official stats for their ve
   expect(screen.queryByRole('link', { name: 'Sign in' })).not.toBeInTheDocument();
   setPlayer(null);
   expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login');
+  expect(screen.queryByRole('button', { name: 'View recap' })).not.toBeInTheDocument();
   expect(onValue).not.toHaveBeenCalled();
 
   setPlayer(firstPlayer);
@@ -78,6 +79,7 @@ test('shows sign-in for a signed-out viewer and live official stats for their ve
   expect(screen.getByText('Rebels')).toBeInTheDocument();
   expect(screen.getByText('150')).toBeInTheDocument();
   expect(screen.getByText('75%')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'View recap' })).toBeInTheDocument();
   expect(screen.queryByRole('link', { name: 'My account' })).not.toBeInTheDocument();
   expect(global.fetch).not.toHaveBeenCalled();
 
@@ -87,6 +89,7 @@ test('shows sign-in for a signed-out viewer and live official stats for their ve
   setPlayer(null);
   expect(screen.getByRole('link', { name: 'Sign in' })).toBeInTheDocument();
   expect(screen.queryByText('Rapid Rebel')).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'View recap' })).not.toBeInTheDocument();
 });
 
 test('links to the current account Companion team when the website team is empty', async () => {
