@@ -10,5 +10,5 @@
 
 .admin-account-removal h3 { font-size: 1.15rem; }
 .admin-account-removal code { color: inherit; overflow-wrap: anywhere; }
-.admin-account-removal form { max-width: 36rem; }
+.admin-account-removal__review { max-width: 36rem; }
 .admin-account-removal__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-block-start: 1rem; }
