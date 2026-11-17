@@ -8,6 +8,10 @@ The public comparison and milestone pages use the Companion's restricted player 
 
 The illustrated rules retain all published sections. `src/components/Pages/RulesClassic.js` preserves the previous rules component byte for byte, with its original rule styles in `RulesClassic.backup.css`. The previous presentation remains accessible at `/information/rules/classic`.
 
+Compare Players searches registered names, public display names, usernames, player IDs and official player links through `/api/leaderboard?lookup=players`. The selection card links to the public milestone record. The illustrated rules use `src/components/constants/rules-catalog.js`, matching the Companion catalog. Its test checks the complete descriptions against the published rules.
+
+Staff can open a birthday or private booking in **Field Operations → Party Calendar** and choose **Open group check-in**. Enter the organizer’s group code and confirm the booking. Group members see its time and expected size. Calendar edits refresh linked groups, and a moved or removed reservation requires staff review.
+
 New rank promotion dates are recorded by the existing score transaction in `rankMilestones`. Earlier promotion dates may be absent. The website and Companion use matching promotion helpers, and score corrections remove a recorded promotion when its point threshold is no longer met.
 
 ## Available Scripts

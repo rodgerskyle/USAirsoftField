@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { withFirebase } from '../Firebase';
+import GroupPartySchedule from './GroupPartySchedule';
 import './GroupCheckIn.css';
 
 const endpoint = 'https://app.usairsoftfield.com/api/check-in-groups';
@@ -32,6 +33,7 @@ function GroupCheckIn({ firebase }) {
   const [selected, setSelected] = useState(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
+  const [visitKind, setVisitKind] = useState('visit');
   const operation = useRef(null);
   const attempt = useRef(null);
 
@@ -40,6 +42,7 @@ function GroupCheckIn({ firebase }) {
     operation.current = null;
     attempt.current = null;
     setUser(current);
+    setVisitKind('visit');
     setGroups([]);
     setSelected(null);
     setNotice('');
@@ -106,16 +109,21 @@ function GroupCheckIn({ firebase }) {
     {user === undefined ? <p role="status">Checking your sign-in…</p> : !user ? <section className="visit-groups__panel"><h2>Plan with your USAW account</h2><p>Sign in to create a group or join using your organizer’s code.</p><Link className="ph-button" to="/login">Sign in</Link></section> : <>
       <div className="visit-groups__layout" aria-busy={busy}>
         <section className="visit-groups__panel"><h2>Plan a visit</h2><form onSubmit={create}><fieldset disabled={busy}>
+          <label>Visit type<select name="kind" value={visitKind} onChange={event => setVisitKind(event.target.value)}>
+            <option value="visit">Family or friends</option><option value="party">Scheduled birthday or event</option>
+          </select></label>
+          {visitKind === 'party' && <p className="visit-groups__help">Use the date on your existing reservation. Share your group code with staff to confirm the details in the Party Calendar.</p>}
           <label>Game-day date<input type="date" name="date" required min={fieldToday()} defaultValue={fieldToday()} /></label>
-          <label>Group name<input name="name" maxLength={80} placeholder="Family or friends" /></label><button className="ph-button ph-button-primary">Create group</button>
+          <label>Group name<input name="name" maxLength={80} placeholder={visitKind === 'party' ? 'Your party or event' : 'Family or friends'} /></label><button className="ph-button ph-button-primary">Create group</button>
         </fieldset></form><h2>Join friends</h2><form onSubmit={join}><fieldset disabled={busy}>
           <label>Organizer’s group code<input name="code" minLength={16} maxLength={16} autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} required /></label><button className="ph-button">Join group</button>
         </fieldset></form><h2>Your groups</h2>{groups.length ? <ul className="visit-groups__choices">{groups.map(group => <li key={group.id}><button disabled={busy} onClick={() => void run(async signal => {
           const data = await groupRequest(firebase, user, '?id=' + encodeURIComponent(group.id), undefined, signal);
           setSelected(data.group);
-        })}><strong>{group.name}</strong><span>{dateLabel(group.date)} · {group.memberCount} players</span></button></li>)}</ul> : <p>No upcoming groups yet.</p>}</section>
+        })}><strong>{group.name}</strong><span>{group.kind === 'party' && 'Birthday or event · '}{dateLabel(group.date)} · {group.memberCount} players</span></button></li>)}</ul> : <p>No upcoming groups yet.</p>}</section>
         <section className="visit-groups__panel">{selected ? <>
           <h2>{selected.name}</h2><p>{dateLabel(selected.date)} · {selected.entries.length} / {selected.capacity} players</p>
+          <GroupPartySchedule group={selected} />
           <div className="visit-groups__code"><span>Invitation code</span><strong>{selected.code}</strong><button className="ph-button" type="button" onClick={() => {
             if (navigator.clipboard) navigator.clipboard.writeText(selected.code).then(() => setNotice('Invitation code copied.')).catch(() => setNotice('Select the invitation code to copy it.'));
             else setNotice('Select the invitation code to copy it.');
