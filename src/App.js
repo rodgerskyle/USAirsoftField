@@ -12,6 +12,9 @@ import Home from './components/Pages/home'
 import PlayerHub from './components/Pages/PlayerHub';
 import LivePolls from './components/Pages/LivePolls';
 import AnonymousSuggestions from './components/Pages/AnonymousSuggestions';
+import PlayerComparison from './components/Pages/PlayerComparison';
+import PlayerMilestones from './components/Pages/PlayerMilestones';
+import GroupCheckIn from './components/Pages/GroupCheckIn';
 import VirtualPatches from './components/Pages/VirtualPatches';
 import Admin from './components/Pages/Admin'
 import AdminLayout, { AdminThemeRoute } from './components/constants/admindrawer';
@@ -32,6 +35,7 @@ import Teams from './components/Pages/Teams';
 import Instagram from './components/Pages/Instagram';
 import Videos from './components/Pages/Videos';
 import Rules from './components/Pages/Rules';
+import RulesClassicPage from './components/Pages/RulesClassicPage';
 import Gametypes from './components/Pages/Gametypes';
 import Contact from './components/Pages/Contact';
 import Membership from './components/Pages/Membership';
@@ -80,6 +84,9 @@ const App = () => (
       <Route path="/live-polls" element={<LivePolls />} />
       <Route path="/suggestions" element={<AnonymousSuggestions />} />
       <Route path="/player-hub" element={<PlayerHub />} />
+      <Route path="/player-comparison" element={<PlayerComparison />} />
+      <Route path="/player-milestones/:id" element={<PlayerMilestones />} />
+      <Route path="/group-check-in" element={<GroupCheckIn />} />
       <Route path="/virtual-patches" element={<VirtualPatches />} />
       <Route exact path="/map" element={<Map />} />
       <Route exact path="/waiver" element={<Waiver />} />
@@ -89,6 +96,7 @@ const App = () => (
       <Route exact path="/about" element={<About />} />
       <Route exact path="/information/gametypes" element={<Gametypes />} />
       <Route exact path="/information/rules" element={<Rules />} />
+      <Route path="/information/rules/classic" element={<RulesClassicPage />} />
       <Route exact path="/media/youtube" element={<Videos />} />
       <Route exact path="/media/instagram" element={<Instagram />} />
       <Route exact path="/teams" element={<Teams />} />

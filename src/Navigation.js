@@ -26,6 +26,8 @@ const PLAY_LINKS = [
     ['/information/gametypes', 'Game modes'],
     ['/leaderboard', 'Leaderboard'],
     ['/team-leaderboard', 'Team leaderboard'],
+    ['/player-comparison', 'Compare players'],
+    ['/group-check-in', 'Group check-in'],
     ['/teams', 'Teams'],
 ];
 
@@ -87,7 +89,7 @@ function NavigationLayout({ authUser, profilePic }) {
     const waiverKiosk = waiverOnly && Boolean(authUser?.roles?.[ROLES.STATIC]);
     const isAdmin = Boolean(authUser?.roles?.[ROLES.ADMIN]);
     const accountItems = waiverOnly
-        ? [['/logout', 'Log out']]
+        ? [['/player-hub', 'Player hub'], ['/group-check-in', 'Group check-in'], ['/logout', 'Log out']]
         : [
             ['/account', 'My profile'],
             ['/profilesettings', 'Profile settings'],

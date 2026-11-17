@@ -2,6 +2,7 @@ const companionOrigin = 'https://app.usairsoftfield.com';
 export const fieldStaffPaths = Object.freeze({
   checkIn: '/admin/field/check-in',
   rounds: '/admin/field/rounds',
+  missionTools: '/admin/field/mission-tools',
   membership: '/admin/field/membership',
   reports: '/admin/field/reports',
   feedback: '/admin/field/feedback',
@@ -16,6 +17,8 @@ const staffEndpoints = new Set([
   '/api/member-card/verify',
   '/api/teams',
   '/api/player-feedback',
+  '/api/field-mission-tools',
+  '/api/check-in-groups',
 ]);
 
 export class FieldStaffError extends Error {

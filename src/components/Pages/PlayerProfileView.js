@@ -19,12 +19,14 @@ import SharePageLink from '../constants/SharePageLink';
 import { AuthUserContext } from '../session';
 import PlayerBadgeCollection from './PlayerBadgeCollection';
 import PlayerPrestige, { PrestigeEmblem } from './PlayerPrestige';
+import PlayerMilestones from './PlayerMilestones';
 import './PlayerProfileView.css';
 
 const sections = [
   { id: 'overview', label: 'Overview' },
   { id: 'progression', label: 'Progression' },
   { id: 'game-feed', label: 'Game feed' },
+  { id: 'milestones', label: 'Milestones' },
 ];
 
 const numberFormat = new Intl.NumberFormat('en-US');
@@ -355,6 +357,7 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
             <Link className="player-profile__link" to="/leaderboard">
               <FontAwesomeIcon icon={faArrowLeft} aria-hidden="true" /> Leaderboard
             </Link>
+            {badgeEligible && <Link className="player-profile__link" to={'/player-comparison?left=' + encodeURIComponent(playerId)}>Compare player</Link>}
             {account && !user.roles?.[ROLES.WAIVER] && (
               <Link className="player-profile__link" to="/profilesettings">Profile settings</Link>
             )}
@@ -469,6 +472,7 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
           )}
         </div>
         {section === 'game-feed' && <GameFeed games={user.games} />}
+        {section === 'milestones' && badgeEligible && <PlayerMilestones playerId={playerId} embedded />}
         {section === 'badges' && canManageBadges && (
           <PlayerBadgeCollection
             headingRef={badgeHeading}
