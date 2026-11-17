@@ -16,6 +16,10 @@ const STANDINGS_PAGE_SIZE = 25;
 const formatCount = new Intl.NumberFormat('en-US');
 const secretPatches = BADGE_CATALOG.filter(patch => patch.secret);
 const secretPatchArt = `${process.env.PUBLIC_URL || ''}/badges/secret-achievement.png`;
+const patchWalls = PATCH_DIFFICULTIES.map(tier => ({
+  ...tier,
+  patches: BADGE_CATALOG.filter(patch => patch.difficultyFactor === tier.factor),
+}));
 
 function patchDisplay(patch, earnedCount) {
   if (!patch.secret || earnedCount) return patch;
@@ -178,11 +182,18 @@ function VirtualPatches({ firebase }) {
   const detailHeading = useRef(null);
   const catalogHeading = useRef(null);
   const overallHeading = useRef(null);
+  const walls = difficulty ? patchWalls.filter(wall => String(wall.factor) === difficulty) : patchWalls;
 
   useEffect(() => {
     if (overall) overallHeading.current?.focus();
     else if (requestedBadge) detailHeading.current?.focus();
   }, [overall, requestedBadge]);
+
+  function selectPatch(patch, secretSlot) {
+    if (requestedBadge === patch) detailHeading.current?.focus();
+    else if (secretSlot) setParams({ secret: secretSlot });
+    else setParams({ badge: patch.id });
+  }
 
   return (
     <main className="virtual-patches" aria-labelledby="virtual-patches-title">
@@ -221,38 +232,44 @@ function VirtualPatches({ firebase }) {
                 <label className="virtual-patches__difficulty-filter">
                   Prestige difficulty
                   <select value={difficulty} onChange={event => setDifficulty(event.target.value)}>
-                    <option value="">All difficulties</option>
+                    <option value="">All difficulty levels</option>
                     {PATCH_DIFFICULTIES.map(tier => (
                       <option key={tier.factor} value={tier.factor}>Factor {tier.factor} · {tier.name}</option>
                     ))}
                   </select>
                 </label>
               </div>
-              <ul className="virtual-patches__wall">
-                {BADGE_CATALOG.filter(patch => !difficulty || String(patch.difficultyFactor) === difficulty).map(patch => {
-                  const display = patchDisplay(patch, counts?.[patch.id]);
-                  return (
-                    <li key={patch.id}>
-                      <button className="virtual-patches__tile" type="button" aria-pressed={badge.id === patch.id}
-                        aria-controls="virtual-patch-detail"
-                        onClick={() => {
-                          if (requestedBadge === patch) detailHeading.current?.focus();
-                          else if (display.secretSlot) setParams({ secret: display.secretSlot });
-                          else setParams({ badge: patch.id });
-                        }}>
-                        <img src={display.artUrl} alt="" width="144" height="144" loading="lazy" decoding="async" />
-                        <strong>{display.name}</strong>
-                        <span className="virtual-patches__difficulty">Factor {patch.difficultyFactor} · {patch.difficultyName}</span>
-                        {counts && (
-                          <span className="virtual-patches__personal-count" data-earned={Boolean(counts[patch.id])}>
-                            {counts[patch.id] ? `Earned ×${formatCount.format(counts[patch.id])}` : 'Not yet earned'}
-                          </span>
-                        )}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
+              <div className="virtual-patches__walls">
+                {walls.map(({ factor, name, patches }) => (
+                  <section className="virtual-patches__board" key={factor} data-factor={factor}
+                    aria-labelledby={`virtual-patch-factor-${factor}`}>
+                    <header className="virtual-patches__board-heading">
+                      <h3 id={`virtual-patch-factor-${factor}`}>Factor {factor} · {name}</h3>
+                      <span>{formatCount.format(patches.length)} {patches.length === 1 ? 'patch' : 'patches'}</span>
+                    </header>
+                    <ul className="virtual-patches__wall">
+                      {patches.map(patch => {
+                        const count = counts?.[patch.id];
+                        const display = patchDisplay(patch, count);
+                        return (
+                          <li key={patch.id}>
+                            <button className="virtual-patches__tile" type="button" aria-pressed={badge.id === patch.id}
+                              aria-controls="virtual-patch-detail" onClick={() => selectPatch(patch, display.secretSlot)}>
+                              <img src={display.artUrl} alt="" width="144" height="144" loading="lazy" decoding="async" />
+                              <strong>{display.name}</strong>
+                              {counts && (
+                                <span className="virtual-patches__personal-count" data-earned={Boolean(count)}>
+                                  {count ? `Earned ×${formatCount.format(count)}` : 'Not yet earned'}
+                                </span>
+                              )}
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </section>
+                ))}
+              </div>
             </section>
             <section className="virtual-patches__detail" id="virtual-patch-detail" aria-labelledby="virtual-patch-detail-title">
               <header className="virtual-patches__brief">
