@@ -46,10 +46,10 @@ class UserOptions extends Component {
             error: null,
             notification: null,
             removing: false,
-            removeOpen: false,
-            removeConfirm: '',
+            removeTarget: null,
             removeError: null,
         };
+        this.reviewRemovalButton = React.createRef();
         this.handleChange = this.handleChange.bind(this);
     }
 
@@ -59,7 +59,7 @@ class UserOptions extends Component {
 
     loadAccount() {
         this.unsubscribeUser?.();
-        this.setState({ loading: true, user: null, error: null, password: '', removing: false, removeOpen: false, removeConfirm: '', removeError: null });
+        this.setState({ loading: true, user: null, error: null, password: '', removing: false, removeTarget: null, removeError: null });
         this.unsubscribeUser = onValue(this.props.firebase.user(this.props.router.params.id), snapshot => {
             const userObject = snapshot.val();
             if (!userObject || userObject.accountRemovedAt) {
@@ -98,6 +98,7 @@ class UserOptions extends Component {
     componentDidUpdate(previousProps) {
         if (previousProps.router.params.id !== this.props.router.params.id) {
             this.removeRequest?.abort();
+            this.removeRequest = null;
             this.loadAccount();
         }
     }
@@ -107,22 +108,27 @@ class UserOptions extends Component {
         this.removeRequest?.abort();
     }
 
-    removeAccount = async (event, actorId) => {
-        event.preventDefault();
+    canRemoveAccount(authUser, playerId) {
+        const { user } = this.state;
+        return Boolean(authUser?.roles?.[ROLES.ADMIN] && authUser.uid !== playerId && user &&
+            !user.accountRemovedAt && !Object.values(user.roles ?? {}).some(Boolean));
+    }
+
+    removeAccount = async (authUser) => {
         const playerId = this.props.router.params.id;
-        const { removeConfirm, removing, user } = this.state;
-        if (removing || this.removeRequest || !user || removeConfirm !== playerId || actorId === playerId) return;
+        const { removeTarget, removing } = this.state;
+        if (removing || this.removeRequest || removeTarget !== playerId || !this.canRemoveAccount(authUser, playerId)) return;
         const request = new AbortController();
         this.removeRequest = request;
         this.setState({ removing: true, removeError: null });
         try {
-            const result = await requestStaffFieldTool(this.props.firebase, actorId, '/api/staff-player-accounts', {
-                method: 'POST', body: { playerId, confirmation: removeConfirm }, signal: request.signal,
+            const result = await requestStaffFieldTool(this.props.firebase, authUser.uid, '/api/staff-player-accounts', {
+                method: 'POST', body: { playerId, confirmation: playerId }, signal: request.signal,
             });
             if (request.signal.aborted) return;
             if (!result.removed || result.playerId !== playerId) throw new Error('Account removal could not be confirmed.');
             this.setState(current => ({
-                user: { ...current.user, accountRemovedAt: true }, removing: false, removeOpen: false,
+                user: { ...current.user, accountRemovedAt: true }, removing: false, removeTarget: null,
             }));
         } catch (error) {
             if (!request.signal.aborted) this.setState({ removing: false, removeError: error.message });
@@ -133,32 +139,30 @@ class UserOptions extends Component {
 
     renderAccountRemoval(authUser) {
         const playerId = this.props.router.params.id;
-        const { user, removeOpen, removeConfirm, removeError, removing } = this.state;
-        if (!user || !authUser || authUser.uid === playerId || Object.values(user.roles ?? {}).some(Boolean)) return null;
+        const { user, removeTarget, removeError, removing } = this.state;
+        if (!this.canRemoveAccount(authUser, playerId)) return null;
         return (
             <section className="admin-account-removal" aria-labelledby="admin-account-removal-title">
                 <h3 id="admin-account-removal-title">Remove player account</h3>
                 <p>Blocks access to this player account in the website and Companion. Signed waivers and historical records are retained.</p>
-                {!removeOpen ? (
-                    <Button variant="outline-danger" onClick={() => this.setState({ removeOpen: true })}>Review removal</Button>
+                {removeTarget !== playerId ? (
+                    <Button type="button" variant="outline-danger" ref={this.reviewRemovalButton}
+                        onClick={() => this.setState({ removeTarget: playerId, removeError: null })}>Review removal</Button>
                 ) : (
-                    <Form onSubmit={event => this.removeAccount(event, authUser.uid)}>
-                        <p><strong>{user.name || user.username || 'Player'}</strong> {user.email && <span>({user.email})</span>}</p>
-                        <Form.Group controlId="admin-remove-player-confirmation">
-                            <Form.Label>Type the player ID <code>{playerId}</code> to confirm.</Form.Label>
-                            <Form.Control autoFocus autoComplete="off" autoCapitalize="none" spellCheck={false} required
-                                value={removeConfirm} disabled={removing}
-                                onChange={event => this.setState({ removeConfirm: event.target.value, removeError: null })} />
-                        </Form.Group>
+                    <div className="admin-account-removal__review" role="group" aria-label="Confirm player account removal" aria-busy={removing}>
+                        <p><strong>{user.name || user.username || 'Player'}</strong>
+                            {user.name && user.username && user.username !== user.name && <span> ({user.username})</span>}
+                            <br />Player ID <code>{playerId}</code>
+                        </p>
                         {removeError && <p role="alert">{removeError}</p>}
                         <div className="admin-account-removal__actions">
-                            <Button type="submit" variant="danger" disabled={removing || removeConfirm !== playerId}>
-                                {removing ? 'Removing account…' : 'Remove account'}
+                            <Button type="button" variant="danger" disabled={removing} onClick={() => this.removeAccount(authUser)}>
+                                {removing ? 'Removing account…' : 'Confirm removal'}
                             </Button>
-                            <Button type="button" variant="outline-secondary" disabled={removing}
-                                onClick={() => this.setState({ removeOpen: false, removeConfirm: '', removeError: null })}>Cancel</Button>
+                            <Button autoFocus type="button" variant="outline-secondary" disabled={removing}
+                                onClick={() => this.setState({ removeTarget: null, removeError: null }, () => this.reviewRemovalButton.current?.focus())}>Cancel</Button>
                         </div>
-                    </Form>
+                    </div>
                 )}
             </section>
         );
