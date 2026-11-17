@@ -1,10 +1,11 @@
 import React from 'react';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import PlayerMilestones from './PlayerMilestones';
 import PlayerComparison from './PlayerComparison';
 import { milestoneDate } from '../constants/playerExperience';
+import { mergeMilestonePage } from '../constants/milestoneHistory';
 
 jest.mock('./PlayerPrestige', () => ({ PrestigeEmblem: ({ count }) => <span>Prestige {count}</span> }));
 const left = 'PlayerLeft1234';
@@ -37,6 +38,59 @@ test('changing the timeline player aborts and hides the previous player records'
   first(reply({ player: { id: left, name: 'Stale name' }, items: [] }));
   expect(screen.queryByText('Stale name')).not.toBeInTheDocument();
   expect(global.fetch.mock.calls[0][1].signal.aborted).toBe(true);
+});
+
+test('the timeline shows dated and undated achievements once and stops a cursor cycle', async () => {
+  const rank = { id: 'rank:1', title: 'Promoted to Private', type: 'rank', detail: 'Rank earned', date: '2024-06', datePrecision: 'month' };
+  const pass = { id: 'free-game:1', title: 'Earned a free game pass', type: 'free-game', detail: 'Points award', date: '2024-07-03', datePrecision: 'day' };
+  const unknown = { id: 'rank:2', title: 'Promoted to Corporal', type: 'rank', detail: 'Rank earned', date: null, datePrecision: 'unknown' };
+  const team = { id: 'team:1', title: 'Joined a field team', type: 'team', detail: 'Team history', date: '2023-10-03' };
+  const base = { player: { id: left, name: 'Operator' }, undatedItems: [unknown, unknown] };
+  global.fetch.mockResolvedValueOnce(reply({ ...base, items: [pass, pass, null], nextCursor: 'cursor-1' }))
+    .mockResolvedValueOnce(reply({ ...base, items: [pass, rank], nextCursor: 'cursor-2' }))
+    .mockResolvedValueOnce(reply({ ...base, items: [rank, team], nextCursor: 'cursor-1' }));
+  show(<PlayerMilestones playerId={left} embedded />);
+  expect(await screen.findByText(pass.title)).toBeVisible();
+  const undated = screen.getByRole('region', { name: 'Achievements without a recorded date' });
+  expect(within(undated).getAllByText(unknown.title)).toHaveLength(1);
+  expect(undated.querySelector('time')).toBeNull();
+  const more = () => screen.getByRole('button', { name: 'Load earlier milestones' });
+  fireEvent.click(more());
+  expect(await screen.findByText('June 2024')).toBeVisible();
+  expect(screen.getAllByText(pass.title)).toHaveLength(1);
+  fireEvent.click(more());
+  await screen.findByText(team.title);
+  expect(screen.queryByRole('button', { name: 'Load earlier milestones' })).toBeNull();
+  expect(screen.getAllByText(rank.title)).toHaveLength(1);
+  expect(screen.getAllByText(unknown.title)).toHaveLength(1);
+});
+
+test('a terminal, empty, duplicate-only, or invalid cursor page cannot request page one again', () => {
+  const item = { id: 'rank:1', title: 'Sergeant' };
+  const base = { player: { id: left }, items: [item], nextCursor: 'good' };
+  const first = mergeMilestonePage(left, base);
+  expect(mergeMilestonePage(left, { ...base, nextCursor: null }).nextCursor).toBeNull();
+  expect(mergeMilestonePage(left, { ...base, items: [], nextCursor: 'more' }, first).nextCursor).toBeNull();
+  expect(mergeMilestonePage(left, { ...base, nextCursor: 'more' }, first).nextCursor).toBeNull();
+  expect(mergeMilestonePage(left, { ...base, nextCursor: { page: 2 } }).nextCursor).toBeNull();
+  expect(mergeMilestonePage(left, { ...base, nextCursor: '?private' }).nextCursor).toBeNull();
+  expect(() => mergeMilestonePage(left, { ...base, items: null })).toThrow();
+});
+
+test('changing players during Load earlier cancels the old request and preserves the new timeline', async () => {
+  const first = { player: { id: left, name: 'Alpha' }, items: [{ id: 'one', title: 'First rank' }], nextCursor: 'next' };
+  let finish;
+  global.fetch.mockResolvedValueOnce(reply(first)).mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }))
+    .mockResolvedValueOnce(reply({ player: { id: right, name: 'Bravo' }, items: [], nextCursor: null }));
+  const view = show(<PlayerMilestones playerId={left} embedded />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Load earlier milestones' }));
+  view.rerender(<MemoryRouter><HelmetProvider><PlayerMilestones playerId={right} embedded /></HelmetProvider></MemoryRouter>);
+  await screen.findByText('Bravo');
+  expect(global.fetch.mock.calls[1][1].signal.aborted).toBe(true);
+  await act(async () => { finish(reply({ ...first, items: [{ id: 'two', title: 'Old player pass' }] })); });
+  expect(screen.queryByText('Old player pass')).toBeNull();
+  expect(screen.queryByText('First rank')).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Load earlier milestones' })).toBeNull();
 });
 
 test('monthly comparisons keep lifetime spot and current Prestige clearly labeled', async () => {

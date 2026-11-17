@@ -24,6 +24,10 @@ import PartyBookingCheckInLink from './PartyBookingCheckInLink';
 import { requestStaffFieldTool } from '../constants/fieldStaffApi';
 import { mutatePartyCalendar, newPartyBookingId } from '../constants/partyCalendarRecords';
 
+function samePartyBooking(left, right) {
+    return Boolean(left && right && ['bookingId', 'title', 'size', 'start', 'end'].every(field => left[field] === right[field]));
+}
+
 class Birthday extends Component {
     constructor(props) {
         super(props);
@@ -35,6 +39,7 @@ class Birthday extends Component {
             saving: false,
             saveError: '',
             refreshFailures: [],
+            lastSaved: null,
             refreshing: false,
             start: null,
             end: null,
@@ -61,7 +66,7 @@ class Birthday extends Component {
         opens.setHours(6, 0, 0, 0);
         closes.setHours(20, 0, 0, 0);
         this.setState({
-            start: opens, end: closes, startTimeHours: 6, startTimeMinutes: 0,
+            lastSaved: null, start: opens, end: closes, startTimeHours: 6, startTimeMinutes: 0,
             endTimeHours: 20, endTimeMinutes: 0, showDialog: true, saveError: '',
         });
     }
@@ -70,7 +75,7 @@ class Birthday extends Component {
     handleEdit = (event) => {
         // Use the last saved booking for the check-in link while staff edit the form.
         this.setState({
-            index: event.index,
+            lastSaved: null, index: event.index,
             title: event.title ?? '',
             size: event.size ?? '',
             notes: event.notes ?? '',
@@ -126,11 +131,16 @@ class Birthday extends Component {
         this.setState({ saving: true, saveError: '' });
         try {
             if (action === 'create' && !this.draftBookingId) this.draftBookingId = newPartyBookingId();
-            const { refreshBookingIds } = await mutatePartyCalendar(this.props.firebase.calendar(), {
+            const { bookingId: savedId, refreshBookingIds } = await mutatePartyCalendar(this.props.firebase.calendar(), {
                 action, original: savedBooking, originalCalendar, index, values,
                 bookingId: action === 'create' ? this.draftBookingId : undefined,
             });
-            if (this.mounted) this.resetDialog();
+            if (this.mounted) {
+                this.resetDialog();
+                if (action !== 'remove') this.setState({ lastSaved: {
+                    bookingId: savedId, title, size, start: values.start, end: values.end,
+                } });
+            }
             for (const bookingId of refreshBookingIds) await this.refreshLinkedGroups(bookingId, uid);
         } catch (error) {
             if (this.mounted) this.setState({ saveError: error.message || 'The booking could not be saved. Reopen it and try again.' });
@@ -229,7 +239,13 @@ class Birthday extends Component {
             const events = Object.entries(rows)
                 .filter(([, row]) => row && typeof row === 'object')
                 .map(([index, row]) => ({ ...row, index, start: new Date(row.start), end: new Date(row.end) }));
-            this.setState({ events, obj: rows, loading: false });
+            this.setState(state => {
+                const current = state.lastSaved && Object.values(rows).find(row => row?.bookingId === state.lastSaved.bookingId);
+                return {
+                    events, obj: rows, loading: false,
+                    lastSaved: samePartyBooking(state.lastSaved, current) ? state.lastSaved : current || null,
+                };
+            });
         });
     }
 
@@ -273,6 +289,7 @@ class Birthday extends Component {
                                 {this.state.refreshing ? 'Refreshing…' : 'Retry group update'}
                             </button>
                         </div>}
+                        {this.state.lastSaved && <PartyBookingCheckInLink firebase={this.props.firebase} booking={this.state.lastSaved} afterSave />}
                         <div className="div-main-birthday admin-panel-card">
                             <Calendar
                                 selectable
@@ -520,7 +537,9 @@ class Birthday extends Component {
                                 </DialogTitle>
                                 <DialogContent className="content-create-birthday">
                                     {this.state.saveError && <p role="alert" className="alert alert-warning">{this.state.saveError}</p>}
-                                    {editDialog && <PartyBookingCheckInLink booking={this.state.savedBooking} />}
+                                    {editDialog && (samePartyBooking(this.state.savedBooking, this.state.obj?.[this.state.index])
+                                        ? <PartyBookingCheckInLink firebase={this.props.firebase} booking={this.state.savedBooking} />
+                                        : <p role="status">The saved party changed. Reopen it on the calendar to manage its group code.</p>)}
                                     <Row>
                                         <Col md={7}>
                                             Start Time

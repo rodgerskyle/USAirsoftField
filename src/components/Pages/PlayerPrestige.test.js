@@ -111,3 +111,38 @@ test('shows another player’s five-star rank and Roman numeral in the emblem', 
     expect.objectContaining({ credentials: 'omit' }),
   ]]);
 });
+
+
+test.each([
+  [0, 0, 'Private', 'Private First Class', 0, 125],
+  [124, 0, 'Private', 'Private First Class', 124, 125],
+  [125, 0, 'Private First Class', 'Specialist', 0, 100],
+  ['175', 0, 'Private First Class', 'Specialist', 50, 100],
+  [4499, 0, 'General', 'General Of The Army', 384, 385],
+  [4500, 0, 'General Of The Army', null, 1, 1],
+  [125, 2, 'General Of The Army', null, 1, 1],
+])('labels both ends of the profile rank bar at %s points, Prestige %s', async (points, prestige, current, next, earned, max) => {
+  global.fetch = jest.fn(url => respond(isTeamLookup(url) ? { team: null } : record(prestige, prestige ? 4500 : 0)));
+  renderProfile({ ...player, points }, false);
+  const meter = await screen.findByRole('progressbar', { name: 'Rank progress' });
+  const panel = within(meter.closest('section'));
+  expect(panel.getByText('Current rank').parentElement).toHaveTextContent(current);
+  expect(meter).toHaveAttribute('value', String(earned));
+  expect(meter).toHaveAttribute('max', String(max));
+  if (next) {
+    expect(panel.getByText('Next rank').parentElement).toHaveTextContent(next);
+    expect(panel.getByText(`${max - earned} ${max - earned === 1 ? 'point' : 'points'} to ${next}`)).toBeVisible();
+    expect(panel.getByText(Math.floor(earned / max * 100) + '% complete')).toBeVisible();
+  } else {
+    expect(panel.queryByText('Next rank')).toBeNull();
+    expect(panel.getByText('Highest rank reached')).toBeVisible();
+    if (prestige) expect(panel.getByText('Prestige ' + prestige)).toBeVisible();
+  }
+});
+
+test('rank bar reports unavailable rank data instead of showing an invented promotion target', async () => {
+  global.fetch = jest.fn(url => respond(isTeamLookup(url) ? { team: null } : record(0, 0)));
+  renderProfile({ ...player, points: 'unavailable' }, false);
+  expect(await screen.findByText('Rank progress is temporarily unavailable.')).toBeVisible();
+  expect(screen.queryByRole('progressbar', { name: 'Rank progress' })).toBeNull();
+});

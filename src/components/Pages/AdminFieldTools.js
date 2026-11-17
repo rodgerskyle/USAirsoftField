@@ -7,6 +7,7 @@ import { AuthUserContext, withAuthorization } from '../session';
 import { ADMIN } from '../constants/roles';
 import { fieldStaffPaths, requestStaffFieldTool } from '../constants/fieldStaffApi';
 import AdminFieldCheckIn from './AdminFieldCheckIn';
+import AdminFieldGroups from './AdminFieldGroups';
 import AdminFieldRounds from './AdminFieldRounds';
 import AdminFieldMembership from './AdminFieldMembership';
 import AdminFieldReports from './AdminFieldReports';
@@ -18,6 +19,7 @@ import './AdminFieldTools.css';
 
 const fieldTools = [
   { id: 'check-in', title: 'Player Check-In', path: fieldStaffPaths.checkIn, Panel: AdminFieldCheckIn },
+  { id: 'groups', title: 'Manage Groups', path: fieldStaffPaths.groups, Panel: AdminFieldGroups },
   { id: 'rounds', title: 'Round Controls', path: fieldStaffPaths.rounds, Panel: AdminFieldRounds },
   { id: 'mission-tools', title: 'Rotation & Briefings', path: fieldStaffPaths.missionTools, Panel: AdminFieldMissionTools },
   { id: 'membership', title: 'Verify Membership', path: fieldStaffPaths.membership, Panel: AdminFieldMembership },

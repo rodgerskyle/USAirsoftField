@@ -12,8 +12,8 @@ const reply = data => ({ ok: true, json: async () => data });
 const group = { id: '00000000-0000-4000-8000-000000000001', name: 'Family game day', date: '2026-12-05', code: 'abcdefgh12345678', isOwner: true, capacity: 30,
   entries: [{ id: 'owner-entry', displayName: 'Owner', isYou: true, kind: 'player' }, { id: 'guest-entry', displayName: 'New Friend', kind: 'guest', canRemove: true }] };
 
-function setup() {
-  const user = { uid: 'PlayerAccountAAA', getIdToken: jest.fn().mockResolvedValue('test-owner-token') };
+function setup(signedIn = true) {
+  const user = signedIn ? { uid: 'PlayerAccountAAA', getIdToken: jest.fn().mockResolvedValue('test-owner-token') } : null;
   let authChange;
   const firebase = { auth: { currentUser: user, onAuthStateChanged: handler => { authChange = handler; handler(user); return () => {}; } } };
   const view = render(<HelmetProvider><MemoryRouter><GroupCheckIn firebase={firebase} /></MemoryRouter></HelmetProvider>);
@@ -22,7 +22,10 @@ function setup() {
 
 beforeEach(() => {
   global.fetch = jest.fn();
-  Object.defineProperty(window, 'crypto', { configurable: true, value: { randomUUID: () => '00000000-0000-4000-8000-000000000099' } });
+  window.localStorage.clear();
+  Object.defineProperty(window, 'crypto', { configurable: true, value: {
+    randomUUID: () => '00000000-0000-4000-8000-000000000099', getRandomValues: bytes => bytes.fill(27),
+  } });
 });
 afterEach(() => {
   global.fetch = originalFetch;
@@ -49,9 +52,73 @@ test('creates an authenticated planned group, permits owner cancellation, and cl
   fireEvent.click(screen.getByRole('button', { name: 'Cancel this group' }));
   await waitFor(() => expect(screen.queryByText(group.code)).not.toBeInTheDocument());
   expect(JSON.parse(global.fetch.mock.calls[3][1].body)).toEqual({ action: 'cancel', id: group.id });
+  global.fetch.mockResolvedValueOnce(reply({ groups: [] }));
   act(() => view.authChange(null));
   expect(screen.getByRole('link', { name: 'Sign in' })).toBeInTheDocument();
   expect(screen.queryByText('New Friend')).not.toBeInTheDocument();
+});
+
+test('a signed-out organizer can create a party, return to it in the same browser and copy the share code', async () => {
+  const guestGroup = { ...group, kind: 'party', entries: [{ id: 'guest-organizer', displayName: 'Field guest', kind: 'guest', isYou: true }] };
+  const list = { groups: [{ ...guestGroup, memberCount: 1 }] };
+  global.fetch.mockResolvedValueOnce(reply({ groups: [] })).mockResolvedValueOnce(reply({ group: guestGroup }))
+    .mockResolvedValueOnce(reply(list)).mockResolvedValueOnce(reply(list)).mockResolvedValueOnce(reply({ group: guestGroup }));
+  const view = setup(false);
+  const create = screen.getByRole('button', { name: 'Create group' });
+  await waitFor(() => expect(create).toBeEnabled());
+  fireEvent.change(create.form.elements.displayName, { target: { value: 'Field guest' } });
+  fireEvent.change(create.form.elements.kind, { target: { value: 'party' } });
+  fireEvent.click(create);
+  expect(await screen.findByText(group.code)).toBeVisible();
+  expect(JSON.parse(global.fetch.mock.calls[1][1].body)).toMatchObject({ action: 'create', kind: 'party', displayName: 'Field guest' });
+  expect(screen.getByText('You')).toBeVisible();
+  expect(screen.getByRole('button', { name: 'Cancel this group' })).toBeVisible();
+  view.unmount();
+  setup(false);
+  fireEvent.click(await screen.findByRole('button', { name: /Family game day/ }));
+  expect(await screen.findByText(group.code)).toBeVisible();
+  const secret = global.fetch.mock.calls[0][1].headers.Authorization;
+  expect(secret).toMatch(/^Guest [a-f0-9]{64}$/);
+  for (const [url, opts] of global.fetch.mock.calls) {
+    expect(opts.credentials).toBe('omit');
+    expect(opts.headers.Authorization).toBe(secret);
+    expect(url + (opts.body || '')).not.toContain(secret.slice(6));
+  }
+  expect(document.body.innerHTML).not.toContain(secret.slice(6));
+  fireEvent.click(screen.getByRole('button', { name: 'Copy code' }));
+  expect(await screen.findByText('Select the invitation code to copy it.')).toBeVisible();
+});
+
+test('a guest joins with a code and a sign-in during lookup discards outstanding guest data', async () => {
+  const joined = { ...group, isOwner: false, entries: [{ id: 'self', isYou: true, kind: 'guest', displayName: 'Guest 2' }] };
+  let finishList;
+  global.fetch.mockResolvedValueOnce(reply({ groups: [] })).mockResolvedValueOnce(reply({ group: joined }))
+    .mockImplementationOnce(() => new Promise(resolve => { finishList = resolve; })).mockResolvedValueOnce(reply({ groups: [] }));
+  const view = setup(false);
+  const join = screen.getByRole('button', { name: 'Join group' });
+  await waitFor(() => expect(join).toBeEnabled());
+  fireEvent.change(join.form.elements.displayName, { target: { value: 'Guest 2' } });
+  fireEvent.change(join.form.elements.code, { target: { value: group.code } });
+  fireEvent.click(join);
+  expect(await screen.findByText(group.code)).toBeVisible();
+  expect(JSON.parse(global.fetch.mock.calls[1][1].body)).toEqual({ action: 'join', code: group.code, displayName: 'Guest 2' });
+  expect(screen.queryByRole('button', { name: 'Cancel this group' })).toBeNull();
+  act(() => view.authChange({ uid: 'Verified', getIdToken: async () => 'verified' }));
+  await act(async () => { finishList(reply({ groups: [{ ...joined, memberCount: 2 }] })); });
+  expect(screen.queryByText(group.code)).toBeNull();
+  expect(screen.queryByText('Guest 2')).toBeNull();
+  expect(screen.queryByText(group.name)).toBeNull();
+  expect(global.fetch.mock.calls.at(-1)[1].headers.Authorization).toBe('Bearer verified');
+});
+
+test('blocked browser storage allows a guest to join with temporary access', async () => {
+  jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('Storage blocked'); });
+  jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('Storage blocked'); });
+  global.fetch.mockResolvedValueOnce(reply({ groups: [] }));
+  setup(false);
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Join group' })).toBeEnabled());
+  expect(screen.getByText(/until this page is closed or reloaded/)).toBeVisible();
+  expect(global.fetch.mock.calls[0][1].headers.Authorization).toMatch(/^Guest [a-f0-9]{64}$/);
 });
 
 test('retries an uncertain group creation with the original request ID', async () => {

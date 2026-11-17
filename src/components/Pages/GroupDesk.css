@@ -1,0 +1,24 @@
+.group-desk {
+  --desk-line: var(--admin-border, var(--line, #a9b6c5));
+  --desk-surface: var(--admin-surface, var(--card, #fff));
+  --desk-emphasis: var(--admin-accent-text, var(--ink, #183358));
+  color: var(--admin-text, var(--ink, inherit));
+}
+.group-desk__layout { display: grid; grid-template-columns: minmax(17rem, 2fr) minmax(0, 3fr); gap: 1rem; align-items: start; }
+.group-desk__section { min-width: 0; border: 1px solid var(--desk-line); border-radius: 14px; padding: clamp(1rem, 2vw, 1.55rem); background: var(--desk-surface); }
+.group-desk__section h2 { margin: 0 0 .65rem; font-size: 1.45rem; overflow-wrap: anywhere; }
+.group-desk__section h3 { margin: 1.25rem 0 .5rem; font-size: 1.1rem; }
+.group-desk__form, .group-desk__code, .group-desk__actions { display: flex; flex-wrap: wrap; align-items: end; gap: .65rem; margin: .9rem 0; }
+.group-desk__form label, .group-desk__code label { display: grid; gap: .3rem; flex: 1 1 9rem; margin: 0; font-weight: 600; }
+.group-desk input, .group-desk select { min-width: 0; width: 100%; min-height: 44px; padding: .5rem .65rem; border: 1px solid var(--desk-line); border-radius: 6px; background: var(--desk-surface); color: inherit; font: inherit; }
+.group-desk [data-invite] { font-family: monospace; letter-spacing: .06em; }
+.group-desk__list, .group-desk__roster { margin: .8rem 0; padding: 0; list-style: none; }
+.group-desk__choice { display: grid; width: 100%; text-align: left; gap: .15rem; padding: .65rem .8rem; margin: .35rem 0; color: inherit; background: var(--desk-surface); border: 1px solid var(--desk-line); border-radius: 8px; overflow-wrap: anywhere; }
+.group-desk__choice[aria-pressed='true'] { border-color: var(--desk-emphasis); box-shadow: inset 3px 0 var(--desk-emphasis); }
+.group-desk__choice span, .group-desk__roster small { font-size: .85rem; display: block; }
+.group-desk__roster li { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .65rem 0; border-bottom: 1px solid var(--desk-line); overflow-wrap: anywhere; }
+.group-desk .btn { min-height: 44px; white-space: normal; }
+.group-desk__confirm { padding: .85rem; border: 1px solid var(--desk-line); border-inline-start: 3px solid #ba3444; border-radius: 8px; }
+.group-desk__confirm p { margin: .5rem 0; }
+.group-desk [role='status']:not(:empty) { border-inline-start: 3px solid var(--desk-emphasis); padding: .6rem .85rem; margin: .5rem 0 1rem; }
+@media (max-width: 760px) { .group-desk__layout { grid-template-columns: 1fr; } }

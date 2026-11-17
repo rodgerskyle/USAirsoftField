@@ -9,6 +9,7 @@ import { AuthUserContext, withAuthorization } from '../session';
 import { ADMIN, WAIVER } from '../constants/roles';
 import { getAllPlayerDisplayNames } from '../constants/playerDisplayNames';
 import { readScannedMemberCard, readScannedPlayerProfile, verifyScannedMemberCard } from '../constants/scoreCards';
+import { newScoreId } from '../constants/scoreHistory';
 import { isCurrentScoreOperation, loadPlayerScoreHistory, recordPlayerResult, voidPlayerResult } from '../constants/scoreRecording';
 import '../constants/admin.css';
 import './ScoreEntry.css';
@@ -49,15 +50,6 @@ function findMembers(members, displayNames, value) {
     return { matches: exact.length ? exact : partial };
 }
 
-function createOperationId() {
-    if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
-    const bytes = crypto.getRandomValues(new Uint8Array(16));
-    bytes[6] = (bytes[6] & 15) | 64;
-    bytes[8] = (bytes[8] & 63) | 128;
-    const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
-    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-}
-
 function retryableAttempt(attempt, now) {
     return isCurrentScoreOperation(attempt?.id, attempt?.at, now);
 }
@@ -82,7 +74,7 @@ function getPendingScore(key, now) {
             else if (pendingKey === key) attempt = saved;
         }
     } catch { /* Continue with this page's in-memory attempts. */ }
-    return attempt ?? { id: createOperationId(), at: now };
+    return attempt ?? { id: newScoreId(), at: now };
 }
 
 function savePendingScore(key, attempt) {

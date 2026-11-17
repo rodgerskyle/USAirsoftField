@@ -371,6 +371,26 @@
   overflow-wrap: anywhere;
 }
 
+.player-profile__rank-ends {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.player-profile__rank-end {
+  display: grid;
+  justify-items: start;
+  gap: 3px;
+  color: var(--usaw-text);
+  overflow-wrap: anywhere;
+}
+
+.player-profile__rank-end:last-child { justify-items: end; text-align: right; }
+.player-profile__rank-end .player-profile__label { margin: 0; }
+.player-profile__rank-cap { text-align: right; color: var(--usaw-muted); }
+
 .player-profile__progress-emblem {
   width: 52px;
   height: 52px;

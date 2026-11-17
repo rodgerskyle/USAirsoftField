@@ -1,0 +1,15 @@
+.game-ledger h2 { margin: 0 0 .6rem; }
+.game-ledger p { margin: .55rem 0; }
+.game-ledger p:empty { display: none; }
+.game-ledger [data-career] { font-weight: 650; font-variant-numeric: tabular-nums; }
+.game-ledger [data-history-note], .game-ledger [data-history-status] { font-size: .9rem; }
+.game-ledger ol { padding: 0; list-style: none; }
+.game-ledger li { display: flex; gap: .75rem; align-items: center; justify-content: space-between; padding: .7rem 0; border-bottom: 1px solid var(--line, #8499b54a); }
+.game-ledger li div { display: grid; gap: .16rem; overflow-wrap: anywhere; }
+.game-ledger li span { font-size: .9rem; }
+.game-ledger li > span { flex: none; font-variant-numeric: tabular-nums; font-weight: 650; }
+.game-ledger__win { color: #147344; }
+.game-ledger__loss { color: #b92a3d; }
+[data-bs-theme="dark"] .game-ledger__win, .night-mode .game-ledger__win { color: #8de3b3; }
+[data-bs-theme="dark"] .game-ledger__loss, .night-mode .game-ledger__loss { color: #ff9ba6; }
+.game-ledger button { min-height: 44px; }
