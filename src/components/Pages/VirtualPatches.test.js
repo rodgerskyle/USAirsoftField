@@ -7,10 +7,11 @@ import { getDownloadURL } from 'firebase/storage';
 import { FirebaseContext } from '../Firebase';
 import { AuthUserContext } from '../session';
 import {
-  getBadgeStandings, getFeaturedBadges, getFeaturedBadgeDetails, getMyBadges, getStaffBadgeCounts,
+  BADGE_CATALOG, getBadgeStandings, getFeaturedBadges, getFeaturedBadgeDetails, getMyBadges, getStaffBadgeCounts,
   getStaffBadgeGrantHistory, revokePlayerBadgeGrant, setFeaturedBadge, unlockBadgeStaff,
 } from '../constants/playerBadges';
 import { getAllPlayerDisplayNames, getPlayerDisplayNames } from '../constants/playerDisplayNames';
+import { PATCH_DIFFICULTIES } from '../constants/patchDifficulty';
 import Redirect from '../constants/redirect';
 import AdminBadgeAwards from './AdminBadgeAwards';
 import Pricing from './Pricing';
@@ -104,7 +105,19 @@ afterEach(() => { global.fetch = originalFetch; });
 test('loads only the selected patch standings and keeps the full catalog visible', async () => {
   const { container } = renderPage(<VirtualPatches />);
   const tileTitle = name => screen.getByText(name, { selector: '.virtual-patches__tile strong' });
-  expect(container.querySelectorAll('.virtual-patches__wall img')).toHaveLength(72);
+  expect(container.querySelectorAll('.virtual-patches__wall img')).toHaveLength(BADGE_CATALOG.length);
+  const difficultyFilter = screen.getByLabelText('Prestige difficulty');
+  expect(difficultyFilter).toHaveDisplayValue('All difficulty levels');
+  const walls = screen.getAllByRole('region', { name: /^Factor \d/ });
+  expect(walls).toHaveLength(PATCH_DIFFICULTIES.length);
+  PATCH_DIFFICULTIES.forEach(({ factor, name }, index) => {
+    const wall = walls[index];
+    const expected = BADGE_CATALOG.filter(patch => patch.difficultyFactor === factor);
+    expect(wall).toHaveAccessibleName(`Factor ${factor} · ${name}`);
+    expect(within(wall).getAllByRole('button')).toHaveLength(expected.length);
+    const displayedArt = [...wall.querySelectorAll('.virtual-patches__tile img')].map(img => img.getAttribute('src'));
+    expect(displayedArt).toEqual(expected.map(patch => patch.secret ? '/badges/secret-achievement.png' : patch.artUrl));
+  });
   const firstPage = await screen.findByRole('table', { name: 'All-time leaderboard' });
   expect(within(firstPage).getByRole('link', { name: user.username }))
     .toHaveAttribute('href', `/profilelookup/${playerId}`);
@@ -132,9 +145,13 @@ test('loads only the selected patch standings and keeps the full catalog visible
   expect(screen.getByRole('heading', { name: 'Power Rush' })).toHaveFocus();
   expect(getBadgeStandings).toHaveBeenLastCalledWith('power-rush', expect.objectContaining({ page: 1 }));
   expect(container.querySelector('.virtual-patches__brief img')).toHaveAttribute('src', '/badges/power-rush.png');
-  fireEvent.change(screen.getByLabelText('Prestige difficulty'), { target: { value: '2' } });
-  expect(tileTitle('Blackout Protocol').closest('button')).toHaveTextContent('Factor 2 · Specialist');
+  fireEvent.change(difficultyFilter, { target: { value: '2' } });
+  const specialistWall = screen.getByRole('region', { name: 'Factor 2 · Specialist' });
+  expect(specialistWall).toContainElement(tileTitle('Blackout Protocol'));
+  expect(screen.getAllByRole('region', { name: /^Factor \d/ })).toEqual([specialistWall]);
   expect(screen.queryByText('Countdown', { selector: '.virtual-patches__tile strong' })).not.toBeInTheDocument();
+  fireEvent.change(difficultyFilter, { target: { value: '' } });
+  expect(screen.getAllByRole('region', { name: /^Factor \d/ })).toHaveLength(PATCH_DIFFICULTIES.length);
 });
 
 test('shows the overall patch totals and ranks to signed-out players with separate pagination', async () => {
