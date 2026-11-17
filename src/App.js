@@ -10,6 +10,7 @@ import AccountPage from './components/Pages/Account';
 import ProfileSettings from './components/Pages/Profilesettings';
 import Home from './components/Pages/home'
 import PlayerHub from './components/Pages/PlayerHub';
+import LivePolls from './components/Pages/LivePolls';
 import VirtualPatches from './components/Pages/VirtualPatches';
 import Admin from './components/Pages/Admin'
 import AdminLayout, { AdminThemeRoute } from './components/constants/admindrawer';
@@ -75,6 +76,7 @@ const App = () => (
       ></Route>
       <Route exact path="/events" element={<Navigate to="/pricing" replace />} />
       <Route exact path="/schedule" element={<Schedule />} />
+      <Route path="/live-polls" element={<LivePolls />} />
       <Route path="/player-hub" element={<PlayerHub />} />
       <Route path="/virtual-patches" element={<VirtualPatches />} />
       <Route exact path="/map" element={<Map />} />

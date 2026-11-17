@@ -1,0 +1,50 @@
+name: Send USAW game-day recaps
+
+on:
+  schedule:
+    - cron: "7,22,37,52 * * * *"
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+
+jobs:
+  send-recaps:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      RECAP_URL: https://app.usairsoftfield.com/api/game-day-recap/deliver
+    steps:
+      - name: Check for completed game days
+        shell: bash
+        run: |
+          encoded_audience=$(jq -rn --arg url "$RECAP_URL" '$url | @uri')
+          token=$(curl --silent --show-error --fail --max-time 15 \
+            --proto '=https' \
+            --header "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$encoded_audience" \
+            | jq -er '.value | strings | select(length > 0)')
+          printf '::add-mask::%s\n' "$token"
+
+          delivery_url=$RECAP_URL
+          if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
+            delivery_url="$delivery_url?dryRun=1"
+          fi
+
+          for _ in {1..4}; do
+            summary=$(curl --silent --show-error --fail --max-time 65 \
+              --proto '=https' \
+              --request POST --header "Authorization: Bearer $token" "$delivery_url")
+            printf '%s\n' "$summary"
+            if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
+              jq -e '.dryRun == true' <<< "$summary" > /dev/null
+              break
+            fi
+
+            has_more=$(jq -r '.hasMore | select(type == "boolean")' <<< "$summary")
+            [[ "$has_more" == true || "$has_more" == false ]]
+            if [[ "$has_more" == false ]]; then
+              break
+            fi
+          done

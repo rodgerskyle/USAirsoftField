@@ -34,14 +34,14 @@ export function PrestigeEmblem({ count }) {
   );
 }
 
-function Requirements({ progress }) {
+export function PrestigeRequirements({ progress, title = `Prestige ${format.format(progress.nextPrestige)} requirements` }) {
   const goals = [
     { label: 'Points since your last Prestige', ...progress.points },
     ...progress.patches.map(tier => ({ label: `Factor ${tier.factor} · ${tier.name} patches`, ...tier })),
   ];
   return (
     <div className="usaw-prestige-goals">
-      <h3>Prestige {format.format(progress.nextPrestige)} requirements</h3>
+      <h3>{title}</h3>
       <ul>{goals.map(({ label, earned, required }) => (
         <li key={label}>
           <span>{label}</span>
@@ -140,7 +140,7 @@ export default function PlayerPrestige({ firebase, playerId, lifetimePoints, pre
             </p>
           )}
           {canManage && completed > 0 && (record.progress
-            ? <Requirements progress={record.progress} />
+            ? <PrestigeRequirements progress={record.progress} />
             : <p>Next Prestige requirements are temporarily unavailable.</p>)}
         </>
       ) : <p role="status">{failed ? 'Prestige information is temporarily unavailable.' : 'Loading Prestige information…'}</p>}

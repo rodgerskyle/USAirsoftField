@@ -33,6 +33,7 @@ const Redirect = ({ firebase }) => {
         if (user && user.roles[ROLES.WAIVER]) {
             const { pathname, search } = location;
             const canBrowsePatches = matchPath('/virtual-patches', pathname);
+            const canBrowsePolls = matchPath('/live-polls', pathname);
             const canBrowseLeaderboard = matchPath('/leaderboard/:view?', pathname)
                 || matchPath('/team-leaderboard', pathname)
                 || matchPath('/admin/leaderboard-tv', pathname)
@@ -41,7 +42,7 @@ const Redirect = ({ firebase }) => {
                 && new URLSearchParams(search).get('section') === 'membership';
             if (user.roles[ROLES.STATIC] && !staticlocations.includes(location.pathname)) {
                 navigate("/dashboard/waiverform");
-            } else if (!waiverlocations.includes(pathname) && !canBrowsePatches && !canBrowseLeaderboard && !canViewMembership) {
+            } else if (!waiverlocations.includes(pathname) && !canBrowsePatches && !canBrowsePolls && !canBrowseLeaderboard && !canViewMembership) {
                 navigate("/dashboard");
             }
         }

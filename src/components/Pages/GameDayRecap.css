@@ -1,0 +1,208 @@
+.game-recap,
+.game-recap-preference {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  padding: clamp(16px, 3vw, 25px);
+  border: 1px solid var(--usaw-line);
+  border-radius: 13px;
+  background: var(--usaw-surface);
+  color: var(--usaw-text);
+}
+
+.game-recap-preference {
+  gap: 10px;
+  margin-block: 14px;
+  color: #eef4fb;
+  background: #172330;
+  border-color: #41546c;
+}
+
+.game-recap h2,
+.game-recap-preference h2 {
+  margin: 0;
+  font-size: clamp(1.15rem, 3vw, 1.65rem);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.game-recap-preference h2 { font-size: 1.1rem; }
+
+.game-recap p,
+.game-recap-preference p {
+  margin: 0;
+  color: var(--usaw-muted);
+}
+
+.game-recap-preference p { color: #c5d0dd; }
+
+.game-recap-header,
+.game-recap-controls,
+.game-recap-next,
+.game-recap-date {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.game-recap-header,
+.game-recap-next { justify-content: space-between; }
+
+.game-recap-header p,
+.game-recap-next p { margin-top: 5px; }
+
+.game-recap-controls { align-items: flex-end; }
+
+.game-recap-controls label {
+  display: grid;
+  gap: 3px;
+  font-weight: 700;
+  font-size: .84rem;
+}
+
+.game-recap-controls select {
+  min-height: 44px;
+  max-width: 100%;
+  padding: 6px 28px 6px 9px;
+  border: 1px solid var(--usaw-line);
+  border-radius: 8px;
+  color: var(--usaw-text);
+  background: var(--usaw-raised);
+}
+
+.game-recap button:disabled { opacity: .72; cursor: wait; }
+
+.game-recap-details { display: grid; gap: 12px; }
+
+.game-recap-date { font-weight: 800; }
+
+.game-recap-date span {
+  padding: 3px 9px;
+  border-radius: 5px;
+  background: var(--usaw-raised);
+  color: var(--usaw-muted);
+  font-size: .78rem;
+}
+
+.game-recap-score {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
+}
+
+.game-recap-score > div,
+.game-recap-patches,
+.game-recap-details .usaw-prestige-goals {
+  min-width: 0;
+  padding: clamp(9px, 2vw, 14px);
+  border: 1px solid var(--usaw-line);
+  border-radius: 9px;
+  background: var(--usaw-raised);
+}
+
+.game-recap-score dt { color: var(--usaw-muted); font-size: .81rem; }
+
+.game-recap-score dd {
+  margin: 0;
+  font-size: clamp(1.2rem, 3vw, 1.6rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.game-recap-wins dd { color: #166433; }
+.game-recap-losses dd, .game-recap p.game-recap-error { color: #aa2132; }
+[data-bs-theme="dark"] .game-recap-wins dd { color: #9be5ae; }
+[data-bs-theme="dark"] .game-recap-losses dd,
+[data-bs-theme="dark"] .game-recap p.game-recap-error,
+.game-recap-preference p.game-recap-error { color: #ffadb7; }
+
+.game-recap-highlights { display: grid; gap: 8px; }
+.game-recap-details .usaw-prestige-goals { margin: 0; }
+.game-recap-details .usaw-prestige-goals p { margin-top: 8px; }
+
+.game-recap-patches h3,
+.game-recap-next h3 { margin: 0; font-size: 1rem; font-weight: 800; }
+
+.game-recap-patches p { margin-top: 8px; }
+
+.game-recap-patches ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 165px), 1fr));
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.game-recap-patches li {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  font-size: .88rem;
+  overflow-wrap: anywhere;
+}
+
+.game-recap-patches img { flex: none; object-fit: contain; }
+.game-recap-patches strong { font-variant-numeric: tabular-nums; }
+
+.game-recap-next {
+  padding-top: 12px;
+  border-top: 1px solid var(--usaw-line);
+}
+
+.game-recap-link {
+  color: var(--usaw-accent);
+  text-decoration: underline;
+  text-underline-offset: .18em;
+  font-weight: 750;
+}
+
+.game-recap-preference .game-recap-link { color: #b4d3f7; }
+.game-recap-preference > a,
+.game-recap-preference > button { justify-self: start; }
+
+.game-recap-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  width: fit-content;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.game-recap-switch input {
+  appearance: none;
+  display: inline-grid;
+  place-items: center start;
+  flex: none;
+  margin: 0;
+  width: 44px;
+  height: 26px;
+  padding-inline: 4px;
+  border: 1px solid #a2b8ce;
+  border-radius: 999px;
+  background: #263a4e;
+  cursor: inherit;
+}
+
+.game-recap-switch input::before {
+  width: 16px;
+  height: 16px;
+  border-radius: 100%;
+  background: #fff;
+  content: "";
+}
+
+.game-recap-switch input:checked { place-items: center end; background: #1b5d99; }
+.game-recap-switch input:disabled { opacity: .72; cursor: wait; }
+.game-recap-preference :focus-visible { outline: 3px solid #b4d3f7; outline-offset: 3px; }
+
+@media (min-width: 720px) {
+  .game-recap-highlights:has(.usaw-prestige-goals) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

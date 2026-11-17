@@ -20,6 +20,7 @@ const VISIT_LINKS = [
 ];
 
 const PLAY_LINKS = [
+    ['/live-polls', 'Live polls'],
     ['/information/rules', 'Field rules'],
     ['/information/gametypes', 'Game modes'],
     ['/leaderboard', 'Leaderboard'],
@@ -168,6 +169,7 @@ function NavigationLayout({ authUser, profilePic }) {
                             <SiteLink className="usaw-nav__control" to="/dashboard">Dashboard</SiteLink>
                             {!waiverKiosk && (
                                 <>
+                                    <SiteLink className="usaw-nav__control" to="/live-polls">Live polls</SiteLink>
                                     <SiteLink className="usaw-nav__control" to="/leaderboard">Leaderboard</SiteLink>
                                     <SiteLink className="usaw-nav__control" to="/virtual-patches">Virtual Patches</SiteLink>
                                 </>
@@ -224,6 +226,7 @@ function NavigationLayout({ authUser, profilePic }) {
                     <div className="usaw-nav__shell usaw-nav__drawer-content">
                         {waiverOnly && (
                             <ul className="usaw-nav__links usaw-nav__quick">
+                                <li><SiteLink to="/live-polls" onClick={close}>Live polls</SiteLink></li>
                                 <li><SiteLink to="/leaderboard" onClick={close}>Leaderboard</SiteLink></li>
                                 <li><SiteLink to="/virtual-patches" onClick={close}>Virtual Patches</SiteLink></li>
                             </ul>
