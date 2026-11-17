@@ -1,6 +1,7 @@
 const companionOrigin = 'https://app.usairsoftfield.com';
 export const fieldStaffPaths = Object.freeze({
   checkIn: '/admin/field/check-in',
+  groups: '/admin/field/groups',
   rounds: '/admin/field/rounds',
   missionTools: '/admin/field/mission-tools',
   membership: '/admin/field/membership',
@@ -19,6 +20,8 @@ const staffEndpoints = new Set([
   '/api/player-feedback',
   '/api/field-mission-tools',
   '/api/check-in-groups',
+  '/api/staff-groups',
+  '/api/party-check-in',
 ]);
 
 export class FieldStaffError extends Error {
@@ -72,7 +75,7 @@ export async function requestStaffFieldTool(firebase, uid, path, { method = 'GET
     method,
     headers,
     body: body === undefined ? undefined : JSON.stringify(body),
-    credentials: 'include',
+    credentials: endpoint.pathname === '/api/party-check-in' ? 'omit' : 'include',
     cache: 'no-store',
     redirect: 'error',
     signal,
