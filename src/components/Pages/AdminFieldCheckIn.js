@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { readScannedMemberCard } from '../constants/scoreCards';
 import { StaffCardScanner } from './StaffCardScanner';
+import StaffGroupLookup from './StaffGroupLookup';
 import './AdminFieldCheckIn.css';
 
 const path = '/api/game-day-check-in';
@@ -297,7 +298,7 @@ export default function AdminFieldCheckIn({ request }) {
     }
   }
 
-  function lookup(input, guest = false) {
+  function lookup(input, guest = false, expectedGroupDate) {
     if (clearConfirmation) return;
     void run(async signal => {
       setSelected(null);
@@ -309,6 +310,7 @@ export default function AdminFieldCheckIn({ request }) {
           body: guest ? { action: 'guestPreview', ...input } : { action: 'lookup', includeBalance: true, ...input },
         });
         if (signal.aborted) return;
+        if (expectedGroupDate && data.date !== expectedGroupDate) throw new Error('The field day changed. Find the group again before checking in.');
         if (data.counts && data.balance) setBoard(current => putResult(current, data));
         if (data.player) {
           setSelected({ date: data.date, rosterVersion: data.rosterVersion, player: data.player });
@@ -475,6 +477,7 @@ export default function AdminFieldCheckIn({ request }) {
               <button className="btn btn-outline-primary" type="submit" disabled={checkInLocked}>Continue</button>
             </form>
           </details>
+          <StaffGroupLookup request={request} onSelect={lookup} disabled={checkInLocked} />
           {status && <p className="admin-checkin__status" role="status">{status}</p>}
           {error && <p className="alert alert-danger" role="alert">{error}</p>}
           {matches.length > 0 && <PlayerRows players={matches} onSelect={lookup} disabled={checkInLocked} />}

@@ -1,5 +1,8 @@
 import { get, runTransaction } from 'firebase/database';
 import { WAIVER } from './roles';
+import rankThresholds from './rankincrements';
+import rankNames from './ranks';
+import { scoreRankMilestones } from './scoreRankMilestones';
 
 const POINTS_PER_FREE_GAME = 450;
 const playerIdPattern = /^[A-Za-z0-9_-]{1,128}$/;
@@ -166,8 +169,10 @@ async function transactScore(firebase, uid, change, now) {
                 : Number(nextPoints % POINTS_PER_FREE_GAME < points % POINTS_PER_FREE_GAME);
             const freeGames = scoreValue(player.freegames) + freeGamesChange;
 
+            const rankMilestones = scoreRankMilestones(player.rankMilestones, points, nextPoints, operationAt, rankThresholds, rankNames);
             return {
                 ...player,
+                ...(Object.keys(rankMilestones).length || player.rankMilestones !== undefined ? { rankMilestones } : {}),
                 ...operationFields,
                 points: nextPoints,
                 [counter]: careerCount + delta,

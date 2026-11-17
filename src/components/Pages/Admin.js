@@ -27,6 +27,7 @@ const ACTION_GROUPS = [
     actions: [
       { title: 'Player Check-In', path: fieldStaffPaths.checkIn, icon: faPeopleGroup, primary: true },
       { title: 'Round Controls', path: fieldStaffPaths.rounds, icon: faStopwatch },
+      { title: 'Rotation & Briefings', path: fieldStaffPaths.missionTools, icon: faClipboardList },
       { title: 'Field Game Days', path: '/schedule', icon: faCalendarDays, primary: true },
       { title: 'Enter Wins', path: '/admin/enterwins', icon: faTrophy },
       { title: 'Enter Losses', path: '/admin/enterlosses', icon: faTimesCircle },

@@ -1,0 +1,209 @@
+.field-mission {
+  display:grid;
+  grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);
+  gap:22px;
+  align-items:start;
+}
+.field-mission__panel {
+  min-width:0;
+}
+.field-mission__panel>p,.field-mission__preview>p {
+  font-size:.86rem;
+  line-height:1.7;
+  color:var(--admin-subtext,#627084);
+}
+.field-mission form>fieldset {
+  padding:0;
+  border:0;
+  min-width:0;
+}
+.field-mission label {
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  font-size:.8rem;
+  font-weight:600;
+  margin-bottom:15px;
+}
+.field-mission input:not([type=checkbox]),.field-mission select,.field-mission textarea {
+  background:var(--admin-surface,#fff);
+  color:var(--admin-text,#16263a);
+  border:1px solid var(--admin-border,#ccd5e0);
+  border-radius:7px;
+  padding:10px;
+  min-width:0;
+  max-width:100%;
+  font-size:.85rem;
+}
+.field-mission textarea {
+  resize:vertical;
+}
+.field-mission__fields {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:0 14px;
+}
+.field-mission .field-mission__modes {
+  border:1px solid var(--admin-border,#ccd5e0);
+  padding:12px;
+  border-radius:9px;
+  margin:0 0 20px;
+}
+.field-mission__modes legend {
+  font-size:.85rem;
+  font-weight:700;
+  padding:0 5px;
+  width:auto;
+  float:none;
+}
+.field-mission__modes>div {
+  max-height:210px;
+  overflow:auto;
+}
+.field-mission__modes label {
+  flex-direction:row;
+  align-items:center;
+  gap:9px;
+  font-size:.78rem;
+  padding:7px;
+  margin:0;
+}
+.field-mission__modes input {
+  width:16px;
+  height:16px;
+  flex:none;
+}
+.field-mission__modes small {
+  margin-left:auto;
+  font-weight:400;
+  font-size:.68rem;
+  color:var(--admin-subtext,#627084);
+}
+.field-mission__preview {
+  border-top:1px solid var(--admin-border,#ccd5e0);
+  margin-top:25px;
+  padding-top:22px;
+}
+.field-mission__preview h3 {
+  font-size:1.2rem;
+}
+.field-mission__preview ol {
+  list-style:none;
+  padding:0;
+  margin:18px 0;
+}
+.field-mission__preview li {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px 0;
+  border-bottom:1px solid var(--admin-border,#ccd5e0);
+}
+.field-mission__time {
+  font-size:.76rem;
+  min-width:110px;
+  line-height:1.6;
+}
+.field-mission__time span {
+  display:block;
+  color:var(--admin-subtext,#627084);
+}
+.field-mission__preview label {
+  flex:1;
+  min-width:0;
+  margin:0;
+}
+.field-mission__move {
+  display:flex;
+  gap:4px;
+}
+.field-mission__move button {
+  padding:6px 10px;
+}
+.field-mission__notice {
+  grid-column:1/-1;
+  font-size:.86rem;
+  line-height:1.8;
+}
+.field-mission__print {
+  border-top:1px solid var(--admin-border,#ccd5e0);
+  margin:25px 0 15px;
+  padding-top:22px;
+  line-height:1.8;
+  font-size:.9rem;
+}
+.field-mission__print p {
+  white-space:pre-wrap;
+}
+.field-mission__print h3 {
+  font-size:1.6rem;
+}
+.field-mission__print h4 {
+  font-size:.85rem;
+  text-transform:uppercase;
+  font-weight:700;
+  margin-top:20px;
+}
+.field-mission__print dl {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:15px;
+}
+.field-mission__print dt {
+  font-size:.75rem;
+}
+.field-mission__missing {
+  background:#b67d1c15;
+  border:1px solid #b67d1c55;
+  border-radius:8px;
+  padding:12px;
+}
+.field-mission button:disabled {
+  opacity:.55;
+}
+@media(max-width:1150px) {
+  .field-mission {
+    grid-template-columns:1fr;
+  }
+}
+@media(max-width:550px) {
+  .field-mission__fields {
+    grid-template-columns:1fr;
+  }
+  .field-mission__modes small {
+    display:none;
+  }
+  .field-mission__preview li {
+    flex-wrap:wrap;
+  }
+  .field-mission__time {
+    width:100%;
+  }
+}
+@media print {
+  body:has(.field-mission--printing) * {
+    visibility:hidden;
+  }
+  body:has(.field-mission--printing) .field-mission__print,body:has(.field-mission--printing) .field-mission__print * {
+    visibility:visible;
+  }
+  body:has(.field-mission--printing) .field-mission__print {
+    position:absolute;
+    inset:0;
+    padding:25px;
+    background:white;
+    color:black;
+    border:0;
+  }
+}
+.field-mission__feedback {
+  padding:13px;
+  border:1px solid var(--admin-border);
+  border-radius:8px;
+  margin-bottom:20px;
+  font-size:.8rem;
+}
+.field-mission__feedback p {
+  margin:6px 0 0;
+  line-height:1.7;
+}

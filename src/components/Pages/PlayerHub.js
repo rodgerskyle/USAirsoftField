@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import PlayerHubAccount from './PlayerHubAccount';
+import PlayerHubInstall from './PlayerHubInstall';
 import './PlayerHub.css';
 
 const STORAGE_KEY = 'usaw-player-hub-v1';
@@ -18,6 +19,8 @@ const FIELD_LINKS = [
   { to: '/information/gametypes', icon: 'flag', title: 'Game modes', copy: 'Learn the objectives for each game.' },
   { to: '/leaderboard', icon: 'trophy', title: 'Leaderboard', copy: 'Look up official player standings.' },
   { to: '/team-leaderboard', icon: 'trophy', title: 'Team leaderboard', copy: 'See casual and competitive team standings.' },
+  { to: '/player-comparison', icon: 'trophy', title: 'Compare players', copy: 'Compare points, results, patches, and Prestige.' },
+  { to: '/group-check-in', icon: 'team', title: 'Group check-in', copy: 'Prepare your family or friends for arrival together.' },
   { to: '/teams', icon: 'team', title: 'Teams', copy: 'Explore the USAW team directory.' },
   { to: '/virtual-patches', icon: 'patch', title: 'Virtual Patches', copy: 'Explore earnable patches and their all-time standings.' },
   { to: '/suggestions', icon: 'flag', title: 'Suggestion box', copy: 'Share an anonymous idea with the field crew.' },
@@ -304,14 +307,14 @@ export default function PlayerHub() {
         <meta name="description" content="Plan your USAW game day, find official field information, and build a packing checklist." />
       </Helmet>
       <header className="ph-hero">
-        <div className="ph-wrap ph-hero-inner">
+        <div className="ph-wrap ph-hero-layout"><div className="ph-hero-inner">
           <p className="ph-kicker">US Airsoft World <span>·</span> Anderson, CA</p>
           <h1>Player Hub</h1>
-          <p className="ph-hero-copy">Plan your next visit and pack your kit for game day.</p>
+          <p className="ph-hero-copy">Your player account, your squad, and your next game day.</p>
           <div className="ph-actions">
-            <button className="ph-button ph-button-primary" type="button" onClick={focusLoadouts}>Pack your kit <Icon name="arrow" size={18} /></button>
+            <button className="ph-button ph-button-secondary" type="button" onClick={focusLoadouts}>Pack your kit <Icon name="arrow" size={18} /></button>
           </div>
-        </div>
+        </div><PlayerHubInstall /></div>
       </header>
       <div className="ph-wrap ph-content">
         <PlayerHubAccount />

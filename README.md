@@ -1,5 +1,15 @@
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## USAW player and staff tools
+
+Player Hub headlines installation of the Field Companion. Its QR image at `public/assets/usaw-companion-install-qr.png` targets `https://app.usairsoftfield.com/#install`.
+
+The public comparison and milestone pages use the Companion's restricted player projections. Group check-in uses the verified account to prepare a private arrival list. Staff find groups through the existing check-in page and verify each player individually. Rotation planning and the briefing builder are native panels inside the unlocked staff field tools, using `/api/field-mission-tools`.
+
+The illustrated rules retain all published sections. `src/components/Pages/RulesClassic.js` preserves the previous rules component byte for byte, with its original rule styles in `RulesClassic.backup.css`. The previous presentation remains accessible at `/information/rules/classic`.
+
+New rank promotion dates are recorded by the existing score transaction in `rankMilestones`. Earlier promotion dates may be absent. The website and Companion use matching promotion helpers, and score corrections remove a recorded promotion when its point threshold is no longer met.
+
 ## Available Scripts
 
 In the project directory, you can run with:

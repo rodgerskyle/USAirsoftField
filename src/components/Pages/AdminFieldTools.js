@@ -11,6 +11,7 @@ import AdminFieldRounds from './AdminFieldRounds';
 import AdminFieldMembership from './AdminFieldMembership';
 import AdminFieldReports from './AdminFieldReports';
 import AdminFieldFeedback from './AdminFieldFeedback';
+import AdminFieldMissionTools from './AdminFieldMissionTools';
 import '../constants/admin.css';
 import './AdminDashboard.css';
 import './AdminFieldTools.css';
@@ -18,6 +19,7 @@ import './AdminFieldTools.css';
 const fieldTools = [
   { id: 'check-in', title: 'Player Check-In', path: fieldStaffPaths.checkIn, Panel: AdminFieldCheckIn },
   { id: 'rounds', title: 'Round Controls', path: fieldStaffPaths.rounds, Panel: AdminFieldRounds },
+  { id: 'mission-tools', title: 'Rotation & Briefings', path: fieldStaffPaths.missionTools, Panel: AdminFieldMissionTools },
   { id: 'membership', title: 'Verify Membership', path: fieldStaffPaths.membership, Panel: AdminFieldMembership },
   { id: 'reports', title: 'Team Reports', path: fieldStaffPaths.reports, Panel: AdminFieldReports },
   { id: 'feedback', title: 'Player Feedback', path: fieldStaffPaths.feedback, Panel: AdminFieldFeedback },

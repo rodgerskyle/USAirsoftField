@@ -35,6 +35,11 @@ const Redirect = ({ firebase }) => {
             const canBrowsePatches = matchPath('/virtual-patches', pathname);
             const canBrowsePolls = matchPath('/live-polls', pathname);
             const canSendSuggestions = matchPath('/suggestions', pathname);
+            const canUsePlayerTools = matchPath('/player-hub', pathname)
+                || matchPath('/player-comparison', pathname)
+                || matchPath('/player-milestones/:id', pathname)
+                || matchPath('/group-check-in', pathname)
+                || matchPath('/information/rules/*', pathname);
             const canBrowseLeaderboard = matchPath('/leaderboard/:view?', pathname)
                 || matchPath('/team-leaderboard', pathname)
                 || matchPath('/admin/leaderboard-tv', pathname)
@@ -43,7 +48,7 @@ const Redirect = ({ firebase }) => {
                 && new URLSearchParams(search).get('section') === 'membership';
             if (user.roles[ROLES.STATIC] && !staticlocations.includes(location.pathname)) {
                 navigate("/dashboard/waiverform");
-            } else if (!waiverlocations.includes(pathname) && !canBrowsePatches && !canBrowsePolls && !canSendSuggestions && !canBrowseLeaderboard && !canViewMembership) {
+            } else if (!waiverlocations.includes(pathname) && !canBrowsePatches && !canBrowsePolls && !canSendSuggestions && !canUsePlayerTools && !canBrowseLeaderboard && !canViewMembership) {
                 navigate("/dashboard");
             }
         }

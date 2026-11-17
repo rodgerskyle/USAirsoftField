@@ -1,5 +1,8 @@
 import { runTransaction } from 'firebase/database';
-import { recordPlayerResult } from './scoreRecording';
+import { recordPlayerResult, voidPlayerResult } from './scoreRecording';
+import { scoreRankMilestones } from './scoreRankMilestones';
+import rankThresholds from './rankincrements';
+import rankNames from './ranks';
 
 jest.mock('firebase/database', () => ({ runTransaction: jest.fn() }));
 
@@ -8,7 +11,7 @@ const firebase = { user: jest.fn(() => 'memberRef') };
 const scoringTime = new Date('2026-12-01T07:59:59Z');
 
 function transactionResult(value, committed = true) {
-    return { committed, snapshot: { exists: () => value != null } };
+    return { committed, snapshot: { exists: () => value != null, val: () => value } };
 }
 
 beforeEach(() => {
@@ -33,6 +36,7 @@ test('uses the latest score on retry and keeps history, rewards and unrelated me
         expect(first.points).toBe(451);
         expect(retry).toEqual({
             ...concurrentUpdate, points: 454, wins: 13, freegames: 4,
+            rankMilestones: { 'rank-5': { at: scoringTime.getTime(), rankLevel: 5, rankName: 'Sergeant' } },
             games: { '2026-10-29': previousDay, '2026-10-30': { wins: 2, losses: 4 } },
         });
         expect(player.games['2026-10-30']).toEqual({ wins: 1, losses: 3 });
@@ -50,6 +54,7 @@ test('records a loss using legacy numeric values and initializes missing history
         const saved = update({ name: 'Member', points: '447', wins: 2, freegames: '2', games: null });
         expect(saved).toEqual({
             name: 'Member', points: 450, wins: 2, losses: 1, freegames: 3,
+            rankMilestones: { 'rank-5': { at: Date.parse('2026-12-01T08:00:00Z'), rankLevel: 5, rankName: 'Sergeant' } },
             games: { '2026-11-1': { wins: 0, losses: 1 } },
         });
         return transactionResult(saved);
@@ -116,6 +121,7 @@ test('records a scan once across retries while preserving the original Pacific d
         expect(stored).toEqual({
             ...original,
             points: 455,
+            rankMilestones: { 'rank-5': { at: scoringTime.getTime(), rankLevel: 5, rankName: 'Sergeant' } },
             wins: 1,
             freegames: 1,
             games: { '2026-10-30': { wins: 1, losses: 0 } },
@@ -139,4 +145,36 @@ test('records a scan once across retries while preserving the original Pacific d
     } finally {
         clock.mockRestore();
     }
+});
+
+
+test('a correction clears an invalid promotion and a later crossing records its actual operation time', async () => {
+    const at = scoringTime.getTime();
+    const clock = jest.spyOn(Date, 'now').mockReturnValue(at + 5000);
+    let player = { username: 'Member', points: 115, wins: 0, losses: 0, freegames: 0 };
+    runTransaction.mockImplementation(async (_reference, update) => {
+        player = update(player);
+        return transactionResult(player);
+    });
+    try {
+        await recordPlayerResult(firebase, playerId, 'win', new Date(at), '114131bd-6b4a-452a-89b7-27711170277a');
+        expect(player.rankMilestones).toEqual({ 'rank-2': { at, rankLevel: 2, rankName: 'Private First Class' } });
+        await voidPlayerResult(firebase, playerId, { day: '2026-10-30', result: 'win', expectedCount: 1,
+            operationId: '214131bd-6b4a-452a-89b7-27711170277a', operationAt: at + 1000 });
+        expect(player.points).toBe(115);
+        expect(player.rankMilestones).toEqual({});
+        await recordPlayerResult(firebase, playerId, 'win', new Date(at + 2000), '314131bd-6b4a-452a-89b7-27711170277a');
+        expect(player.rankMilestones['rank-2'].at).toBe(at + 2000);
+        expect(player.points).toBe(125);
+        expect(player.wins).toBe(1);
+    } finally { clock.mockRestore(); }
+});
+
+test('legacy numeric milestone arrays are preserved as stable Firebase map keys', () => {
+    const legacy = [];
+    legacy[2] = { at: 1000, rankLevel: 2, rankName: 'Private First Class' };
+    legacy[3] = { at: 2000, rankLevel: 3, rankName: 'Specialist' };
+    const result = scoreRankMilestones(legacy, 225, 235, 3000, rankThresholds, rankNames);
+    expect(result).toEqual({ 'rank-2': legacy[2], 'rank-3': legacy[3] });
+    expect(legacy[2].at).toBe(1000);
 });

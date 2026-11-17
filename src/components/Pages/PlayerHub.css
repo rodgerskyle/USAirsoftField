@@ -40,6 +40,92 @@
   padding-block: 54px;
 }
 
+.ph-hero-layout {
+  display: grid;
+  align-items: center;
+  gap: 0 32px;
+  padding-bottom: 30px;
+}
+
+.ph-install {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 22px;
+  padding: clamp(20px, 3vw, 30px);
+  border: 1px solid #8caacc70;
+  border-radius: 18px;
+  color: #fff;
+  background: linear-gradient(135deg, #173a5bf2, #091d31f5);
+  box-shadow: 0 16px 44px #020a1845;
+}
+
+.ph-install-logo {
+  display: block;
+  object-fit: contain;
+  margin-bottom: 14px;
+}
+
+.ph-install h2 {
+  margin: 0 0 12px;
+  font-size: clamp(1.55rem, 2.8vw, 2.2rem);
+  line-height: 1.05;
+  letter-spacing: -.035em;
+}
+
+.ph-install p {
+  color: #dae6f4;
+  font-size: .91rem;
+  line-height: 1.55;
+  margin: 0 0 18px;
+}
+
+.ph-install .ph-install-help {
+  margin: 14px 0 0;
+  font-size: .75rem;
+  line-height: 1.65;
+  color: #b7cbe1;
+}
+
+.ph-install-qr {
+  width: 166px;
+  margin: 0;
+  padding: 8px 8px 10px;
+  border-radius: 12px;
+  background: #fff;
+  color: #15283c;
+  text-align: center;
+}
+
+.ph-install-qr a,
+.ph-install-qr img {
+  display: block;
+  width: 150px;
+  height: 150px;
+}
+
+.ph-install-qr figcaption {
+  padding-inline: 2px;
+  font-size: .7rem;
+  line-height: 1.4;
+  font-weight: 650;
+}
+
+@media (min-width: 1050px) {
+  .ph-hero-layout {
+    grid-template-columns: minmax(0, .75fr) minmax(0, 1.25fr);
+    padding-block: 30px;
+  }
+
+  .ph-hero-layout .ph-hero-inner { padding-block: 30px; }
+}
+
+@media (max-width: 540px) {
+  .ph-install { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+  .ph-install-qr { justify-self: start; }
+  .ph-hero-layout .ph-hero-inner { min-height: 270px; padding-block: 35px; }
+}
+
 .player-hub .ph-kicker {
   color: var(--ph-blue);
   font-size: .72rem;
