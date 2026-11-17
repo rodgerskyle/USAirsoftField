@@ -3,6 +3,7 @@ import {
     fieldTimeInput, fieldTimeISO, formatFieldTime, formatRoundCountdown, isOpenVote, liveRounds,
     LIVE_ROUNDS_PATH, ROUND_CATALOG_PATH, RoundRespawns, useLiveFieldBoard,
 } from './FieldRoundsShared';
+import { FieldPinPicker, readMapPins, roundPinLocation } from './FieldRoundMap';
 import './FieldRounds.css';
 
 const defaultVoteModes = ['countdown', 'three-flag', 'downed-pilot'];
@@ -11,7 +12,7 @@ const actions = {
     delayRound: 'Round delayed by five minutes.',
     endRound: 'Round ended.',
     cancelGame: 'Round removed from the schedule.',
-    updateSpawns: 'Respawn locations updated.',
+    updateSpawns: 'Round locations updated.',
     createGame: 'Round added to the field schedule.',
     createPoll: 'Player voting is open.',
     closePoll: 'Voting closed.',
@@ -51,17 +52,20 @@ function RoundForm({ catalog, poll, now, disabled, onSave }) {
     const defaultMode = winners ? winners[0]?.modeId : catalog.sections.flatMap(section => section.modes)
         .find(mode => mode.id === 'countdown')?.id;
     const [error, setError] = useState('');
+    const [mapPins, setMapPins] = useState({});
     async function submit(event) {
         event.preventDefault();
         const form = event.currentTarget;
         try {
             const values = roundFormData(form);
+            if (Object.keys(mapPins).length) values.mapPins = mapPins;
             setError('');
             const saved = await onSave(poll
                 ? { ...values, action: 'publishWinner', pollId: poll.id }
                 : { ...values, action: 'createGame' });
             if (saved && !poll) {
                 form.reset();
+                setMapPins({});
                 form.elements.startsAt.value = fieldTimeInput(now + 15 * 60000);
             }
         } catch (failure) {
@@ -88,6 +92,10 @@ function RoundForm({ catalog, poll, now, disabled, onSave }) {
                     <label>Briefing location<input name="briefingLocation" maxLength={80} placeholder="e.g. Barracks" /></label>
                 </div>
                 <SpawnInputs />
+                <details>
+                    <summary>Place map pins</summary>
+                    <FieldPinPicker pins={mapPins} onChange={setMapPins} />
+                </details>
                 <label>Briefing notes<textarea name="notes" rows={2} maxLength={300} placeholder="Objective details or gear reminders" /></label>
                 <label className="field-rounds-option"><input type="checkbox" name="staffControlled" defaultChecked /> Wait for staff to start the round</label>
                 <button className="btn btn-primary" type="submit">{poll ? 'Publish winning round' : 'Add to field schedule'}</button>
@@ -161,19 +169,44 @@ function PollForm({ catalog, now, disabled, onSave }) {
     );
 }
 
+function EditRoundLocations({ round, disabled, onSave }) {
+    const [pins, setPins] = useState(() => readMapPins(round.mapPins));
+    const [edited, setEdited] = useState(false);
+    function submit(event) {
+        event.preventDefault();
+        if (disabled) return;
+        const data = new FormData(event.currentTarget);
+        void onSave({
+            action: 'updateSpawns', gameId: round.id, revision: round.revision,
+            briefingLocation: formText(data, 'briefingLocation'),
+            camoSpawn: formText(data, 'camoSpawn'), solidSpawn: formText(data, 'solidSpawn'),
+            ...(edited && { mapPins: pins }),
+        });
+    }
+
+    return (
+        <details>
+            <summary>Edit round locations</summary>
+            <form className="field-rounds-form" onSubmit={submit}>
+                <fieldset disabled={disabled}>
+                    <label>Briefing location<input name="briefingLocation" defaultValue={round.briefingLocation} maxLength={80} /></label>
+                    <SpawnInputs round={round} />
+                    <details>
+                        <summary>Place map pins</summary>
+                        <FieldPinPicker pins={pins} onChange={next => { setPins(next); setEdited(true); }} />
+                    </details>
+                    <button className="btn btn-outline-secondary" type="submit">Save round locations</button>
+                </fieldset>
+            </form>
+        </details>
+    );
+}
+
 function RoundCard({ round, live, hasCurrentRound, now, disabled, onSave }) {
     function change(action) {
         const prompt = { endRound: 'End this round now?', cancelGame: 'Remove this round from the schedule?' }[action];
         if (prompt && !window.confirm(prompt)) return;
         void onSave({ action, gameId: round.id, revision: round.revision });
-    }
-    function saveSpawns(event) {
-        event.preventDefault();
-        const data = new FormData(event.currentTarget);
-        void onSave({
-            action: 'updateSpawns', gameId: round.id, revision: round.revision,
-            camoSpawn: formText(data, 'camoSpawn'), solidSpawn: formText(data, 'solidSpawn'),
-        });
     }
     const kind = live ? 'In play' : round.status === 'delayed' ? 'Delayed'
         : round.status === 'scheduled' ? 'Automatic start' : 'Staff start';
@@ -185,7 +218,7 @@ function RoundCard({ round, live, hasCurrentRound, now, disabled, onSave }) {
                 <div>
                     <h3>{round.title || 'Field round'}</h3>
                     <p>{kind} · {formatFieldTime(round.startsAt)} · {roundMinutes} min</p>
-                    <p>{round.location || 'Main field'} · Briefing at {round.briefingLocation || round.location || 'the field'}</p>
+                    <p>{round.location || 'Main field'} · Briefing · {roundPinLocation(round, 'briefing')}</p>
                     {round.notes && <p>{round.notes}</p>}
                 </div>
                 {live && <span className="field-rounds-countdown" role="timer" aria-label="Round time remaining">
@@ -201,15 +234,7 @@ function RoundCard({ round, live, hasCurrentRound, now, disabled, onSave }) {
                         <button className="btn btn-outline-danger" type="button" disabled={disabled} onClick={() => change('cancelGame')}>Cancel round</button>
                     </>}
             </div>
-            <details>
-                <summary>Edit respawns</summary>
-                <form className="field-rounds-form" onSubmit={saveSpawns}>
-                    <fieldset disabled={disabled}>
-                        <SpawnInputs round={round} />
-                        <button className="btn btn-outline-secondary" type="submit">Save respawns</button>
-                    </fieldset>
-                </form>
-            </details>
+            <EditRoundLocations round={round} disabled={disabled} onSave={onSave} />
         </article>
     );
 }

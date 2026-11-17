@@ -60,6 +60,71 @@ test('writes a scheduled mode with official California time and both team respaw
     }));
 });
 
+test('saves map-relative tap and keyboard positions when scheduling a round', async () => {
+    const request = mockStaffRequest({ current: () => [], onWrite: () => ({ ok: true }) });
+    render(<AdminFieldRounds request={request} />);
+    const schedule = within(await screen.findByRole('region', { name: 'Schedule a round' }));
+    fireEvent.click(schedule.getByText('Place map pins'));
+    const briefing = await schedule.findByRole('button', { name: 'Place Briefing pin on field map' });
+    jest.spyOn(briefing, 'getBoundingClientRect').mockReturnValue({ left: 20, top: 10, width: 400, height: 225 });
+    fireEvent.click(briefing, { detail: 1, clientX: 120, clientY: 190 });
+    expect(schedule.getByText('Briefing pin placed.')).toBeInTheDocument();
+
+    fireEvent.click(schedule.getByRole('button', { name: 'Camo respawn', exact: true }));
+    fireEvent.keyDown(schedule.getByRole('button', { name: 'Place Camo respawn pin on field map' }), { key: 'ArrowRight' });
+    fireEvent.click(schedule.getByRole('button', { name: 'Add to field schedule' }));
+
+    await screen.findByText('Round added to the field schedule.');
+    expect(request).toHaveBeenCalledWith(LIVE_ROUNDS_PATH, expect.objectContaining({
+        method: 'POST', body: expect.objectContaining({
+            action: 'createGame', mapPins: { briefing: { x: .25, y: .8 }, camo: { x: .51, y: .5 } },
+        }),
+    }));
+    expect(schedule.getByText('Camo respawn pin unset.')).toBeInTheDocument();
+});
+
+test('clears the last pin from an existing round against its revision', async () => {
+    let round = { ...playing, mapPins: { solid: { x: .8, y: .25 } } };
+    const request = mockStaffRequest({ current: () => [round], onWrite: () => {
+        round = { ...round, revision: 8, mapPins: {} };
+        return { ok: true };
+    } });
+    render(<AdminFieldRounds request={request} />);
+    const card = within(await screen.findByRole('article'));
+    fireEvent.click(card.getByText('Edit round locations'));
+    fireEvent.click(card.getByText('Place map pins'));
+    fireEvent.click(card.getByRole('button', { name: 'Solid respawn', exact: true }));
+    fireEvent.click(card.getByRole('button', { name: 'Clear Solid respawn pin' }));
+    fireEvent.change(card.getByLabelText('Briefing location'), { target: { value: 'Hive entry' } });
+    fireEvent.click(card.getByRole('button', { name: 'Save round locations' }));
+
+    await screen.findByText('Round locations updated.');
+    expect(request).toHaveBeenCalledWith(LIVE_ROUNDS_PATH, expect.objectContaining({
+        method: 'POST', body: {
+            action: 'updateSpawns', gameId: playing.id, revision: 7,
+            briefingLocation: 'Hive entry', camoSpawn: 'Alpha HQ', solidSpawn: 'Foxtrot HQ', mapPins: {},
+        },
+    }));
+});
+
+test('omits unchanged pins when saving an existing round’s text locations', async () => {
+    const round = { ...playing, mapPins: { camo: { x: .29, y: .6 } } };
+    const request = mockStaffRequest({ current: () => [round], onWrite: () => ({ ok: true }) });
+    render(<AdminFieldRounds request={request} />);
+    const card = within(await screen.findByRole('article'));
+    fireEvent.click(card.getByText('Edit round locations'));
+    fireEvent.change(card.getByLabelText('Camo respawn'), { target: { value: 'New Camo HQ' } });
+    fireEvent.click(card.getByRole('button', { name: 'Save round locations' }));
+
+    await screen.findByText('Round locations updated.');
+    expect(request).toHaveBeenCalledWith(LIVE_ROUNDS_PATH, expect.objectContaining({
+        method: 'POST', body: {
+            action: 'updateSpawns', gameId: playing.id, revision: 7,
+            briefingLocation: 'Barracks', camoSpawn: 'New Camo HQ', solidSpawn: 'Foxtrot HQ',
+        },
+    }));
+});
+
 test('uses catalog options for voting and publishes a staff-selected winner from a tie', async () => {
     const pollId = '95f68466-2c3d-4259-9801-9b449d9be09e';
     let poll = null;
@@ -110,8 +175,30 @@ test('uses a read-only public board and displays live round and both respawns in
     expect(screen.getByText('Foxtrot HQ')).toBeInTheDocument();
     expect(screen.getByRole('timer', { name: 'Round time remaining' })).toHaveTextContent('25:00');
     expect(screen.queryByRole('button', { name: 'End round' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /on map/i })).not.toBeInTheDocument();
     expect(request).toHaveBeenCalledTimes(1);
     expect(request).toHaveBeenCalledWith(LIVE_ROUNDS_PATH, { signal: expect.anything() });
+});
+
+test('opens the selected public map pin and labels it with the round location', async () => {
+    const round = { ...playing, briefingLocation: '', mapPins: { briefing: { x: .25, y: .8 }, camp: { x: .1, y: .2 }, solid: { x: .7, y: .35 } } };
+    const request = jest.fn().mockResolvedValue({ serverNow, isStaff: false, poll: null, games: [round] });
+    render(<HelmetProvider><MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <BarracksTV request={request} />
+    </MemoryRouter></HelmetProvider>);
+
+    const solid = await screen.findByRole('button', { name: 'Show Solid respawn on map' });
+    expect(screen.getByText('Marked on map')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Show Camo respawn on map' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Map pin locations' })).not.toBeInTheDocument();
+    fireEvent.click(solid);
+    expect(solid).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('img', { name: /highlighting Solid respawn/ })).toBeInTheDocument();
+    expect(within(screen.getByRole('list', { name: 'Map pin locations' })).getByText(/Foxtrot HQ/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Show Briefing on map' }));
+    expect(solid).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('img', { name: /highlighting Briefing/ })).toBeInTheDocument();
+    expect(request).toHaveBeenCalledTimes(1);
 });
 
 test('rejects nonexistent and repeated times during California clock changes', () => {

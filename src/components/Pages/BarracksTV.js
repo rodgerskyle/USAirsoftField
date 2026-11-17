@@ -6,6 +6,7 @@ import { requestPublicFieldTool } from '../constants/fieldStaffApi';
 import {
     formatFieldTime, formatRoundCountdown, isOpenVote, liveRounds, RoundRespawns, useLiveFieldBoard,
 } from './FieldRoundsShared';
+import { RoundMapViewer, roundPinLocation } from './FieldRoundMap';
 import './FieldRounds.css';
 
 function VotingDisplay({ poll, now, stale }) {
@@ -98,9 +99,10 @@ export default function BarracksTV({ request = requestPublicFieldTool }) {
                         </div>
                         <dl className="field-barracks-locations">
                             <div><dt>Field location</dt><dd>{round.location || 'Main field'}</dd></div>
-                            <div><dt>Briefing</dt><dd>{round.briefingLocation || round.location || 'Main field'}</dd></div>
+                            <div><dt>Briefing</dt><dd>{roundPinLocation(round, 'briefing')}</dd></div>
                         </dl>
                         <RoundRespawns round={round} />
+                        <RoundMapViewer key={round.id} round={round} />
                         {round.notes && <p className="field-barracks-round-note">{round.notes}</p>}
                     </> : <p>Check here for the next round and its briefing location.</p>}
                 </section>
@@ -108,13 +110,14 @@ export default function BarracksTV({ request = requestPublicFieldTool }) {
                     {next && <section className="field-barracks-support" aria-labelledby="barracks-next-round">
                         <div className="field-barracks-kicker">{current ? 'Next round' : 'Then on the field'}</div>
                         <h2 id="barracks-next-round">{next.title}</h2>
-                        <p>{formatFieldTime(next.startsAt)} · {next.briefingLocation || next.location || 'Main field'}</p>
+                        <p>{formatFieldTime(next.startsAt)} · {roundPinLocation(next, 'briefing')}</p>
                         <p>{Date.parse(next.startsAt) <= displayTime ? 'Awaiting staff start' : <>
                             {next.status === 'delayed' ? 'Delayed · estimated start in' : next.status === 'queued' ? 'Planned start in' : 'Starts in'}{' '}
                             <strong role="timer" aria-label="Time until following round">
                                 {error ? '—' : formatRoundCountdown(Date.parse(next.startsAt) - now)}
                             </strong>
                         </>}</p>
+                        <RoundMapViewer key={next.id} round={next} />
                     </section>}
                     <VotingDisplay poll={board.poll} now={displayTime} stale={Boolean(error)} />
                 </aside>}

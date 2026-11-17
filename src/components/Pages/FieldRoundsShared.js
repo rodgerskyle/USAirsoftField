@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { roundPinLocation } from './FieldRoundMap';
 
 export const LIVE_ROUNDS_PATH = '/api/live-games';
 export const ROUND_CATALOG_PATH = LIVE_ROUNDS_PATH + '?catalog=1';
@@ -123,11 +124,11 @@ export function RoundRespawns({ round }) {
         <dl className="field-round-respawns">
             <div data-team="camo">
                 <dt>Camo respawn</dt>
-                <dd>{round.camoSpawn || 'At briefing'}</dd>
+                <dd>{roundPinLocation(round, 'camo')}</dd>
             </div>
             <div data-team="solid">
                 <dt>Solid respawn</dt>
-                <dd>{round.solidSpawn || 'At briefing'}</dd>
+                <dd>{roundPinLocation(round, 'solid')}</dd>
             </div>
         </dl>
     );
