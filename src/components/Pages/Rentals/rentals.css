@@ -91,8 +91,8 @@
 }
 
 .card-rental-form .submit-button:not(:disabled) {
-    background: var(--admin-accent) !important;
-    color: #fff;
+    background: var(--admin-action-bg) !important;
+    color: var(--admin-on-accent);
 }
 
 .card-rental-form .submit-button.Mui-disabled,
@@ -740,8 +740,8 @@
 }
 
 .form-avatar {
-    background-color: var(--admin-accent) !important;
-    color: white !important;
+    background-color: var(--admin-action-bg) !important;
+    color: var(--admin-on-accent) !important;
 }
 
 .warning-avatar {
@@ -953,8 +953,8 @@
 }
 
 .save-button {
-    background-color: var(--admin-accent) !important;
-    color: white !important;
+    background-color: var(--admin-action-bg) !important;
+    color: var(--admin-on-accent) !important;
     padding: 8px 24px !important;
     font-weight: 500 !important;
     text-transform: none !important;
@@ -963,7 +963,7 @@
 }
 
 .save-button:hover {
-    background-color: var(--admin-accent) !important;
+    background-color: var(--admin-action-bg) !important;
     box-shadow: 0 4px 12px rgba(25, 118, 210, 0.25) !important;
 }
 
@@ -1257,9 +1257,9 @@ button.btn-pin-code-link {
 
 .rental-management .btn-primary,
 .return-form-root .btn-primary {
-    background: var(--admin-accent);
+    background: var(--admin-action-bg);
     border-color: var(--admin-accent);
-    color: #fff;
+    color: var(--admin-on-accent);
 }
 
 .rental-management .btn-outline-primary,
@@ -1292,4 +1292,38 @@ button.btn-pin-code-link {
     .search-controls {
         top: 52px;
     }
+}
+
+/* Legacy desk forms also render outside the rental layout through modal portals. */
+:root[data-bs-theme="light"] :is(.h5-add-rental-rf, .h2-modal-rf, .h5-title-summary,
+    .p-notice-rf, .p-total-price-rf, .table-cell-total-participants-rf, .div-groupname-summary, .div-cc-summary,
+    .col-notice-rf, .col-total-price-rf, .table-edit-rf .MuiTableCell-root, .table-edit-rf .MuiIconButton-root,
+    .paper-rental-row-rf h5, .paper-rental-row-rf .MuiInputBase-root,
+    .div-email-rf .MuiInputBase-input, .div-cc-summary .MuiInputBase-input, .col-textfield-rf .MuiOutlinedInput-input) {
+    color: var(--usaw-light-ink);
+}
+
+:root[data-bs-theme="light"] :is(.col-textfield-rf, .div-cc-summary, .div-email-rf) .MuiFormLabel-root {
+    color: var(--usaw-light-ink) !important;
+}
+
+:root[data-bs-theme="light"] :is(.col-textfield-rf, .div-cc-summary, .div-email-rf) .MuiOutlinedInput-notchedOutline {
+    border-color: var(--admin-border-strong) !important;
+}
+
+:root[data-bs-theme="light"] :is(.col-textfield-rf, .div-cc-summary, .div-email-rf) .Mui-focused .MuiOutlinedInput-notchedOutline {
+    border-color: var(--admin-focus) !important;
+}
+
+:root[data-bs-theme="light"] :is(.col-notice-rf, .col-total-price-rf, .div-edit-rf, .div-selected-rf,
+    .paper-rental-row-rf.MuiPaper-root, .table-edit-rf.MuiPaper-root, .table-edit-rf .MuiTableCell-footer,
+    .collapse-table-row-rf .MuiTableCell-root, .list-edit-rf.MuiList-root) {
+    background: var(--admin-surface-muted);
+}
+
+:root[data-bs-theme="light"] .modal-pincode > div:has(> .h2-modal-rf) {
+    padding: 1.5rem;
+    border: 1px solid var(--admin-border);
+    border-radius: .75rem;
+    background: var(--admin-surface);
 }
