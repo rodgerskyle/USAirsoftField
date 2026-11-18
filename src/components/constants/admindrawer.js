@@ -5,6 +5,7 @@ import { createTheme, ThemeProvider, useTheme } from '@mui/material/styles';
 import { useAppearance } from '../../Appearance';
 import AppearanceControl from '../../AppearanceControl';
 import logo from '../../assets/usairsoft-small-logo.png';
+import lightLogo from '../../assets/usairsoft-wide-logo-light.png';
 import { AuthUserContext } from '../session';
 import { ADMIN } from './roles';
 import './admin-theme.css';
@@ -74,7 +75,7 @@ export default function AdminLayout() {
         <Navbar className="admin-navbar" aria-label="Staff navigation">
           <Container fluid>
             <Navbar.Brand as={Link} to={isAdmin ? '/admin' : '/'}>
-              <img src={logo} alt="" className="admin-nav-logo" />
+              <img src={appearance?.theme === 'light' ? lightLogo : logo} alt="" className="admin-nav-logo" />
               <span>{isAdmin ? 'Staff' : 'US Airsoft'}</span>
             </Navbar.Brand>
             <Nav className="admin-nav-actions">

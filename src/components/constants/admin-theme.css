@@ -92,6 +92,14 @@
   background: var(--usaw-chrome);
 }
 
+:root[data-bs-theme="light"] .admin-nav-logo {
+  width: clamp(6.5rem, 16vw, 10rem);
+  height: auto;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+}
+
 .admin-navbar :is(.admin-site-link, .usaw-nav__appearance) {
   display: inline-flex;
   align-items: center;
