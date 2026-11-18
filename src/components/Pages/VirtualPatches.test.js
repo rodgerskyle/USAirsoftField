@@ -389,15 +389,40 @@ test('shows a public featured count without loading private badge records or a l
   expect(getMyBadges).not.toHaveBeenCalled();
 });
 
-test('shows the custom public profile name without showing the account name', async () => {
+test.each([false, true])('shows the registered name beneath the display name on a profile with account=%s', async account => {
   getPlayerDisplayNames.mockResolvedValue({ [playerId]: 'Field Scout' });
-  const member = { ...user, name: 'Jordan Example' };
-  renderPage(<PlayerProfileView firebase={firebase} user={member} playerId={playerId} />);
+  const member = { ...user, name: ' Jordan Example ' };
+  renderPage(<PlayerProfileView firebase={firebase} user={member} playerId={playerId} account={account} />, {
+    path: account ? '/account' : `/profilelookup/${playerId}`,
+    authUser: account ? member : null,
+  });
 
-  expect(screen.queryByText(member.name)).not.toBeInTheDocument();
-  expect(await screen.findByRole('heading', { name: 'Field Scout' })).toBeVisible();
-  expect(screen.queryByText(member.name)).not.toBeInTheDocument();
+  const heading = await screen.findByRole('heading', { name: 'Field Scout' });
+  expect(heading.nextElementSibling).toBe(screen.getByText('Jordan Example'));
+  expect(heading.nextElementSibling).toBeVisible();
   expect(screen.queryByText(member.username)).not.toBeInTheDocument();
+});
+
+test.each([
+  [' JORDAN  EXAMPLE ', 'Jordan Example', 'JORDAN EXAMPLE'],
+  ['Field Scout', '  ', 'Field Scout'],
+  ['Field Scout', 'private@example.org', 'Field Scout'],
+  ['private@example.org', 'Jordan Example', 'Jordan Example'],
+  [null, null, 'USAW player'],
+])('uses one profile name when username=%s and registered name=%s', async (username, name, heading) => {
+  renderPage(<PlayerProfileView firebase={firebase} user={{ ...user, username, name }} playerId={playerId} />);
+  await screen.findByText('Unaffiliated');
+  const title = screen.getByRole('heading', { name: heading });
+  expect(title.parentElement.querySelector('.player-profile__real-name')).toBeNull();
+  expect(screen.queryByText('private@example.org')).not.toBeInTheDocument();
+});
+
+test('keeps the registered name beneath the legacy username if the display-name service is unavailable', async () => {
+  getPlayerDisplayNames.mockRejectedValue(new Error('Unavailable'));
+  renderPage(<PlayerProfileView firebase={firebase} user={{ ...user, name: 'Jordan Example' }} playerId={playerId} />);
+  await screen.findByText('Unaffiliated');
+  const heading = screen.getByRole('heading', { name: user.username });
+  expect(heading.nextElementSibling).toBe(screen.getByText('Jordan Example'));
 });
 
 test.each([false, true])('shows the Companion team on a profile with account=%s', async account => {
