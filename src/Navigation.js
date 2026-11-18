@@ -82,6 +82,7 @@ function SocialLinks() {
 function NavigationLayout({ authUser, profilePic }) {
     const location = useLocation();
     const appearance = useAppearance();
+    const useShieldLogo = appearance?.theme === 'light';
     const header = useRef(null);
     const triggers = useRef({});
     const [open, setOpen] = useState('');
@@ -163,7 +164,8 @@ function NavigationLayout({ authUser, profilePic }) {
                     aria-label={waiverOnly ? 'US Airsoft World dashboard' : 'US Airsoft World home'}>
                     <picture>
                         <source media="(max-width: 365px)" srcSet={shieldLogo} />
-                        <img src={logo} alt="" width="175" height="41" />
+                        <img src={useShieldLogo ? shieldLogo : logo} alt=""
+                            width={useShieldLogo ? 56 : 175} height={useShieldLogo ? 54 : 41} />
                     </picture>
                 </SiteLink>
                 <nav aria-label="Main navigation" className="usaw-nav__desktop">

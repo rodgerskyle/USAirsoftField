@@ -442,3 +442,33 @@
         object-fit: contain;
     }
 }
+
+:root[data-bs-theme="light"] .usaw-nav {
+    --nav-bg: var(--usaw-surface);
+    --nav-top: var(--usaw-subtle);
+    --nav-raised: var(--usaw-raised);
+    --nav-line: #9bb1c9;
+    --nav-text: var(--usaw-light-ink);
+    --nav-muted: var(--usaw-light-ink);
+    --nav-accent: var(--usaw-light-ink);
+    --nav-blue: var(--usaw-light-selection);
+}
+
+/* The full-color shield stays legible on the light navigation surface. */
+:root[data-bs-theme="light"] .usaw-nav__brand img {
+    width: clamp(2.75rem, 5vw, 3.5rem);
+    height: auto;
+    object-fit: contain;
+}
+
+:root[data-bs-theme="light"] .usaw-nav .usaw-nav__waiver {
+    color: var(--nav-text);
+    background: var(--usaw-light-red-tint);
+    border-color: var(--nav-crimson);
+}
+
+:root[data-bs-theme="light"] .usaw-nav .usaw-nav__waiver:is(:hover, [aria-current="page"]) {
+    color: var(--nav-text);
+    background: #f6d8db;
+    border-color: var(--nav-crimson-hover);
+}

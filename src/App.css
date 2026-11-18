@@ -4684,7 +4684,7 @@ a.nav-link:hover {
 
 .admin-birthday-page .div-main-birthday .rbc-toolbar button:active,
 .admin-birthday-page .div-main-birthday .rbc-toolbar button.rbc-active {
-  background: var(--admin-accent);
+  background: var(--admin-action-bg);
   border-color: var(--admin-accent);
   color: var(--admin-on-accent);
   box-shadow: none;
@@ -7789,4 +7789,82 @@ a.nav-link:hover,
   color: #fff;
   outline: 3px solid #b4d3f7;
   outline-offset: 3px;
+}
+
+:root[data-bs-theme="light"] .field-skip-link,
+:root[data-bs-theme="light"] .field-skip-link:focus {
+  color: var(--usaw-light-ink);
+  background: var(--usaw-surface);
+  outline-color: var(--usaw-focus);
+}
+
+:root[data-bs-theme="light"] .background-static-all:not(.admin-container),
+:root[data-bs-theme="light"] .background-static-all:not(.admin-container)::before {
+  background-color: var(--usaw-page-bg);
+}
+
+:root[data-bs-theme="light"] .pagePlaceholder,
+:root[data-bs-theme="light"] a.nav-link {
+  color: var(--usaw-light-ink) !important;
+}
+
+:root[data-bs-theme="light"] .public-tab-nav .list-group-item.active {
+  color: var(--usaw-light-ink) !important;
+  background: var(--usaw-light-selection) !important;
+  border-color: var(--usaw-light-ink);
+  box-shadow: inset 3px 0 var(--usaw-light-ink);
+}
+
+:root[data-bs-theme="light"] .public-tab-panel .tab-content {
+  background-color: var(--usaw-raised);
+}
+
+:root[data-bs-theme="light"] .public-footer-shell {
+  color: var(--usaw-light-ink);
+  background: var(--usaw-raised);
+}
+
+:root[data-bs-theme="light"] .public-footer-shell :is(.public-footer-title, .public-section-kicker) {
+  color: var(--usaw-light-ink);
+}
+
+:root[data-bs-theme="light"] .public-footer-link {
+  color: var(--usaw-light-ink) !important;
+}
+
+:root[data-bs-theme="light"] .public-footer-link:hover {
+  text-decoration: underline;
+  text-underline-offset: .2em;
+}
+
+:root[data-bs-theme="light"] .public-footer-social-link {
+  background: var(--usaw-chrome);
+}
+
+:root[data-bs-theme="light"] .public-footer-social-link:hover {
+  background: var(--usaw-light-ink);
+}
+
+:root[data-bs-theme="light"] .public-footer-subscribe .form-control {
+  color: var(--usaw-light-ink);
+  background: var(--usaw-surface);
+  border-color: var(--usaw-line);
+}
+
+:root[data-bs-theme="light"] .public-footer-subscribe .form-control::placeholder {
+  color: var(--usaw-light-ink);
+  opacity: 1;
+}
+
+:root[data-bs-theme="light"] .public-footer-subscribe-button {
+  color: var(--usaw-light-ink) !important;
+  background: var(--usaw-light-red-tint) !important;
+}
+
+:root[data-bs-theme="light"] .public-footer-subscribe-button:hover {
+  background: #f6d8db !important;
+}
+
+:root[data-bs-theme="light"] .public-footer-shell .status-row-footer {
+  color: #24633c;
 }

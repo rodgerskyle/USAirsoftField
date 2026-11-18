@@ -5,7 +5,7 @@ import logo from './assets/usairsoft-small-logo.png';
 import { withFirebase } from './components/Firebase';
 import { Container, Row, Col, Form, Button, InputGroup, FormControl } from 'react-bootstrap/';
 
-import ReCAPTCHA from 'react-google-recaptcha';
+import ThemedCaptcha from './components/ThemedCaptcha';
 import { Helmet } from 'react-helmet-async';
  
 const INITIAL_STATE = {
@@ -24,8 +24,11 @@ class PasswordForgetFormBase extends Component {
 
 //Recaptcha stuff
   handleCaptchaResponseChange(response) {
+    if (!response) return this.expireCaptcha();
+    const widget = this.recaptcha;
     let checkRecaptcha = this.props.firebase.checkRecaptcha();
     checkRecaptcha({response}).then((result) => {
+      if (!widget || this.recaptcha !== widget || widget.getValue() !== response) return;
       if (result.data && result.data.status === "success.") {
         this.setState({
           robot: false, error: null
@@ -92,27 +95,24 @@ class PasswordForgetFormBase extends Component {
           </Row>
           <Form onSubmit={this.onSubmit}>
             <InputGroup className="mb-1 input-group-forgot-pass">
-                <FormControl
+              <FormControl
                 name="email"
                 placeholder="Email Address"
                 aria-label="Email Address"
                 value={this.state.email}
                 onChange={this.onChange}
-                />
-                <InputGroup.Append>
-                    <Button variant="primary" type="submit"
-                    disabled={isInvalid}
-                    >Reset My Password</Button>
-                </InputGroup.Append>
+              />
+              <Button variant="primary" type="submit" disabled={isInvalid}>
+                Reset My Password
+              </Button>
             </InputGroup>
             <p className="forgotP">{error}</p>
           </Form>
           <Row className="align-items-center justify-content-center">
             <Col className="recap">
-              <ReCAPTCHA
+              <ThemedCaptcha
                 ref={(el) => { this.recaptcha = el; }}
                 sitekey="6Lc0JPsUAAAAAGfLV1lzptnyO2V1dTU7GfR5_5h5"
-                theme={'dark'}
                 onChange={this.handleCaptchaResponseChange} 
                 onExpired={this.expireCaptcha} />
             </Col>
