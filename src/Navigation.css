@@ -454,11 +454,20 @@
     --nav-blue: var(--usaw-light-selection);
 }
 
-/* The full-color shield stays legible on the light navigation surface. */
 :root[data-bs-theme="light"] .usaw-nav__brand img {
-    width: clamp(2.75rem, 5vw, 3.5rem);
+    width: clamp(8rem, 17vw, 12rem);
     height: auto;
-    object-fit: contain;
+    aspect-ratio: auto;
+}
+
+@media (max-width: 365px) {
+    :root[data-bs-theme="light"] .usaw-nav__actions .usaw-nav__mobile-account > svg {
+        display: block;
+    }
+
+    :root[data-bs-theme="light"] .usaw-nav__mobile-account span {
+        display: none;
+    }
 }
 
 :root[data-bs-theme="light"] .usaw-nav .usaw-nav__waiver {

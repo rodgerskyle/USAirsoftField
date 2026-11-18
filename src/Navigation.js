@@ -6,6 +6,7 @@ import { getDownloadURL } from 'firebase/storage';
 import { withFirebase } from './components/Firebase';
 import * as ROLES from './components/constants/roles';
 import logo from './assets/usairsoft-wide-logo.png';
+import lightLogo from './assets/usairsoft-wide-logo-light.png';
 import shieldLogo from './assets/usairsoft-small-logo.png';
 import AppearanceControl from './AppearanceControl';
 import { useAppearance } from './Appearance';
@@ -82,7 +83,7 @@ function SocialLinks() {
 function NavigationLayout({ authUser, profilePic }) {
     const location = useLocation();
     const appearance = useAppearance();
-    const useShieldLogo = appearance?.theme === 'light';
+    const lightMode = appearance?.theme === 'light';
     const header = useRef(null);
     const triggers = useRef({});
     const [open, setOpen] = useState('');
@@ -163,9 +164,9 @@ function NavigationLayout({ authUser, profilePic }) {
                 <SiteLink to={waiverOnly ? '/dashboard' : '/home'} onClick={close} className="usaw-nav__brand"
                     aria-label={waiverOnly ? 'US Airsoft World dashboard' : 'US Airsoft World home'}>
                     <picture>
-                        <source media="(max-width: 365px)" srcSet={shieldLogo} />
-                        <img src={useShieldLogo ? shieldLogo : logo} alt=""
-                            width={useShieldLogo ? 56 : 175} height={useShieldLogo ? 54 : 41} />
+                        {!lightMode && <source media="(max-width: 365px)" srcSet={shieldLogo} />}
+                        <img src={lightMode ? lightLogo : logo} alt=""
+                            width={lightMode ? 1557 : 175} height={lightMode ? 326 : 41} />
                     </picture>
                 </SiteLink>
                 <nav aria-label="Main navigation" className="usaw-nav__desktop">
