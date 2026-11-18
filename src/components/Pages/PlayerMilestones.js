@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link, useParams } from 'react-router-dom';
-import { badgeById } from '../constants/playerBadges';
+import { historicalBadge } from '../constants/playerBadges';
 import { milestoneDate, playerCount, playerIdPattern, requestPlayerExperience } from '../constants/playerExperience';
 import { mergeMilestonePage } from '../constants/milestoneHistory';
 import { PrestigeEmblem } from './PlayerPrestige';
@@ -10,10 +10,10 @@ import './PlayerExperience.css';
 function MilestoneList({ items, dated = true }) {
   return <ol className="player-milestones__list">{items.map(item => {
     const label = milestoneDate(item.date, item.datePrecision);
-    const badge = badgeById[item.badgeId];
+    const badge = historicalBadge(item.badgeId);
     return <li key={item.id}>
       <span className="player-milestones__marker" aria-hidden="true">{badge?.thumbUrl ? <img src={badge.thumbUrl} alt="" width="56" height="56" loading="lazy" /> : item.type === 'prestige' ? '★' : item.type === 'team' ? '◆' : '●'}</span>
-      <div>{dated && (label === 'Date unavailable' ? <span>{label}</span> : <time dateTime={item.date}>{label}</time>)}<h3>{item.title}</h3><p>{item.detail}</p></div>
+      <div>{dated && (label === 'Date unavailable' ? <span>{label}</span> : <time dateTime={item.date}>{label}</time>)}<h3>{item.title}{badge?.retired && ' (retired)'}</h3><p>{item.detail}</p></div>
     </li>;
   })}</ol>;
 }
