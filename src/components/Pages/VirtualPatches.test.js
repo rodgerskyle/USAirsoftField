@@ -116,7 +116,7 @@ test('loads only the selected patch standings and keeps the full catalog visible
     expect(wall).toHaveAccessibleName(`Factor ${factor} · ${name}`);
     expect(within(wall).getAllByRole('button')).toHaveLength(expected.length);
     const displayedArt = [...wall.querySelectorAll('.virtual-patches__tile img')].map(img => img.getAttribute('src'));
-    expect(displayedArt).toEqual(expected.map(patch => patch.secret ? '/badges/secret-achievement.png' : patch.artUrl));
+    expect(displayedArt).toEqual(expected.map(patch => patch.artUrl));
   });
   const firstPage = await screen.findByRole('table', { name: 'All-time leaderboard' });
   expect(within(firstPage).getByRole('link', { name: user.username }))
@@ -265,31 +265,46 @@ test('shows achievement criteria and standings for a public patch', async () => 
   expect(getBadgeStandings).toHaveBeenLastCalledWith('buzzer-beater', expect.objectContaining({ page: 1 }));
 });
 
-test('keeps a signed-out viewer from seeing a secret patch on a direct link', () => {
-  const { container } = renderPage(<VirtualPatches />, { path: '/virtual-patches?badge=no-shots-fired' });
-
-  expect(screen.getByRole('heading', { name: 'Secret Achievement 1' })).toHaveFocus();
-  expect(screen.getByText('Secret Achievement 2', { selector: '.virtual-patches__tile strong' }).closest('button')).toBeVisible();
-  expect(screen.queryByText('No Shots Fired')).not.toBeInTheDocument();
-  expect(screen.queryByText(/without firing a single BB/)).not.toBeInTheDocument();
-  expect(container.querySelector('.virtual-patches__brief img')).toHaveAttribute('src', '/badges/secret-achievement.png');
+test.each([
+  ['badge=no-shots-fired', 'no-shots-fired', 'No Shots Fired', /without firing a single BB/],
+  ['secret=1', 'no-shots-fired', 'No Shots Fired', /without firing a single BB/],
+  ['badge=wrong-pocket', 'wrong-pocket', 'Wrong Pocket', /pull out a snack by mistake/],
+  ['secret=2', 'wrong-pocket', 'Wrong Pocket', /pull out a snack by mistake/],
+  ['badge=pocket-bbs', 'pocket-bbs', 'Pocket BBs', /Either a referee or the player you eliminated can report it to staff/],
+])('shows the public artwork, criteria and standings at %s without signing in', async (query, id, name, condition) => {
+  const { container } = renderPage(<VirtualPatches />, { path: `/virtual-patches?${query}` });
+  expect(screen.getByRole('heading', { name })).toHaveFocus();
+  expect(screen.getByText(condition)).toBeVisible();
+  const tile = screen.getByRole('button', { name, exact: true });
+  expect(tile.querySelector('img')).toHaveAttribute('src', `/badges/${id}.png`);
+  expect(container.querySelector('.virtual-patches__brief img')).toHaveAttribute('src', `/badges/${id}.png`);
+  expect(await screen.findByText('No players have earned this patch yet.')).toBeVisible();
+  expect(getBadgeStandings).toHaveBeenLastCalledWith(id, expect.objectContaining({ page: 1 }));
   expect(getMyBadges).not.toHaveBeenCalled();
-  expect(getBadgeStandings).not.toHaveBeenCalled();
 });
 
-test('reveals only the secret patch already earned by a signed-in player', async () => {
-  getMyBadges.mockResolvedValue({ awards: [{ badgeId: 'no-shots-fired', earnedCount: 2 }] });
-  const { container } = renderPage(<VirtualPatches />, { authUser: user });
-  const patch = await screen.findByRole('button', { name: /No Shots Fired/ });
-  expect(within(patch).getByText('Earned ×2')).toBeVisible();
-  expect(screen.getByRole('button', { name: /Secret Achievement 2/ })).toBeVisible();
+test('old links to retired patches show the active collection and skip retired standings', async () => {
+  renderPage(<VirtualPatches />, { path: '/virtual-patches?badge=team-death-match' });
+  expect(await screen.findByRole('table', { name: 'All-time leaderboard' })).toBeVisible();
+  expect(getBadgeStandings).toHaveBeenCalledWith('ambassador', expect.anything());
+  for (const retired of ['First Game', 'Team Death Match', 'BB Confetti', 'Tactical Click']) {
+    expect(screen.queryByRole('button', { name: retired })).not.toBeInTheDocument();
+  }
+});
 
-  fireEvent.click(patch);
-  expect(screen.getByRole('heading', { name: 'No Shots Fired' })).toHaveFocus();
-  expect(screen.getByText(/without firing a single BB/)).toBeVisible();
-  expect(container.querySelector('.virtual-patches__brief img')).toHaveAttribute('src', '/badges/no-shots-fired.png');
+test('retains award counts for the existing badge IDs and keeps Pocket BBs separate', async () => {
+  getMyBadges.mockResolvedValue({ awards: [
+    { badgeId: 'no-shots-fired', earnedCount: 2 }, { badgeId: 'wrong-pocket', earnedCount: 3 },
+  ] });
+  renderPage(<VirtualPatches />, { authUser: user });
+  const specialistWall = screen.getByRole('region', { name: 'Factor 2 · Specialist' });
+  expect(await screen.findByRole('button', { name: /No Shots Fired Earned ×2/ })).toBeVisible();
+  expect(within(specialistWall).getByRole('button', { name: /Wrong Pocket Earned ×3/ })).toBeVisible();
+  const newPatch = within(specialistWall).getByRole('button', { name: /Pocket BBs Not yet earned/ });
+  fireEvent.click(newPatch);
+  expect(screen.getByRole('heading', { name: 'Pocket BBs' })).toHaveFocus();
   expect(await screen.findByText('No players have earned this patch yet.')).toBeVisible();
-  expect(getBadgeStandings).toHaveBeenLastCalledWith('no-shots-fired', expect.objectContaining({ page: 1 }));
+  expect(getBadgeStandings).toHaveBeenLastCalledWith('pocket-bbs', expect.objectContaining({ page: 1 }));
 });
 
 test('offers the expanded patch collection in the unlocked staff award picker', async () => {
@@ -301,22 +316,28 @@ test('offers the expanded patch collection in the unlocked staff award picker', 
 
   const picker = await screen.findByRole('combobox', { name: 'Badge' });
   const patchIds = within(picker).getAllByRole('option').map(option => option.value).filter(Boolean);
-  expect(patchIds).toHaveLength(72);
+  expect(patchIds).toHaveLength(69);
+  for (const retired of ['first-game', 'team-death-match', 'bb-confetti', 'tactical-click']) {
+    expect(patchIds).not.toContain(retired);
+  }
   expect(new Set(patchIds).size).toBe(patchIds.length);
   expect(patchIds).toEqual(expect.arrayContaining([
     'countdown', 'medic', 'blackout-protocol', 'icy-killers',
     'power-rush', 'light-domination', 'six-flag',
-    'tactical-potato', 'spawn-tourist', 'bb-confetti', 'tactical-click', 'bush-camo',
-    'buzzer-beater', 'return-to-sender', 'second-wind', 'human-decoy', 'no-shots-fired', 'wrong-pocket',
+    'tactical-potato', 'spawn-tourist', 'bush-camo',
+    'buzzer-beater', 'return-to-sender', 'second-wind', 'human-decoy', 'no-shots-fired', 'wrong-pocket', 'pocket-bbs',
   ]));
   expect(within(picker).getByRole('option', { name: 'Wrong Pocket' })).toHaveValue('wrong-pocket');
-  fireEvent.change(picker, { target: { value: 'wrong-pocket' } });
-  expect(screen.getByText('Wrong Pocket', { selector: 'strong' })).toBeVisible();
+  fireEvent.change(picker, { target: { value: 'pocket-bbs' } });
+  expect(screen.getByText('Pocket BBs', { selector: 'strong' })).toBeVisible();
 });
 
-test('removes only the explicitly confirmed award from a repeated badge', async () => {
+test.each([
+  ['countdown', 'Countdown', 'Badge'],
+  ['tactical-click', 'Tactical Click', 'Previously awarded retired badge'],
+])('removes only the explicitly confirmed %s award', async (badgeId, name, label) => {
   unlockBadgeStaff.mockResolvedValue({ staffToken: 'test-staff-token', expiresAt: new Date(Date.now() + 60_000).toISOString() });
-  getStaffBadgeCounts.mockResolvedValue({ counts: { countdown: 2 } });
+  getStaffBadgeCounts.mockResolvedValue({ counts: { [badgeId]: 2 } });
   getStaffBadgeGrantHistory.mockResolvedValue({ grants: [
     { id: 'new-grant', awardedAt: '2026-01-03T21:30:00.000Z' },
     { id: 'first-grant', awardedAt: '2026-01-01T20:15:00.000Z' },
@@ -331,7 +352,11 @@ test('removes only the explicitly confirmed award from a repeated badge', async 
 
     fireEvent.change(await screen.findByRole('searchbox', { name: 'Find a player' }), { target: { value: user.username } });
     fireEvent.click(screen.getByRole('button', { name: new RegExp(user.username) }));
-    fireEvent.change(screen.getByRole('combobox', { name: 'Badge' }), { target: { value: 'countdown' } });
+    fireEvent.change(await screen.findByRole('combobox', { name: label }), { target: { value: badgeId } });
+    if (label !== 'Badge') {
+      expect(screen.queryByRole('button', { name: /Grant (again|badge)/ })).not.toBeInTheDocument();
+      expect(within(screen.getByRole('combobox', { name: 'Badge' })).queryByDisplayValue(badgeId)).not.toBeInTheDocument();
+    }
     fireEvent.click(await screen.findByRole('button', { name: 'Review awards to remove' }));
 
     const history = screen.getByRole('region', { name: 'Award history' });
@@ -342,9 +367,9 @@ test('removes only the explicitly confirmed award from a repeated badge', async 
     fireEvent.click(remove);
     expect(revokePlayerBadgeGrant).toHaveBeenCalledTimes(1);
     expect(revokePlayerBadgeGrant).toHaveBeenCalledWith(firebase, {
-      playerId, badgeId: 'countdown', grantId: 'first-grant',
+      playerId, badgeId, grantId: 'first-grant',
     }, 'test-staff-token');
-    expect(await screen.findByText('One Countdown award removed from Patch Hunter. 1 remaining.')).toBeVisible();
+    expect(await screen.findByText(`One ${name} award removed from Patch Hunter. 1 remaining.`)).toBeVisible();
     expect(within(history).queryByText(/Jan 1, 2026/)).not.toBeInTheDocument();
     expect(within(history).getByText(/Jan 3, 2026/)).toBeVisible();
     expect(screen.getByText('Earned 1 time')).toBeVisible();
@@ -533,7 +558,7 @@ test('shows one earned patch with its count and preserves the first award reason
 
 test('features an earned badge from the profile shortcut and shows it when the leaderboard is revisited', async () => {
   let featuredBadgeId = null;
-  getMyBadges.mockResolvedValue({ awards: [{ badgeId: 'ambassador', earnedCount: 2 }], featuredBadgeId });
+  getMyBadges.mockResolvedValue({ awards: [{ badgeId: 'pocket-bbs', earnedCount: 2 }], featuredBadgeId });
   setFeaturedBadge.mockImplementation(async (_, badgeId) => {
     featuredBadgeId = badgeId;
     return { featuredBadgeId };
@@ -546,18 +571,21 @@ test('features an earned badge from the profile shortcut and shows it when the l
 
   const board = renderPage(<Leaderboard />, { path: '/leaderboard' });
   const standings = within(screen.getByRole('table', { name: 'All time player standings' }));
-  expect(standings.queryByAltText('Featured badge: USAW Ambassador')).not.toBeInTheDocument();
+  expect(standings.queryByAltText('Featured badge: Pocket BBs')).not.toBeInTheDocument();
   const profile = renderPage(<PlayerProfileView firebase={firebase} user={user} playerId={playerId} account />, { path: '/account' });
   fireEvent.click(within(profile.container).getByRole('button', { name: 'Choose featured badge' }));
   const selector = await within(profile.container).findByRole('combobox', { name: 'Featured badge' });
-  fireEvent.change(selector, { target: { value: 'ambassador' } });
+  fireEvent.change(selector, { target: { value: 'pocket-bbs' } });
   fireEvent.click(within(profile.container).getByRole('button', { name: 'Save selection' }));
   expect(await within(profile.container).findByText('Featured badge updated.')).toBeVisible();
   expect(within(profile.container).getByRole('button', { name: 'Change featured badge' })).toBeVisible();
-  expect(setFeaturedBadge).toHaveBeenCalledWith(firebase, 'ambassador');
+  expect(setFeaturedBadge).toHaveBeenCalledWith(firebase, 'pocket-bbs');
 
   fireEvent(window, new Event('focus'));
-  expect(await within(board.container).findByAltText('Featured badge: USAW Ambassador')).toBeVisible();
+  const featured = await within(board.container).findByAltText('Featured badge: Pocket BBs');
+  expect(featured).toBeVisible();
+  expect(featured).toHaveAttribute('src', '/badges/thumbs/pocket-bbs.png');
+  expect(featured).toHaveAttribute('srcset', '/badges/thumbs/pocket-bbs.png 72w, /badges/pocket-bbs.png 256w');
 });
 
 test('the owner can reach badge settings from a public profile without exposing their collection there', async () => {

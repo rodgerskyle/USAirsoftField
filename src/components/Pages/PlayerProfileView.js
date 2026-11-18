@@ -489,7 +489,6 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
             headingRef={badgeHeading}
             awards={badges.record?.awards || []}
             featuredBadgeId={featuredBadge?.id}
-            getBadge={getBadge}
             loading={!badges.record && !badges.error}
             error={badges.error && (badges.error.message || 'Badge information is temporarily unavailable.')}
             membershipExpired={badges.error?.membershipStatus === 'expired'}

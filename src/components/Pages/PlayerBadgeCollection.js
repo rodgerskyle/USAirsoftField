@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { Link } from 'react-router-dom';
+import { historicalBadge } from '../constants/playerBadges';
 
 const awardDateFormat = new Intl.DateTimeFormat('en-US', {
   month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Los_Angeles',
@@ -61,6 +62,7 @@ function EarnedBadge({ award, badge, featured }) {
             <FontAwesomeIcon icon={faChevronDown} aria-hidden="true" />
           </span>
           {featured && <span className="player-profile__badge-featured-label">Featured</span>}
+          {badge.retired && <span className="player-profile__badge-featured-label">Retired patch</span>}
         </summary>
         <div className="player-profile__badge-detail">
           <p>{award.reason || badge.description}</p>
@@ -72,12 +74,14 @@ function EarnedBadge({ award, badge, featured }) {
 }
 
 export default function PlayerBadgeCollection({
-  headingRef, awards, featuredBadgeId, getBadge, loading, error, membershipExpired, onRetry, onFeature, saving, feedback,
+  headingRef, awards, featuredBadgeId, loading, error, membershipExpired, onRetry, onFeature, saving, feedback,
 }) {
   const badges = awards.flatMap((award) => {
-    const badge = getBadge(award.badgeId);
+    const badge = historicalBadge(award.badgeId);
     return badge ? [{ award, badge }] : [];
   });
+  const featureable = badges.filter(({ badge }) => !badge.retired);
+  const currentFeaturedId = featureable.find(({ badge }) => badge.id === featuredBadgeId)?.badge.id;
   let content = <p className="player-profile__empty">Badges awarded by USAW staff will appear here.</p>;
 
   if (loading) {
@@ -95,13 +99,13 @@ export default function PlayerBadgeCollection({
   } else if (badges.length) {
     content = (
       <>
-        <FeatureBadgeControl
-          key={featuredBadgeId || ''}
-          badges={badges}
-          featuredBadgeId={featuredBadgeId}
+        {featureable.length > 0 && <FeatureBadgeControl
+          key={currentFeaturedId || ''}
+          badges={featureable}
+          featuredBadgeId={currentFeaturedId}
           onFeature={onFeature}
           saving={saving}
-        />
+        />}
         {feedback && (
           <p className="player-profile__badge-feedback" role={feedback.error ? 'alert' : 'status'}>
             {feedback.message}
@@ -109,7 +113,7 @@ export default function PlayerBadgeCollection({
         )}
         <ul className="player-profile__badge-wall">
           {badges.map(({ award, badge }) => (
-            <EarnedBadge key={badge.id} award={award} badge={badge} featured={badge.id === featuredBadgeId} />
+            <EarnedBadge key={badge.id} award={award} badge={badge} featured={badge.id === currentFeaturedId} />
           ))}
         </ul>
       </>

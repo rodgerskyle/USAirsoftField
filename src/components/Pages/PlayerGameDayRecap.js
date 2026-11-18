@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { badgeById } from '../constants/playerBadges';
+import { historicalBadge } from '../constants/playerBadges';
 import {
   formatFieldClose, formatFieldDate, gameDayRecapNotifications, getGameDayRecap, recapNotificationSetupUrl, todayAtField,
 } from '../constants/gameDayRecap';
@@ -31,13 +31,16 @@ function RecapDetails({ recap }) {
           <h3 id="game-recap-patches-heading">Patches earned</h3>
           {patches.length ? (
             <ul>
-              {patches.map(patch => (
-                <li key={patch.id}>
-                  {badgeById[patch.id] && <img src={badgeById[patch.id].thumbUrl} width="42" height="42" alt="" loading="lazy" />}
-                  <span>{patch.name}</span>
-                  <strong aria-label={`${numbers.format(patch.count)} earned`}>×{numbers.format(patch.count)}</strong>
-                </li>
-              ))}
+              {patches.map(patch => {
+                const badge = historicalBadge(patch.id);
+                return (
+                  <li key={patch.id}>
+                    {badge && <img src={badge.thumbUrl} width="42" height="42" alt="" loading="lazy" />}
+                    <span>{patch.name}{badge?.retired && ' (retired)'}</span>
+                    <strong aria-label={`${numbers.format(patch.count)} earned`}>×{numbers.format(patch.count)}</strong>
+                  </li>
+                );
+              })}
             </ul>
           ) : <p>No patches were recorded for this game day.</p>}
         </section>

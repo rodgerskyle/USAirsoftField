@@ -14,23 +14,12 @@ import './VirtualPatches.css';
 
 const STANDINGS_PAGE_SIZE = 25;
 const formatCount = new Intl.NumberFormat('en-US');
-const secretPatches = BADGE_CATALOG.filter(patch => patch.secret);
-const secretPatchArt = `${process.env.PUBLIC_URL || ''}/badges/secret-achievement.png`;
+// Preserve links shared before these two achievements were made public.
+const legacyBadgeIds = new Map([['1', 'no-shots-fired'], ['2', 'wrong-pocket']]);
 const patchWalls = PATCH_DIFFICULTIES.map(tier => ({
   ...tier,
   patches: BADGE_CATALOG.filter(patch => patch.difficultyFactor === tier.factor),
 }));
-
-function patchDisplay(patch, earnedCount) {
-  if (!patch.secret || earnedCount) return patch;
-  const secretSlot = secretPatches.indexOf(patch) + 1;
-  return {
-    name: `Secret Achievement ${secretSlot}`,
-    artUrl: secretPatchArt,
-    description: 'Earn this patch to reveal its artwork and unlock condition.',
-    secretSlot,
-  };
-}
 
 function useOwnPatchCounts(firebase, memberId) {
   const [record, setRecord] = useState(null);
@@ -173,12 +162,11 @@ function VirtualPatches({ firebase }) {
   catalogParams.delete('view');
   const standingsParams = new URLSearchParams(catalogParams);
   standingsParams.set('view', 'leaderboard');
-  const requestedBadge = badgeById[params.get('badge')] || secretPatches[Number(params.get('secret')) - 1];
+  const requestedBadge = badgeById[params.get('badge')] || badgeById[legacyBadgeIds.get(params.get('secret'))];
   const badge = requestedBadge || BADGE_CATALOG[0];
   const waiverOnly = Boolean(authUser?.roles?.[WAIVER]);
   const memberId = waiverOnly ? null : authUser?.uid;
   const counts = useOwnPatchCounts(firebase, overall ? null : memberId);
-  const displayedBadge = patchDisplay(badge, counts?.[badge.id]);
   const detailHeading = useRef(null);
   const catalogHeading = useRef(null);
   const overallHeading = useRef(null);
@@ -189,9 +177,8 @@ function VirtualPatches({ firebase }) {
     else if (requestedBadge) detailHeading.current?.focus();
   }, [overall, requestedBadge]);
 
-  function selectPatch(patch, secretSlot) {
+  function selectPatch(patch) {
     if (requestedBadge === patch) detailHeading.current?.focus();
-    else if (secretSlot) setParams({ secret: secretSlot });
     else setParams({ badge: patch.id });
   }
 
@@ -250,13 +237,12 @@ function VirtualPatches({ firebase }) {
                     <ul className="virtual-patches__wall">
                       {patches.map(patch => {
                         const count = counts?.[patch.id];
-                        const display = patchDisplay(patch, count);
                         return (
                           <li key={patch.id}>
                             <button className="virtual-patches__tile" type="button" aria-pressed={badge.id === patch.id}
-                              aria-controls="virtual-patch-detail" onClick={() => selectPatch(patch, display.secretSlot)}>
-                              <img src={display.artUrl} alt="" width="144" height="144" loading="lazy" decoding="async" />
-                              <strong>{display.name}</strong>
+                              aria-controls="virtual-patch-detail" onClick={() => selectPatch(patch)}>
+                              <img src={patch.artUrl} alt="" width="144" height="144" loading="lazy" decoding="async" />
+                              <strong>{patch.name}</strong>
                               {counts && (
                                 <span className="virtual-patches__personal-count" data-earned={Boolean(count)}>
                                   {count ? `Earned ×${formatCount.format(count)}` : 'Not yet earned'}
@@ -273,14 +259,14 @@ function VirtualPatches({ firebase }) {
             </section>
             <section className="virtual-patches__detail" id="virtual-patch-detail" aria-labelledby="virtual-patch-detail-title">
               <header className="virtual-patches__brief">
-                <img src={displayedBadge.artUrl} alt="" width="144" height="144" decoding="async" />
+                <img src={badge.artUrl} alt="" width="144" height="144" decoding="async" />
                 <div>
-                  <h2 id="virtual-patch-detail-title" tabIndex={-1} ref={detailHeading}>{displayedBadge.name}</h2>
+                  <h2 id="virtual-patch-detail-title" tabIndex={-1} ref={detailHeading}>{badge.name}</h2>
                   <p className="virtual-patches__difficulty">Factor {badge.difficultyFactor} · {badge.difficultyName}</p>
-                  <p>{displayedBadge.description}</p>
+                  <p>{badge.description}</p>
                 </div>
               </header>
-              {!displayedBadge.secretSlot && <PatchStandings key={badge.id} badge={badge} firebase={firebase} />}
+              <PatchStandings key={badge.id} badge={badge} firebase={firebase} />
               <button className="virtual-patches__return" type="button" onClick={() => catalogHeading.current?.focus()}>
                 Back to patch collection
               </button>

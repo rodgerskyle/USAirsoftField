@@ -25,7 +25,7 @@ test('loads a private recap manually and renders recorded score, patches, Presti
     nextGameDay: { date: '2026-07-12', name: 'Open Play', time: '9:00 AM' },
     recap: {
       date: '2026-07-11', checkedIn: true, pointsEarned: 75, wins: 3, losses: 1,
-      patches: [{ id: 'countdown', name: 'Countdown', count: 2 }],
+      patches: [{ id: 'countdown', name: 'Countdown', count: 2 }, { id: 'first-game', name: 'First Game', count: 1 }],
       prestige: { progress: { nextPrestige: 2, points: { earned: 300, required: 500 }, patches: [] } },
     },
   }));
@@ -36,6 +36,7 @@ test('loads a private recap manually and renders recorded score, patches, Presti
   expect(screen.getByText('Checked in')).toBeInTheDocument();
   expect(screen.getByText('75', { selector: 'dd' })).toBeInTheDocument();
   expect(screen.getByText('Countdown')).toBeInTheDocument();
+  expect(screen.getByText('First Game (retired)')).toBeInTheDocument();
   expect(screen.getByText('×2')).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: 'Current progress toward Prestige 2' })).toBeInTheDocument();
   expect(screen.getByText('July 12, 2026', { selector: 'time' })).toBeInTheDocument();

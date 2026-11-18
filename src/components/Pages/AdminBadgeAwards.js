@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  BADGE_CATALOG, badgeServiceConfigured, getStaffBadgeCounts, getStaffBadgeGrantHistory,
+  BADGE_CATALOG, RETIRED_BADGES, badgeServiceConfigured, getStaffBadgeCounts, getStaffBadgeGrantHistory,
   grantPlayerBadge, revokePlayerBadgeGrant, unlockBadgeStaff,
 } from '../constants/playerBadges';
 import './AdminBadgeAwards.css';
@@ -57,10 +57,12 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
 
   const selectedPlayer = eligiblePlayers.find(player => player.uid === playerId);
   const selectedPlayerId = selectedPlayer?.uid;
-  const selectedBadge = BADGE_CATALOG.find(badge => badge.id === badgeId);
   const staffToken = staffSession?.staffToken;
   const playerCounts = countLookup?.playerId === selectedPlayerId ? countLookup : null;
   const counts = playerCounts?.counts;
+  const retiredAwards = RETIRED_BADGES.filter(badge => counts?.[badge.id] > 0);
+  const retiredBadge = retiredAwards.find(badge => badge.id === badgeId);
+  const selectedBadge = retiredBadge || BADGE_CATALOG.find(badge => badge.id === badgeId);
   const earnedCount = counts?.[badgeId] || 0;
   const isRepeat = earnedCount > 0;
   const query = search.trim();
@@ -72,7 +74,7 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
     )
   );
   const cleanReason = normalizeReason(reason);
-  const canGrant = !!staffToken && !!selectedPlayer && !!selectedBadge && !!counts &&
+  const canGrant = !!staffToken && !!selectedPlayer && !!selectedBadge && !retiredBadge && !!counts &&
     (isRepeat || (cleanReason.length >= 3 && cleanReason.length <= 160)) && !busy && !grantHistory?.loading;
 
   useEffect(() => () => historyRequest.current?.abort(), []);
@@ -176,6 +178,7 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
         throw new Error('Removal could not be confirmed. Choose the same award to retry.');
       }
       updateCount(selectedPlayerId, badgeId, count);
+      if (retiredBadge && !count) setBadgeId('');
       setGrantHistory(history => count && history
         ? { ...history, grants: history.grants.filter(item => item.id !== grant.id) }
         : null);
@@ -192,7 +195,15 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
     }
   }
 
+  function selectBadge(id) {
+    setBadgeId(id);
+    setReason('');
+    setFeedback(null);
+    closeHistory();
+  }
+
   function choosePlayer(player) {
+    if (retiredBadge) setBadgeId('');
     setPlayerId(player?.uid || '');
     setCountLookup(null);
     setReason('');
@@ -348,12 +359,8 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
 
             <div className="admin-badge-awards__patch">
               <label htmlFor="admin-badges-patch">Badge</label>
-              <select ref={badgeSelect} id="admin-badges-patch" value={badgeId} required onChange={event => {
-                setBadgeId(event.target.value);
-                setReason('');
-                setFeedback(null);
-                closeHistory();
-              }}>
+              <select ref={badgeSelect} id="admin-badges-patch" value={retiredBadge ? '' : badgeId}
+                required={!retiredBadge} onChange={event => selectBadge(event.target.value)}>
                 <option value="">Choose a badge</option>
                 {BADGE_CATALOG.map(badge => (
                   <option key={badge.id} value={badge.id}>
@@ -361,17 +368,31 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
                   </option>
                 ))}
               </select>
+              {retiredAwards.length > 0 && (
+                <>
+                  <label htmlFor="admin-badges-retired">Previously awarded retired badge</label>
+                  <select id="admin-badges-retired" value={retiredBadge?.id || ''}
+                    onChange={event => selectBadge(event.target.value)}>
+                    <option value="">Choose an award to review</option>
+                    {retiredAwards.map(badge => (
+                      <option key={badge.id} value={badge.id}>
+                        {badge.name} · {counts[badge.id]} earned
+                      </option>
+                    ))}
+                  </select>
+                </>
+              )}
               {selectedBadge && (
                 <div className="admin-badge-awards__preview">
                   {selectedBadge.artUrl && <img src={selectedBadge.artUrl} alt="" width="64" height="64" />}
                   <div>
                     <strong>{selectedBadge.name}</strong>
-                    <p>{selectedBadge.description}</p>
+                    {selectedBadge.description && <p>{selectedBadge.description}</p>}
                     {counts && <p><strong>Earned {earnedCount} {earnedCount === 1 ? 'time' : 'times'}</strong></p>}
                   </div>
                 </div>
               )}
-              {counts && selectedBadge && (isRepeat ? (
+              {counts && selectedBadge && !retiredBadge && (isRepeat ? (
                 <p>Granting again adds one to this player’s count.</p>
               ) : (
                 <>
@@ -383,9 +404,11 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
                 </>
               ))}
               <div className="admin-badge-awards__actions">
-                <button type="submit" disabled={!canGrant}>
-                  {busy === 'grant' ? 'Granting badge…' : feedback?.retry ? 'Retry grant' : isRepeat ? 'Grant again' : 'Grant badge'}
-                </button>
+                {!retiredBadge && (
+                  <button type="submit" disabled={!canGrant}>
+                    {busy === 'grant' ? 'Granting badge…' : feedback?.retry ? 'Retry grant' : isRepeat ? 'Grant again' : 'Grant badge'}
+                  </button>
+                )}
                 {isRepeat && (
                   <button className="admin-badge-awards__history-toggle" type="button"
                     aria-expanded={!!grantHistory} aria-controls="admin-badges-grant-history"
