@@ -34,7 +34,7 @@ function renderCard(rule, open = false) {
   return `<details class="field-rule-card" id="rule-${escapeHtml(rule.id)}"${open ? ' open' : ''}>
     <summary>
       <h2>
-        <span class="field-rule-art"><img src="/assets/rules/${escapeHtml(rule.image)}.png" alt="" width="128" height="112" loading="lazy" decoding="async"></span>
+        <span class="field-rule-art"><img src="/assets/rules/${escapeHtml(rule.id)}.webp" alt="" width="256" height="256" loading="lazy" decoding="async"></span>
         <span class="field-rule-caption">
           <span class="field-rule-section">${escapeHtml(sectionNames.get(rule.sectionId))}</span>
           <span class="field-rule-title">${escapeHtml(rule.title)}<span class="field-rule-toggle" aria-hidden="true"></span></span>

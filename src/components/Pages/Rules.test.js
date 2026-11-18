@@ -42,6 +42,12 @@ test('each card expands independently and the entire catalog can be reached in b
   expect(document.activeElement).toBe(cards()[6].querySelector('summary'));
   for (let i = 12; i < RULE_CARDS.length; i += 6) fireEvent.click(more);
   expect(cards().map(card => card.id)).toEqual(RULE_CARDS.map(rule => 'rule-' + rule.id));
+  const artwork = cards().map(card => {
+    const src = card.querySelector('.field-rule-art img').getAttribute('src');
+    const file = readFileSync(path.join(__dirname, '../../../public', src));
+    return createHash('sha256').update(file).digest('hex');
+  });
+  expect(new Set(artwork).size).toBe(RULE_CARDS.length);
   expect(more).not.toBeVisible();
 });
 
