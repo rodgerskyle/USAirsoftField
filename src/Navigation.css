@@ -460,12 +460,18 @@
     aspect-ratio: auto;
 }
 
-@media (max-width: 365px) {
-    :root[data-bs-theme="light"] .usaw-nav__actions .usaw-nav__mobile-account > svg {
+@media (max-width: 520px) {
+    :root[data-bs-theme="light"] .usaw-nav__actions :is(.usaw-nav__mobile-account, .usaw-nav__toggle) {
+        width: 2.75rem;
+        min-width: 2.75rem;
+        padding-inline: .4rem;
+    }
+
+    :root[data-bs-theme="light"] .usaw-nav__actions :is(.usaw-nav__mobile-account, .usaw-nav__toggle) > svg {
         display: block;
     }
 
-    :root[data-bs-theme="light"] .usaw-nav__mobile-account span {
+    :root[data-bs-theme="light"] .usaw-nav__actions :is(.usaw-nav__mobile-account, .usaw-nav__toggle) > span {
         display: none;
     }
 }

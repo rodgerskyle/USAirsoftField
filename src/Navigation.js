@@ -218,6 +218,7 @@ function NavigationLayout({ authUser, profilePic }) {
                     {!waiverKiosk && (
                         <button type="button" className="usaw-nav__control usaw-nav__toggle"
                             ref={(node) => { triggers.current.mobile = node; }}
+                            aria-label={open === 'mobile' ? 'Close' : 'Menu'}
                             aria-expanded={open === 'mobile'} aria-controls="usaw-nav-drawer"
                             onClick={() => toggle('mobile')}>
                             <svg aria-hidden="true" width="21" height="21" viewBox="0 0 24 24" fill="none">
