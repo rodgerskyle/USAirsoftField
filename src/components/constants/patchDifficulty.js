@@ -11,7 +11,7 @@ const specialistPatches = new Set([
   'the-purge', 'pfrc', 'icbm-first-strike', 'sabotage', 'operation-airstrike',
   'broken-arrow', 'level-4-biohazard', 'operation-first-strike', 'detonation',
   'fuel-depot-demolition', 'progressive-countdown', 'blackout-protocol',
-  'ribbon-flag', 'fallout', 'hvt', 'human-decoy', 'wrong-pocket',
+  'ribbon-flag', 'fallout', 'hvt', 'human-decoy', 'wrong-pocket', 'pocket-bbs',
 ]);
 
 const elitePatches = new Set([

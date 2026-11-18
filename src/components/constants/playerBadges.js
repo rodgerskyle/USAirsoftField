@@ -7,7 +7,7 @@ const artPath = `${process.env.PUBLIC_URL || ''}/badges`;
 
 export const badgeServiceConfigured = /^https:\/\/[^?#]+$/i.test(apiUrl);
 
-export const BADGE_CATALOG = catalog.map((badge) => {
+function withBadgeArt(badge) {
     const difficulty = patchDifficulty(badge.id);
     return {
         ...badge,
@@ -16,11 +16,27 @@ export const BADGE_CATALOG = catalog.map((badge) => {
         artUrl: `${artPath}/${badge.id}.png`,
         thumbUrl: `${artPath}/thumbs/${badge.id}.png`,
     };
-});
+}
+
+export const BADGE_CATALOG = catalog.map(withBadgeArt);
+
+// Historical metadata is kept separate so these awards cannot re-enter staff or player pickers.
+export const RETIRED_BADGES = [
+    { id: 'first-game', name: 'First Game', description: 'A welcome to the field after a first USAW game day.' },
+    { id: 'team-death-match', name: 'Team Death Match', description: 'Recognized by staff for making a decisive play or showing standout teamwork in Team Death Match.' },
+    { id: 'bb-confetti', name: 'BB Confetti', description: 'Finish a round and discover loose BBs collected in your boot or pouch.' },
+    { id: 'tactical-click', name: 'Tactical Click', description: 'Start a live round with an empty magazine, hear the click, then reload and get back in the game.' },
+].map(badge => withBadgeArt({ ...badge, retired: true }));
+
+const retiredById = new Map(RETIRED_BADGES.map(badge => [badge.id, badge]));
 
 export const badgeById = Object.assign(Object.create(null), Object.fromEntries(
     BADGE_CATALOG.map((badge) => [badge.id, badge])
 ));
+
+export function historicalBadge(id) {
+    return badgeById[id] || retiredById.get(id);
+}
 
 async function callBadgeApi({ query, firebase, body, staffToken, signal } = {}) {
     if (!badgeServiceConfigured) throw new Error('Badge services are unavailable.');
@@ -110,6 +126,9 @@ export function getMyBadges(firebase, { signal } = {}) {
 }
 
 export function setFeaturedBadge(firebase, badgeId) {
+    if (badgeId !== null && !badgeById[badgeId]) {
+        return Promise.reject(new Error('Choose an earned patch from the current collection.'));
+    }
     return callBadgeApi({ firebase, body: { action: 'feature', badgeId } });
 }
 
