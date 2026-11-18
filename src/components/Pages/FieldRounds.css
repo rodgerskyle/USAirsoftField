@@ -147,6 +147,11 @@
 }
 
 .field-barracks-brand img { width: clamp(4rem, 8vw, 7rem); height: auto; }
+:root[data-bs-theme="light"] .field-barracks-brand img {
+  display: block;
+  width: clamp(6rem, 13vw, 12rem);
+  height: auto;
+}
 .field-barracks-header h1 { margin: 0; font-size: clamp(1.65rem, 4vw, 3rem); }
 .field-barracks-controls { display: flex; flex-wrap: wrap; gap: .45rem; margin-inline-start: auto; }
 

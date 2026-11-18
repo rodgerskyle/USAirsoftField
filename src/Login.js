@@ -5,7 +5,7 @@ import logo from './assets/usairsoft-small-logo.png';
 import { get } from 'firebase/database';
 import { withFirebase } from './components/Firebase';
 import { PasswordForgetLink } from './passwordForgot';
-import ReCAPTCHA from 'react-google-recaptcha';
+import ThemedCaptcha from './components/ThemedCaptcha';
 import { Container, Row, Col, Form, Button } from 'react-bootstrap/';
 
 import * as ROLES from './components/constants/roles';
@@ -45,8 +45,11 @@ class SignInFormBase extends Component {
 
   //Recaptcha stuff
   handleCaptchaResponseChange(response) {
+    if (!response) return this.expireCaptcha();
+    const widget = this.recaptcha;
     let checkRecaptcha = this.props.firebase.checkRecaptcha();
     checkRecaptcha({ response }).then((result) => {
+      if (!widget || this.recaptcha !== widget || widget.getValue() !== response) return;
       if (result.data && result.data.status === "success.") {
         this.setState({
           robot: false, error: null
@@ -150,10 +153,9 @@ class SignInFormBase extends Component {
         <Container>
           <Row className="align-items-center justify-content-center">
             <Col className="recap">
-              <ReCAPTCHA
+              <ThemedCaptcha
                 ref={(el) => { this.recaptcha = el; }}
                 sitekey={process.env.REACT_APP_RECAPTCHA_V2_SITE_KEY}
-                theme={'dark'}
                 onChange={this.handleCaptchaResponseChange}
                 onExpired={this.expireCaptcha} />
             </Col>

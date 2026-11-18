@@ -1,6 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { Alert, Button } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
 import { AppearanceProvider } from '../../Appearance';
@@ -11,7 +12,11 @@ const preferenceKey = 'usaw-field-theme';
 
 function DialogTheme() {
   const { palette } = useTheme();
-  return <output aria-label="Dialog theme">{palette.mode}</output>;
+  return <>
+    <output aria-label="Dialog theme">{palette.mode}</output>
+    <Button variant="contained">Confirm desk action</Button>
+    <Alert severity="success" variant="filled">Desk update saved</Alert>
+  </>;
 }
 
 function Page({ name }) {
@@ -57,6 +62,12 @@ test('uses one theme switch across staff routes and updates portaled controls', 
   const switcher = screen.getByRole('button', { name: 'Dark mode' });
   expect(switcher).toHaveAttribute('aria-pressed', 'false');
   expect(screen.getByLabelText('Dialog theme')).toHaveTextContent('light');
+  const action = screen.getByRole('button', { name: 'Confirm desk action' });
+  const notice = screen.getByRole('alert');
+  const portalRules = Array.from(document.styleSheets).flatMap(sheet => Array.from(sheet.cssRules))
+    .filter(rule => rule.style?.getPropertyValue('color') === 'var(--admin-on-accent)');
+  expect(portalRules.some(rule => action.matches(rule.selectorText))).toBe(true);
+  expect(portalRules.some(rule => notice.matches(rule.selectorText))).toBe(true);
 
   fireEvent.click(switcher);
   expect(document.documentElement).toHaveAttribute('data-bs-theme', 'dark');

@@ -5,6 +5,7 @@ import { createTheme, ThemeProvider, useTheme } from '@mui/material/styles';
 import { useAppearance } from '../../Appearance';
 import AppearanceControl from '../../AppearanceControl';
 import logo from '../../assets/usairsoft-small-logo.png';
+import lightLogo from '../../assets/usairsoft-wide-logo-light.png';
 import { AuthUserContext } from '../session';
 import { ADMIN } from './roles';
 import './admin-theme.css';
@@ -29,7 +30,35 @@ const adminPalettes = {
 export function AdminThemeRoute({ children }) {
   const palette = adminPalettes[useAppearance()?.theme ?? 'light'];
   const { typography } = useTheme();
-  const theme = useMemo(() => createTheme({ typography, palette }), [typography, palette]);
+  const theme = useMemo(() => createTheme({
+    typography,
+    palette,
+    ...(palette.mode === 'light' && {
+      components: {
+        MuiButton: {
+          styleOverrides: {
+            contained: {
+              color: 'var(--admin-on-accent)',
+              backgroundColor: 'var(--admin-action-bg)',
+              '&:hover, &:active': { backgroundColor: 'var(--admin-action-hover)' },
+            },
+          },
+        },
+        MuiAlert: {
+          styleOverrides: {
+            filled: ({ ownerState }) => {
+              const severity = ownerState.color || ownerState.severity;
+              const surface = { error: 'danger', success: 'success', warning: 'warning' }[severity];
+              return {
+                color: 'var(--admin-on-accent)',
+                backgroundColor: surface ? `var(--admin-${surface}-bg)` : 'var(--admin-action-bg)',
+              };
+            },
+          },
+        },
+      },
+    }),
+  }), [typography, palette]);
 
   return (
     <ThemeProvider theme={theme}>{children ?? <Outlet />}</ThemeProvider>
@@ -46,7 +75,7 @@ export default function AdminLayout() {
         <Navbar className="admin-navbar" aria-label="Staff navigation">
           <Container fluid>
             <Navbar.Brand as={Link} to={isAdmin ? '/admin' : '/'}>
-              <img src={logo} alt="" className="admin-nav-logo" />
+              <img src={appearance?.theme === 'light' ? lightLogo : logo} alt="" className="admin-nav-logo" />
               <span>{isAdmin ? 'Staff' : 'US Airsoft'}</span>
             </Navbar.Brand>
             <Nav className="admin-nav-actions">

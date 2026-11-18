@@ -1,0 +1,257 @@
+/* Give the public pages their daylight surfaces. Preserve the photos' existing
+   crops and positioning as well as the fabric and factor colors of patch walls. */
+:root[data-bs-theme="light"] {
+  --usaw-day-photo: linear-gradient(100deg, #f5f9fd 8%, #f5f9fdf2 48%, #f5f9fdc7);
+  --usaw-day-panel: linear-gradient(120deg, var(--usaw-raised), var(--usaw-subtle));
+}
+
+:root[data-bs-theme="light"] :is(.ph-hero, .team-directory__hero, .player-profile__hero) {
+  background-image: var(--usaw-day-photo), url("../../assets/background-rp.jpeg");
+  color: var(--usaw-light-ink);
+}
+
+:root[data-bs-theme="light"] .field-lb-hero {
+  background-image: var(--usaw-day-photo), url("../../assets/background-lb.jpeg");
+  color: var(--usaw-light-ink);
+}
+
+:root[data-bs-theme="light"] :is(
+  .ph-install, .ph-account, .player-profile__team-card, .player-profile__rank,
+  .player-profile__featured-badge, .team-detail__hero, .virtual-patches__hero,
+  .field-rule-header, .pricing-modern-callout-price, .player-milestones__current,
+  .settings-hero-card, .settings-content-card
+) {
+  color: var(--usaw-light-ink);
+  background: var(--usaw-day-panel);
+  border-color: var(--usaw-line);
+}
+
+:root[data-bs-theme="light"] .field-rule-header { border-inline-start-color: var(--usaw-red); }
+:root[data-bs-theme="light"] .team-detail__hero { border-bottom-color: var(--usaw-red); }
+:root[data-bs-theme="light"] .player-hub { --ph-light-blue: var(--usaw-light-ink); }
+
+:root[data-bs-theme="light"] :is(
+  .ph-hero-copy, .ph-install p, .ph-install .ph-install-help, .ph-account p:last-child, .ph-account-loading,
+  .ph-player-stats dt, .ph-player-meta dt, .ph-player-meta dd,
+  .field-lb-hero h1, .field-lb-hero p, .field-lb-hero-stats dt, .field-lb-hero-stats a,
+  .field-lb-back, .field-lb-back:hover, .team-directory__hub, .team-directory__hub:hover, .team-directory__hero p,
+  .team-detail__hero h1, .team-detail__identity p, .team-detail__back, .team-detail__back:hover,
+  .player-profile__hero .player-profile__label, .player-profile__metadata dt, .player-profile__real-name,
+  .player-profile__team-arrow, .virtual-patches__hero p, .virtual-patches__membership a,
+  .virtual-patches__back, .virtual-patches__back:hover, .field-rule-header h1, .field-rule-header p,
+  .field-rule-header small, .pricing-modern-callout-amount, .pricing-modern-callout-caption,
+  .player-milestones__current p, .player-milestones__current span, .player-milestones__current dt
+) {
+  color: var(--usaw-light-ink);
+}
+
+:root[data-bs-theme="light"] .ph-kicker span { color: var(--usaw-red); }
+:root[data-bs-theme="light"] .ph-player-stats dd { color: var(--usaw-light-ink); }
+:root[data-bs-theme="light"] .ph-player-wins dd { color: #166433; }
+:root[data-bs-theme="light"] .ph-player-losses dd { color: #aa2132; }
+
+:root[data-bs-theme="light"] :is(
+  .field-lb-hero-stats > div, .ph-player-stats > div, .team-detail__logo, .player-profile__team-logo,
+  .player-profile__hero .player-profile__link, .team-directory__hero .team-directory__button,
+  .team-detail__button, .field-rule-links a, .virtual-patches__tile
+) {
+  border-color: #8da7c1;
+  background: var(--usaw-raised);
+  color: var(--usaw-light-ink);
+}
+
+:root[data-bs-theme="light"] :is(
+  .player-profile__team-card:hover, .player-profile__hero .player-profile__link:hover,
+  .team-directory__hero .team-directory__button:hover, .team-detail__button:hover,
+  .field-rule-links a:hover, .field-map-controls button:not(:disabled):hover
+) {
+  border-color: var(--usaw-light-ink);
+  background: var(--usaw-light-selection);
+  color: var(--usaw-light-ink);
+}
+
+:root[data-bs-theme="light"] :is(
+  .ph-button-primary, .field-lb-period button[aria-pressed="true"],
+  .field-lb-pagination .MuiPaginationItem-root.Mui-selected, .team-lb-division input:checked + span,
+  .player-profile__sections button[aria-pressed="true"], .player-profile__badge-save:enabled,
+  .team-directory__hero .team-directory__button--primary, .team-detail__button--primary,
+  .player-experience__button--primary, .pricing-modern-tab.active, .contact-button.pricing-modern-cta-button,
+  .field-map-image-link, .field-schedule__action--primary, .waiver-submit-button,
+  .react-calendar__tile--active
+) {
+  border-color: var(--usaw-light-ink);
+  background: var(--usaw-light-selection);
+  color: var(--usaw-light-ink);
+  box-shadow: inset 0 0 0 1px var(--usaw-light-ink);
+}
+
+:root[data-bs-theme="light"] :is(
+  .ph-button-primary:hover, .player-profile__badge-save:enabled:hover,
+  .team-directory__hero .team-directory__button--primary:hover, .team-detail__button--primary:hover,
+  .player-experience__button--primary:hover, .contact-button.pricing-modern-cta-button:hover,
+  .field-map-image-link:hover, .field-schedule__action--primary:hover:not(:disabled), .waiver-submit-button:enabled:hover,
+  .react-calendar__tile--active:enabled:hover, .react-calendar__tile--active:enabled:focus
+) {
+  color: var(--usaw-light-ink);
+  background: #c6dbf1;
+}
+
+:root[data-bs-theme="light"] .team-lb-division::before { background: var(--usaw-light-selection); }
+
+/* The guide's legacy tab rules include important colors for the selected item. */
+:root[data-bs-theme="light"] .game-mode-guide .public-tab-nav .list-group-item.active {
+  color: var(--usaw-light-ink) !important;
+  background: var(--usaw-light-selection) !important;
+  border-color: var(--usaw-light-ink);
+  box-shadow: inset 3px 0 var(--usaw-light-ink);
+}
+
+:root[data-bs-theme="light"] .virtual-patches__board {
+  --patch-board-border: #839ab2;
+  --patch-board-accent: var(--usaw-light-ink);
+  --patch-board-light: #f0f6fb;
+  --patch-board-dark: #d6e4f1;
+  color: var(--usaw-light-ink);
+}
+
+:root[data-bs-theme="light"] .virtual-patches__board[data-factor="2"] {
+  --patch-board-border: #81927d;
+  --patch-board-light: #f2f6eb;
+  --patch-board-dark: #dce8d6;
+}
+
+:root[data-bs-theme="light"] .virtual-patches__board[data-factor="3"] {
+  --patch-board-border: #a98d6c;
+  --patch-board-light: #fbf5e9;
+  --patch-board-dark: #ecdfc7;
+}
+
+:root[data-bs-theme="light"] .virtual-patches__tile:hover {
+  border-color: var(--usaw-light-ink);
+  background: var(--usaw-surface);
+}
+
+:root[data-bs-theme="light"] .virtual-patches__tile[aria-pressed="true"] {
+  border-color: var(--usaw-light-ink);
+  background: var(--usaw-light-selection);
+  box-shadow: inset 0 0 0 1px var(--usaw-light-ink);
+}
+
+:root[data-bs-theme="light"] .virtual-patches__personal-count { color: var(--usaw-light-ink); }
+
+:root[data-bs-theme="light"] :is(
+  .player-profile__hero .player-profile__featured-badge .player-profile__label,
+  .player-profile__featured-count, .ph-player-prestige,
+  .virtual-patches__personal-count[data-earned="true"]
+) { color: #744e08; }
+
+:root[data-bs-theme="light"] :is(.player-profile__prestige, .player-profile__badge-featured-label) {
+  background: #fff2ce;
+  color: #744e08;
+}
+
+/* The Roman numeral is live type inside a transparent opening in the artwork. */
+:root[data-bs-theme="light"] .field-lb-insignia:has(.usaw-prestige-emblem) {
+  background: var(--usaw-subtle);
+}
+:root[data-bs-theme="light"] .usaw-prestige-emblem > span {
+  color: var(--usaw-light-ink);
+  text-shadow: 0 0 2px var(--usaw-surface);
+}
+
+/* The TV views have local palettes so their full-screen tables and controls
+   also follow the website appearance selection. */
+:root[data-bs-theme="light"] .field-lb.field-lb-presentation {
+  --usaw-text: var(--usaw-light-ink);
+  --usaw-muted: inherit;
+  --usaw-page-bg: inherit;
+  --usaw-surface: inherit;
+  --usaw-raised: inherit;
+  --usaw-subtle: inherit;
+  --usaw-line: inherit;
+  --usaw-accent: var(--usaw-light-ink);
+  --usaw-focus: var(--usaw-light-ink);
+  --field-lb-win: #166433;
+  --field-lb-loss: #aa2132;
+  --field-lb-prestige: #744e08;
+  color-scheme: light;
+  background: var(--usaw-day-panel);
+}
+
+:root[data-bs-theme="light"] .field-barracks {
+  --barracks-bg: var(--usaw-page-bg);
+  --barracks-panel: var(--usaw-surface);
+  --barracks-line: var(--usaw-line);
+  --barracks-text: var(--usaw-light-ink);
+  --barracks-muted: var(--usaw-light-ink);
+  --barracks-red: var(--usaw-red);
+  background: var(--usaw-day-panel);
+}
+
+:root[data-bs-theme="light"] .field-barracks .field-round-respawns > div { background: var(--usaw-subtle); }
+:root[data-bs-theme="light"] .field-barracks-votes li[data-winner="true"] { color: #166433; }
+
+:root[data-bs-theme="light"] :is(.round-map-marker, .round-map-key) {
+  border-color: #962638;
+  background: var(--usaw-light-red-tint);
+  color: var(--usaw-light-ink);
+}
+:root[data-bs-theme="light"] :is(.round-map-marker, .round-map-key)[data-pin="camo"] {
+  border-color: #385930;
+  background: #e0ecd6;
+}
+:root[data-bs-theme="light"] :is(.round-map-marker, .round-map-key)[data-pin="solid"] {
+  border-color: #285784;
+  background: var(--usaw-light-selection);
+}
+
+/* Account settings, public registration and the classic rulebook share older
+   components with staff tools; keep these adjustments within public surfaces. */
+:root[data-bs-theme="light"] :is(
+  .google-map .pin, .settings-display-name, .game-recap-preference, .container-settings .MuiPaper-root,
+  .container-settings .MuiButton-containedPrimary, .div-img-button-settings,
+  .waiver-success-screen
+) {
+  color: var(--usaw-light-ink);
+  background: var(--usaw-raised);
+  border-color: var(--usaw-line);
+}
+
+:root[data-bs-theme="light"] :is(
+  .google-map .pin-icon, .container-youtube, .row-instagram, .row-update-rules, .public-tab-panel .ol-rules,
+  .team-form-page .team-upload-text, .notice-text-settings, .container-settings .password-change-form,
+  .paper-ef .verify-form, .pdfStyle, .settings-page-title, .settings-page-copy, .settings-display-name p, .game-recap-preference p,
+  .game-recap-preference .game-recap-link, .container-settings .MuiTab-textColorPrimary,
+  .container-settings .p-picture-label-settings, .container-settings .verify-form,
+  .container-settings .row-img-settings, .container-settings .password-text,
+  .p-description-about
+) { color: var(--usaw-light-ink); }
+
+:root[data-bs-theme="light"] .container-settings .MuiTab-textColorPrimary.Mui-selected {
+  background: var(--usaw-light-selection);
+  color: var(--usaw-light-ink);
+  box-shadow: inset 0 -3px var(--usaw-light-ink);
+}
+
+:root[data-bs-theme="light"] .div-img-text-settings {
+  background: var(--usaw-surface);
+  color: var(--usaw-light-ink);
+}
+
+:root[data-bs-theme="light"] :is(.settings-display-name p[role="alert"], .game-recap-preference p.game-recap-error) {
+  color: var(--usaw-heading-red);
+}
+
+:root[data-bs-theme="light"] .paper-ef:has(.verify-form) {
+  background: var(--usaw-raised);
+  color: var(--usaw-light-ink);
+}
+
+:root[data-bs-theme="light"] :is(.a-youtube-link, .a-instagram-link) {
+  color: var(--usaw-light-ink) !important;
+}
+
+:root[data-bs-theme="light"] .col-photo-instagram:hover .p-caption-instagram {
+  color: var(--usaw-light-ink);
+  background: var(--usaw-raised);
+}

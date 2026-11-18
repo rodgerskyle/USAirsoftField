@@ -2,10 +2,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCompress, faExpand } from '@fortawesome/free-solid-svg-icons';
-import logo from '../../assets/usairsoft-small-logo.png';
+import { useAppearance } from '../../Appearance';
+import wordmark from '../../assets/usairsoft-wide-logo-light.png';
+import shield from '../../assets/usairsoft-small-logo.png';
 import './LeaderboardTvDisplay.css';
 
 export default function LeaderboardTvDisplay({ title, periodControls, status, playerCount, onLoadMore, tvControl, children }) {
+    const logo = useAppearance()?.theme === 'dark' ? shield : wordmark;
     const displayRef = useRef(null);
     const standingsRef = useRef(null);
     const [fullscreen, setFullscreen] = useState(false);

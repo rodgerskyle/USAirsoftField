@@ -6,6 +6,7 @@ import { getDownloadURL } from 'firebase/storage';
 import { withFirebase } from './components/Firebase';
 import * as ROLES from './components/constants/roles';
 import logo from './assets/usairsoft-wide-logo.png';
+import lightLogo from './assets/usairsoft-wide-logo-light.png';
 import shieldLogo from './assets/usairsoft-small-logo.png';
 import AppearanceControl from './AppearanceControl';
 import { useAppearance } from './Appearance';
@@ -82,6 +83,7 @@ function SocialLinks() {
 function NavigationLayout({ authUser, profilePic }) {
     const location = useLocation();
     const appearance = useAppearance();
+    const lightMode = appearance?.theme === 'light';
     const header = useRef(null);
     const triggers = useRef({});
     const [open, setOpen] = useState('');
@@ -162,8 +164,9 @@ function NavigationLayout({ authUser, profilePic }) {
                 <SiteLink to={waiverOnly ? '/dashboard' : '/home'} onClick={close} className="usaw-nav__brand"
                     aria-label={waiverOnly ? 'US Airsoft World dashboard' : 'US Airsoft World home'}>
                     <picture>
-                        <source media="(max-width: 365px)" srcSet={shieldLogo} />
-                        <img src={logo} alt="" width="175" height="41" />
+                        {!lightMode && <source media="(max-width: 365px)" srcSet={shieldLogo} />}
+                        <img src={lightMode ? lightLogo : logo} alt=""
+                            width={lightMode ? 1557 : 175} height={lightMode ? 326 : 41} />
                     </picture>
                 </SiteLink>
                 <nav aria-label="Main navigation" className="usaw-nav__desktop">
@@ -215,6 +218,7 @@ function NavigationLayout({ authUser, profilePic }) {
                     {!waiverKiosk && (
                         <button type="button" className="usaw-nav__control usaw-nav__toggle"
                             ref={(node) => { triggers.current.mobile = node; }}
+                            aria-label={open === 'mobile' ? 'Close' : 'Menu'}
                             aria-expanded={open === 'mobile'} aria-controls="usaw-nav-drawer"
                             onClick={() => toggle('mobile')}>
                             <svg aria-hidden="true" width="21" height="21" viewBox="0 0 24 24" fill="none">
@@ -241,6 +245,7 @@ function NavigationLayout({ authUser, profilePic }) {
                                 <ul className="usaw-nav__links usaw-nav__quick">
                                     <li><SiteLink to="/player-hub" onClick={close}>Player hub</SiteLink></li>
                                     <li><StoreLink /></li>
+                                    <li className="usaw-nav__drawer-waiver"><SiteLink to="/waiver" onClick={close}>Waiver</SiteLink></li>
                                 </ul>
                                 <div className="usaw-nav__drawer-section">
                                     <p>Plan your visit</p>

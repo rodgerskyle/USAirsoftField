@@ -9,6 +9,8 @@
   --admin-subtext: var(--usaw-muted);
   --admin-accent: #185bac;
   --admin-accent-dark: #174a87;
+  --admin-action-bg: var(--admin-accent);
+  --admin-action-hover: var(--admin-accent-dark);
   --admin-on-accent: #fff;
   --admin-accent-text: var(--usaw-accent);
   --admin-accent-soft: var(--usaw-subtle);
@@ -24,6 +26,14 @@
   --admin-warning: #754905;
   --admin-warning-bg: #fff1d7;
   --admin-warning-border: #d5b879;
+}
+
+:root[data-bs-theme="light"] {
+  --admin-action-bg: var(--usaw-subtle);
+  --admin-action-hover: #d4e4f5;
+  --admin-info-button-bg: var(--admin-action-bg);
+  --admin-info-button-hover: var(--admin-action-hover);
+  --admin-on-accent: var(--usaw-light-ink);
 }
 
 :root[data-bs-theme="dark"] {
@@ -80,6 +90,14 @@
   padding: 4px;
   border-radius: 8px;
   background: var(--usaw-chrome);
+}
+
+:root[data-bs-theme="light"] .admin-nav-logo {
+  width: clamp(6.5rem, 16vw, 10rem);
+  height: auto;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
 }
 
 .admin-navbar :is(.admin-site-link, .usaw-nav__appearance) {

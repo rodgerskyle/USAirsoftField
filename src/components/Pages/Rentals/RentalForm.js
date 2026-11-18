@@ -56,7 +56,7 @@ const StyledToggle = styled(FormControlLabel)({
     padding: '4px 12px',
     borderRadius: '20px',
     '& .MuiFormControlLabel-label': {
-        color: '#fff',
+        color: 'var(--usaw-light-ink, #fff)',
         fontSize: '0.9rem',
         marginLeft: '8px'
     },

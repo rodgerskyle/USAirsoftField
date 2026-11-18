@@ -64,6 +64,11 @@
     color: var(--admin-text) !important;
 }
 
+:root[data-bs-theme="light"] .admin-breadcrumb a:link:hover {
+    color: var(--usaw-light-ink) !important;
+    text-decoration: underline;
+}
+
 .admin-panel-card,
 .admin-compact-page .waiver-cards,
 .admin-compact-page .usa-waiver-card {
@@ -147,14 +152,14 @@
 
 .admin-compact-page .btn-primary,
 .admin-compact-page .button-options-style-admin.btn-primary {
-    background: var(--admin-accent);
+    background: var(--admin-action-bg);
     border-color: var(--admin-accent);
     color: var(--admin-on-accent);
 }
 
 .admin-compact-page .btn-primary:hover,
 .admin-compact-page .button-options-style-admin.btn-primary:hover {
-    background: var(--admin-accent-dark);
+    background: var(--admin-action-hover);
     border-color: var(--admin-accent-dark);
     color: var(--admin-on-accent);
 }
@@ -242,7 +247,7 @@
 }
 
 .admin-compact-page .button-submit-admin {
-    background: var(--admin-accent);
+    background: var(--admin-action-bg);
     border-color: var(--admin-accent);
     color: var(--admin-on-accent);
 }
@@ -250,7 +255,7 @@
 .admin-compact-page .button-submit-admin:hover,
 .admin-compact-page .button-submit-admin:focus,
 .admin-compact-page .button-submit-admin:active {
-    background: var(--admin-accent-dark) !important;
+    background: var(--admin-action-hover) !important;
     border-color: var(--admin-accent-dark) !important;
     color: var(--admin-on-accent) !important;
 }
@@ -1349,4 +1354,18 @@
     .admin-page-header h1 {
         font-size: 1.45rem;
     }
+}
+
+:root[data-bs-theme="light"] :is(.admin-layout, .admin-container) :is(.admin-cards, .padding-5px,
+    .status-card-body-wl-admin, .status-card-body-fg-admin, .pagePlaceholder) {
+    color: var(--usaw-light-ink);
+}
+
+:root[data-bs-theme="light"] :is(.admin-layout, .admin-container) :is(.admin-cards, .status-card-body-wl-admin) {
+    background: var(--admin-surface) !important;
+}
+
+:root[data-bs-theme="light"] .admin-cards :is(.MuiTableCell-head, .MuiTableCell-body, .MuiIconButton-root),
+:root[data-bs-theme="light"] .pagination-row-user-table :is(.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows, .MuiNativeSelect-select, .MuiTablePagination-selectIcon) {
+    color: var(--usaw-light-ink);
 }

@@ -258,6 +258,7 @@
 .usaw-nav .usaw-nav__mobile-account,
 .usaw-nav .usaw-nav__mobile-dashboard,
 .usaw-nav .usaw-nav__toggle,
+.usaw-nav__drawer-waiver,
 .usaw-nav__drawer {
     display: none;
 }
@@ -440,5 +441,60 @@
         width: 2.5rem;
         aspect-ratio: 1;
         object-fit: contain;
+    }
+}
+
+:root[data-bs-theme="light"] .usaw-nav {
+    --nav-bg: var(--usaw-surface);
+    --nav-top: var(--usaw-subtle);
+    --nav-raised: var(--usaw-raised);
+    --nav-line: #9bb1c9;
+    --nav-text: var(--usaw-light-ink);
+    --nav-muted: var(--usaw-light-ink);
+    --nav-accent: var(--usaw-light-ink);
+    --nav-blue: var(--usaw-light-selection);
+}
+
+:root[data-bs-theme="light"] .usaw-nav__brand img {
+    width: clamp(8rem, 17vw, 12rem);
+    height: auto;
+    aspect-ratio: auto;
+}
+
+@media (max-width: 520px) {
+    :root[data-bs-theme="light"] .usaw-nav__actions :is(.usaw-nav__mobile-account, .usaw-nav__toggle) {
+        width: 2.75rem;
+        min-width: 2.75rem;
+        padding-inline: .4rem;
+    }
+
+    :root[data-bs-theme="light"] .usaw-nav__actions :is(.usaw-nav__mobile-account, .usaw-nav__toggle) > svg {
+        display: block;
+    }
+
+    :root[data-bs-theme="light"] .usaw-nav__actions :is(.usaw-nav__mobile-account, .usaw-nav__toggle) > span {
+        display: none;
+    }
+}
+
+:root[data-bs-theme="light"] .usaw-nav .usaw-nav__waiver {
+    color: var(--nav-text);
+    background: var(--usaw-light-red-tint);
+    border-color: var(--nav-crimson);
+}
+
+:root[data-bs-theme="light"] .usaw-nav .usaw-nav__waiver:is(:hover, [aria-current="page"]) {
+    color: var(--nav-text);
+    background: #f6d8db;
+    border-color: var(--nav-crimson-hover);
+}
+
+@media (max-width: 365px) {
+    :root[data-bs-theme="light"] .usaw-nav__actions .usaw-nav__waiver {
+        display: none;
+    }
+
+    :root[data-bs-theme="light"] .usaw-nav__drawer-waiver {
+        display: block;
     }
 }

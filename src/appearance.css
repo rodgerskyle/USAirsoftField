@@ -28,6 +28,94 @@
   --usaw-focus: #b4d3f7;
 }
 
+:root[data-bs-theme="light"] {
+  --usaw-light-ink: #174a87;
+  --usaw-light-selection: #d7e6f7;
+  --usaw-light-red-tint: #fbe8ea;
+}
+
+/* Bootstrap supplies white lettering on its filled and selected controls. */
+:root[data-bs-theme="light"] :is(.btn-primary, .btn-secondary, .btn-dark, .btn-danger, .btn-success) {
+  --bs-btn-color: var(--usaw-light-ink);
+  --bs-btn-bg: var(--usaw-control-fill, var(--usaw-subtle));
+  --bs-btn-border-color: var(--usaw-control-border, var(--usaw-light-ink));
+  --bs-btn-disabled-color: var(--usaw-light-ink);
+  --bs-btn-disabled-bg: var(--bs-btn-bg);
+}
+
+:root[data-bs-theme="light"] :is(
+  .btn-primary, .btn-secondary, .btn-dark, .btn-danger, .btn-success,
+  .btn-outline-primary, .btn-outline-secondary, .btn-outline-dark,
+  .btn-outline-danger, .btn-outline-success, .btn-outline-light
+) {
+  --bs-btn-hover-color: var(--usaw-light-ink);
+  --bs-btn-active-color: var(--usaw-light-ink);
+  --bs-btn-hover-bg: var(--usaw-control-fill, var(--usaw-light-selection));
+  --bs-btn-active-bg: var(--usaw-control-fill, var(--usaw-light-selection));
+  --bs-btn-hover-border-color: var(--usaw-control-border, var(--usaw-light-ink));
+  --bs-btn-active-border-color: var(--bs-btn-hover-border-color);
+}
+
+:root[data-bs-theme="light"] :is(.btn-danger, .btn-outline-danger) {
+  --usaw-control-fill: var(--usaw-light-red-tint);
+  --usaw-control-border: var(--usaw-red);
+}
+
+:root[data-bs-theme="light"] :is(.btn-success, .btn-outline-success) {
+  --usaw-control-fill: var(--bs-success-bg-subtle);
+  --usaw-control-border: var(--bs-success);
+}
+
+:root[data-bs-theme="light"] .btn-outline-light {
+  --bs-btn-color: var(--usaw-light-ink);
+  --bs-btn-border-color: var(--usaw-line);
+  --bs-btn-disabled-color: var(--usaw-light-ink);
+}
+
+:root[data-bs-theme="light"] :is(.text-white, .text-light, .text-white-50) {
+  color: var(--usaw-light-ink) !important;
+}
+
+:root[data-bs-theme="light"] .badge {
+  --bs-badge-color: var(--usaw-light-ink);
+}
+
+:root[data-bs-theme="light"] .badge.bg-danger {
+  background-color: var(--usaw-light-red-tint) !important;
+  border: 1px solid var(--usaw-red);
+}
+
+:root[data-bs-theme="light"] .dropdown-menu {
+  --bs-dropdown-link-active-color: var(--usaw-light-ink);
+  --bs-dropdown-link-active-bg: var(--usaw-light-selection);
+}
+
+:root[data-bs-theme="light"] .dropdown-item:is(:hover, :focus, :active, .active) {
+  color: var(--usaw-light-ink) !important;
+  background-color: var(--usaw-light-selection) !important;
+}
+
+:root[data-bs-theme="light"] .list-group {
+  --bs-list-group-active-color: var(--usaw-light-ink);
+  --bs-list-group-active-bg: var(--usaw-light-selection);
+}
+
+:root[data-bs-theme="light"] .pagination {
+  --bs-pagination-active-color: var(--usaw-light-ink);
+  --bs-pagination-active-bg: var(--usaw-light-selection);
+}
+
+:root[data-bs-theme="light"] .nav-pills {
+  --bs-nav-pills-link-active-color: var(--usaw-light-ink);
+  --bs-nav-pills-link-active-bg: var(--usaw-light-selection);
+}
+
+:root[data-bs-theme="light"] .progress {
+  --bs-progress-bg: var(--usaw-raised);
+  --bs-progress-bar-color: var(--usaw-light-ink);
+  --bs-progress-bar-bg: var(--usaw-light-selection);
+}
+
 .usaw-share {
   position: relative;
 }

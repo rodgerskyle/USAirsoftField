@@ -8,6 +8,7 @@ import * as serviceWorker from './serviceWorker';
 import Firebase, { FirebaseContext } from './components/Firebase';
 import { HelmetProvider } from 'react-helmet-async';
 import { AppearanceProvider } from './Appearance';
+import './components/Pages/public-light-text.css';
 
 const displayTypography = {
   fontFamily: 'var(--usaw-font-display)',

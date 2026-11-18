@@ -42,3 +42,19 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+:root[data-bs-theme="light"] .MuiButton-contained:not(.Mui-disabled) {
+  color: var(--usaw-light-ink);
+  background-color: var(--usaw-subtle);
+  box-shadow: inset 0 0 0 1px var(--usaw-light-ink);
+  text-shadow: none;
+}
+
+:root[data-bs-theme="light"] .MuiButton-contained:not(.Mui-disabled):hover {
+  background-color: #d5e5f6;
+}
+
+:root[data-bs-theme="light"] .MuiButton-containedError:not(.Mui-disabled) {
+  background-color: #fbecee;
+  box-shadow: inset 0 0 0 1px var(--usaw-red);
+}

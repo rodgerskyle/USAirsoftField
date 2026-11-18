@@ -53,6 +53,7 @@ import UserOptions from './components/Pages/UserOptions';
 import ScrollToTop from './components/constants/scrolltotop';
 import Redirect from './components/constants/redirect';
 import CookieConsent from "react-cookie-consent";
+import { useAppearance } from './Appearance';
 import PageNotFound from './components/Pages/PageNotFound';
 import Birthday from './components/Pages/Birthday';
 import ScanWaiver from './components/Pages/ScanWaiver';
@@ -176,7 +177,15 @@ function useTvDisplay() {
 
 function CookieConsentRoute() {
   const tvDisplay = useTvDisplay();
-  return tvDisplay ? null : <CookieConsent>This website uses cookies to enhance the user experience.</CookieConsent>;
+  const light = useAppearance()?.theme === 'light';
+  return tvDisplay ? null : (
+    <CookieConsent
+      style={light ? { background: 'var(--usaw-raised)', color: 'var(--usaw-light-ink)', borderTop: '1px solid var(--usaw-line)' } : undefined}
+      buttonStyle={light ? { color: 'var(--usaw-light-ink)' } : undefined}
+    >
+      This website uses cookies to enhance the user experience.
+    </CookieConsent>
+  );
 }
 
 function NavigationRoute() {

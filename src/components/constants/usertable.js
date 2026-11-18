@@ -138,10 +138,10 @@ function UserRow({ user, page, rowsPerPage, index }) {
                         to={`/admin/useroptions/${user.uid}`}
                         variant="contained"
                         sx={{
-                          backgroundColor: 'var(--usaw-red)',
-                          color: '#fff',
+                          backgroundColor: 'var(--admin-info-button-bg, var(--usaw-red))',
+                          color: 'var(--admin-on-accent)',
                           '&:hover': {
-                            backgroundColor: '#8e1824',
+                            backgroundColor: 'var(--admin-info-button-hover, #8e1824)',
                           }
                         }}
                       >
