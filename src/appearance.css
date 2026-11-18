@@ -90,6 +90,11 @@
   --bs-dropdown-link-active-bg: var(--usaw-light-selection);
 }
 
+:root[data-bs-theme="light"] .dropdown-item:is(:hover, :focus, :active, .active) {
+  color: var(--usaw-light-ink) !important;
+  background-color: var(--usaw-light-selection) !important;
+}
+
 :root[data-bs-theme="light"] .list-group {
   --bs-list-group-active-color: var(--usaw-light-ink);
   --bs-list-group-active-bg: var(--usaw-light-selection);
