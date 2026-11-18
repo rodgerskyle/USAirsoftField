@@ -99,6 +99,11 @@ function count(value) {
   return Number.isFinite(number) ? number : 0;
 }
 
+function profileName(value) {
+  if (typeof value !== 'string' || /\S+@\S+/.test(value)) return '';
+  return value.normalize('NFC').trim().replace(/\s+/g, ' ');
+}
+
 function getGameDays(games) {
   return Object.entries(games || {}).map(([key, day]) => {
     const [year, month, date] = key.split('-').map(Number);
@@ -329,10 +334,10 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
     else setSection('badges');
   }
 
-  const nameResolved = Boolean(nameRecord && nameRecord.playerId === playerId);
-  const customName = nameResolved && typeof nameRecord.name === 'string' ? nameRecord.name : '';
-  const displayName = customName || user.username || user.name || 'USAW player';
-  const showRealName = (account || (nameResolved && !customName)) && user.name && user.name !== displayName;
+  const customName = nameRecord && nameRecord.playerId === playerId ? profileName(nameRecord.name) : '';
+  const registeredName = profileName(user.name);
+  const displayName = customName || profileName(user.username) || registeredName || 'USAW player';
+  const showRegisteredName = registeredName && registeredName.toLowerCase() !== displayName.toLowerCase();
   const { team, status: teamStatus } = usePlayerTeam(playerId, user.team);
   const teamStatusText = teamStatus === 'loading' ? 'Checking team…'
     : teamStatus === 'error' ? 'Team unavailable' : 'Unaffiliated';
@@ -381,7 +386,7 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
             <div className="player-profile__identity">
               <p className="player-profile__label">{account ? 'My profile' : 'Player profile'}</p>
               <h1 id="player-profile-title">{displayName}</h1>
-              {showRealName && <p className="player-profile__real-name">{user.name}</p>}
+              {showRegisteredName && <p className="player-profile__real-name">{registeredName}</p>}
               {team && <ProfileTeamCard key={`${team.source}:${team.id}`} firebase={firebase} team={team} />}
               {(!team || user.renewal) && (
                 <dl className="player-profile__metadata">
