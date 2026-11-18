@@ -425,3 +425,17 @@ $rccs-visaelectron-logo: 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBl
         opacity: 1 !important;
     }
 }
+
+:root[data-bs-theme="light"] .rccs__card {
+    .rccs__card--front,
+    .rccs__card--back,
+    .rccs__card__background {
+        background: linear-gradient(25deg, var(--admin-surface), var(--admin-action-hover));
+        color: var(--usaw-light-ink);
+    }
+
+    :is(.rccs__number, .rccs__name, .rccs__expiry) {
+        color: var(--usaw-light-ink);
+        opacity: 1 !important;
+    }
+}
