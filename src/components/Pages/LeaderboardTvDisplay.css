@@ -45,6 +45,16 @@
     object-fit: contain;
 }
 
+:root[data-bs-theme="light"] .field-lb-presentation-brand {
+    max-width: 100%;
+}
+
+:root[data-bs-theme="light"] .field-lb-presentation-brand img {
+    width: clamp(6.25rem, 11vw, 10.5rem);
+    max-width: 32vw;
+    height: auto;
+}
+
 .field-lb-presentation-brand h1 {
     margin: 0;
     color: var(--usaw-text);

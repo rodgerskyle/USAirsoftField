@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
-import logo from '../../assets/usairsoft-small-logo.png';
+import { useAppearance } from '../../Appearance';
+import wordmark from '../../assets/usairsoft-wide-logo-light.png';
+import shield from '../../assets/usairsoft-small-logo.png';
 import { requestPublicFieldTool } from '../constants/fieldStaffApi';
 import {
     formatFieldTime, formatRoundCountdown, isOpenVote, liveRounds, RoundRespawns, useLiveFieldBoard,
@@ -31,6 +33,7 @@ function VotingDisplay({ poll, now, stale }) {
 }
 
 export default function BarracksTV({ request = requestPublicFieldTool }) {
+    const logo = useAppearance()?.theme === 'dark' ? shield : wordmark;
     const { board, error, now, refresh } = useLiveFieldBoard(request);
     const display = useRef(null);
     const [fullscreen, setFullscreen] = useState(false);
