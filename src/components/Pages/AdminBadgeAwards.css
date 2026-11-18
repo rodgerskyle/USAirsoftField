@@ -200,8 +200,8 @@
 }
 
 .admin-badge-awards__actions button {
-  background: var(--usaw-red);
-  color: #fff;
+  background: var(--admin-info-button-bg, var(--usaw-red));
+  color: var(--admin-on-accent);
 }
 
 .admin-badge-awards__actions .admin-badge-awards__history-toggle {

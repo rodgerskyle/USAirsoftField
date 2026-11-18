@@ -4,7 +4,7 @@ import { withRouter } from '../constants/withRouter';
 import logo from '../../assets/usairsoft-small-logo.png';
 
 import { withFirebase } from '../Firebase';
-import ReCAPTCHA from 'react-google-recaptcha';
+import ThemedCaptcha from '../ThemedCaptcha';
 import { Container, Row, Col, Form, Button } from 'react-bootstrap/';
 
 const INITIAL_STATE = {
@@ -24,8 +24,11 @@ class VerificationForm extends Component {
 
     //Recaptcha stuff
     handleCaptchaResponseChange(response) {
+        if (!response) return this.expireCaptcha();
+        const widget = this.recaptcha;
         let checkRecaptcha = this.props.firebase.checkRecaptcha();
         checkRecaptcha({ response }).then((result) => {
+            if (!widget || this.recaptcha !== widget || widget.getValue() !== response) return;
             if (result.data && result.data.status === "success.") {
                 this.setState({
                     robot: false, error: null
@@ -117,10 +120,9 @@ class VerificationForm extends Component {
                         <Container>
                             <Row className="align-items-center justify-content-center">
                                 <Col className="recap">
-                                    <ReCAPTCHA
+                                    <ThemedCaptcha
                                         ref={(el) => { this.recaptcha = el; }}
                                         sitekey="6Lc0JPsUAAAAAGfLV1lzptnyO2V1dTU7GfR5_5h5"
-                                        theme={'dark'}
                                         onChange={this.handleCaptchaResponseChange}
                                         onExpired={this.expireCaptcha} />
                                 </Col>

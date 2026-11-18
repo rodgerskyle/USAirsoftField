@@ -358,7 +358,7 @@
 }
 
 .usa-waiver-page-button.active {
-    --bs-btn-active-bg: var(--admin-accent);
+    --bs-btn-active-bg: var(--admin-action-bg);
     --bs-btn-active-border-color: var(--admin-accent);
     --bs-btn-active-color: var(--admin-on-accent);
 }

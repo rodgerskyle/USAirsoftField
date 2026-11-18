@@ -523,3 +523,69 @@
     font-size: .81rem;
   }
 }
+
+:root[data-bs-theme="light"] .field-home {
+  --field-light-blue: var(--usaw-light-ink);
+  --field-light-red: var(--usaw-red);
+}
+
+/* Separate the caption from the footage so its contrast never depends on a video frame. */
+:root[data-bs-theme="light"] .field-home__hero {
+  color: var(--usaw-light-ink);
+  background: linear-gradient(to bottom, var(--hero-shadow) var(--hero-video-height), var(--usaw-raised) var(--hero-video-height));
+}
+
+:root[data-bs-theme="light"] .field-home__hero::before {
+  display: none;
+}
+
+:root[data-bs-theme="light"] .field-home__hero-inner {
+  padding-top: calc(var(--hero-video-height) + clamp(.9rem, 1.5vw, 1.35rem));
+}
+
+:root[data-bs-theme="light"] .field-home__hero h1 {
+  color: var(--usaw-light-ink);
+  text-shadow: none;
+}
+
+:root[data-bs-theme="light"] :is(.field-home__hero-description, .field-home__hub h3, .field-home__hub p) {
+  color: var(--usaw-light-ink);
+}
+
+:root[data-bs-theme="light"] .field-home__hub {
+  color: var(--usaw-light-ink);
+  background: linear-gradient(110deg, var(--usaw-surface), var(--usaw-subtle));
+  border-color: var(--field-line);
+  border-left-color: var(--field-red);
+}
+
+:root[data-bs-theme="light"] .field-home__hub-icon,
+:root[data-bs-theme="light"] .field-home__seasons button[aria-pressed="true"],
+:root[data-bs-theme="light"] .field-home__hours-table thead {
+  color: var(--usaw-light-ink);
+  background: var(--usaw-light-selection);
+}
+
+:root[data-bs-theme="light"] .field-home__seasons button[aria-pressed="true"] {
+  box-shadow: inset 0 0 0 1px var(--usaw-light-ink);
+}
+
+:root[data-bs-theme="light"] .field-home__button--primary {
+  color: var(--usaw-light-ink);
+  background: var(--usaw-light-red-tint);
+  border-color: var(--field-red);
+}
+
+:root[data-bs-theme="light"] .field-home__button--primary:hover {
+  background: #f6d8db;
+}
+
+:root[data-bs-theme="light"] .field-home__button--outline {
+  color: var(--usaw-light-ink);
+  background: var(--usaw-surface);
+  border-color: var(--usaw-light-ink);
+}
+
+:root[data-bs-theme="light"] .field-home__button--outline:hover {
+  background: var(--usaw-light-selection);
+}

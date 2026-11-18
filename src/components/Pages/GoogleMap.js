@@ -1,23 +1,46 @@
 import React, { useState } from 'react'
 import GoogleMapReact from 'google-map-react'
+import { useAppearance } from '../../Appearance'
 import './map.css'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faMapMarkerAlt } from '@fortawesome/free-solid-svg-icons'
 
+const mapColors = {
+  light: {
+    label: '#174a87',
+    halo: '#f8fafc',
+    boundary: '#bacbd9',
+    land: '#eef2ee',
+    park: '#d8e8d9',
+    road: '#ffffff',
+    water: '#c6deef',
+  },
+  dark: {
+    label: '#ffffff',
+    halo: '#3e606f',
+    boundary: '#1a3541',
+    land: '#2c5a71',
+    park: '#406d80',
+    road: '#1f4f70',
+    water: '#193341',
+  },
+};
+
 const GMap = ({ location, zoomLevel }) => {
   const [zoom, setZoom] = useState(zoomLevel);
+  const colors = mapColors[useAppearance()?.theme] || mapColors.light;
 
   const mapOptions = {
     styles: [
       {
         featureType: "all",
         elementType: "labels.text.fill",
-        stylers: [{ color: "#ffffff" }]
+        stylers: [{ color: colors.label }]
       },
       {
         featureType: "all",
         elementType: "labels.text.stroke",
-        stylers: [{ visibility: "on" }, { color: "#3e606f" }, { weight: 2 }, { gamma: 0.84 }]
+        stylers: [{ visibility: "on" }, { color: colors.halo }, { weight: 2 }, { gamma: 0.84 }]
       },
       {
         featureType: "all",
@@ -27,32 +50,32 @@ const GMap = ({ location, zoomLevel }) => {
       {
         featureType: "administrative",
         elementType: "geometry",
-        stylers: [{ weight: 0.6 }, { color: "#1a3541" }]
+        stylers: [{ weight: 0.6 }, { color: colors.boundary }]
       },
       {
         featureType: "landscape",
         elementType: "geometry",
-        stylers: [{ color: "#2c5a71" }]
+        stylers: [{ color: colors.land }]
       },
       {
         featureType: "poi",
         elementType: "geometry",
-        stylers: [{ color: "#406d80" }]
+        stylers: [{ color: colors.park }]
       },
       {
         featureType: "road",
         elementType: "geometry",
-        stylers: [{ color: "#1f4f70" }]
+        stylers: [{ color: colors.road }]
       },
       {
         featureType: "transit",
         elementType: "geometry",
-        stylers: [{ color: "#406d80" }]
+        stylers: [{ color: colors.park }]
       },
       {
         featureType: "water",
         elementType: "geometry",
-        stylers: [{ color: "#193341" }]
+        stylers: [{ color: colors.water }]
       }
     ]
   };
