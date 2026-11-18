@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link, useLocation } from 'react-router-dom';
-import { bindRuleWall, renderRuleWall } from '../constants/rule-wall';
+import { renderRuleWall } from '../constants/rule-wall';
+import { RULE_SECTIONS } from '../constants/rules-catalog';
 import rulesDocument from './rules.pdf';
 import './Rules.css';
 
@@ -9,12 +10,13 @@ export default function Rules() {
   const { hash } = useLocation();
   const wall = useRef(null);
   // Previous versions linked directly to sections of the published text.
-  const initialSection = hash.startsWith('#rules-') ? hash.slice(7) : '';
-  const markup = useMemo(() => ({ __html: renderRuleWall({ section: initialSection }) }), [initialSection]);
+  const section = RULE_SECTIONS.find(item => hash === '#rules-' + item.id);
+  const ruleId = hash.startsWith('#rule-') ? hash.slice(6) : '';
+  const markup = useMemo(() => ({ __html: renderRuleWall({ section: section?.id, ruleId }) }), [section, ruleId]);
   useEffect(() => {
-    bindRuleWall(wall.current);
-    if (initialSection || hash === '#complete-rules') wall.current?.scrollIntoView?.();
-  }, [initialSection, hash]);
+    if (ruleId) document.getElementById('rule-' + ruleId)?.scrollIntoView?.();
+    else if (section || hash === '#complete-rules') wall.current?.scrollIntoView?.();
+  }, [section, ruleId, hash]);
 
   return (
     <main className="field-rule-guide field-rule-guide--website">
@@ -22,7 +24,7 @@ export default function Rules() {
       <header className="field-rule-header">
         <div>
           <h1>Field rules</h1>
-          <p>Select a card to read the full rule.</p>
+          <p>Choose a category, then open a rule to read it.</p>
           <small>Published rules updated <time dateTime="2020-01-01">January 1, 2020</time></small>
         </div>
         <div className="field-rule-links">
@@ -30,6 +32,7 @@ export default function Rules() {
           <a href={rulesDocument} target="_blank" rel="noopener noreferrer">Rules PDF</a>
         </div>
       </header>
+      {section && <Link to="/information/rules" className="field-all-categories">All categories</Link>}
       <div id="complete-rules" ref={wall} dangerouslySetInnerHTML={markup} />
     </main>
   );

@@ -7,10 +7,28 @@ import { HelmetProvider } from 'react-helmet-async';
 import { MemoryRouter } from 'react-router-dom';
 import Rules from './Rules';
 import RulesClassicPage from './RulesClassicPage';
-import { RULE_CARDS } from '../constants/rules-catalog';
+import { RULE_CARDS, RULE_SECTIONS } from '../constants/rules-catalog';
 
-function show(Component) {
-  return render(<HelmetProvider><MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><Component /></MemoryRouter></HelmetProvider>);
+function show(Component, route = '/information/rules') {
+  return render(
+    <HelmetProvider>
+      <MemoryRouter initialEntries={[route]} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <Component />
+      </MemoryRouter>
+    </HelmetProvider>
+  );
+}
+
+function passageText({ text, items = [] }) {
+  return text + items.map(passageText).join('');
+}
+
+function artworkDigest(image) {
+  const src = image.getAttribute('src');
+  expect(src).toMatch(/^\/assets\/rules\/[a-z0-9-]+\.png$/);
+  const file = readFileSync(path.join(__dirname, '../../../public', src));
+  expect(file.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
+  return createHash('sha256').update(file).digest('hex');
 }
 
 test('the original rules backup is preserved byte for byte', () => {
@@ -19,55 +37,79 @@ test('the original rules backup is preserved byte for byte', () => {
     .toBe('ef88cdc191bdc6b5e79a65f679002c1068e362950cd466cf0d8fb04a1c89e38b');
 });
 
-test('each card expands independently and the entire catalog can be reached in batches', () => {
+test('eight illustrated categories expose the full catalog once, with the published text and individual artwork', () => {
   const { container } = show(Rules);
-  const cards = () => Array.from(container.querySelectorAll('.field-rule-card'));
-  expect(cards()).toHaveLength(6);
+  const categories = Array.from(container.querySelectorAll('details.field-rule-category'));
+  expect(categories).toHaveLength(8);
   expect(screen.getByRole('link', { name: 'Classic view' })).toHaveAttribute('href', '/information/rules/classic');
   expect(screen.getByRole('link', { name: 'Rules PDF' })).toHaveAttribute('target', '_blank');
-  const team = screen.getByText('Identify your team by sleeve or tape').closest('details');
-  expect(team.open).toBe(false);
-  fireEvent.click(team.querySelector('summary'));
-  expect(team.open).toBe(true);
-  expect(team.querySelector('.field-rule-body')).toHaveTextContent(/outer shirt or jacket sleeves/);
-  expect(team.querySelector('.field-rule-team--camo')).toHaveTextContent('Camo · Yellow');
-  expect(team.querySelector('.field-rule-team--solid')).toHaveTextContent('Solid · Blue');
-  expect(team.querySelector('.field-rule-body .field-rule-team--camo')).toBeInTheDocument();
-  expect(team.querySelector('.field-rule-body .field-rule-team--solid')).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /load more rules/i })).not.toBeInTheDocument();
+  const catalog = new Map(RULE_CARDS.map(rule => ['rule-' + rule.id, rule]));
+  const displayedIds = [];
+  const categoryImages = [];
+  const ruleImages = [];
 
-  const more = screen.getByRole('button', { name: 'Load more rules' });
-  fireEvent.click(more);
-  expect(cards()).toHaveLength(12);
-  expect(team.open).toBe(true);
-  expect(document.activeElement).toBe(cards()[6].querySelector('summary'));
-  for (let i = 12; i < RULE_CARDS.length; i += 6) fireEvent.click(more);
-  expect(cards().map(card => card.id)).toEqual(RULE_CARDS.map(rule => 'rule-' + rule.id));
-  const artwork = cards().map(card => {
-    const src = card.querySelector('.field-rule-art img').getAttribute('src');
-    const file = readFileSync(path.join(__dirname, '../../../public', src));
-    return createHash('sha256').update(file).digest('hex');
-  });
-  expect(new Set(artwork).size).toBe(RULE_CARDS.length);
-  expect(more).not.toBeVisible();
+  for (const category of categories) {
+    const summary = category.querySelector('summary');
+    expect(category.open).toBe(false);
+    expect(summary).toBeVisible();
+    categoryImages.push(artworkDigest(summary.querySelector('img')));
+    fireEvent.click(summary);
+    expect(category.open).toBe(true);
+    const entries = category.querySelectorAll('details.field-rule-entry');
+    expect(entries.length).toBeGreaterThan(0);
+    expect(summary.querySelector('.field-category-count').textContent).toBe(
+      entries.length === 1 ? '1 rule' : entries.length + ' rules'
+    );
+    for (const entry of entries) {
+      const rule = catalog.get(entry.id);
+      expect(rule).toBeDefined();
+      expect(entry.querySelector('summary h3')).toHaveTextContent(rule.title);
+      expect(entry.open).toBe(false);
+      const passages = Array.from(entry.querySelectorAll('.field-rule-passage'), el => el.textContent.replace(/\s+/g, ''));
+      expect(passages).toEqual(rule.body.map(item => passageText(item).replace(/\s+/g, '')));
+      displayedIds.push(entry.id);
+      ruleImages.push(artworkDigest(entry.querySelector('.field-rule-detail-art img')));
+    }
+  }
+  expect(displayedIds).toHaveLength(96);
+  expect(displayedIds.sort()).toEqual(Array.from(catalog.keys()).sort());
+  expect(new Set(categoryImages).size).toBe(categories.length);
+  expect(new Set(ruleImages).size).toBe(RULE_CARDS.length);
 });
 
-test('section selection resets the count and preserves nested rules in the selected cards', () => {
+test('opening a category and rule reveals the team designations and full nested descriptions', () => {
   const { container } = show(Rules);
-  const select = screen.getByRole('combobox');
-  fireEvent.change(select, { target: { value: 'personal-safety' } });
-  expect(screen.getByRole('status')).toHaveTextContent('Showing 6 of 10 rules');
-  fireEvent.click(screen.getByRole('button', { name: 'Load more rules' }));
-  const uniform = screen.getByText('Field clothing and team uniform options').closest('details');
+  const category = container.querySelector('#category-teams');
+  fireEvent.click(category.querySelector('summary'));
+  const team = category.querySelector('#rule-facility-identify-your-team-by-sleeve-or-tape');
+  expect(team.querySelector('summary')).toBeVisible();
+  const body = team.querySelector('.field-rule-body');
+  expect(body).not.toBeVisible();
+  fireEvent.click(team.querySelector('summary'));
+  expect(body).toBeVisible();
+  expect(body).toHaveTextContent(/outer shirt or jacket sleeves/);
+  expect(team.querySelector('.field-rule-team--camo')).toHaveTextContent('Camo · Yellow');
+  expect(team.querySelector('.field-rule-team--solid')).toHaveTextContent('Solid · Blue');
+  expect(body.querySelector('.field-rule-passage .field-rule-team--camo')).toBeInTheDocument();
+  expect(body.querySelector('.field-rule-passage .field-rule-team--solid')).toBeInTheDocument();
+  const uniform = category.querySelector('#rule-personal-safety-field-clothing-and-team-uniform-options');
   fireEvent.click(uniform.querySelector('summary'));
   expect(uniform.querySelectorAll('.field-rule-body ul ul').length).toBeGreaterThan(0);
-  expect(uniform.querySelector('.field-rule-body')).toHaveTextContent(/Camo/i);
-  expect(uniform.querySelector('.field-rule-body')).toHaveTextContent(/Solid/i);
-  fireEvent.change(select, { target: { value: 'play-days' } });
-  expect(container.querySelectorAll('.field-rule-card')).toHaveLength(4);
-  expect(screen.queryByRole('button', { name: 'Load more rules' })).toBeNull();
-  fireEvent.change(select, { target: { value: '' } });
-  expect(container.querySelectorAll('.field-rule-card')).toHaveLength(6);
-  expect(screen.getByRole('button', { name: 'Load more rules' })).toBeVisible();
+  fireEvent.click(category.querySelector('summary'));
+  expect(body).not.toBeVisible();
+});
+
+test.each(RULE_SECTIONS)('the legacy $id section link includes exactly its published rules', ({ id }) => {
+  const { container } = show(Rules, '/information/rules#rules-' + id);
+  const expected = RULE_CARDS.filter(rule => rule.sectionId === id).map(rule => 'rule-' + rule.id);
+  const visibleSection = Array.from(container.querySelectorAll('.field-rule-entry'), el => el.id);
+  expect(visibleSection.sort()).toEqual(expected.sort());
+  const all = screen.getByRole('link', { name: 'All categories' });
+  expect(all).toHaveAttribute('href', '/information/rules');
+  fireEvent.click(all);
+  expect(container.querySelectorAll('.field-rule-category')).toHaveLength(8);
+  expect(container.querySelectorAll('.field-rule-entry')).toHaveLength(RULE_CARDS.length);
 });
 
 test('classic route retains the original tabbed page and returns to the illustrated view', () => {
