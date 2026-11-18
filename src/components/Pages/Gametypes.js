@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Col, Container, ListGroup, Row, Tab } from 'react-bootstrap/';
 import { Helmet } from 'react-helmet-async';
+import { COMPANION_GAME_MODES } from './companionGameModes';
 
 import './Gametypes.css';
 
@@ -8,9 +9,9 @@ function Gametypes() {
     const [query, setQuery] = useState('');
     const [selectedKey, setSelectedKey] = useState(GAME_MODES[0].key);
     const searchInput = useRef(null);
-    const terms = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
-    const matches = GAME_MODES.filter(({ name }) =>
-        terms.every(term => name.toLowerCase().includes(term))
+    const terms = searchable(query).split(/\s+/).filter(Boolean);
+    const matches = GAME_MODES.filter(({ searchText }) =>
+        terms.every(term => searchText.includes(term))
     );
     const activeMode = matches.find(({ key }) => key === selectedKey) || matches[0];
 
@@ -28,7 +29,7 @@ function Gametypes() {
                     </p>
                 </div>
                 <Container fluid>
-                    <div className="public-meta-row game-mode-meta"><p>Last Updated: 1/1/2020</p></div>
+                    <div className="public-meta-row game-mode-meta"><p>Last Updated: 11/17/2026</p></div>
                     <Tab.Container id="game-mode-tabs" activeKey={activeMode?.key ?? null} onSelect={setSelectedKey} transition={false}>
                         <Row className="public-tab-layout">
                             <Col lg={4} className="mb-4 mb-lg-0">
@@ -72,9 +73,9 @@ function Gametypes() {
                                 <div className="public-tab-panel">
                                     {activeMode ? (
                                         <Tab.Content>
-                                            {matches.map(({ key, Mode }) => (
+                                            {matches.map(({ key, content }) => (
                                                 <Tab.Pane key={key} eventKey={key} hidden={key !== activeMode.key}>
-                                                    <Mode />
+                                                    {content}
                                                 </Tab.Pane>
                                             ))}
                                         </Tab.Content>
@@ -1483,7 +1484,7 @@ const FuelDepotDemolition = () => (
 )
 
 
-const GAME_MODES = [
+const originalModes = [
     ["The Enemy within", EnemyWithin],
     ["Medic!", Medic],
     ["Bottle Domination", BottleDomination],
@@ -1517,6 +1518,47 @@ const GAME_MODES = [
     ["Zombie Attack", ZombieAttack],
     ["Money Bag", MoneyBag],
     ["Fuel Depot “Demolition”", FuelDepotDemolition],
-].map(([name, Mode], index) => ({ name, Mode, key: "#link" + (index + 1) }));
+];
+
+function CompanionBriefing({ mode, number }) {
+    return (
+        <ol start={number} className="ol-rules">
+            <li className="li-content-rules">
+                {mode.name} – ({mode.intro})
+                <ul>
+                    <li>General Information – {mode.playtest && 'Staff playtest. '}{mode.info}</li>
+                    <li>The Goal – {mode.goal}</li>
+                    <li>Respawn/HQ – {mode.respawn || 'The referee will give the respawn rules and locations before play.'}</li>
+                    <li>Needs – {mode.needs || 'Check the round briefing for any equipment needed.'}</li>
+                    <li>Game Time – {mode.time || 'The referee sets the round length at the briefing.'}</li>
+                    <li>Area of play – {mode.area || 'Use the field boundaries announced for the round.'}</li>
+                    <li>Review overall – {mode.review}</li>
+                </ul>
+            </li>
+        </ol>
+    );
+}
+
+function searchable(value) {
+    return value.toLowerCase().replace(/[.“”"]/g, '').replace(/[-:]/g, ' ').trim();
+}
+
+const originalAliases = {
+    'Team Death Match': ['Elimination', 'One-Life TDM'],
+    Countdown: ['Single Clock Countdown'],
+    Detonation: ['Pool Filter Bomb', 'Exploding Pool Filter Game'],
+};
+
+const GAME_MODES = [
+    ...originalModes.map(([name, Mode], index) => ({
+        name, key: '#link' + (index + 1), content: <Mode />, aliases: originalAliases[name],
+    })),
+    ...COMPANION_GAME_MODES.map((mode, index) => ({
+        name: mode.name,
+        key: '#mode-' + mode.id,
+        content: <CompanionBriefing mode={mode} number={originalModes.length + index + 1} />,
+        aliases: mode.aliases,
+    })),
+].map(mode => ({ ...mode, searchText: searchable([mode.name, ...(mode.aliases || [])].join(' ')) }));
 
 export default Gametypes;
