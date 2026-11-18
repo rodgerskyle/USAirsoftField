@@ -29,7 +29,35 @@ const adminPalettes = {
 export function AdminThemeRoute({ children }) {
   const palette = adminPalettes[useAppearance()?.theme ?? 'light'];
   const { typography } = useTheme();
-  const theme = useMemo(() => createTheme({ typography, palette }), [typography, palette]);
+  const theme = useMemo(() => createTheme({
+    typography,
+    palette,
+    ...(palette.mode === 'light' && {
+      components: {
+        MuiButton: {
+          styleOverrides: {
+            contained: {
+              color: 'var(--admin-on-accent)',
+              backgroundColor: 'var(--admin-action-bg)',
+              '&:hover, &:active': { backgroundColor: 'var(--admin-action-hover)' },
+            },
+          },
+        },
+        MuiAlert: {
+          styleOverrides: {
+            filled: ({ ownerState }) => {
+              const severity = ownerState.color || ownerState.severity;
+              const surface = { error: 'danger', success: 'success', warning: 'warning' }[severity];
+              return {
+                color: 'var(--admin-on-accent)',
+                backgroundColor: surface ? `var(--admin-${surface}-bg)` : 'var(--admin-action-bg)',
+              };
+            },
+          },
+        },
+      },
+    }),
+  }), [typography, palette]);
 
   return (
     <ThemeProvider theme={theme}>{children ?? <Outlet />}</ThemeProvider>
