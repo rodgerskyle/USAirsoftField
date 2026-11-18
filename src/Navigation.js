@@ -245,6 +245,7 @@ function NavigationLayout({ authUser, profilePic }) {
                                 <ul className="usaw-nav__links usaw-nav__quick">
                                     <li><SiteLink to="/player-hub" onClick={close}>Player hub</SiteLink></li>
                                     <li><StoreLink /></li>
+                                    <li className="usaw-nav__drawer-waiver"><SiteLink to="/waiver" onClick={close}>Waiver</SiteLink></li>
                                 </ul>
                                 <div className="usaw-nav__drawer-section">
                                     <p>Plan your visit</p>
