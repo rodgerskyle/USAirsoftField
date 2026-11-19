@@ -29,7 +29,7 @@ export async function requestScoreReceipts(firebase, actor, params, body, signal
     }
 }
 
-export function FlaggedRoundReceipts({ request, disabled, onReview, onCorrect, resolved, updateMessage }) {
+export function FlaggedRoundReceipts({ request, getPlayerName, disabled, onReview, onCorrect, resolved, updateMessage }) {
     const [flags, setFlags] = useState(null);
     const [cursor, setCursor] = useState(null);
     const [error, setError] = useState('');
@@ -68,8 +68,8 @@ export function FlaggedRoundReceipts({ request, disabled, onReview, onCorrect, r
         });
     }
 
-    function close(flag, action) {
-        const label = flag.displayName || flag.playerId;
+    function close(flag, action, playerName) {
+        const label = playerName || 'this player';
         if (!window.confirm(action === 'dismiss' ? 'Keep the ' + flag.outcome + ' for ' + label + ' and close this flag?'
             : 'Close the corrected receipt for ' + label + '?')) return;
         return run(async signal => {
@@ -90,18 +90,19 @@ export function FlaggedRoundReceipts({ request, disabled, onReview, onCorrect, r
         <Card.Body>
             {!flags ? <p>Review reports players sent from their Companion receipts.</p>
                 : !flags.length ? <p>No open receipt flags.</p> : flags.map(flag => {
+                    const playerName = getPlayerName(flag.playerId);
                     const details = [flag.mode, sideLabels[flag.side], when.format(flag.at) + ' Pacific'].filter(Boolean).join(' · ');
                     return <details key={flagKey(flag)} className="score-receipt-flag">
-                        <summary><strong>{flag.outcome === 'win' ? 'Win' : 'Loss'} · {flag.displayName || flag.playerId}</strong><small>{details}</small></summary>
+                        <summary><strong>{flag.outcome === 'win' ? 'Win' : 'Loss'} · {playerName || 'Player name unavailable'}</strong><small>{details}</small></summary>
                         <p className="score-flag-reason">{flag.reason}</p>
-                        <small>Player ID · {flag.playerId}<br />Receipt · {flag.id}</small>
+                        <small>Receipt · {flag.id}</small>
                         <div className="score-entry-mode">
                             <Button variant="outline-secondary" disabled={busy || disabled} onClick={() => onReview(flag)}>Open player record</Button>
                             {flag.voided ? <Button variant="outline-secondary" disabled={busy || disabled}
-                                onClick={() => close(flag, 'resolve')}>Close corrected flag</Button> : <>
+                                onClick={() => close(flag, 'resolve', playerName)}>Close corrected flag</Button> : <>
                                 <Button variant="outline-danger" disabled={busy || disabled} onClick={() => onCorrect(flag)}>Review correction</Button>
                                 <Button variant="outline-secondary" disabled={busy || disabled}
-                                    onClick={() => close(flag, 'dismiss')}>Keep result and close flag</Button>
+                                    onClick={() => close(flag, 'dismiss', playerName)}>Keep result and close flag</Button>
                             </>}
                         </div>
                     </details>;

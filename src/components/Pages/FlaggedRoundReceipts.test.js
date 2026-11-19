@@ -3,8 +3,10 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { FlaggedRoundReceipts, requestScoreReceipts } from './FlaggedRoundReceipts';
 
 const first = { playerId: 'memberAlpha01', id: '11111111-1111-4111-8111-111111111111', outcome: 'loss', at: 1800000000000,
-    day: '2026-10-18', mode: 'Countdown', side: 'camo', displayName: 'River Lane', reason: 'I played on Solid.', voided: false };
-const second = { ...first, id: '22222222-2222-4222-8222-222222222222', outcome: 'win', voided: true };
+    day: '2026-10-18', mode: 'Countdown', side: 'camo', reason: 'I played on Solid.', voided: false };
+const second = { ...first, playerId: 'memberBeta02', id: '22222222-2222-4222-8222-222222222222', outcome: 'win', voided: true };
+const names = { [first.playerId]: 'River Lane', [second.playerId]: 'Sam Hayes' };
+const getPlayerName = uid => names[uid] || '';
 const press = async name => act(async () => fireEvent.click(screen.getByRole('button', { name })));
 
 afterEach(() => jest.restoreAllMocks());
@@ -13,7 +15,7 @@ test('loads flags on demand, pages without duplicates, and sends the exact selec
     const request = jest.fn().mockResolvedValueOnce({ flags: [first], nextCursor: 'page-2' })
         .mockResolvedValueOnce({ flags: [first, second], nextCursor: null });
     const onReview = jest.fn(), onCorrect = jest.fn();
-    render(<FlaggedRoundReceipts request={request} onReview={onReview} onCorrect={onCorrect} />);
+    render(<FlaggedRoundReceipts request={request} getPlayerName={getPlayerName} onReview={onReview} onCorrect={onCorrect} />);
     expect(request).not.toHaveBeenCalled();
     await press('View flagged receipts');
     fireEvent.click(screen.getByText('Loss · River Lane'));
@@ -25,18 +27,20 @@ test('loads flags on demand, pages without duplicates, and sends the exact selec
     await press('Load more flags');
     expect(request).toHaveBeenLastCalledWith({ cursor: 'page-2' }, undefined, expect.any(AbortSignal));
     expect(screen.getAllByText('Loss · River Lane')).toHaveLength(1);
-    expect(screen.getByText('Win · River Lane')).toBeInTheDocument();
+    expect(screen.getByText('Win · Sam Hayes')).toBeInTheDocument();
     expect(screen.queryByText('Load more flags')).not.toBeInTheDocument();
 });
 
 test.each([[first, 'Keep result and close flag', 'dismiss'], [second, 'Close corrected flag', 'resolve']])(
     'closes the selected flag only after staff confirms', async (flag, button, action) => {
-        jest.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValue(true);
+        const confirm = jest.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValue(true);
         const request = jest.fn().mockResolvedValueOnce({ flags: [flag], nextCursor: null }).mockResolvedValue({ ok: true });
-        render(<FlaggedRoundReceipts request={request} />);
+        render(<FlaggedRoundReceipts request={request} getPlayerName={getPlayerName} />);
         await press('View flagged receipts');
-        fireEvent.click(screen.getByText(flag.outcome === 'win' ? 'Win · River Lane' : 'Loss · River Lane'));
+        fireEvent.click(screen.getByText(flag.outcome === 'win' ? 'Win · Sam Hayes' : 'Loss · River Lane'));
         await press(button);
+        expect(confirm).toHaveBeenCalledWith(expect.stringContaining(getPlayerName(flag.playerId)));
+        expect(confirm.mock.calls[0][0]).not.toContain(flag.playerId);
         expect(request).toHaveBeenCalledTimes(1);
         await press(button);
         expect(request).toHaveBeenLastCalledWith(null, { action, playerId: flag.playerId, id: flag.id }, expect.any(AbortSignal));
@@ -46,7 +50,7 @@ test.each([[first, 'Keep result and close flag', 'dismiss'], [second, 'Close cor
 
 test('a failed load keeps refresh available', async () => {
     const request = jest.fn().mockRejectedValueOnce(new Error('Queue is unavailable.')).mockResolvedValue({ flags: [] });
-    render(<FlaggedRoundReceipts request={request} />);
+    render(<FlaggedRoundReceipts request={request} getPlayerName={getPlayerName} />);
     await press('View flagged receipts');
     expect(screen.getByRole('alert')).toHaveTextContent('Queue is unavailable.');
     await press('View flagged receipts');

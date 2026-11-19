@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Breadcrumb, Button, Card, Container, Form } from 'react-bootstrap';
 import { Helmet } from 'react-helmet-async';
 import { LinkContainer } from 'react-router-bootstrap';
@@ -78,6 +78,7 @@ function ScoreEntry({ firebase, actor }) {
     const modeInput = useRef(null);
     const active = useRef(null);
     const [members, setMembers] = useState(null);
+    const membersById = useMemo(() => new Map(members?.map(member => [member.uid, member])), [members]);
     const [directoryUnavailable, setDirectoryUnavailable] = useState(false);
     const [displayNames, setDisplayNames] = useState({});
     const [value, setValue] = useState('');
@@ -164,7 +165,7 @@ function ScoreEntry({ firebase, actor }) {
             if (token) {
                 const uid = await withinDeskTimeout(verifyScannedMemberCard(firebase, token, { signal }));
                 if (!current()) return;
-                const member = members.find(entry => entry.uid === uid);
+                const member = membersById.get(uid);
                 if (!member) throw new Error('The verified card has no matching USAW member.');
                 selectPlayer(member);
                 return;
@@ -195,7 +196,7 @@ function ScoreEntry({ firebase, actor }) {
 
     function reviewFlag(flag, correct) {
         setFlagMessage('');
-        const member = members?.find(entry => entry.uid === flag.playerId);
+        const member = membersById.get(flag.playerId);
         if (member) review(member, correct ? flag : null);
         else setError('The player is no longer in the member directory. Refresh the flagged receipts.');
     }
@@ -454,7 +455,7 @@ function ScoreEntry({ firebase, actor }) {
                     <Card.Header>Pending confirmations</Card.Header>
                     <Card.Body>
                         {visible.map(op => {
-                            const member = members?.find(entry => entry.uid === op.uid);
+                            const member = membersById.get(op.uid);
                             const expired = !isCurrentScoreOperation(op.id, op.at);
                             return <section className="score-entry-pending" key={op.id}>
                                 <strong>{op.day ? 'Remove ' : ''}{resultLabel(op.outcome)} · {member ? nameOf(member) : op.uid}</strong>
@@ -480,7 +481,7 @@ function ScoreEntry({ firebase, actor }) {
                     <Card.Header>Recent results</Card.Header>
                     <Card.Body className="status-card-body-admin" aria-live="polite" aria-relevant="additions text">
                         {recent.length ? recent.map((item, index) => {
-                            const member = members?.find(entry => entry.uid === item.uid);
+                            const member = membersById.get(item.uid);
                             const name = registeredName(member?.name, item.uid) || registeredName(item.registeredName, item.uid);
                             const action = item.day ? ' removed' : ' recorded';
                             return <div key={item.id} className={(index % 2 ? 'status-card-row-admin' : 'status-card-offrow-admin') + ' score-entry-recent'}>
@@ -492,6 +493,7 @@ function ScoreEntry({ firebase, actor }) {
                     </Card.Body>
                 </Card>
                 <FlaggedRoundReceipts request={receiptRequest} disabled={busy} resolved={closedFlag} updateMessage={flagMessage}
+                    getPlayerName={uid => registeredName(membersById.get(uid)?.name, uid)}
                     onReview={flag => reviewFlag(flag, false)} onCorrect={flag => reviewFlag(flag, true)} />
             </Container>
         </div>
