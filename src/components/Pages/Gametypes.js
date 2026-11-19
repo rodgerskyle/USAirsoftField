@@ -1485,39 +1485,39 @@ const FuelDepotDemolition = () => (
 
 
 const originalModes = [
-    ["The Enemy within", EnemyWithin],
-    ["Medic!", Medic],
-    ["Bottle Domination", BottleDomination],
-    ["Flag Domination “Downtown”", FlagDominationDowntown],
-    ["Flag Domination “Full Map”", FlagDominationFullMap],
-    ["Sticky Bomb", StickyBomb],
-    ["Capture the Flag", CaptureTheFlag],
-    ["Battle Buddy", BattleBuddy],
-    ["Downed Pilot", DownedPilot],
-    ["Interrogation", Interrogation],
-    ["Pilot Rescue", PilotRescue],
-    ["Wolf", Wolf],
-    ["General", General],
-    ["Team Death Match", TeamDeathMatch],
-    ["VIP Rescue", VIPRescue],
-    ["Bomb Disarmament “Bridge”", BombDisarmamentBridge],
-    ["Multiple Bomb Disarmament", MultipleBombDisarmament],
-    ["Red City Siege", RedCitySiege],
-    ["The Purge", ThePurge],
-    ["Countdown", Countdown],
-    ["P.F.R.C. “Pod Fired Rocket Cluster”", PFRC],
-    ["Ring the Bell - Operation Alamo", RingTheBell],
-    ["ICBM “First Strike”", ICBM],
-    ["Demolition", Demolition],
-    ["Sabotage", Sabotage],
-    ["Operation Airstrike", OperationAirstrike],
-    ["Broken Arrow", BrokenArrow],
-    ["Level 4 Biohazard", Level4Biohazard],
-    ["Operation First Strike", OperationFirstStrike],
-    ["Detonation", Detonation],
-    ["Zombie Attack", ZombieAttack],
-    ["Money Bag", MoneyBag],
-    ["Fuel Depot “Demolition”", FuelDepotDemolition],
+    ["the-enemy-within", "The Enemy within", EnemyWithin],
+    ["medic", "Medic!", Medic],
+    ["bottle-domination", "Bottle Domination", BottleDomination],
+    ["flag-domination-downtown", "Flag Domination “Downtown”", FlagDominationDowntown],
+    ["flag-domination-full-map", "Flag Domination “Full Map”", FlagDominationFullMap],
+    ["sticky-bomb", "Sticky Bomb", StickyBomb],
+    ["capture-the-flag", "Capture the Flag", CaptureTheFlag],
+    ["battle-buddy", "Battle Buddy", BattleBuddy],
+    ["downed-pilot", "Downed Pilot", DownedPilot],
+    ["interrogation", "Interrogation", Interrogation],
+    ["pilot-rescue", "Pilot Rescue", PilotRescue],
+    ["wolf", "Wolf", Wolf],
+    ["general", "General", General],
+    ["team-death-match", "Team Death Match", TeamDeathMatch],
+    ["vip-rescue", "VIP Rescue", VIPRescue],
+    ["bomb-disarmament-bridge", "Bomb Disarmament “Bridge”", BombDisarmamentBridge],
+    ["multiple-bomb-disarmament", "Multiple Bomb Disarmament", MultipleBombDisarmament],
+    ["red-city-siege", "Red City Siege", RedCitySiege],
+    ["the-purge", "The Purge", ThePurge],
+    ["countdown", "Countdown", Countdown],
+    ["pfrc", "P.F.R.C. “Pod Fired Rocket Cluster”", PFRC],
+    ["ring-the-bell", "Ring the Bell - Operation Alamo", RingTheBell],
+    ["icbm-first-strike", "ICBM “First Strike”", ICBM],
+    ["demolition", "Demolition", Demolition],
+    ["sabotage", "Sabotage", Sabotage],
+    ["operation-airstrike", "Operation Airstrike", OperationAirstrike],
+    ["broken-arrow", "Broken Arrow", BrokenArrow],
+    ["level-4-biohazard", "Level 4 Biohazard", Level4Biohazard],
+    ["operation-first-strike", "Operation First Strike", OperationFirstStrike],
+    ["detonation", "Detonation", Detonation],
+    ["zombie-attack", "Zombie Attack", ZombieAttack],
+    ["money-bag", "Money Bag", MoneyBag],
+    ["fuel-depot-demolition", "Fuel Depot “Demolition”", FuelDepotDemolition],
 ];
 
 function CompanionBriefing({ mode, number }) {
@@ -1550,17 +1550,18 @@ const originalAliases = {
 };
 
 const GAME_MODES = [
-    ...originalModes.map(([name, Mode], index) => ({
-        name, key: '#link' + (index + 1), content: <Mode />, aliases: originalAliases[name],
+    ...originalModes.map(([id, name, Mode], index) => ({
+        id, name, key: '#link' + (index + 1), content: <Mode />, aliases: originalAliases[name],
     })),
     ...COMPANION_GAME_MODES.map((mode, index) => ({
-        name: mode.name,
+        id: mode.id, name: mode.name,
         key: '#mode-' + mode.id,
         content: <CompanionBriefing mode={mode} number={originalModes.length + index + 1} />,
         aliases: mode.aliases,
     })),
 ].map(mode => ({ ...mode, searchText: searchable([mode.name, ...(mode.aliases || [])].join(' ')) }));
 
+export const gameModeIds = new Set(GAME_MODES.map(mode => mode.id));
 export const gameModeNames = GAME_MODES.map(mode => mode.name).sort((a, b) => a.localeCompare(b, 'en', { numeric: true }));
 
 export default Gametypes;

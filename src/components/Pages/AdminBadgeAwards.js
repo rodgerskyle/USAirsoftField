@@ -4,10 +4,17 @@ import {
   BADGE_CATALOG, RETIRED_BADGES, badgeServiceConfigured, getStaffBadgeCounts, getStaffBadgeGrantHistory,
   grantPlayerBadge, revokePlayerBadgeGrant, unlockBadgeStaff,
 } from '../constants/playerBadges';
+import { gameModeIds } from './Gametypes';
 import './AdminBadgeAwards.css';
 
 const MAX_RESULTS = 8;
 const PLAYER_ID = /^[A-Za-z0-9_-]{10,128}$/;
+const badgeNames = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
+const awardGroups = [
+  { label: 'Game modes', patches: BADGE_CATALOG.filter(badge => gameModeIds.has(badge.id))
+    .sort((a, b) => badgeNames.compare(a.name, b.name)) },
+  { label: 'Other patches', patches: BADGE_CATALOG.filter(badge => !gameModeIds.has(badge.id)) },
+];
 const expiresFormat = new Intl.DateTimeFormat('en-US', {
   month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
   timeZone: 'America/Los_Angeles', timeZoneName: 'short',
@@ -362,10 +369,14 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
               <select ref={badgeSelect} id="admin-badges-patch" value={retiredBadge ? '' : badgeId}
                 required={!retiredBadge} onChange={event => selectBadge(event.target.value)}>
                 <option value="">Choose a badge</option>
-                {BADGE_CATALOG.map(badge => (
-                  <option key={badge.id} value={badge.id}>
-                    {badge.name}{counts?.[badge.id] > 0 ? ` · ${counts[badge.id]} earned` : ''}
-                  </option>
+                {awardGroups.map(({ label, patches }) => (
+                  <optgroup key={label} label={label}>
+                    {patches.map(badge => (
+                      <option key={badge.id} value={badge.id}>
+                        {badge.name}{counts?.[badge.id] > 0 ? ` · ${counts[badge.id]} earned` : ''}
+                      </option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
               {retiredAwards.length > 0 && (
