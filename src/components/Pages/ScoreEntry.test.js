@@ -419,10 +419,45 @@ test('keeps a player from receiving a receipt for an unconfirmed score', async (
     expect(requestStaffFieldTool).not.toHaveBeenCalled();
 });
 
+const flag = { playerId: firstId, reason: 'I played on the other side.',
+    id: 'c2461ef1-01b5-4794-971c-4e05f2e3752f', day: '2026-10-18', outcome: 'loss',
+    at: Date.parse('2026-11-18T20:10:00Z'), mode: 'Countdown', side: 'solid', flagStatus: 'open', voided: false };
+
+test('a flagged receipt shows the registered name when the directory arrives without exposing IDs or aliases', async () => {
+    let publish;
+    onValue.mockImplementationOnce((_ref, next) => { publish = data => next({ val: () => data }); return stopDirectory; });
+    getAllPlayerDisplayNames.mockResolvedValue({ [firstId]: 'RiverAlias' });
+    requestStaffFieldTool.mockResolvedValueOnce({ flags: [flag] });
+    const page = renderScore();
+    await page.verify(admin);
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'View flagged receipts' })));
+
+    const summary = screen.getByText('Loss · Player name unavailable');
+    fireEvent.click(summary);
+    const row = summary.closest('details');
+    expect(within(row).getByText(flag.reason)).toBeVisible();
+    const confirm = jest.spyOn(window, 'confirm').mockReturnValue(false);
+    try {
+        fireEvent.click(within(row).getByRole('button', { name: 'Keep result and close flag' }));
+        expect(confirm).toHaveBeenCalledWith(expect.stringContaining('this player'));
+        expect(confirm.mock.calls[0][0]).not.toContain(firstId);
+    } finally { confirm.mockRestore(); }
+
+    for (const invalid of ['', firstId, 'river@example.com']) {
+        act(() => publish({ [firstId]: { ...players[firstId], name: invalid } }));
+        expect(row).toHaveTextContent('Player name unavailable');
+        expect(row).not.toHaveTextContent(firstId);
+        expect(row).not.toHaveTextContent('river@example.com');
+        expect(row).not.toHaveTextContent(players[firstId].username);
+        expect(row).not.toHaveTextContent('RiverAlias');
+    }
+    act(() => publish(players));
+    expect(within(row).getByText('Loss · River Lane')).toBeVisible();
+    expect(row).not.toHaveTextContent(firstId);
+    expect(requestStaffFieldTool).toHaveBeenCalledTimes(1);
+});
+
 test.each(['open', 'dismissed'])('rechecks a player report currently marked %s before correcting its receipt', async flagStatus => {
-    const flag = { playerId: firstId, displayName: 'River Lane', reason: 'I played on the other side.',
-        id: 'c2461ef1-01b5-4794-971c-4e05f2e3752f', day: '2026-10-18', outcome: 'loss',
-        at: Date.parse('2026-11-18T20:10:00Z'), mode: 'Countdown', side: 'solid', flagStatus: 'open', voided: false };
     requestStaffFieldTool.mockResolvedValueOnce({ flags: [flag], nextCursor: null })
         .mockResolvedValueOnce({ flag: { ...flag, flagStatus } });
     loadPlayerScoreHistory.mockResolvedValue({ history: [{ day: flag.day, date: '2026-11-18', wins: 0, losses: 1, events: [flag] }] });
