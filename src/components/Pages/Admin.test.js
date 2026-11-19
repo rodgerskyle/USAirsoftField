@@ -72,13 +72,13 @@ test('links each native field tool once and keeps website scoring, scheduling, w
     ['Party Calendar', '/admin/birthday'],
     ['Manage Groups', '/admin/field/groups'],
     ['Field Game Days', '/schedule'],
-    ['Enter Wins', '/admin/enterwins'],
-    ['Enter Losses', '/admin/enterlosses'],
+    ['Wins & Losses', '/admin/scores'],
     ['Scan Waiver', '/admin/scanwaiver'],
   ];
   for (const [name, path] of websiteTools) {
     expect(screen.getByRole('link', { name })).toHaveAttribute('href', path);
   }
+  expect(screen.queryByRole('link', { name: /Enter Wins|Enter Losses/ })).not.toBeInTheDocument();
   expect(screen.getByRole('heading', { name: 'Badge awards' })).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: 'Player directory' })).toBeInTheDocument();
 });

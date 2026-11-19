@@ -2,416 +2,499 @@ import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Breadcrumb, Button, Card, Container, Form } from 'react-bootstrap';
 import { Helmet } from 'react-helmet-async';
 import { LinkContainer } from 'react-router-bootstrap';
+import { useLocation } from 'react-router-dom';
 import { onValue } from 'firebase/database';
 
 import { withFirebase } from '../Firebase';
 import { AuthUserContext, withAuthorization } from '../session';
 import { ADMIN, WAIVER } from '../constants/roles';
 import { getAllPlayerDisplayNames } from '../constants/playerDisplayNames';
-import { readScannedMemberCard, readScannedPlayerProfile, verifyScannedMemberCard } from '../constants/scoreCards';
+import { isLegacyCardName, readScannedMemberCard, readScannedPlayerProfile, verifyScannedMemberCard } from '../constants/scoreCards';
 import { newScoreId } from '../constants/scoreHistory';
-import { isCurrentScoreOperation, loadPlayerScoreHistory, recordPlayerResult, voidPlayerResult } from '../constants/scoreRecording';
+import { checkScoreOperation, isCurrentScoreOperation, loadPlayerScoreHistory, recordPlayerResult, voidPlayerResult } from '../constants/scoreRecording';
+import { gameModeNames } from './Gametypes';
+import { loadDesk, newScoreRound, persistDesk } from './scoreEntrySession';
+import { StaffCardScanner } from './StaffCardScanner';
+import { FlaggedRoundReceipts, requestScoreReceipts } from './FlaggedRoundReceipts';
 import '../constants/admin.css';
 import './ScoreEntry.css';
 
-const playerId = /^[A-Za-z0-9_-]{1,128}$/;
-const maxMatches = 10;
-const maxRecentResults = 20;
-const scannerRepeatWindow = 2000;
-const pendingScorePrefix = 'usaw-score-pending-v1:';
-const memoryAttempts = new Map();
-const scoreDate = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'UTC' });
+const teamNames = { camo: 'Camo · Yellow', solid: 'Solid · Blue' };
+const dateFormat = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'UTC' });
+const fieldTime = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' });
 const textValue = value => typeof value === 'string' ? value.trim().replace(/\s+/g, ' ') : '';
 const normalized = value => textValue(value).toLowerCase();
 const nameOf = member => member.name || member.username || member.uid;
-const dateOf = row => scoreDate.format(new Date(`${row.date}T00:00:00Z`));
+const dateOf = row => dateFormat.format(new Date(row.date + 'T00:00:00Z'));
+const resultLabel = outcome => outcome === 'win' ? 'Win' : 'Loss';
+const detailsOf = entry => [entry.mode, teamNames[entry.side]].filter(Boolean).join(' · ');
 
 function memberDirectory(snapshot) {
     return Object.entries(snapshot.val() ?? {}).filter(([uid, member]) =>
-        playerId.test(uid) && member && typeof member === 'object' && !Array.isArray(member) && !member.roles?.[WAIVER] && !member.accountRemovedAt
+        /^[A-Za-z0-9_-]{1,128}$/.test(uid) && member && typeof member === 'object' && !Array.isArray(member) &&
+        !member.roles?.[WAIVER] && !member.accountRemovedAt
     ).map(([uid, member]) => ({ uid, name: textValue(member.name), username: textValue(member.username) }));
 }
 
-function findMembers(members, displayNames, value) {
-    const uid = readScannedPlayerProfile(value);
-    // Some Code 128 readers include the AIM symbology prefix before the ID.
-    const barcodeId = /^\]C[01]([A-Za-z0-9_-]{10,128})$/.exec(value)?.[1];
-    const direct = members.find(member => member.uid === (uid ?? barcodeId ?? value));
-    if (direct || uid || barcodeId) return { direct, matches: [] };
-
+function findMembers(members, displayNames, raw) {
+    const uid = readScannedPlayerProfile(raw);
+    const value = raw.replace(/^\]C[01]/, '');
+    const direct = members.find(member => member.uid === (uid || value));
+    if (direct || uid) return { direct, matches: [] };
     const query = normalized(value);
     const exact = [];
     const partial = [];
     for (const member of members) {
-        const names = [member.name, member.username, displayNames[member.uid]].map(normalized);
-        if (names.includes(query)) exact.push(member);
+        const names = [member.name, member.username, displayNames[member.uid]].map(normalized).filter(Boolean);
+        // Older Code 128 cards use both parts of the legal name without spaces.
+        const parts = normalized(member.name).split(' ');
+        const printedNames = [parts.join(''), parts.slice().reverse().join('')];
+        if (names.includes(query) || (isLegacyCardName(value) && printedNames.includes(query))) exact.push(member);
         else if (query.length >= 2 && names.some(name => name.includes(query))) partial.push(member);
     }
     return { matches: exact.length ? exact : partial };
 }
 
-function retryableAttempt(attempt, now) {
-    return isCurrentScoreOperation(attempt?.id, attempt?.at, now);
-}
-
-function readStoredAttempt(storage, key) {
-    try { return JSON.parse(storage.getItem(key) || 'null'); }
-    catch { return null; }
-}
-
-function getPendingScore(key, now) {
-    for (const [pendingKey, attempt] of memoryAttempts) {
-        if (!retryableAttempt(attempt, now)) memoryAttempts.delete(pendingKey);
-    }
-    let attempt = memoryAttempts.get(key);
+async function withinDeskTimeout(work) {
+    let timer;
     try {
-        const storage = window.sessionStorage;
-        for (let index = storage.length - 1; index >= 0; index -= 1) {
-            const pendingKey = storage.key(index);
-            if (!pendingKey?.startsWith(pendingScorePrefix)) continue;
-            const saved = readStoredAttempt(storage, pendingKey);
-            if (!retryableAttempt(saved, now)) storage.removeItem(pendingKey);
-            else if (pendingKey === key) attempt = saved;
-        }
-    } catch { /* Continue with this page's in-memory attempts. */ }
-    return attempt ?? { id: newScoreId(), at: now };
+        return await Promise.race([work, new Promise((_, reject) => {
+            timer = setTimeout(() => reject(new Error('The official score service did not respond in time.')), 12000);
+        })]);
+    } finally { clearTimeout(timer); }
 }
 
-function savePendingScore(key, attempt) {
-    memoryAttempts.set(key, attempt);
-    try { window.sessionStorage.setItem(key, JSON.stringify(attempt)); }
-    catch { /* Private browsing may limit storage. */ }
-}
-
-function clearPendingScore(key, attempt) {
-    if (memoryAttempts.get(key)?.id === attempt.id) memoryAttempts.delete(key);
-    try {
-        const storage = window.sessionStorage;
-        if (readStoredAttempt(storage, key)?.id === attempt.id) storage.removeItem(key);
-    } catch { /* Private browsing may limit storage. */ }
-}
-
-function ScoreEntry({ firebase, outcome }) {
-    const admin = useContext(AuthUserContext);
-    const isWin = outcome === 'win';
-    const heading = isWin ? 'Enter Wins' : 'Enter Losses';
-    const resultName = isWin ? 'Win' : 'Loss';
+function ScoreEntry({ firebase, actor }) {
+    const [desk, setDesk] = useState(() => loadDesk(actor));
+    const state = useRef(desk);
     const input = useRef(null);
+    const historyPanel = useRef(null);
     const mounted = useRef(false);
-    const pending = useRef(null);
-    const lastScan = useRef(null);
-    const resultSequence = useRef(0);
+    const modeInput = useRef(null);
+    const active = useRef(null);
     const [members, setMembers] = useState(null);
     const [directoryUnavailable, setDirectoryUnavailable] = useState(false);
     const [displayNames, setDisplayNames] = useState({});
     const [value, setValue] = useState('');
     const [matches, setMatches] = useState([]);
+    const [selected, setSelected] = useState(null);
+    const [history, setHistory] = useState(null);
+    const [correction, setCorrection] = useState(null);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState('');
     const [status, setStatus] = useState('');
     const [recent, setRecent] = useState([]);
-    const [correcting, setCorrecting] = useState(false);
-    const [playerHistory, setPlayerHistory] = useState(null);
-    const [correction, setCorrection] = useState(null);
-    const [retryRemoval, setRetryRemoval] = useState(false);
-    const counter = isWin ? 'wins' : 'losses';
+    const [cameraKey, setCameraKey] = useState(0);
+    const [closedFlag, setClosedFlag] = useState('');
+    const [flagMessage, setFlagMessage] = useState('');
+    const receiptRequest = (params, body, signal) => requestScoreReceipts(firebase, actor, params, body, signal);
+
+    function updateDesk(fn) {
+        const next = fn(state.current);
+        state.current = next;
+        persistDesk(actor, next);
+        setDesk(next);
+    }
 
     useEffect(() => {
         mounted.current = true;
         const controller = new AbortController();
         const unsubscribe = onValue(firebase.users(), snapshot => {
-            setMembers(memberDirectory(snapshot));
-            setDirectoryUnavailable(false);
+            if (!controller.signal.aborted) {
+                setMembers(memberDirectory(snapshot));
+                setDirectoryUnavailable(false);
+            }
         }, () => {
-            setMembers(null);
-            setDirectoryUnavailable(true);
+            if (!controller.signal.aborted) { setMembers(null); setDirectoryUnavailable(true); }
         });
         getAllPlayerDisplayNames({ signal: controller.signal }).then(names => {
             if (!controller.signal.aborted) setDisplayNames(names);
         }).catch(() => {});
         return () => {
             mounted.current = false;
-            pending.current?.abort();
+            active.current?.abort();
             controller.abort();
             unsubscribe();
         };
     }, [firebase]);
 
-    async function submitResult(rawInput, selectedMember, review = correcting) {
-        const query = rawInput.trim();
-        if (!query || !members || pending.current || retryRemoval) return;
-        const staffUser = firebase.auth.currentUser;
-        if (!staffUser || staffUser.uid !== admin?.uid) {
-            setError('Sign in again to manage results.');
-            return;
-        }
+    async function perform(work) {
+        if (active.current) return;
+        const staff = firebase.auth.currentUser;
+        if (!staff || staff.uid !== actor) { setError('Sign in again to manage results.'); return; }
         const controller = new AbortController();
-        const submittedAt = Date.now();
-        const submittedClock = performance.now();
-        pending.current = controller;
+        active.current = controller;
         setBusy(true);
-        setError('');
         setStatus('');
-        setPlayerHistory(null);
-        setCorrection(null);
+        setError('');
+        const current = () => !controller.signal.aborted && firebase.auth.currentUser === staff;
         try {
-            let member = selectedMember && members.find(entry => entry.uid === selectedMember.uid);
-            if (selectedMember && !member) throw new Error('This player is no longer in the member directory. Search again.');
-            if (!member) {
-                const token = readScannedMemberCard(query);
-                if (token) {
-                    const uid = await verifyScannedMemberCard(firebase, token, { signal: controller.signal });
-                    if (controller.signal.aborted) return;
-                    member = members.find(entry => entry.uid === uid);
-                } else {
-                    const result = findMembers(members, displayNames, query);
-                    member = result.direct;
-                    setMatches(result.matches);
-                    if (result.matches.length) return;
+            await work(current, controller.signal);
+        } catch (failure) {
+            if (current()) setError(failure?.message || 'The request could not be completed. Try again.');
+        } finally {
+            if (active.current === controller) active.current = null;
+            if (current()) setBusy(false);
+        }
+    }
+
+    function resetSearch() {
+        setValue(''); setMatches([]); setSelected(null); setHistory(null); setCorrection(null);
+    }
+
+    function selectPlayer(member) {
+        resetSearch();
+        setError(''); setStatus('');
+        setSelected(member);
+        const hidden = state.current.pending.some(op => op.uid === member.uid && op.hidden);
+        if (hidden) updateDesk(old => ({ ...old, pending: old.pending.map(op => op.uid === member.uid ? { ...op, hidden: false } : op) }));
+    }
+
+    function lookup(raw, cardToken) {
+        const query = raw.trim();
+        if (!members || (!query && !cardToken)) return;
+        void perform(async (current, signal) => {
+            resetSearch();
+            const token = cardToken || readScannedMemberCard(query);
+            if (token) {
+                const uid = await withinDeskTimeout(verifyScannedMemberCard(firebase, token, { signal }));
+                if (!current()) return;
+                const member = members.find(entry => entry.uid === uid);
+                if (!member) throw new Error('The verified card has no matching USAW member.');
+                selectPlayer(member);
+                return;
+            }
+            const { direct, matches: found } = findMembers(members, displayNames, query);
+            if (direct) selectPlayer(direct);
+            else if (found.length) { setValue(query); setMatches(found); }
+            else throw new Error('No matching USAW member. Check the name, player ID, or card.');
+        });
+    }
+
+    function review(member, flag) {
+        void perform(async current => {
+            selectPlayer(member);
+            const data = await withinDeskTimeout(loadPlayerScoreHistory(firebase, member.uid));
+            if (!current()) return;
+            setHistory(data.history);
+            if (flag) {
+                const row = data.history.find(entry => entry.day === flag.day);
+                const event = row?.events?.find(item => item.id === flag.id && item.outcome === flag.outcome);
+                if (!event) throw new Error('This round has already changed. Refresh the flagged receipts.');
+                setCorrection({ ...row, ...event, targetEventId: event.id, fromFlag: true,
+                    expectedCount: event.outcome === 'win' ? row.wins : row.losses });
+            }
+            historyPanel.current?.focus();
+        });
+    }
+
+    function reviewFlag(flag, correct) {
+        setFlagMessage('');
+        const member = members?.find(entry => entry.uid === flag.playerId);
+        if (member) review(member, correct ? flag : null);
+        else setError('The player is no longer in the member directory. Refresh the flagged receipts.');
+    }
+
+    // Official scores are committed before any Companion delivery request.
+    async function syncReceipt(op, saved) {
+        const id = saved?.eventId || op.targetEventId;
+        const day = saved?.day || op.day;
+        if (!id || !day) return;
+        try {
+            await receiptRequest(null, { action: 'sync', playerId: op.uid, id, day });
+            if (op.fromFlag) {
+                await receiptRequest(null, { action: 'resolve', playerId: op.uid, id });
+                if (mounted.current) {
+                    setClosedFlag(op.uid + '/' + id);
+                    setFlagMessage('Result removed and flag closed.');
                 }
             }
-            if (!member) throw new Error('No matching USAW member. Check the name, player ID, or card.');
-
-            if (firebase.auth.currentUser !== staffUser) throw new Error('The admin session changed. Sign in again to manage results.');
-            if (review) {
-                const { history } = await loadPlayerScoreHistory(firebase, member.uid);
-                if (!mounted.current || controller.signal.aborted || firebase.auth.currentUser !== staffUser) return;
-                setPlayerHistory({ member, history });
-                setValue('');
-                setMatches([]);
-                return;
-            }
-            const previous = lastScan.current;
-            if (!selectedMember && previous?.uid === member.uid && previous.outcome === outcome &&
-                submittedClock - previous.clock < scannerRepeatWindow) {
-                setStatus(`Repeat scan ignored for ${nameOf(member)}. Scan the next card.`);
-                setValue('');
-                setMatches([]);
-                return;
-            }
-            const key = `${pendingScorePrefix}${staffUser.uid}:${outcome}:${member.uid}`;
-            const operation = getPendingScore(key, submittedAt);
-            savePendingScore(key, operation);
-            await recordPlayerResult(firebase, member.uid, outcome, new Date(operation.at), operation.id);
-            clearPendingScore(key, operation);
-            if (!mounted.current || controller.signal.aborted) return;
-            if (!selectedMember) lastScan.current = { uid: member.uid, outcome, clock: performance.now() };
-            const item = { id: ++resultSequence.current, uid: member.uid, text: `${resultName} recorded for ${nameOf(member)}.` };
-            setRecent(items => [item, ...items].slice(0, maxRecentResults));
-            setValue('');
-            setMatches([]);
-        } catch (failure) {
-            if (mounted.current && !controller.signal.aborted) {
-                setError(failure?.message || (review ? 'Could not load recorded results. Try again.' : 'The result could not be recorded. Try again.'));
-            }
-        } finally {
-            if (pending.current === controller) pending.current = null;
-            if (mounted.current && !controller.signal.aborted) {
-                setBusy(false);
-                if (!review) input.current?.focus();
-            }
+        } catch {
+            // Reopening receipts and the scheduled sync can recover missed deliveries.
+            if (op.fromFlag && mounted.current) setFlagMessage('The score was corrected. Refresh flags to finish reviewing this receipt.');
         }
     }
 
-    async function removeResult() {
-        if (pending.current || !playerHistory || !correction) return;
-        const { member } = playerHistory;
-        const staffUser = firebase.auth.currentUser;
-        if (!staffUser || staffUser.uid !== admin?.uid) {
-            setError('Sign in again to correct a result.');
-            return;
-        }
-
-        const controller = new AbortController();
-        const expectedCount = correction[counter];
-        const key = `${pendingScorePrefix}${staffUser.uid}:void:${outcome}:${member.uid}:${correction.day}:${expectedCount}`;
-        const operation = getPendingScore(key, Date.now());
-        savePendingScore(key, operation);
-        pending.current = controller;
-        setBusy(true);
-        setError('');
-        setStatus('');
-        const current = () => mounted.current && !controller.signal.aborted && firebase.auth.currentUser === staffUser;
-        try {
-            const removed = await voidPlayerResult(firebase, member.uid, {
-                day: correction.day, result: outcome, expectedCount, operationId: operation.id, operationAt: operation.at,
-            });
-            clearPendingScore(key, operation);
-            if (!current()) return;
-            setRetryRemoval(false);
-            setCorrection(null);
-            setPlayerHistory({ member, history: removed.history });
-            const message = `${resultName} on ${dateOf(correction)} ${removed.duplicate ? 'already ' : ''}removed for ${nameOf(member)}.`;
-            setStatus(message);
-            const item = { id: ++resultSequence.current, uid: member.uid, text: message };
-            setRecent(items => [item, ...items].slice(0, maxRecentResults));
-        } catch (failure) {
-            if (failure?.retryable !== true) clearPendingScore(key, operation);
-            if (!current()) return;
-            if (failure?.retryable === true) {
-                setRetryRemoval(true);
-                setError('Could not confirm the removal. Retry this same correction to check it.');
-                return;
+    function finish(op, saved) {
+        const removing = Boolean(op.day);
+        const member = members?.find(entry => entry.uid === op.uid);
+        const message = resultLabel(op.outcome) + (removing ? ' removed for ' : ' recorded for ') + (member ? nameOf(member) : op.uid) + '.';
+        updateDesk(old => {
+            let scored = { ...old.round.scored };
+            if (!removing && op.roundId === old.round.id) {
+                scored = { ...scored, [op.uid]: { outcome: op.outcome, eventId: saved?.eventId, mode: op.mode, side: op.side } };
+            } else if (removing && scored[op.uid]?.eventId && scored[op.uid].eventId === (saved?.eventId || op.targetEventId)) {
+                delete scored[op.uid];
             }
-            setRetryRemoval(false);
-            setCorrection(null);
-            if (failure?.code === 'score_changed') {
-                setPlayerHistory(null);
-                try {
-                    const { history } = await loadPlayerScoreHistory(firebase, member.uid);
-                    if (current()) setPlayerHistory({ member, history });
-                } catch { /* The staff member can search for the player again. */ }
-                if (current()) setError('That day’s results changed. Review the current list before trying again.');
-                return;
-            }
-            setError(failure?.message || 'The result could not be removed. Try again.');
-        } finally {
-            if (pending.current === controller) pending.current = null;
-            if (mounted.current && !controller.signal.aborted) setBusy(false);
-        }
-    }
-
-    function changeMode(review) {
-        if (pending.current || retryRemoval) return;
-        setCorrecting(review);
-        setValue('');
-        setMatches([]);
-        setPlayerHistory(null);
-        setCorrection(null);
-        setError('');
-        setStatus('');
+            return { round: { ...old.round, scored }, pending: old.pending.filter(item => item.id !== op.id) };
+        });
+        setRecent(old => [{ ...op, text: message }, ...old].slice(0, 20));
+        void syncReceipt(op, saved);
+        resetSearch();
         input.current?.focus();
     }
 
-    function submit(event) {
-        event.preventDefault();
-        // A hardware scan can send Enter before controlled input state is painted.
-        submitResult(input.current?.value ?? value);
+    function saveScore(op, checkOnly = false) {
+        void perform(async (current, signal) => {
+            const pending = state.current.pending.some(item => item.id === op.id);
+            if (op.fromFlag && !checkOnly) {
+                const { flag } = await receiptRequest({ id: op.targetEventId, playerId: op.uid }, undefined, signal);
+                if (!current()) return;
+                if (!flag || flag.id !== op.targetEventId || flag.playerId !== op.uid || flag.outcome !== op.outcome ||
+                    flag.day !== op.day || flag.voided || flag.flagStatus !== 'open') {
+                    setCorrection(null);
+                    if (!pending) throw new Error('This flag changed. Refresh the flagged receipts before correcting it.');
+                    // An earlier attempt may already have removed the result. If staff
+                    // closed the flag meanwhile, only confirm that attempt, never write.
+                    checkOnly = true;
+                }
+            }
+            if (!pending) updateDesk(old => ({ ...old, pending: [...old.pending, op] }));
+            let writeFailure;
+            if (!checkOnly) {
+                try {
+                    const result = await withinDeskTimeout(op.day
+                        ? voidPlayerResult(firebase, op.uid, { day: op.day, result: op.outcome, expectedCount: op.expectedCount,
+                            operationId: op.id, operationAt: op.at, targetEventId: op.targetEventId, ...(op.legacyOnly && { legacyOnly: true }) })
+                        : recordPlayerResult(firebase, op.uid, op.outcome, new Date(op.at), op.id, { mode: op.mode, side: op.side }));
+                    if (current()) finish(op, result);
+                    return;
+                } catch (failure) {
+                    if (!current()) return;
+                    if (failure.retryable === false && failure.code !== 'operation_expired') {
+                        updateDesk(old => ({ ...old, pending: old.pending.filter(item => item.id !== op.id) }));
+                        setHistory(null); setCorrection(null);
+                        throw failure;
+                    }
+                    writeFailure = failure;
+                }
+            }
+            try {
+                // The correction marker identifies the original event by ID. Its game mode
+                // and team describe that event and are only display labels on the correction.
+                const expected = op.day ? { ...op, mode: undefined, side: undefined } : op;
+                const result = await withinDeskTimeout(checkScoreOperation(firebase, op.uid, expected));
+                if (!current()) return;
+                if (result.confirmed) { finish(op, result); return; }
+                setStatus('This submission has no confirmed result. You can check again or retry the same submission.');
+            } catch (failure) {
+                if (current()) setStatus('Confirmation is pending. You can check its saved status or scan the next player.');
+                if (!writeFailure) throw failure;
+            }
+            if (current() && writeFailure) setError(writeFailure.message);
+        });
     }
 
-    function changeValue(event) {
-        setValue(event.target.value);
-        setMatches([]);
-        setPlayerHistory(null);
-        setCorrection(null);
-        setError('');
-        setStatus('');
+    const round = desk.round;
+    const saved = selected && Object.hasOwn(round.scored, selected.uid) && round.scored[selected.uid];
+    const blocks = selected && desk.pending.some(op => op.uid === selected.uid &&
+        (op.day || !op.roundId || op.roundId === round.id));
+    const canRecord = selected && !saved && !blocks && round.mode && round.side && !busy;
+
+    function record(outcome) {
+        if (!canRecord || active.current) return;
+        saveScore({ uid: selected.uid, outcome, mode: round.mode, side: round.side, roundId: round.id, id: newScoreId(), at: Date.now() });
     }
 
-    function handleInputKey(event) {
-        if (event.key === 'Enter' && (event.repeat || event.nativeEvent.isComposing || event.keyCode === 229)) {
-            event.preventDefault();
-        }
+    function startRound() {
+        if (active.current || !window.confirm('Start a new round? Choose the new game mode and team. Pending submissions stay available with their original details.')) return;
+        updateDesk(old => ({ ...old, round: newScoreRound() }));
+        resetSearch(); setError(''); setStatus('New round started. Select the game mode and team.');
+        setCameraKey(old => old + 1);
+        modeInput.current?.focus();
     }
 
+    function clearEntries() {
+        if (active.current || !window.confirm('Clear the search and recent entries from this desk? Official scores and player receipts are kept. Pending submissions can be shown again.')) return;
+        resetSearch(); setRecent([]); setError(''); setStatus('Entries cleared. Scan the next player.');
+        setCameraKey(old => old + 1);
+        updateDesk(old => ({ ...old, pending: old.pending.map(op => ({ ...op, hidden: true })) }));
+        input.current?.focus();
+    }
+
+    function changeRound(field, next) {
+        updateDesk(old => ({ ...old, round: { ...old.round, [field]: next } }));
+        if (field === 'side' && next && !selected) input.current?.focus();
+    }
+
+    const modeLocked = Object.keys(round.scored).length > 0 || desk.pending.some(op => op.roundId === round.id);
+    const visible = desk.pending.filter(op => !op.hidden);
+    const hiddenCount = desk.pending.length - visible.length;
+    const resultHint = new URLSearchParams(useLocation().search).get('result');
     return (
-        <div className="admin-container admin-compact-page">
-            <Helmet><title>{`US Airsoft Field: ${heading}`}</title></Helmet>
+        <div className="admin-container admin-compact-page score-entry-page">
+            <Helmet><title>US Airsoft Field: Wins and losses</title></Helmet>
             <Container fluid className="admin-content">
                 <div className="admin-page-header">
-                    <h2 className="admin-header">{heading}</h2>
+                    <h2 className="admin-header">Wins and losses</h2>
                     <Breadcrumb className="admin-breadcrumb admin-page-breadcrumb">
                         <LinkContainer to="/admin"><Breadcrumb.Item>Admin</Breadcrumb.Item></LinkContainer>
-                        <Breadcrumb.Item active>{heading}</Breadcrumb.Item>
+                        <Breadcrumb.Item active>Wins and losses</Breadcrumb.Item>
                     </Breadcrumb>
                 </div>
-                <Card className="admin-panel-card admin-points-card">
+                <Card className="admin-panel-card">
+                    <Card.Header>Round details</Card.Header>
                     <Card.Body>
-                        <Form className="admin-points-form" onSubmit={submit}>
-                            <div className="score-entry-mode" role="group" aria-label="Score entry mode">
-                                <Button variant={correcting ? 'outline-secondary' : 'secondary'} type="button"
-                                    aria-pressed={!correcting} disabled={busy || retryRemoval} onClick={() => changeMode(false)}>Record {counter}</Button>
-                                <Button variant={correcting ? 'secondary' : 'outline-secondary'} type="button"
-                                    aria-pressed={correcting} disabled={busy || retryRemoval} onClick={() => changeMode(true)}>Correct {counter}</Button>
-                            </div>
-                            <Form.Group controlId="score-entry-player" className="admin-points-field">
-                                <Form.Label>Scan a card or find a player</Form.Label>
-                                <Form.Control ref={input} value={value} onChange={changeValue} onKeyDown={handleInputKey}
-                                    autoFocus autoComplete="off" autoCorrect="off" autoCapitalize="none" spellCheck={false}
-                                    inputMode="text" name="scorePlayer" readOnly={busy || retryRemoval} aria-describedby="score-entry-help"
-                                    placeholder="Name, callsign, player ID, or profile link" />
-                                <Form.Text id="score-entry-help">{correcting
-                                    ? `Find a player to review their dated ${counter}. You’ll confirm the removal separately.`
-                                    : 'Scan a card with this field focused. For a name or callsign, select the matching player before recording.'}</Form.Text>
+                        <div className="score-entry-context">
+                            <Form.Group controlId="score-mode"><Form.Label>Game mode</Form.Label>
+                                <Form.Select ref={modeInput} value={round.mode} disabled={busy || modeLocked} onChange={e => changeRound('mode', e.target.value)}>
+                                    <option value="">Choose a game mode</option>
+                                    {gameModeNames.map(name => <option key={name} value={name}>{name}</option>)}
+                                </Form.Select>
                             </Form.Group>
-                            {directoryUnavailable ? <p role="alert">Could not load the member directory. Reload this page to try again.</p>
-                                : !members ? <p role="status">Loading members…</p> : null}
-                            {error && <p role="alert">{error}</p>}
-                            {status && <p role="status">{status}</p>}
-                            {matches.length > 0 && (
-                                <div className="score-entry-matches">
-                                    <p>{correcting ? `Select the player to review their ${counter}.` : 'Select the player to record this result.'}</p>
-                                    <ul aria-label="Matching players">
-                                        {matches.slice(0, maxMatches).map(member => (
-                                            <li key={member.uid}>
-                                                <Button variant="outline-secondary" type="button" disabled={busy}
-                                                    onClick={() => submitResult(input.current?.value ?? value, member)}>
-                                                    <strong>{nameOf(member)}</strong>
-                                                    <small>{[member.username, displayNames[member.uid], member.uid]
-                                                        .filter((value, index, values) => value && value !== nameOf(member) && values.indexOf(value) === index)
-                                                        .join(' · ') || member.uid}</small>
-                                                </Button>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                    {matches.length > maxMatches && <p>Enter a more specific name or player ID to see additional matches.</p>}
-                                </div>
-                            )}
-                            <div className="admin-submit-row">
-                                <Button className="button-submit-admin" type="submit" disabled={busy || !members || retryRemoval}>
-                                    {busy ? (correcting ? 'Working…' : 'Recording…') : correcting ? `Find ${counter}` : `Record ${outcome}`}
-                                </Button>
-                            </div>
-                        </Form>
+                            <Form.Group controlId="score-team"><Form.Label>Player’s team</Form.Label>
+                                <Form.Select value={round.side} disabled={busy} onChange={e => changeRound('side', e.target.value)}>
+                                    <option value="">Choose a team</option>
+                                    {Object.entries(teamNames).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                                </Form.Select>
+                            </Form.Group>
+                            <Button variant="outline-secondary" disabled={busy} onClick={startRound}>Start new round</Button>
+                        </div>
+                        <Form.Text>These details appear on the player’s Companion receipt. Switch teams as you scan the other side.</Form.Text>
                     </Card.Body>
                 </Card>
-                {correcting && playerHistory && (
-                    <Card className="admin-panel-card">
-                        <Card.Header>{nameOf(playerHistory.member)} · Recorded {counter}</Card.Header>
-                        <Card.Body>
-                            {correction ? (
-                                <div className="score-entry-correction" aria-live="polite">
-                                    <p><strong>Remove one {outcome} on {dateOf(correction)}?</strong></p>
-                                    <p>This updates {nameOf(playerHistory.member)}’s leaderboard totals.</p>
-                                    <div className="score-entry-mode">
-                                        <Button variant="danger" type="button" disabled={busy} onClick={removeResult}>
-                                            {retryRemoval ? 'Retry removal' : `Remove ${outcome}`}
-                                        </Button>
-                                        <Button variant="outline-secondary" type="button" disabled={busy || retryRemoval}
-                                            onClick={() => setCorrection(null)}>Cancel</Button>
-                                    </div>
+                <Card className="admin-panel-card admin-points-card">
+                    <Card.Header className="score-entry-section-heading">Find a player
+                        <Button variant="outline-secondary" type="button" disabled={busy} onClick={clearEntries}>Clear entries</Button>
+                    </Card.Header>
+                    <Card.Body>
+                        <Form className="admin-points-form" onSubmit={event => {
+                            event.preventDefault(); lookup(input.current?.value ?? value);
+                        }}>
+                            <Form.Group controlId="score-entry-player" className="admin-points-field">
+                                <Form.Label>Scan a card or find a player</Form.Label>
+                                <Form.Control ref={input} value={value} onChange={e => {
+                                    resetSearch(); setValue(e.target.value); setError(''); setStatus('');
+                                }} onKeyDown={event => {
+                                    if (event.key === 'Enter' && (event.repeat || event.nativeEvent.isComposing || event.keyCode === 229)) event.preventDefault();
+                                }} autoFocus autoComplete="off" autoCorrect="off" autoCapitalize="none" spellCheck={false}
+                                    inputMode="text" name="scorePlayer" readOnly={busy} maxLength={500} aria-describedby="score-entry-help"
+                                    placeholder="Name, callsign, player ID, or profile link" />
+                                <Form.Text id="score-entry-help">Focus this field for a connected scanner. Confirm the player before choosing a result.</Form.Text>
+                            </Form.Group>
+                            <div className="score-entry-mode">
+                                <Button className="button-submit-admin" type="submit" disabled={busy || !members}>Find player</Button>
+                                <StaffCardScanner key={cameraKey} disabled={busy || !members} verifyLegacyCards
+                                    onScan={entry => lookup(entry.playerId || entry.barcodeValue || '', entry.cardToken)} />
+                            </div>
+                        </Form>
+                        {directoryUnavailable ? <p role="alert">Could not load the member directory. Reload to try again.</p>
+                            : !members ? <p role="status">Loading members…</p> : null}
+                        {busy && <p role="status">Working…</p>}
+                        {error && <p role="alert">{error}</p>}
+                        {status && <p role="status">{status}</p>}
+                        {!!matches.length && <div className="score-entry-matches"><p>Choose the matching player.</p>
+                            <ul aria-label="Matching players">{matches.slice(0, 10).map(member => (
+                                <li key={member.uid}><Button variant="outline-secondary" disabled={busy} onClick={() => selectPlayer(member)}>
+                                    <strong>{nameOf(member)}</strong>
+                                    <small>{[member.username, displayNames[member.uid], member.uid].filter((part, index, all) =>
+                                        part && part !== nameOf(member) && all.indexOf(part) === index).join(' · ') || member.uid}</small>
+                                </Button></li>
+                            ))}</ul>{matches.length > 10 && <p>Enter a more specific name or player ID.</p>}</div>}
+                        {selected && <section aria-label="Selected player" className="score-entry-selected">
+                            <h3>{nameOf(selected)}</h3>
+                            <p>{[displayNames[selected.uid], selected.uid].filter(Boolean).join(' · ')}</p>
+                            {saved ? <p role="status">{resultLabel(saved.outcome)} already recorded for this player in this round.</p>
+                                : blocks ? <p>Review this player’s pending submission below.</p>
+                                : !round.mode || !round.side ? <p>Select the game mode and team to record a result.</p> : null}
+                            <div className="score-entry-mode">
+                                {(resultHint === 'loss' ? ['loss', 'win'] : ['win', 'loss']).map(outcome =>
+                                    <Button key={outcome} className={'score-result-' + outcome} variant={outcome === 'win' ? 'success' : 'danger'}
+                                        disabled={!canRecord} onClick={() => record(outcome)}>Record {outcome}</Button>)}
+                                <Button variant="outline-secondary" disabled={busy} onClick={() => review(selected)}>Review results</Button>
+                            </div>
+                        </section>}
+                    </Card.Body>
+                </Card>
+                {selected && history && <Card className="admin-panel-card">
+                    <Card.Header ref={historyPanel} tabIndex={-1}>Recorded results · {nameOf(selected)}</Card.Header>
+                    <Card.Body>
+                        {correction ? <div className="score-entry-correction" aria-live="polite">
+                            <strong>Remove one {correction.outcome} on {dateOf(correction)}?</strong>
+                            {detailsOf(correction) && <p>{detailsOf(correction)}</p>}
+                            <p>This updates the player’s totals.{correction.targetEventId && ' The receipt for this round will show the correction.'}</p>
+                            <div className="score-entry-mode">
+                                <Button variant="danger" disabled={busy || blocks} onClick={() => saveScore({
+                                    uid: selected.uid, day: correction.day, outcome: correction.outcome, expectedCount: correction.expectedCount,
+                                    targetEventId: correction.targetEventId, mode: correction.mode, side: correction.side, id: newScoreId(), at: Date.now(),
+                                    ...(correction.legacyOnly && { legacyOnly: true }), ...(correction.fromFlag && { fromFlag: true }),
+                                })}>Remove {correction.outcome}</Button>
+                                <Button variant="outline-secondary" disabled={busy} onClick={() => setCorrection(null)}>Cancel</Button>
+                            </div>
+                        </div> : history.length ? <ul className="score-entry-history" aria-label="Dated results">
+                            {history.map(row => <li key={row.day}>
+                                <div><strong>{dateOf(row)}</strong><small>{row.wins} wins · {row.losses} losses</small></div>
+                                <div className="score-entry-day-events">
+                                    {(row.events || []).map(event => <div className="score-entry-recent" key={event.id}>
+                                        <span>{resultLabel(event.outcome)} · {fieldTime.format(event.at)} Pacific
+                                            <small>{detailsOf(event)}</small></span>
+                                        <Button variant="outline-danger" disabled={busy || blocks} onClick={() => setCorrection({
+                                            ...row, ...event, targetEventId: event.id, expectedCount: event.outcome === 'win' ? row.wins : row.losses,
+                                        })}>Remove this {event.outcome}</Button>
+                                    </div>)}
+                                    {['win', 'loss'].map(outcome => {
+                                        const count = outcome === 'win' ? row.wins : row.losses;
+                                        const recorded = (row.events || []).filter(event => event.outcome === outcome).length;
+                                        if (count <= recorded) return null;
+                                        return <Button key={outcome} variant="outline-danger" disabled={busy || blocks}
+                                            onClick={() => setCorrection({ ...row, outcome, expectedCount: count, legacyOnly: true })}>
+                                            Remove one {recorded ? 'untimed ' : ''}{outcome}</Button>;
+                                    })}
                                 </div>
-                            ) : playerHistory.history.some(row => row[counter] > 0) ? (
-                                <ul className="score-entry-history" aria-label={`Dated ${counter}`}>
-                                    {playerHistory.history.filter(row => row[counter] > 0).map(row => (
-                                        <li key={row.day}>
-                                            <span><strong>{dateOf(row)}</strong><small>{row[counter]} {row[counter] === 1 ? outcome : counter}</small></span>
-                                            <Button variant="outline-danger" type="button" disabled={busy}
-                                                onClick={() => setCorrection(row)}>Remove one {outcome}</Button>
-                                        </li>
-                                    ))}
-                                </ul>
-                            ) : <p>No dated {counter} are available to correct.</p>}
-                        </Card.Body>
-                    </Card>
-                )}
+                            </li>)}
+                        </ul> : <p>No dated results are available to correct.</p>}
+                    </Card.Body>
+                </Card>}
+                {(visible.length > 0 || hiddenCount > 0) && <Card className="admin-panel-card">
+                    <Card.Header>Pending confirmations</Card.Header>
+                    <Card.Body>
+                        {visible.map(op => {
+                            const member = members?.find(entry => entry.uid === op.uid);
+                            const expired = !isCurrentScoreOperation(op.id, op.at);
+                            return <section className="score-entry-pending" key={op.id}>
+                                <strong>{op.day ? 'Remove ' : ''}{resultLabel(op.outcome)} · {member ? nameOf(member) : op.uid}</strong>
+                                <p>{[detailsOf(op), fieldTime.format(op.at) + ' Pacific'].filter(Boolean).join(' · ')}</p>
+                                <small>Reference {op.id}</small>
+                                <div className="score-entry-mode">
+                                    <Button variant="outline-secondary" disabled={busy} onClick={() => saveScore(op, true)}>Check saved status</Button>
+                                    {expired ? <Button variant="outline-secondary" disabled={busy} onClick={() => {
+                                        if (window.confirm('Have you verified this expired submission against the official player record?')) {
+                                            updateDesk(old => ({ ...old, pending: old.pending.filter(item => item.id !== op.id) }));
+                                        }
+                                    }}>Mark manually reviewed</Button> :
+                                        <Button variant="outline-secondary" disabled={busy} onClick={() => saveScore(op)}>Retry same submission</Button>}
+                                </div>
+                            </section>;
+                        })}
+                        {hiddenCount > 0 && <Button variant="outline-secondary" disabled={busy} onClick={() =>
+                            updateDesk(old => ({ ...old, pending: old.pending.map(op => ({ ...op, hidden: false })) }))
+                        }>Show cleared pending entries ({hiddenCount})</Button>}
+                    </Card.Body>
+                </Card>}
                 <Card className="status-card-admin admin-panel-card admin-status-card">
                     <Card.Header>Recent results</Card.Header>
                     <Card.Body className="status-card-body-admin" aria-live="polite" aria-relevant="additions text">
-                        {recent.length ? recent.map((item, index) => (
-                            <div className={`${index % 2 ? 'status-card-row-admin' : 'status-card-offrow-admin'} score-entry-recent`} key={item.id}>
-                                <span>{item.text}</span>
-                                <Button variant="outline-secondary" type="button" disabled={busy || retryRemoval}
-                                    onClick={() => { changeMode(true); submitResult(item.uid, null, true); }}>Review {counter}</Button>
-                            </div>
-                        )) : <Card.Text className="status-card-row-admin">No results recorded in this session.</Card.Text>}
+                        {recent.length ? recent.map((item, index) => <div key={item.id}
+                            className={(index % 2 ? 'status-card-row-admin' : 'status-card-offrow-admin') + ' score-entry-recent'}>
+                            <span><strong data-outcome={item.outcome}>{item.text}</strong><small>{detailsOf(item)}</small></span>
+                            <Button variant="outline-secondary" disabled={busy || !members} onClick={() => {
+                                const member = members?.find(entry => entry.uid === item.uid);
+                                if (member) review(member);
+                            }}>Review results</Button>
+                        </div>) : <Card.Text className="status-card-row-admin">No results recorded in this session.</Card.Text>}
                     </Card.Body>
                 </Card>
+                <FlaggedRoundReceipts request={receiptRequest} disabled={busy} resolved={closedFlag} updateMessage={flagMessage}
+                    onReview={flag => reviewFlag(flag, false)} onCorrect={flag => reviewFlag(flag, true)} />
             </Container>
         </div>
     );
 }
 
-const isAdmin = user => Boolean(user?.roles?.[ADMIN]);
+function StaffScoreDesk({ firebase }) {
+    const actor = useContext(AuthUserContext).uid;
+    return <ScoreEntry key={actor} actor={actor} firebase={firebase} />;
+}
 
-export default withAuthorization(isAdmin, { verifyOnMount: true })(withFirebase(ScoreEntry));
+const isAdmin = user => Boolean(user?.roles?.[ADMIN]);
+export default withAuthorization(isAdmin, { verifyOnMount: true })(withFirebase(StaffScoreDesk));

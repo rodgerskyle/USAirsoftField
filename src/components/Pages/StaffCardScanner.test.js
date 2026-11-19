@@ -24,6 +24,7 @@ afterEach(() => {
 
 it.each([
     ['a case-sensitive Code 128 player ID', false, 'code_128', 'ExactCasePlayer987', { playerId: 'ExactCasePlayer987' }],
+    ['a scanner-prefixed Code 128 player ID', true, 'code_128', ']C0ExactCasePlayer987', { playerId: 'ExactCasePlayer987' }],
     ['a short legacy Code 128 name', true, 'code_128', 'ab', { barcodeValue: 'ab' }],
     ['an official membership profile QR code', true, 'qr_code', 'https://www.usairsoftfield.com/profilelookup/ExactCasePlayer987', { playerId: 'ExactCasePlayer987' }],
 ])('passes %s and releases the camera', async (_name, verifyLegacyCards, format, rawValue, expected) => {
@@ -49,7 +50,7 @@ it.each([
     expect(screen.getByRole('button', { name: 'Scan with camera' })).toBeInTheDocument();
 });
 
-it('decodes a short legacy name in software when the membership scanner opts in', () => {
+function legacyBarcodeFrame() {
     // Code 128 B start, a, b, checksum 95, stop.
     const bars = [...'2112141211241214211141132331112'].flatMap((modules, index) =>
         Array(5 * Number(modules)).fill(index % 2 ? 255 : 0));
@@ -61,9 +62,35 @@ it('decodes a short legacy name in software when the membership scanner opts in'
         const gray = line[(offset / 4) % width];
         data.set([gray, gray, gray, 255], offset);
     }
-    const image = { width, height, data };
+    return { width, height, data };
+}
+
+it('decodes a short legacy name in software when the membership scanner opts in', () => {
+    const image = legacyBarcodeFrame();
     expect(readPlayerIdBarcode(image)).toBeNull();
     expect(readPlayerIdBarcode(image, isLegacyCardName)).toBe('ab');
+});
+
+it.each([true, false])('reads physical cards with software while the QR asset loads (native detector available: %s)', async native => {
+    const image = legacyBarcodeFrame();
+    installCamera(jest.fn().mockResolvedValue({ getTracks: () => [] }));
+    jest.spyOn(window.HTMLMediaElement.prototype, 'play').mockResolvedValue();
+    Object.defineProperty(window, 'BarcodeDetector', { configurable: true, value: native ? class {
+        static async getSupportedFormats() { return ['qr_code', 'code_128']; }
+        async detect() { throw new Error('Frame unreadable'); }
+    } : undefined });
+    jest.spyOn(window.HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+        drawImage: jest.fn(), getImageData: () => image,
+    });
+    const onScan = jest.fn();
+    const { container } = render(<StaffCardScanner onScan={onScan} verifyLegacyCards />);
+    Object.defineProperties(container.querySelector('video'), {
+        readyState: { value: 2 },
+        videoWidth: { value: image.width },
+        videoHeight: { value: image.height },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Scan with camera' }));
+    await waitFor(() => expect(onScan).toHaveBeenCalledWith({ barcodeValue: 'ab' }));
 });
 
 it('releases a late camera stream after staff leaves the tool', async () => {

@@ -1,11 +1,11 @@
-import { runTransaction } from 'firebase/database';
-import { recordPlayerResult, voidPlayerResult } from './scoreRecording';
+import { child, get, runTransaction } from 'firebase/database';
+import { checkScoreOperation, loadPlayerScoreHistory, recordPlayerResult, voidPlayerResult } from './scoreRecording';
 import { scoreRankMilestones } from './scoreRankMilestones';
 import { scoreHistoryFields } from './scoreHistory';
 import rankThresholds from './rankincrements';
 import rankNames from './ranks';
 
-jest.mock('firebase/database', () => ({ runTransaction: jest.fn() }));
+jest.mock('firebase/database', () => ({ get: jest.fn(), child: jest.fn(), runTransaction: jest.fn() }));
 
 const playerId = 'test-player-42';
 const firebase = { user: jest.fn(() => 'memberRef') };
@@ -138,7 +138,7 @@ test('records a scan once across retries while preserving the original Pacific d
         return transactionResult(stored);
     });
     try {
-        await expect(recordPlayerResult(firebase, playerId, 'win', scoringTime, operationId)).resolves.toEqual({ replayed: false });
+        await expect(recordPlayerResult(firebase, playerId, 'win', scoringTime, operationId)).resolves.toEqual({ replayed: false, day: '2026-10-30', eventId: expect.any(String) });
         expect(stored).toEqual({
             ...original,
             points: 455,
@@ -148,7 +148,8 @@ test('records a scan once across retries while preserving the original Pacific d
             wins: 1,
             freegames: 1,
             games: { '2026-10-30': { wins: 1, losses: 0 } },
-            scoreOperations: { [operationId]: { outcome: 'win', day: '2026-10-30', at: Date.parse('2026-12-01') } },
+            scoreOperations: { [operationId]: { outcome: 'win', day: '2026-10-30', at: Date.parse('2026-12-01'),
+                requestedAt: scoringTime.getTime(), eventId: Object.keys(stored.gameResultHistory['2026-10-30'])[0] } },
         });
 
         expect(stored.gameResultHistory['2026-10-30']).not.toHaveProperty(operationId);
@@ -158,7 +159,7 @@ test('records a scan once across retries while preserving the original Pacific d
             expect(retried).toBe(stored);
             return transactionResult(retried);
         });
-        await expect(recordPlayerResult(firebase, playerId, 'win', scoringTime, operationId)).resolves.toEqual({ replayed: true });
+        await expect(recordPlayerResult(firebase, playerId, 'win', scoringTime, operationId)).resolves.toEqual({ replayed: true, day: '2026-10-30', eventId: stored.scoreOperations[operationId].eventId });
 
         runTransaction.mockImplementationOnce(async (_reference, update) => {
             expect(update(stored)).toBeUndefined();
@@ -245,4 +246,200 @@ test('reconciles an older client’s aggregate correction without dating it or r
     expect(player.gameResultHistory[day].second).toEqual(second);
     expect(fields.freeGameMilestones).toBeUndefined();
     expect(scoreHistoryFields({}, { day, outcome: 'loss', dailyCount: 2, removing: true, previousPoints: 456, nextPoints: 453, at: 4000 })).toEqual({});
+});
+
+test('keeps the mode and team on one Companion event and binds retries to the original round', async () => {
+    const at = scoringTime.getTime();
+    const clock = jest.spyOn(Date, 'now').mockReturnValue(at + 1000);
+    const id = '194f1ada-5134-45d8-9ec4-70db1f5cbadc';
+    const round = { mode: 'Ring the Bell', side: 'solid' };
+    const day = '2026-10-30';
+    let player = { name: 'Player' };
+    runTransaction.mockImplementation(async (_ref, update) => {
+        const next = update(player);
+        if (next) player = next;
+        return transactionResult(player, !!next);
+    });
+    try {
+        const { eventId } = await recordPlayerResult(firebase, playerId, 'loss', scoringTime, id, round);
+        expect(eventId).not.toEqual(id);
+        expect(player.gameResultHistory[day]).toEqual({ [eventId]: { ...round, at, outcome: 'loss' } });
+        expect(player.scoreOperations[id]).toMatchObject({ ...round, requestedAt: at, eventId, outcome: 'loss', day });
+        await expect(recordPlayerResult(firebase, playerId, 'loss', scoringTime, id, round))
+            .resolves.toEqual({ eventId, day, replayed: true });
+        for (const [date, context] of [[scoringTime, { ...round, side: 'camo' }],
+            [scoringTime, { ...round, mode: '3 Flag' }], [new Date(at + 100), round]]) {
+            await expect(recordPlayerResult(firebase, playerId, 'loss', date, id, context))
+                .rejects.toMatchObject({ code: 'score_conflict', retryable: false });
+        }
+        expect(player.losses).toBe(1);
+        expect(player.points).toBe(3);
+        expect(Object.keys(player.gameResultHistory[day])).toEqual([eventId]);
+    } finally { clock.mockRestore(); }
+});
+
+test('corrects the exact receipt and leaves a newer same-outcome event and legacy counters intact', async () => {
+    const at = scoringTime.getTime();
+    const day = '2026-10-30';
+    const clock = jest.spyOn(Date, 'now').mockReturnValue(at + 1000);
+    const ids = ['194f1ada-5134-45d8-9ec4-70db1f5cbadc', '294f1ada-5134-45d8-9ec4-70db1f5cbadc',
+        '394f1ada-5134-45d8-9ec4-70db1f5cbadc'];
+    let player = { name: 'Member', points: 10, wins: 1, games: { [day]: { wins: 1 } } };
+    runTransaction.mockImplementation(async (_ref, update) => {
+        const next = update(player);
+        if (next) player = next;
+        return transactionResult(player, !!next);
+    });
+    try {
+        const first = await recordPlayerResult(firebase, playerId, 'win', scoringTime, ids[0], { mode: '3 Flag', side: 'camo' });
+        const second = await recordPlayerResult(firebase, playerId, 'win', new Date(at + 10), ids[1], { mode: 'Countdown', side: 'solid' });
+        const correction = { result: 'win', day, operationAt: at + 100, operationId: ids[2], targetEventId: first.eventId, expectedCount: 3 };
+        get.mockResolvedValueOnce(transactionResult(player).snapshot);
+        const previous = await loadPlayerScoreHistory(firebase, playerId);
+        expect(previous.history[0].events.map(event => event.id)).toEqual([second.eventId, first.eventId]);
+        const corrected = await voidPlayerResult(firebase, playerId, correction);
+        expect(corrected.eventId).toBe(first.eventId);
+        expect(corrected.history[0]).toMatchObject({ wins: 2, events: [{ id: second.eventId, mode: 'Countdown', side: 'solid' }] });
+        expect(player.gameResultHistory[day][first.eventId]).toEqual({ outcome: 'win', at, mode: '3 Flag', side: 'camo', voided: true, voidedAt: at + 100 });
+        expect(player.gameResultHistory[day][second.eventId].voided).toBeUndefined();
+        expect((await voidPlayerResult(firebase, playerId, correction)).duplicate).toBe(true);
+        await expect(voidPlayerResult(firebase, playerId, { ...correction, targetEventId: second.eventId }))
+            .rejects.toMatchObject({ code: 'score_conflict' });
+        await expect(voidPlayerResult(firebase, playerId, { ...correction, expectedCount: 2, operationId: '494f1ada-5134-45d8-9ec4-70db1f5cbadc' }))
+            .rejects.toMatchObject({ code: 'score_changed' });
+        expect(player.wins).toBe(2);
+        expect(player.points).toBe(20);
+    } finally { clock.mockRestore(); }
+});
+
+test('status reads the exact server marker, preserves legacy confirmations, and never submits a score', async () => {
+    const at = scoringTime.getTime();
+    const id = '194f1ada-5134-45d8-9ec4-70db1f5cbadc';
+    const eventId = '294f1ada-5134-45d8-9ec4-70db1f5cbadc';
+    const op = { id, at, outcome: 'win', side: 'solid', mode: '3 Flag' };
+    const clock = jest.spyOn(Date, 'now').mockReturnValue(at + 1000);
+    const api = { ...firebase, auth: { currentUser: { getIdToken: async () => 'test-user-token' } } };
+    child.mockReturnValue(new URL('https://example.invalid/users/member/scoreOperations/' + id));
+    const originalFetch = global.fetch;
+    const marker = { at: Date.parse('2026-12-01'), day: '2026-10-30', outcome: 'win' };
+    const reply = record => ({ ok: true, json: async () => record });
+    global.fetch = jest.fn()
+        .mockResolvedValueOnce(reply(null))
+        .mockResolvedValueOnce(reply({ ...marker, eventId, side: 'solid', mode: '3 Flag', requestedAt: at }))
+        .mockResolvedValueOnce(reply({ ...marker, side: 'camo', mode: '3 Flag', requestedAt: at }))
+        .mockResolvedValueOnce(reply(marker))
+        .mockResolvedValueOnce({ ok: false })
+        .mockResolvedValueOnce(reply(null));
+    try {
+        await expect(checkScoreOperation(api, playerId, op)).resolves.toEqual({ confirmed: false, eventId: null });
+        expect(child).toHaveBeenCalledWith('memberRef', 'scoreOperations/' + id);
+        expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining(id + '.json?auth='), expect.objectContaining({ cache: 'no-store' }));
+        await expect(checkScoreOperation(api, playerId, op)).resolves.toEqual({ confirmed: true, day: marker.day, eventId });
+        await expect(checkScoreOperation(api, playerId, op)).rejects.toMatchObject({ code: 'score_conflict' });
+        await expect(checkScoreOperation(api, playerId, { id, at, outcome: 'win' })).resolves.toEqual({ confirmed: true, day: marker.day, eventId: null });
+        await expect(checkScoreOperation(api, playerId, op)).rejects.toThrow('could not be checked');
+        clock.mockReturnValue(at + 3 * 86400000);
+        await expect(checkScoreOperation(api, playerId, op)).rejects.toMatchObject({ code: 'operation_expired' });
+        expect(runTransaction).not.toHaveBeenCalled();
+        expect(get).not.toHaveBeenCalled();
+    } finally {
+        global.fetch = originalFetch;
+        clock.mockRestore();
+    }
+});
+
+test('refuses invalid receipt metadata before starting a write', async () => {
+    for (const round of [{ mode: 'A'.repeat(81), side: 'camo' }, { mode: '3 Flag', side: 'other' }, { mode: ' ', side: 'solid' }]) {
+        await expect(recordPlayerResult(firebase, playerId, 'win', scoringTime, undefined, round)).rejects.toMatchObject({ retryable: false });
+    }
+    expect(runTransaction).not.toHaveBeenCalled();
+});
+
+test('can confirm an exact correction using the display details saved on the original pending entry', async () => {
+    const at = scoringTime.getTime();
+    const id = '194f1ada-5134-45d8-9ec4-70db1f5cbadc';
+    const targetEventId = '294f1ada-5134-45d8-9ec4-70db1f5cbadc';
+    const correction = { id, at, day: '2026-10-30', outcome: 'loss', expectedCount: 1, targetEventId,
+        mode: 'Countdown', side: 'solid' };
+    const api = { ...firebase, auth: { currentUser: { getIdToken: async () => 'test-user-token' } } };
+    child.mockReturnValue(new URL('https://example.invalid/users/member/scoreOperations/' + id));
+    const originalFetch = global.fetch;
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({
+        at: Date.parse('2026-12-01'), requestedAt: at, kind: 'void', day: correction.day,
+        outcome: 'loss', expectedCount: 1, targetEventId, eventId: targetEventId,
+    }) });
+    try {
+        await expect(checkScoreOperation(api, playerId, correction)).resolves.toEqual({ confirmed: true, day: correction.day, eventId: targetEventId });
+        expect(runTransaction).not.toHaveBeenCalled();
+    } finally { global.fetch = originalFetch; }
+});
+
+test('a queued Firebase write releases the desk and a late commit can be retried exactly once', async () => {
+    const at = scoringTime.getTime();
+    const id = '194f1ada-5134-45d8-9ec4-70db1f5cbadc';
+    const context = { mode: '3 Flag', side: 'camo' };
+    let player = { name: 'Member' };
+    let commit;
+    runTransaction.mockImplementationOnce((_ref, update) => new Promise(resolve => {
+        commit = () => { player = update(player); resolve(transactionResult(player)); };
+    }));
+    jest.useFakeTimers();
+    jest.setSystemTime(at);
+    try {
+        const first = recordPlayerResult(firebase, playerId, 'win', scoringTime, id, context);
+        const checkFailure = expect(first).rejects.toThrow('could not be saved or confirmed');
+        jest.advanceTimersByTime(12500);
+        await checkFailure;
+        commit();
+        runTransaction.mockImplementationOnce(async (_ref, update) => {
+            player = update(player);
+            return transactionResult(player);
+        });
+        const second = await recordPlayerResult(firebase, playerId, 'win', scoringTime, id, context);
+        expect(second.replayed).toBe(true);
+        expect(Object.keys(player.gameResultHistory['2026-10-30'])).toEqual([second.eventId]);
+        expect(player.points).toBe(10);
+        expect(player.wins).toBe(1);
+    } finally { jest.useRealTimers(); }
+});
+
+test('removes only a surplus legacy result without touching a recorded receipt on the same day', async () => {
+    const at = scoringTime.getTime(), day = '2026-10-30';
+    const eventId = '194f1ada-5134-45d8-9ec4-70db1f5cbadc';
+    const id = '294f1ada-5134-45d8-9ec4-70db1f5cbadc';
+    const originalEvent = { at, outcome: 'win', mode: 'Countdown', side: 'solid' };
+    let player = { name: 'Member', points: 20, wins: 2, games: { [day]: { wins: 2 } },
+        gameResultHistory: { [day]: { [eventId]: originalEvent } } };
+    const clock = jest.spyOn(Date, 'now').mockReturnValue(at + 1000);
+    runTransaction.mockImplementation(async (_ref, update) => {
+        const next = update(player);
+        if (next) player = next;
+        return transactionResult(player, !!next);
+    });
+    const originalFetch = global.fetch;
+    const api = { ...firebase, auth: { currentUser: { getIdToken: async () => 'test-token' } } };
+    child.mockReturnValue(new URL('https://example.invalid/users/member/scoreOperations/' + id));
+    global.fetch = jest.fn(async () => ({ ok: true, json: async () => player.scoreOperations[id] }));
+    try {
+        const correction = { operationId: id, operationAt: at + 100, result: 'win', day, expectedCount: 2, legacyOnly: true };
+        const removed = await voidPlayerResult(firebase, playerId, correction);
+        expect(removed).toMatchObject({ wins: 1, points: 10, eventId: null, day });
+        expect(player.gameResultHistory[day]).toEqual({ [eventId]: originalEvent });
+        expect(player.scoreOperations[id]).toMatchObject({ kind: 'void', legacyOnly: true });
+        const check = { id, at: at + 100, outcome: 'win', day, expectedCount: 2, legacyOnly: true };
+        await expect(checkScoreOperation(api, playerId, check)).resolves.toEqual({ confirmed: true, day, eventId: null });
+        await expect(checkScoreOperation(api, playerId, { ...check, legacyOnly: false }))
+            .rejects.toMatchObject({ code: 'score_conflict' });
+        expect((await voidPlayerResult(firebase, playerId, correction)).duplicate).toBe(true);
+        await expect(voidPlayerResult(firebase, playerId, { ...correction, legacyOnly: false }))
+            .rejects.toMatchObject({ code: 'score_conflict' });
+        await expect(voidPlayerResult(firebase, playerId, {
+            ...correction, expectedCount: 1, operationId: '394f1ada-5134-45d8-9ec4-70db1f5cbadc',
+        })).rejects.toMatchObject({ code: 'score_changed' });
+        expect(player.wins).toBe(1);
+        expect(player.gameResultHistory[day][eventId]).toEqual(originalEvent);
+    } finally {
+        clock.mockRestore();
+        global.fetch = originalFetch;
+    }
 });

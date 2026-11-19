@@ -44,7 +44,7 @@ test('verifies an active card at the fixed Companion endpoint using the current 
     const { signal } = new AbortController();
     global.fetch = jest.fn().mockResolvedValue(response(200, { status: 'active', playerId }));
     await expect(verifyScannedMemberCard(firebase, token, { signal })).resolves.toBe(playerId);
-    expect(global.fetch).toHaveBeenCalledWith(`${companion}/api/member-card/verify`, {
+    expect(global.fetch).toHaveBeenCalledWith(`${branded}/api/member-card/verify`, {
         method: 'POST',
         headers: {
             Accept: 'application/json',

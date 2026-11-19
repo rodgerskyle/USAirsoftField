@@ -16,6 +16,10 @@ Player profiles show current and next ranks on the progress bar. The milestone t
 
 **Player profile → Game history** requests `/api/player-game-history` and loads 25 entries at a time, newest first. New wins and losses store an individual score event in the same player transaction as the points, result counters and receipt. Corrections void the matching event. Earlier records can provide only day, month or lifetime totals. The service subtracts individually shown results from the corresponding aggregate to avoid counting them twice. The client removes the load button at the last page.
 
+**Staff operations → Game day → Wins & Losses** opens the website score desk at `/admin/scores`. Choose the game mode and the player’s field team (yellow for Camo, blue for Solid), identify the member by card, name or ID, and select **Record win** or **Record loss**. Switch the team as the other side comes through. **Start new round** lets the same players score again. **Clear entries** clears the desk view and keeps pending submissions available for review. Both old scoring bookmarks open this desk.
+
+The Firebase transaction saves the score and its individual `gameResultHistory` entry together. After confirmation, the website sends the event’s player ID, field date and event ID to `/api/staff-round-result-receipts`. The Companion verifies the administrator, reads the official result, places it in the player’s private receipt inbox and attempts push delivery to enrolled devices. Receipt preferences control alerts. Opening the inbox and scheduled reconciliation can also recover a missed sync. **Review results** lets staff correct the specific round. **Flagged round receipts** shows reports players submitted from the Companion.
+
 ## Available Scripts
 
 In the project directory, you can run with:

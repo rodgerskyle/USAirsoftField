@@ -25,6 +25,7 @@ import SignUpForm from './components/Pages/Signup'
 import WaiverForm from './components/Pages/FillOutWaiver'
 import EnterWins from './components/Pages/enterwins';
 import EnterLosses from './components/Pages/enterlosses';
+import ScoreEntry from './components/Pages/ScoreEntry';
 import FreeGames from './components/Pages/freegames';
 // import Migration from './components/Pages/migrate';
 import Leaderboard, { LegacyLeaderboardTvRedirect, LEGACY_LEADERBOARD_TV_PATH } from './components/Pages/leaderboard';
@@ -115,6 +116,7 @@ const App = () => (
         <Route path="waiverlookup" element={<WaiverLookup />} />
         <Route path="renewal" element={<RenewSubscription />} />
         <Route path="renewal/:id" element={<RenewSubscription />} />
+        <Route path="scores" element={<ScoreEntry />} />
         <Route path="enterwins" element={<EnterWins />} />
         <Route path="enterlosses" element={<EnterLosses />} />
         <Route path="freegames" element={<FreeGames />} />

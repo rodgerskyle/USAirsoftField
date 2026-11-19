@@ -9,8 +9,9 @@ let qrDecoder;
 
 function scannedValue(raw, format, verifyLegacyCards) {
     if (format === 'code_128') {
-        if (verifyLegacyCards && isLegacyCardName(raw)) return { barcodeValue: raw };
-        return playerId.test(raw) ? { playerId: raw } : null;
+        const value = raw.replace(/^\]C[01]/, '');
+        if (verifyLegacyCards && isLegacyCardName(value)) return { barcodeValue: value };
+        return playerId.test(value) ? { playerId: value } : null;
     }
     if (format !== 'qr_code') return null;
     if (qrToken.test(raw)) return { cardToken: raw };
@@ -30,8 +31,18 @@ function loadQRReader() {
         qrDecoder = new Promise((resolve, reject) => {
             const script = document.createElement('script');
             script.src = `${process.env.PUBLIC_URL || ''}/vendor/jsqr-1.4.0.js`;
-            script.onload = () => typeof window.jsQR === 'function' ? resolve(window.jsQR) : reject(new Error('QR reader unavailable'));
-            script.onerror = () => reject(new Error('QR reader unavailable'));
+            const fail = () => {
+                clearTimeout(timeout);
+                script.remove();
+                reject(new Error('QR reader unavailable'));
+            };
+            const timeout = setTimeout(fail, 6000);
+            script.onload = () => {
+                clearTimeout(timeout);
+                if (typeof window.jsQR === 'function') resolve(window.jsQR);
+                else fail();
+            };
+            script.onerror = fail;
             document.head.appendChild(script);
         }).catch(error => {
             qrDecoder = null;
@@ -43,16 +54,14 @@ function loadQRReader() {
 
 async function createReader(verifyLegacyCards) {
     let detector;
-    let formats = [];
     try {
         const supported = await window.BarcodeDetector?.getSupportedFormats();
-        formats = ['qr_code', 'code_128'].filter(format => supported?.includes(format));
+        const formats = ['qr_code', 'code_128'].filter(format => supported?.includes(format));
         if (formats.length) detector = new window.BarcodeDetector({ formats });
-    } catch {
-        formats = [];
-    }
-    const decodeQr = formats.includes('qr_code') ? null : await loadQRReader().catch(() => null);
-    const decodeBarcode = !formats.includes('code_128');
+    } catch { /* Use the software readers when native detection is unavailable. */ }
+    // A slow QR asset must never delay reading a physical Code 128 card.
+    let decodeQr;
+    loadQRReader().then(reader => { decodeQr = reader; }).catch(() => {});
     const canvas = document.createElement('canvas');
 
     return async video => {
@@ -65,7 +74,6 @@ async function createReader(verifyLegacyCards) {
                 }
             } catch { /* A browser decoder can skip an unreadable frame. */ }
         }
-        if (!decodeBarcode && !decodeQr) return null;
         const scale = Math.min(1, 1200 / Math.max(video.videoWidth, video.videoHeight));
         canvas.width = Math.max(1, Math.round(video.videoWidth * scale));
         canvas.height = Math.max(1, Math.round(video.videoHeight * scale));
@@ -73,9 +81,9 @@ async function createReader(verifyLegacyCards) {
         if (!frame) return null;
         frame.drawImage(video, 0, 0, canvas.width, canvas.height);
         const image = frame.getImageData(0, 0, canvas.width, canvas.height);
-        const code = decodeBarcode && readPlayerIdBarcode(image, verifyLegacyCards ? isLegacyCardName : undefined);
+        const code = readPlayerIdBarcode(image, verifyLegacyCards ? isLegacyCardName : undefined);
         if (code) return scannedValue(code, 'code_128', verifyLegacyCards);
-        const qr = decodeQr?.(image.data, image.width, image.height, { inversionAttempts: 'dontInvert' })?.data;
+        const qr = decodeQr?.(image.data, image.width, image.height, { inversionAttempts: 'attemptBoth' })?.data;
         return qr ? scannedValue(qr, 'qr_code', verifyLegacyCards) : null;
     };
 }

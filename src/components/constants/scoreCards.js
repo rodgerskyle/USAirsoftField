@@ -1,5 +1,5 @@
-const companionOrigin = 'https://usaw-field-companion.pink-bud-3735.chatgpt.site';
-const cardOrigins = new Set([companionOrigin, 'https://app.usairsoftfield.com']);
+const companionOrigin = 'https://app.usairsoftfield.com';
+const cardOrigins = new Set([companionOrigin, 'https://usaw-field-companion.pink-bud-3735.chatgpt.site']);
 const cardHostnames = new Set([...cardOrigins].map(origin => new URL(origin).hostname));
 const websiteOrigin = 'https://www.usairsoftfield.com';
 const profileOrigins = new Set([websiteOrigin, 'https://usairsoftfield.com']);

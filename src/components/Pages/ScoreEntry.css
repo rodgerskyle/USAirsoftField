@@ -54,3 +54,64 @@
 .score-entry-history .btn {
     min-height: 44px;
 }
+
+.score-entry-context {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 0.75rem;
+    margin-bottom: 0.65rem;
+}
+
+.score-entry-context :is(select, button), .score-entry-section-heading button {
+    min-height: 44px;
+}
+
+.score-entry-section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+
+.score-entry-selected, .score-entry-matches, .score-entry-pending + .score-entry-pending {
+    border-top: 1px solid var(--admin-border);
+    margin-top: 1rem;
+    padding-top: 1rem;
+}
+
+.score-entry-selected p, .score-entry-pending small, .score-entry-recent small {
+    display: block;
+    color: var(--admin-subtext);
+    overflow-wrap: anywhere;
+}
+
+.score-entry-pending .score-entry-mode {
+    margin-top: 0.5rem;
+}
+
+.score-entry-day-events {
+    display: grid;
+    gap: 0.5rem;
+    flex: 1 1 16rem;
+}
+
+.score-entry-recent [data-outcome="win"] { color: var(--admin-success); }
+.score-entry-recent [data-outcome="loss"] { color: var(--admin-danger); }
+
+@media (max-width: 650px) {
+    .score-entry-context { grid-template-columns: 1fr; }
+    .score-entry-context > button { justify-self: start; }
+}
+
+.score-receipt-flag {
+    border-top: 1px solid var(--admin-border);
+    padding: 0.75rem 0;
+    overflow-wrap: anywhere;
+}
+
+.score-receipt-flag summary { cursor: pointer; }
+.score-receipt-flag summary small { display: block; margin-block: 0.2rem; }
+.score-receipt-flag .score-entry-mode { margin-top: 0.6rem; }
+.score-flag-reason { margin-block: 0.6rem; white-space: pre-wrap; }
