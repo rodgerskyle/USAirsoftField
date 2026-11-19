@@ -29,6 +29,11 @@ const dateOf = row => dateFormat.format(new Date(row.date + 'T00:00:00Z'));
 const resultLabel = outcome => outcome === 'win' ? 'Win' : 'Loss';
 const detailsOf = entry => [entry.mode, teamNames[entry.side]].filter(Boolean).join(' · ');
 
+function registeredName(value, uid) {
+    const name = textValue(value);
+    return normalized(name) === normalized(uid) || /\S+@\S+/.test(name) ? '' : name;
+}
+
 function memberDirectory(snapshot) {
     return Object.entries(snapshot.val() ?? {}).filter(([uid, member]) =>
         /^[A-Za-z0-9_-]{1,128}$/.test(uid) && member && typeof member === 'object' && !Array.isArray(member) &&
@@ -217,8 +222,6 @@ function ScoreEntry({ firebase, actor }) {
 
     function finish(op, saved) {
         const removing = Boolean(op.day);
-        const member = members?.find(entry => entry.uid === op.uid);
-        const message = resultLabel(op.outcome) + (removing ? ' removed for ' : ' recorded for ') + (member ? nameOf(member) : op.uid) + '.';
         updateDesk(old => {
             let scored = { ...old.round.scored };
             if (!removing && op.roundId === old.round.id) {
@@ -228,7 +231,7 @@ function ScoreEntry({ firebase, actor }) {
             }
             return { round: { ...old.round, scored }, pending: old.pending.filter(item => item.id !== op.id) };
         });
-        setRecent(old => [{ ...op, text: message }, ...old].slice(0, 20));
+        setRecent(old => [op, ...old].slice(0, 20));
         void syncReceipt(op, saved);
         resetSearch();
         input.current?.focus();
@@ -293,7 +296,8 @@ function ScoreEntry({ firebase, actor }) {
 
     function record(outcome) {
         if (!canRecord || active.current) return;
-        saveScore({ uid: selected.uid, outcome, mode: round.mode, side: round.side, roundId: round.id, id: newScoreId(), at: Date.now() });
+        saveScore({ uid: selected.uid, registeredName: registeredName(selected.name, selected.uid),
+            outcome, mode: round.mode, side: round.side, roundId: round.id, id: newScoreId(), at: Date.now() });
     }
 
     function startRound() {
@@ -415,7 +419,8 @@ function ScoreEntry({ firebase, actor }) {
                             <p>This updates the player’s totals.{correction.targetEventId && ' The receipt for this round will show the correction.'}</p>
                             <div className="score-entry-mode">
                                 <Button variant="danger" disabled={busy || blocks} onClick={() => saveScore({
-                                    uid: selected.uid, day: correction.day, outcome: correction.outcome, expectedCount: correction.expectedCount,
+                                    uid: selected.uid, registeredName: registeredName(selected.name, selected.uid),
+                                    day: correction.day, outcome: correction.outcome, expectedCount: correction.expectedCount,
                                     targetEventId: correction.targetEventId, mode: correction.mode, side: correction.side, id: newScoreId(), at: Date.now(),
                                     ...(correction.legacyOnly && { legacyOnly: true }), ...(correction.fromFlag && { fromFlag: true }),
                                 })}>Remove {correction.outcome}</Button>
@@ -474,14 +479,16 @@ function ScoreEntry({ firebase, actor }) {
                 <Card className="status-card-admin admin-panel-card admin-status-card">
                     <Card.Header>Recent results</Card.Header>
                     <Card.Body className="status-card-body-admin" aria-live="polite" aria-relevant="additions text">
-                        {recent.length ? recent.map((item, index) => <div key={item.id}
-                            className={(index % 2 ? 'status-card-row-admin' : 'status-card-offrow-admin') + ' score-entry-recent'}>
-                            <span><strong data-outcome={item.outcome}>{item.text}</strong><small>{detailsOf(item)}</small></span>
-                            <Button variant="outline-secondary" disabled={busy || !members} onClick={() => {
-                                const member = members?.find(entry => entry.uid === item.uid);
-                                if (member) review(member);
-                            }}>Review results</Button>
-                        </div>) : <Card.Text className="status-card-row-admin">No results recorded in this session.</Card.Text>}
+                        {recent.length ? recent.map((item, index) => {
+                            const member = members?.find(entry => entry.uid === item.uid);
+                            const name = registeredName(member?.name, item.uid) || registeredName(item.registeredName, item.uid);
+                            const action = item.day ? ' removed' : ' recorded';
+                            return <div key={item.id} className={(index % 2 ? 'status-card-row-admin' : 'status-card-offrow-admin') + ' score-entry-recent'}>
+                                <span><strong data-outcome={item.outcome}>{resultLabel(item.outcome)}{action}{name ? ' for ' + name + '.' : ' · Player name unavailable.'}</strong>
+                                    <small>{detailsOf(item)}</small></span>
+                                <Button variant="outline-secondary" disabled={busy || !member} onClick={() => review(member)}>Review results</Button>
+                            </div>;
+                        }) : <Card.Text className="status-card-row-admin">No results recorded in this session.</Card.Text>}
                     </Card.Body>
                 </Card>
                 <FlaggedRoundReceipts request={receiptRequest} disabled={busy} resolved={closedFlag} updateMessage={flagMessage}

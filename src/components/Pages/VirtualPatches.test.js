@@ -315,6 +315,16 @@ test('offers the expanded patch collection in the unlocked staff award picker', 
   fireEvent.click(screen.getByRole('button', { name: 'Unlock badge controls' }));
 
   const picker = await screen.findByRole('combobox', { name: 'Badge' });
+  const modes = within(picker).getByRole('group', { name: 'Game modes' });
+  const otherPatches = within(picker).getByRole('group', { name: 'Other patches' });
+  const names = within(modes).getAllByRole('option').map(option => option.textContent);
+  expect(names).toHaveLength(53);
+  expect(names).toEqual([...names].sort(new Intl.Collator('en', { numeric: true, sensitivity: 'base' }).compare));
+  expect(names.slice(0, 3)).toEqual(['3 Bomb', '3 Flag', 'Amoeba']);
+  expect(names[names.length - 1]).toBe('Zombie Attack');
+  expect(within(modes).getByRole('option', { name: 'Ring the Bell' })).toHaveValue('ring-the-bell');
+  expect(within(otherPatches).getByRole('option', { name: 'Pocket BBs' })).toHaveValue('pocket-bbs');
+  expect(picker).toHaveValue('');
   const patchIds = within(picker).getAllByRole('option').map(option => option.value).filter(Boolean);
   expect(patchIds).toHaveLength(69);
   for (const retired of ['first-game', 'team-death-match', 'bb-confetti', 'tactical-click']) {

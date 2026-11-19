@@ -283,6 +283,8 @@ test('a pending write keeps its original submission after clear and reload and c
         page = renderScore();
         await page.verify(admin);
         await scan(firstId);
+        // Once the retry is visible, simulate the live directory going offline.
+        act(() => { onValue.mock.calls[1][2](); });
         await act(async () => { fireEvent.click(screen.getByRole('button', { name: /check saved status/i })); });
         expect(checkScoreOperation).toHaveBeenCalled();
         expect(recordPlayerResult).toHaveBeenCalledTimes(1);
@@ -291,7 +293,31 @@ test('a pending write keeps its original submission after clear and reload and c
         const original = recordPlayerResult.mock.calls[0];
         expect(recordPlayerResult.mock.calls[1].slice(1)).toEqual(original.slice(1));
         expect(original[5]).toEqual({ mode: 'Countdown', side: 'solid' });
+        expect(screen.getByText('Win recorded for River Lane.')).toBeInTheDocument();
     } finally { confirm.mockRestore(); }
+});
+
+test('a recovered result waits for the registered name without displaying a player ID or alias', async () => {
+    sessionStorage.setItem('usaw-score-pending-v1:' + admin.uid + ':loss:' + firstId,
+        JSON.stringify({ id: webcrypto.randomUUID(), at: Date.now() }));
+    let publish;
+    onValue.mockImplementationOnce((_ref, next) => { publish = next; return stopDirectory; });
+    checkScoreOperation.mockResolvedValue({ confirmed: true });
+    const page = renderScore();
+    await page.verify(admin);
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: /check saved status/i })); });
+
+    const recent = screen.getByText('Recent results').closest('.card');
+    expect(recent).toHaveTextContent('Loss recorded · Player name unavailable.');
+    expect(recent).not.toHaveTextContent(firstId);
+    act(() => { publish({ val: () => ({ [firstId]: { ...players[firstId], name: firstId } }) }); });
+    expect(recent).toHaveTextContent('Player name unavailable.');
+    expect(recent).not.toHaveTextContent(firstId);
+    expect(recent).not.toHaveTextContent(players[firstId].username);
+
+    act(() => { publish({ val: () => players }); });
+    expect(recent).toHaveTextContent('Loss recorded for River Lane.');
+    expect(recordPlayerResult).not.toHaveBeenCalled();
 });
 
 test('a server-confirmed pending entry completes using a read-only check', async () => {
