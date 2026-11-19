@@ -7,7 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCalendar, faCalendarDays, faChevronRight, faClipboardList,
   faComments, faGift, faIdCard, faPeopleGroup, faQrcode, faSearch, faStopwatch,
-  faTimesCircle, faTrophy, faTv, faUserGear, faUserPen, faUserPlus,
+  faTrophy, faTv, faUserGear, faUserPen, faUserPlus,
 } from '@fortawesome/free-solid-svg-icons';
 
 import { withFirebase } from '../Firebase';
@@ -29,8 +29,7 @@ const ACTION_GROUPS = [
       { title: 'Round Controls', path: fieldStaffPaths.rounds, icon: faStopwatch },
       { title: 'Rotation & Briefings', path: fieldStaffPaths.missionTools, icon: faClipboardList },
       { title: 'Field Game Days', path: '/schedule', icon: faCalendarDays, primary: true },
-      { title: 'Enter Wins', path: '/admin/enterwins', icon: faTrophy },
-      { title: 'Enter Losses', path: '/admin/enterlosses', icon: faTimesCircle },
+      { title: 'Wins & Losses', path: '/admin/scores', icon: faTrophy },
       { title: 'Check Free Games', path: '/admin/freegames', icon: faGift },
     ],
   },

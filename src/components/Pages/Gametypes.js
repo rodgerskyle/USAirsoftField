@@ -1561,4 +1561,6 @@ const GAME_MODES = [
     })),
 ].map(mode => ({ ...mode, searchText: searchable([mode.name, ...(mode.aliases || [])].join(' ')) }));
 
+export const gameModeNames = GAME_MODES.map(mode => mode.name).sort((a, b) => a.localeCompare(b, 'en', { numeric: true }));
+
 export default Gametypes;

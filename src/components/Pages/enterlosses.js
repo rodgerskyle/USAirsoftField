@@ -1,6 +1,6 @@
 import React from 'react';
-import ScoreEntry from './ScoreEntry';
+import { Navigate } from 'react-router-dom';
 
 export default function EnterLosses() {
-    return <ScoreEntry outcome="loss" />;
+    return <Navigate to="/admin/scores?result=loss" replace />;
 }
