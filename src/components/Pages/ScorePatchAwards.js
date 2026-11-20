@@ -134,7 +134,7 @@ export function ScorePatchAwards({ firebase, mode, player, member, roundSide, di
       {!token && (battleAccessRequested || selection.badgeIds.length > 0 || jobs.length > 0) && <form className="score-patch-access" onSubmit={unlock}>
             <AdminAccountUnlock firebase={firebase} disabled={unlocking} setWorking={setUnlocking}
                 unlock={() => unlockBadgeAdminAccount(firebase)} onUnlocked={acceptUnlock} />
-            <p>Or enter your staff email and password for round patches and the daily MVP award.</p>
+            <p>Or enter your staff email and password to unlock badge awards.</p>
             <label>Staff badge email<input ref={emailInput} name="email" type="email" className="form-control" required autoComplete="username" /></label>
             <label>Staff badge password<input name="password" type="password" className="form-control" required autoComplete="current-password" /></label>
             <button className="btn btn-outline-secondary" disabled={unlocking}>Unlock badge awards</button>

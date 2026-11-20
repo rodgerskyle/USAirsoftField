@@ -44,3 +44,10 @@
     padding-top: .8rem;
     border-top: 1px solid var(--admin-border);
 }
+.staff-battle-log { display: grid; justify-items: start; gap: .75rem; }
+.staff-battle-feedback {
+    padding: .55rem .8rem;
+    border-inline-start: 3px solid var(--staff-success, #21874e);
+    font-weight: 600;
+}
+.staff-battle-feedback[role='alert'] { border-color: var(--staff-error, #b52e3e); }

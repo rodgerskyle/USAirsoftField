@@ -73,3 +73,16 @@ body:not(.night-mode) .player-hero-card .battle-showcase {
   object-fit: contain;
   filter: drop-shadow(0 2px 2px #08182688);
 }
+.daily-battle-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .65rem 1rem;
+  padding: .65rem max(1rem, calc((100% - 68rem) / 2));
+  background: #20291c;
+  color: #fff7df;
+  border-bottom: 2px solid #c7a24d;
+}
+.daily-battle-notice img { object-fit: contain; }
+.daily-battle-notice small, .daily-battle-notice strong { display: block; }
+.daily-battle-notice a { color: #ffe19b; font-weight: 700; text-decoration: underline; }

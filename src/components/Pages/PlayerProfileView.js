@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { onValue } from 'firebase/database';
 import { getDownloadURL } from 'firebase/storage';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -297,10 +297,15 @@ function GameFeed({ games }) {
 export default function PlayerProfileView({ firebase, user, playerId, account = false }) {
   const authUser = useContext(AuthUserContext);
   const [params] = useSearchParams();
+  const { key: locationKey } = useLocation();
   const badgeHeading = useRef(null);
   const badgeEligible = !user.roles?.[ROLES.WAIVER];
   const canManageBadges = account && badgeEligible;
-  const [section, setSection] = useState(() => canManageBadges && params.get('section') === 'badges' ? 'badges' : 'overview');
+  const requestedSection = params.get('section');
+  const linkedSection = badgeEligible && requestedSection === 'milestones' ? 'milestones'
+    : canManageBadges && requestedSection === 'badges' ? 'badges' : 'overview';
+  const [section, setSection] = useState(linkedSection);
+  useEffect(() => { setSection(linkedSection); }, [linkedSection, playerId, locationKey]);
   const [nameRecord, setNameRecord] = useState(null);
 
   useEffect(() => {

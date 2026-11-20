@@ -55,7 +55,10 @@ beforeEach(() => {
 });
 
 test('links each native field tool once and keeps website scoring, scheduling, waivers, and awards', () => {
-  openAdmin(admin)();
+  const verify = openAdmin(admin);
+  expect(screen.queryByRole('heading', { name: 'Badge awards' })).toBeNull();
+  expect(onValue).not.toHaveBeenCalled();
+  verify();
   expect(screen.getByRole('heading', { name: 'Staff operations' })).toBeInTheDocument();
 
   const fieldTools = [

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link, useParams } from 'react-router-dom';
 import { historicalBadge } from '../constants/playerBadges';
+import { battleBadgeArtUrl, battleBadgeForAward } from '../constants/battleBadgeArt';
 import { milestoneDate, playerCount, playerIdPattern, requestPlayerExperience } from '../constants/playerExperience';
 import { mergeMilestonePage } from '../constants/milestoneHistory';
 import { PrestigeEmblem } from './PlayerPrestige';
@@ -11,9 +12,11 @@ function MilestoneList({ items, dated = true }) {
   return <ol className="player-milestones__list">{items.map(item => {
     const label = milestoneDate(item.date, item.datePrecision);
     const badge = historicalBadge(item.badgeId);
+    const battleBadge = item.type === 'battle-badge' && battleBadgeForAward(item.totalAwards);
+    const image = battleBadge ? battleBadgeArtUrl(battleBadge.id) : badge?.thumbUrl;
     return <li key={item.id}>
-      <span className="player-milestones__marker" aria-hidden="true">{badge?.thumbUrl ? <img src={badge.thumbUrl} alt="" width="56" height="56" loading="lazy" /> : item.type === 'prestige' ? '★' : item.type === 'team' ? '◆' : '●'}</span>
-      <div>{dated && (label === 'Date unavailable' ? <span>{label}</span> : <time dateTime={item.date}>{label}</time>)}<h3>{item.title}{badge?.retired && ' (retired)'}</h3><p>{item.detail}</p></div>
+      <span className="player-milestones__marker" aria-hidden="true">{image ? <img src={image} alt="" width="56" height="56" loading="lazy" /> : item.type === 'prestige' ? '★' : item.type === 'team' ? '◆' : '●'}</span>
+      <div>{dated && (label === 'Date unavailable' ? <span>{label}</span> : <time dateTime={item.date}>{label}</time>)}<h3>{item.title}{badge?.retired && ' (retired)'}</h3><p>{battleBadge && <>{battleBadge.name} · </>}{item.detail}</p></div>
     </li>;
   })}</ol>;
 }

@@ -23,6 +23,22 @@ import { getDownloadURL, getMetadata, updateMetadata } from 'firebase/storage';
 import { waiverArchiveStart } from '../utils/waiverArchive';
 import './UserOptions.css';
 
+function profileFields(user) {
+    return {
+        username: user.username ?? '', name: user.name ?? '', team: user.team?.toUpperCase() ?? '',
+        wins: user.wins ?? 0, losses: user.losses ?? 0, freegames: user.freegames ?? 0,
+        profilepic: Boolean(user.profilepic),
+    };
+}
+
+function emailError(error) {
+    const message = typeof error?.message === 'string' ? error.message : '';
+    if (/already[-_ ](?:in[-_ ]use|exists)|email[-_ ]exists|already.*(?:used|in use)/i.test([error?.code, message].join(' '))) {
+        return 'This email is already used by another account. Enter a different email.';
+    }
+    return message || 'The player email could not be updated. Try again.';
+}
+
 class UserOptions extends Component {
     constructor(props) {
         super(props);
@@ -40,6 +56,10 @@ class UserOptions extends Component {
             profilepic: false,
             renewal: "",
             email: "",
+            oldEmail: "",
+            saving: false,
+            emailNotice: "",
+            emailError: "",
             password: "",
             removeImg: false,
             super_status: null,
@@ -61,36 +81,39 @@ class UserOptions extends Component {
 
     loadAccount() {
         this.unsubscribeUser?.();
-        this.setState({ loading: true, user: null, reviewWaiver: null, error: null, password: '', removing: false, removeTarget: null, removeError: null });
-        this.unsubscribeUser = onValue(this.props.firebase.user(this.props.router.params.id), snapshot => {
-            const userObject = snapshot.val();
-            if (!userObject || userObject.accountRemovedAt) {
-                this.setState({ loading: false, user: userObject });
+        this.saveRequest?.abort();
+        this.saveRequest = null;
+        const uid = this.props.router.params.id;
+        this.setState({ loading: true, user: null, saving: false, reviewWaiver: null, error: null, status: null,
+            emailError: '', emailNotice: '', password: '', removing: false, removeTarget: null, removeError: null });
+        this.unsubscribeUser = onValue(this.props.firebase.user(uid), snapshot => {
+            if (this.props.router.params.id !== uid) return;
+            const user = snapshot.val();
+            if (!user || user.accountRemovedAt) {
+                this.setState({ loading: false, user });
                 return;
             }
 
-            this.setState({
-                loading: false,
-                user: userObject,
-                username: userObject.username ?? '',
-                name: userObject.name ?? '',
-                team: userObject.team?.toUpperCase() ?? '',
-                wins: userObject.wins,
-                losses: userObject.losses,
-                points: userObject.points,
-                freegames: userObject.freegames,
-                profilepic: userObject.profilepic,
-                renewal: userObject.renewal ?? '',
-                email: userObject.email ?? '',
-                oldEmail: userObject.email ?? '',
-            }, function () {
-                //After setstate, then grab points and profile
-                if (userObject.profilepic)
-                    this.getProfile(`${this.props.router.params.id}/profilepic`);
-                else
-                    this.setState({ profileicon: default_profile })
+            this.setState(previous => {
+                const fields = profileFields(user);
+                const baseline = previous.user && profileFields(previous.user);
+                // A live email update must not discard unsaved edits to this player.
+                for (const key of Object.keys(fields)) {
+                    if (baseline && previous[key] !== baseline[key]) fields[key] = previous[key];
+                }
+                const editingEmail = previous.user && previous.email !== previous.oldEmail;
+                return {
+                    ...fields, loading: false, user, renewal: user.renewal ?? '',
+                    email: editingEmail ? previous.email : (user.email ?? ''),
+                    oldEmail: editingEmail ? previous.oldEmail : (user.email ?? ''),
+                };
+            }, () => {
+                if (this.state.profilepic) this.getProfile(uid + '/profilepic');
+                else this.setState({ profileicon: default_profile });
             });
-        }, () => this.setState({ loading: false, user: null, error: 'The player account is temporarily unavailable.' }));
+        }, () => {
+            if (this.props.router.params.id === uid) this.setState({ loading: false, user: null, error: 'The player account is temporarily unavailable.' });
+        });
     }
 
     componentDidMount() {
@@ -106,6 +129,7 @@ class UserOptions extends Component {
     }
 
     componentWillUnmount() {
+        this.saveRequest?.abort();
         this.unsubscribeUser?.();
         this.removeRequest?.abort();
     }
@@ -216,15 +240,11 @@ class UserOptions extends Component {
     // Reset settings to default
     resetOptions() {
         this.setState({
-            username: this.state.user.username,
-            name: this.state.user.name,
-            team: this.state.user.team?.toUpperCase() ?? '',
-            wins: this.state.user.wins,
-            losses: this.state.user.losses,
-            points: this.state.user.points,
-            freegames: this.state.user.freegames,
-            profilepic: this.state.user.profilepic,
-            email: this.state.user.email,
+            ...profileFields(this.state.user),
+            email: this.state.user.email ?? '',
+            oldEmail: this.state.user.email ?? '',
+            emailNotice: '',
+            emailError: '',
             password: "",
             error: null,
             status: null,
@@ -237,47 +257,96 @@ class UserOptions extends Component {
         });
     }
 
-    // Update changed items 
-    updateUser() {
-        const { username, name, team, profilepic, email, oldEmail, password } = this.state;
-        let uid = this.props.router.params.id
-        let points = this.state.wins * 10 + this.state.losses * 3 + 50
-        let wins = parseInt(this.state.wins)
-        let losses = parseInt(this.state.losses)
-        let freegames = parseInt(this.state.freegames)
-        const normalizedName = (name || '').trim().toLowerCase();
-        const normalizedUsername = (username || '').trim().toLowerCase();
-        update(this.props.firebase.user(uid), ({
-            username, usernameLower: normalizedUsername, name, nameLower: normalizedName, team, wins, losses, points, profilepic, freegames
+    async savePlayerEmail(uid, email, oldEmail, signal) {
+        const { firebase } = this.props;
+        const emailRef = firebase.user(uid + '/email');
+        const current = (await get(emailRef)).val() ?? '';
+        if (signal.aborted) return;
+        if (current !== oldEmail) {
+            this.setState(state => ({ user: { ...state.user, email: current } }));
+            throw new Error('The saved email changed. Select Reset to load the current address before trying again.');
+        }
+        const result = await firebase.manageProfile()({
+            choice: 'emailAdmin', uid, email: encode(email), old_email: encode(oldEmail),
+        });
+        if (signal.aborted) return;
+        const data = result?.data;
+        if (data === false || data?.success === false || data?.error) {
+            throw new Error(typeof data?.error === 'string' ? data.error : data?.error?.message || data?.message || 'The email change was declined.');
+        }
+        const saved = (await get(emailRef)).val();
+        if (signal.aborted) return;
+        if (typeof saved !== 'string' || saved.toLowerCase() !== email.toLowerCase()) {
+            throw new Error('The account service has not confirmed the new email on this profile. Reopen the player to check the saved address.');
+        }
+        this.setState(state => ({
+            email: saved, oldEmail: saved, user: { ...state.user, email: saved },
+            emailNotice: 'Player email updated to ' + saved + '.', emailError: '',
         }));
+    }
 
-        // Email portion
-        if (email !== oldEmail) {
-            let updateEmail = this.props.firebase.manageProfile();
-            updateEmail({ choice: "emailAdmin", uid, email: encode(email), old_email: encode(oldEmail) }).then((res) => {
-            })
-            this.setState({ oldEmail: email })
+    async updateUser(emailOnly = false) {
+        if (this.saveRequest || !this.state.user || this.state.user.accountRemovedAt) return;
+        const { firebase } = this.props;
+        const uid = this.props.router.params.id;
+        const { oldEmail, password, user } = this.state;
+        const email = this.state.email.trim();
+        const emailChanged = email.toLowerCase() !== oldEmail.trim().toLowerCase();
+        if (emailChanged && (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
+            this.setState({ emailError: 'Enter a valid player email address.', emailNotice: '', status: null });
+            return;
         }
-
-        // Password portion
-
-        if (password !== "") {
-            if (password.length >= 6) {
-                let updatePassword = this.props.firebase.manageProfile();
-                updatePassword({ choice: "passAdmin", uid, password }).then((res) => {
-                })
-            }
-            else {
-                this.setState({ error: "Password must be longer than 6 characters." })
+        if (!emailOnly && password && password.length < 6) {
+            this.setState({ error: 'Password must be at least 6 characters.', status: null });
+            return;
+        }
+        if (emailOnly && !emailChanged) return;
+        const baseline = profileFields(user);
+        const edits = Object.fromEntries(Object.keys(baseline)
+            .filter(key => String(this.state[key]) !== String(baseline[key]))
+            .map(key => [key, this.state[key]]));
+        for (const key of ['wins', 'losses', 'freegames']) {
+            if (key in edits) {
+                if (!emailOnly && (!/^\d+$/.test(String(edits[key])) || !Number.isSafeInteger(Number(edits[key])))) {
+                    this.setState({ error: 'Enter a whole number of zero or more for ' + key + '.', status: null });
+                    return;
+                }
+                edits[key] = Number(edits[key]);
             }
         }
+        if ('wins' in edits || 'losses' in edits) edits.points = Number(this.state.wins) * 10 + Number(this.state.losses) * 3 + 50;
+        if ('username' in edits) edits.usernameLower = edits.username.trim().toLowerCase();
+        if ('name' in edits) edits.nameLower = edits.name.trim().toLowerCase();
 
-        this.setState({ status: "Successfully updated " + this.state.name })
+        const request = new AbortController();
+        this.saveRequest = request;
+        this.setState({ saving: true, status: null, error: null, emailError: '', emailNotice: '' });
+        let updatingEmail = emailChanged;
+        try {
+            if (emailChanged) await this.savePlayerEmail(uid, email, oldEmail, request.signal);
+            if (request.signal.aborted || emailOnly) return;
+            updatingEmail = false;
+            if (Object.keys(edits).length) await update(firebase.user(uid), edits);
+            if (request.signal.aborted) return;
+            if (password) await firebase.manageProfile()({ choice: 'passAdmin', uid, password });
+            if (!request.signal.aborted && (Object.keys(edits).length || password)) {
+                this.setState({ status: 'Successfully updated ' + this.state.name, password: '' });
+            }
+        } catch (error) {
+            if (!request.signal.aborted) this.setState(updatingEmail ? { emailError: emailError(error) } :
+                { error: error.message || 'The player profile could not be updated.' });
+        } finally {
+            if (this.saveRequest === request) {
+                this.saveRequest = null;
+                if (!request.signal.aborted) this.setState({ saving: false });
+            }
+        }
     }
 
     // Form box on change event
     onChange = event => {
-        this.setState({ [event.target.name]: event.target.value });
+        const { name, value } = event.target;
+        this.setState({ [name]: value, ...(name === 'email' && { emailNotice: '', emailError: '' }) });
     };
 
     async openWaiver() {
@@ -412,16 +481,21 @@ class UserOptions extends Component {
                                         </Row>
                                         <Row>
                                             <Col>
-                                                <Form>
+                                                <Form noValidate onSubmit={event => { event.preventDefault(); void this.updateUser(true); }}>
                                                     <Form.Group controlId="form.email">
-                                                        <Form.Label>Email:</Form.Label>
-                                                        <Form.Control
-                                                            type="text"
-                                                            name="email"
-                                                            value={this.state.email}
-                                                            onChange={this.onChange}
-                                                        />
+                                                        <Form.Label>Player sign-in email</Form.Label>
+                                                        <Form.Control type="email" name="email" autoComplete="off" maxLength={254}
+                                                            disabled={this.state.saving} value={this.state.email} onChange={this.onChange}
+                                                            aria-invalid={Boolean(this.state.emailError)} aria-describedby="player-email-message" />
                                                     </Form.Group>
+                                                    <Button type="submit" variant="outline-primary" className="mt-2"
+                                                        disabled={this.state.saving || this.state.email.trim().toLowerCase() === this.state.oldEmail.trim().toLowerCase()}>
+                                                        Save email
+                                                    </Button>
+                                                    <div id="player-email-message">
+                                                        {this.state.emailError && <p role="alert" className="text-red">{this.state.emailError}</p>}
+                                                        {this.state.emailNotice && <p role="status">{this.state.emailNotice}</p>}
+                                                    </div>
                                                 </Form>
                                             </Col>
                                             <Col>
@@ -526,11 +600,11 @@ class UserOptions extends Component {
                                         Confirm reviewed signatures
                                     </Button>}
                                     <Button variant="outline-primary" className="button-update-uo"
-                                        onClick={() => this.resetOptions()}>
+                                        disabled={this.state.saving} onClick={() => this.resetOptions()}>
                                         Reset
                                     </Button>
                                     <Button variant="outline-primary" className="button-update-uo"
-                                        onClick={() => this.updateUser()}>
+                                        disabled={this.state.saving} onClick={() => this.updateUser()}>
                                         Update
                                     </Button>
                                     <Button variant="outline-primary" className="button-update-uo"

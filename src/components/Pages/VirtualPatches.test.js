@@ -364,11 +364,15 @@ test('badge awards uses the selected member for MVP and reconciles another staff
   getStaffBadgeCounts.mockResolvedValue({ counts: {} });
   const recipient = { id: 'recorded', playerId: 'another-player', playerName: 'Sam Hayes', side: 'solid' };
   const extra = { id: 'extra', playerId, playerName: member.name, side: 'camo', overrideQuantity: 20 };
+  const concurrent = { ...extra, id: 'newer', playerName: 'Another player', overrideQuantity: 5 };
   staffBattleBadgeDay.mockResolvedValueOnce({ date, awards: [] })
     .mockRejectedValueOnce(Object.assign(new Error('Today’s MVP was already awarded.'), { status: 409 }))
     .mockResolvedValueOnce({ date, awards: [recipient], overrides: [] })
-    .mockResolvedValueOnce({ date, awards: [recipient], overrides: [extra] });
-  renderPage(<AdminBadgeAwards firebase={firebase} players={[member]} loading={false} directoryUnavailable={false} />);
+    .mockRejectedValueOnce(Object.assign(new Error('Network unavailable.'), { status: 503 }))
+    .mockResolvedValueOnce({ date, awards: [recipient], overrides: [extra] })
+    .mockResolvedValueOnce({ date, awards: [recipient], overrides: [concurrent] });
+  renderPage(<AdminBadgeAwards firebase={firebase} players={[member]} loading={false} directoryUnavailable={false} />,
+    { authUser: { uid: 'field-admin', roles: { ADMIN: true } } });
   fireEvent.change(screen.getByLabelText('Staff email'), { target: { value: 'staff@example.com' } });
   fireEvent.change(screen.getByLabelText('Staff password'), { target: { value: 'test-password' } });
   fireEvent.click(screen.getByRole('button', { name: 'Unlock badge controls' }));
@@ -382,10 +386,40 @@ test('badge awards uses the selected member for MVP and reconciles another staff
   expect(desk.queryByRole('button', { name: 'Award daily MVP' })).toBeNull();
   fireEvent.change(desk.getByLabelText('Number of Battle Badges'), { target: { value: '20' } });
   fireEvent.click(desk.getByRole('button', { name: 'Grant extra Battle Badges' }));
-  expect(await desk.findByText('Camo · 20 extra')).toBeVisible();
+  expect(await desk.findByRole('alert')).toHaveTextContent('Override could not be confirmed. Network unavailable.');
+  expect(desk.getByLabelText('Number of Battle Badges')).toHaveValue(20);
+  fireEvent.click(desk.getByRole('button', { name: 'Grant extra Battle Badges' }));
+  expect(await desk.findByText('Override applied successfully.')).toBeVisible();
+  expect(staffBattleBadgeDay.mock.calls[4][2].body).toEqual(staffBattleBadgeDay.mock.calls[3][2].body);
+  expect(desk.queryByText('Camo · 20 extra')).toBeNull();
+  expect(desk.queryByRole('button', { name: 'Clear override log' })).toBeNull();
+  expect(desk.getByLabelText('Number of Battle Badges')).toHaveValue(1);
+  fireEvent.click(desk.getByRole('button', { name: 'Show override log' }));
+  expect(desk.getByText('Camo · 20 extra')).toBeVisible();
+  const confirm = jest.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true);
+  try {
+    const clear = desk.getByRole('button', { name: 'Clear override log' });
+    fireEvent.click(clear);
+    expect(staffBattleBadgeDay).toHaveBeenCalledTimes(5);
+    fireEvent.click(clear);
+    expect(await desk.findByText('Override log cleared. Awarded badges were kept.')).toBeVisible();
+    expect(staffBattleBadgeDay.mock.calls[5][2].body).toEqual({ action: 'clearOverrideLog', date, throughId: extra.id });
+    expect(desk.queryByText('Camo · 20 extra')).toBeNull();
+    expect(desk.getByText('Camo · 5 extra')).toBeVisible();
+    fireEvent.click(desk.getByRole('button', { name: 'Hide override log' }));
+    expect(desk.queryByText('Camo · 5 extra')).toBeNull();
+  } finally { confirm.mockRestore(); }
   expect(desk.getByText('Sam Hayes')).toBeVisible();
   expect(staffBattleBadgeDay.mock.calls[3][2].body).toMatchObject({ action: 'override', quantity: 20, playerId, date, side: 'camo' });
   expect(staffBattleBadgeDay.mock.calls[1][2].body).toMatchObject({ action: 'award', playerId, date, side: 'camo' });
+});
+
+test.each([null, user, { uid: playerId, roles: { ADMIN: 'false' } }])('hides the Battle Badge desk without an admin role', account => {
+  renderPage(<AdminBadgeAwards firebase={firebase} players={[user]} loading={false} directoryUnavailable={false} />,
+    { authUser: account });
+  expect(screen.queryByText('US Airsoft World Battle Badges')).toBeNull();
+  expect(screen.queryByRole('button', { name: /override|MVP/i })).toBeNull();
+  expect(staffBattleBadgeDay).not.toHaveBeenCalled();
 });
 
 test.each([
