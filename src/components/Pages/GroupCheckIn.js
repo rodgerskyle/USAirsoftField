@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { withFirebase } from '../Firebase';
 import { getGroupGuestSession, guestSessionKey } from '../constants/groupGuestSession';
 import { groupExperienceLabels } from '../constants/groupExperience';
+import WaiverStatus from './WaiverStatus';
 import GroupPartySchedule from './GroupPartySchedule';
 import './GroupCheckIn.css';
 
@@ -170,7 +171,8 @@ function GroupCheckIn({ firebase }) {
           {selected.expiresAt && <p>Group expires <time dateTime={selected.expiresAt}>{new Date(selected.expiresAt).toLocaleString('en-US', { timeZone: 'America/Los_Angeles', dateStyle: 'medium', timeStyle: 'short' })} Pacific</time>.</p>}
           {selected.rosterPrivate && <p>Only the organizer and staff can see the full roster.</p>}
           <ul className="visit-groups__entries">{selected.entries.map(entry => <li key={entry.id}><div><strong>{entry.displayName}</strong><small>{entry.isYou ? 'You' : entry.kind === 'guest' ? 'Guest player' : 'USAW player'}</small>
-            <small>Experience · {groupExperienceLabels[entry.experienceBand] || groupExperienceLabels.unrated}</small></div>
+            <small>Experience · {groupExperienceLabels[entry.experienceBand] || groupExperienceLabels.unrated}</small>
+            {entry.waiverStatus && <WaiverStatus status={entry.waiverStatus} />}</div>
             {(selected.isOwner || entry.isYou) && <details className="visit-groups__experience"><summary>Edit experience<span className="visually-hidden"> for {entry.displayName}</span></summary>
               <form key={entry.experienceBand} onSubmit={event => edit('setExperience', event, { entryId: entry.id })}><fieldset disabled={busy}>
                 <ExperienceField label={'Airsoft experience for ' + entry.displayName} value={entry.experienceBand} /><button className="ph-button">Save experience</button>

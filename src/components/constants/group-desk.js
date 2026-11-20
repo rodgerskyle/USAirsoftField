@@ -1,5 +1,6 @@
 import { bindWaiverPicker, waiverPickerMarkup } from './staff-waiver-picker.js';
 import { groupExperienceLabels } from './groupExperience.js';
+import { waiverStatusMarkup } from './waiver-status.js';
 
 const endpoint = '/api/staff-groups';
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -51,7 +52,8 @@ function experienceOptions(current = 'unrated') {
 
 function rosterRow(entry) {
   const kind = entry.kind === 'guest' ? 'Guest player' : 'USAW player';
-  return `<li><div><strong>${escape(entry.displayName)}</strong><small>${kind}${entry.isOrganizer ? ' · Organizer' : ''} · ${groupExperienceLabels[entry.experienceBand] || groupExperienceLabels.unrated}</small></div>
+  return `<li><div><strong>${escape(entry.displayName)}</strong><small>${kind}${entry.isOrganizer ? ' · Organizer' : ''} · ${groupExperienceLabels[entry.experienceBand] || groupExperienceLabels.unrated}</small>${waiverStatusMarkup(entry.waiverStatus)}</div>
+    ${entry.waiverStatus !== 'signed' ? `<details data-waiver-entry="${escape(entry.id)}"><summary>Link signed waiver<span class="visually-hidden"> for ${escape(entry.displayName)}</span></summary>${waiverPickerMarkup({ name: entry.displayName })}</details>` : ''}
     <details><summary>Edit experience<span class="visually-hidden"> for ${escape(entry.displayName)}</span></summary>
       <form data-experience="${escape(entry.id)}" class="group-desk__form"><label>Experience for ${escape(entry.displayName)}<select name="experienceBand">${experienceOptions(entry.experienceBand)}</select></label>
       <button class="btn btn-secondary">Save experience</button></form></details>
@@ -67,7 +69,9 @@ function detailMarkup(group, confirmDelete) {
       <button class="btn btn-secondary" type="button" data-copy>Copy code</button></div>
     ${group.expiresAt ? `<p>Expires ${escape(new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', dateStyle: 'medium', timeStyle: 'short' }).format(new Date(group.expiresAt)))} Pacific</p>` : ''}
     <h3>Group roster</h3>
-    ${group.entries.length ? `<ul class="group-desk__roster">${group.entries.map(rosterRow).join('')}</ul>` : '<p>No players on the list yet.</p>'}
+    ${group.entries.length ? `<p>${group.entries.filter(entry => entry.waiverStatus === 'signed').length} of ${group.entries.length} waivers verified</p>
+      ${group.entries.some(entry => entry.waiverStatus === 'unavailable' || !entry.waiverStatus) ? '<button type="button" class="btn btn-secondary" data-refresh-waivers>Retry waiver verification</button>' : ''}
+      <ul class="group-desk__roster">${group.entries.map(rosterRow).join('')}</ul>` : '<p>No players on the list yet.</p>'}
     <form data-add class="group-desk__form">${waiverPickerMarkup()}<label>Player name or callsign<input required name="displayName" minlength="2" maxlength="80" autocomplete="off"></label>
       <label>Airsoft experience<select name="experienceBand">${experienceOptions()}</select></label>
       <button class="btn btn-primary" type="submit">Add player</button></form>
@@ -91,10 +95,14 @@ export function bindGroupDesk(root, { request, signal, initialId }) {
   bindWaiverPicker(root, { signal, isBusy: () => busy,
     search: name => request('/api/staff-waivers', { method: 'POST', body: { name }, signal }),
     onChoose: (match, picker) => {
+      const row = picker.closest('[data-waiver-entry]');
+      if (row) {
+        return run(() => change('linkWaiver', { entryId: row.dataset.waiverEntry, waiverRef: match.ref }, 'Waiver linked. Roster updated.'));
+      }
       const form = picker.closest('[data-add]');
       form.elements.displayName.value = match.name;
       form.dataset.waiverRef = match.ref;
-      picker.querySelector('[data-waiver-message]').textContent = 'Selected signed waiver for ' + match.name + '.';
+      picker.querySelector('[data-waiver-message]').textContent = 'Waiver selected for ' + match.name + '. Add player to verify.';
     },
   });
   root.addEventListener('input', event => {
@@ -199,7 +207,12 @@ export function bindGroupDesk(root, { request, signal, initialId }) {
     } else if (button.dataset.page) {
       page = Number(button.dataset.page); void run(loadList);
     } else if (!selected) return;
-    else if (button.hasAttribute('data-copy')) {
+    else if (button.hasAttribute('data-refresh-waivers')) {
+      void run(async () => {
+        await open(selected.id);
+        if (!signal.aborted) status.textContent = 'Waiver statuses refreshed.';
+      });
+    } else if (button.hasAttribute('data-copy')) {
       const field = detail.querySelector('[data-invite]');
       field.select();
       void run(async () => {

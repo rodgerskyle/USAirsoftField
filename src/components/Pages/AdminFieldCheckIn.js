@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { readScannedMemberCard } from '../constants/scoreCards';
 import { StaffCardScanner } from './StaffCardScanner';
 import { groupExperienceLabels } from '../constants/groupExperience';
+import WaiverStatus from './WaiverStatus';
 import StaffWaiverPicker from './StaffWaiverPicker';
 import StaffGroupLookup from './StaffGroupLookup';
 import './AdminFieldCheckIn.css';
@@ -145,6 +146,7 @@ function PlayerRows({ players, onSelect, checkedIn, disabled }) {
             <span>
               <strong>{player.displayName}</strong>
               <small>{checkedIn ? `${memberships[player.membershipStatus] || memberships.unconfirmed} · ${classificationLabel(player)}` : player.playerId}</small>
+              <WaiverStatus status={player.waiverStatus ?? 'unavailable'} />
             </span>
             <span className={checkedIn ? 'admin-checkin__pill' : undefined} data-side={checkedIn ? player.side : undefined} aria-hidden={checkedIn ? undefined : true}>
               {checkedIn ? sides[player.side] : '›'}
@@ -171,13 +173,15 @@ function SelectedPlayer({ player, suggestion, working, onAssessment, onAssign, r
         <span className="admin-checkin__pill" data-side={side || undefined}>
           {side ? `Checked in · ${sides[side]}` : 'Awaiting check-in'}
         </span>
+        <WaiverStatus status={player.waiverStatus ?? 'unavailable'} />
         <span className="admin-checkin__pill">{classificationLabel(player)}</span>
         {Number.isSafeInteger(gamesLogged) && <span className="admin-checkin__hint">
           {countFormat.format(gamesLogged)} {gamesLogged === 1 ? 'game' : 'games'} logged
         </span>}
       </div>
       {!side && <div>
-        <p role="status">{player.waiverStatus === 'signed' ? 'Signed waiver verified.' : player.waiverStatus === 'unavailable' ? 'Waiver verification unavailable. Retry before check-in.' : 'A current signed waiver is required for check-in.'}</p>
+        {(player.waiverStatus ?? 'unavailable') === 'unavailable' &&
+          <p role="status">Look up this player again to retry the waiver check.</p>}
         {player.waiverStatus !== 'signed' && <StaffWaiverPicker request={request} name={membershipStatus === 'guest' ? player.displayName : ''} disabled={working} onChoose={onWaiver} />}
       </div>}
       {canSetExperience && (

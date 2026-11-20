@@ -86,6 +86,23 @@ test('uses a walk-on team balance estimate while their classification stays Unra
   });
 });
 
+test('recent check-ins and search matches show their individual waiver status', async () => {
+  const matches = [
+    { playerId: 'registered-one', displayName: 'Sam Lee', waiverStatus: 'signed' },
+    { playerId: 'registered-two', displayName: 'Sam Lane', waiverStatus: 'missing' },
+  ];
+  const request = jest.fn().mockResolvedValueOnce(versionedRoster)
+    .mockResolvedValueOnce({ date, matches });
+  render(<AdminFieldCheckIn request={request} />);
+  const roster = await screen.findByRole('list', { name: 'Recent players' });
+  expect(within(roster).getByText('Verification pending')).toBeVisible();
+  fireEvent.change(screen.getByLabelText('Player name, ID or card link'), { target: { value: 'Sam' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Find player' }));
+  const results = await screen.findByRole('list', { name: 'Matching players' });
+  expect(within(results).getByRole('button', { name: /Sam Lee.*Waiver verified/ })).toBeVisible();
+  expect(within(results).getByRole('button', { name: /Sam Lane.*Waiver needed/ })).toBeVisible();
+});
+
 test('resolves a connected scanner Code 128 or an official card link on the website', async () => {
   const playerId = 'Wi23kdJBktOzimVScc29CA728S4k';
   const cardToken = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef';
@@ -255,7 +272,7 @@ test('checks the selected signed waiver before staff can admit a walk-on', async
   fireEvent.change(screen.getByLabelText(/Participant.*(name|waiver)/i), { target: { value: 'Jordan' } });
   fireEvent.click(screen.getByRole('button', { name: 'Find a signed waiver' }));
   fireEvent.click(await screen.findByRole('button', { name: /Jordan Smith/ }));
-  expect(await screen.findByText('Signed waiver verified.')).toBeVisible();
+  expect(await screen.findByText('Waiver verified')).toBeVisible();
   expect(request.mock.calls[3][1].body).toMatchObject({ action: 'guestPreview', displayName: 'Jordan Smith', waiverRef: 'signed-ref' });
   expect(screen.getByRole('button', { name: 'Check in as Solid' })).toBeEnabled();
 });

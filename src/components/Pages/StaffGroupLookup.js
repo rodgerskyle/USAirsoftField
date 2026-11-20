@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { isGroupCode } from '../constants/groupCode';
 import { groupExperienceLabels } from '../constants/groupExperience';
+import WaiverStatus from './WaiverStatus';
 import StaffWaiverPicker from './StaffWaiverPicker';
 import GroupPartySchedule, { bookingTime } from './GroupPartySchedule';
 import './GroupCheckIn.css';
@@ -223,18 +224,20 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
             <button type="button" className="btn btn-outline-secondary" disabled={locked}
               onClick={() => void run(signal => openById(group.id, signal))}>Refresh group</button></div>
           {!busy && !fresh && <p role="status">Refresh the group to see current teams.</p>}
+          {fresh && [...positions.values()].some(position => position.waiverStatus === 'unavailable') &&
+            <p>Refresh the group to retry pending waiver checks.</p>}
         </>}
         <ul>{group.entries.map(entry => {
           const position = fresh ? positions.get(entry.id) : undefined;
+          const waiverStatus = position?.waiverStatus ?? entry.waiverStatus ?? 'unavailable';
           const playerId = position?.playerId || entry.playerId;
           const playerName = position?.displayName ?? entry.displayName;
           const experience = position?.experienceBand ?? entry.experienceBand;
           return <li className="group-placement__player" key={entry.id}>
             <strong>{playerName}</strong><small>{groupExperienceLabels[experience] || groupExperienceLabels.unrated}{position && ' · ' + (teamLabels[position.side] || 'Awaiting check-in')}</small>
-            {current && position && !position.side && <>
-              <small>{position.waiverStatus === 'signed' ? 'Signed waiver verified' : position.waiverStatus === 'unavailable' ? 'Waiver verification unavailable' : 'Signed waiver required'}</small>
-              {position.waiverStatus !== 'signed' && <StaffWaiverPicker request={request} disabled={locked} name={entry.displayName} onChoose={match => linkWaiver(entry, match)} />}
-            </>}
+            <WaiverStatus status={waiverStatus} />
+            {current && position && !position.side && waiverStatus !== 'signed' &&
+              <StaffWaiverPicker request={request} disabled={locked} name={entry.displayName} onChoose={match => linkWaiver(entry, match)} />}
             {current && <div className="group-placement__actions">
               {Object.entries(teamLabels).map(([side, label]) => <button type="button" className="btn btn-outline-primary"
                 key={side} data-team={side} aria-label={'Assign ' + playerName + ' to ' + label}
