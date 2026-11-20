@@ -116,7 +116,7 @@ test('a return check preserves imported identity, manual fields and arrivals add
     view.rerender(<ReturnForm firebase={firebase} rentalForms={[{ key: 'other', name: 'Another form' }, { ...current, key: '0' }]} />);
     expect(screen.getByText('Group: Birthday rental')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Complete Form' }));
-    expect(screen.getByText(/email for receipt/)).toBeVisible();
+    expect(screen.getByRole('textbox', { name: 'Email Address' })).toBeVisible();
 });
 
 test('rejects imports for a different linked group or a returned or deleted record', async () => {
