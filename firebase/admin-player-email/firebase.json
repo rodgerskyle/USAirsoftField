@@ -1,0 +1,8 @@
+{
+  "functions": [{
+    "source": "functions",
+    "codebase": "admin-player-email",
+    "runtime": "nodejs22",
+    "ignore": ["node_modules", ".git", "test", "*.log"]
+  }]
+}
