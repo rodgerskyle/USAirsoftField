@@ -1,5 +1,6 @@
 import React from 'react';
 import './App.css';
+import './components/constants/waiver-status.css';
 import { BrowserRouter as Router, Route, Routes, useLocation, useMatch, Navigate } from "react-router-dom";
 import Login from "./Login"
 import Navigation from "./Navigation"

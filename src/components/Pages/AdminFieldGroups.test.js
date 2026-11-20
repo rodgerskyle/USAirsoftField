@@ -84,3 +84,61 @@ test('staff can update the organizer’s experience using the selected roster ve
   expect(request.mock.calls[2][1].body).toEqual({ action: 'setExperience', id, entryId: 'owner', version: 'version-one', experienceBand: 'veteran' });
   expect(screen.getByText('USAW player · Organizer · Experienced')).toBeVisible();
 });
+
+test('choosing a signed waiver verifies just the added player and the check survives reopening the group', async () => {
+  const group = { ...initial, entries: [{ ...initial.entries[0], waiverStatus: 'missing' }] };
+  const entry = { id: 'guest', displayName: 'Field Callsign', kind: 'guest', waiverStatus: 'signed' };
+  const updated = { ...group, version: 'two', entries: [...group.entries, entry] };
+  const match = { name: 'Rebel Guest', ref: 'signed-guest-reference', signedAt: '2026-11-19T20:00:00Z' };
+  const request = jest.fn().mockResolvedValueOnce({ group }).mockResolvedValueOnce(list(group))
+    .mockResolvedValueOnce({ matches: [match] }).mockResolvedValueOnce({ group: updated }).mockResolvedValueOnce(list(updated))
+    .mockResolvedValueOnce({ group: updated });
+  open(request);
+  const add = await screen.findByRole('button', { name: 'Add player' });
+  await waitFor(() => expect(add).toBeEnabled());
+  const form = within(add.closest('form'));
+  fireEvent.change(form.getByLabelText('Participant name or waiver reference'), { target: { value: 'Rebel' } });
+  fireEvent.click(form.getByRole('button', { name: 'Find a signed waiver' }));
+  fireEvent.click(await form.findByRole('button', { name: /Rebel Guest/ }));
+  expect(form.getByLabelText('Player name or callsign')).toHaveValue('Rebel Guest');
+  fireEvent.change(form.getByLabelText('Player name or callsign'), { target: { value: entry.displayName } });
+  expect(screen.queryByText('Waiver verified')).toBeNull();
+  fireEvent.click(add);
+  expect(await screen.findByText('Player added.')).toBeVisible();
+  expect(request.mock.calls[3][1].body).toEqual({
+    action: 'addGuest', id, version: group.version, displayName: entry.displayName, experienceBand: 'unrated', waiverRef: match.ref,
+  });
+  expect(within(screen.getByText('Organizer').closest('li')).getByText('Waiver needed')).toBeVisible();
+  expect(within(screen.getByText(entry.displayName).closest('li')).getByText('Waiver verified')).toBeVisible();
+  expect(screen.getByText('1 of 2 waivers verified')).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: /Birthday group/ }));
+  await waitFor(() => expect(request).toHaveBeenCalledTimes(6));
+  expect(screen.getByText('Waiver verified')).toBeVisible();
+});
+
+test('staff can recover a pending verification and link a signed waiver to an existing roster entry', async () => {
+  const entry = { ...initial.entries[0], waiverStatus: 'unavailable' };
+  const pending = { ...initial, entries: [entry] };
+  const missing = { ...initial, version: 'after-refresh', entries: [{ ...entry, waiverStatus: 'missing' }] };
+  const signed = { ...missing, version: 'linked', entries: [{ ...entry, waiverStatus: 'signed' }] };
+  const match = { name: 'Actual Account Name', ref: 'confirmed-reference', signedAt: '2026-11-19T20:00:00Z' };
+  const request = jest.fn().mockResolvedValueOnce({ group: pending }).mockResolvedValueOnce(list(pending))
+    .mockResolvedValueOnce({ group: missing }).mockResolvedValueOnce({ matches: [match] })
+    .mockResolvedValueOnce({ group: signed }).mockResolvedValueOnce(list(signed));
+  open(request);
+  const retry = await screen.findByRole('button', { name: 'Retry waiver verification' });
+  await waitFor(() => expect(retry).toBeEnabled());
+  expect(screen.getByText('Verification pending')).toBeVisible();
+  fireEvent.click(retry);
+  expect(await screen.findByText('Waiver needed')).toBeVisible();
+  const row = within(screen.getByText('Organizer').closest('li'));
+  fireEvent.click(row.getByText('Link signed waiver'));
+  fireEvent.click(row.getByRole('button', { name: 'Find a signed waiver' }));
+  fireEvent.click(await row.findByRole('button', { name: /Actual Account Name/ }));
+  expect(await screen.findByText('Waiver linked. Roster updated.')).toBeVisible();
+  expect(request.mock.calls[4][1].body).toEqual({
+    action: 'linkWaiver', id, version: missing.version, entryId: entry.id, waiverRef: match.ref,
+  });
+  expect(screen.getByText('1 of 1 waivers verified')).toBeVisible();
+  expect(screen.getByText('Waiver verified')).toBeVisible();
+});

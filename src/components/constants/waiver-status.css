@@ -1,0 +1,32 @@
+.waiver-status[data-status] {
+  display: inline-flex;
+  align-items: center;
+  gap: .35em;
+  max-width: 100%;
+  padding: .18em .55em;
+  border: 1px solid currentColor;
+  border-radius: .35em;
+  color: #344258;
+  background: #eef1f5;
+  font-size: .85rem;
+  font-weight: 600;
+  line-height: 1.35;
+  vertical-align: middle;
+}
+
+.waiver-status[data-status="signed"] {
+  color: #10532e;
+  background: #e0f6e9;
+}
+
+.waiver-status[data-status="missing"] {
+  color: #723809;
+  background: #fff0d6;
+}
+
+.waiver-status[data-status] > [aria-hidden] {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1em;
+  font-weight: 800;
+}

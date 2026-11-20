@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import GroupCheckIn from './GroupCheckIn';
@@ -93,6 +93,25 @@ test('a signed-out organizer can create a party, return to it in the same browse
   expect(await screen.findByText('Select the invitation code to copy it.')).toBeVisible();
 });
 
+test('a private event shows only waiver statuses supplied for visible roster entries', async () => {
+  const selected = { ...group, kind: 'party', entries: [
+    { id: 'self', isYou: true, displayName: 'Jess', waiverStatus: 'signed' },
+    { id: 'child', kind: 'guest', displayName: 'Sam', waiverStatus: 'missing' },
+    { id: 'review', kind: 'guest', displayName: 'Vic', waiverStatus: 'unavailable' },
+    { id: 'friend', displayName: 'Robin' },
+  ] };
+  global.fetch.mockResolvedValueOnce(reply({ groups: [{ ...selected, memberCount: 4 }] }))
+    .mockResolvedValueOnce(reply({ group: selected }));
+  setup();
+  fireEvent.click(await screen.findByRole('button', { name: /Family game day/ }));
+  const row = name => within(screen.getByText(name).closest('li'));
+  expect(await screen.findByText('Jess')).toBeVisible();
+  expect(row('Jess').getByText('Waiver verified')).toBeVisible();
+  expect(row('Sam').getByText('Waiver needed')).toBeVisible();
+  expect(row('Vic').getByText('Verification pending')).toBeVisible();
+  expect(row('Robin').queryByText(/Waiver verified|Waiver needed|Verification pending/)).toBeNull();
+});
+
 test('a guest joins with a code and a sign-in during lookup discards outstanding guest data', async () => {
   const joined = { ...group, isOwner: false, entries: [{ id: 'self', isYou: true, kind: 'guest', displayName: 'Guest 2' }] };
   let finishList;
@@ -147,7 +166,7 @@ test('staff can find groups by name, confirm the right one, assign everyone and 
   const entries = [{ id: 'mem', playerId: 'OfficialMemberID', displayName: 'Member', experienceBand: 'veteran' }, { id: 'guest', displayName: 'New player' }];
   const positions = side => entries.map(entry => ({ entryId: entry.id, side, waiverStatus: 'signed' }));
   const allCamo = boardFor('v2', positions('camo'));
-  const split = boardFor('v3', [{ entryId: 'mem', side: 'camo' }, { entryId: 'guest', side: 'solid' }]);
+  const split = boardFor('v3', [{ entryId: 'mem', side: 'camo', waiverStatus: 'signed' }, { entryId: 'guest', side: 'solid', waiverStatus: 'unavailable' }]);
   const result = { group: { ...group, entries }, today: group.date };
   const request = jest.fn().mockResolvedValueOnce({ groups: [
     { id: 'other', name: 'Family friends', date: group.date, memberCount: 8 }, { ...group, memberCount: 2 }], page: 1, totalPages: 1 })
@@ -175,6 +194,8 @@ test('staff can find groups by name, confirm the right one, assign everyone and 
   expect(request.mock.calls[4][1].body).toMatchObject({ assignmentVersion: 'v2', entryId: 'guest', side: 'solid' });
   expect(screen.getByRole('button', { name: 'Assign New player to Solid' })).toBeDisabled();
   expect(screen.getByRole('button', { name: 'Assign Member to Solid' })).toBeEnabled();
+  expect(within(screen.getByText('Member').closest('li')).getByText('Waiver verified')).toBeVisible();
+  expect(within(screen.getByText('New player').closest('li')).getByText('Verification pending')).toBeVisible();
 });
 
 const booking = { key: 'a'.repeat(64), title: 'Reserved room fixture', date: group.date,
