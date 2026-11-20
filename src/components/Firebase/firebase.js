@@ -111,6 +111,8 @@ class Firebase {
 
     manageProfile = () => httpsCallable(this.func, 'manageProfile');
 
+    updatePlayerSignInEmail = () => httpsCallable(this.func, 'updatePlayerSignInEmail');
+
     checkRecaptcha = () => httpsCallable(this.func, 'checkRecaptcha');
 
     sendReceipt = () => httpsCallable(this.func, 'sendReceipt');
