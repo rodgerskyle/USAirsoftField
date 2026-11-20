@@ -3,12 +3,19 @@ import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { withFirebase } from '../Firebase';
 import { getGroupGuestSession, guestSessionKey } from '../constants/groupGuestSession';
+import { groupExperienceLabels } from '../constants/groupExperience';
 import GroupPartySchedule from './GroupPartySchedule';
 import './GroupCheckIn.css';
 
 const endpoint = 'https://app.usairsoftfield.com/api/check-in-groups';
 const dateLabel = date => new Intl.DateTimeFormat('en-US', { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(date + 'T00:00:00Z'));
 const fieldToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+
+function ExperienceField({ label = 'Airsoft experience', value = 'unrated' }) {
+  return <label>{label}<select name="experienceBand" defaultValue={value}>
+    {Object.entries(groupExperienceLabels).map(([band, text]) => <option key={band} value={band}>{text}</option>)}
+  </select></label>;
+}
 
 async function groupRequest(firebase, session, query, body, signal) {
   function current() {
@@ -96,7 +103,7 @@ function GroupCheckIn({ firebase }) {
     const values = Object.fromEntries(new FormData(event.currentTarget));
     const fingerprint = JSON.stringify(values);
     if (attempt.current?.fingerprint !== fingerprint) attempt.current = { fingerprint, id: window.crypto.randomUUID() };
-    void run(signal => change({ action: 'create', ...values, requestId: attempt.current.id }, signal));
+    void run(signal => change({ action: 'create', ...values, headcount: Number(values.headcount), requestId: attempt.current.id }, signal));
   }
 
   function join(event) {
@@ -105,15 +112,15 @@ function GroupCheckIn({ firebase }) {
     void run(signal => change({ action: 'join', ...values, code: values.code.trim() }, signal));
   }
 
-  function edit(action, event) {
+  function edit(action, event, fields = {}) {
     event.preventDefault();
     const values = Object.fromEntries(new FormData(event.currentTarget));
-    void run(signal => change({ action, id: selected.id, ...values }, signal));
+    void run(signal => change({ action, id: selected.id, ...values, ...fields }, signal));
   }
 
   return <main className="visit-groups">
     <Helmet><title>Group Check-in | US Airsoft Field</title></Helmet>
-    <header className="visit-groups__heading"><div><p>Arrive together</p><h1>Group check-in</h1><p>Prepare a party list before visiting USAW.</p></div><Link className="ph-button" to="/player-hub">Player Hub</Link></header>
+    <header className="visit-groups__heading"><div><p>Arrive together</p><h1>Group check-in</h1><p>Prepare your roster up to five days before your visit.</p></div><Link className="ph-button" to="/player-hub">Player Hub</Link></header>
     <p className="visit-groups__note">Your group list helps staff find your party. Every player still completes their own waiver, admission, equipment checks, and team assignment at the field.</p>
     {!session ? <p role="status">Loading group check-in…</p> : <>
       {session.guest && <p className="visit-groups__guest-access"><strong>Continue as a guest.</strong>{' '}
@@ -122,30 +129,43 @@ function GroupCheckIn({ firebase }) {
       <div className="visit-groups__layout" aria-busy={busy} key={session.user?.uid || 'guest'}>
         <section className="visit-groups__panel"><h2>Plan a visit</h2><form onSubmit={create}><fieldset disabled={busy}>
           {session.guest && <label>Your name or callsign<input name="displayName" required minLength={2} maxLength={80} /></label>}
+          <ExperienceField label="Your airsoft experience" />
           <label>Visit type<select name="kind" value={visitKind} onChange={event => setVisitKind(event.target.value)}>
             <option value="visit">Family or friends</option><option value="party">Scheduled birthday or event</option>
           </select></label>
           {visitKind === 'party' && <p className="visit-groups__help">Use the date on your existing reservation. Share your group code with staff to confirm the details in the Party Calendar.</p>}
           <label>Game-day date<input type="date" name="date" required min={fieldToday()} defaultValue={fieldToday()} /></label>
-          <label>Group name<input name="name" maxLength={80} placeholder={visitKind === 'party' ? 'Your party or event' : 'Family or friends'} /></label><button className="ph-button ph-button-primary">Create group</button>
+          <label>Group name<input name="name" maxLength={80} placeholder={visitKind === 'party' ? 'Your party or event' : 'Family or friends'} /></label>
+          <label>Expected group size, including you<input name="headcount" type="number" min={1} max={30} defaultValue={1} required /></label>
+          <p className="visit-groups__help">Your group name and size form your code, for example rebels-8. Groups expire five days after creation.</p>
+          <button className="ph-button ph-button-primary">Create group</button>
         </fieldset></form><h2>Join friends</h2><form onSubmit={join}><fieldset disabled={busy}>
           {session.guest && <label>Your name or callsign<input name="displayName" required minLength={2} maxLength={80} /></label>}
-          <label>Organizer’s group code<input name="code" minLength={16} maxLength={16} autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} required /></label><button className="ph-button">Join group</button>
+          <ExperienceField label="Your airsoft experience" />
+          <label>Organizer’s group code<input name="code" maxLength={64} autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} required /></label><button className="ph-button">Join group</button>
         </fieldset></form><h2>Your groups</h2>{groups.length ? <ul className="visit-groups__choices">{groups.map(group => <li key={group.id}><button disabled={busy} onClick={() => void run(async signal => {
           const data = await groupRequest(firebase, session, '?id=' + encodeURIComponent(group.id), undefined, signal);
           setSelected(data.group);
         })}><strong>{group.name}</strong><span>{group.kind === 'party' && 'Birthday or event · '}{dateLabel(group.date)} · {group.memberCount} players</span></button></li>)}</ul> : <p>No upcoming groups yet.</p>}</section>
         <section className="visit-groups__panel">{selected ? <>
-          <h2>{selected.name}</h2><p>{dateLabel(selected.date)} · {selected.entries.length} / {selected.capacity} players</p>
+          <h2>{selected.name}</h2><p>{dateLabel(selected.date)} · {selected.memberCount ?? selected.entries.length} / {selected.capacity} players</p>
           <GroupPartySchedule group={selected} />
           <div className="visit-groups__code"><span>Invitation code</span><strong>{selected.code}</strong><button className="ph-button" type="button" onClick={() => {
             if (navigator.clipboard) navigator.clipboard.writeText(selected.code).then(() => setNotice('Invitation code copied.')).catch(() => setNotice('Select the invitation code to copy it.'));
             else setNotice('Select the invitation code to copy it.');
           }}>Copy code</button></div>
-          <p>Share this code so friends can join on the website or in the Companion. {selected.isOwner && 'You can also add walk-ons who will check in individually at the field.'}</p>
-          <ul className="visit-groups__entries">{selected.entries.map(entry => <li key={entry.id}><div><strong>{entry.displayName}</strong><small>{entry.isYou ? 'You' : entry.kind === 'guest' ? 'Guest / walk-on' : 'USAW player'}</small></div>{entry.canRemove && <button className="ph-button" disabled={busy} onClick={() => void run(signal => change({ action: 'remove', id: selected.id, entryId: entry.id }, signal))}>Remove from group</button>}</li>)}</ul>
+          <p>Share this code so friends can join on the website or in the Companion. {selected.isOwner && 'You can also add players directly to your roster.'}</p>
+          {selected.expiresAt && <p>Group expires <time dateTime={selected.expiresAt}>{new Date(selected.expiresAt).toLocaleString('en-US', { timeZone: 'America/Los_Angeles', dateStyle: 'medium', timeStyle: 'short' })} Pacific</time>.</p>}
+          {selected.rosterPrivate && <p>Only the organizer and staff can see the full roster.</p>}
+          <ul className="visit-groups__entries">{selected.entries.map(entry => <li key={entry.id}><div><strong>{entry.displayName}</strong><small>{entry.isYou ? 'You' : entry.kind === 'guest' ? 'Guest player' : 'USAW player'}</small>
+            <small>Experience · {groupExperienceLabels[entry.experienceBand] || groupExperienceLabels.unrated}</small></div>
+            {(selected.isOwner || entry.isYou) && <details className="visit-groups__experience"><summary>Edit experience<span className="visually-hidden"> for {entry.displayName}</span></summary>
+              <form key={entry.experienceBand} onSubmit={event => edit('setExperience', event, { entryId: entry.id })}><fieldset disabled={busy}>
+                <ExperienceField label={'Airsoft experience for ' + entry.displayName} value={entry.experienceBand} /><button className="ph-button">Save experience</button>
+              </fieldset></form></details>}
+            {entry.canRemove && <button className="ph-button" disabled={busy} onClick={() => void run(signal => change({ action: 'remove', id: selected.id, entryId: entry.id }, signal))}>Remove from group</button>}</li>)}</ul>
           {selected.isOwner ? <><form onSubmit={event => edit('rename', event)} key={selected.id + selected.name}><fieldset disabled={busy}><label>Group name<input name="name" required maxLength={80} defaultValue={selected.name} /></label><button className="ph-button">Save name</button></fieldset></form>
-            <form onSubmit={event => edit('addGuest', event)}><fieldset disabled={busy}><label>Walk-on name or callsign<input name="displayName" required minLength={2} maxLength={80} /></label><button className="ph-button ph-button-primary">Add walk-on</button></fieldset></form>
+            <form onSubmit={event => edit('addGuest', event)}><fieldset disabled={busy}><label>Player name or callsign<input name="displayName" required minLength={2} maxLength={80} /></label><ExperienceField /><button className="ph-button ph-button-primary">Add player</button></fieldset></form>
             <button className="ph-button" disabled={busy} onClick={() => { if (window.confirm('Cancel this planned group and remove its preparation list? Field check-ins and player scores are kept.')) void run(signal => change({ action: 'cancel', id: selected.id }, signal)); }}>Cancel this group</button>
           </> : <button className="ph-button" disabled={busy} onClick={() => void run(signal => change({ action: 'leave', id: selected.id }, signal))}>Leave group</button>}
         </> : <><h2>Get your group ready</h2><p>Select a group or create one to share an invitation code and prepare your party’s list.</p></>}</section>

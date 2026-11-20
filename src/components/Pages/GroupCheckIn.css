@@ -23,3 +23,12 @@
 .visit-party-tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 14px 0; }
 .visit-party-tools form, .visit-party-tools__confirm { width: 100%; margin: 0; }
 .visit-party-tools__confirm button { margin: 0 8px 4px 0; }
+
+.visit-groups__experience form { margin-top: .6rem; }
+.visit-groups__experience fieldset { margin-bottom: 0; }
+.group-placement { margin-block: 1rem; }
+.group-placement__actions { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
+.admin-group-lookup .group-placement__player { display: grid; gap: .35rem; padding: .65rem 0; border-bottom: 1px solid var(--usaw-line, #8599b45e); }
+.admin-group-lookup .group-placement__player button { width: auto; }
+.group-placement button[data-team=camo] { border-inline-start: 4px solid #eaba30; }
+.group-placement button[data-team=solid] { border-inline-start: 4px solid #488fda; }

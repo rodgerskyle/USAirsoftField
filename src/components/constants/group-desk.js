@@ -1,3 +1,5 @@
+import { groupExperienceLabels } from './groupExperience.js';
+
 const endpoint = '/api/staff-groups';
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const pacificToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
@@ -41,9 +43,17 @@ function listMarkup(result, selectedId) {
     ${result.page < result.totalPages ? `<button type="button" class="btn btn-secondary" data-page="${result.page + 1}">Next</button>` : ''}</nav>` : ''}`;
 }
 
+function experienceOptions(current = 'unrated') {
+  return Object.entries(groupExperienceLabels).map(([band, label]) =>
+    `<option value="${band}"${band === current ? ' selected' : ''}>${label}</option>`).join('');
+}
+
 function rosterRow(entry) {
-  const kind = entry.kind === 'guest' ? 'Walk-on' : 'USAW player';
-  return `<li><div><strong>${escape(entry.displayName)}</strong><small>${kind}${entry.isOrganizer ? ' · Organizer' : ''}</small></div>
+  const kind = entry.kind === 'guest' ? 'Guest player' : 'USAW player';
+  return `<li><div><strong>${escape(entry.displayName)}</strong><small>${kind}${entry.isOrganizer ? ' · Organizer' : ''} · ${groupExperienceLabels[entry.experienceBand] || groupExperienceLabels.unrated}</small></div>
+    <details><summary>Edit experience<span class="visually-hidden"> for ${escape(entry.displayName)}</span></summary>
+      <form data-experience="${escape(entry.id)}" class="group-desk__form"><label>Experience for ${escape(entry.displayName)}<select name="experienceBand">${experienceOptions(entry.experienceBand)}</select></label>
+      <button class="btn btn-secondary">Save experience</button></form></details>
     ${entry.canRemove && entry.kind === 'guest' ? `<button type="button" class="btn btn-secondary" data-remove="${escape(entry.id)}" aria-label="Remove ${escape(entry.displayName)}">Remove</button>` : ''}</li>`;
 }
 
@@ -54,10 +64,12 @@ function detailMarkup(group, confirmDelete) {
     <p>${escape(displayDay(group.date))} · ${people(group.entries.length)}${schedule}${partySummary(group.party?.start, group.party?.size)}</p>
     <div class="group-desk__code"><label>Invitation code<input readonly data-invite value="${escape(group.code)}" autocomplete="off"></label>
       <button class="btn btn-secondary" type="button" data-copy>Copy code</button></div>
+    ${group.expiresAt ? `<p>Expires ${escape(new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', dateStyle: 'medium', timeStyle: 'short' }).format(new Date(group.expiresAt)))} Pacific</p>` : ''}
     <h3>Group roster</h3>
     ${group.entries.length ? `<ul class="group-desk__roster">${group.entries.map(rosterRow).join('')}</ul>` : '<p>No players on the list yet.</p>'}
-    <form data-add class="group-desk__form"><label>Walk-on name or callsign<input required name="displayName" minlength="2" maxlength="80" autocomplete="off"></label>
-      <button class="btn btn-primary" type="submit">Add walk-on</button></form>
+    <form data-add class="group-desk__form"><label>Player name or callsign<input required name="displayName" minlength="2" maxlength="80" autocomplete="off"></label>
+      <label>Airsoft experience<select name="experienceBand">${experienceOptions()}</select></label>
+      <button class="btn btn-primary" type="submit">Add player</button></form>
     <form data-rename class="group-desk__form"><label>Group name<input required name="name" maxlength="80" value="${escape(group.name)}"></label>
       <button class="btn btn-secondary" type="submit">Save name</button></form>
     ${confirmDelete ? `<div class="group-desk__confirm"><strong>Remove ${escape(group.name)} and its roster?</strong><p>The Party Calendar reservation and completed player check-ins stay on file.</p>
@@ -156,7 +168,9 @@ export function bindGroupDesk(root, { request, signal, initialId }) {
       selected = null; directory = null; confirming = false; drawDetail(); drawList();
       void run(loadList);
     } else if (selected && form.matches('[data-add]')) {
-      void run(() => change('addGuest', { displayName: form.elements.displayName.value.trim() }, 'Walk-on added.'));
+      void run(() => change('addGuest', { displayName: form.elements.displayName.value.trim(), experienceBand: form.elements.experienceBand.value }, 'Player added.'));
+    } else if (selected && form.matches('[data-experience]')) {
+      void run(() => change('setExperience', { entryId: form.dataset.experience, experienceBand: form.elements.experienceBand.value }, 'Experience saved.'));
     } else if (selected && form.matches('[data-rename]')) {
       void run(() => change('rename', { name: form.elements.name.value.trim() }, 'Group name saved.'));
     }
@@ -178,7 +192,7 @@ export function bindGroupDesk(root, { request, signal, initialId }) {
         catch { if (!signal.aborted) status.textContent = 'The invitation code is selected. Use Copy on this device.'; }
       });
     } else if (button.dataset.remove) {
-      void run(() => change('removeGuest', { entryId: button.dataset.remove }, 'Walk-on removed from the group.'));
+      void run(() => change('removeGuest', { entryId: button.dataset.remove }, 'Player removed from the group.'));
     } else if (button.hasAttribute('data-confirm-delete') || button.hasAttribute('data-keep')) {
       confirming = button.hasAttribute('data-confirm-delete'); drawDetail();
       detail.querySelector(confirming ? '[data-keep]' : '[data-confirm-delete]')?.focus();

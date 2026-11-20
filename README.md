@@ -4,7 +4,9 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 Player Hub headlines installation of the Field Companion. Its QR image at `public/assets/usaw-companion-install-qr.png` targets `https://app.usairsoftfield.com/#install`.
 
-Compare Players, Milestones and Game History use shared player services hosted by the Companion. Guests and signed-in players can create or join a private arrival list under **Group Check-In**. A guest organizer can reopen the group in the same browser on the same site. The invitation code works across the website and Companion. Staff still verify each player at arrival. Rotation planning and the briefing builder are native panels inside the unlocked staff field tools, using `/api/field-mission-tools`.
+Compare Players, Milestones and Game History use shared player services hosted by the Companion. Guests and signed-in players can create or join a private arrival list under **Group Check-In**. A guest organizer can reopen the group in the same browser on the same site. The invitation code works across the website and Companion. New codes use the group name and expected headcount. Each group expires five days after creation. In Player Check-In, staff can search by group name or code, use the players’ experience estimates, place the whole group on one side, and move individuals afterward. Staff still verify each player at arrival. Rotation planning and the briefing builder are native panels inside the unlocked staff field tools, using `/api/field-mission-tools`.
+
+In **Wins & Losses**, select a game mode and player to see the round’s eligible patches. Select the artwork for each patch earned and record the win or loss. Staff badge access is required to grant awards. A first award requires a reason. Any pending patch can be retried on the score desk after the score is saved.
 
 The illustrated rules retain all published sections. `src/components/Pages/RulesClassic.js` preserves the previous rules component byte for byte, with its original rule styles in `RulesClassic.backup.css`. The previous presentation remains accessible at `/information/rules/classic`.
 
