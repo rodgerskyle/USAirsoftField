@@ -31,12 +31,68 @@ function profileFields(user) {
     };
 }
 
-function emailError(error) {
-    const message = typeof error?.message === 'string' ? error.message : '';
-    if (/already[-_ ](?:in[-_ ]use|exists)|email[-_ ]exists|already.*(?:used|in use)/i.test([error?.code, message].join(' '))) {
+function knownEmailFailure(error) {
+    const reason = [error?.details?.code, error?.details?.errorInfo?.code, error?.code,
+        error?.details?.message, error?.message].filter(value => typeof value === 'string').join(' ');
+    if (/already[-_ ](?:in[-_ ]use|exists)|email[-_ ]exists|already.*(?:used|in use)/i.test(reason)) {
         return 'This email is already used by another account. Enter a different email.';
     }
-    return message || 'The player email could not be updated. Try again.';
+    if (/invalid[-_ ]email|invalid[-_ ]argument/i.test(reason)) return 'Check the player’s email address and save again.';
+    if (/user[-_ ]not[-_ ]found/i.test(reason)) return 'Firebase could not find this player’s sign-in account. Check the player ID in Find Player.';
+    if (/unauthenticated|requires[-_ ]recent[-_ ]login|token[-_ ]expired/i.test(reason)) return 'Sign in to your USAW administrator account again, then reopen this player.';
+    if (/service lacks permission|service account.*permission/i.test(reason)) return 'The email service lacks permission to update accounts. Contact the Firebase project owner.';
+    if (/permission[-_ ]denied|insufficient[-_ ]permission/i.test(reason)) return 'Firebase denied this change. Ask a project administrator to check your email-edit access.';
+    return '';
+}
+
+function uncertainEmailFailure(error) {
+    return /^(functions\/)?(internal|unknown|unavailable|deadline-exceeded|cancelled|network-request-failed)$/i.test(error?.code) ||
+        /^(internal(?: server error)?|unknown|failed to fetch|network error)$/i.test(error?.message || '');
+}
+
+const changedSessionMessage = 'Your USAW staff sign-in changed. Reopen the player using your administrator account.';
+
+async function availableEmailService(firebase, actor, signal, checkSession) {
+    const service = firebase.updatePlayerSignInEmail();
+    let capability;
+    try {
+        capability = (await service({ action: 'capabilities' }))?.data;
+    } catch (error) {
+        // Missing HTTPS callables can appear as "internal" in browsers when
+        // their 404 lacks CORS headers. This probe has no target and cannot write.
+        const missing = ['functions/not-found', 'functions/unimplemented'].includes(error?.code);
+        const opaque = error?.code === 'functions/internal' && /^(internal(?: server error)?|failed to fetch)?$/i.test(error.message || '');
+        if (knownEmailFailure(error) || (!missing && !opaque)) throw error;
+        checkSession();
+        let status;
+        try {
+            status = await requestStaffFieldTool(firebase, actor.uid, '/api/staff-player-accounts/email-service', { signal });
+        } catch (statusError) {
+            checkSession();
+            if ([401, 403].includes(statusError.status)) throw statusError;
+            throw new Error('Unable to verify which email service is available. Retry after reconnecting or contact the Firebase project administrator.');
+        }
+        checkSession();
+        if (status?.deployed === false) return null;
+        throw new Error(status?.deployed === true
+            ? 'The player email service is deployed but did not respond. Retry later or contact the Firebase project administrator.'
+            : 'The email service deployment could not be confirmed. Contact the Firebase project administrator.');
+    }
+    if (capability?.operation !== 'updatePlayerSignInEmail' || capability.version !== 1) {
+        throw new Error('The player email service is incompatible with this website. Refresh the page before editing.');
+    }
+    return service;
+}
+
+function sameEmail(actual, expected) {
+    return typeof actual === 'string' && actual.trim().toLowerCase() === expected.trim().toLowerCase();
+}
+
+function unconfirmedEmailMessage(saved, requested, uid) {
+    const profile = typeof saved === 'string' && saved.toLowerCase() === requested.toLowerCase()
+        ? 'The player profile shows the requested address, but Firebase did not confirm the sign-in change.'
+        : 'Firebase did not confirm the player’s sign-in email change.';
+    return profile + ' Ask a Firebase project administrator to check Authentication → Users for player ID ' + uid + ' before retrying.';
 }
 
 class UserOptions extends Component {
@@ -257,26 +313,58 @@ class UserOptions extends Component {
         });
     }
 
-    async savePlayerEmail(uid, email, oldEmail, signal) {
+    async savePlayerEmail(uid, email, oldEmail, actor, signal, checkSession) {
         const { firebase } = this.props;
         const emailRef = firebase.user(uid + '/email');
         const current = (await get(emailRef)).val() ?? '';
-        if (signal.aborted) return;
-        if (current !== oldEmail) {
+        checkSession();
+        if (current !== oldEmail && !sameEmail(current, email)) {
             this.setState(state => ({ user: { ...state.user, email: current } }));
             throw new Error('The saved email changed. Select Reset to load the current address before trying again.');
         }
-        const result = await firebase.manageProfile()({
-            choice: 'emailAdmin', uid, email: encode(email), old_email: encode(oldEmail),
-        });
-        if (signal.aborted) return;
-        const data = result?.data;
-        if (data === false || data?.success === false || data?.error) {
-            throw new Error(typeof data?.error === 'string' ? data.error : data?.error?.message || data?.message || 'The email change was declined.');
+        const service = await availableEmailService(firebase, actor, signal, checkSession);
+        checkSession();
+        if (!service && current !== oldEmail) throw new Error(unconfirmedEmailMessage(current, email, uid));
+        let verifiedSignIn = false;
+        try {
+            if (service) {
+                const { data } = await service({ uid, email, expectedEmail: oldEmail });
+                verifiedSignIn = data?.verified === true && data.uid === uid &&
+                    [data.email, data.authEmail, data.profileEmail].every(value => sameEmail(value, email));
+                if (!verifiedSignIn) {
+                    throw Object.assign(new Error('Incomplete account confirmation.'), { code: 'functions/unknown' });
+                }
+            } else {
+                const result = await firebase.manageProfile()({
+                    choice: 'emailAdmin', uid, email: encode(email), old_email: encode(oldEmail),
+                });
+                const data = result?.data;
+                if (data === false || data?.success === false || data?.error) {
+                    const reason = data?.error || data;
+                    const message = typeof reason === 'string' ? reason : reason?.message || data?.message;
+                    throw Object.assign(new Error(message || 'The email change was declined.'), { code: reason?.code, details: reason?.details });
+                }
+            }
+        } catch (error) {
+            checkSession();
+            // The dedicated service returns specific explanations for protected
+            // accounts (including the operator's own account) and stale edits.
+            if (service && error?.code === 'functions/permission-denied' && error.message && error.message !== 'permission-denied') {
+                throw new Error(error.message);
+            }
+            const actionable = knownEmailFailure(error);
+            if (actionable) throw new Error(actionable);
+            if (!uncertainEmailFailure(error)) throw error;
+            // Never issue a second write after an ambiguous response from either service.
+            const saved = await get(emailRef).then(snapshot => snapshot.val()).catch(() => null);
+            checkSession();
+            throw new Error(unconfirmedEmailMessage(saved, email, uid));
         }
-        const saved = (await get(emailRef)).val();
-        if (signal.aborted) return;
-        if (typeof saved !== 'string' || saved.toLowerCase() !== email.toLowerCase()) {
+        checkSession();
+        const saved = await get(emailRef).then(snapshot => snapshot.val()).catch(() => null);
+        checkSession();
+        if (!sameEmail(saved, email)) {
+            if (verifiedSignIn) throw new Error('Firebase confirmed the sign-in address as ' + email + '. Reopen the player to check their current profile address before saving again.');
             throw new Error('The account service has not confirmed the new email on this profile. Reopen the player to check the saved address.');
         }
         this.setState(state => ({
@@ -285,7 +373,7 @@ class UserOptions extends Component {
         }));
     }
 
-    async updateUser(emailOnly = false) {
+    async updateUser(authUser, emailOnly = false) {
         if (this.saveRequest || !this.state.user || this.state.user.accountRemovedAt) return;
         const { firebase } = this.props;
         const uid = this.props.router.params.id;
@@ -318,24 +406,41 @@ class UserOptions extends Component {
         if ('username' in edits) edits.usernameLower = edits.username.trim().toLowerCase();
         if ('name' in edits) edits.nameLower = edits.name.trim().toLowerCase();
 
+        const actor = firebase.auth.currentUser;
+        if (!actor || actor.uid !== authUser?.uid || !authUser.roles?.[ROLES.ADMIN]) {
+            this.setState({ emailError: changedSessionMessage });
+            return;
+        }
         const request = new AbortController();
+        const checkSession = () => {
+            if (request.signal.aborted || firebase.auth.currentUser !== actor) throw new Error(changedSessionMessage);
+        };
         this.saveRequest = request;
+        const unsubscribe = firebase.auth.onAuthStateChanged(current => {
+            if (current !== actor && this.saveRequest === request && !request.signal.aborted) {
+                request.abort();
+                this.saveRequest = null;
+                this.setState({ saving: false, emailError: changedSessionMessage });
+            }
+        });
         this.setState({ saving: true, status: null, error: null, emailError: '', emailNotice: '' });
         let updatingEmail = emailChanged;
         try {
-            if (emailChanged) await this.savePlayerEmail(uid, email, oldEmail, request.signal);
-            if (request.signal.aborted || emailOnly) return;
+            if (emailChanged) await this.savePlayerEmail(uid, email, oldEmail, actor, request.signal, checkSession);
+            checkSession();
+            if (emailOnly) return;
             updatingEmail = false;
             if (Object.keys(edits).length) await update(firebase.user(uid), edits);
-            if (request.signal.aborted) return;
+            checkSession();
             if (password) await firebase.manageProfile()({ choice: 'passAdmin', uid, password });
             if (!request.signal.aborted && (Object.keys(edits).length || password)) {
                 this.setState({ status: 'Successfully updated ' + this.state.name, password: '' });
             }
         } catch (error) {
-            if (!request.signal.aborted) this.setState(updatingEmail ? { emailError: emailError(error) } :
+            if (!request.signal.aborted) this.setState(updatingEmail ? { emailError: knownEmailFailure(error) || error.message || 'The player email could not be updated.' } :
                 { error: error.message || 'The player profile could not be updated.' });
         } finally {
+            unsubscribe();
             if (this.saveRequest === request) {
                 this.saveRequest = null;
                 if (!request.signal.aborted) this.setState({ saving: false });
@@ -481,7 +586,7 @@ class UserOptions extends Component {
                                         </Row>
                                         <Row>
                                             <Col>
-                                                <Form noValidate onSubmit={event => { event.preventDefault(); void this.updateUser(true); }}>
+                                                <Form noValidate onSubmit={event => { event.preventDefault(); void this.updateUser(authUser, true); }}>
                                                     <Form.Group controlId="form.email">
                                                         <Form.Label>Player sign-in email</Form.Label>
                                                         <Form.Control type="email" name="email" autoComplete="off" maxLength={254}
@@ -604,7 +709,7 @@ class UserOptions extends Component {
                                         Reset
                                     </Button>
                                     <Button variant="outline-primary" className="button-update-uo"
-                                        disabled={this.state.saving} onClick={() => this.updateUser()}>
+                                        disabled={this.state.saving} onClick={() => this.updateUser(authUser)}>
                                         Update
                                     </Button>
                                     <Button variant="outline-primary" className="button-update-uo"
