@@ -192,3 +192,8 @@ export async function staffBattleBadgeDay(firebase, staffToken, { body, signal }
     }
     return day;
 }
+
+export function dailyBattleBadgeNotifications(firebase, { signal, readId } = {}) {
+    return callBadgeApi({ endpoint: 'https://app.usairsoftfield.com/api/battle-badge-notifications',
+        firebase, signal, ...(readId && { body: { action: 'read', id: readId } }) });
+}

@@ -262,7 +262,7 @@ test('checks the selected signed waiver before staff can admit a walk-on', async
   const request = jest.fn().mockResolvedValueOnce(versionedRoster)
     .mockResolvedValueOnce({ ...versionedRoster, player: { ...guest, waiverStatus: 'missing' } })
     .mockResolvedValueOnce({ matches: [{ ref: 'signed-ref', name: 'Jordan Smith', signedAt: Date.now() }] })
-    .mockResolvedValueOnce({ ...versionedRoster, player: { ...guest, displayName: 'Jordan Smith', waiverRef: 'signed-ref' } });
+    .mockResolvedValueOnce({ ...versionedRoster, player: { ...guest, displayName: guest.displayName, waiverRef: 'signed-ref' } });
   render(<AdminFieldCheckIn request={request} />);
   await screen.findByText('2 checked in');
   fireEvent.click(screen.getByText('Add a walk-on'));
@@ -273,6 +273,93 @@ test('checks the selected signed waiver before staff can admit a walk-on', async
   fireEvent.click(screen.getByRole('button', { name: 'Find a signed waiver' }));
   fireEvent.click(await screen.findByRole('button', { name: /Jordan Smith/ }));
   expect(await screen.findByText('Waiver verified')).toBeVisible();
-  expect(request.mock.calls[3][1].body).toMatchObject({ action: 'guestPreview', displayName: 'Jordan Smith', waiverRef: 'signed-ref' });
+  expect(request.mock.calls[3][1].body).toMatchObject({ action: 'guestPreview', displayName: guest.displayName, waiverRef: 'signed-ref' });
   expect(screen.getByRole('button', { name: 'Check in as Solid' })).toBeEnabled();
+});
+
+const waiverMatch = { ref: 'official-waiver', name: 'Jordan Smith', signedAt: 1700000000000 };
+
+async function chooseWaiver() {
+  const input = screen.getByLabelText('Participant name or waiver reference');
+  fireEvent.change(input, { target: { value: waiverMatch.name } });
+  fireEvent.keyDown(input, { key: 'Enter' });
+  fireEvent.click(await screen.findByRole('button', { name: /Jordan Smith ·/ }));
+}
+
+test('starts an individual walk-on from a waiver even when no account matches', async () => {
+  const pending = { ...guest, displayName: waiverMatch.name, waiverRef: waiverMatch.ref, waiverStatus: 'unavailable' };
+  const request = jest.fn().mockResolvedValueOnce(initialRoster)
+    .mockResolvedValueOnce({ date, matches: [] })
+    .mockResolvedValueOnce({ matches: [waiverMatch] })
+    .mockResolvedValueOnce({ date, player: pending })
+    .mockResolvedValueOnce({ date, player: { ...pending, waiverStatus: 'signed' } })
+    .mockResolvedValueOnce({ date, player: { ...pending, waiverStatus: 'signed', side: 'camo' } });
+  render(<AdminFieldCheckIn request={request} />);
+  await screen.findByText('2 checked in');
+  fireEvent.change(screen.getByLabelText('Player name, ID or card link'), { target: { value: waiverMatch.name } });
+  fireEvent.click(screen.getByRole('button', { name: 'Find player' }));
+  expect(await screen.findByText(/No matching player/)).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: 'Find a waiver' }));
+  const field = screen.getByLabelText('Participant name or waiver reference');
+  expect(field).toHaveValue(waiverMatch.name);
+  expect(field).toHaveFocus();
+  await chooseWaiver();
+  const selected = await screen.findByRole('region', { name: waiverMatch.name });
+  expect(selected.compareDocumentPosition(screen.getByText('Add a walk-on')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(selected.compareDocumentPosition(screen.getByText('Find an arriving group')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(within(selected).getByText('Verification pending')).toBeVisible();
+  expect(within(selected).getByRole('button', { name: 'Check in as Camo' })).toBeDisabled();
+  fireEvent.click(within(selected).getByRole('button', { name: 'Retry waiver check' }));
+  expect(await screen.findByText('Waiver verified')).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: 'Check in as Camo' }));
+  await screen.findByText('Jordan Smith checked in as Camo.');
+  expect(request.mock.calls.slice(3).map(([, options]) => options.body)).toEqual([
+    { action: 'guestPreview', displayName: waiverMatch.name, waiverRef: waiverMatch.ref },
+    { action: 'guestPreview', displayName: waiverMatch.name, waiverRef: waiverMatch.ref },
+    expect.objectContaining({ action: 'guestCheckIn', displayName: waiverMatch.name, waiverRef: waiverMatch.ref }),
+  ]);
+});
+
+test('selected member waiver search uses their registered name and keeps their account', async () => {
+  const member = { ...checkedInPlayer, legalName: waiverMatch.name, side: null, waiverStatus: 'missing' };
+  const request = jest.fn().mockResolvedValueOnce(initialRoster)
+    .mockResolvedValueOnce({ date, player: member }).mockResolvedValueOnce({ matches: [waiverMatch] })
+    .mockResolvedValueOnce({ date, player: { ...member, waiverStatus: 'signed', waiverRef: waiverMatch.ref } });
+  render(<AdminFieldCheckIn request={request} />);
+  await screen.findByText('2 checked in');
+  const field = screen.getByLabelText('Player name, ID or card link');
+  fireEvent.change(field, { target: { value: member.playerId } });
+  fireEvent.click(screen.getByRole('button', { name: 'Find player' }));
+  expect(await screen.findByLabelText('Participant name or waiver reference')).toHaveValue(waiverMatch.name);
+  expect(screen.queryByRole('button', { name: 'Find a waiver' })).toBeNull();
+  await chooseWaiver();
+  expect(await screen.findByText('Waiver verified')).toBeVisible();
+  expect(request.mock.calls[3][1].body).toEqual({ action: 'lookup', includeBalance: true, playerId: member.playerId, waiverRef: waiverMatch.ref });
+  fireEvent.change(field, { target: { value: 'A different player' } });
+  expect(screen.queryByRole('heading', { name: member.displayName })).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Check in as Camo' })).toBeNull();
+});
+
+test.each(['guest', 'active'])('links a checked-in %s in place, refreshing the same attendance ID on conflict', async membershipStatus => {
+  const seated = { ...checkedInPlayer, playerId: membershipStatus === 'guest' ? 'guest:legacy' : checkedInPlayer.playerId,
+    membershipStatus, waiverStatus: 'missing' };
+  const failure = Object.assign(new Error('The attendance record changed.'), { status: 409 });
+  const request = jest.fn().mockResolvedValueOnce({ ...versionedRoster, players: [seated] })
+    .mockResolvedValueOnce({ ...versionedRoster, player: seated })
+    .mockResolvedValueOnce({ matches: [waiverMatch] }).mockRejectedValueOnce(failure)
+    .mockResolvedValueOnce({ ...versionedRoster, player: { ...seated, revision: 2 } })
+    .mockResolvedValueOnce({ matches: [waiverMatch] })
+    .mockResolvedValueOnce({ ...versionedRoster, player: { ...seated, revision: 3, waiverStatus: 'signed' } });
+  render(<AdminFieldCheckIn request={request} />);
+  fireEvent.click(await screen.findByRole('button', { name: /Registered Member/ }));
+  await screen.findByRole('heading', { name: seated.displayName });
+  await chooseWaiver();
+  expect(await screen.findByRole('alert')).toHaveTextContent('The attendance record changed.');
+  expect(request.mock.calls[4][1].body).toEqual({ action: 'lookup', includeBalance: true, playerId: seated.playerId });
+  await chooseWaiver();
+  expect(await screen.findByText('Waiver linked to ' + seated.displayName + '.')).toBeVisible();
+  expect(request.mock.calls[6][1].body).toEqual({ action: 'linkPlayerWaiver', playerId: seated.playerId,
+    date, rosterVersion: 'initial', revision: 2, waiverRef: waiverMatch.ref });
+  expect(within(screen.getByRole('region', { name: seated.displayName })).getByText('Checked in · Camo')).toBeVisible();
+  expect(request.mock.calls.some(([, options]) => ['guestPreview', 'reassign', 'guestCheckIn', 'checkIn'].includes(options.body?.action))).toBe(false);
 });

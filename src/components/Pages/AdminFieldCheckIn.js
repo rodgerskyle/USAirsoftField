@@ -158,15 +158,17 @@ function PlayerRows({ players, onSelect, checkedIn, disabled }) {
   );
 }
 
-function SelectedPlayer({ player, suggestion, working, onAssessment, onAssign, request, onWaiver }) {
+function SelectedPlayer({ player, suggestion, working, onAssessment, onAssign, request, onWaiver, onRetry }) {
   const { side, membershipStatus, experienceBand, assignedExperienceBand, canSetExperience, gamesLogged } = player;
+  const heading = useRef(null);
+  useEffect(() => { heading.current?.focus(); }, [player.playerId]);
   const oppositeSide = side === 'camo' ? 'solid' : 'camo';
   const choices = side ? [oppositeSide] : Object.keys(sides);
   const membership = memberships[membershipStatus] || memberships.unconfirmed;
   const ratingChanged = experienceBand !== (assignedExperienceBand || 'unrated');
   return (
     <section className="admin-checkin__selection" aria-labelledby="admin-checkin-selection">
-      <h3 id="admin-checkin-selection">{player.displayName}</h3>
+      <h3 id="admin-checkin-selection" tabIndex={-1} ref={heading}>{player.displayName}</h3>
       {membershipStatus !== 'guest' && <p className="admin-checkin__id">{player.playerId}</p>}
       <div className="admin-checkin__badges">
         <span className="admin-checkin__pill" data-membership={membershipStatus}>{membership}</span>
@@ -179,10 +181,9 @@ function SelectedPlayer({ player, suggestion, working, onAssessment, onAssign, r
           {countFormat.format(gamesLogged)} {gamesLogged === 1 ? 'game' : 'games'} logged
         </span>}
       </div>
-      {!side && <div>
-        {(player.waiverStatus ?? 'unavailable') === 'unavailable' &&
-          <p role="status">Look up this player again to retry the waiver check.</p>}
-        {player.waiverStatus !== 'signed' && <StaffWaiverPicker request={request} name={membershipStatus === 'guest' ? player.displayName : ''} disabled={working} onChoose={onWaiver} />}
+      {player.waiverStatus !== 'signed' && <div id="admin-checkin-selected-waiver">
+        <button type="button" className="btn btn-outline-secondary" onClick={onRetry} disabled={working}>Retry waiver check</button>
+        <StaffWaiverPicker request={request} name={membershipStatus === 'guest' ? player.displayName : player.legalName || ''} disabled={working} onChoose={onWaiver} />
       </div>}
       {canSetExperience && (
         <label className="admin-checkin__rating" htmlFor="admin-checkin-rating">
@@ -214,6 +215,7 @@ export default function AdminFieldCheckIn({ request }) {
   const [board, setBoard] = useState(null);
   const [selected, setSelected] = useState(null);
   const [matches, setMatches] = useState([]);
+  const [walkOnWaiverQuery, setWalkOnWaiverQuery] = useState(null);
   const [working, setWorking] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [groupWorking, setGroupWorking] = useState(false);
@@ -306,39 +308,82 @@ export default function AdminFieldCheckIn({ request }) {
     }
   }
 
+  function resetLookup() {
+    setSelected(null);
+    setMatches([]);
+    setWalkOnWaiverQuery(null);
+    setStatus('');
+    setError('');
+  }
+
+  async function loadLookup(signal, input, guest, expectedGroupDate) {
+    setWalkOnWaiverQuery(null);
+    setSelected(null);
+    setMatches([]);
+    setStatus(guest ? 'Checking today’s walk-on roster…' : 'Looking up the player…');
+    try {
+      const data = await request(path, {
+        method: 'POST', signal,
+        body: guest ? { action: 'guestPreview', ...input } : { action: 'lookup', includeBalance: true, ...input },
+      });
+      if (signal.aborted) return;
+      if (expectedGroupDate && data.date !== expectedGroupDate) throw new Error('The field day changed. Find the group again before checking in.');
+      if (data.counts && data.balance) setBoard(current => putResult(current, data));
+      if (data.player) {
+        setSelected({ date: data.date, rosterVersion: data.rosterVersion, player: data.player });
+        setStatus(data.player.side ? 'This player is already checked in.' : data.player.waiverStatus === 'signed' ? 'Choose a side to check in.' : 'Verify the player’s signed waiver below.');
+      } else if (data.matches?.length) {
+        setMatches(data.matches);
+        setStatus('Select the matching player.');
+      } else {
+        setStatus('No matching player. Check the name or use Find a waiver for a walk-on.');
+      }
+    } catch (failure) {
+      if (!signal.aborted) {
+        if (failure.status === 409 && failure.data?.counts && failure.data?.players) {
+          setBoard(current => putResult(current, failure.data));
+        }
+        setStatus('');
+      }
+      throw failure;
+    }
+  }
+
   function lookup(input, guest = false, expectedGroupDate) {
     if (clearConfirmation) return;
-    void run(async signal => {
-      setSelected(null);
-      setMatches([]);
-      setStatus(guest ? 'Checking today’s walk-on roster…' : 'Looking up the player…');
-      try {
-        const data = await request(path, {
-          method: 'POST', signal,
-          body: guest ? { action: 'guestPreview', ...input } : { action: 'lookup', includeBalance: true, ...input },
-        });
-        if (signal.aborted) return;
-        if (expectedGroupDate && data.date !== expectedGroupDate) throw new Error('The field day changed. Find the group again before checking in.');
-        if (data.counts && data.balance) setBoard(current => putResult(current, data));
-        if (data.player) {
-          setSelected({ date: data.date, rosterVersion: data.rosterVersion, player: data.player });
-          setStatus(data.player.side ? 'This player is already checked in.' : data.player.waiverStatus === 'signed' ? 'Choose a side to check in.' : 'Verify the player’s signed waiver below.');
-        } else if (data.matches?.length) {
-          setMatches(data.matches);
-          setStatus('Select the matching player.');
-        } else {
-          setStatus('No matching player. Try another spelling, enter a player ID, or add a walk-on.');
-        }
-      } catch (failure) {
-        if (!signal.aborted) {
-          if (failure.status === 409 && failure.data?.counts && failure.data?.players) {
-            setBoard(current => putResult(current, failure.data));
+    void run(signal => loadLookup(signal, input, guest, expectedGroupDate));
+  }
+
+  function verifySelected(waiverRef) {
+    if (!selected || clearConfirmation) return;
+    const { player, date, rosterVersion } = selected;
+    if (player.side && waiverRef) {
+      void run(async signal => {
+        setStatus('Verifying the waiver for ' + player.displayName + '…');
+        try {
+          const result = await request(path, { method: 'POST', signal, body: {
+            action: 'linkPlayerWaiver', playerId: player.playerId, date, rosterVersion, revision: player.revision, waiverRef,
+          } });
+          if (signal.aborted) return;
+          applyAssignment(result, player);
+          setCheckInRevision(value => value + 1);
+          setStatus('Waiver linked to ' + player.displayName + '.');
+        } catch (failure) {
+          if (!signal.aborted) {
+            setStatus('');
+            if (failure.status === 409) await loadLookup(signal, { playerId: player.playerId }, false);
           }
-          setStatus('');
+          throw failure;
         }
-        throw failure;
-      }
-    });
+      });
+      return;
+    }
+    const proof = waiverRef || player.waiverRef;
+    const isNewGuest = !player.side && player.membershipStatus === 'guest';
+    lookup({
+      ...(isNewGuest ? { displayName: player.displayName } : { playerId: player.playerId }),
+      ...(!player.side && proof ? { waiverRef: proof } : {}),
+    }, isNewGuest);
   }
 
   function applyAssignment(data, player) {
@@ -425,6 +470,7 @@ export default function AdminFieldCheckIn({ request }) {
         setBoard(current => putResult(current, data));
         setSelected(null);
         setMatches([]);
+        setWalkOnWaiverQuery(null);
         if (memberInput.current) memberInput.current.value = '';
         if (guestInput.current) guestInput.current.value = '';
         setClearConfirmation(null);
@@ -444,7 +490,7 @@ export default function AdminFieldCheckIn({ request }) {
     try {
       lookup(lookupInput(memberInput.current.value));
     } catch (failure) {
-      setStatus('');
+      resetLookup();
       setError(failure.message);
     }
   }
@@ -473,12 +519,30 @@ export default function AdminFieldCheckIn({ request }) {
           <form className="admin-checkin__form" onSubmit={submitLookup}>
             <label htmlFor="admin-checkin-player">
               Player name, ID or card link
-              <input id="admin-checkin-player" ref={memberInput} type="text" maxLength={500} autoCapitalize="none" autoComplete="off" autoCorrect="off" spellCheck={false} required readOnly={checkInLocked} />
+              <input id="admin-checkin-player" ref={memberInput} type="text" maxLength={500} autoCapitalize="none" autoComplete="off" autoCorrect="off" spellCheck={false} required readOnly={checkInLocked} onChange={resetLookup} />
             </label>
             <button className="btn btn-primary" type="submit" disabled={checkInLocked}>Find player</button>
+            {!selected && <button type="button" className="btn btn-outline-primary" disabled={checkInLocked}
+              aria-expanded={walkOnWaiverQuery !== null} aria-controls="admin-checkin-waiver-search"
+              onClick={() => {
+                const open = walkOnWaiverQuery === null;
+                resetLookup();
+                if (open) setWalkOnWaiverQuery(memberInput.current.value.trim());
+              }}>Find a waiver</button>}
           </form>
           <StaffCardScanner disabled={checkInLocked} onScan={lookup} />
           <p className="admin-checkin__hint">Scan with the camera or a connected reader, or enter the player’s name or ID.</p>
+          {status && <p className="admin-checkin__status" role="status">{status}</p>}
+          {error && <p className="alert alert-danger" role="alert">{error}</p>}
+          {matches.length > 0 && <PlayerRows players={matches} onSelect={lookup} disabled={checkInLocked} />}
+          {selected && <SelectedPlayer player={selected.player} suggestion={recommendation} working={checkInLocked} request={request}
+            onWaiver={match => verifySelected(match.ref)} onRetry={() => verifySelected()} onAssessment={updateAssessment} onAssign={assign} />}
+          {walkOnWaiverQuery !== null && !selected && <section id="admin-checkin-waiver-search" aria-labelledby="admin-checkin-waiver-title">
+            <h3 id="admin-checkin-waiver-title">Check in a walk-on by waiver</h3>
+            <p>Choose the participant’s signed waiver to review their walk-on check-in.</p>
+            <StaffWaiverPicker request={request} name={walkOnWaiverQuery} focus disabled={checkInLocked}
+              onChoose={match => lookup({ displayName: match.name, waiverRef: match.ref }, true)} />
+          </section>}
           <details className="admin-checkin__walk-on">
             <summary>Add a walk-on</summary>
             <form className="admin-checkin__form" onSubmit={event => {
@@ -488,7 +552,7 @@ export default function AdminFieldCheckIn({ request }) {
               <label htmlFor="admin-checkin-guest">
                 Player name or callsign
                 <input id="admin-checkin-guest" ref={guestInput} type="text" minLength={2} maxLength={80} autoComplete="off" required readOnly={checkInLocked}
-                  onChange={() => { if (selected?.player.membershipStatus === 'guest' && !selected.player.side) setSelected(null); }} />
+                  onChange={resetLookup} />
               </label>
               <button className="btn btn-outline-primary" type="submit" disabled={checkInLocked}>Continue</button>
             </form>
@@ -497,17 +561,9 @@ export default function AdminFieldCheckIn({ request }) {
             rosterVersion={board?.rosterVersion} checkInRevision={checkInRevision} onWorking={setGroupWorking}
             onBoardRead={acceptGroupBoard} onAssigned={result => {
               acceptGroupBoard(result);
-              setSelected(null); setMatches([]); setStatus(''); setError('');
+              setSelected(null); setMatches([]); setWalkOnWaiverQuery(null); setStatus(''); setError('');
             }} />
-          {status && <p className="admin-checkin__status" role="status">{status}</p>}
-          {error && <p className="alert alert-danger" role="alert">{error}</p>}
-          {matches.length > 0 && <PlayerRows players={matches} onSelect={lookup} disabled={checkInLocked} />}
-          {selected && <SelectedPlayer player={selected.player} suggestion={recommendation} working={checkInLocked} request={request} onWaiver={match => {
-            if (selected.player.membershipStatus === 'guest') {
-              if (guestInput.current) guestInput.current.value = match.name;
-              lookup({ displayName: match.name, waiverRef: match.ref }, true);
-            } else lookup({ playerId: selected.player.playerId, waiverRef: match.ref });
-          }} onAssessment={updateAssessment} onAssign={assign} />}
+
         </section>
         <section className="admin-checkin__card" aria-labelledby="admin-checkin-roster">
           <div className="admin-checkin__heading">

@@ -1,5 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { staffBattleBadgeDay } from '../constants/playerBadges';
+import { AuthUserContext } from '../session';
+import { officialAccountRoles } from '../constants/roles';
 import { newScoreId } from '../constants/scoreHistory';
 import { battleBadgeArtUrl, battleBadgeForAward } from '../constants/battleBadgeArt';
 import './StaffBattleBadges.css';
@@ -18,6 +20,7 @@ function BattleDesk({ firebase, token, player, roundSide, onLock, allowOverride 
     const validQuantity = Number.isSafeInteger(quantity) && quantity > 0;
     const [day, setDay] = useState(null);
     const [busy, setBusy] = useState(false);
+    const [showOverrides, setShowOverrides] = useState(false);
     const [feedback, setFeedback] = useState(null);
     const [refresh, setRefresh] = useState(0);
     const requests = useRef(new Map());
@@ -42,11 +45,12 @@ function BattleDesk({ firebase, token, player, roundSide, onLock, allowOverride 
 
     function reload() {
         setDay(null);
+        setShowOverrides(false);
         setFeedback(null);
         setRefresh(value => value + 1);
     }
 
-    async function save(awardToRemove, override = false) {
+    function save(awardToRemove, override = false) {
         if (!day || mutation.current) return;
         if (!awardToRemove && (!player || !teams[chosenSide])) return;
         if (!awardToRemove && (override ? !allowOverride || !validQuantity : day.awards.length > 0)) return;
@@ -60,6 +64,19 @@ function BattleDesk({ firebase, token, player, roundSide, onLock, allowOverride 
         const body = awardToRemove ? { action: 'revoke', id: awardToRemove.id, date } : {
             action: override ? 'override' : 'award', ...(override && { quantity }), playerId: player.uid, side: chosenSide, date, requestId: requests.current.get(key),
         };
+        const outcome = awardToRemove ? 'Battle Badge removed from ' + awardToRemove.playerName + '.' :
+            override ? 'Override applied successfully.' : 'Daily Battle Badge awarded to ' + playerName + '.';
+        return mutate(body, outcome, key);
+    }
+
+    function clearLog() {
+        const newest = day?.overrides?.[0];
+        if (!allowOverride || !showOverrides || !newest || mutation.current) return;
+        if (!window.confirm('Clear today’s displayed override log? Players keep every awarded Battle Badge.')) return;
+        return mutate({ action: 'clearOverrideLog', date: day.date, throughId: newest.id }, 'Override log cleared. Awarded badges were kept.');
+    }
+
+    async function mutate(body, outcome, key) {
         const controller = new AbortController();
         mutation.current = controller;
         setBusy(true);
@@ -69,8 +86,11 @@ function BattleDesk({ firebase, token, player, roundSide, onLock, allowOverride 
             if (controller.signal.aborted) return;
             setDay(result);
             if (key) requests.current.delete(key);
-            setFeedback({ text: awardToRemove ? 'Battle Badge removed from ' + awardToRemove.playerName + '.' :
-                (override ? quantity + ' Battle Badge' + (quantity === 1 ? '' : 's') : 'Battle Badge') + ' awarded to ' + playerName + '.' });
+            if (body.action === 'override') {
+                setQuantityInput('1');
+                setShowOverrides(false);
+            }
+            setFeedback({ text: outcome });
         } catch (error) {
             if (controller.signal.aborted) return;
             if (error.status === 401) { lockRef.current(); return; }
@@ -79,7 +99,8 @@ function BattleDesk({ firebase, token, player, roundSide, onLock, allowOverride 
                 setDay(null);
                 setRefresh(value => value + 1);
             }
-            setFeedback({ error: true, text: error.message });
+            const action = { award: 'Daily award', override: 'Override', clearOverrideLog: 'Log clearing', revoke: 'Badge removal' }[body.action];
+            setFeedback({ error: true, heading: action + ' could not be confirmed.', text: error.message });
         } finally {
             if (!controller.signal.aborted) {
                 mutation.current = null;
@@ -114,27 +135,46 @@ function BattleDesk({ firebase, token, player, roundSide, onLock, allowOverride 
             </>}
             {allowOverride && Array.isArray(day.overrides) && <div className="staff-battle-override">
                 <h4>Admin Battle Badge override</h4>
-                <p>Grant extra Battle Badges to the selected player. Today’s MVP slot stays separate.</p>
+                <p>Grant extra Battle Badges to the selected player.</p>
                 <label>Number of Battle Badges
                     <input className="form-control" type="number" min="1" step="1" value={quantityInput}
                         disabled={busy} onChange={event => setQuantityInput(event.target.value)} />
                 </label>
                 <button type="button" className="btn btn-outline-primary" disabled={!player || !teams[chosenSide] || !validQuantity || busy}
                     onClick={() => save(null, true)}>Grant extra Battle Badges</button>
-                {day.overrides.map(grant => <div key={grant.id} className="staff-battle-recipient">
-                    <div><strong>{grant.playerName}</strong><span>{teams[grant.side]} · {grant.overrideQuantity} extra</span></div>
-                    <button type="button" className="btn btn-outline-secondary" disabled={busy}
-                        onClick={() => save(grant)}>Remove override</button>
-                </div>)}
+                <button type="button" className="btn btn-link" disabled={busy} aria-expanded={showOverrides}
+                    onClick={() => setShowOverrides(value => !value)}>{showOverrides ? 'Hide override log' : 'Show override log'}</button>
+                {showOverrides && <div className="staff-battle-log" role="group" aria-label="Today’s override log">
+                    {day.overrides.length ? <>
+                        {day.overrides.map(grant => <div key={grant.id} className="staff-battle-recipient">
+                            <div><strong>{grant.playerName}</strong><span>{teams[grant.side]} · {grant.overrideQuantity} extra</span></div>
+                            <button type="button" className="btn btn-outline-secondary" disabled={busy}
+                                onClick={() => save(grant)}>Remove override</button>
+                        </div>)}
+                        <button type="button" className="btn btn-outline-secondary" disabled={busy} onClick={clearLog}>
+                            Clear override log
+                        </button>
+                    </> : <p>No overrides in today’s log.</p>}
+                </div>}
             </div>}
         </> : !feedback?.error && <p role="status">Checking the field’s MVP record…</p>}
-        {feedback && <p role={feedback.error ? 'alert' : 'status'}>{feedback.text}</p>}
+        {feedback && <p className="staff-battle-feedback" role={feedback.error ? 'alert' : 'status'}>
+            {feedback.heading && <><strong>{feedback.heading}</strong>{' '}</>}<span>{feedback.text}</span>
+        </p>}
         {(day || feedback?.error) && <button type="button" className="btn btn-link" disabled={busy} onClick={reload}>Refresh field day</button>}
     </div>;
 }
 
 export default function StaffBattleBadges({ firebase, token, player, roundSide, onLock, onRequestUnlock, allowOverride = false }) {
     const [open, setOpen] = useState(false);
+    const [accessError, setAccessError] = useState('');
+    const account = useContext(AuthUserContext);
+    useEffect(() => { if (token) setAccessError(''); }, [token]);
+    if (!account?.uid || !officialAccountRoles(account.roles).ADMIN) return null;
+    function sessionExpired() {
+        setAccessError('The request could not be confirmed. Unlock badge controls and retry.');
+        onLock();
+    }
     return <section className="staff-battle-badges" aria-label={title}>
         <div className="staff-battle-heading">
             <img src={battleBadgeArtUrl('tower-of-power')} alt="Tower of Power Battle Badge" width="66" height="78" />
@@ -145,9 +185,10 @@ export default function StaffBattleBadges({ firebase, token, player, roundSide, 
         {token ? <>
             <button type="button" className="btn btn-outline-secondary" aria-expanded={open}
                 onClick={() => setOpen(!open)}>{open ? 'Close MVP controls' : 'Manage today’s MVP'}</button>
-            {open && <BattleDesk key={token} {...{ firebase, token, player, roundSide, onLock, allowOverride }} />}
+            {open && <BattleDesk key={token} {...{ firebase, token, player, roundSide, allowOverride }} onLock={sessionExpired} />}
         </> : onRequestUnlock ? <button type="button" className="btn btn-outline-secondary"
             onClick={() => { setOpen(true); onRequestUnlock(); }}>Unlock MVP controls</button> :
             <p>Unlock badge controls above to manage today’s MVP.</p>}
+        {!token && accessError && <p role="alert">{accessError}</p>}
     </section>;
 }

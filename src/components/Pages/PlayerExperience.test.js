@@ -16,6 +16,17 @@ function show(element, path = '/') { return render(<MemoryRouter initialEntries=
 beforeEach(() => { global.fetch = jest.fn(); });
 afterEach(() => { global.fetch = originalFetch; });
 
+test('a public player milestone shows the patch earned on that field day', async () => {
+  global.fetch.mockResolvedValueOnce(reply({ player: { id: left, name: 'MVP' }, items: [{
+    id: 'battle-badge:award', type: 'battle-badge', totalAwards: 9, date: '2026-11-20',
+    title: 'Daily field MVP', detail: 'Camo',
+  }] }));
+  show(<PlayerMilestones playerId={left} embedded />);
+  const milestone = (await screen.findByText('Daily field MVP')).closest('li');
+  expect(milestone.querySelector('img')).toHaveAttribute('src', '/assets/battle-badges/field-badges.svg#tower-of-power');
+  expect(within(milestone).getByText('Nov 20, 2026')).toBeVisible();
+});
+
 test('timeline shows recorded dates, current rank context, and earlier milestones without rendering markup', async () => {
   const record = { player: { id: left, name: 'Operator <script>', points: 455, rankName: 'Sergeant', prestigeCount: 0, patchesEarned: 4 }, items: [{ id: 'one', date: '2026-11-17', type: 'first-game', title: 'First recorded game day', detail: '2 wins · 1 loss' }], nextCursor: 'page-two', historyNote: 'Earlier rank promotion dates may be unavailable.' };
   global.fetch.mockResolvedValueOnce(reply(record)).mockResolvedValueOnce(reply({ ...record, items: [{ id: 'two', date: '2026-11-16T21:00:00.000Z', type: 'team', title: 'Joined Rebels', detail: 'Field team' }], nextCursor: null }));

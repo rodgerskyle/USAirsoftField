@@ -182,5 +182,5 @@ function AdminPage({ firebase }) {
   );
 }
 
-const condition = authUser => !!authUser?.roles?.[ROLES.ADMIN];
-export default withAuthorization(condition)(withFirebase(AdminPage));
+const condition = authUser => Boolean(authUser?.uid && ROLES.officialAccountRoles(authUser.roles).ADMIN);
+export default withAuthorization(condition, { verifyOnMount: true })(withFirebase(AdminPage));
