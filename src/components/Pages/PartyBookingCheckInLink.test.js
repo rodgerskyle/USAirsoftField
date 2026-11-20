@@ -40,6 +40,7 @@ test('finds a legacy booking by Pacific date, links an organizer code, and displ
   fireEvent.change(codeBox, { target: { value: linked.code } });
   fireEvent.click(screen.getByRole('button', { name: 'Link existing group' }));
   expect(await screen.findByLabelText('Group code')).toHaveAttribute('readonly');
+  expect(screen.getByRole('link', { name: 'Open rental form' })).toHaveAttribute('href', '/admin/rentalform?view=new&group=group');
   expect(screen.getByRole('link', { name: /Manage this group/ })).toHaveAttribute('href', '/admin/field/groups?group=group');
   expect(JSON.parse(fetch.mock.calls[1][1].body)).toEqual({ date: linked.date, partyKey: new URL(url).searchParams.get('partyKey'), action: 'link', code: linked.code });
   expect(screen.getByText(linked.name)).toBeVisible();
@@ -74,4 +75,13 @@ test('ignores a late response after selecting another party or losing the calend
   rerender(view('MEMBER'));
   expect(screen.queryByRole('region', { name: 'Party group check-in' })).toBeNull();
   expect(fetch).toHaveBeenCalledTimes(2);
+});
+
+
+test('routes confirmed waiver staff to their rental desk and omits booking and participant details', async () => {
+  fetch.mockResolvedValueOnce(response({ group: linked }));
+  render(view('WAIVER'));
+  const rental = await screen.findByRole('link', { name: 'Open rental form' });
+  expect(rental).toHaveAttribute('href', '/dashboard/rentalform?view=new&group=group');
+  expect(rental).toHaveAttribute('rel', 'noopener noreferrer');
 });

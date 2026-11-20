@@ -26,6 +26,7 @@ const staffEndpoints = new Set([
   '/api/field-mission-tools',
   '/api/check-in-groups',
   '/api/staff-groups',
+  '/api/rental-groups',
   '/api/staff-waivers',
   '/api/party-check-in',
 ]);
@@ -85,7 +86,7 @@ export async function requestStaffFieldTool(firebase, uid, path, { method = 'GET
     method,
     headers,
     body: body === undefined ? undefined : JSON.stringify(body),
-    credentials: ['/api/party-check-in', '/api/staff-round-result-receipts', '/api/member-card/waiver-name', '/api/waivers/review-paper'].includes(endpoint.pathname) ? 'omit' : 'include',
+    credentials: ['/api/party-check-in', '/api/rental-groups', '/api/staff-round-result-receipts', '/api/member-card/waiver-name', '/api/waivers/review-paper'].includes(endpoint.pathname) ? 'omit' : 'include',
     cache: 'no-store',
     redirect: 'error',
     signal,

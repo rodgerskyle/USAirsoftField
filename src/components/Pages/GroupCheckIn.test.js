@@ -182,6 +182,7 @@ test('staff can find groups by name, confirm the right one, assign everyone and 
   await waitFor(() => expect(all).toBeEnabled());
   expect(request.mock.calls[0][0]).toMatch(/staff-groups.*q=Family/);
   expect(request.mock.calls[1][0]).toContain('staff=1&id=' + group.id);
+  expect(screen.getByRole('link', { name: 'Open rental form' })).toHaveAttribute('href', '/admin/rentalform?view=new&group=' + group.id);
   expect(screen.getByText(/Experienced · Awaiting check-in/)).toBeVisible();
   fireEvent.click(screen.getByRole('button', { name: 'Verify Member' }));
   expect(onSelect).toHaveBeenCalledWith({ playerId: 'OfficialMemberID' }, false, group.date);
@@ -214,6 +215,7 @@ test('party organizers create a preparation list and share their group code for 
   expect(await screen.findByText('Awaiting staff confirmation')).toBeVisible();
   expect(JSON.parse(global.fetch.mock.calls[1][1].body)).toEqual(expect.objectContaining({ kind: 'party', date: group.date }));
   expect(screen.getByText(group.code)).toBeInTheDocument();
+  expect(screen.queryByRole('link', { name: 'Open rental form' })).toBeNull();
   expect(global.fetch.mock.calls.some(([url]) => url.includes('parties='))).toBe(false);
 });
 
@@ -260,6 +262,7 @@ test('a calendar handoff for a different visit date never selects a booking', as
     fireEvent.change(screen.getByLabelText('Group name or code'), { target: { value: group.code } });
     fireEvent.submit(screen.getByRole('button', { name: 'Find group' }).closest('form'));
     expect(await screen.findByText(/different date from the selected Party Calendar booking/)).toBeVisible();
+    expect(screen.queryByRole('link', { name: 'Open rental form' })).toBeNull();
     expect(request).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole('button', { name: 'Confirm booking for group' })).toBeNull();
   } finally { window.history.replaceState(null, '', pathname + search + hash); }

@@ -1,3 +1,4 @@
+import { groupRentalLink } from './groupRentalLink.js';
 import { bindWaiverPicker, waiverPickerMarkup } from './staff-waiver-picker.js';
 import { groupExperienceLabels } from './groupExperience.js';
 import { waiverStatusMarkup } from './waiver-status.js';
@@ -65,6 +66,7 @@ function detailMarkup(group, confirmDelete) {
   const schedule = group.partyStatus === 'confirmed' ? ' · Party Calendar linked' : group.partyStatus === 'review' ? ' · Booking needs review' : '';
   return `<h2 tabindex="-1" data-selection-title>${escape(group.name)}</h2>
     <p>${escape(displayDay(group.date))} · ${people(group.entries.length)}${schedule}${partySummary(group.party?.start, group.party?.size)}</p>
+    ${group.id && group.partyStatus !== 'review' ? `<p><a href="${escape(groupRentalLink(group.id))}" target="_blank" rel="noopener noreferrer">Open rental form</a></p>` : ''}
     <div class="group-desk__code"><label>Invitation code<input readonly data-invite value="${escape(group.code)}" autocomplete="off"></label>
       <button class="btn btn-secondary" type="button" data-copy>Copy code</button></div>
     ${group.expiresAt ? `<p>Expires ${escape(new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', dateStyle: 'medium', timeStyle: 'short' }).format(new Date(group.expiresAt)))} Pacific</p>` : ''}

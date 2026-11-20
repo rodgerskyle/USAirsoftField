@@ -1,3 +1,4 @@
+import { groupRentalLink } from '../constants/groupRentalLink';
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import AuthUserContext from '../session/context';
 import { ADMIN, WAIVER } from '../constants/roles';
@@ -89,6 +90,8 @@ function CodeControls({ firebase, uid, date, partyKey, isAdmin }) {
       <div className="party-code-row"><label>Group code<input ref={codeInput} className="form-control" readOnly value={group.code} onFocus={event => event.target.select()} /></label>
         <button type="button" className="btn btn-primary" onClick={copyCode}>Copy code</button></div>
       <small>Find this group in Player Check-In by name or code.</small>
+      {group.id && group.date === date && !needsReview && !error && !busy &&
+        <a href={groupRentalLink(group.id, isAdmin)} target="_blank" rel="noopener noreferrer">Open rental form</a>}
       {isAdmin && group.id && <a href={`/admin/field/groups?group=${encodeURIComponent(group.id)}`} target="_blank" rel="noopener noreferrer">Manage this group <span className="visually-hidden">(opens in a new tab)</span></a>}
     </>}
     {group === null && <>

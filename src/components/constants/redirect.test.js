@@ -6,7 +6,8 @@ import Redirect from './redirect';
 jest.mock('../Firebase', () => ({ withFirebase: component => component }));
 
 function CurrentLocation() {
-  return <output aria-label="Current page">{useLocation().pathname}</output>;
+  const { pathname, search } = useLocation();
+  return <output aria-label="Current page">{pathname + search}</output>;
 }
 
 function visit(pathname, roles) {
@@ -26,4 +27,10 @@ test.each(['/player-hub', '/group-check-in', '/player-comparison', '/player-mile
 test('the shared waiver kiosk retains its restricted route', async () => {
   visit('/group-check-in', { WAIVER: 'WAIVER', STATIC: 'STATIC' });
   expect(await screen.findByLabelText('Current page')).toHaveTextContent('/dashboard/waiverform');
+});
+
+test('a Companion rental link opens the waiver desk with the same group preselected', () => {
+  const query = '?view=new&group=d66f62ef-6dc1-455a-81f3-cefe92f0307a';
+  visit('/admin/rentalform' + query, { WAIVER: true });
+  expect(screen.getByLabelText('Current page').textContent).toBe('/dashboard/rentalform' + query);
 });
