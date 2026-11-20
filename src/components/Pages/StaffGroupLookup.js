@@ -1,3 +1,4 @@
+import { groupRentalLink } from '../constants/groupRentalLink';
 import React, { useEffect, useRef, useState } from 'react';
 import { isGroupCode } from '../constants/groupCode';
 import { groupExperienceLabels } from '../constants/groupExperience';
@@ -198,6 +199,9 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
         <button type="button" disabled={locked || search.page >= search.totalPages} onClick={() => find(search.query, search.page + 1)}>Next</button></nav>}</div>}
     {group && <><h3>{group.name}</h3><p>{group.date}</p>{!current && <p>This group is planned for a different date.</p>}
       <GroupPartySchedule group={group} staff />
+      {group.id && !busy && group.partyStatus !== 'review' && !missingBooking && !data.partyCalendarUnavailable &&
+        (!hint || (hint.date === group.date && (!hint.key || hint.key === group.partyKey))) &&
+        <p><a href={groupRentalLink(group.id)} target="_blank" rel="noopener noreferrer">Open rental form</a></p>}
       <div className="visit-party-tools">
         <button className="btn btn-secondary" type="button" disabled={locked} onClick={() => void run(signal => loadBookings(group, signal))}>{parties ? 'Refresh Party Calendar bookings' : 'Find bookings in the Party Calendar'}</button>
         {missingBooking && <p role="alert">The last confirmed booking no longer matches the Party Calendar for this date. Review the reservation and confirm the updated booking or unlink it.</p>}

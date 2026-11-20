@@ -1,0 +1,28 @@
+.group-rental-picker {
+    margin-block: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--admin-border);
+    border-radius: .75rem;
+    background: var(--admin-surface);
+    color: var(--admin-text);
+}
+.group-rental-picker h3 { font-size: 1.15rem; }
+.group-rental-picker h4, .group-rental-picker legend { font-size: 1rem; font-weight: 600; }
+.group-rental-picker p { margin: .5rem 0; }
+.group-rental-picker__filters, .group-rental-picker__actions {
+    display: flex;
+    align-items: end;
+    flex-wrap: wrap;
+    gap: .65rem;
+}
+.group-rental-picker__filters label { max-width: 100%; }
+.group-rental-picker__filters label:first-child { flex: 1 1 14rem; }
+.group-rental-picker__groups { margin: .75rem 0; padding: 0; list-style: none; }
+.group-rental-picker__groups li + li { margin-top: .4rem; }
+.group-rental-picker__groups button { display: grid; width: 100%; text-align: left; }
+.group-rental-picker__groups button span { font-size: .875rem; }
+.group-rental-picker__roster { margin-top: .9rem; }
+.group-rental-picker fieldset { margin-block: .8rem; }
+.group-rental-picker fieldset label { display: flex; align-items: center; gap: .6rem; min-height: 2.25rem; overflow-wrap: anywhere; }
+.group-rental-picker__select-all { border-bottom: 1px solid var(--admin-border); }
+.group-rental-picker [role="alert"] { color: var(--admin-danger, #a02a24); }

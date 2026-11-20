@@ -13,59 +13,53 @@ import * as ROLES from '../../constants/roles';
 import { withFirebase } from '../../Firebase';
 import { withAuthorization } from '../../session';
 import EditSelectedForm from './EditSelectedForm';
+import { matchesRental, rentalIdentity, rentalParticipants, rentalRows } from './utils/openRental';
 
 import '../../../App.css';
 import { Container } from 'react-bootstrap';
 import EmptyState from './components/EmptyState';
 
+function selectedRental(props, key, linkedGroupId) {
+    const form = props.rentalForms?.find(row => String(row.key) === String(key));
+    return { selectedKey: key ?? null, identity: rentalIdentity(form),
+        selectionClosed: key != null && (!form || Boolean(linkedGroupId && form.checkInGroup?.id !== linkedGroupId)) };
+}
+
 class EditForm extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            editting: false,
-            options: null,
-            index: -1,
-            authUser: null,
-            open: false,
-            expanded: false,
-            optionsState: null,
+            ...selectedRental(props, props.initialFormKey, props.initialLinkedGroupId),
             rentalsSuccess: null,
             rentalsError: null,
-            rentalForm: null,
-            showSummary: false
         };
     }
 
-    componentDidUpdate = (prevProps) => {
-        if (prevProps.rentalForms !== this.props.rentalForms) {
-            this.setState({
-                rentalForms: this.props.rentalForms,
-                rentalForm: this.props.rentalForms.find(form => form.key === this.state.index)
-            })
+    componentDidUpdate(previous) {
+        if (!this.state.manualSelection && !this.state.selectionClosed && this.props.initialFormKey != null && this.props.initialFormKey !== previous.initialFormKey) {
+            this.setState(selectedRental(this.props, this.props.initialFormKey, this.props.initialLinkedGroupId));
+        } else if (this.state.selectedKey != null && !this.state.selectionClosed) {
+            const current = this.props.rentalForms?.find(row => String(row.key) === String(this.state.selectedKey));
+            if (!matchesRental(current, this.state.identity)) this.setState({ selectionClosed: true });
+            else if (!this.state.identity?.groupId && current.checkInGroup?.id) this.setState({ identity: rentalIdentity(current) });
         }
     }
 
-    handleEditForm = (index, form) => {
-        this.setState({
-            editting: true,
-            index,
-            rentalForm: form
-        });
-    };
-
     render() {
-        const { editting, index, rentalsError, rentalsSuccess } = this.state;
-        const { rentalForms, rentalOptions } = this.props;
+        const { selectedKey, rentalsError, rentalsSuccess } = this.state;
+        const { rentalForms = [], firebase, uid, canImportGroup, initialGroupId } = this.props;
+        const form = selectedKey != null && !this.state.selectionClosed
+            ? rentalForms.find(row => String(row.key) === String(selectedKey) && matchesRental(row, this.state.identity)) : null;
 
         return (
             <Container>
-                {!editting ? (
+                {selectedKey == null ? (
                     <div className="rental-forms-list">
                         <h2 className="section-header">Edit Rental Forms</h2>
                         {rentalForms && rentalForms.length > 0 && (
                             <Paper elevation={3} className="forms-container">
-                                {rentalForms.map((form, i) => (
-                                    <Card key={i} className="rental-form-card">
+                                {rentalForms.map((form) => (
+                                    <Card key={form.key} className="rental-form-card">
                                         <CardContent>
                                             <Typography variant="h6" className="form-name">
                                                 {form.name}
@@ -92,7 +86,7 @@ class EditForm extends Component {
                                             <MUIButton
                                                 size="small"
                                                 color="primary"
-                                                onClick={() => this.handleEditForm(form.key, form)}
+                                                onClick={() => this.setState({ ...selectedRental(this.props, form.key), manualSelection: true })}
                                                 startIcon={<Edit />}
                                             >
                                                 Edit Form
@@ -110,19 +104,17 @@ class EditForm extends Component {
                             <MUIButton
                                 variant="outlined"
                                 startIcon={<ArrowBackIos />}
-                                onClick={() => this.setState({ editting: false, index: -1 })}
+                                onClick={() => this.setState({ selectedKey: null, manualSelection: true })}
                                 className="back-button"
                             >
                                 Back to Forms
                             </MUIButton>
-                            <h3>Editing: {this.state.rentalForm?.name}</h3>
+                            {form && <h3>Editing: {form.name}</h3>}
                         </div>
-                        <EditSelectedForm
-                            index={index}
-                            form={this.state.rentalForm}
-                            firebase={this.props.firebase}
-                            showAP={this.props.showAP}
-                        />
+                        {form && !form.returned ? <EditSelectedForm key={form.key} index={form.key}
+                            form={{ ...form, participants: rentalParticipants(form.participants), available: rentalRows(form.available) }}
+                            firebase={firebase} uid={uid} canImportGroup={canImportGroup} initialGroupId={initialGroupId}
+                            showAP={this.props.showAP} /> : <p role="status">This rental form is no longer open.</p>}
                     </div>
                 )}
 

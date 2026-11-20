@@ -48,6 +48,8 @@ const Redirect = ({ firebase }) => {
                 && new URLSearchParams(search).get('section') === 'membership';
             if (user.roles[ROLES.STATIC] && !staticlocations.includes(location.pathname)) {
                 navigate("/dashboard/waiverform");
+            } else if (matchPath('/admin/rentalform', pathname)) {
+                navigate({ pathname: '/dashboard/rentalform', search }, { replace: true });
             } else if (!waiverlocations.includes(pathname) && !canBrowsePatches && !canBrowsePolls && !canSendSuggestions && !canUsePlayerTools && !canBrowseLeaderboard && !canViewMembership) {
                 navigate("/dashboard");
             }

@@ -18,9 +18,12 @@ import { archiveMonthKeys, waiverArchiveStart } from '../../utils/waiverArchive'
 import { v4 as uuid } from 'uuid';
 
 import { withFirebase } from '../../Firebase';
+import GroupRentalPicker from './GroupRentalPicker';
+import { editRentalInventory } from './utils/editRentalInventory';
+import { importRentalParticipants, changeOpenRental, rentalIdentity, rentalParticipants, rentalRows } from './utils/openRental';
 
 import '../../../App.css';
-import { get, update, onValue, set, query, orderByKey, startAt, endAt, orderByChild, limitToFirst, limitToLast, ref as dbRef } from "firebase/database";
+import { get, onValue, query, orderByKey, startAt, endAt, orderByChild, limitToFirst, limitToLast, ref as dbRef } from "firebase/database";
 import TablePagination from '@mui/material/TablePagination';
 import Modal from '@mui/material/Modal';
 import TextField from '@mui/material/TextField';
@@ -343,7 +346,7 @@ const TransactionDialog = ({ open, onClose, onSubmit, error, value, onChange }) 
     );
 };
 
-const ParticipantCard = ({ participant, index, onDelete, onRemoveRental, onAddRental, availableRentals, onEditRentalNumber }) => {
+const ParticipantCard = ({ participant, index, canIssue, onDelete, onRemoveRental, onAddRental, availableRentals, onEditRentalNumber }) => {
     const [showRentalMenu, setShowRentalMenu] = useState(false);
     const [editingRental, setEditingRental] = useState(null);
     const [tempNumber, setTempNumber] = useState('');
@@ -396,6 +399,7 @@ const ParticipantCard = ({ participant, index, onDelete, onRemoveRental, onAddRe
                         onClick={() => setShowRentalMenu(!showRentalMenu)}
                         color="primary"
                         title="Add Rental"
+                        disabled={!canIssue}
                     >
                         <Add />
                     </IconButton>
@@ -417,7 +421,7 @@ const ParticipantCard = ({ participant, index, onDelete, onRemoveRental, onAddRe
                             <div className="rental-content">
                                 <Chip
                                     label={rental.label}
-                                    onDelete={() => onRemoveRental(index, rentalIndex)}
+                                    onDelete={canIssue ? () => onRemoveRental(index, rentalIndex) : undefined}
                                     className="rental-chip"
                                     icon={rental.checked ? <CheckCircle color="success" /> : null}
                                 />
@@ -447,7 +451,7 @@ const ParticipantCard = ({ participant, index, onDelete, onRemoveRental, onAddRe
                                     <Typography
                                         variant="caption"
                                         className="rental-number"
-                                        onClick={() => handleEditNumber(rental, rentalIndex)}
+                                        onClick={canIssue ? () => handleEditNumber(rental, rentalIndex) : undefined}
                                     >
                                         {rental.number || 'Set #'}
                                     </Typography>
@@ -463,7 +467,7 @@ const ParticipantCard = ({ participant, index, onDelete, onRemoveRental, onAddRe
                 <Paper className="rental-menu">
                     <div className="rental-menu-items">
                         {getUniqueRentals().map((rental, rentalIndex) => (
-                            <Button
+                            <MUIButton
                                 key={rentalIndex}
                                 variant="outlined"
                                 onClick={() => {
@@ -475,7 +479,7 @@ const ParticipantCard = ({ participant, index, onDelete, onRemoveRental, onAddRe
                                 disabled={rental.count === 0}
                             >
                                 {rental.label} ({rental.count})
-                            </Button>
+                            </MUIButton>
                         ))}
                     </div>
                 </Paper>
@@ -523,28 +527,28 @@ const SizeEditModal = ({ open, onClose, currentSize, onSave }) => {
     );
 };
 
-const InventoryEditModal = ({ open, onClose, available, onSave, currentOptions }) => {
+const InventoryEditModal = ({ open, onClose, available, onSave, currentOptions, saving }) => {
     const [inventory, setInventory] = useState({});
     const [selectedRental, setSelectedRental] = useState('');
 
     useEffect(() => {
         // Group available items by type
         if (!available || !Array.isArray(available)) {
-            setInventory([])
+            setInventory({});
             return;
         }
 
         const grouped = available.reduce((acc, item) => {
             acc[item.value] = (acc[item.value] || 0) + 1;
             return acc;
-        }, {});
+        }, Object.create(null));
         setInventory(grouped);
     }, [available]);
 
     // Get rental options that aren't in inventory
     const getAvailableOptions = () => {
-        return currentOptions.filter(option =>
-            !inventory.hasOwnProperty(option.value)
+        return rentalRows(currentOptions).filter(option =>
+            !Object.prototype.hasOwnProperty.call(inventory, option.value)
         );
     };
 
@@ -608,7 +612,7 @@ const InventoryEditModal = ({ open, onClose, available, onSave, currentOptions }
 
                 {/* Inventory List */}
                 {Object.entries(inventory).map(([value, count]) => {
-                    const label = currentOptions.find(opt => opt.value === value)?.label || value;
+                    const label = rentalRows(currentOptions).find(opt => opt.value === value)?.label || value;
 
                     return (
                         <Box key={value} sx={{ mb: 2 }}>
@@ -640,13 +644,17 @@ const InventoryEditModal = ({ open, onClose, available, onSave, currentOptions }
                 })}
 
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 2 }}>
-                    <Button onClick={onClose}>Cancel</Button>
-                    <Button variant="contained" onClick={() => onSave(inventory)}>Save Changes</Button>
+                    <Button onClick={onClose} disabled={saving}>Cancel</Button>
+                    <Button variant="contained" disabled={saving} onClick={() => onSave(inventory)}>Save Changes</Button>
                 </Box>
             </Paper>
         </Modal>
     );
 };
+
+function copyParticipants(participants) {
+    return participants.map(person => ({ ...person, rentals: (person.rentals || []).map(item => ({ ...item })) }));
+}
 
 class EditSelectedForm extends Component {
     constructor(props) {
@@ -1156,7 +1164,7 @@ class EditSelectedForm extends Component {
             return;
         }
 
-        update(this.props.firebase.rentalGroup(this.props.form.key), {
+        this.saveForm({
             complete: true,
             transaction: transaction.trim()
         }).then(() => {
@@ -1167,6 +1175,30 @@ class EditSelectedForm extends Component {
             this.setState({ transactionError: 'Failed to update transaction' });
         });
     }
+
+    saveForm = fields => {
+        const { form, firebase } = this.props;
+        return changeOpenRental(firebase.rentalGroup(form.key), current => ({ ...current, ...fields }), rentalIdentity(form));
+    };
+
+    importGroup = async (group, entries) => {
+        const { firebase, uid, canImportGroup, form } = this.props;
+        if (!canImportGroup || !uid || uid !== firebase.auth.currentUser?.uid) throw new Error('Sign in to the rental desk again.');
+        await importRentalParticipants(firebase.rentalGroups(), form.key, group, entries, rentalIdentity(form));
+    };
+
+    // A second desk can add arrivals while equipment is being issued. Keep newer
+    // participants, and reject changes to rows or inventory that this desk edited.
+    saveRoster = (fields) => {
+        const { form, firebase } = this.props;
+        return changeOpenRental(firebase.rentalGroup(form.key), current => {
+            const previous = form.participants ?? [];
+            const latest = rentalParticipants(current.participants);
+            if (latest.length < previous.length || JSON.stringify(latest.slice(0, previous.length)) !== JSON.stringify(previous)) return;
+            if (fields.available && JSON.stringify(rentalRows(current.available)) !== JSON.stringify(form.available ?? [])) return;
+            return { ...current, ...fields, participants: [...fields.participants, ...latest.slice(previous.length)] };
+        }, rentalIdentity(form));
+    };
 
     addParticipant = async (person) => {
         const { participants } = this.props.form;
@@ -1191,7 +1223,7 @@ class EditSelectedForm extends Component {
         // Update state and firebase
         const updatedParticipants = [...participants ?? [], newParticipant];
         try {
-            await update(this.props.firebase.rentalGroup(this.props.form.key), {
+            await this.saveRoster({
                 participants: updatedParticipants
             });
 
@@ -1220,7 +1252,7 @@ class EditSelectedForm extends Component {
     handleDeleteParticipant = (index) => {
         // Use props.form instead of state to get the latest data
         const { participants, available } = this.props.form;
-        const updatedParticipants = [...participants];
+        const updatedParticipants = copyParticipants(participants);
         const removedParticipant = updatedParticipants[index];
 
         // Return all rentals back to availableList
@@ -1241,7 +1273,7 @@ class EditSelectedForm extends Component {
         updatedParticipants.splice(index, 1);
 
         // Update Firebase with the changes
-        update(this.props.firebase.rentalGroup(this.props.form.key), {
+        this.saveRoster({
             participants: updatedParticipants,
             available: updatedAvailableList
         }).catch(error => {
@@ -1259,7 +1291,7 @@ class EditSelectedForm extends Component {
         }
 
         try {
-            const updatedParticipants = [...participants];
+            const updatedParticipants = copyParticipants(participants);
             let updatedAvailableList = available ? [...available] : [];
 
             // Get the rental to be removed
@@ -1279,7 +1311,7 @@ class EditSelectedForm extends Component {
             updatedAvailableList.push(returnedRental);
 
             // Update firebase
-            await update(this.props.firebase.rentalGroup(this.props.form.key), {
+            await this.saveRoster({
                 participants: updatedParticipants,
                 available: updatedAvailableList
             });
@@ -1292,16 +1324,13 @@ class EditSelectedForm extends Component {
 
     handleEditRentalNumber = (participantIndex, rentalIndex, number) => {
         const { participants } = this.props.form;
-        const updatedParticipants = [...participants];
+        const updatedParticipants = copyParticipants(participants);
 
         // Update the rental number
         updatedParticipants[participantIndex].rentals[rentalIndex].number = number;
 
         // Update state and firebase
-        this.setState({ participants: updatedParticipants });
-        update(this.props.firebase.rentalGroup(this.props.form.key), {
-            participants: updatedParticipants
-        });
+        this.saveRoster({ participants: updatedParticipants }).catch(error => this.setState({ error: error.message }));
     };
 
     getAvailableItemsSummary = () => {
@@ -1331,11 +1360,10 @@ class EditSelectedForm extends Component {
     };
 
     handleAddRental = async (participantIndex, rental) => {
-        const { rentalOptions } = this.state;
         const { participants, available } = this.props.form;
 
         // Create updated participants array
-        const updatedParticipants = [...participants];
+        const updatedParticipants = copyParticipants(participants);
         const participant = updatedParticipants[participantIndex];
 
         if (!participant.rentals) {
@@ -1350,17 +1378,6 @@ class EditSelectedForm extends Component {
             const removeIndex = updatedAvailableList.findIndex(item => item.value === rental.value);
             const [removedRental] = updatedAvailableList.splice(removeIndex, 1);
 
-            // Update rental options stock
-            const updatedOptions = rentalOptions.map(option => {
-                if (option.value === rental.value) {
-                    return {
-                        ...option,
-                        stock: (option.stock || 0) + 1
-                    };
-                }
-                return option;
-            });
-
             // Add to participant's rentals
             participant.rentals.push({
                 ...removedRental,
@@ -1370,14 +1387,7 @@ class EditSelectedForm extends Component {
             });
 
             try {
-                // Update both rental form and options
-                await Promise.all([
-                    update(this.props.firebase.rentalGroup(this.props.form.key), {
-                        participants: updatedParticipants,
-                        available: updatedAvailableList
-                    }),
-                    set(this.props.firebase.rentalOptions(), updatedOptions)
-                ]);
+                await this.saveRoster({ participants: updatedParticipants, available: updatedAvailableList });
 
                 this.setState({
                     participants: updatedParticipants,
@@ -1400,7 +1410,7 @@ class EditSelectedForm extends Component {
         }
 
         try {
-            const updatedParticipants = [...participants];
+            const updatedParticipants = copyParticipants(participants);
             let updatedAvailableList = [...available];
 
             // Group available items by type
@@ -1451,7 +1461,7 @@ class EditSelectedForm extends Component {
             }
 
             // Update firebase
-            await update(this.props.firebase.rentalGroup(this.props.form.key), {
+            await this.saveRoster({
                 participants: updatedParticipants,
                 available: updatedAvailableList
             });
@@ -1589,7 +1599,7 @@ class EditSelectedForm extends Component {
 
     handleSizeUpdate = async (newSize) => {
         try {
-            await update(this.props.firebase.rentalGroup(this.props.form.key), {
+            await this.saveForm({
                 size: newSize
             });
             this.setState({
@@ -1602,59 +1612,18 @@ class EditSelectedForm extends Component {
         }
     };
 
-    handleInventoryUpdate = async (newInventory) => {
+    handleInventoryUpdate = async quantities => {
+        if (!this.state.inventoryReview || this.savingInventory) return;
+        this.savingInventory = true;
+        this.setState({ savingInventory: true, error: null });
         try {
-            const { availableList, rentalOptions } = this.state;
-            let updatedAvailableList = [];
-            if (availableList?.length >= 0) {
-                updatedAvailableList = [...availableList]
-            }
-
-            // For each rental type in the new inventory
-            Object.entries(newInventory).forEach(([value, count]) => {
-                // Find the rental option for this value
-                const rentalOption = rentalOptions.find(opt => opt.value === value);
-                if (!rentalOption) return;
-
-                // Count current items of this type
-                const currentCount = availableList && Array.isArray(availableList) ? availableList?.filter(item => item.value === value).length : 0;
-
-                if (count > currentCount) {
-                    // Add new items
-                    const itemsToAdd = count - currentCount;
-                    for (let i = 0; i < itemsToAdd; i++) {
-                        updatedAvailableList.push({
-                            value: value,
-                            label: rentalOption.label,
-                            id: uuid(),
-                            number: '',
-                            checked: false
-                        });
-                    }
-                } else if (count < currentCount) {
-                    // Remove items
-                    const itemsToRemove = currentCount - count;
-                    for (let i = 0; i < itemsToRemove; i++) {
-                        const removeIndex = updatedAvailableList.findIndex(item => item.value === value);
-                        if (removeIndex !== -1) {
-                            updatedAvailableList.splice(removeIndex, 1);
-                        }
-                    }
-                }
-            });
-
-            // Update both the rental form and the global rental options
-            await update(this.props.firebase.rentalGroup(this.props.form.key), {
-                available: updatedAvailableList
-            });
-
-            this.setState({
-                availableList: updatedAvailableList,
-                showInventoryEdit: false
-            });
+            await editRentalInventory(this.props.firebase.rentals(), this.state.inventoryReview, quantities);
+            this.setState({ showInventoryEdit: false, inventoryReview: null });
         } catch (error) {
-            console.error('Error updating inventory:', error);
-            this.setState({ error: 'Failed to update inventory' });
+            this.setState({ showInventoryEdit: false, inventoryReview: null, error: error.message || 'Failed to update inventory.' });
+        } finally {
+            this.savingInventory = false;
+            this.setState({ savingInventory: false });
         }
     };
 
@@ -1693,7 +1662,10 @@ class EditSelectedForm extends Component {
                             </MUIButton>
                             <MUIButton
                                 startIcon={<Edit />}
-                                onClick={() => this.setState({ showInventoryEdit: true })}
+                                onClick={() => this.setState({ showInventoryEdit: true, inventoryReview: {
+                                    key: this.props.form.key, identity: rentalIdentity(this.props.form),
+                                    available: rentalRows(this.props.form.available),
+                                } })}
                             >
                                 Edit Inventory
                             </MUIButton>
@@ -1749,12 +1721,18 @@ class EditSelectedForm extends Component {
                     )}
                 </div>
 
+                {this.state.error && <p role="alert">{this.state.error}</p>}
+                {this.props.canImportGroup && <GroupRentalPicker firebase={this.props.firebase} uid={this.props.uid}
+                    linkedGroupId={this.props.form.checkInGroup?.id} initialGroupId={this.props.form.checkInGroup?.id || this.props.initialGroupId}
+                    existingEntries={this.props.form.participants || []} onAdd={this.importGroup} />}
+
                 {/* Participants Grid */}
                 <div className="participant-grid">
                     {this.props.form?.participants?.map((participant, index) => (
                         <ParticipantCard
-                            key={index}
+                            key={participant.groupEntryId || participant.ref || index}
                             participant={participant}
+                            canIssue={Boolean(this.props.form.complete)}
                             index={index}
                             onDelete={this.handleDeleteParticipant}
                             onRemoveRental={this.handleRemoveRental}
@@ -1816,8 +1794,9 @@ class EditSelectedForm extends Component {
 
                 <InventoryEditModal
                     open={this.state.showInventoryEdit}
-                    onClose={() => this.setState({ showInventoryEdit: false })}
-                    available={this.props.form.available}
+                    onClose={() => { if (!this.savingInventory) this.setState({ showInventoryEdit: false, inventoryReview: null }); }}
+                    saving={this.state.savingInventory}
+                    available={this.state.inventoryReview?.available}
                     onSave={this.handleInventoryUpdate}
                     currentOptions={this.state.rentalOptions}
                 />

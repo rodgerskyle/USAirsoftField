@@ -35,6 +35,7 @@ test('a Party Calendar deep link opens its group and edits walk-ons using the la
     '/api/staff-groups?id=' + id, '/api/staff-groups?date=' + date + '&page=1',
   ]);
   expect(detail.getByLabelText('Invitation code')).toHaveValue(initial.code);
+  expect(detail.getByRole('link', { name: 'Open rental form' })).toHaveAttribute('href', '/admin/rentalform?view=new&group=' + id);
   expect(screen.getByLabelText('Field date')).toHaveValue(date);
   expect(detail.queryByRole('button', { name: 'Remove Organizer' })).toBeNull();
   fireEvent.change(detail.getByLabelText('Player name or callsign'), { target: { value: '  Rebel Guest  ' } });

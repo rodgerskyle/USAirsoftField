@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Container, Row, Spinner } from 'react-bootstrap';
 import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
@@ -24,9 +24,10 @@ import {
     IconButton
 } from '@mui/material';
 import { AddBox, EditNote, AssignmentReturn, Inventory2, Lock, LockOpen } from '@mui/icons-material';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import '../constants/admin.css';
 
+const GROUP_ID = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
 const VIEW_KEYS = ['new', 'edit', 'return', 'inventory'];
 
 const VIEW_CONFIG = {
@@ -38,6 +39,8 @@ const VIEW_CONFIG = {
 
 function RentalsManagement(props) {
     const [searchParams, setSearchParams] = useSearchParams();
+    const location = useLocation();
+    const handledLocation = useRef(null);
     const [loading, setLoading] = useState(true);
     const [rentalForms, setRentalForms] = useState([]);
     const [rentalOptions, setRentalOptions] = useState([]);
@@ -51,11 +54,31 @@ function RentalsManagement(props) {
         return VIEW_KEYS.includes(view) ? view : 'new';
     }, [searchParams]);
 
+    const roles = ROLES.officialAccountRoles(authUser?.roles);
+    const isSharedKiosk = Boolean(roles.STATIC && roles.WAIVER);
+    const canImportGroup = Boolean(authUser?.uid && !isNavHidden && !isSharedKiosk &&
+        (roles.ADMIN || ['1', 'true', 'waiver'].includes(String(roles.WAIVER).trim().toLowerCase())));
+    const requestedGroup = searchParams.get('group');
+    const groupId = canImportGroup && GROUP_ID.test(requestedGroup) ? requestedGroup : null;
+    const linkedForm = groupId && rentalForms.find(form => !form.returned && form.checkInGroup?.id === groupId);
+
     useEffect(() => {
-        if (!searchParams.get('view')) {
-            setSearchParams({ view: 'new' }, { replace: true });
+        if (loading || !authUser?.uid || handledLocation.current === location.key) return;
+        handledLocation.current = location.key;
+        if (activeView === 'new' && linkedForm) {
+            setSearchParams({ view: 'edit', group: groupId, form: String(linkedForm.key) }, { replace: true });
+        } else if (!searchParams.get('view')) {
+            const params = new URLSearchParams(searchParams);
+            params.set('view', 'new');
+            setSearchParams(params, { replace: true });
         }
-    }, [searchParams, setSearchParams]);
+    }, [loading, authUser?.uid, location.key, activeView, linkedForm, groupId, searchParams, setSearchParams]);
+
+    const openExisting = (key, id) => {
+        if (canImportGroup && key != null && GROUP_ID.test(id)) {
+            setSearchParams({ view: 'edit', group: id, form: String(key) });
+        }
+    };
 
     useEffect(() => {
         const unsubscribe = props.firebase.onAuthUserListener(
@@ -249,7 +272,12 @@ function RentalsManagement(props) {
 
                                     {!loading && activeView === 'new' ? (
                                         <CreateRentalForm
+                                            key={requestedGroup || 'manual'}
                                             {...props}
+                                            uid={authUser?.uid}
+                                            canImportGroup={canImportGroup}
+                                            initialGroupId={groupId}
+                                            onOpenExisting={openExisting}
                                             rentalForms={rentalForms}
                                             rentalOptions={rentalOptions}
                                         />
@@ -257,7 +285,12 @@ function RentalsManagement(props) {
 
                                     {!loading && activeView === 'edit' ? (
                                         <EditForm
+                                            key={requestedGroup || 'manual'}
                                             {...props}
+                                            uid={authUser?.uid}
+                                            canImportGroup={canImportGroup}
+                                            initialLinkedGroupId={groupId}
+                                            initialFormKey={linkedForm && String(linkedForm.key) === searchParams.get('form') ? linkedForm.key : null}
                                             rentalForms={rentalForms}
                                             rentalOptions={rentalOptions}
                                         />
