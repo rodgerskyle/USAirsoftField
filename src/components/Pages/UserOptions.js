@@ -19,7 +19,8 @@ import { Link } from 'react-router-dom';
 import { encode } from 'firebase-encode';
 import { Helmet } from 'react-helmet-async';
 import { get, onValue, update } from 'firebase/database';
-import { getDownloadURL } from 'firebase/storage';
+import { getDownloadURL, getMetadata, updateMetadata } from 'firebase/storage';
+import { waiverArchiveStart } from '../utils/waiverArchive';
 import './UserOptions.css';
 
 class UserOptions extends Component {
@@ -46,6 +47,7 @@ class UserOptions extends Component {
             error: null,
             notification: null,
             removing: false,
+            reviewWaiver: null,
             removeTarget: null,
             removeError: null,
         };
@@ -59,7 +61,7 @@ class UserOptions extends Component {
 
     loadAccount() {
         this.unsubscribeUser?.();
-        this.setState({ loading: true, user: null, error: null, password: '', removing: false, removeTarget: null, removeError: null });
+        this.setState({ loading: true, user: null, reviewWaiver: null, error: null, password: '', removing: false, removeTarget: null, removeError: null });
         this.unsubscribeUser = onValue(this.props.firebase.user(this.props.router.params.id), snapshot => {
             const userObject = snapshot.val();
             if (!userObject || userObject.accountRemovedAt) {
@@ -278,12 +280,49 @@ class UserOptions extends Component {
         this.setState({ [event.target.name]: event.target.value });
     };
 
-    openWaiver() {
-        getDownloadURL(this.props.firebase.membersWaivers(`${this.props.router.params.id}.pdf`)).then((url) => {
-            window.open(url)
-        }).catch((error) => {
-            // Handle any errors
-        })
+    async openWaiver() {
+        const uid = this.props.router.params.id;
+        const storageRef = this.props.firebase.membersWaivers(uid + '.pdf');
+        const tab = window.open();
+        if (!tab) {
+            this.setState({ error: 'Allow the waiver PDF to open and try again.' });
+            return;
+        }
+        tab.opener = null;
+        this.setState({ reviewWaiver: null, error: null });
+        try {
+            const [url, metadata] = await Promise.all([getDownloadURL(storageRef), getMetadata(storageRef)]);
+            tab.location.replace(url);
+            const created = Date.parse(metadata.timeCreated);
+            const data = metadata.customMetadata || {};
+            if (this.props.router.params.id === uid && created > waiverArchiveStart() && created <= Date.now() &&
+                metadata.generation && data.usawSignedMemberForm !== 'v1' && data.usawReviewedGeneration !== metadata.generation) {
+                this.setState({ reviewWaiver: { uid, storageRef, generation: metadata.generation } });
+            }
+        } catch {
+            tab.close();
+            if (this.props.router.params.id === uid) this.setState({ error: 'Unable to open the member waiver.' });
+        }
+    }
+
+    confirmReviewedWaiver = async () => {
+        const reviewed = this.state.reviewWaiver;
+        if (!reviewed || reviewed.uid !== this.props.router.params.id ||
+            !window.confirm('Did you verify this is the correct participant and visually confirm their signature and any required guardian signature on this PDF?')) return;
+        this.setState({ reviewWaiver: null });
+        try {
+            const metadata = await getMetadata(reviewed.storageRef);
+            if (metadata.generation !== reviewed.generation || Date.parse(metadata.timeCreated) <= waiverArchiveStart()) {
+                throw new Error('The waiver has expired or changed. Reopen the current waiver.');
+            }
+            await updateMetadata(reviewed.storageRef, { customMetadata: {
+                ...metadata.customMetadata, usawReviewedGeneration: reviewed.generation,
+                usawReviewedBy: this.props.firebase.auth.currentUser.uid,
+            } });
+            if (this.props.router.params.id === reviewed.uid) this.setState({ status: 'Waiver signatures verified for check-in.', error: null });
+        } catch (error) {
+            if (this.props.router.params.id === reviewed.uid) this.setState({ error: error.message || 'Unable to save the waiver review.' });
+        }
     }
 
     // Checks if given date is expired or not
@@ -483,6 +522,9 @@ class UserOptions extends Component {
                                     <Button variant="outline-info" onClick={() => this.openWaiver()}>
                                         Open Waiver
                                     </Button>
+                                    {this.state.reviewWaiver && <Button variant="outline-primary" onClick={this.confirmReviewedWaiver}>
+                                        Confirm reviewed signatures
+                                    </Button>}
                                     <Button variant="outline-primary" className="button-update-uo"
                                         onClick={() => this.resetOptions()}>
                                         Reset

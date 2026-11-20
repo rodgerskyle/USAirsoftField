@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { isGroupCode } from '../constants/groupCode';
 import { groupExperienceLabels } from '../constants/groupExperience';
+import StaffWaiverPicker from './StaffWaiverPicker';
 import GroupPartySchedule, { bookingTime } from './GroupPartySchedule';
 import './GroupCheckIn.css';
 
@@ -113,8 +114,30 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
     && (!rosterVersion || assignments.rosterVersion === rosterVersion)
     && group?.entries.length === positions.size && group.entries.every(entry => positions.has(entry.id));
 
-  function assign(side, entry) {
+  const cleared = position => position && (position.side || position.waiverStatus === 'signed');
+  const groupCleared = fresh && group.entries.length > 0 && group.entries.every(entry => cleared(positions.get(entry.id)));
+
+  function linkWaiver(entry, match) {
     if (!current || !fresh) return;
+    void run(async signal => {
+      try {
+        const result = await request(assignmentPath, { method: 'POST', signal, body: {
+          action: 'linkGroupWaiver', groupId: group.id, entryId: entry.id, date: group.date,
+          assignmentVersion: assignments.version, waiverRef: match.ref,
+        } });
+        if (signal.aborted) return;
+        setAssignments({ ...result.groupAssignments, rosterVersion: result.rosterVersion, revision: checkInRevision });
+        onBoardRead?.(result);
+        setNotice('Signed waiver linked to ' + entry.displayName + '.');
+      } catch (error) {
+        if (error.status === 409 && !signal.aborted) await openById(group.id, signal);
+        throw error;
+      }
+    });
+  }
+
+  function assign(side, entry) {
+    if (!current || !fresh || !(entry ? cleared(positions.get(entry.id)) : groupCleared)) return;
     void run(async signal => {
       try {
         const result = await request(assignmentPath, { method: 'POST', signal, body: {
@@ -195,7 +218,7 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
           <p>Confirm everyone is ready for check-in before assigning the whole group. Assign any player separately below.</p>
           <div className="group-placement__actions">{Object.entries(teamLabels).map(([side, label]) =>
             <button key={side} type="button" className="btn btn-outline-primary" data-team={side}
-              disabled={locked || !fresh || !group.entries.length}
+              disabled={locked || !groupCleared}
               onClick={() => assign(side)}>Assign group to {label}</button>)}
             <button type="button" className="btn btn-outline-secondary" disabled={locked}
               onClick={() => void run(signal => openById(group.id, signal))}>Refresh group</button></div>
@@ -208,10 +231,14 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
           const experience = position?.experienceBand ?? entry.experienceBand;
           return <li className="group-placement__player" key={entry.id}>
             <strong>{playerName}</strong><small>{groupExperienceLabels[experience] || groupExperienceLabels.unrated}{position && ' · ' + (teamLabels[position.side] || 'Awaiting check-in')}</small>
+            {current && position && !position.side && <>
+              <small>{position.waiverStatus === 'signed' ? 'Signed waiver verified' : position.waiverStatus === 'unavailable' ? 'Waiver verification unavailable' : 'Signed waiver required'}</small>
+              {position.waiverStatus !== 'signed' && <StaffWaiverPicker request={request} disabled={locked} name={entry.displayName} onChoose={match => linkWaiver(entry, match)} />}
+            </>}
             {current && <div className="group-placement__actions">
               {Object.entries(teamLabels).map(([side, label]) => <button type="button" className="btn btn-outline-primary"
                 key={side} data-team={side} aria-label={'Assign ' + playerName + ' to ' + label}
-                disabled={locked || !position || position.side === side} onClick={() => assign(side, entry)}>{label}</button>)}
+                disabled={locked || !cleared(position) || position.side === side} onClick={() => assign(side, entry)}>{label}</button>)}
               {playerId && <button type="button" className="btn btn-outline-secondary" disabled={locked}
                 aria-label={'Verify ' + playerName} onClick={() => onSelect({ playerId }, false, group.date)}>Verify player</button>}
             </div>}

@@ -5,7 +5,8 @@ import './waiverlookup.css';
 import { withFirebase } from '../Firebase';
 import { AuthUserContext, withAuthorization } from '../session';
 
-import convertDate from '../utils/convertDate';
+import { archiveDateRanges, recentPaperWaivers, waiverArchiveStart } from '../utils/waiverArchive';
+import { loadWaiverSearchIndex } from '../utils/waiverArchiveSearch';
 import { Alert, Badge, Button, Form, Card, Breadcrumb, Spinner, Dropdown, Modal } from 'react-bootstrap/';
 import { LinkContainer } from 'react-router-bootstrap';
 
@@ -16,11 +17,13 @@ import * as ROLES from '../constants/roles';
 
 import { Helmet } from 'react-helmet-async';
 import { getDownloadURL, listAll } from 'firebase/storage';
-import { get, onValue, push, remove, set } from 'firebase/database';
+import { endAt, endBefore, get, limitToLast, onValue, orderByChild, push, query, remove, set, startAt } from 'firebase/database';
 
 import { FormControlLabel, Switch } from '@mui/material';
 
 import SignedWaiver from './SignedWaiver';
+import WaiverCardSearch from './WaiverCardSearch';
+import PaperWaiverReview from './PaperWaiverReview';
 import { pdf } from '@react-pdf/renderer';
 import { findPotentialBans, normalizePersonName } from '../utils/banMatching';
 
@@ -42,22 +45,21 @@ class WaiverLookup extends Component {
             loading: true,
             waivers: [],
             search: "",
-            OpenWaiverState: this.openWaiver,
+            hasOlder: false,
+            loadingOlder: false,
+            loadError: "",
+            searchIncomplete: false,
             activeMonth: null,
             activeDay: null,
             activeYear: null,
             days: [...Array(31).keys()].map(String),
             years: [],
             months: [],
-            num_waivers_prev: null,
-            num_waivers_cur: null,
-            validateArray: null,
             useLegacy: false,
             showPdfModal: false,
             pdfUrl: null,
             currentPage: 1,
             itemsPerPage: 50,
-            totalPages: 1,
             bannedNames: [],
             bannedNamesLoading: true,
             bannedNamesLoadError: null,
@@ -71,19 +73,19 @@ class WaiverLookup extends Component {
             banDetailsName: "",
             banDetailsMatches: [],
         };
-        // this.validate = this.validate.bind(this)
-        this.lookup = this.lookup.bind(this)
+        this.generation = 0;
     }
 
     componentWillUnmount() {
+        this.stopArchive();
         if (this.bannedNamesUnsubscribe) this.bannedNamesUnsubscribe();
+        if (this.state.pdfUrl) URL.revokeObjectURL(this.state.pdfUrl);
     }
 
 
     componentDidMount() {
         this.setState({ loading: true });
         this.initializeDates();
-        this.loadWaivers();
         this.loadBannedNames();
     }
 
@@ -161,10 +163,6 @@ class WaiverLookup extends Component {
         }
     }
 
-    getWaiverName = waiver => waiver.isDigital
-        ? waiver.name
-        : waiver.name.substr(0, waiver.name.lastIndexOf('('));
-
     showBanDetails = (name, matches) => {
         this.setState({
             banDetailsOpen: true,
@@ -181,11 +179,11 @@ class WaiverLookup extends Component {
             // activeYear: date.getFullYear()
             activeMonth: 13,
             activeDay: 32,
-            activeYear: date.getFullYear()
+            activeYear: date.getFullYear() + 1
         });
 
         let years = [];
-        for (let i = 2020; i < date.getFullYear() + 1; i++) {
+        for (let i = new Date(waiverArchiveStart()).getFullYear(); i < date.getFullYear() + 1; i++) {
             years.push(i);
         }
 
@@ -197,128 +195,140 @@ class WaiverLookup extends Component {
         this.setState({ years, months });
     }
 
+    stopArchive = () => {
+        this.generation++;
+        this.olderRequest = null;
+        clearTimeout(this.searchTimer);
+        if (this.unsubscribeWaivers) this.unsubscribeWaivers();
+        this.unsubscribeWaivers = null;
+    }
+
+    // Keep only list metadata in memory. The signature and contact details are
+    // needed when staff open a single document.
+    readPage = snapshot => {
+        const rows = [];
+        snapshot.forEach(child => {
+            const record = child.val();
+            rows.push({ name: record.name || '', date: new Date(record.timestamp), ref: child.key, isDigital: true });
+        });
+        rows.reverse();
+        return { waivers: rows.slice(0, this.state.itemsPerPage), hasOlder: rows.length > this.state.itemsPerPage };
+    }
+
+    archiveQuery = (index, cursor) => {
+        const range = this.ranges[index];
+        return query(this.props.firebase.digitalWaivers(), orderByChild('timestamp'), startAt(range.start),
+            ...(cursor ? [endBefore(cursor.date.getTime(), cursor.ref)] : this.unfiltered ? [] : [endAt(range.end)]),
+            limitToLast(this.state.itemsPerPage + 1));
+    }
+
+    usePage = (snapshot, rangeIndex, replace) => {
+        const page = this.readPage(snapshot);
+        this.pageRange = page.hasOlder ? rangeIndex : rangeIndex + 1;
+        this.pageCursor = page.hasOlder ? page.waivers[page.waivers.length - 1] : null;
+        if (replace && this.unfiltered) this.recentRows = page.waivers;
+        this.setState(state => ({
+            waivers: replace ? page.waivers : [...state.waivers, ...page.waivers],
+            hasOlder: this.pageRange < this.ranges.length, loading: false, loadingOlder: false,
+            ...(replace && { currentPage: 1 })
+        }), this.ensureMatches);
+    }
+
     loadWaivers = () => {
+        this.stopArchive();
+        const generation = this.generation;
+        this.setState({ loading: true, waivers: [], currentPage: 1, hasOlder: false, loadingOlder: false, loadError: '', searchIncomplete: false });
+        const failed = () => {
+            if (generation === this.generation) this.setState({ loading: false, loadError: 'Unable to load the waiver archive.' });
+        };
         if (this.state.useLegacy) {
-            this.loadLegacyWaivers();
-        } else {
-            this.loadDigitalWaivers();
+            // The legacy bucket is flat and lists filenames only.
+            listAll(this.props.firebase.waiversList()).then(({ items }) => {
+                if (generation === this.generation) this.setState({ waivers: recentPaperWaivers(items), loading: false });
+            }).catch(failed);
+            return;
+        }
+        const { search, activeYear, activeMonth, activeDay } = this.state;
+        if (search.trim()) {
+            if (!this.searchIndex) this.searchIndex = loadWaiverSearchIndex(this.props.firebase);
+            this.searchIndex.then(batches => {
+                if (generation !== this.generation) return;
+                const rows = new Map();
+                batches.forEach(batch => batch.rows.forEach(row => rows.set(row.ref, row)));
+                (this.recentRows || []).forEach(row => rows.set(row.ref, row));
+                this.setState({ waivers: [...rows.values()], loading: false, searchIncomplete: batches.some(batch => batch.missing) });
+            }).catch(() => {
+                if (generation === this.generation) this.setState({ waivers: this.recentRows || [], loading: false, searchIncomplete: true });
+            });
+            return;
+        }
+        this.searchIndex = null;
+        this.ranges = archiveDateRanges(activeYear, activeMonth, activeDay);
+        this.unfiltered = activeYear === new Date().getFullYear() + 1 && activeMonth === 13 && activeDay === 32;
+        if (!this.ranges.length) {
+            this.setState({ loading: false });
+            return;
+        }
+        this.unsubscribeWaivers = onValue(this.archiveQuery(0), snapshot => {
+            if (generation !== this.generation) return;
+            this.olderRequest = null;
+            this.usePage(snapshot, 0, true);
+        }, failed);
+    }
+
+    loadOlder = async () => {
+        if (this.olderRequest || !this.state.hasOlder || this.state.loadError) return;
+        const request = {};
+        this.olderRequest = request;
+        const index = this.pageRange;
+        const cursor = this.pageCursor;
+        this.setState({ loadingOlder: true });
+        try {
+            const snapshot = await get(this.archiveQuery(index, cursor));
+            if (this.olderRequest !== request) return;
+            this.olderRequest = null;
+            this.usePage(snapshot, index, false);
+        } catch (error) {
+            if (this.olderRequest === request) {
+                this.olderRequest = null;
+                this.setState({ loadError: 'Unable to load older waivers.', loadingOlder: false });
+            }
         }
     }
 
-    loadDigitalWaivers = () => {
-        onValue(this.props.firebase.digitalWaivers(), snapshot => {
-            if (snapshot.exists()) {
-                const waiversObject = snapshot.val();
-                const tempWaivers = Object.keys(waiversObject).map(key => ({
-                    name: waiversObject[key].name,
-                    date: new Date(waiversObject[key].timestamp),
-                    ref: key,
-                    isDigital: true,
-                    data: waiversObject[key] // Store full waiver data
-                }));
-                this.setState({
-                    waivers: tempWaivers,
-                    loading: false
-                });
-            }
-        });
+    matches = (waiver, cutoff, now) => {
+        const { search, activeMonth, activeDay, activeYear } = this.state;
+        if (!waiver.name || !(waiver.date > cutoff && waiver.date <= now)) return false;
+        const term = search.trim().toLowerCase();
+        return term ? waiver.name.toLowerCase().includes(term) : compareDate(activeMonth, activeDay, activeYear, waiver.date);
     }
 
-    loadLegacyWaivers = () => {
-        listAll(this.props.firebase.waiversList()).then((res) => {
-            const tempWaivers = res.items.map(item => {
-                try {
-                    const waiverName = item.name;
-                    // Extract date from filename
-                    const dateMatch = waiverName.match(/\((.*?)\)/);
-                    let dateObj;
+    ensureMatches = () => {
+        const { waivers, currentPage, itemsPerPage, hasOlder } = this.state;
+        const now = Date.now();
+        const cutoff = waiverArchiveStart(now);
+        if (hasOlder && waivers.filter(waiver => this.matches(waiver, cutoff, now)).length < currentPage * itemsPerPage) {
+            this.loadOlder();
+        }
+    }
 
-                    if (dateMatch && dateMatch[1]) {
-                        dateObj = this.parseLegacyDate(dateMatch[1]);
-                    } else {
-                        dateObj = new Date();
-                    }
-
-                    return {
-                        name: waiverName,
-                        date: dateObj,
-                        ref: item,
-                        isDigital: false
-                    };
-                } catch (error) {
-                    console.error('Error processing waiver:', item.name, error);
-                    return {
-                        name: item.name,
-                        date: new Date(),
-                        ref: item.fullPath,
-                        isDigital: false
-                    };
-                }
-            });
-
-            const validWaivers = tempWaivers.filter(waiver =>
-                waiver && waiver.name && waiver.date && waiver.ref
-            );
-
-            this.setState({
-                waivers: validWaivers,
-                loading: false,
-                totalPages: Math.ceil(validWaivers.length / this.state.itemsPerPage)
-            });
-        }).catch(error => {
-            console.error('Error loading legacy waivers:', error);
-            this.setState({
-                waivers: [],
-                loading: false
-            });
-        });
+    componentDidUpdate(prevProps, prevState) {
+        const filters = ['search', 'activeMonth', 'activeDay', 'activeYear'];
+        if (filters.some(key => prevState[key] !== this.state[key])) {
+            if (this.state.useLegacy) {
+                if (this.state.currentPage !== 1) this.setState({ currentPage: 1 });
+            } else {
+                this.stopArchive();
+                this.setState({ loading: true, hasOlder: false, loadError: '' });
+                this.searchTimer = setTimeout(this.loadWaivers, this.state.search.trim() ? 250 : 0);
+            }
+        } else if (prevState.currentPage !== this.state.currentPage) {
+            this.ensureMatches();
+        }
     }
 
     toggleWaiverType = () => {
-        this.setState({
-            useLegacy: !this.state.useLegacy,
-            loading: true
-        }, () => {
-            this.loadWaivers();
-        });
-    }
-
-    componentDidUpdate() {
-        if (this.state.num_waivers_prev !== this.state.num_waivers_cur) {
-            listAll(this.props.firebase.waiversList()).then((res) => {
-                var tempWaivers = [];
-                for (let i = 0; i < res.items.length; i++) {
-                    let waiverName = res.items[i].name
-                    let dateObj = (convertDate(waiverName.substr(waiverName.lastIndexOf('(') + 1).split(')')[0]))
-                    let waiver_obj = {
-                        name: waiverName,
-                        date: dateObj,
-                        ref: res.items[i]
-                    }
-                    tempWaivers.push(waiver_obj)
-                }
-                this.setState({ waivers: tempWaivers }, function () {
-                    this.setState({ loading: false })
-                })
-            }).catch(function (error) {
-                // Uh-oh, an error occurred!
-                console.log(error)
-            });
-            get(this.props.firebase.numWaivers(), snapshot => {
-                let prev = snapshot.val().total_num;
-                this.setState({ num_waivers_prev: prev })
-            })
-        }
-    }
-
-    // Adds user to validate list
-    // validate = (file) => {
-    //     this.props.firebase.validatedWaiver(file.substr(0, file.lastIndexOf(')')+1)).set({attached: false})
-    // }
-
-    // Lookups file to see if it exists in validated array
-    lookup = (file) => {
-        return this.state.validateArray[file.substr(0, file.lastIndexOf(')') + 1)]
+        this.setState(state => ({ useLegacy: !state.useLegacy }), this.loadWaivers);
     }
 
     // Opens User's waiver
@@ -327,12 +337,17 @@ class WaiverLookup extends Component {
             // Handle digital waiver viewing
             this.setState({ showPdfModal: true });
             try {
-                const pdfBlob = await pdf(<SignedWaiver {...this.state.waivers.find(w => w.ref === ref).data} />).toBlob();
+                const record = (await get(this.props.firebase.digitalWaiver(ref))).val();
+                if (!record || !(record.timestamp > waiverArchiveStart() && record.timestamp <= Date.now())) {
+                    this.setState({ loadError: 'This waiver is no longer in the one-year archive.' });
+                    return;
+                }
+                const pdfBlob = await pdf(<SignedWaiver {...record} />).toBlob();
                 const pdfUrl = URL.createObjectURL(pdfBlob);
                 window.open(pdfUrl, '_blank');
                 this.setState({ pdfUrl });
             } catch (error) {
-                console.error('Error generating PDF:', error);
+                this.setState({ loadError: 'Unable to open the signed waiver.' });
             }
         } else {
             // Handle legacy waiver opening
@@ -340,7 +355,7 @@ class WaiverLookup extends Component {
                 const url = await getDownloadURL(ref);
                 window.open(url, '_blank');
             } catch (error) {
-                console.error('Error opening legacy waiver:', error);
+                this.setState({ loadError: 'Unable to open the scanned waiver.' });
             }
         }
     }
@@ -359,23 +374,6 @@ class WaiverLookup extends Component {
         });
     }
 
-    // Add this method to parse complex date formats
-    parseLegacyDate = (dateString) => {
-        try {
-            // Handle format: 1-23-2022:9:1:38:752
-            if (dateString.includes(':')) {
-                const [datePart] = dateString.split(':');
-                const [month, day, year] = datePart.split('-');
-                return new Date(year, month - 1, day);
-            }
-            // Handle other formats using existing convertDate
-            return convertDate(dateString);
-        } catch (error) {
-            console.error('Date parsing error:', dateString, error);
-            return new Date();
-        }
-    }
-
     // Add pagination controls
     handlePageChange = (pageNumber) => {
         this.setState({ currentPage: pageNumber });
@@ -387,17 +385,9 @@ class WaiverLookup extends Component {
         const potentialBanMatches = findPotentialBans(search, bannedNames);
 
         // Get current waivers
-        const filteredWaivers = waivers
-            .sort((a, b) => b.date - a.date)
-            .filter(waiver => {
-                if (search !== "" && !waiver.name.toLowerCase().includes(search.toLowerCase())) {
-                    return false;
-                }
-                if (!search && !compareDate(activeMonth, activeDay, activeYear, waiver.date)) {
-                    return false;
-                }
-                return true;
-            });
+        const now = Date.now();
+        const cutoff = waiverArchiveStart(now);
+        const filteredWaivers = waivers.filter(waiver => this.matches(waiver, cutoff, now)).sort((a, b) => b.date - a.date);
 
         const indexOfLastItem = currentPage * itemsPerPage;
         const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -423,13 +413,8 @@ class WaiverLookup extends Component {
 
                             <Card className="usa-waiver-card admin-panel-card">
                                 <Card.Header className="usa-waiver-header">
-                                    <Form.Control
-                                        type="text"
-                                        placeholder="Search by name..."
-                                        value={search}
-                                        onChange={(e) => this.setState({ search: e.target.value, currentPage: 1 })}
-                                        className="usa-waiver-search"
-                                    />
+                                    <WaiverCardSearch key={authUser?.uid} firebase={this.props.firebase} uid={authUser?.uid}
+                                        value={search} onChange={name => this.setState({ search: name, currentPage: 1 })} />
 
                                     {!!authUser?.roles[ROLES.ADMIN] && (
                                         <Button
@@ -557,6 +542,10 @@ class WaiverLookup extends Component {
                                 )}
 
                                 <Card.Body className="usa-waiver-body">
+                                    <p>Waivers created in the past year</p>
+                                    {this.state.searchIncomplete && <Alert variant="warning">Some months have no search index. Clear the name and browse by creation date to check the signed records.</Alert>}
+                                    {!this.state.useLegacy && !search.trim() && <Button size="sm" variant="outline-secondary" onClick={this.loadWaivers}>Refresh waivers</Button>}
+                                    {this.state.loadError && <Alert variant="danger">{this.state.loadError} <Button size="sm" onClick={this.loadWaivers}>Retry</Button></Alert>}
                                     {loading ? (
                                         <div className="usa-waiver-loading">
                                             <Spinner animation="border" role="status">
@@ -569,18 +558,22 @@ class WaiverLookup extends Component {
                                                 <>
                                                     <div className="usa-waiver-list">
                                                         {currentWaivers.map((waiver) => {
-                                                            const waiverName = this.getWaiverName(waiver);
+                                                            const waiverName = waiver.name;
                                                             const waiverBanMatches = findPotentialBans(waiverName, bannedNames);
                                                             const rowIndex = index++;
                                                             return (
                                                                 <div
                                                                     className={`usa-waiver-row ${waiverBanMatches.length > 0 ? 'usa-waiver-row-flagged' : (rowIndex % 2 === 0 ? 'usa-waiver-row-even' : 'usa-waiver-row-odd')}`}
-                                                                    key={waiver.ref}
+                                                                    key={waiver.isDigital ? waiver.ref : waiver.ref.fullPath}
                                                                 >
                                                                     <div className="usa-waiver-row-content">
                                                                         <div className="usa-waiver-info">
                                                                             <span className="usa-waiver-index">#{rowIndex}</span>
                                                                             <span className="usa-waiver-name">{waiverName}</span>
+                                                                            {waiver.isDigital && <details className="ms-2">
+                                                                                <summary>Waiver reference</summary>
+                                                                                <input aria-label={`Waiver reference for ${waiverName}`} value={waiver.ref} readOnly onFocus={event => event.target.select()} />
+                                                                            </details>}
                                                                             {waiverBanMatches.length > 0 && (
                                                                                 <Button
                                                                                     variant="danger"
@@ -601,6 +594,8 @@ class WaiverLookup extends Component {
                                                                         >
                                                                             {waiver.isDigital ? 'View' : 'Open'}
                                                                         </Button>
+                                                                        {!waiver.isDigital && <PaperWaiverReview firebase={this.props.firebase}
+                                                                            uid={authUser.uid} waiver={waiver} />}
                                                                     </div>
                                                                 </div>
                                                             );
@@ -618,12 +613,19 @@ class WaiverLookup extends Component {
                                                         ))}
                                                     </div>
                                                 </>
-                                            ) : (
+                                            ) : (!this.state.hasOlder && !this.state.loadError && (
                                                 <div className="usa-waiver-no-results">
                                                     <p>No waivers found matching your search criteria.</p>
                                                     <p>Try broadening your search or adjusting the date filters.</p>
                                                 </div>
-                                            )}
+                                            ))}
+                                            {this.state.loadingOlder && <p role="status">Searching older waivers…</p>}
+                                            {this.state.hasOlder && !this.state.loadingOlder && !this.state.loadError &&
+                                                filteredWaivers.length >= currentPage * itemsPerPage &&
+                                                currentPage === Math.ceil(filteredWaivers.length / itemsPerPage) &&
+                                                <Button onClick={() => this.handlePageChange(currentPage + 1)}>Older waivers</Button>}
+                                            {currentPage > 1 && !currentWaivers.length && !this.state.loadingOlder &&
+                                                <Button onClick={() => this.handlePageChange(currentPage - 1)}>Previous page</Button>}
                                         </>
                                     )}
                                 </Card.Body>

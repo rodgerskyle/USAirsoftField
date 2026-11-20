@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { readScannedMemberCard } from '../constants/scoreCards';
 import { StaffCardScanner } from './StaffCardScanner';
 import { groupExperienceLabels } from '../constants/groupExperience';
+import StaffWaiverPicker from './StaffWaiverPicker';
 import StaffGroupLookup from './StaffGroupLookup';
 import './AdminFieldCheckIn.css';
 
@@ -155,7 +156,7 @@ function PlayerRows({ players, onSelect, checkedIn, disabled }) {
   );
 }
 
-function SelectedPlayer({ player, suggestion, working, onAssessment, onAssign }) {
+function SelectedPlayer({ player, suggestion, working, onAssessment, onAssign, request, onWaiver }) {
   const { side, membershipStatus, experienceBand, assignedExperienceBand, canSetExperience, gamesLogged } = player;
   const oppositeSide = side === 'camo' ? 'solid' : 'camo';
   const choices = side ? [oppositeSide] : Object.keys(sides);
@@ -175,6 +176,10 @@ function SelectedPlayer({ player, suggestion, working, onAssessment, onAssign })
           {countFormat.format(gamesLogged)} {gamesLogged === 1 ? 'game' : 'games'} logged
         </span>}
       </div>
+      {!side && <div>
+        <p role="status">{player.waiverStatus === 'signed' ? 'Signed waiver verified.' : player.waiverStatus === 'unavailable' ? 'Waiver verification unavailable. Retry before check-in.' : 'A current signed waiver is required for check-in.'}</p>
+        {player.waiverStatus !== 'signed' && <StaffWaiverPicker request={request} name={membershipStatus === 'guest' ? player.displayName : ''} disabled={working} onChoose={onWaiver} />}
+      </div>}
       {canSetExperience && (
         <label className="admin-checkin__rating" htmlFor="admin-checkin-rating">
           Team balance estimate
@@ -189,7 +194,7 @@ function SelectedPlayer({ player, suggestion, working, onAssessment, onAssign })
       {membershipStatus !== 'active' && <p className="admin-checkin__hint">Confirm admission at the desk. Check-in records attendance and team assignment only.</p>}
       <div className="admin-checkin__buttons">
         {choices.map(choice => (
-          <button className={`btn btn-${side ? 'outline-primary' : 'primary'}`} type="button" key={choice} disabled={working} onClick={() => onAssign(choice)}>
+          <button className={`btn btn-${side ? 'outline-primary' : 'primary'}`} type="button" key={choice} disabled={working || (!side && player.waiverStatus !== 'signed')} onClick={() => onAssign(choice)}>
             {side ? 'Move to ' : 'Check in as '}{sides[choice]}
           </button>
         ))}
@@ -313,7 +318,7 @@ export default function AdminFieldCheckIn({ request }) {
         if (data.counts && data.balance) setBoard(current => putResult(current, data));
         if (data.player) {
           setSelected({ date: data.date, rosterVersion: data.rosterVersion, player: data.player });
-          setStatus(data.player.side ? 'This player is already checked in.' : 'Choose a side to check in.');
+          setStatus(data.player.side ? 'This player is already checked in.' : data.player.waiverStatus === 'signed' ? 'Choose a side to check in.' : 'Verify the player’s signed waiver below.');
         } else if (data.matches?.length) {
           setMatches(data.matches);
           setStatus('Select the matching player.');
@@ -350,6 +355,7 @@ export default function AdminFieldCheckIn({ request }) {
   function assign(side) {
     if (!selected || clearConfirmation) return;
     const { player, date, rosterVersion } = selected;
+    if (!player.side && player.waiverStatus !== 'signed') return;
     const newGuest = player.membershipStatus === 'guest' && !player.side;
     const action = player.side ? 'reassign' : newGuest ? 'guestCheckIn' : 'checkIn';
     void run(async signal => {
@@ -359,6 +365,7 @@ export default function AdminFieldCheckIn({ request }) {
           method: 'POST', signal,
           body: {
             action, date, side,
+            ...(!player.side && player.waiverRef ? { waiverRef: player.waiverRef } : {}),
             ...(rosterVersion ? { rosterVersion } : {}),
             ...(newGuest ? { displayName: player.displayName } : { playerId: player.playerId, revision: player.revision }),
             ...(player.canSetExperience ? { experienceBand: player.experienceBand } : {}),
@@ -491,7 +498,12 @@ export default function AdminFieldCheckIn({ request }) {
           {status && <p className="admin-checkin__status" role="status">{status}</p>}
           {error && <p className="alert alert-danger" role="alert">{error}</p>}
           {matches.length > 0 && <PlayerRows players={matches} onSelect={lookup} disabled={checkInLocked} />}
-          {selected && <SelectedPlayer player={selected.player} suggestion={recommendation} working={checkInLocked} onAssessment={updateAssessment} onAssign={assign} />}
+          {selected && <SelectedPlayer player={selected.player} suggestion={recommendation} working={checkInLocked} request={request} onWaiver={match => {
+            if (selected.player.membershipStatus === 'guest') {
+              if (guestInput.current) guestInput.current.value = match.name;
+              lookup({ displayName: match.name, waiverRef: match.ref }, true);
+            } else lookup({ playerId: selected.player.playerId, waiverRef: match.ref });
+          }} onAssessment={updateAssessment} onAssign={assign} />}
         </section>
         <section className="admin-checkin__card" aria-labelledby="admin-checkin-roster">
           <div className="admin-checkin__heading">

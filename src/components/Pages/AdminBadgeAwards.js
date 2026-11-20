@@ -493,7 +493,7 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
           {feedback && <p role={feedback.error ? 'alert' : 'status'}>{feedback.text}</p>}
         </form>
       )}
-      {badgeServiceConfigured && <StaffBattleBadges firebase={firebase} token={staffToken}
+      {badgeServiceConfigured && <StaffBattleBadges allowOverride firebase={firebase} token={staffToken}
         player={selectedPlayer} onLock={lock} />}
     </section>
   );

@@ -1,3 +1,4 @@
+import { waiverAge } from '../utils/waiverAge';
 import React, { useRef, useState } from 'react';
 import waiver from './waiver.pdf';
 import '../../App.css';
@@ -73,9 +74,7 @@ const Waiver = (props) => {
             values: { ...prev.values, dob: value },
             errors: { ...prev.errors, dob: '' }
         }));
-        const dobDate = new Date(value);
-        const age = new Date().getFullYear() - dobDate.getFullYear();
-        setAge(age);
+        setAge(waiverAge(value));
     };
 
     const handlePrint = (event) => {
@@ -124,7 +123,7 @@ const Waiver = (props) => {
         if (!values.zipcode) newErrors.zipcode = 'Zip code is required';
 
         // DOB validation
-        if (!values.dob) newErrors.dob = 'Date of birth is required';
+        if (age === null) newErrors.dob = 'Enter a valid date of birth';
 
         // Guardian info validation for minors
         if (age < 18) {
@@ -198,7 +197,8 @@ const Waiver = (props) => {
             const result = await submitWaiver(waiverData);
 
             if (result.data.success) {
-                setShowSuccessScreen(true);
+                if (props.onSigned) props.onSigned(waiverData.name.trim());
+                else setShowSuccessScreen(true);
             } else {
                 throw new Error('Waiver submission failed');
             }
@@ -290,6 +290,13 @@ const Waiver = (props) => {
                                         <p className="mt-2">You've been added to our mailing list and will receive updates about events and promotions.</p>
                                     )}
                                     <div className="mt-4">
+                                        {window.opener && new URLSearchParams(window.location.search).get('from') === 'companion-group' && (
+                                            <Button className="me-3" onClick={() => {
+                                                const name = [formState.values.fname, formState.values.lname].join(' ').trim();
+                                                window.opener.postMessage({ type: 'usaw-signed-participant', name }, 'https://app.usairsoftfield.com');
+                                                window.close();
+                                            }}>Use signed name in group</Button>
+                                        )}
                                         <Button
                                             variant="primary"
                                             href="/"

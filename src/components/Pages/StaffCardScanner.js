@@ -88,7 +88,7 @@ async function createReader(verifyLegacyCards) {
     };
 }
 
-export function StaffCardScanner({ disabled = false, onScan, verifyLegacyCards = false }) {
+export function StaffCardScanner({ disabled = false, onScan, verifyLegacyCards = false, manualFallback }) {
     const video = useRef(null);
     const camera = useRef(null);
     const callback = useRef(onScan);
@@ -121,7 +121,7 @@ export function StaffCardScanner({ disabled = false, onScan, verifyLegacyCards =
     async function start() {
         if (disabled || camera.current) return;
         if (!navigator.mediaDevices?.getUserMedia) {
-            setStatus('Camera access is unavailable. Use a connected scanner or type the player ID.');
+            setStatus('Camera access is unavailable. ' + (manualFallback || 'Use a connected scanner or type the player ID.'));
             return;
         }
         const current = {};
@@ -162,8 +162,8 @@ export function StaffCardScanner({ disabled = false, onScan, verifyLegacyCards =
             if (camera.current !== current) return;
             stop();
             setStatus(error?.name === 'NotAllowedError'
-                ? 'Allow camera access or use a connected scanner.'
-                : 'The camera could not open. Use a connected scanner or type the player ID.');
+                ? (manualFallback ? 'Allow camera access. ' + manualFallback : 'Allow camera access or use a connected scanner.')
+                : 'The camera could not open. ' + (manualFallback || 'Use a connected scanner or type the player ID.'));
         }
     }
 

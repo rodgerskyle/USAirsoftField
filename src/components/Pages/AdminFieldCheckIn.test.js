@@ -19,7 +19,7 @@ const initialRoster = {
   players: [],
 };
 const guest = {
-  playerId: 'guest:field', displayName: 'Field Guest', membershipStatus: 'guest', side: null,
+  waiverStatus: 'signed', playerId: 'guest:field', displayName: 'Field Guest', membershipStatus: 'guest', side: null,
   experienceBand: 'unrated', assignedExperienceBand: null, balanceScore: 100,
   classificationBand: 'unrated', assignedClassificationBand: null, gamesLogged: 0,
   canSetExperience: true, experienceOptions: estimates,
@@ -239,4 +239,23 @@ test('loads the current board when a reset races a lookup', async () => {
   expect(await screen.findByRole('alert')).toHaveTextContent('The roster was cleared. Look up the player again.');
   expect(screen.getByText('0 checked in')).toBeInTheDocument();
   expect(screen.queryByText(checkedInPlayer.displayName)).not.toBeInTheDocument();
+});
+
+test('checks the selected signed waiver before staff can admit a walk-on', async () => {
+  const request = jest.fn().mockResolvedValueOnce(versionedRoster)
+    .mockResolvedValueOnce({ ...versionedRoster, player: { ...guest, waiverStatus: 'missing' } })
+    .mockResolvedValueOnce({ matches: [{ ref: 'signed-ref', name: 'Jordan Smith', signedAt: Date.now() }] })
+    .mockResolvedValueOnce({ ...versionedRoster, player: { ...guest, displayName: 'Jordan Smith', waiverRef: 'signed-ref' } });
+  render(<AdminFieldCheckIn request={request} />);
+  await screen.findByText('2 checked in');
+  fireEvent.click(screen.getByText('Add a walk-on'));
+  fireEvent.change(screen.getByLabelText('Player name or callsign'), { target: { value: 'Field Guest' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+  expect(await screen.findByRole('button', { name: 'Check in as Solid' })).toBeDisabled();
+  fireEvent.change(screen.getByLabelText(/Participant.*(name|waiver)/i), { target: { value: 'Jordan' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Find a signed waiver' }));
+  fireEvent.click(await screen.findByRole('button', { name: /Jordan Smith/ }));
+  expect(await screen.findByText('Signed waiver verified.')).toBeVisible();
+  expect(request.mock.calls[3][1].body).toMatchObject({ action: 'guestPreview', displayName: 'Jordan Smith', waiverRef: 'signed-ref' });
+  expect(screen.getByRole('button', { name: 'Check in as Solid' })).toBeEnabled();
 });

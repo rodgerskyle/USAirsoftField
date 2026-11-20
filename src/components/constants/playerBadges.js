@@ -183,9 +183,11 @@ export function revokePlayerBadgeGrant(firebase, { playerId, badgeId, grantId },
 
 export async function staffBattleBadgeDay(firebase, staffToken, { body, signal } = {}) {
     const day = await callBadgeApi({ endpoint: battleBadgesUrl, firebase, staffToken, body, signal });
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(day.date) || !Array.isArray(day.awards) ||
-        !day.awards.every(row => typeof row?.id === 'string' && typeof row.playerId === 'string' &&
-            typeof row.playerName === 'string' && ['camo', 'solid'].includes(row.side))) {
+    const validAward = row => typeof row?.id === 'string' && typeof row.playerId === 'string' &&
+        typeof row.playerName === 'string' && ['camo', 'solid'].includes(row.side);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day.date) || !Array.isArray(day.awards) || !day.awards.every(validAward) ||
+        (day.overrides !== undefined && (!Array.isArray(day.overrides) || !day.overrides.every(row =>
+            validAward(row) && Number.isSafeInteger(row.overrideQuantity) && row.overrideQuantity > 0)))) {
         throw new Error('The field’s MVP record could not be confirmed. Check the field day again.');
     }
     return day;

@@ -1,3 +1,4 @@
+import { waiverAge } from '../utils/waiverAge';
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import logo from '../../assets/usairsoft-small-logo.png';
@@ -5,6 +6,7 @@ import { Button, Form, Container, Row, Col, Breadcrumb, Spinner } from 'react-bo
 import { LinkContainer } from 'react-router-bootstrap';
 import SignatureCanvas from 'react-signature-canvas';
 import SignedWaiver from './SignedWaiver';
+import { memberWaiverDocument, memberWaiverMetadata } from '../utils/memberWaiverDocument';
 import '../../App.css';
 import { encode } from 'firebase-encode';
 import { pdf } from '@react-pdf/renderer';
@@ -181,7 +183,8 @@ class SignUpFormBase extends Component {
         .then(authUser => {
           // Create a user in your Firebase realtime database
           this.setState({ uid: authUser.user.uid })
-          return set(this.props.firebase.user(authUser.user.uid), {
+          const memberId = authUser.user.uid;
+          return set(this.props.firebase.user(memberId), {
             name,
             nameLower: normalizedName,
             email,
@@ -199,13 +202,13 @@ class SignUpFormBase extends Component {
             pmlosses,
             renewal,
             profilepic
-          });
+          }).then(() => memberId);
         })
-        .then(authUser => {
+        .then(memberId => {
           this.emailSignUp();
           // Sign out of secondary app
           signOut(secondaryAuth);
-          this.completeWaiver(myProps)
+          return this.completeWaiver(myProps, memberId)
         })
         .catch(error => {
           this.setState({ error, submitted: false });
@@ -220,12 +223,7 @@ class SignUpFormBase extends Component {
 
   checkDOB = event => {
     this.setState({ [event.target.name]: event.target.value }, function () {
-      var today = new Date();
-      var ageInput = new Date(this.state.dob);
-      var age = today.getFullYear() - ageInput.getFullYear();
-      var month = today.getMonth() - ageInput.getMonth();
-      if (month < 0 || (month === 0 && today.getDate() < ageInput.getDate()))
-        age--;
+      const age = waiverAge(this.state.dob);
       if (age < 18) {
         this.setState({ agecheck: false, age })
       }
@@ -249,13 +247,11 @@ class SignUpFormBase extends Component {
     })
   } */
 
-  async completeWaiver(myProps) {
-    const blob = await pdf((
-      <SignedWaiver {...myProps} />
-    )).toBlob();
-    uploadBytes(this.props.firebase.membersWaivers(`${this.state.uid}.pdf`), blob).then(() => {
-      this.setState({ submitted: false, showLander: true, loading: false })
-    })
+  async completeWaiver(myProps, memberId) {
+    const signed = memberWaiverDocument(myProps);
+    const blob = await pdf(<SignedWaiver {...signed} />).toBlob();
+    await uploadBytes(this.props.firebase.membersWaivers(memberId + '.pdf'), blob, memberWaiverMetadata);
+    this.setState({ submitted: false, showLander: true, loading: false });
   }
 
   componentDidMount() {

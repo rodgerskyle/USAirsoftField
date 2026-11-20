@@ -1,3 +1,4 @@
+import { waiverAge } from '../utils/waiverAge';
 import React, { Component } from 'react';
 import logo from '../../assets/usairsoft-small-logo.png';
 import { Container, Row, Col, Form, Button, Breadcrumb, Spinner } from 'react-bootstrap/';
@@ -311,12 +312,7 @@ class WaiverPageFormBase extends Component {
 
   checkDOB = event => {
     this.setState({ [event.target.name]: event.target.value }, function () {
-      var today = new Date();
-      var ageInput = new Date(this.state.dob);
-      var age = today.getFullYear() - ageInput.getFullYear();
-      var month = today.getMonth() - ageInput.getMonth();
-      if (month < 0 || (month === 0 && today.getDate() < ageInput.getDate()))
-        age--;
+      const age = waiverAge(this.state.dob);
       if (age < 18) {
         this.setState({ agecheck: false, age })
       }

@@ -356,13 +356,18 @@ test('offers the expanded patch collection in the unlocked staff award picker', 
 
 test('badge awards uses the selected member for MVP and reconciles another staff desk’s daily award', async () => {
   const date = '2026-11-20';
-  jest.spyOn(scoreHistory, 'newScoreId').mockReturnValueOnce('9e97166f-69f5-4e82-8047-0018778f8b88');
+  jest.spyOn(scoreHistory, 'newScoreId')
+    .mockReturnValueOnce('9e97166f-69f5-4e82-8047-0018778f8b88')
+    .mockReturnValueOnce('6caec3dd-d95f-421c-bb45-681e72097db9');
   const member = { ...user, name: 'Morgan Lane' };
   unlockBadgeStaff.mockResolvedValue({ staffToken: 'staff-token', expiresAt: new Date(Date.now() + 60_000).toISOString() });
   getStaffBadgeCounts.mockResolvedValue({ counts: {} });
+  const recipient = { id: 'recorded', playerId: 'another-player', playerName: 'Sam Hayes', side: 'solid' };
+  const extra = { id: 'extra', playerId, playerName: member.name, side: 'camo', overrideQuantity: 20 };
   staffBattleBadgeDay.mockResolvedValueOnce({ date, awards: [] })
     .mockRejectedValueOnce(Object.assign(new Error('Today’s MVP was already awarded.'), { status: 409 }))
-    .mockResolvedValueOnce({ date, awards: [{ id: 'recorded', playerId: 'another-player', playerName: 'Sam Hayes', side: 'solid' }] });
+    .mockResolvedValueOnce({ date, awards: [recipient], overrides: [] })
+    .mockResolvedValueOnce({ date, awards: [recipient], overrides: [extra] });
   renderPage(<AdminBadgeAwards firebase={firebase} players={[member]} loading={false} directoryUnavailable={false} />);
   fireEvent.change(screen.getByLabelText('Staff email'), { target: { value: 'staff@example.com' } });
   fireEvent.change(screen.getByLabelText('Staff password'), { target: { value: 'test-password' } });
@@ -375,6 +380,11 @@ test('badge awards uses the selected member for MVP and reconciles another staff
   fireEvent.click(desk.getByRole('button', { name: 'Award daily MVP' }));
   expect(await desk.findByText('Sam Hayes')).toBeVisible();
   expect(desk.queryByRole('button', { name: 'Award daily MVP' })).toBeNull();
+  fireEvent.change(desk.getByLabelText('Number of Battle Badges'), { target: { value: '20' } });
+  fireEvent.click(desk.getByRole('button', { name: 'Grant extra Battle Badges' }));
+  expect(await desk.findByText('Camo · 20 extra')).toBeVisible();
+  expect(desk.getByText('Sam Hayes')).toBeVisible();
+  expect(staffBattleBadgeDay.mock.calls[3][2].body).toMatchObject({ action: 'override', quantity: 20, playerId, date, side: 'camo' });
   expect(staffBattleBadgeDay.mock.calls[1][2].body).toMatchObject({ action: 'award', playerId, date, side: 'camo' });
 });
 
