@@ -1,0 +1,38 @@
+.staff-battle-badges {
+    margin-block: 1rem;
+    padding: clamp(1rem, 2.2vw, 1.5rem);
+    color: var(--admin-text);
+    background: var(--admin-surface);
+    border: 1px solid var(--admin-border-strong);
+    border-radius: 0.85rem;
+}
+.staff-battle-heading, .staff-battle-recipient {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.staff-battle-heading { margin-bottom: .8rem; }
+.staff-battle-heading img { flex: 0 0 auto; object-fit: contain; }
+.staff-battle-heading h3, .staff-battle-desk h4 {
+    color: var(--admin-text);
+    font-size: 1.15rem;
+    margin: 0;
+}
+.staff-battle-heading p, .staff-battle-recipient span {
+    color: var(--admin-subtext);
+    margin: .3rem 0 0;
+}
+.staff-battle-desk {
+    display: grid;
+    justify-items: start;
+    gap: .7rem;
+    padding-top: 1rem;
+    margin-top: .8rem;
+    border-top: 1px solid var(--admin-border);
+}
+.staff-battle-desk p { margin: 0; }
+.staff-battle-recipient { flex-wrap: wrap; }
+.staff-battle-recipient span { display: block; }
+.staff-battle-desk label { display: grid; gap: .25rem; }
+.staff-battle-badges button { min-height: 44px; }
+.staff-battle-badges .btn-link { color: var(--usaw-accent); }

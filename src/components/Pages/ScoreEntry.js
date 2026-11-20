@@ -372,6 +372,7 @@ function ScoreEntry({ firebase, actor }) {
                         </div>
                         <Form.Text>These details appear on the player’s Companion receipt. Switch teams as you scan the other side.</Form.Text>
                         <ScorePatchAwards firebase={firebase} mode={round.mode} player={selected && nameOf(selected)}
+                            member={selected} roundSide={round.side}
                             disabled={Boolean(busy || saved || blocks)} selection={patchSelection} onChange={setPatchSelection}
                             jobs={desk.patchJobs || []} updateJob={updatePatchJob} />
                     </Card.Body>

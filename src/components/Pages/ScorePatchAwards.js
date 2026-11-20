@@ -1,5 +1,7 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { awardRoundPatch, badgeById, getRoundPatchOptions, unlockBadgeStaff } from '../constants/playerBadges';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import StaffBattleBadges from './StaffBattleBadges';
+import AdminAccountUnlock from './AdminAccountUnlock';
+import { awardRoundPatch, badgeById, getRoundPatchOptions, unlockBadgeAdminAccount, unlockBadgeStaff } from '../constants/playerBadges';
 
 export const emptyPatchSelection = { badgeIds: [], reason: '' };
 
@@ -49,15 +51,20 @@ function PatchDelivery({ job, firebase, token, updateJob, lock, report }) {
     </div>;
 }
 
-export function ScorePatchAwards({ firebase, mode, player, disabled, selection, onChange, jobs, updateJob }) {
+export function ScorePatchAwards({ firebase, mode, player, member, roundSide, disabled, selection, onChange, jobs, updateJob }) {
     const [options, setOptions] = useState(null);
     const [reload, setReload] = useState(0);
     const [session, setSession] = useState(null);
     const [unlocking, setUnlocking] = useState(false);
     const [unlockError, setUnlockError] = useState('');
+    const [battleAccessRequested, setBattleAccessRequested] = useState(false);
+    const emailInput = useRef(null);
     const [notice, setNotice] = useState('');
     const lock = useCallback(() => setSession(null), []);
     const token = session?.staffToken;
+    useEffect(() => {
+        if (battleAccessRequested && !token) emailInput.current?.focus();
+    }, [battleAccessRequested, token]);
     useEffect(() => {
         if (!mode) return undefined;
         const controller = new AbortController();
@@ -74,6 +81,13 @@ export function ScorePatchAwards({ firebase, mode, player, disabled, selection, 
         return () => clearTimeout(timer);
     }, [session, lock]);
 
+    function acceptUnlock(result) {
+        const expiresAt = Date.parse(result.expiresAt);
+        if (!result.staffToken || !(expiresAt > Date.now())) throw new Error('Badge access could not be verified.');
+        setSession({ staffToken: result.staffToken, expiresAt });
+        setUnlockError('');
+        setBattleAccessRequested(false);
+    }
     async function unlock(event) {
         event.preventDefault();
         if (unlocking) return;
@@ -83,9 +97,7 @@ export function ScorePatchAwards({ firebase, mode, player, disabled, selection, 
         setUnlockError('');
         try {
             const result = await unlockBadgeStaff(firebase, { email: values.get('email').trim(), password: values.get('password') });
-            const expiresAt = Date.parse(result.expiresAt);
-            if (!result.staffToken || !(expiresAt > Date.now())) throw new Error('Badge access could not be verified.');
-            setSession({ staffToken: result.staffToken, expiresAt });
+            acceptUnlock(result);
         } catch (error) { setUnlockError(error.message || 'Badge access could not be unlocked.'); }
         finally { setUnlocking(false); }
     }
@@ -93,9 +105,9 @@ export function ScorePatchAwards({ firebase, mode, player, disabled, selection, 
         const ids = selection.badgeIds.includes(id) ? selection.badgeIds.filter(value => value !== id) : [...selection.badgeIds, id];
         onChange(ids.length ? { ...selection, badgeIds: ids } : emptyPatchSelection);
     }
-    if (!mode && !jobs.length && !notice) return null;
     const current = options?.mode === mode ? options : null;
-    return <section className="score-patch-panel" aria-label="Round patches">
+    return <>
+      {(mode || jobs.length > 0 || notice) && <section className="score-patch-panel" aria-label="Round patches">
         {mode && <>
             <h3>Round patches</h3>
             <p>{player ? 'Select the patches ' + player + ' earned this round.' : 'Find a player to select the patches they earned this round.'}</p>
@@ -115,16 +127,21 @@ export function ScorePatchAwards({ firebase, mode, player, disabled, selection, 
                 <small>Enter 3–160 characters for a first award. Repeat awards can be left blank.</small>
             </label>}
         </>}
-        {!token && (selection.badgeIds.length > 0 || jobs.length > 0) && <form className="score-patch-access" onSubmit={unlock}>
-            <p>Unlock badge awards to deliver the selected patches after the score is saved.</p>
-            <label>Staff badge email<input name="email" type="email" className="form-control" required autoComplete="username" /></label>
-            <label>Staff badge password<input name="password" type="password" className="form-control" required autoComplete="current-password" /></label>
-            <button className="btn btn-outline-secondary" disabled={unlocking}>Unlock badge awards</button>
-            {unlockError && <p role="alert">{unlockError}</p>}
-        </form>}
-        {token && <button type="button" className="btn btn-link" onClick={lock}>Lock badge awards</button>}
         {jobs.map(job => <PatchDelivery key={job.id} job={job} firebase={firebase} token={token} updateJob={updateJob}
             lock={lock} report={setNotice} />)}
         {notice && <p role="status">{notice}</p>}
-    </section>;
+      </section>}
+      {!token && (battleAccessRequested || selection.badgeIds.length > 0 || jobs.length > 0) && <form className="score-patch-access" onSubmit={unlock}>
+            <AdminAccountUnlock firebase={firebase} disabled={unlocking} setWorking={setUnlocking}
+                unlock={() => unlockBadgeAdminAccount(firebase)} onUnlocked={acceptUnlock} />
+            <p>Or enter your staff email and password for round patches and the daily MVP award.</p>
+            <label>Staff badge email<input ref={emailInput} name="email" type="email" className="form-control" required autoComplete="username" /></label>
+            <label>Staff badge password<input name="password" type="password" className="form-control" required autoComplete="current-password" /></label>
+            <button className="btn btn-outline-secondary" disabled={unlocking}>Unlock badge awards</button>
+            {unlockError && <p role="alert">{unlockError}</p>}
+      </form>}
+      {token && <button type="button" className="btn btn-link" onClick={lock}>Lock badge awards</button>}
+      <StaffBattleBadges firebase={firebase} token={token} player={member} roundSide={roundSide} onLock={lock}
+          onRequestUnlock={() => { setBattleAccessRequested(true); emailInput.current?.focus(); }} />
+    </>;
 }

@@ -18,6 +18,7 @@ import { teamPagePath, usePlayerTeam, useTeamLogo } from '../constants/teamDirec
 import SharePageLink from '../constants/SharePageLink';
 import { AuthUserContext } from '../session';
 import PlayerBadgeCollection from './PlayerBadgeCollection';
+import BattleBadgeShowcase from './BattleBadgeShowcase';
 import PlayerPrestige, { PrestigeEmblem } from './PlayerPrestige';
 import PlayerMilestones from './PlayerMilestones';
 import PlayerGameHistory from './PlayerGameHistory';
@@ -440,6 +441,7 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
               )}
             </div>
           </div>
+          {badgeEligible && <BattleBadgeShowcase key={playerId} playerId={playerId} />}
         </div>
       </header>
       <div className="player-profile__wrap player-profile__body">

@@ -23,7 +23,18 @@ const prestigeTwoProgress = (points, patches) => ({
   patches: [{ factor: 1, name: 'Fieldcraft', earned: patches, required: 10 }],
 });
 const respond = data => Promise.resolve({ ok: true, json: async () => data });
-const isTeamLookup = url => new URL(url).pathname === '/api/player-team';
+const isPrestigeLookup = url => new URL(url).pathname === '/api/player-prestige';
+function profileFetch(prestigeHandler) {
+  return jest.fn((url, options) => {
+    const path = new URL(url).pathname;
+    if (path === '/api/player-team') return respond({ team: null });
+    if (path === '/api/battle-badges') return respond({
+      progress: { totalAwards: 0, colorBadgeCount: 0, towerOfPower: false, silverStars: 0, goldStars: 0 },
+    });
+    if (isPrestigeLookup(url)) return prestigeHandler(url, options);
+    throw new Error('Unexpected profile request: ' + path);
+  });
+}
 const originalFetch = global.fetch;
 
 function renderProfile(user, account) {
@@ -43,8 +54,7 @@ afterEach(() => { global.fetch = originalFetch; });
 
 test('requires two confirmations and keeps the five-star rank after Prestige', async () => {
   let persisted = record(0, 0);
-  global.fetch = jest.fn((url, options) => {
-    if (isTeamLookup(url)) return respond({ team: null });
+  global.fetch = profileFetch((url, options) => {
     if (options.method !== 'POST') return respond(persisted);
     const action = JSON.parse(options.body).action;
     if (action === 'prepare') return respond({ challenge: 'fixture-review', nextPrestige: 1, pointsAtPreview: player.points });
@@ -96,7 +106,7 @@ test('requires two confirmations and keeps the five-star rank after Prestige', a
 });
 
 test('shows another player’s five-star rank and Roman numeral in the emblem', async () => {
-  global.fetch = jest.fn(url => respond(isTeamLookup(url) ? { team: null } : record(11, 8100)));
+  global.fetch = profileFetch(() => respond(record(11, 8100)));
   renderProfile({ ...player, points: 8225 }, false);
   await screen.findByText('Prestige 11', { selector: '.player-profile__prestige span' });
   expect(screen.getByText('XI', { selector: '.player-profile__rank .usaw-prestige-emblem > span' })).toBeInTheDocument();
@@ -105,7 +115,7 @@ test('shows another player’s five-star rank and Roman numeral in the emblem', 
   fireEvent.click(screen.getByRole('button', { name: 'Progression' }));
   expect(within(screen.getByRole('region', { name: 'Prestige' })).getByText('11')).toBeVisible();
   expect(screen.queryByRole('button', { name: /start prestige/i })).not.toBeInTheDocument();
-  const prestigeRequests = global.fetch.mock.calls.filter(([url]) => !isTeamLookup(url));
+  const prestigeRequests = global.fetch.mock.calls.filter(([url]) => isPrestigeLookup(url));
   expect(prestigeRequests).toEqual([[
     `https://usaw-field-companion.pink-bud-3735.chatgpt.site/api/player-prestige?id=${playerId}`,
     expect.objectContaining({ credentials: 'omit' }),
@@ -122,7 +132,7 @@ test.each([
   [4500, 0, 'General Of The Army', null, 1, 1],
   [125, 2, 'General Of The Army', null, 1, 1],
 ])('labels both ends of the profile rank bar at %s points, Prestige %s', async (points, prestige, current, next, earned, max) => {
-  global.fetch = jest.fn(url => respond(isTeamLookup(url) ? { team: null } : record(prestige, prestige ? 4500 : 0)));
+  global.fetch = profileFetch(() => respond(record(prestige, prestige ? 4500 : 0)));
   renderProfile({ ...player, points }, false);
   const meter = await screen.findByRole('progressbar', { name: 'Rank progress' });
   const panel = within(meter.closest('section'));
@@ -141,7 +151,7 @@ test.each([
 });
 
 test('rank bar reports unavailable rank data instead of showing an invented promotion target', async () => {
-  global.fetch = jest.fn(url => respond(isTeamLookup(url) ? { team: null } : record(0, 0)));
+  global.fetch = profileFetch(() => respond(record(0, 0)));
   renderProfile({ ...player, points: 'unavailable' }, false);
   expect(await screen.findByText('Rank progress is temporarily unavailable.')).toBeVisible();
   expect(screen.queryByRole('progressbar', { name: 'Rank progress' })).toBeNull();

@@ -2,9 +2,11 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   BADGE_CATALOG, RETIRED_BADGES, badgeServiceConfigured, getStaffBadgeCounts, getStaffBadgeGrantHistory,
-  grantPlayerBadge, revokePlayerBadgeGrant, unlockBadgeStaff,
+  grantPlayerBadge, revokePlayerBadgeGrant, unlockBadgeAdminAccount, unlockBadgeStaff,
 } from '../constants/playerBadges';
 import { gameModeIds } from './Gametypes';
+import StaffBattleBadges from './StaffBattleBadges';
+import AdminAccountUnlock from './AdminAccountUnlock';
 import './AdminBadgeAwards.css';
 
 const MAX_RESULTS = 8;
@@ -228,6 +230,16 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
     setFeedback({ text: 'Badge controls locked.' });
   }
 
+  function acceptUnlock(result) {
+    const expiresAt = Date.parse(result.expiresAt);
+    if (!result.staffToken || !Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
+      throw new Error('Badge access could not be unlocked. Try again.');
+    }
+    setCountLookup(null);
+    setFeedback(null);
+    setStaffSession({ staffToken: result.staffToken, expiresAt });
+  }
+
   async function unlock(event) {
     event.preventDefault();
     if (busy) return;
@@ -240,12 +252,7 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
     setFeedback(null);
     try {
       const result = await unlockBadgeStaff(firebase, { email, password });
-      const expiresAt = Date.parse(result.expiresAt);
-      if (!result.staffToken || !Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
-        throw new Error('Badge access could not be unlocked. Try again.');
-      }
-      setCountLookup(null);
-      setStaffSession({ staffToken: result.staffToken, expiresAt });
+      acceptUnlock(result);
     } catch (error) {
       setFeedback({ error: true, text: error?.message || 'Badge access could not be unlocked. Try again.' });
     } finally {
@@ -465,7 +472,9 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
       ) : (
         <form key="unlock" className="admin-badge-awards__card admin-badge-awards__unlock" onSubmit={unlock}
           autoComplete="off" aria-busy={!!busy}>
-          <p>Unlock badge controls with your USAW staff credentials.</p>
+          <AdminAccountUnlock firebase={firebase} disabled={!!busy} setWorking={value => setBusy(value ? 'account' : null)}
+            unlock={() => unlockBadgeAdminAccount(firebase)} onUnlocked={acceptUnlock} />
+          <p>Or enter your staff email and password.</p>
           <fieldset className="admin-badge-awards__fields" disabled={busy}>
             <div>
               <label htmlFor="admin-badges-email">Staff email</label>
@@ -484,6 +493,8 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
           {feedback && <p role={feedback.error ? 'alert' : 'status'}>{feedback.text}</p>}
         </form>
       )}
+      {badgeServiceConfigured && <StaffBattleBadges firebase={firebase} token={staffToken}
+        player={selectedPlayer} onLock={lock} />}
     </section>
   );
 }

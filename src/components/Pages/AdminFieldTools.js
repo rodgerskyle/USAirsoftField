@@ -13,6 +13,7 @@ import AdminFieldMembership from './AdminFieldMembership';
 import AdminFieldReports from './AdminFieldReports';
 import AdminFieldFeedback from './AdminFieldFeedback';
 import AdminFieldMissionTools from './AdminFieldMissionTools';
+import AdminAccountUnlock from './AdminAccountUnlock';
 import '../constants/admin.css';
 import './AdminDashboard.css';
 import './AdminFieldTools.css';
@@ -185,7 +186,18 @@ function StaffToolsWorkspace({ firebase, uid, tool }) {
               {access.kind === 'locked' && (
                 <>
                   <h2>Unlock field tools</h2>
-                  <p>Use your USAW staff unlock credentials for check-in, live rounds, membership, team reports, and player feedback.</p>
+                  <AdminAccountUnlock firebase={firebase} disabled={pending !== ''}
+                    setWorking={working => setPending(working ? 'account' : '')}
+                    unlock={() => requestStaffFieldTool(firebase, uid, staffSessionPath, {
+                      method: 'POST', body: { action: 'unlock-account' },
+                    })}
+                    onUnlocked={data => {
+                      const next = sessionState(data);
+                      if (next.kind !== 'unlocked') throw new Error('Field staff access could not be confirmed. Check access and try again.');
+                      setNotice('');
+                      setAccess(next);
+                    }} />
+                  <p>Or enter your staff email and password.</p>
                   <StaffUnlockForm busy={pending !== ''} onSubmit={submitUnlock} />
                 </>
               )}
