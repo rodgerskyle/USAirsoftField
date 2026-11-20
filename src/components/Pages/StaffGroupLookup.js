@@ -202,16 +202,18 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
           {!busy && !fresh && <p role="status">Refresh the group to see current teams.</p>}
         </>}
         <ul>{group.entries.map(entry => {
-          const position = fresh && positions.get(entry.id);
+          const position = fresh ? positions.get(entry.id) : undefined;
           const playerId = position?.playerId || entry.playerId;
+          const playerName = position?.displayName ?? entry.displayName;
+          const experience = position?.experienceBand ?? entry.experienceBand;
           return <li className="group-placement__player" key={entry.id}>
-            <strong>{entry.displayName}</strong><small>{groupExperienceLabels[entry.experienceBand] || groupExperienceLabels.unrated}{position && ' · ' + (teamLabels[position.side] || 'Awaiting check-in')}</small>
+            <strong>{playerName}</strong><small>{groupExperienceLabels[experience] || groupExperienceLabels.unrated}{position && ' · ' + (teamLabels[position.side] || 'Awaiting check-in')}</small>
             {current && <div className="group-placement__actions">
               {Object.entries(teamLabels).map(([side, label]) => <button type="button" className="btn btn-outline-primary"
-                key={side} data-team={side} aria-label={'Assign ' + entry.displayName + ' to ' + label}
+                key={side} data-team={side} aria-label={'Assign ' + playerName + ' to ' + label}
                 disabled={locked || !position || position.side === side} onClick={() => assign(side, entry)}>{label}</button>)}
               {playerId && <button type="button" className="btn btn-outline-secondary" disabled={locked}
-                aria-label={'Verify ' + entry.displayName} onClick={() => onSelect({ playerId }, false, group.date)}>Verify player</button>}
+                aria-label={'Verify ' + playerName} onClick={() => onSelect({ playerId }, false, group.date)}>Verify player</button>}
             </div>}
           </li>;
         })}</ul>
