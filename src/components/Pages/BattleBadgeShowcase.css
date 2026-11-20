@@ -59,12 +59,7 @@ body:not(.night-mode) .player-hero-card .battle-showcase {
   gap: 6px;
   min-width: 0;
   padding: 8px 5px;
-  border: 1px solid #506e8d;
-  border-radius: 9px;
-  background:
-    repeating-linear-gradient(135deg, #ffffff08 0 1px, transparent 1px 4px),
-    radial-gradient(ellipse at 48% 34%, #334e63, #182936 74%);
-  color: #f2f6fa;
+  color: var(--battle-ink);
   text-align: center;
   font-size: .8rem;
   font-weight: 700;
