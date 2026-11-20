@@ -30,20 +30,21 @@ test('a Party Calendar deep link opens its group and edits walk-ons using the la
   open(request);
   const detail = within(screen.getByRole('region', { name: 'Selected group' }));
   expect(await detail.findByRole('heading', { name: 'Birthday group' })).toBeVisible();
-  await waitFor(() => expect(detail.getByRole('button', { name: 'Add walk-on' })).toBeEnabled());
+  await waitFor(() => expect(detail.getByRole('button', { name: 'Add player' })).toBeEnabled());
   expect(request.mock.calls.slice(0, 2).map(([path]) => path)).toEqual([
     '/api/staff-groups?id=' + id, '/api/staff-groups?date=' + date + '&page=1',
   ]);
   expect(detail.getByLabelText('Invitation code')).toHaveValue(initial.code);
   expect(screen.getByLabelText('Field date')).toHaveValue(date);
   expect(detail.queryByRole('button', { name: 'Remove Organizer' })).toBeNull();
-  fireEvent.change(detail.getByLabelText('Walk-on name or callsign'), { target: { value: '  Rebel Guest  ' } });
-  fireEvent.click(detail.getByRole('button', { name: 'Add walk-on' }));
-  expect(await screen.findByText('Walk-on added.')).toBeVisible();
+  fireEvent.change(detail.getByLabelText('Player name or callsign'), { target: { value: '  Rebel Guest  ' } });
+  fireEvent.change(detail.getByLabelText('Airsoft experience'), { target: { value: 'limited' } });
+  fireEvent.click(detail.getByRole('button', { name: 'Add player' }));
+  expect(await screen.findByText('Player added.')).toBeVisible();
   expect(detail.getByText('Rebel Guest')).toBeVisible();
-  expect(request.mock.calls[2][1].body).toEqual({ action: 'addGuest', id, version: 'version-one', displayName: 'Rebel Guest' });
+  expect(request.mock.calls[2][1].body).toEqual({ action: 'addGuest', id, version: 'version-one', displayName: 'Rebel Guest', experienceBand: 'limited' });
   fireEvent.click(detail.getByRole('button', { name: 'Remove Rebel Guest' }));
-  expect(await screen.findByText('Walk-on removed from the group.')).toBeVisible();
+  expect(await screen.findByText('Player removed from the group.')).toBeVisible();
   expect(request.mock.calls[4][1].body).toEqual({ action: 'removeGuest', id, version: 'version-two', entryId: entry.id });
   expect(detail.queryByText('Rebel Guest')).toBeNull();
   expect(detail.getByText('Organizer')).toBeVisible();
@@ -67,4 +68,19 @@ test('keeping a group cancels removal and only explicit confirmation submits the
   expect(request.mock.calls[2][1]).toEqual(expect.objectContaining({ method: 'POST', body: { action: 'delete', id, version: initial.version } }));
   expect(detail.queryByDisplayValue(initial.code)).toBeNull();
   expect(screen.getByText('No groups found for these dates.')).toBeVisible();
+});
+
+test('staff can update the organizer’s experience using the selected roster version', async () => {
+  const updated = { ...initial, version: 'updated', entries: [{ ...initial.entries[0], experienceBand: 'veteran' }] };
+  const request = jest.fn().mockResolvedValueOnce({ group: initial }).mockResolvedValueOnce(list(initial))
+    .mockResolvedValueOnce({ group: updated }).mockResolvedValueOnce(list(updated));
+  open(request);
+  const summary = await screen.findByText('Edit experience');
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Remove group' })).toBeEnabled());
+  fireEvent.click(summary);
+  fireEvent.change(screen.getByLabelText('Experience for Organizer'), { target: { value: 'veteran' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save experience' }));
+  expect(await screen.findByText('Experience saved.')).toBeVisible();
+  expect(request.mock.calls[2][1].body).toEqual({ action: 'setExperience', id, entryId: 'owner', version: 'version-one', experienceBand: 'veteran' });
+  expect(screen.getByText('USAW player · Organizer · Experienced')).toBeVisible();
 });

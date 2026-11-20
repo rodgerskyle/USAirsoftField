@@ -1,8 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { isGroupCode } from '../constants/groupCode';
+import { groupExperienceLabels } from '../constants/groupExperience';
 import GroupPartySchedule, { bookingTime } from './GroupPartySchedule';
 import './GroupCheckIn.css';
 
 const endpoint = '/api/check-in-groups';
+const assignmentPath = '/api/game-day-check-in';
+const teamLabels = { camo: 'Camo', solid: 'Solid' };
+const fieldToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 
 function calendarHint() {
   if (window.location.hash !== '#arriving-group') return null;
@@ -14,9 +19,11 @@ function calendarHint() {
   return Number.isFinite(day.getTime()) && day.toISOString().startsWith(date) ? { date, key } : null;
 }
 
-export default function StaffGroupLookup({ request, onSelect, disabled }) {
+export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoardRead, disabled, rosterVersion, checkInRevision, onWorking }) {
   const [hint] = useState(calendarHint);
   const [data, setData] = useState(null);
+  const [search, setSearch] = useState(null);
+  const [assignments, setAssignments] = useState(null);
   const [parties, setParties] = useState(null);
   const [chosenKey, setChosenKey] = useState('');
   const [confirmUnlink, setConfirmUnlink] = useState(false);
@@ -36,41 +43,98 @@ export default function StaffGroupLookup({ request, onSelect, disabled }) {
     const controller = new AbortController();
     operation.current = controller;
     setBusy(true);
+    onWorking?.(true);
     setNotice('');
     try { await work(controller.signal); }
     catch (error) {
       if (!controller.signal.aborted) {
         clearChoices();
-        if (error.status === 401 || error.status === 403) setData(null);
+        if ([401, 403, 404].includes(error.status)) { setData(null); setSearch(null); setAssignments(null); }
         setNotice(error.message || 'The group could not be updated. Try again.');
       }
     } finally {
-      if (!controller.signal.aborted) setBusy(false);
+      if (!controller.signal.aborted) { setBusy(false); onWorking?.(false); }
       operation.current = null;
     }
   }
 
+  async function loadAssignments(target, signal) {
+    const result = await request(assignmentPath, { method: 'POST', signal,
+      body: { action: 'groupAssignments', groupId: target.id, date: target.date } });
+    if (signal.aborted) return;
+    setAssignments({ ...result.groupAssignments, rosterVersion: result.rosterVersion, revision: checkInRevision });
+    onBoardRead?.(result);
+  }
+
+  async function openGroup(result, signal) {
+    if (signal.aborted) return;
+    setData(result); setAssignments(null); clearChoices();
+    if (hint && result.group.date === hint.date) await loadBookings(result.group, signal);
+    else if (hint) setNotice('This group is on a different date from the selected Party Calendar booking. Check the group before linking.');
+    if (!signal.aborted && result.group.date === result.today) await loadAssignments(result.group, signal);
+  }
+
+  async function openById(id, signal) {
+    const result = await request(endpoint + '?staff=1&id=' + encodeURIComponent(id), { signal });
+    await openGroup(result, signal);
+  }
+
+  function find(query, page = 1) {
+    void run(async signal => {
+      setData(null); setAssignments(null); setSearch(null); clearChoices();
+      // A shared code identifies a single group, even from another booking date.
+      if (page === 1 && isGroupCode(query)) {
+        let exact;
+        try { exact = await request(endpoint + '?staff=1&code=' + encodeURIComponent(query), { signal }); }
+        catch (error) { if (error.status !== 404) throw error; }
+        if (signal.aborted) return;
+        if (exact?.group) { await openGroup(exact, signal); return; }
+      }
+      const params = new URLSearchParams({ [hint ? 'date' : 'from']: hint?.date || fieldToday(), q: query, page: String(page) });
+      const result = await request('/api/staff-groups?' + params, { signal });
+      if (signal.aborted) return;
+      if (!result.groups.length) { setNotice('No matching groups. Check the name or code and try again.'); return; }
+      if (result.totalPages > 1 || result.groups.length > 1) setSearch({ ...result, query });
+      else await openById(result.groups[0].id, signal);
+    });
+  }
+
   function lookup(event) {
     event.preventDefault();
-    const code = new FormData(event.currentTarget).get('code').trim();
-    void run(async signal => {
-      setData(null);
-      clearChoices();
-      const result = await request(endpoint + '?staff=1&code=' + encodeURIComponent(code), { signal });
-      if (signal.aborted) return;
-      setData(result);
-      if (!hint) return;
-      if (result.group.date !== hint.date) {
-        setNotice('This group is on a different date from the selected Party Calendar booking. Check the group code before linking.');
-        return;
-      }
-      await loadBookings(result.group, signal);
-    });
+    const value = new FormData(event.currentTarget).get('group').trim();
+    if (value) find(value);
   }
 
   const group = data?.group;
   const locked = disabled || busy;
-  const current = group?.date === data?.today;
+  const current = group && group.date === data.today;
+  const positions = new Map(assignments?.entries?.map(position => [position.entryId, position]));
+  const fresh = assignments?.version && assignments.revision === checkInRevision
+    && (!rosterVersion || assignments.rosterVersion === rosterVersion)
+    && group?.entries.length === positions.size && group.entries.every(entry => positions.has(entry.id));
+
+  function assign(side, entry) {
+    if (!current || !fresh) return;
+    void run(async signal => {
+      try {
+        const result = await request(assignmentPath, { method: 'POST', signal, body: {
+          action: 'assignGroup', groupId: group.id, date: group.date, side,
+          rosterVersion: assignments.rosterVersion, assignmentVersion: assignments.version, ...(entry && { entryId: entry.id }),
+        } });
+        if (signal.aborted) return;
+        setAssignments({ ...result.groupAssignments, rosterVersion: result.rosterVersion, revision: checkInRevision });
+        onAssigned?.(result);
+        setNotice((entry ? entry.displayName : group.name) + ' assigned to ' + teamLabels[side] + '.');
+      } catch (error) {
+        if (signal.aborted) return;
+        setAssignments(null);
+        if (error.status !== 409) throw error;
+        await openById(group.id, signal);
+        if (!signal.aborted) setNotice(error.message || 'The roster changed. Review the refreshed assignments before trying again.');
+      }
+    });
+  }
+
   const missingBooking = Boolean(group?.partyKey && group.partyStatus !== 'review' && parties && !parties.some(party => party.key === group.partyKey && !party.ambiguous));
   async function loadBookings(targetGroup, signal) {
     clearChoices();
@@ -97,9 +161,17 @@ export default function StaffGroupLookup({ request, onSelect, disabled }) {
   }
 
   return <details id="arriving-group" className="admin-group-lookup" open={hint ? true : undefined}><summary>Find an arriving group</summary>
-    {hint && <p>Party Calendar booking for {hint.date}. Enter its invitation code to find the group.</p>}
-    <p>Enter the invitation code from the organizer or Party Calendar to find the arriving group. <a href="/admin/field/groups">Manage groups</a></p>
-    <form onSubmit={lookup}><label>Group code<input name="code" minLength={16} maxLength={16} autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} required disabled={locked} /></label><button className="btn btn-secondary" disabled={locked}>{busy ? 'Working…' : 'Find group'}</button></form>
+    {hint && <p>Party Calendar booking for {hint.date}. Find the group by its name or invitation code.</p>}
+    <p>Search by group name or invitation code. <a href="/admin/field/groups">Manage groups</a></p>
+    <form onSubmit={lookup}><label>Group name or code<input name="group" minLength={1} maxLength={80} autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} required disabled={locked} /></label><button className="btn btn-secondary" disabled={locked}>{busy ? 'Working…' : 'Find group'}</button></form>
+    {search && <div><p>Choose a matching group.</p><ul>{search.groups.map(item => <li key={item.id}>
+      <button type="button" className="btn btn-outline-primary" disabled={locked} onClick={() => void run(signal => openById(item.id, signal))}>
+        <strong>{item.name}</strong><span>{item.date} · {item.memberCount} players</span>
+      </button></li>)}</ul>
+      {search.totalPages > 1 && <nav aria-label="Group search pages" className="admin-checkin__buttons">
+        <button type="button" disabled={locked || search.page <= 1} onClick={() => find(search.query, search.page - 1)}>Previous</button>
+        <span>Page {search.page} of {search.totalPages}</span>
+        <button type="button" disabled={locked || search.page >= search.totalPages} onClick={() => find(search.query, search.page + 1)}>Next</button></nav>}</div>}
     {group && <><h3>{group.name}</h3><p>{group.date}</p>{!current && <p>This group is planned for a different date.</p>}
       <GroupPartySchedule group={group} staff />
       <div className="visit-party-tools">
@@ -118,7 +190,32 @@ export default function StaffGroupLookup({ request, onSelect, disabled }) {
           <button type="button" className="btn btn-outline-secondary" disabled={locked} onClick={() => setConfirmUnlink(false)}>Keep booking linked</button></div>
           : <button type="button" className="btn btn-outline-secondary" disabled={locked} onClick={() => setConfirmUnlink(true)}>Unlink booking</button>)}
       </div>
-      <ul>{group.entries.map(entry => <li key={entry.id}><button type="button" className="btn btn-outline-primary" disabled={locked || !current} onClick={() => onSelect(entry.playerId ? { playerId: entry.playerId } : { displayName: entry.displayName }, !entry.playerId, group.date)}><strong>{entry.displayName}</strong><span>{entry.playerId ? 'Verify player' : 'Preview walk-on'}</span></button></li>)}</ul></>}
+      <section className="group-placement" aria-label="Group team assignments"><h4>Team assignments</h4>
+        {current && <>
+          <p>Confirm everyone is ready for check-in before assigning the whole group. Assign any player separately below.</p>
+          <div className="group-placement__actions">{Object.entries(teamLabels).map(([side, label]) =>
+            <button key={side} type="button" className="btn btn-outline-primary" data-team={side}
+              disabled={locked || !fresh || !group.entries.length}
+              onClick={() => assign(side)}>Assign group to {label}</button>)}
+            <button type="button" className="btn btn-outline-secondary" disabled={locked}
+              onClick={() => void run(signal => openById(group.id, signal))}>Refresh group</button></div>
+          {!busy && !fresh && <p role="status">Refresh the group to see current teams.</p>}
+        </>}
+        <ul>{group.entries.map(entry => {
+          const position = fresh && positions.get(entry.id);
+          const playerId = position?.playerId || entry.playerId;
+          return <li className="group-placement__player" key={entry.id}>
+            <strong>{entry.displayName}</strong><small>{groupExperienceLabels[entry.experienceBand] || groupExperienceLabels.unrated}{position && ' · ' + (teamLabels[position.side] || 'Awaiting check-in')}</small>
+            {current && <div className="group-placement__actions">
+              {Object.entries(teamLabels).map(([side, label]) => <button type="button" className="btn btn-outline-primary"
+                key={side} data-team={side} aria-label={'Assign ' + entry.displayName + ' to ' + label}
+                disabled={locked || !position || position.side === side} onClick={() => assign(side, entry)}>{label}</button>)}
+              {playerId && <button type="button" className="btn btn-outline-secondary" disabled={locked}
+                aria-label={'Verify ' + entry.displayName} onClick={() => onSelect({ playerId }, false, group.date)}>Verify player</button>}
+            </div>}
+          </li>;
+        })}</ul>
+      </section></>}
     {notice && <p role="status">{notice}</p>}
   </details>;
 }

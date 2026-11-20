@@ -50,13 +50,14 @@ test('finds a legacy booking by Pacific date, links an organizer code, and displ
 
 test('calendar-only staff create a code, recover an uncertain save, and see a moved group flagged for review', async () => {
   fetch.mockResolvedValueOnce(response({ group: null })).mockResolvedValueOnce(response({ error: 'Connection interrupted' }, 503))
-    .mockResolvedValueOnce(response({ needsReview: true, group: { ...linked, date: '2026-12-04' } }));
+    .mockResolvedValueOnce(response({ needsReview: true, group: { ...linked, code: 'raptors-12', date: '2026-12-04' } }));
   render(view('WAIVER'));
-  fireEvent.click(await screen.findByRole('button', { name: 'Create group code' }));
+  fireEvent.change(await screen.findByLabelText('Public group name (optional)'), { target: { value: 'Raptors' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Create group code' }));
   expect(await screen.findByText('Connection interrupted')).toBeVisible();
-  expect(JSON.parse(fetch.mock.calls[1][1].body)).toMatchObject({ date: linked.date, action: 'create' });
+  expect(JSON.parse(fetch.mock.calls[1][1].body)).toMatchObject({ date: linked.date, action: 'create', name: 'Raptors' });
   fireEvent.click(screen.getByRole('button', { name: 'Refresh group status' }));
-  expect(await screen.findByLabelText('Group code')).toHaveValue(linked.code);
+  expect(await screen.findByLabelText('Group code')).toHaveValue('raptors-12');
   expect(screen.getByText(/reservation changed/i)).toBeVisible();
   expect(screen.queryByRole('link')).toBeNull();
 });

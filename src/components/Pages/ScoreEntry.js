@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Breadcrumb, Button, Card, Container, Form } from 'react-bootstrap';
 import { Helmet } from 'react-helmet-async';
 import { LinkContainer } from 'react-router-bootstrap';
@@ -15,6 +15,7 @@ import { checkScoreOperation, isCurrentScoreOperation, loadPlayerScoreHistory, r
 import { gameModeNames } from './Gametypes';
 import { loadDesk, newScoreRound, persistDesk } from './scoreEntrySession';
 import { StaffCardScanner } from './StaffCardScanner';
+import { ScorePatchAwards, emptyPatchSelection } from './ScorePatchAwards';
 import { FlaggedRoundReceipts, requestScoreReceipts } from './FlaggedRoundReceipts';
 import '../constants/admin.css';
 import './ScoreEntry.css';
@@ -84,6 +85,7 @@ function ScoreEntry({ firebase, actor }) {
     const [value, setValue] = useState('');
     const [matches, setMatches] = useState([]);
     const [selected, setSelected] = useState(null);
+    const [patchSelection, setPatchSelection] = useState(emptyPatchSelection);
     const [history, setHistory] = useState(null);
     const [correction, setCorrection] = useState(null);
     const [busy, setBusy] = useState(false);
@@ -95,12 +97,16 @@ function ScoreEntry({ firebase, actor }) {
     const [flagMessage, setFlagMessage] = useState('');
     const receiptRequest = (params, body, signal) => requestScoreReceipts(firebase, actor, params, body, signal);
 
-    function updateDesk(fn) {
+    const updateDesk = useCallback(fn => {
         const next = fn(state.current);
         state.current = next;
         persistDesk(actor, next);
         setDesk(next);
-    }
+    }, [actor]);
+
+    const updatePatchJob = useCallback((id, apply) => updateDesk(old => ({
+        ...old, patchJobs: (old.patchJobs || []).map(job => job.id === id ? apply(job) : job).filter(job => job.badgeIds.length),
+    })), [updateDesk]);
 
     useEffect(() => {
         mounted.current = true;
@@ -146,6 +152,7 @@ function ScoreEntry({ firebase, actor }) {
 
     function resetSearch() {
         setValue(''); setMatches([]); setSelected(null); setHistory(null); setCorrection(null);
+        setPatchSelection(emptyPatchSelection);
     }
 
     function selectPlayer(member) {
@@ -230,7 +237,13 @@ function ScoreEntry({ firebase, actor }) {
             } else if (removing && scored[op.uid]?.eventId && scored[op.uid].eventId === (saved?.eventId || op.targetEventId)) {
                 delete scored[op.uid];
             }
-            return { round: { ...old.round, scored }, pending: old.pending.filter(item => item.id !== op.id) };
+            const next = { ...old, round: { ...old.round, scored }, pending: old.pending.filter(item => item.id !== op.id) };
+            if (!removing && op.patches?.badgeIds.length) {
+                const job = { id: op.id, playerId: op.uid, playerName: op.registeredName, mode: op.mode,
+                    day: saved.day, eventId: saved.eventId, ...op.patches };
+                next.patchJobs = [...(old.patchJobs || []).filter(item => item.id !== op.id), job];
+            }
+            return next;
         });
         setRecent(old => [op, ...old].slice(0, 20));
         void syncReceipt(op, saved);
@@ -298,7 +311,8 @@ function ScoreEntry({ firebase, actor }) {
     function record(outcome) {
         if (!canRecord || active.current) return;
         saveScore({ uid: selected.uid, registeredName: registeredName(selected.name, selected.uid),
-            outcome, mode: round.mode, side: round.side, roundId: round.id, id: newScoreId(), at: Date.now() });
+            outcome, mode: round.mode, side: round.side, roundId: round.id, id: newScoreId(), at: Date.now(),
+            ...(patchSelection.badgeIds.length > 0 && { patches: { ...patchSelection, reason: patchSelection.reason.trim() } }) });
     }
 
     function startRound() {
@@ -318,6 +332,7 @@ function ScoreEntry({ firebase, actor }) {
     }
 
     function changeRound(field, next) {
+        if (field === 'mode') setPatchSelection(emptyPatchSelection);
         updateDesk(old => ({ ...old, round: { ...old.round, [field]: next } }));
         if (field === 'side' && next && !selected) input.current?.focus();
     }
@@ -356,6 +371,9 @@ function ScoreEntry({ firebase, actor }) {
                             <Button variant="outline-secondary" disabled={busy} onClick={startRound}>Start new round</Button>
                         </div>
                         <Form.Text>These details appear on the player’s Companion receipt. Switch teams as you scan the other side.</Form.Text>
+                        <ScorePatchAwards firebase={firebase} mode={round.mode} player={selected && nameOf(selected)}
+                            disabled={Boolean(busy || saved || blocks)} selection={patchSelection} onChange={setPatchSelection}
+                            jobs={desk.patchJobs || []} updateJob={updatePatchJob} />
                     </Card.Body>
                 </Card>
                 <Card className="admin-panel-card admin-points-card">

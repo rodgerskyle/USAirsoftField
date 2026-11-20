@@ -62,7 +62,7 @@ test('uses a walk-on team balance estimate while their classification stays Unra
   render(<AdminFieldCheckIn request={request} />);
   await screen.findByText('2 checked in');
   fireEvent.click(screen.getByText('Add a walk-on'));
-  fireEvent.change(screen.getByLabelText('Walk-on name or callsign'), { target: { value: 'Field Guest' } });
+  fireEvent.change(screen.getByLabelText('Player name or callsign'), { target: { value: 'Field Guest' } });
   fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
   const assessment = await screen.findByLabelText('Team balance estimate');
@@ -182,7 +182,7 @@ test('clears both sides and the current lookup without letting an older refresh 
   fireEvent.click(screen.getByRole('button', { name: 'Find player' }));
   await screen.findByRole('heading', { name: checkedInPlayer.displayName });
   fireEvent.click(screen.getByText('Add a walk-on'));
-  const walkOn = screen.getByLabelText('Walk-on name or callsign');
+  const walkOn = screen.getByLabelText('Player name or callsign');
   fireEvent.change(walkOn, { target: { value: 'A draft walk-on' } });
   fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
   fireEvent.click(trigger);

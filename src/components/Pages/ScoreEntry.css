@@ -115,3 +115,63 @@
 .score-receipt-flag summary small { display: block; margin-block: 0.2rem; }
 .score-receipt-flag .score-entry-mode { margin-top: 0.6rem; }
 .score-flag-reason { margin-block: 0.6rem; white-space: pre-wrap; }
+
+.score-patch-panel {
+    border-top: 1px solid var(--admin-border);
+    margin-top: 1rem;
+    padding-top: 1rem;
+}
+.score-patch-panel h3 { font-size: 1.1rem; }
+.score-patch-panel p { margin-block: .4rem .65rem; }
+.score-patch-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(6.3rem, 1fr));
+    gap: .4rem;
+}
+.score-patch-grid button {
+    display: grid;
+    align-content: start;
+    justify-items: center;
+    gap: .2rem;
+    position: relative;
+    border: 2px solid var(--admin-border);
+    border-radius: .55rem;
+    color: var(--admin-text);
+    background: var(--admin-surface-muted);
+    padding: .35rem;
+    font-size: .875rem;
+    line-height: 1.2;
+}
+.score-patch-grid img { object-fit: contain; max-width: 100%; }
+.score-patch-grid button:enabled:is(:hover, :focus-visible),
+.score-patch-grid button[aria-pressed="true"] {
+    background: var(--admin-accent-soft);
+    border-color: var(--admin-accent);
+}
+.score-patch-grid button:focus-visible { outline: 3px solid var(--admin-focus); outline-offset: 2px; }
+.score-patch-grid button[aria-pressed="true"]::before {
+    content: '✓';
+    position: absolute;
+    top: .18rem;
+    right: .18rem;
+    background: var(--admin-action-bg);
+    color: var(--admin-on-accent);
+    width: 1.2rem;
+    border-radius: 50%;
+    font-weight: bold;
+}
+.score-patch-panel label { display: grid; gap: .25rem; }
+.score-patch-reason, .score-patch-access, .score-patch-job { margin-top: .85rem; }
+.score-patch-access { display: flex; flex-wrap: wrap; gap: .5rem; align-items: end; }
+.score-patch-access p { width: 100%; }
+.score-patch-job { padding: .65rem; border-inline-start: 3px solid var(--admin-border-strong); }
+.score-patch-job .score-entry-mode { margin-top: .35rem; }
+@media (max-width: 650px) {
+    .score-patch-grid {
+        grid-auto-flow: column;
+        grid-template-columns: none;
+        grid-auto-columns: 6.4rem;
+        overflow-x: auto;
+        padding: .25rem;
+    }
+}

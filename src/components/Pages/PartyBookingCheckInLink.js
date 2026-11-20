@@ -2,11 +2,11 @@ import React, { useCallback, useContext, useEffect, useRef, useState } from 'rea
 import AuthUserContext from '../session/context';
 import { ADMIN, WAIVER } from '../constants/roles';
 import { fieldStaffPaths, requestStaffFieldTool } from '../constants/fieldStaffApi';
+import { isGroupCode } from '../constants/groupCode';
 import { normalizePartyBooking, partyBookingKey } from '../constants/partyBookingKey';
 import './PartyBookingCheckInLink.css';
 
 const endpoint = '/api/party-check-in';
-const inviteCode = /^[A-Za-z0-9_-]{16}$/;
 
 function CheckInLink({ date, partyKey }) {
   const params = new URLSearchParams({ partyDate: date });
@@ -26,7 +26,7 @@ function CodeControls({ firebase, uid, date, partyKey, isAdmin }) {
   const operation = useRef(null);
   const codeInput = useRef(null);
 
-  const request = useCallback(async (action, invitation) => {
+  const request = useCallback(async (action, value) => {
     if (operation.current) return;
     const controller = new AbortController();
     operation.current = controller;
@@ -39,7 +39,7 @@ function CodeControls({ firebase, uid, date, partyKey, isAdmin }) {
       path += '?' + new URLSearchParams({ date, partyKey });
     } else {
       options.method = 'POST';
-      options.body = { action, date, partyKey, ...(action === 'link' && { code: invitation }) };
+      options.body = { action, date, partyKey, ...(action === 'link' && { code: value }), ...(action === 'create' && value && { name: value }) };
     }
     try {
       const result = await requestStaffFieldTool(firebase, uid, path, options);
@@ -47,7 +47,7 @@ function CodeControls({ firebase, uid, date, partyKey, isAdmin }) {
       setNeedsReview(result.needsReview === true);
       if (result.group === null && action === 'load') {
         setGroup(null);
-      } else if (inviteCode.test(result.group?.code) && (result.group.date === date || result.needsReview === true)) {
+      } else if (isGroupCode(result.group?.code) && (result.group.date === date || result.needsReview === true)) {
         setGroup(result.group);
         setCode('');
         if (action !== 'load') setMessage('The group code is ready to use at check-in.');
@@ -88,15 +88,19 @@ function CodeControls({ firebase, uid, date, partyKey, isAdmin }) {
       <p>Linked group <strong>{group.name}</strong></p>
       <div className="party-code-row"><label>Group code<input ref={codeInput} className="form-control" readOnly value={group.code} onFocus={event => event.target.select()} /></label>
         <button type="button" className="btn btn-primary" onClick={copyCode}>Copy code</button></div>
-      <small>Paste this code into staff check-in to find the group.</small>
+      <small>Find this group in Player Check-In by name or code.</small>
       {isAdmin && group.id && <a href={`/admin/field/groups?group=${encodeURIComponent(group.id)}`} target="_blank" rel="noopener noreferrer">Manage this group <span className="visually-hidden">(opens in a new tab)</span></a>}
     </>}
     {group === null && <>
       <form className="party-code-row" onSubmit={event => { event.preventDefault(); request('link', code.trim()); }}>
-        <label>Organizer’s group code<input className="form-control" value={code} onChange={event => setCode(event.target.value)} required minLength={16} maxLength={16} autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} /></label>
-        <button className="btn btn-primary" disabled={busy || !inviteCode.test(code.trim())}>Link existing group</button>
+        <label>Organizer’s group code<input className="form-control" value={code} onChange={event => setCode(event.target.value)} required maxLength={64} autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} /></label>
+        <button className="btn btn-primary" disabled={busy || !isGroupCode(code.trim())}>Link existing group</button>
       </form>
-      <div className="party-code-create"><span>Party has no group yet?</span> <button type="button" className="btn btn-outline-primary" disabled={busy} onClick={() => request('create')}>Create group code</button></div>
+      <form className="party-code-row" onSubmit={event => {
+        event.preventDefault(); request('create', event.currentTarget.elements.groupName.value.trim());
+      }}><label>Public group name (optional)<input name="groupName" className="form-control" maxLength={80} placeholder="Scheduled party" /></label>
+        <button type="submit" className="btn btn-outline-primary" disabled={busy}>Create group code</button></form>
+      <small>Create the group within five days of the party. Its code uses the public group name and booked party size.</small>
     </>}
     {busy && <p role="status">{group === undefined ? 'Looking up the party’s group…' : 'Updating the party’s group…'}</p>}
     {message && <p role="status">{message}</p>}

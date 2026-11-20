@@ -22,3 +22,4 @@
 .group-desk__confirm p { margin: .5rem 0; }
 .group-desk [role='status']:not(:empty) { border-inline-start: 3px solid var(--desk-emphasis); padding: .6rem .85rem; margin: .5rem 0 1rem; }
 @media (max-width: 760px) { .group-desk__layout { grid-template-columns: 1fr; } }
+.group-desk__roster li { flex-wrap: wrap; }

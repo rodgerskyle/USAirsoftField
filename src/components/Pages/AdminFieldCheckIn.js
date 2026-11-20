@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { readScannedMemberCard } from '../constants/scoreCards';
 import { StaffCardScanner } from './StaffCardScanner';
+import { groupExperienceLabels } from '../constants/groupExperience';
 import StaffGroupLookup from './StaffGroupLookup';
 import './AdminFieldCheckIn.css';
 
@@ -15,10 +16,6 @@ const memberships = {
   guest: 'Walk-on',
 };
 const classifications = { a: 'A Tier', b: 'B Tier', c: 'C Tier', d: 'D Tier', unrated: 'Unrated' };
-const assessments = {
-  unrated: 'No estimate', limited: 'New to airsoft', regular: 'Some experience',
-  veteran: 'Experienced', elite: 'Highly experienced',
-};
 const reasons = {
   headcount: 'closer headcounts',
   tierA: 'spreads A Tier players',
@@ -182,7 +179,7 @@ function SelectedPlayer({ player, suggestion, working, onAssessment, onAssign })
         <label className="admin-checkin__rating" htmlFor="admin-checkin-rating">
           Team balance estimate
           <select id="admin-checkin-rating" value={experienceBand || 'unrated'} disabled={working} onChange={event => onAssessment(event.target.value)}>
-            {Object.entries(assessments).map(([band, label]) => <option value={band} key={band}>{label}</option>)}
+            {Object.entries(groupExperienceLabels).map(([band, label]) => <option value={band} key={band}>{label}</option>)}
           </select>
         </label>
       )}
@@ -210,6 +207,8 @@ export default function AdminFieldCheckIn({ request }) {
   const [matches, setMatches] = useState([]);
   const [working, setWorking] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [groupWorking, setGroupWorking] = useState(false);
+  const [checkInRevision, setCheckInRevision] = useState(0);
   const [rosterError, setRosterError] = useState('');
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
@@ -367,6 +366,7 @@ export default function AdminFieldCheckIn({ request }) {
         });
         if (signal.aborted) return;
         applyAssignment(data, player);
+        setCheckInRevision(value => value + 1);
         setStatus(assignmentMessage(data));
         const input = newGuest ? guestInput.current : memberInput.current;
         if (input) {
@@ -386,6 +386,11 @@ export default function AdminFieldCheckIn({ request }) {
         throw failure;
       }
     });
+  }
+
+  function acceptGroupBoard(result) {
+    ++generation.current;
+    setBoard(current => putResult(current, result));
   }
 
   function openClearConfirmation() {
@@ -442,7 +447,7 @@ export default function AdminFieldCheckIn({ request }) {
   }
 
   const players = board?.players ?? [];
-  const checkInLocked = working || Boolean(clearConfirmation);
+  const checkInLocked = working || groupWorking || Boolean(clearConfirmation);
   const canClear = Boolean(board?.rosterVersion && board.counts?.total > 0);
   const dateLabel = board?.date ? `${fieldDate.format(new Date(board.date + 'T00:00:00Z'))} · Pacific time` : 'Today at the field · Pacific time';
   const recommendation = selected?.date === board?.date ? recommendPlacement(board, selected?.player) : null;
@@ -470,14 +475,19 @@ export default function AdminFieldCheckIn({ request }) {
               lookup({ displayName: guestInput.current.value.trim() }, true);
             }}>
               <label htmlFor="admin-checkin-guest">
-                Walk-on name or callsign
+                Player name or callsign
                 <input id="admin-checkin-guest" ref={guestInput} type="text" minLength={2} maxLength={80} autoComplete="off" required readOnly={checkInLocked}
                   onChange={() => { if (selected?.player.membershipStatus === 'guest' && !selected.player.side) setSelected(null); }} />
               </label>
               <button className="btn btn-outline-primary" type="submit" disabled={checkInLocked}>Continue</button>
             </form>
           </details>
-          <StaffGroupLookup request={request} onSelect={lookup} disabled={checkInLocked} />
+          <StaffGroupLookup request={request} onSelect={lookup} disabled={working || Boolean(clearConfirmation)}
+            rosterVersion={board?.rosterVersion} checkInRevision={checkInRevision} onWorking={setGroupWorking}
+            onBoardRead={acceptGroupBoard} onAssigned={result => {
+              acceptGroupBoard(result);
+              setSelected(null); setMatches([]); setStatus(''); setError('');
+            }} />
           {status && <p className="admin-checkin__status" role="status">{status}</p>}
           {error && <p className="alert alert-danger" role="alert">{error}</p>}
           {matches.length > 0 && <PlayerRows players={matches} onSelect={lookup} disabled={checkInLocked} />}

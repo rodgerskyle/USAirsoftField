@@ -3,6 +3,7 @@ import { patchDifficulty } from './patchDifficulty';
 
 const apiUrl = process.env.REACT_APP_USAW_BADGE_API_URL ?? 'https://usaw-badge-service.pink-bud-3735.chatgpt.site/api/player-badges';
 const patchLeaderboardUrl = 'https://app.usairsoftfield.com/api/patch-leaderboard';
+const scoreBadgesUrl = 'https://app.usairsoftfield.com/api/staff-score-badges';
 const artPath = `${process.env.PUBLIC_URL || ''}/badges`;
 
 export const badgeServiceConfigured = /^https:\/\/[^?#]+$/i.test(apiUrl);
@@ -38,8 +39,8 @@ export function historicalBadge(id) {
     return badgeById[id] || retiredById.get(id);
 }
 
-async function callBadgeApi({ query, firebase, body, staffToken, signal } = {}) {
-    if (!badgeServiceConfigured) throw new Error('Badge services are unavailable.');
+async function callBadgeApi({ query, firebase, body, staffToken, signal, endpoint = apiUrl } = {}) {
+    if (endpoint === apiUrl && !badgeServiceConfigured) throw new Error('Badge services are unavailable.');
 
     const headers = { Accept: 'application/json' };
     if (firebase) {
@@ -49,7 +50,7 @@ async function callBadgeApi({ query, firebase, body, staffToken, signal } = {}) 
     }
     if (body) headers['Content-Type'] = 'application/json';
     if (staffToken) headers['X-USAW-Staff-Session'] = staffToken;
-    const url = new URL(apiUrl);
+    const url = new URL(endpoint);
     if (query) url.search = new URLSearchParams(query).toString();
 
     let response;
@@ -142,6 +143,20 @@ export function getStaffBadgeCounts(firebase, playerId, staffToken, { signal } =
 
 export function grantPlayerBadge(firebase, { playerId, badgeId, reason, grantId }, staffToken) {
     return callBadgeApi({ firebase, staffToken, body: { action: 'award', playerId, badgeId, reason, grantId } });
+}
+
+export async function getRoundPatchOptions(mode, signal) {
+    const data = await callBadgeApi({ endpoint: scoreBadgesUrl, query: { mode }, signal });
+    if (!Array.isArray(data.badgeIds)) throw new Error('The patches for this round could not be loaded.');
+    return [...new Set(data.badgeIds)].map(id => badgeById[id]).filter(Boolean);
+}
+
+export async function awardRoundPatch(firebase, body, staffToken, signal) {
+    const { award } = await callBadgeApi({ endpoint: scoreBadgesUrl, firebase, body, staffToken, signal });
+    if (award?.badgeId !== body.badgeId || !Number.isSafeInteger(award.earnedCount) || award.earnedCount < 1) {
+        throw new Error('The patch award could not be confirmed. Retry this patch.');
+    }
+    return award;
 }
 
 export function getStaffBadgeGrantHistory(firebase, { playerId, badgeId, before }, staffToken, { signal } = {}) {

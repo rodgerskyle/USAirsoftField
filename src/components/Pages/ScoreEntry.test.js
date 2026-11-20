@@ -7,6 +7,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { FirebaseContext } from '../Firebase';
 import { requestStaffFieldTool } from '../constants/fieldStaffApi';
 import { getAllPlayerDisplayNames } from '../constants/playerDisplayNames';
+import { awardRoundPatch, badgeById, getRoundPatchOptions, unlockBadgeStaff } from '../constants/playerBadges';
 import { readScannedMemberCard, verifyScannedMemberCard } from '../constants/scoreCards';
 import { checkScoreOperation, loadPlayerScoreHistory, recordPlayerResult, voidPlayerResult } from '../constants/scoreRecording';
 import { AuthUserContext } from '../session';
@@ -24,6 +25,10 @@ jest.mock('../Firebase', () => {
 jest.mock('firebase/database', () => ({ onValue: jest.fn() }));
 jest.mock('../constants/fieldStaffApi', () => ({ requestStaffFieldTool: jest.fn() }));
 jest.mock('../constants/playerDisplayNames', () => ({ getAllPlayerDisplayNames: jest.fn() }));
+jest.mock('../constants/playerBadges', () => ({
+    ...jest.requireActual('../constants/playerBadges'),
+    awardRoundPatch: jest.fn(), getRoundPatchOptions: jest.fn(), unlockBadgeStaff: jest.fn(),
+}));
 jest.mock('../constants/scoreCards', () => ({
     ...jest.requireActual('../constants/scoreCards'),
     readScannedMemberCard: jest.fn(),
@@ -111,6 +116,9 @@ beforeEach(() => {
         return stopDirectory;
     });
     getAllPlayerDisplayNames.mockResolvedValue({});
+    getRoundPatchOptions.mockResolvedValue([badgeById.countdown, badgeById['objective-mvp']]);
+    unlockBadgeStaff.mockResolvedValue({ staffToken: 'staff-test-token', expiresAt: new Date(Date.now() + 3600000).toISOString() });
+    awardRoundPatch.mockResolvedValue({ earnedCount: 1 });
     readScannedMemberCard.mockReturnValue(null);
     recordPlayerResult.mockResolvedValue({ replayed: false });
     loadPlayerScoreHistory.mockResolvedValue({ history: [] });
@@ -483,4 +491,68 @@ test.each(['open', 'dismissed'])('rechecks a player report currently marked %s b
         { action: 'resolve', id: flag.id, playerId: firstId },
     ]);
     expect(screen.getByText('No open receipt flags.')).toBeInTheDocument();
+});
+
+async function unlockRoundPatches() {
+    fireEvent.change(screen.getByLabelText('Staff badge email'), { target: { value: 'ref@example.com' } });
+    fireEvent.change(screen.getByLabelText('Staff badge password'), { target: { value: 'test-password' } });
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Unlock badge awards' })));
+}
+
+test('patches follow the selected player, survive a pending loss, and are awarded only on confirmation', async () => {
+    const eventId = '1f0424db-e3d6-4982-95c7-3843a46243fd';
+    const day = '2026-10-19';
+    const page = renderScore();
+    await page.verify(admin);
+    selectRound();
+    const patch = await screen.findByRole('button', { name: 'Countdown', pressed: false });
+    expect(patch).toBeDisabled();
+    expect(patch.querySelector('img')).toHaveAttribute('src', '/badges/thumbs/countdown.png');
+    await scan(secondId);
+    fireEvent.click(patch);
+    expect(patch).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(patch);
+    expect(patch).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(patch);
+    await scan(firstId);
+    expect(patch).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(screen.getByRole('button', { name: 'Objective MVP' }));
+    fireEvent.change(screen.getByLabelText(/award reason/i), { target: { value: 'Held the objective.' } });
+    await unlockRoundPatches();
+    recordPlayerResult.mockRejectedValueOnce(new Error('Waiting for a confirmed score'));
+    checkScoreOperation.mockResolvedValueOnce({ confirmed: false }).mockResolvedValueOnce({ confirmed: true, eventId, day });
+    await record('loss');
+    expect(awardRoundPatch).not.toHaveBeenCalled();
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Check saved status' })));
+    expect(awardRoundPatch).toHaveBeenCalledTimes(1);
+    expect(awardRoundPatch).toHaveBeenCalledWith(page.firebase, {
+        playerId: firstId, eventId, day, badgeId: 'objective-mvp', reason: 'Held the objective.',
+    }, 'staff-test-token', expect.any(AbortSignal));
+    expect(screen.getByText('Objective MVP awarded to River Lane.')).toBeInTheDocument();
+    expect(recordPlayerResult).toHaveBeenCalledTimes(1);
+});
+
+test('a first-award reason can be supplied after reload without awarding successful patches or writing the win again', async () => {
+    const eventId = '1f0424db-e3d6-4982-95c7-3843a46243fd';
+    recordPlayerResult.mockResolvedValue({ eventId, day: '2026-10-19' });
+    awardRoundPatch.mockResolvedValueOnce({ earnedCount: 2 }).mockRejectedValueOnce(new Error('Add a reason for this first award.'));
+    let page = renderScore();
+    await page.verify(admin);
+    selectRound();
+    await scan(firstId);
+    fireEvent.click(screen.getByRole('button', { name: 'Countdown', pressed: false }));
+    fireEvent.click(screen.getByRole('button', { name: 'Objective MVP', pressed: false }));
+    await unlockRoundPatches();
+    await record('win');
+    expect(screen.getByText('Add a reason for this first award.')).toBeInTheDocument();
+    expect(awardRoundPatch.mock.calls.map(([, body]) => body.badgeId)).toEqual(['countdown', 'objective-mvp']);
+    page.unmount();
+    page = renderScore();
+    await page.verify(admin);
+    await unlockRoundPatches();
+    fireEvent.change(screen.getByLabelText('First-award reason for Objective MVP'), { target: { value: 'Captured the timer.' } });
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Retry patch' })));
+    expect(awardRoundPatch.mock.calls[2][1]).toEqual({ ...awardRoundPatch.mock.calls[1][1], reason: 'Captured the timer.' });
+    expect(recordPlayerResult).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('Objective MVP awarded to River Lane.')).toBeInTheDocument();
 });
