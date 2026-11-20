@@ -20,6 +20,22 @@ jest.mock('jspdf', () => jest.fn());
 jest.mock('./components/Pages/Birthday', () => () => null);
 jest.mock('./components/Pages/StaffCardScanner', () => ({ StaffCardScanner: () => null }));
 
+test('keeps the staff directory closed until Firebase verifies the account on this device', () => {
+  const staff = { uid: 'previous-staff', roles: { ADMIN: true } };
+  localStorage.setItem('authUser', JSON.stringify(staff));
+  window.history.replaceState(null, '', '/admin');
+  const firebase = { auth: { currentUser: null }, onAuthUserListener: () => () => {}, users: () => 'players' };
+  const readsBefore = onValue.mock.calls.length;
+  try {
+    render(<FirebaseContext.Provider value={firebase}><HelmetProvider><App /></HelmetProvider></FirebaseContext.Provider>);
+    expect(screen.queryByRole('heading', { name: 'Staff operations' })).not.toBeInTheDocument();
+    expect(onValue.mock.calls.length).toBe(readsBefore);
+  } finally {
+    window.history.replaceState(null, '', '/');
+    localStorage.removeItem('authUser');
+  }
+});
+
 test.each([
   ['/admin/scores', ''],
   ['/admin/enterwins', '?result=win'],

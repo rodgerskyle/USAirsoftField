@@ -2,13 +2,14 @@ import { initializeApp } from 'firebase/app';
 import {
     getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
     signOut, sendPasswordResetEmail, updatePassword, updateEmail,
-    reauthenticateWithCredential
+    reauthenticateWithCredential, EmailAuthProvider
 } from 'firebase/auth';
 import { ref as db_ref } from 'firebase/database';
 import { getDatabase, onValue } from 'firebase/database';
 import { ref as st_ref } from 'firebase/storage';
 import { getStorage } from 'firebase/storage';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { officialAccountRoles } from '../constants/roles';
 
 // import 'firebase/compat/auth';
 // import 'firebase/compat/database';
@@ -56,7 +57,7 @@ class Firebase {
         updateEmail(this.auth.currentUser, email)
 
     doReauthenticate = (email, password) =>
-        reauthenticateWithCredential(this.auth.currentUser, this.ns_auth.EmailAuthProvider.credential(email, password));
+        reauthenticateWithCredential(this.auth.currentUser, EmailAuthProvider.credential(email, password));
 
     // *** Merge Auth and DB User API *** //
     onAuthUserListener = (next, fallback) => {
@@ -75,7 +76,7 @@ class Firebase {
                     if (dbUser?.accountRemovedAt) void this.doSignOut().catch(() => {});
                     return;
                 }
-                next({ email: authUser.email, ...dbUser, roles: dbUser.roles || [], uid: authUser.uid });
+                next({ email: authUser.email, ...dbUser, roles: officialAccountRoles(dbUser.roles), uid: authUser.uid });
             }, fallback);
         });
         return () => {

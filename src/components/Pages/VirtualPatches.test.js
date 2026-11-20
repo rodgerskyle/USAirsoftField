@@ -8,16 +8,27 @@ import { FirebaseContext } from '../Firebase';
 import { AuthUserContext } from '../session';
 import {
   BADGE_CATALOG, getBadgeStandings, getFeaturedBadges, getFeaturedBadgeDetails, getMyBadges, getStaffBadgeCounts,
-  getStaffBadgeGrantHistory, revokePlayerBadgeGrant, setFeaturedBadge, unlockBadgeStaff,
+  getStaffBadgeGrantHistory, revokePlayerBadgeGrant, setFeaturedBadge, staffBattleBadgeDay, unlockBadgeStaff,
 } from '../constants/playerBadges';
 import { getAllPlayerDisplayNames, getPlayerDisplayNames } from '../constants/playerDisplayNames';
 import { PATCH_DIFFICULTIES } from '../constants/patchDifficulty';
+import * as scoreHistory from '../constants/scoreHistory';
 import Redirect from '../constants/redirect';
 import AdminBadgeAwards from './AdminBadgeAwards';
 import Pricing from './Pricing';
 import VirtualPatches from './VirtualPatches';
 import PlayerProfileView from './PlayerProfileView';
 import Leaderboard from './leaderboard';
+
+jest.mock('../constants/playerExperience', () => {
+  const actual = jest.requireActual('../constants/playerExperience');
+  return {
+    ...actual,
+    requestPlayerExperience: (path, signal) => path.startsWith('/api/battle-badges?')
+      ? Promise.resolve({ progress: { totalAwards: 0, colorBadgeCount: 0, towerOfPower: false, silverStars: 0, goldStars: 0 } })
+      : actual.requestPlayerExperience(path, signal),
+  };
+});
 
 jest.mock('../Firebase', () => {
   const context = jest.requireActual('../Firebase/context');
@@ -39,6 +50,7 @@ jest.mock('../constants/playerBadges', () => ({
   getStaffBadgeGrantHistory: jest.fn(),
   revokePlayerBadgeGrant: jest.fn(),
   setFeaturedBadge: jest.fn(),
+  staffBattleBadgeDay: jest.fn(),
   unlockBadgeStaff: jest.fn(),
 }));
 jest.mock('../constants/playerDisplayNames', () => ({
@@ -342,6 +354,30 @@ test('offers the expanded patch collection in the unlocked staff award picker', 
   expect(screen.getByText('Pocket BBs', { selector: 'strong' })).toBeVisible();
 });
 
+test('badge awards uses the selected member for MVP and reconciles another staff desk’s daily award', async () => {
+  const date = '2026-11-20';
+  jest.spyOn(scoreHistory, 'newScoreId').mockReturnValueOnce('9e97166f-69f5-4e82-8047-0018778f8b88');
+  const member = { ...user, name: 'Morgan Lane' };
+  unlockBadgeStaff.mockResolvedValue({ staffToken: 'staff-token', expiresAt: new Date(Date.now() + 60_000).toISOString() });
+  getStaffBadgeCounts.mockResolvedValue({ counts: {} });
+  staffBattleBadgeDay.mockResolvedValueOnce({ date, awards: [] })
+    .mockRejectedValueOnce(Object.assign(new Error('Today’s MVP was already awarded.'), { status: 409 }))
+    .mockResolvedValueOnce({ date, awards: [{ id: 'recorded', playerId: 'another-player', playerName: 'Sam Hayes', side: 'solid' }] });
+  renderPage(<AdminBadgeAwards firebase={firebase} players={[member]} loading={false} directoryUnavailable={false} />);
+  fireEvent.change(screen.getByLabelText('Staff email'), { target: { value: 'staff@example.com' } });
+  fireEvent.change(screen.getByLabelText('Staff password'), { target: { value: 'test-password' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Unlock badge controls' }));
+  fireEvent.change(await screen.findByRole('searchbox', { name: 'Find a player' }), { target: { value: member.name } });
+  fireEvent.click(screen.getByRole('button', { name: /Morgan Lane/ }));
+  const desk = within(screen.getByRole('region', { name: 'US Airsoft World Battle Badges' }));
+  fireEvent.click(desk.getByRole('button', { name: 'Manage today’s MVP' }));
+  fireEvent.change(await desk.findByLabelText('MVP team'), { target: { value: 'camo' } });
+  fireEvent.click(desk.getByRole('button', { name: 'Award daily MVP' }));
+  expect(await desk.findByText('Sam Hayes')).toBeVisible();
+  expect(desk.queryByRole('button', { name: 'Award daily MVP' })).toBeNull();
+  expect(staffBattleBadgeDay.mock.calls[1][2].body).toMatchObject({ action: 'award', playerId, date, side: 'camo' });
+});
+
 test.each([
   ['countdown', 'Countdown', 'Badge'],
   ['tactical-click', 'Tactical Click', 'Previously awarded retired badge'],
@@ -410,6 +446,7 @@ test.each([false, true])('shows the registered name beneath the display name on 
   const heading = await screen.findByRole('heading', { name: 'Field Scout' });
   expect(heading.nextElementSibling).toBe(screen.getByText('Jordan Example'));
   expect(heading.nextElementSibling).toBeVisible();
+  expect(within(heading.closest('header')).getByRole('region', { name: 'US Airsoft World Battle Badges' })).toBeVisible();
   expect(screen.queryByText(member.username)).not.toBeInTheDocument();
 });
 

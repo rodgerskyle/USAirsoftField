@@ -7,7 +7,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { FirebaseContext } from '../Firebase';
 import { requestStaffFieldTool } from '../constants/fieldStaffApi';
 import { getAllPlayerDisplayNames } from '../constants/playerDisplayNames';
-import { awardRoundPatch, badgeById, getRoundPatchOptions, unlockBadgeStaff } from '../constants/playerBadges';
+import { awardRoundPatch, badgeById, getRoundPatchOptions, staffBattleBadgeDay, unlockBadgeStaff } from '../constants/playerBadges';
 import { readScannedMemberCard, verifyScannedMemberCard } from '../constants/scoreCards';
 import { checkScoreOperation, loadPlayerScoreHistory, recordPlayerResult, voidPlayerResult } from '../constants/scoreRecording';
 import { AuthUserContext } from '../session';
@@ -27,7 +27,7 @@ jest.mock('../constants/fieldStaffApi', () => ({ requestStaffFieldTool: jest.fn(
 jest.mock('../constants/playerDisplayNames', () => ({ getAllPlayerDisplayNames: jest.fn() }));
 jest.mock('../constants/playerBadges', () => ({
     ...jest.requireActual('../constants/playerBadges'),
-    awardRoundPatch: jest.fn(), getRoundPatchOptions: jest.fn(), unlockBadgeStaff: jest.fn(),
+    awardRoundPatch: jest.fn(), getRoundPatchOptions: jest.fn(), staffBattleBadgeDay: jest.fn(), unlockBadgeStaff: jest.fn(),
 }));
 jest.mock('../constants/scoreCards', () => ({
     ...jest.requireActual('../constants/scoreCards'),
@@ -498,6 +498,45 @@ async function unlockRoundPatches() {
     fireEvent.change(screen.getByLabelText('Staff badge password'), { target: { value: 'test-password' } });
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Unlock badge awards' })));
 }
+
+test('the score desk can grant a Battle Badge and correct it independently of wins, losses and round patches', async () => {
+    const emptyDay = { date: '2026-11-20', awards: [] };
+    const awarded = { id: 'award-id', playerId: firstId, playerName: 'River Lane', side: 'solid', progress: { totalAwards: 29 } };
+    staffBattleBadgeDay.mockResolvedValueOnce(emptyDay)
+        .mockRejectedValueOnce(new Error('Connection lost')).mockResolvedValueOnce({ ...emptyDay, awards: [awarded] })
+        .mockResolvedValueOnce(emptyDay);
+    const page = renderScore();
+    await page.verify(admin);
+    await scan(firstId);
+    fireEvent.change(teamField(), { target: { value: 'solid' } });
+    const desk = within(screen.getByRole('region', { name: 'US Airsoft World Battle Badges' }));
+    fireEvent.click(desk.getByRole('button', { name: 'Unlock MVP controls' }));
+    expect(staffBattleBadgeDay).not.toHaveBeenCalled();
+    await unlockRoundPatches();
+    const award = await desk.findByRole('button', { name: 'Award daily MVP' });
+    await act(async () => fireEvent.click(award));
+    expect(await desk.findByText('Connection lost')).toBeVisible();
+    await act(async () => fireEvent.click(award));
+    expect(staffBattleBadgeDay.mock.calls[1][2].body).toEqual({
+        action: 'award', date: emptyDay.date, playerId: firstId, side: 'solid', requestId: expect.stringMatching(/^[a-f0-9-]{36}$/),
+    });
+    expect(staffBattleBadgeDay.mock.calls[1][2].body).toEqual(staffBattleBadgeDay.mock.calls[2][2].body);
+    expect(desk.getByText('Solid team · Gold Star')).toBeVisible();
+    expect(desk.getByText('Solid team · Gold Star').closest('.staff-battle-recipient').querySelector('img'))
+        .toHaveAttribute('src', '/assets/battle-badges/field-badges.svg#gold-star');
+    expect(desk.queryByRole('button', { name: 'Award daily MVP' })).toBeNull();
+    const confirm = jest.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true);
+    try {
+        const remove = desk.getByRole('button', { name: 'Remove Battle Badge' });
+        fireEvent.click(remove);
+        expect(staffBattleBadgeDay).toHaveBeenCalledTimes(3);
+        await act(async () => fireEvent.click(remove));
+        expect(staffBattleBadgeDay.mock.calls[3][2].body).toEqual({ action: 'revoke', id: awarded.id, date: emptyDay.date });
+        expect(desk.getByRole('button', { name: 'Award daily MVP' })).toBeEnabled();
+        expect(recordPlayerResult).not.toHaveBeenCalled();
+        expect(awardRoundPatch).not.toHaveBeenCalled();
+    } finally { confirm.mockRestore(); }
+});
 
 test('patches follow the selected player, survive a pending loss, and are awarded only on confirmation', async () => {
     const eventId = '1f0424db-e3d6-4982-95c7-3843a46243fd';

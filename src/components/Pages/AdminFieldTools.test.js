@@ -30,10 +30,11 @@ const expiry = () => new Date(Date.now() + 60 * 60_000).toISOString();
 const reply = (data, status = 200) => ({ ok: status < 400, status, json: async () => data });
 const fetchBeforeTest = global.fetch;
 
-function openCheckIn(user, { verify = true, path = '/admin/field/check-in' } = {}) {
+function openCheckIn(user, { verify = true, path = '/admin/field/check-in', reauthenticate } = {}) {
   let confirmRole;
   const firebase = {
-    auth: { currentUser: user && { uid: user.uid, getIdToken: async () => 'firebase-field-id-token' } },
+    auth: { currentUser: user && { uid: user.uid, email: user.email, getIdToken: async () => 'firebase-field-id-token' } },
+    doReauthenticate: reauthenticate,
     onAuthUserListener: success => {
       confirmRole = success;
       return () => {};
@@ -71,6 +72,31 @@ test('keeps a direct field tool URL behind the verified website administrator gu
   expect(screen.getByRole('heading', { name: 'Sign in' })).toBeInTheDocument();
   expect(screen.queryByRole('heading', { name: 'Player Check-In' })).not.toBeInTheDocument();
   expect(fetch).not.toHaveBeenCalled();
+});
+
+test.each(['desk-one', 'desk-two'])('unlocks an independently authorized admin %s with their own recent sign-in', async uid => {
+  fetch.mockResolvedValueOnce(reply({ available: true, accountStatus: 'staff', isStaff: false }))
+    .mockResolvedValueOnce(reply({ isStaff: true, expiresAt: expiry() }));
+  openCheckIn({ uid, email: uid + '@example.com', roles: { ADMIN: 'ADMIN' } });
+  fireEvent.click(await screen.findByRole('button', { name: 'Use my admin account' }));
+  expect(await screen.findByText('Load test roster')).toBeVisible();
+  expect(fetch).toHaveBeenLastCalledWith(sessionEndpoint, expect.objectContaining({
+    method: 'POST', credentials: 'include', body: JSON.stringify({ action: 'unlock-account' }),
+  }));
+});
+
+test('re-verifies a stale admin sign-in with Firebase before retrying the field session exchange', async () => {
+  fetch.mockResolvedValueOnce(reply({ available: true, accountStatus: 'staff', isStaff: false }))
+    .mockResolvedValueOnce(reply({ code: 'recent_login_required', error: 'Verify your account.' }, 401))
+    .mockResolvedValueOnce(reply({ isStaff: true, expiresAt: expiry() }));
+  const reauthenticate = jest.fn().mockResolvedValue({});
+  openCheckIn({ ...admin, email: 'field@example.com' }, { reauthenticate });
+  fireEvent.click(await screen.findByRole('button', { name: 'Use my admin account' }));
+  fireEvent.change(await screen.findByLabelText('Account password'), { target: { value: 'fixture' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Verify account password' }));
+  expect(await screen.findByText('Load test roster')).toBeVisible();
+  expect(reauthenticate).toHaveBeenCalledWith('field@example.com', 'fixture');
+  expect(fetch.mock.calls.slice(1).map(([, options]) => JSON.parse(options.body))).toEqual([{ action: 'unlock-account' }, { action: 'unlock-account' }]);
 });
 
 test('unlocks once, switches between in-site tools, and revokes the shared cookie session', async () => {

@@ -1,0 +1,76 @@
+.battle-showcase {
+  --battle-ink: #eef4fb;
+  --battle-muted: #b8cadf;
+  --battle-edge: #516981;
+  --battle-fabric: #132638;
+  position: relative;
+  margin-block-start: 16px;
+  padding: 14px clamp(12px, 2vw, 22px);
+  border: 1px solid var(--battle-edge);
+  border-inline-start: 3px solid #bd3e4e;
+  border-radius: 8px;
+  color: var(--battle-ink);
+  background: var(--battle-fabric);
+  min-width: 0;
+}
+:root[data-bs-theme="light"] .battle-showcase,
+body:not(.night-mode) .player-hero-card .battle-showcase {
+  --battle-ink: #112e4b;
+  --battle-muted: #364e65;
+  --battle-edge: #9fb2c2;
+  --battle-fabric: #edf2f5;
+}
+.battle-showcase .battle-showcase__title {
+  margin: 0;
+  color: var(--battle-ink);
+  font-size: clamp(1rem, 1rem + .35vw, 1.3rem);
+  font-weight: 750;
+  line-height: 1.25;
+}
+.battle-showcase .battle-showcase__message,
+.battle-showcase .battle-showcase__total {
+  color: var(--battle-muted);
+  margin: 5px 0 0;
+  font-size: .875rem;
+  line-height: 1.4;
+}
+.battle-showcase__message button {
+  padding: 4px 6px;
+  color: inherit;
+  font: inherit;
+  background: transparent;
+  border: none;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.battle-showcase__rack {
+  display: flex;
+  gap: 12px clamp(9px, 1.3vw, 18px);
+  flex-wrap: wrap;
+  align-items: flex-end;
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+.battle-showcase__badge {
+  display: grid;
+  justify-items: center;
+  align-content: end;
+  gap: 4px;
+  text-align: center;
+  color: var(--battle-ink);
+  font-size: .76rem;
+  font-weight: 650;
+  line-height: 1.2;
+}
+.battle-showcase__badge img {
+  display: block;
+  width: clamp(46px, 5vw, 64px);
+  height: clamp(55px, 6vw, 76px);
+  object-fit: contain;
+  filter: drop-shadow(0 2px 2px #08182655);
+}
+.battle-showcase__badge--tower-of-power img {
+  width: clamp(56px, 6vw, 78px);
+  height: clamp(67px, 7vw, 92px);
+}
