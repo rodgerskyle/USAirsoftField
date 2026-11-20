@@ -1,9 +1,11 @@
 import catalog from './badgeCatalog.json';
 import { patchDifficulty } from './patchDifficulty';
+import { matchesSignedInEmail, verifySignedInAdminIdentity } from './officialAdminAccount';
 
 const apiUrl = process.env.REACT_APP_USAW_BADGE_API_URL ?? 'https://usaw-badge-service.pink-bud-3735.chatgpt.site/api/player-badges';
 const patchLeaderboardUrl = 'https://app.usairsoftfield.com/api/patch-leaderboard';
 const scoreBadgesUrl = 'https://app.usairsoftfield.com/api/staff-score-badges';
+const battleBadgesUrl = 'https://app.usairsoftfield.com/api/staff-battle-badges';
 const artPath = `${process.env.PUBLIC_URL || ''}/badges`;
 
 export const badgeServiceConfigured = /^https:\/\/[^?#]+$/i.test(apiUrl);
@@ -43,10 +45,11 @@ async function callBadgeApi({ query, firebase, body, staffToken, signal, endpoin
     if (endpoint === apiUrl && !badgeServiceConfigured) throw new Error('Badge services are unavailable.');
 
     const headers = { Accept: 'application/json' };
+    const user = firebase?.auth.currentUser;
     if (firebase) {
-        const user = firebase.auth.currentUser;
         if (!user) throw new Error('Sign in to your USAW account to continue.');
         headers.Authorization = `Bearer ${await user.getIdToken()}`;
+        if (firebase.auth.currentUser !== user) throw new Error('Your signed-in account changed. Reopen the staff tool.');
     }
     if (body) headers['Content-Type'] = 'application/json';
     if (staffToken) headers['X-USAW-Staff-Session'] = staffToken;
@@ -69,6 +72,7 @@ async function callBadgeApi({ query, firebase, body, staffToken, signal, endpoin
     }
 
     const result = await response.json().catch(() => null);
+    if (user && firebase.auth.currentUser !== user) throw new Error('Your signed-in account changed. Reopen the staff tool.');
     if (!response.ok || !result) {
         const error = new Error(result?.error || 'Badge services are temporarily unavailable. Please try again.');
         error.status = response.status;
@@ -133,8 +137,16 @@ export function setFeaturedBadge(firebase, badgeId) {
     return callBadgeApi({ firebase, body: { action: 'feature', badgeId } });
 }
 
-export function unlockBadgeStaff(firebase, { email, password }) {
+export async function unlockBadgeStaff(firebase, { email, password }) {
+    if (matchesSignedInEmail(firebase, email)) {
+        await verifySignedInAdminIdentity(firebase, firebase.auth.currentUser, password);
+        return unlockBadgeAdminAccount(firebase);
+    }
     return callBadgeApi({ firebase, body: { action: 'unlock', email, password } });
+}
+
+export function unlockBadgeAdminAccount(firebase) {
+    return callBadgeApi({ endpoint: 'https://app.usairsoftfield.com/api/staff-badge-session', firebase, body: { action: 'unlock-account' } });
 }
 
 export function getStaffBadgeCounts(firebase, playerId, staffToken, { signal } = {}) {
@@ -167,4 +179,14 @@ export function getStaffBadgeGrantHistory(firebase, { playerId, badgeId, before 
 
 export function revokePlayerBadgeGrant(firebase, { playerId, badgeId, grantId }, staffToken) {
     return callBadgeApi({ firebase, staffToken, body: { action: 'revoke-one', playerId, badgeId, grantId } });
+}
+
+export async function staffBattleBadgeDay(firebase, staffToken, { body, signal } = {}) {
+    const day = await callBadgeApi({ endpoint: battleBadgesUrl, firebase, staffToken, body, signal });
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day.date) || !Array.isArray(day.awards) ||
+        !day.awards.every(row => typeof row?.id === 'string' && typeof row.playerId === 'string' &&
+            typeof row.playerName === 'string' && ['camo', 'solid'].includes(row.side))) {
+        throw new Error('The field’s MVP record could not be confirmed. Check the field day again.');
+    }
+    return day;
 }

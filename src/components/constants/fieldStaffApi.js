@@ -1,3 +1,5 @@
+import { matchesSignedInEmail, verifySignedInAdminIdentity } from './officialAdminAccount';
+
 const companionOrigin = 'https://app.usairsoftfield.com';
 export const fieldStaffPaths = Object.freeze({
   checkIn: '/admin/field/check-in',
@@ -65,6 +67,10 @@ export async function requestStaffFieldTool(firebase, uid, path, { method = 'GET
   if (!staffEndpoints.has(endpoint.pathname)) throw new Error('Invalid field tool endpoint.');
   const user = firebase.auth.currentUser;
   requireCurrentAccount(firebase, user, uid);
+  if (endpoint.pathname === '/api/staff-session' && method === 'POST' && matchesSignedInEmail(firebase, body?.email)) {
+    await verifySignedInAdminIdentity(firebase, user, body.password);
+    body = { action: 'unlock-account' };
+  }
   const token = await user.getIdToken().catch(() => {
     throw new FieldStaffError('Your USAW sign-in could not be verified. Sign in again or retry after reconnecting.', 401);
   });
