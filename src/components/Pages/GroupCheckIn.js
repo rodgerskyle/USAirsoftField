@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import Modal from 'react-bootstrap/Modal';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { withFirebase } from '../Firebase';
@@ -7,9 +8,18 @@ import { groupExperienceLabels } from '../constants/groupExperience';
 import GroupPartySchedule from './GroupPartySchedule';
 import './GroupCheckIn.css';
 
+const Waiver = React.lazy(() => import('./Waiver'));
 const endpoint = 'https://app.usairsoftfield.com/api/check-in-groups';
 const dateLabel = date => new Intl.DateTimeFormat('en-US', { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(date + 'T00:00:00Z'));
 const fieldToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+
+function RosterName({ label, onSign }) {
+  const input = useRef(null);
+  return <div>
+    <label>{label}<input name="displayName" required minLength={2} maxLength={80} ref={input} /></label>
+    <button className="ph-button" type="button" onClick={() => onSign(input.current)}>Sign waiver and fill name</button>
+  </div>;
+}
 
 function ExperienceField({ label = 'Airsoft experience', value = 'unrated' }) {
   return <label>{label}<select name="experienceBand" defaultValue={value}>
@@ -44,6 +54,7 @@ function GroupCheckIn({ firebase }) {
   const [visitKind, setVisitKind] = useState('visit');
   const operation = useRef(null);
   const attempt = useRef(null);
+  const [waiverInput, setWaiverInput] = useState(null);
 
   useEffect(() => {
     function reset(current) {
@@ -51,6 +62,7 @@ function GroupCheckIn({ firebase }) {
       operation.current = null;
       attempt.current = null;
       setSession(current ? { user: current } : { user: null, guest: getGroupGuestSession() });
+      setWaiverInput(null);
       setVisitKind('visit');
       setGroups([]);
       setSelected(null);
@@ -121,14 +133,14 @@ function GroupCheckIn({ firebase }) {
   return <main className="visit-groups">
     <Helmet><title>Group Check-in | US Airsoft Field</title></Helmet>
     <header className="visit-groups__heading"><div><p>Arrive together</p><h1>Group check-in</h1><p>Prepare your roster up to five days before your visit.</p></div><Link className="ph-button" to="/player-hub">Player Hub</Link></header>
-    <p className="visit-groups__note">Your group list helps staff find your party. Every player still completes their own waiver, admission, equipment checks, and team assignment at the field.</p>
+    <p className="visit-groups__note">Use the group list for your visit, birthday or private event. Each player can <Link to="/waiver">sign the waiver</Link> ahead of time. Staff verify each waiver at arrival.</p>
     {!session ? <p role="status">Loading group check-in…</p> : <>
       {session.guest && <p className="visit-groups__guest-access"><strong>Continue as a guest.</strong>{' '}
         {session.guest.persistent ? 'Return to this website in the same browser to manage your group. Use your own device.' : 'This browser can only remember your guest access until this page is closed or reloaded.'}{' '}
         <Link to="/login">Sign in</Link> to use your USAW account instead.</p>}
       <div className="visit-groups__layout" aria-busy={busy} key={session.user?.uid || 'guest'}>
         <section className="visit-groups__panel"><h2>Plan a visit</h2><form onSubmit={create}><fieldset disabled={busy}>
-          {session.guest && <label>Your name or callsign<input name="displayName" required minLength={2} maxLength={80} /></label>}
+          {session.guest && <RosterName label="Your name or callsign" onSign={setWaiverInput} />}
           <ExperienceField label="Your airsoft experience" />
           <label>Visit type<select name="kind" value={visitKind} onChange={event => setVisitKind(event.target.value)}>
             <option value="visit">Family or friends</option><option value="party">Scheduled birthday or event</option>
@@ -140,7 +152,7 @@ function GroupCheckIn({ firebase }) {
           <p className="visit-groups__help">Your group name and size form your code, for example rebels-8. Groups expire five days after creation.</p>
           <button className="ph-button ph-button-primary">Create group</button>
         </fieldset></form><h2>Join friends</h2><form onSubmit={join}><fieldset disabled={busy}>
-          {session.guest && <label>Your name or callsign<input name="displayName" required minLength={2} maxLength={80} /></label>}
+          {session.guest && <RosterName label="Your name or callsign" onSign={setWaiverInput} />}
           <ExperienceField label="Your airsoft experience" />
           <label>Organizer’s group code<input name="code" maxLength={64} autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} required /></label><button className="ph-button">Join group</button>
         </fieldset></form><h2>Your groups</h2>{groups.length ? <ul className="visit-groups__choices">{groups.map(group => <li key={group.id}><button disabled={busy} onClick={() => void run(async signal => {
@@ -165,12 +177,22 @@ function GroupCheckIn({ firebase }) {
               </fieldset></form></details>}
             {entry.canRemove && <button className="ph-button" disabled={busy} onClick={() => void run(signal => change({ action: 'remove', id: selected.id, entryId: entry.id }, signal))}>Remove from group</button>}</li>)}</ul>
           {selected.isOwner ? <><form onSubmit={event => edit('rename', event)} key={selected.id + selected.name}><fieldset disabled={busy}><label>Group name<input name="name" required maxLength={80} defaultValue={selected.name} /></label><button className="ph-button">Save name</button></fieldset></form>
-            <form onSubmit={event => edit('addGuest', event)}><fieldset disabled={busy}><label>Player name or callsign<input name="displayName" required minLength={2} maxLength={80} /></label><ExperienceField /><button className="ph-button ph-button-primary">Add player</button></fieldset></form>
+            <form onSubmit={event => edit('addGuest', event)}><fieldset disabled={busy}><RosterName label="Player name or callsign" onSign={setWaiverInput} /><ExperienceField /><button className="ph-button ph-button-primary">Add player</button></fieldset></form>
             <button className="ph-button" disabled={busy} onClick={() => { if (window.confirm('Cancel this planned group and remove its preparation list? Field check-ins and player scores are kept.')) void run(signal => change({ action: 'cancel', id: selected.id }, signal)); }}>Cancel this group</button>
           </> : <button className="ph-button" disabled={busy} onClick={() => void run(signal => change({ action: 'leave', id: selected.id }, signal))}>Leave group</button>}
         </> : <><h2>Get your group ready</h2><p>Select a group or create one to share an invitation code and prepare your party’s list.</p></>}</section>
       </div><p role="status" className="visit-groups__status">{notice}</p>
     </>}
+    {waiverInput && <Modal show size="xl" onHide={() => setWaiverInput(null)} aria-labelledby="group-waiver-title">
+      <Modal.Header closeButton><Modal.Title id="group-waiver-title">Player waiver</Modal.Title></Modal.Header>
+      <Modal.Body><React.Suspense fallback={<p role="status">Loading waiver…</p>}>
+        <Waiver onSigned={name => {
+          if (waiverInput.isConnected) waiverInput.value = name;
+          setWaiverInput(null);
+          setNotice('Waiver submitted. Review the player name and save the roster entry.');
+        }} />
+      </React.Suspense></Modal.Body>
+    </Modal>}
   </main>;
 }
 

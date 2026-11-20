@@ -12,6 +12,7 @@ import { Button, Spinner } from 'react-bootstrap/';
 import * as ROLES from '../../constants/roles';
 import { withAuthorization } from '../../session';
 import convertDate from '../../utils/convertDate';
+import { archiveMonthKeys, waiverArchiveStart } from '../../utils/waiverArchive';
 
 // import uuid from 'uuid/v4';
 import { v4 as uuid } from 'uuid';
@@ -69,7 +70,7 @@ const AddParticipantModal = ({
             const loadingLabel = isLoadingMembers
                 ? 'Loading members...'
                 : (hasActiveSearch && !isMemberMode
-                    ? 'Searching waivers across all dates...'
+                    ? 'Searching waivers from the past year…'
                     : 'Updating results...');
 
             return (
@@ -703,7 +704,7 @@ class EditSelectedForm extends Component {
     initializeDates = () => {
         let date = new Date();
         let years = [];
-        for (let i = 2020; i < date.getFullYear() + 1; i++) {
+        for (let i = new Date(waiverArchiveStart()).getFullYear(); i < date.getFullYear() + 1; i++) {
             years.push(i);
         }
         this.setState({ years });
@@ -838,9 +839,14 @@ class EditSelectedForm extends Component {
             }
 
             // Convert dates to timestamps for Firebase query
-            const startTimestamp = startDate.getTime();
-            const endTimestamp = endDate.getTime();
-            const monthKeysForSearch = this.getSearchMonthKeysForRange();
+            const now = Date.now();
+            const startTimestamp = Math.max(startDate.getTime(), waiverArchiveStart(now) + 1);
+            const endTimestamp = Math.min(endDate.getTime(), now);
+            if (startTimestamp > endTimestamp) {
+                this.setState({ waivers: [], totalDigital: 0, digitalTotalKnown: true, digitalPages: [], digitalPage: 0, digitalHasNextPage: false, isLoadingDigital: false });
+                return;
+            }
+            const monthKeysForSearch = archiveMonthKeys(startTimestamp, endTimestamp);
 
             if (searchTerm.length >= 2 && monthKeysForSearch.length > 0) {
                 const searchResultsByMonth = await Promise.all(
@@ -911,50 +917,9 @@ class EditSelectedForm extends Component {
         return `${activeYear}-${monthKey}`;
     };
 
-    getSearchMonthKeysForRange = () => {
-        const trimmedSearch = this.state.searchQuery.trim();
-        if (trimmedSearch.length >= 2) {
-            return this.getAllDigitalSearchMonthKeys();
-        }
-
-        const { activeMonth, activeYear } = this.state;
-        const allYearsValue = new Date().getFullYear() + 1;
-
-        if (activeYear === allYearsValue) {
-            // Avoid fanning out across many years for now; use non-indexed fallback path.
-            return [];
-        }
-
-        if (activeMonth === 13) {
-            return Array.from({ length: 12 }, (_, index) =>
-                `${activeYear}-${String(index + 1).padStart(2, '0')}`
-            );
-        }
-
-        const monthKey = String(activeMonth).padStart(2, '0');
-        return [`${activeYear}-${monthKey}`];
-    };
-
     getGlobalDigitalSearchRange = () => {
-        const now = new Date();
-        return {
-            startDate: new Date(2020, 0, 1),
-            endDate: new Date(now.getFullYear() + 1, 11, 31, 23, 59, 59, 999)
-        };
-    };
-
-    getAllDigitalSearchMonthKeys = () => {
-        const now = new Date();
-        const keys = [];
-
-        for (let year = 2020; year <= now.getFullYear(); year++) {
-            const maxMonth = year === now.getFullYear() ? now.getMonth() + 1 : 12;
-            for (let month = 1; month <= maxMonth; month++) {
-                keys.push(`${year}-${String(month).padStart(2, '0')}`);
-            }
-        }
-
-        return keys;
+        const now = Date.now();
+        return { startDate: new Date(waiverArchiveStart(now) + 1), endDate: new Date(now) };
     };
 
     getMonthlyDigitalCountIfApplicable = async () => {
@@ -964,7 +929,7 @@ class EditSelectedForm extends Component {
         const isSpecificYear = activeYear !== allYearsValue;
         const isWholeMonth = activeDay === 32;
 
-        if (!isSpecificMonth || !isSpecificYear || !isWholeMonth) {
+        if (!isSpecificMonth || !isSpecificYear || !isWholeMonth || new Date(activeYear, activeMonth - 1, 1).getTime() <= waiverArchiveStart()) {
             return null;
         }
 
@@ -1600,9 +1565,7 @@ class EditSelectedForm extends Component {
         let startDate, endDate;
 
         if (year === now.getFullYear() + 1) {
-            // All years - use a very wide range
-            startDate = new Date(2020, 0, 1);
-            endDate = new Date(now.getFullYear() + 1, 11, 31);
+            return this.getGlobalDigitalSearchRange();
         } else {
             if (month === 13) {
                 // All months in selected year

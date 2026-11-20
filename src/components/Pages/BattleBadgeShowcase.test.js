@@ -14,7 +14,7 @@ test('shows the physical badges in order and displays both star patches and coun
   requestPlayerExperience.mockResolvedValue({ progress: decorated });
   render(<BattleBadgeShowcase playerId="field-member" />);
   const region = screen.getByRole('region', { name: 'US Airsoft World Battle Badges' });
-  expect(await within(region).findByText('30 MVP days')).toBeVisible();
+  expect(await within(region).findByText('30 Battle Badge awards')).toBeVisible();
   const rack = within(region).getByRole('list', { name: 'Earned Battle Badges and stars' });
   const badges = within(rack).getAllByRole('listitem');
   expect(badges.map(item => item.querySelector('img').getAttribute('src').split('#')[1])).toEqual([
@@ -45,6 +45,6 @@ test('retries an unavailable record and shows one earned badge', async () => {
   });
   render(<BattleBadgeShowcase playerId="field-member" />);
   fireEvent.click(await screen.findByRole('button', { name: 'Try again' }));
-  expect(await screen.findByText('1 MVP day')).toBeVisible();
+  expect(await screen.findByText('1 Battle Badge award')).toBeVisible();
   expect(screen.getAllByRole('listitem')).toHaveLength(1);
 });

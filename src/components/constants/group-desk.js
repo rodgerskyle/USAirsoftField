@@ -1,3 +1,4 @@
+import { bindWaiverPicker, waiverPickerMarkup } from './staff-waiver-picker.js';
 import { groupExperienceLabels } from './groupExperience.js';
 
 const endpoint = '/api/staff-groups';
@@ -67,7 +68,7 @@ function detailMarkup(group, confirmDelete) {
     ${group.expiresAt ? `<p>Expires ${escape(new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', dateStyle: 'medium', timeStyle: 'short' }).format(new Date(group.expiresAt)))} Pacific</p>` : ''}
     <h3>Group roster</h3>
     ${group.entries.length ? `<ul class="group-desk__roster">${group.entries.map(rosterRow).join('')}</ul>` : '<p>No players on the list yet.</p>'}
-    <form data-add class="group-desk__form"><label>Player name or callsign<input required name="displayName" minlength="2" maxlength="80" autocomplete="off"></label>
+    <form data-add class="group-desk__form">${waiverPickerMarkup()}<label>Player name or callsign<input required name="displayName" minlength="2" maxlength="80" autocomplete="off"></label>
       <label>Airsoft experience<select name="experienceBand">${experienceOptions()}</select></label>
       <button class="btn btn-primary" type="submit">Add player</button></form>
     <form data-rename class="group-desk__form"><label>Group name<input required name="name" maxlength="80" value="${escape(group.name)}"></label>
@@ -86,6 +87,20 @@ export function bindGroupDesk(root, { request, signal, initialId }) {
   let selected = null, directory = null, confirming = false, busy = false;
   const drawList = () => { list.innerHTML = directory ? listMarkup(directory, selected?.id) : ''; };
   const drawDetail = () => { detail.innerHTML = detailMarkup(selected, confirming); };
+
+  bindWaiverPicker(root, { signal, isBusy: () => busy,
+    search: name => request('/api/staff-waivers', { method: 'POST', body: { name }, signal }),
+    onChoose: (match, picker) => {
+      const form = picker.closest('[data-add]');
+      form.elements.displayName.value = match.name;
+      form.dataset.waiverRef = match.ref;
+      picker.querySelector('[data-waiver-message]').textContent = 'Selected signed waiver for ' + match.name + '.';
+    },
+  });
+  root.addEventListener('input', event => {
+    const form = event.target.closest('[data-add]');
+    if (form && event.target.matches('[data-waiver-name]')) delete form.dataset.waiverRef;
+  }, { signal });
 
   async function loadList() {
     const params = new URLSearchParams({ [range]: date, page: String(page) });
@@ -168,7 +183,7 @@ export function bindGroupDesk(root, { request, signal, initialId }) {
       selected = null; directory = null; confirming = false; drawDetail(); drawList();
       void run(loadList);
     } else if (selected && form.matches('[data-add]')) {
-      void run(() => change('addGuest', { displayName: form.elements.displayName.value.trim(), experienceBand: form.elements.experienceBand.value }, 'Player added.'));
+      void run(() => change('addGuest', { ...(form.dataset.waiverRef ? {waiverRef: form.dataset.waiverRef} : {}), displayName: form.elements.displayName.value.trim(), experienceBand: form.elements.experienceBand.value }, 'Player added.'));
     } else if (selected && form.matches('[data-experience]')) {
       void run(() => change('setExperience', { entryId: form.dataset.experience, experienceBand: form.elements.experienceBand.value }, 'Experience saved.'));
     } else if (selected && form.matches('[data-rename]')) {

@@ -5,6 +5,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import GroupCheckIn from './GroupCheckIn';
 import StaffGroupLookup from './StaffGroupLookup';
 
+jest.mock('./Waiver', () => ({ onSigned }) => <button type="button" onClick={() => onSigned('Jordan Smith')}>Finish signed waiver</button>);
 jest.mock('../Firebase', () => ({ withFirebase: Component => Component }));
 const originalFetch = global.fetch;
 const originalCrypto = window.crypto;
@@ -144,7 +145,7 @@ const emptyAssignments = boardFor('initial', []);
 
 test('staff can find groups by name, confirm the right one, assign everyone and then switch one player', async () => {
   const entries = [{ id: 'mem', playerId: 'OfficialMemberID', displayName: 'Member', experienceBand: 'veteran' }, { id: 'guest', displayName: 'New player' }];
-  const positions = side => entries.map(entry => ({ entryId: entry.id, side }));
+  const positions = side => entries.map(entry => ({ entryId: entry.id, side, waiverStatus: 'signed' }));
   const allCamo = boardFor('v2', positions('camo'));
   const split = boardFor('v3', [{ entryId: 'mem', side: 'camo' }, { entryId: 'guest', side: 'solid' }]);
   const result = { group: { ...group, entries }, today: group.date };
@@ -277,4 +278,19 @@ test('a joined player can update their own experience and sees the full group co
   fireEvent.click(screen.getByRole('button', { name: 'Save experience' }));
   expect(await screen.findByText('Experience · Highly experienced')).toBeVisible();
   expect(JSON.parse(global.fetch.mock.calls[2][1].body)).toEqual({ action: 'setExperience', id: group.id, entryId: 'own', experienceBand: 'elite' });
+});
+
+test('a birthday guest can fill their own roster name after signing without losing the planned visit', async () => {
+  global.fetch.mockResolvedValueOnce(reply({ groups: [] }));
+  setup(false);
+  const create = screen.getByRole('button', { name: 'Create group' });
+  await waitFor(() => expect(create).toBeEnabled());
+  fireEvent.change(create.form.elements.kind, { target: { value: 'party' } });
+  fireEvent.change(create.form.elements.name, { target: { value: 'Birthday group' } });
+  fireEvent.click(create.form.querySelector('button[type="button"]'));
+  fireEvent.click(await screen.findByRole('button', { name: 'Finish signed waiver' }));
+  expect(create.form.elements.displayName).toHaveValue('Jordan Smith');
+  expect(create.form.elements.kind).toHaveValue('party');
+  expect(create.form.elements.name).toHaveValue('Birthday group');
+  expect(screen.getByRole('button', { name: 'Join group' }).form.elements.displayName).toHaveValue('');
 });

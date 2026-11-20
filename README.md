@@ -12,6 +12,8 @@ In **Wins & Losses**, select a game mode and player to see the round’s eligibl
 
 **US Airsoft World Battle Badges** appear in both staff Badge Awards and Wins & Losses. Select an active member and their Camo or Solid side, then use the MVP award button. Both desks share one MVP slot per Pacific field date with the Companion. Staff can correct a mistaken selection for the day and award the intended player. Recording the round result and awarding its ordinary patches are separate actions from choosing the daily MVP.
 
+In **Badge Awards → Manage today’s MVP**, select the player and team, enter a quantity under **Admin Battle Badge override**, and choose **Grant extra Battle Badges**. Each grant advances the same progression for that active member. The daily MVP stays available, and admins can remove a mistaken override on the same field day.
+
 Player profiles show the eight colored Battle Badges in award order, followed by Tower of Power on the ninth award. Each subsequent MVP earns a silver star. Every twenty silver stars convert to one gold star, with the remaining silver stars displayed alongside it. For example, a player with 30 MVP awards has Tower of Power, one gold star and one silver star. Battle Badges have their own ledger and do not contribute to score, prestige or the virtual patch leaderboard.
 
 The illustrated rules retain all published sections. `src/components/Pages/RulesClassic.js` preserves the previous rules component byte for byte, with its original rule styles in `RulesClassic.backup.css`. The previous presentation remains accessible at `/information/rules/classic`.

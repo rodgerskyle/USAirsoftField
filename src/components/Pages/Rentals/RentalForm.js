@@ -45,9 +45,11 @@ import {
 import logo from '../../../assets/usairsoft-small-logo.png';
 import '../../../App.css';
 import RentalOptions from "./RentalOptions";
-import { get, onValue, set, update } from "firebase/database";
+import { get, limitToLast, onValue, orderByChild, query, set, startAfter, update } from "firebase/database";
 
 import { styled } from '@mui/material/styles';
+import { loadWaiverSearchIndex } from '../../utils/waiverArchiveSearch';
+import { waiverArchiveStart, recentPaperWaivers } from '../../utils/waiverArchive';
 import { listAll } from 'firebase/storage';
 
 const StyledToggle = styled(FormControlLabel)({
@@ -110,7 +112,6 @@ class RentalForm extends Component {
 
         this.state = {
             loading: true,
-            waivers: [],
             rentalForms: [],
             options: null,
             members: null,
@@ -344,8 +345,12 @@ class RentalForm extends Component {
 
             // Get the waiver data using the reference
             get(this.props.firebase.digitalWaiver(ref)).then(waiverSnapshot => {
-                console.log("Waiver data:", waiverSnapshot.val());
                 const waiver = waiverSnapshot.val();
+
+                if (!waiver || !(waiver.timestamp > waiverArchiveStart() && waiver.timestamp <= Date.now())) {
+                    this.setState({ rentalsError: 'This waiver is outside the one-year archive.', addingParticipant: false });
+                    return;
+                }
 
                 if (this.lookupMember(participants, waiver.name)) {
                     console.log("Member already exists in group");
@@ -430,39 +435,6 @@ class RentalForm extends Component {
         //         console.log(snapshot)
         // })
 
-        onValue(this.props.firebase.numWaivers(), snapshot => {
-            let num_waivers = snapshot.val().total_num;
-            this.setState({ num_waivers_cur: num_waivers, validateArray: snapshot.val().validated })
-        })
-        onValue(this.props.firebase.digitalWaivers(), (snapshot) => {
-            if (snapshot.exists()) {
-                const waiversObject = snapshot.val();
-                const tempWaivers = Object.keys(waiversObject).map(key => {
-                    const waiver = waiversObject[key];
-                    return {
-                        name: waiver.name,
-                        date: new Date(waiver.timestamp), // Using timestamp field instead
-                        ref: key,
-                        // Add additional fields that might be useful
-                        email: waiver.email,
-                        phone: waiver.phone,
-                        dob: waiver.dob,
-                        address: waiver.address,
-                        city: waiver.city,
-                        state: waiver.state,
-                        zipcode: waiver.zipcode
-                    };
-                });
-                this.setState({ waivers: tempWaivers });
-            } else {
-                this.setState({ waivers: [] });
-            }
-        });
-        get(this.props.firebase.numWaivers(), snapshot => {
-            let prev = snapshot.val().total_num;
-            this.setState({ num_waivers_prev: prev })
-        })
-
         onValue(this.props.firebase.rentalGroups(), snapshot => {
             const rentalsObject = snapshot.val()
 
@@ -502,42 +474,14 @@ class RentalForm extends Component {
         })
     }
 
-    componentDidUpdate() {
-        if (this.state.num_waivers_prev !== this.state.num_waivers_cur) {
-            // listAll(this.props.firebase.waiversList()).then((res) => {
-            //     var tempWaivers = [];
-            //     for (let i = 0; i < res.items.length; i++) {
-            //         let waiverName = res.items[i].name
-            //         let dateObj = (convertDate(waiverName.substr(waiverName.lastIndexOf('(') + 1).split(')')[0]))
-            //         let waiver_obj = {
-            //             name: waiverName,
-            //             date: dateObj,
-            //             ref: res.items[i]
-            //         }
-            //         tempWaivers.push(waiver_obj)
-            //     }
-            //     this.setState({ waivers: tempWaivers }, function () {
-            //         this.setState({ loading: false })
-            //     })
-            // }).catch(function (error) {
-            //     // Uh-oh, an error occurred!
-            //     console.log(error)
-            // });
-            // get(this.props.firebase.numWaivers(), snapshot => {
-            //     let prev = snapshot.val().total_num;
-            //     this.setState({ num_waivers_prev: prev })
-            // })
-        }
-    }
-
     render() {
         const {
             cvc, number, expiry, name, zipcode, cvcError, expiryError, nameError, loading, members, rentalsError,
-            numberError, numparticipantsError, rentalnameError, zipcodeError, waivers, createdIndex, hidenav
+            numberError, numparticipantsError, rentalnameError, zipcodeError, createdIndex, hidenav
         } = this.state
         const errorProps = { expiryError, nameError, numberError, numparticipantsError, cvcError, rentalnameError, zipcodeError }
         const add = this.addParticipant
-        const waiverProps = { waivers, add, loading, members, firebase: this.props.firebase }
+        const waiverProps = { add, loading, members, firebase: this.props.firebase }
 
         return (
             <AuthUserContext.Consumer>
@@ -1030,7 +974,37 @@ function AddParticipant(props) {
     const [isMember, setIsMember] = useState(false)
     const [useLegacy, setUseLegacy] = useState(false)
 
-    let newprops = { ...props, search, isMember }
+    const [waivers, setWaivers] = useState([]);
+    const [loadingWaivers, setLoadingWaivers] = useState(true);
+    const [error, setError] = useState('');
+    useEffect(() => {
+        if (useLegacy || isMember) return undefined;
+        setLoadingWaivers(true);
+        setError('');
+        let active = true;
+        const byId = new Map();
+        const recent = query(props.firebase.digitalWaivers(), orderByChild('timestamp'), startAfter(waiverArchiveStart()), limitToLast(50));
+        const unsubscribe = onValue(recent, snapshot => {
+            snapshot.forEach(child => {
+                const { name, timestamp } = child.val();
+                if (name && timestamp <= Date.now()) byId.set(child.key, { ref: child.key, name, date: new Date(timestamp) });
+            });
+            setWaivers([...byId.values()]);
+            setLoadingWaivers(false);
+        }, () => {
+            setLoadingWaivers(false);
+            setError('Unable to load recent waivers.');
+        });
+        loadWaiverSearchIndex(props.firebase).then(batches => {
+            if (!active) return;
+            batches.forEach(batch => batch.rows.forEach(row => byId.set(row.ref, row)));
+            setWaivers([...byId.values()]);
+            if (batches.some(batch => batch.missing)) setError('Some months have no waiver search index. Staff can browse by date in Waiver Lookup.');
+        });
+        return () => { active = false; unsubscribe(); };
+    }, [props.firebase, isMember, useLegacy]);
+
+    const newprops = { ...props, search, isMember, waivers, loading: props.loading || (!useLegacy && !isMember && loadingWaivers) };
 
     return (
         <div>
@@ -1076,6 +1050,7 @@ function AddParticipant(props) {
                                 </Form.Group>
                             </Form>
                         </Card.Header>
+                        {!isMember && !useLegacy && error && <Alert severity="error">{error}</Alert>}
                         {isMember ? (
                             <MemberBox {...newprops} />
                         ) : useLegacy ? (
@@ -1088,18 +1063,6 @@ function AddParticipant(props) {
             </Row>
         </div>
     )
-}
-
-// Converts Non-Members date to a date object
-function convertDate(date) {
-    // Making date variables in correct format
-    date = date.split('-');
-    let temp = date[2].split(':')
-    date.splice(2, 1)
-    date = date.concat(temp)
-
-    // Now to changing them to date objects
-    return new Date(date[2], date[0] - 1, date[1], date[3], date[4], date[5], date[6])
 }
 
 // Converts Members renewal date to a date object
@@ -1383,17 +1346,7 @@ function LegacyWaiverBox(props) {
 
     useEffect(() => {
         listAll(props.firebase.waiversList()).then((res) => {
-            const tempWaivers = res.items.map(item => {
-                const waiverName = item.name;
-                const dateObj = convertDate(waiverName.substr(waiverName.lastIndexOf('(') + 1).split(')')[0]);
-                return {
-                    name: waiverName.substr(0, waiverName.lastIndexOf('(')),
-                    date: dateObj,
-                    ref: item,
-                    isLegacy: true
-                };
-            });
-            setLegacyWaivers(tempWaivers);
+            setLegacyWaivers(recentPaperWaivers(res.items));
             setLoading(false);
         }).catch(error => {
             console.log(error);

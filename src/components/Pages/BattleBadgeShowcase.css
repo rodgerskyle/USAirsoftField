@@ -44,33 +44,37 @@ body:not(.night-mode) .player-hero-card .battle-showcase {
   text-underline-offset: 3px;
 }
 .battle-showcase__rack {
-  display: flex;
-  gap: 12px clamp(9px, 1.3vw, 18px);
-  flex-wrap: wrap;
-  align-items: flex-end;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 96px), 1fr));
+  gap: 8px;
   list-style: none;
   margin: 12px 0 0;
   padding: 0;
 }
 .battle-showcase__badge {
   display: grid;
+  grid-template-rows: auto 1fr;
   justify-items: center;
-  align-content: end;
-  gap: 4px;
+  align-items: start;
+  gap: 6px;
+  min-width: 0;
+  padding: 8px 5px;
+  border: 1px solid #506e8d;
+  border-radius: 9px;
+  background:
+    repeating-linear-gradient(135deg, #ffffff08 0 1px, transparent 1px 4px),
+    radial-gradient(ellipse at 48% 34%, #334e63, #182936 74%);
+  color: #f2f6fa;
   text-align: center;
-  color: var(--battle-ink);
-  font-size: .76rem;
-  font-weight: 650;
+  font-size: .8rem;
+  font-weight: 700;
   line-height: 1.2;
 }
 .battle-showcase__badge img {
   display: block;
-  width: clamp(46px, 5vw, 64px);
-  height: clamp(55px, 6vw, 76px);
+  width: min(96%, 92px);
+  height: auto;
+  aspect-ratio: 1;
   object-fit: contain;
-  filter: drop-shadow(0 2px 2px #08182655);
-}
-.battle-showcase__badge--tower-of-power img {
-  width: clamp(56px, 6vw, 78px);
-  height: clamp(67px, 7vw, 92px);
+  filter: drop-shadow(0 2px 2px #08182688);
 }

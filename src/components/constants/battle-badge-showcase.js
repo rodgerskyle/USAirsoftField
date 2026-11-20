@@ -3,7 +3,7 @@ import { battleBadgeArtUrl, colorBadges } from './battleBadgeArt.js';
 function earnedBadge(id, label, count) {
   const caption = count === undefined ? label : label + (count === 1 ? '' : 's');
   return `<li class="battle-showcase__badge battle-showcase__badge--${id}">
-    <img src="${battleBadgeArtUrl(id)}" width="68" height="76" alt="" decoding="async">
+    <img src="${battleBadgeArtUrl(id)}" width="96" height="96" alt="" decoding="async">
     <span>${count === undefined ? '' : count.toLocaleString('en-US') + ' '}${caption}</span></li>`;
 }
 
@@ -18,7 +18,7 @@ function renderProgress(progress) {
   if (progress.towerOfPower) items.push(earnedBadge('tower-of-power', 'Tower of Power'));
   if (progress.silverStars) items.push(earnedBadge('silver-star', 'Silver Star', progress.silverStars));
   if (progress.goldStars) items.push(earnedBadge('gold-star', 'Gold Star', progress.goldStars));
-  return `<p class="battle-showcase__total">${progress.totalAwards.toLocaleString('en-US')} MVP ${progress.totalAwards === 1 ? 'day' : 'days'}</p>
+  return `<p class="battle-showcase__total">${progress.totalAwards.toLocaleString('en-US')} Battle Badge ${progress.totalAwards === 1 ? 'award' : 'awards'}</p>
     <ul class="battle-showcase__rack" aria-label="Earned Battle Badges and stars">${items.join('')}</ul>`;
 }
 
