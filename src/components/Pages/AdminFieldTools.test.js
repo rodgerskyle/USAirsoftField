@@ -14,7 +14,6 @@ jest.mock('../Firebase', () => {
 jest.mock('./AdminFieldCheckIn', () => ({ request }) => (
   <button type="button" onClick={() => void request('/api/game-day-check-in').catch(() => {})}>Load test roster</button>
 ), { virtual: true });
-jest.mock('./AdminFieldRounds', () => () => <p>Test round controls</p>, { virtual: true });
 jest.mock('./AdminFieldMembership', () => ({ request }) => (
   <button type="button" onClick={() => void request('/api/member-card/verify?staff=1', {
     method: 'POST', body: { playerId: 'fixture-player' },
@@ -26,8 +25,12 @@ jest.mock('./AdminFieldReports', () => () => null, { virtual: true });
 
 const admin = { uid: 'field-admin', roles: { ADMIN: true } };
 const sessionEndpoint = 'https://app.usairsoftfield.com/api/staff-session';
+const staffBoard = 'https://app.usairsoftfield.com/api/live-games?staff=1';
+const modeCatalog = 'https://app.usairsoftfield.com/api/live-games?catalog=1';
 const expiry = () => new Date(Date.now() + 60 * 60_000).toISOString();
 const reply = (data, status = 200) => ({ ok: status < 400, status, json: async () => data });
+const boardReply = () => reply({ serverNow: new Date().toISOString(), games: [], isStaff: true, poll: null });
+const catalogReply = () => reply({ minOptions: 2, maxOptions: 7, sections: [{ name: 'Field games', modes: [] }] });
 const fetchBeforeTest = global.fetch;
 
 function openCheckIn(user, { verify = true, path = '/admin/field/check-in', reauthenticate } = {}) {
@@ -103,7 +106,12 @@ test('unlocks once, switches between in-site tools, and revokes the shared cooki
   fetch
     .mockResolvedValueOnce(reply({ available: true, accountStatus: 'staff', isStaff: false }))
     .mockResolvedValueOnce(reply({ isStaff: true, expiresAt: expiry() }))
-    .mockResolvedValueOnce(reply({ isStaff: false }));
+    .mockImplementation(async (url, { method }) => {
+      if (url === staffBoard) return boardReply();
+      if (url === modeCatalog) return catalogReply();
+      if (url === sessionEndpoint && method === 'DELETE') return reply({ isStaff: false });
+      throw new Error('Unexpected call ' + url);
+    });
   const verify = openCheckIn(admin, { verify: false });
   expect(fetch).not.toHaveBeenCalled();
   verify();
@@ -123,15 +131,67 @@ test('unlocks once, switches between in-site tools, and revokes the shared cooki
   }));
 
   fireEvent.click(screen.getByRole('link', { name: 'Round Controls' }));
-  expect(await screen.findByText('Test round controls')).toBeInTheDocument();
-  expect(fetch).toHaveBeenCalledTimes(2);
+  expect(await screen.findByRole('heading', { name: 'Current and scheduled rounds' })).toBeInTheDocument();
+  expect(fetch).toHaveBeenCalledWith(staffBoard, expect.objectContaining({
+    credentials: 'include', headers: { Accept: 'application/json', Authorization: 'Bearer firebase-field-id-token' },
+  }));
 
   fireEvent.click(screen.getByRole('button', { name: 'Lock field tools' }));
   await screen.findByRole('heading', { name: 'Unlock field tools' });
-  expect(screen.queryByText('Test round controls')).not.toBeInTheDocument();
-  expect(fetch).toHaveBeenNthCalledWith(3, sessionEndpoint, expect.objectContaining({
+  expect(screen.queryByRole('heading', { name: 'Current and scheduled rounds' })).not.toBeInTheDocument();
+  expect(fetch).toHaveBeenLastCalledWith(sessionEndpoint, expect.objectContaining({
     method: 'DELETE', credentials: 'include',
   }));
+});
+
+test('returns to the unlock form for an expired desk session and reopens Round Controls after unlock', async () => {
+  let valid = false;
+  fetch.mockImplementation(async (url, { method }) => {
+    if (url === sessionEndpoint) {
+      if (method === 'POST') valid = true;
+      return reply({ accountStatus: 'staff', isStaff: true, expiresAt: expiry() });
+    }
+    if (url === modeCatalog) return catalogReply();
+    if (url === staffBoard) return valid ? boardReply() : reply({ error: 'Unlock staff tools.', code: 'staff_session_required' }, 401);
+    throw new Error('Unexpected call ' + url);
+  });
+  openCheckIn({ ...admin, email: 'test@example.com' }, { path: '/admin/field/rounds' });
+  await screen.findByRole('heading', { name: 'Unlock field tools' });
+  fireEvent.click(screen.getByRole('button', { name: 'Use my admin account' }));
+  expect(await screen.findByRole('heading', { name: 'Current and scheduled rounds' })).toBeVisible();
+});
+
+test.each([[403, 'staff_role_required'], [401, 'staff_account_required']])(
+  'routes a %s account rejection to USAW sign-in instead of offering a desk unlock', async (status, code) => {
+    fetch.mockImplementation(async url => {
+      if (url === sessionEndpoint) return reply({ accountStatus: 'staff', isStaff: true, expiresAt: expiry() });
+      if (url === modeCatalog) return catalogReply();
+      if (url === staffBoard) return reply({ error: 'An authorized account is required.', code }, status);
+      throw new Error('Unexpected call ' + url);
+    });
+    openCheckIn(admin, { path: '/admin/field/rounds' });
+    await screen.findByRole('heading', { name: 'Sign in with your authorized USAW staff account' });
+    expect(screen.getByRole('link', { name: 'Sign in to USAW' })).toHaveAttribute('href', '/login');
+    expect(screen.queryByRole('heading', { name: 'Unlock field tools' })).toBeNull();
+  },
+);
+
+test('an obsolete staff board request cannot lock a newer verified board', async () => {
+  let finishOld;
+  fetch.mockImplementation(async url => {
+    if (url === sessionEndpoint) return reply({ accountStatus: 'staff', isStaff: true, expiresAt: expiry() });
+    if (url === modeCatalog) return catalogReply();
+    if (url === staffBoard && !finishOld) return new Promise(resolve => { finishOld = resolve; });
+    if (url === staffBoard) return boardReply();
+    throw new Error('Unexpected call ' + url);
+  });
+  openCheckIn(admin, { path: '/admin/field/rounds' });
+  await waitFor(() => expect(finishOld).toBeDefined());
+  fireEvent.click(screen.getByRole('button', { name: 'Refresh board' }));
+  await screen.findByRole('heading', { name: 'Current and scheduled rounds' });
+  await act(async () => finishOld(reply({ error: 'Staff session expired' }, 401)));
+  expect(screen.getByRole('heading', { name: 'Current and scheduled rounds' })).toBeVisible();
+  expect(screen.queryByRole('heading', { name: 'Unlock field tools' })).toBeNull();
 });
 
 test('removes the private tool when a protected request reports lost staff access', async () => {

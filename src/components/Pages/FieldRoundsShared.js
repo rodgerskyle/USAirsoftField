@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { roundPinLocation } from './FieldRoundMap';
 
 export const LIVE_ROUNDS_PATH = '/api/live-games';
+export const STAFF_ROUNDS_PATH = LIVE_ROUNDS_PATH + '?staff=1';
 export const ROUND_CATALOG_PATH = LIVE_ROUNDS_PATH + '?catalog=1';
 
 const californiaTime = new Intl.DateTimeFormat('en-US', {
@@ -64,7 +65,7 @@ export function formatRoundCountdown(milliseconds) {
     return hours ? `${hours}:${minutes}:${remainder}` : `${minutes}:${remainder}`;
 }
 
-export function useLiveFieldBoard(request) {
+export function useLiveFieldBoard(request, path = LIVE_ROUNDS_PATH) {
     const [snapshot, setSnapshot] = useState(null);
     const [error, setError] = useState('');
     const [clock, setClock] = useState(() => performance.now());
@@ -75,10 +76,13 @@ export function useLiveFieldBoard(request) {
         active.current = controller;
         const timeout = window.setTimeout(() => controller.abort(), 8000);
         try {
-            const board = await request(LIVE_ROUNDS_PATH, { signal: controller.signal });
+            const board = await request(path, { signal: controller.signal });
             const serverTime = Date.parse(board?.serverNow);
             if (!Array.isArray(board?.games) || !Number.isFinite(serverTime)) {
                 throw new Error('The field board returned an unexpected response.');
+            }
+            if (path === STAFF_ROUNDS_PATH && board.isStaff !== true) {
+                throw new Error('The staff board could not verify your access. Refresh the board to retry.');
             }
             if (active.current !== controller) return;
             if (controller.signal.aborted) throw new Error('The field board did not respond.');
@@ -95,7 +99,7 @@ export function useLiveFieldBoard(request) {
             window.clearTimeout(timeout);
             if (active.current === controller) active.current = null;
         }
-    }, [request]);
+    }, [path, request]);
 
     useEffect(() => {
         const update = () => {

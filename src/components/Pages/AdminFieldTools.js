@@ -83,6 +83,8 @@ function StaffToolsWorkspace({ firebase, uid, tool }) {
       const data = await requestStaffFieldTool(firebase, uid, staffSessionPath, { method, body, signal });
       if (signal.aborted) return;
       const next = method === 'DELETE' ? { kind: 'locked' } : sessionState(data);
+      // A temporary verification outage does not invalidate a confirmed session's local expiry.
+      if (quiet && next.kind === 'unavailable') return;
       setAccess(next);
       if (next.kind === 'unlocked' && method === 'GET') setNotice('');
       if (method === 'POST' && next.kind === 'locked') {
@@ -135,10 +137,11 @@ function StaffToolsWorkspace({ firebase, uid, tool }) {
     try {
       return await requestStaffFieldTool(firebase, uid, path, options);
     } catch (error) {
-      if (mounted.current && (error.status === 401 || error.status === 403)) {
+      if (mounted.current && !options?.signal?.aborted && (error.status === 401 || error.status === 403)) {
         if (sessionRequest.current?.quiet) sessionRequest.current.controller.abort();
-        setAccess(current => current.kind === 'unlocked' ? { kind: 'locked' } : current);
-        setNotice('USAW staff access must be verified again. Check access to continue.');
+        const accountDenied = error.code === 'staff_role_required' || error.code === 'staff_account_required';
+        setAccess(current => current.kind === 'unlocked' ? { kind: accountDenied ? 'denied' : 'locked' } : current);
+        setNotice(accountDenied ? error.message : 'USAW staff access must be verified again. Check access to continue.');
       }
       throw error;
     }
