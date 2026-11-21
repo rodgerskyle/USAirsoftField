@@ -77,7 +77,10 @@ export async function requestStaffFieldTool(firebase, uid, path, { method = 'GET
     await verifySignedInAdminIdentity(firebase, user, body.password);
     body = { action: 'unlock-account' };
   }
-  const token = await user.getIdToken().catch(() => {
+  const token = await user.getIdToken().catch(error => {
+    if (error?.code === 'auth/network-request-failed') {
+      throw new FieldStaffError('Could not reach USAW sign-in. Check your connection and retry.', 503);
+    }
     throw new FieldStaffError('Your USAW sign-in could not be verified. Sign in again or retry after reconnecting.', 401);
   });
   requireCurrentAccount(firebase, user, uid);

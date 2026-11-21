@@ -1,10 +1,10 @@
 import React from 'react';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { HelmetProvider } from 'react-helmet-async';
 import { MemoryRouter } from 'react-router-dom';
 import AdminFieldRounds from './AdminFieldRounds';
 import BarracksTV from './BarracksTV';
-import { fieldTimeISO, LIVE_ROUNDS_PATH, ROUND_CATALOG_PATH } from './FieldRoundsShared';
+import { fieldTimeISO, LIVE_ROUNDS_PATH, ROUND_CATALOG_PATH, STAFF_ROUNDS_PATH } from './FieldRoundsShared';
 
 const serverNow = '2026-11-16T18:00:00.000Z';
 const scheduled = {
@@ -39,6 +39,28 @@ test('starts a staff-controlled round against its revision and reloads the offic
         method: 'POST', body: { action: 'startRound', gameId: scheduled.id, revision: 6 },
     }));
     expect(screen.getByRole('timer')).toHaveTextContent('25:00');
+});
+
+test('keeps a draft through temporary staff verification failure and retries the protected board', async () => {
+    let offline = false;
+    const request = jest.fn(async path => {
+        if (path === ROUND_CATALOG_PATH) return catalog;
+        if (path !== STAFF_ROUNDS_PATH) throw new Error('Expected protected board');
+        if (offline) throw Object.assign(new Error('Verification unavailable.'), { status: 503 });
+        return { serverNow, isStaff: true, poll: null, games: [] };
+    });
+    render(<AdminFieldRounds request={request} />);
+    const form = within(await screen.findByRole('region', { name: 'Schedule a round' }));
+    const field = await form.findByLabelText('Camo respawn');
+    fireEvent.change(field, { target: { value: 'Keep this location' } });
+    offline = true;
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh board' }));
+    await screen.findByText(/Verification unavailable/);
+    expect(field).toBeDisabled();
+    offline = false;
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh board' }));
+    await waitFor(() => expect(field).toBeEnabled());
+    expect(field).toHaveValue('Keep this location');
 });
 
 test('writes a scheduled mode with official California time and both team respawns', async () => {

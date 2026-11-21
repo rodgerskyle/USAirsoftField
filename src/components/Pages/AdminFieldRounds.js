@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
     fieldTimeInput, fieldTimeISO, formatFieldTime, formatRoundCountdown, isOpenVote, liveRounds,
-    LIVE_ROUNDS_PATH, ROUND_CATALOG_PATH, RoundRespawns, useLiveFieldBoard,
+    LIVE_ROUNDS_PATH, ROUND_CATALOG_PATH, STAFF_ROUNDS_PATH, RoundRespawns, useLiveFieldBoard,
 } from './FieldRoundsShared';
 import { FieldPinPicker, readMapPins, roundPinLocation } from './FieldRoundMap';
 import './FieldRounds.css';
@@ -240,7 +240,7 @@ function RoundCard({ round, live, hasCurrentRound, now, disabled, onSave }) {
 }
 
 export default function AdminFieldRounds({ request }) {
-    const { board, error, now, refresh } = useLiveFieldBoard(request);
+    const { board, error, now, refresh } = useLiveFieldBoard(request, STAFF_ROUNDS_PATH);
     const [catalog, setCatalog] = useState(null);
     const [catalogError, setCatalogError] = useState('');
     const [catalogAttempt, setCatalogAttempt] = useState(0);
@@ -308,7 +308,6 @@ export default function AdminFieldRounds({ request }) {
     const poll = board?.poll;
     const open = isOpenVote(poll, now);
     const disabled = busy || Boolean(error);
-    const canManage = board?.isStaff === true;
     const canPublish = poll && !open && !poll.publishedGameId && poll.winnerModeIds?.length > 0;
     function closePoll() {
         if (window.confirm('Close this vote? Players will no longer be able to vote.')) {
@@ -324,8 +323,7 @@ export default function AdminFieldRounds({ request }) {
             </div>
             {error && <p className="field-rounds-error" role="alert">{error} {board && 'Round controls will resume when the board reconnects.'}</p>}
             {notice && <p role={notice.error ? 'alert' : 'status'} className={notice.error ? 'field-rounds-error' : 'field-rounds-success'}>{notice.text}</p>}
-            {board && !canManage && <p role="alert">Staff access has expired. Unlock staff tools to continue.</p>}
-            {canManage && <>
+            {board && <>
                 <section className="field-rounds-panel" aria-labelledby="field-rounds-current">
                     <h2 id="field-rounds-current">Current and scheduled rounds</h2>
                     {!rounds.active.length && !rounds.upcoming.length && <p>No rounds are scheduled in the next 48 hours.</p>}
