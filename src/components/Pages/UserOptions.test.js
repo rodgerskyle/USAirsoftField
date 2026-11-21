@@ -21,7 +21,8 @@ const secondId = 'second-player-uid';
 const player = { name: 'Jordan Rivera', username: 'JRivera', wins: 1, losses: 0, points: 60, freegames: 0 };
 const manageProfile = jest.fn();
 const emailService = jest.fn();
-const firebase = { auth: { currentUser: staff, onAuthStateChanged: jest.fn() }, user: uid => uid, manageProfile: () => manageProfile, updatePlayerSignInEmail: () => emailService };
+const deletePlayer = jest.fn();
+const firebase = { permanentlyDeletePlayerAccount: () => deletePlayer, auth: { currentUser: staff, onAuthStateChanged: jest.fn() }, user: uid => uid, manageProfile: () => manageProfile, updatePlayerSignInEmail: () => emailService };
 
 function page(id) {
     return <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
@@ -34,68 +35,122 @@ function page(id) {
 }
 
 function openReview() {
-    fireEvent.click(screen.getByRole('button', { name: 'Review removal' }));
-    return screen.getByRole('group', { name: 'Confirm player account removal' });
+    fireEvent.click(screen.getByRole('button', { name: 'Review deletion' }));
+    return screen.getByRole('group', { name: 'Confirm permanent deletion' });
+}
+
+function confirmDeletion(review, id = firstId) {
+    fireEvent.change(within(review).getByRole('textbox'), { target: { value: id } });
+    fireEvent.click(within(review).getByRole('button', { name: 'Permanently delete player' }));
 }
 
 beforeEach(() => {
     jest.clearAllMocks();
+    firebase.auth.currentUser = staff;
+    deletePlayer.mockReset();
     onValue.mockImplementation((id, receive) => {
         receive({ val: () => id === secondId ? { ...player, name: 'Another Player', username: '' } : player });
         return jest.fn();
     });
 });
 
-test('shows the named player and ID, cancels without a request, then confirms with one click', async () => {
-    requestStaffFieldTool.mockResolvedValueOnce({ removed: true, playerId: firstId });
+test('requires the exact selected player ID and keeps cancellation reversible', async () => {
+    deletePlayer.mockResolvedValue({ data: { deleted: true, playerId: firstId } });
     render(page(firstId));
     const review = openReview();
     expect(review).toHaveTextContent('Jordan Rivera (JRivera)');
     expect(review).toHaveTextContent(firstId);
-    expect(within(review).queryByRole('textbox')).not.toBeInTheDocument();
-    const cancel = within(review).getByRole('button', { name: 'Cancel' });
-    expect(cancel).toHaveFocus();
-    fireEvent.click(cancel);
-    expect(screen.getByRole('button', { name: 'Review removal' })).toHaveFocus();
+    expect(within(review).getByRole('textbox')).toHaveFocus();
+    confirmDeletion(review, secondId);
+    expect(deletePlayer).not.toHaveBeenCalled();
+    fireEvent.click(within(review).getByRole('button', { name: 'Cancel' }));
+    expect(screen.getByRole('button', { name: 'Review deletion' })).toHaveFocus();
+    const reopened = openReview();
+    expect(within(reopened).getByRole('textbox')).toHaveValue('');
+    confirmDeletion(reopened);
+    expect(await screen.findByText(/Player account permanently deleted/)).toBeVisible();
+    expect(deletePlayer.mock.calls).toEqual([[{ playerId: firstId, confirmation: firstId }]]);
     expect(requestStaffFieldTool).not.toHaveBeenCalled();
-
-    fireEvent.click(within(openReview()).getByRole('button', { name: 'Confirm removal' }));
-    expect(await screen.findByText('This player account was removed.')).toBeInTheDocument();
-    expect(requestStaffFieldTool).toHaveBeenCalledTimes(1);
-    expect(requestStaffFieldTool).toHaveBeenCalledWith(firebase, staff.uid, '/api/staff-player-accounts', {
-        method: 'POST', body: { playerId: firstId, confirmation: firstId }, signal: expect.anything(),
-    });
 });
 
-test('keeps confirmation locked during removal and allows retry after a failed request', async () => {
-    let reject;
-    requestStaffFieldTool.mockImplementationOnce(() => new Promise((_, fail) => { reject = fail; }));
-    requestStaffFieldTool.mockResolvedValueOnce({ removed: true, playerId: firstId });
+test('allows an archived player to be individually selected and permanently deleted', async () => {
+    onValue.mockImplementation((_id, receive) => { receive({ val: () => ({ ...player, accountRemovedAt: 42 }) }); return jest.fn(); });
+    deletePlayer.mockResolvedValue({ data: { deleted: true, playerId: firstId } });
     render(page(firstId));
-    const review = within(openReview());
-    fireEvent.click(review.getByRole('button', { name: 'Confirm removal' }));
-    expect(review.getByRole('button', { name: 'Removing account…' })).toBeDisabled();
-    expect(review.getByRole('button', { name: 'Cancel' })).toBeDisabled();
-    await act(async () => reject(new Error('Unlock staff tools.')));
-    expect(await review.findByRole('alert')).toHaveTextContent('Unlock staff tools.');
-    fireEvent.click(review.getByRole('button', { name: 'Confirm removal' }));
-    expect(await screen.findByText('This player account was removed.')).toBeInTheDocument();
-    expect(requestStaffFieldTool).toHaveBeenCalledTimes(2);
+    expect(screen.getByText('This player account is archived.')).toBeVisible();
+    expect(screen.getByText(/Past check-ins and rental records stay on file/)).toHaveTextContent(/one-year/);
+    expect(screen.queryByRole('button', { name: 'Save email' })).toBeNull();
+    confirmDeletion(openReview());
+    expect(await screen.findByText(/Player account permanently deleted/)).toBeVisible();
 });
 
-test('aborts a pending request when opening a different player', async () => {
+test.each([staff.uid, 'privileged-player'])('hides deletion for self and staff accounts', id => {
+    if (id !== staff.uid) onValue.mockImplementation((_id, receive) => {
+        receive({ val: () => ({ ...player, roles: { WAIVER: true }, accountRemovedAt: 42 }) }); return jest.fn();
+    });
+    render(page(id));
+    expect(screen.queryByRole('button', { name: 'Review deletion' })).toBeNull();
+});
+
+test.each([{ removed: true, playerId: firstId }, { deleted: true, playerId: secondId }])('rejects an incomplete or mismatched receipt', async receipt => {
+    deletePlayer.mockResolvedValue({ data: receipt });
+    render(page(firstId));
+    confirmDeletion(openReview());
+    expect(await screen.findByRole('alert')).toHaveTextContent('Permanent deletion could not be confirmed');
+    expect(screen.queryByText(/Player account permanently deleted/)).toBeNull();
+});
+
+test('keeps the selected ID retryable if the server removes the profile before a response arrives', async () => {
+    let reject, publish;
+    onValue.mockImplementation((_id, receive) => { publish = value => receive({ val: () => value }); publish(player); return jest.fn(); });
+    deletePlayer.mockImplementationOnce(() => new Promise((_, fail) => { reject = fail; }));
+    deletePlayer.mockResolvedValueOnce({ data: { deleted: true, playerId: firstId } });
+    render(page(firstId));
+    const review = openReview();
+    confirmDeletion(review);
+    expect(within(review).getByRole('button', { name: 'Deleting account…' })).toBeDisabled();
+    expect(within(review).getByRole('button', { name: 'Cancel' })).toBeDisabled();
+    fireEvent.submit(review);
+    expect(deletePlayer).toHaveBeenCalledTimes(1);
+    act(() => publish(null));
+    await act(async () => reject(new Error('unavailable')));
+    expect(await screen.findByRole('alert')).toHaveTextContent('could not confirm completion');
+    expect(screen.queryByText(/permanently deleted/)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Permanently delete player' }));
+    expect(await screen.findByText(/Player account permanently deleted/)).toBeVisible();
+});
+
+test('ignores a late receipt when opening a different player and drops the previous confirmation', async () => {
     let resolve;
-    requestStaffFieldTool.mockImplementationOnce(() => new Promise(finish => { resolve = finish; }));
+    deletePlayer.mockImplementationOnce(() => new Promise(finish => { resolve = finish; }));
     const { rerender } = render(page(firstId));
-    fireEvent.click(within(openReview()).getByRole('button', { name: 'Confirm removal' }));
-    const options = requestStaffFieldTool.mock.calls[0][3];
+    confirmDeletion(openReview());
     rerender(page(secondId));
-    expect(options.signal.aborted).toBe(true);
-    await act(async () => resolve({ removed: true, playerId: firstId }));
+    await act(async () => resolve({ data: { deleted: true, playerId: firstId } }));
     const review = openReview();
     expect(review).toHaveTextContent('Another Player');
-    expect(review).toHaveTextContent(secondId);
-    expect(screen.queryByText('This player account was removed.')).not.toBeInTheDocument();
+    expect(within(review).getByRole('textbox')).toHaveValue('');
+    expect(screen.queryByText(/permanently deleted/)).toBeNull();
+});
+
+test('closes an unsubmitted review if the selected profile disappears', () => {
+    let publish;
+    onValue.mockImplementation((_id, receive) => { publish = value => receive({ val: () => value }); publish(player); return jest.fn(); });
+    render(page(firstId));
+    openReview();
+    act(() => publish(null));
+    expect(screen.getByRole('status')).toHaveTextContent('This player account was not found.');
+    expect(screen.queryByRole('button', { name: 'Permanently delete player' })).toBeNull();
+    expect(deletePlayer).not.toHaveBeenCalled();
+});
+
+test('rejects a confirmation after the admin sign-in changed', async () => {
+    render(page(firstId));
+    const review = openReview();
+    firebase.auth.currentUser = { uid: 'other-admin' };
+    confirmDeletion(review);
+    expect(await screen.findByRole('alert')).toHaveTextContent('staff sign-in changed');
+    expect(deletePlayer).not.toHaveBeenCalled();
 });
 
 describe('Find Player > More Info email edits', () => {

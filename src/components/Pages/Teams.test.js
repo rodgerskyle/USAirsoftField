@@ -67,7 +67,8 @@ beforeEach(() => {
     jest.clearAllMocks();
     getDownloadURL.mockRejectedValue(new Error('No uploaded logo'));
     onValue.mockImplementation((path, next) => {
-        const data = path === 'teams' ? { rebels: legacy } : path === 'teams/rebels' ? legacy : 'Field Captain';
+        const data = path === 'teams' ? { rebels: legacy } : path === 'teams/rebels' ? legacy
+            : path.endsWith('/name') ? 'Field Captain' : null;
         next({ val: () => data });
         return jest.fn();
     });
@@ -115,4 +116,33 @@ test('requires membership for Companion profiles and keeps the legacy Firebase p
     expect(await screen.findByText('USAW field team')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Sign in to request to join' })).toHaveAttribute('href', '/login?team=rebels');
     await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+});
+
+
+test('field rosters require a live profile and stop displaying a removed account when its marker disappears', () => {
+    const active = 'active-id-001';
+    const former = 'former-id-001';
+    const roster = { ...legacy, leader: active, members: [['Field Captain', active], ['Former player', former]] };
+    const listeners = new Map();
+    onValue.mockImplementation((path, next) => {
+        listeners.set(path, value => next({ val: () => value }));
+        if (path === 'teams/rebels') next({ val: () => roster });
+        return () => listeners.delete(path);
+    });
+    mount(null, '/teams/rebels');
+    const list = within(screen.getByRole('region', { name: 'Team roster' }));
+    const publish = (uid, field, value) => act(() => listeners.get(`users/${uid}/${field}`)(value));
+    publish(former, 'accountRemovedAt', 123);
+    expect(list.queryAllByRole('link')).toHaveLength(0);
+    publish(active, 'accountRemovedAt', null);
+    publish(active, 'name', 'Field Captain');
+    expect(list.getByRole('link', { name: /Field Captain/ })).toBeVisible();
+    publish(former, 'accountRemovedAt', null);
+    expect(list.queryByRole('link', { name: /Former player/ })).toBeNull();
+    publish(former, 'name', null);
+    expect(list.queryByRole('link', { name: /Former player/ })).toBeNull();
+    publish(active, 'accountRemovedAt', 124);
+    expect(list.queryAllByRole('link')).toHaveLength(0);
+    expect(screen.queryByRole('link', { name: 'Field Captain' })).toBeNull();
+    expect(onValue.mock.calls.map(([path]) => path)).not.toContain(`users/${former}`);
 });

@@ -23,7 +23,7 @@ import { editRentalInventory } from './utils/editRentalInventory';
 import { importRentalParticipants, changeOpenRental, rentalIdentity, rentalParticipants, rentalRows } from './utils/openRental';
 
 import '../../../App.css';
-import { get, onValue, query, orderByKey, startAt, endAt, orderByChild, limitToFirst, limitToLast, ref as dbRef } from "firebase/database";
+import { get, onValue, query, orderByKey, startAt, startAfter, endAt, orderByChild, limitToFirst, limitToLast, ref as dbRef } from "firebase/database";
 import TablePagination from '@mui/material/TablePagination';
 import Modal from '@mui/material/Modal';
 import TextField from '@mui/material/TextField';
@@ -1066,27 +1066,29 @@ class EditSelectedForm extends Component {
                 return;
             }
 
-            const resultLimit = this.state.membersPerPage;
-            const searchFields = ['usernameLower', 'nameLower'];
-            const snapshots = await Promise.all(
-                searchFields.map((field) =>
-                    get(query(
-                        this.props.firebase.users(),
-                        orderByChild(field),
-                        startAt(normalizedSearch),
-                        endAt(`${normalizedSearch}\uf8ff`),
-                        limitToFirst(resultLimit)
-                    ))
-                )
-            );
-
-            const mergedMembers = dedupeMembers(
-                snapshots.flatMap((snapshot) =>
-                    snapshot.exists()
-                        ? Object.entries(snapshot.val()).map(mapMember)
-                        : []
-                )
-            );
+            const limit = this.state.membersPerPage;
+            const byField = async field => {
+                const matches = [];
+                let lowerBound = startAt(normalizedSearch);
+                while (matches.length < limit) {
+                    const page = await get(query(this.props.firebase.users(), orderByChild(field), lowerBound,
+                        endAt(normalizedSearch + '\uf8ff'), limitToFirst(limit)));
+                    let count = 0;
+                    let last;
+                    page.forEach(row => {
+                        const record = row.val();
+                        count++;
+                        last = [record[field], row.key];
+                        if (!record.accountRemovedAt) matches.push(mapMember([row.key, record]));
+                    });
+                    // Read another page only when archived rows displaced active matches.
+                    if (count < limit || matches.length >= limit) break;
+                    lowerBound = startAfter(...last);
+                }
+                return matches;
+            };
+            const batches = await Promise.all(['usernameLower', 'nameLower'].map(byField));
+            const mergedMembers = dedupeMembers(batches.flat());
 
             this.setState({
                 members: mergedMembers,
@@ -1201,6 +1203,18 @@ class EditSelectedForm extends Component {
     };
 
     addParticipant = async (person) => {
+        if (person.isMember) {
+            try {
+                const member = (await get(this.props.firebase.user(person.ref))).val();
+                if (!member || member.accountRemovedAt) {
+                    this.setState({ error: 'This player account was removed. Search again to add a current member.', showAddParticipant: false });
+                    return;
+                }
+            } catch {
+                this.setState({ error: 'Could not verify this player account. Try the member search again.', showAddParticipant: false });
+                return;
+            }
+        }
         const { participants } = this.props.form;
 
         // Check if participant already exists

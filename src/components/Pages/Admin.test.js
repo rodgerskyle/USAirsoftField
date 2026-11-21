@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { onValue } from 'firebase/database';
 import { HelmetProvider } from 'react-helmet-async';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -13,7 +13,7 @@ jest.mock('../Firebase', () => {
   return { FirebaseContext: context.default, withFirebase: context.withFirebase };
 });
 jest.mock('firebase/database', () => ({ onValue: jest.fn() }));
-jest.mock('../constants/usertable', () => () => null);
+jest.mock('../constants/usertable', () => ({ users }) => users.map(user => user.uid).join(' '));
 jest.mock('./AdminBadgeAwards', () => () => <h2 id="admin-badges-title">Badge awards</h2>);
 
 const admin = { uid: 'field-admin', roles: { ADMIN: true } };
@@ -91,4 +91,22 @@ test('keeps staff tools behind the website administrator guard', () => {
   expect(screen.getByRole('heading', { name: 'Sign in' })).toBeInTheDocument();
   expect(screen.queryByRole('link', { name: /Player Check-In/ })).not.toBeInTheDocument();
   expect(onValue).not.toHaveBeenCalled();
+});
+
+test('includes archived players only when selected and finds an individual account by player ID', () => {
+  onValue.mockImplementation((_ref, next) => {
+    next({ val: () => ({
+      'live-uid': { name: 'Casey Hill', username: 'caseyhill' },
+      'archived-uid': { name: 'Casey Hill', username: 'caseyhill1', accountRemovedAt: 100 },
+    }) });
+    return () => {};
+  });
+  openAdmin(admin)();
+  expect(screen.queryByText(/archived-uid/)).toBeNull();
+  fireEvent.click(screen.getByRole('checkbox', { name: 'Include archived accounts' }));
+  fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'archived-uid' } });
+  expect(screen.getByText('archived-uid')).toBeVisible();
+  expect(screen.queryByText(/live-uid/)).toBeNull();
+  fireEvent.click(screen.getByRole('checkbox', { name: 'Include archived accounts' }));
+  expect(screen.getByText('No users match your search.')).toBeVisible();
 });

@@ -449,12 +449,9 @@ class RentalForm extends Component {
         })
 
         onValue(this.props.firebase.users(), snapshot => {
-            const usersObject = snapshot.val();
-
-            let usersList = Object.keys(usersObject).map(key => ({
-                ...usersObject[key],
-                uid: key,
-            }));
+            const usersList = Object.entries(snapshot.val() || {})
+                .filter(([, user]) => user && !user.accountRemovedAt)
+                .map(([uid, user]) => ({ ...user, uid }));
 
             this.setState({ members: usersList })
         })

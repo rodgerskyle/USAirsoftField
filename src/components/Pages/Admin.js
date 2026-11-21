@@ -66,7 +66,7 @@ function matchesQuery(user, query) {
   if (!query) return true;
   const name = normalized(user.name);
   const nameParts = name.split(/\s+/);
-  return [name, normalized(user.username), normalized(user.email)].some(value => value.includes(query))
+  return [name, normalized(user.username), normalized(user.email), normalized(user.uid)].some(value => value.includes(query))
     || query.split(/\s+/).every(part => nameParts.includes(part));
 }
 
@@ -156,11 +156,11 @@ function AdminPage({ firebase }) {
             <Form.Control
               id="staff-directory-search"
               type="search"
-              placeholder="Name, username, or email"
+              placeholder="Name, username, email, or player ID"
               value={search}
               onChange={event => setSearch(event.target.value)}
             />
-            <Form.Check id="staff-directory-show-removed" label="Include removed accounts"
+            <Form.Check id="staff-directory-show-removed" label="Include archived accounts"
               checked={showRemoved} onChange={event => setShowRemoved(event.target.checked)} />
           </Form>
           {loading ? (
