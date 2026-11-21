@@ -74,7 +74,7 @@ function UserRow({ user, page, rowsPerPage, index }) {
   const [open, setOpen] = React.useState(false);
   const expired = checkDate(user.renewal);
   const playerName = [user.name, user.username].find(value => typeof value === 'string' && value.trim()) || 'Unnamed player';
-  const renewalStatus = user.accountRemovedAt ? 'Account removed' : expired === null ? 'Date unavailable' : expired ? 'Expired' : 'Clear';
+  const renewalStatus = user.accountRemovedAt ? 'Archived' : expired === null ? 'Date unavailable' : expired ? 'Expired' : 'Clear';
   const renewalColor = expired === null ? 'var(--admin-subtext)' : expired ? 'var(--staff-error)' : 'var(--staff-success)';
 
   return (
@@ -102,6 +102,7 @@ function UserRow({ user, page, rowsPerPage, index }) {
         </TableCell>
         <TableCell sx={{ color: 'var(--admin-text)', fontWeight: 600 }}>
           {`(${(index + 1) + (page * rowsPerPage)}) ${playerName}`}
+          {user.accountRemovedAt && <span className="ms-2">(archived)</span>}
         </TableCell>
         <TableCell align="right" sx={{ color: 'var(--admin-subtext)' }}>{typeof user.username === 'string' ? user.username : '—'}</TableCell>
         <TableCell align="right" sx={{ color: 'var(--admin-subtext)' }}>{typeof user.email === 'string' ? user.email : '—'}</TableCell>

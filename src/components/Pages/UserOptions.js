@@ -125,6 +125,9 @@ class UserOptions extends Component {
             removing: false,
             reviewWaiver: null,
             removeTarget: null,
+            confirmation: '',
+            attemptedRemoval: false,
+            deleted: false,
             removeError: null,
         };
         this.reviewRemovalButton = React.createRef();
@@ -141,12 +144,15 @@ class UserOptions extends Component {
         this.saveRequest = null;
         const uid = this.props.router.params.id;
         this.setState({ loading: true, user: null, saving: false, reviewWaiver: null, error: null, status: null,
-            emailError: '', emailNotice: '', password: '', removing: false, removeTarget: null, removeError: null });
+            emailError: '', emailNotice: '', password: '', removing: false, removeTarget: null, confirmation: '', attemptedRemoval: false, deleted: false, removeError: null });
         this.unsubscribeUser = onValue(this.props.firebase.user(uid), snapshot => {
             if (this.props.router.params.id !== uid) return;
             const user = snapshot.val();
             if (!user || user.accountRemovedAt) {
-                this.setState({ loading: false, user });
+                this.setState(previous => ({
+                    loading: false, user,
+                    ...(!user && !previous.attemptedRemoval && { removeTarget: null, confirmation: '', removeError: null }),
+                }));
                 return;
             }
 
@@ -160,6 +166,8 @@ class UserOptions extends Component {
                 const editingEmail = previous.user && previous.email !== previous.oldEmail;
                 return {
                     ...fields, loading: false, user, renewal: user.renewal ?? '',
+                    ...(previous.removeTarget && !previous.attemptedRemoval && Object.values(user.roles ?? {}).some(Boolean) &&
+                        { removeTarget: null, confirmation: '', removeError: null }),
                     email: editingEmail ? previous.email : (user.email ?? ''),
                     oldEmail: editingEmail ? previous.oldEmail : (user.email ?? ''),
                 };
@@ -168,7 +176,10 @@ class UserOptions extends Component {
                 else this.setState({ profileicon: default_profile });
             });
         }, () => {
-            if (this.props.router.params.id === uid) this.setState({ loading: false, user: null, error: 'The player account is temporarily unavailable.' });
+            if (this.props.router.params.id === uid) this.setState(previous => ({
+                loading: false, user: null, error: 'The player account is temporarily unavailable.',
+                ...(!previous.attemptedRemoval && { removeTarget: null, confirmation: '', removeError: null }),
+            }));
         });
     }
 
@@ -191,29 +202,42 @@ class UserOptions extends Component {
     }
 
     canRemoveAccount(authUser, playerId) {
-        const { user } = this.state;
-        return Boolean(authUser?.roles?.[ROLES.ADMIN] && authUser.uid !== playerId && user &&
-            !user.accountRemovedAt && !Object.values(user.roles ?? {}).some(Boolean));
+        const { user, removeTarget, attemptedRemoval, deleted } = this.state;
+        // A successful server-side delete may remove the live profile before a receipt arrives.
+        const reviewed = user || (attemptedRemoval && removeTarget?.uid === playerId && removeTarget);
+        return Boolean(!deleted && reviewed && authUser?.roles?.[ROLES.ADMIN] && authUser.uid !== playerId &&
+            !Object.values(reviewed.roles ?? {}).some(Boolean));
     }
 
     removeAccount = async (authUser) => {
+        const { firebase } = this.props;
         const playerId = this.props.router.params.id;
-        const { removeTarget, removing } = this.state;
-        if (removing || this.removeRequest || removeTarget !== playerId || !this.canRemoveAccount(authUser, playerId)) return;
+        const { confirmation, removeTarget } = this.state;
+        if (this.removeRequest || this.saveRequest || removeTarget?.uid !== playerId ||
+            confirmation !== playerId || !this.canRemoveAccount(authUser, playerId)) return;
+        const actor = firebase.auth.currentUser;
+        if (!actor || actor.uid !== authUser.uid || actor.uid !== removeTarget.actorUid) {
+            this.setState({ removeError: changedSessionMessage });
+            return;
+        }
         const request = new AbortController();
         this.removeRequest = request;
-        this.setState({ removing: true, removeError: null });
+        this.setState({ removing: true, attemptedRemoval: true, removeError: null });
         try {
-            const result = await requestStaffFieldTool(this.props.firebase, authUser.uid, '/api/staff-player-accounts', {
-                method: 'POST', body: { playerId, confirmation: playerId }, signal: request.signal,
-            });
+            const { data } = await firebase.permanentlyDeletePlayerAccount()({ playerId, confirmation });
             if (request.signal.aborted) return;
-            if (!result.removed || result.playerId !== playerId) throw new Error('Account removal could not be confirmed.');
-            this.setState(current => ({
-                user: { ...current.user, accountRemovedAt: true }, removing: false, removeTarget: null,
-            }));
+            if (firebase.auth.currentUser !== actor) throw new Error(changedSessionMessage);
+            if (data?.deleted !== true || data.playerId !== playerId) throw new Error('Permanent deletion could not be confirmed. Retry for this player ID.');
+            this.setState({
+                user: null, deleted: true, removing: false, removeTarget: null, confirmation: '', attemptedRemoval: false,
+            });
         } catch (error) {
-            if (!request.signal.aborted) this.setState({ removing: false, removeError: error.message });
+            if (!request.signal.aborted) {
+                const message = !error?.message || /^(internal(?: server error)?|unavailable|unknown|failed to fetch|not found)$/i.test(error.message)
+                    ? 'The deletion service could not confirm completion. Retry for this player ID. If this continues, ask the Firebase project administrator to check the deletion service.'
+                    : error.message;
+                this.setState({ removing: false, removeError: message });
+            }
         } finally {
             if (this.removeRequest === request) this.removeRequest = null;
         }
@@ -221,30 +245,41 @@ class UserOptions extends Component {
 
     renderAccountRemoval(authUser) {
         const playerId = this.props.router.params.id;
-        const { user, removeTarget, removeError, removing } = this.state;
+        const { user, removeTarget, removeError, confirmation, removing, saving } = this.state;
         if (!this.canRemoveAccount(authUser, playerId)) return null;
         return (
             <section className="admin-account-removal" aria-labelledby="admin-account-removal-title">
-                <h3 id="admin-account-removal-title">Remove player account</h3>
-                <p>Blocks access to this player account in the website and Companion. Signed waivers and historical records are retained.</p>
-                {removeTarget !== playerId ? (
-                    <Button type="button" variant="outline-danger" ref={this.reviewRemovalButton}
-                        onClick={() => this.setState({ removeTarget: playerId, removeError: null })}>Review removal</Button>
+                <h3 id="admin-account-removal-title">Permanently delete player</h3>
+                <p>This deletes the player’s sign-in and profile and frees their email and username for registration.
+                    Signed waivers keep their one-year window. Past check-ins and rental records stay on file.</p>
+                {removeTarget?.uid !== playerId ? (
+                    <Button type="button" variant="outline-danger" ref={this.reviewRemovalButton} disabled={saving}
+                        onClick={() => this.setState({ removeTarget: {
+                            uid: playerId, actorUid: authUser.uid, name: user.name, username: user.username, email: user.email, roles: user.roles,
+                        }, confirmation: '', attemptedRemoval: false, removeError: null })}>Review deletion</Button>
                 ) : (
-                    <div className="admin-account-removal__review" role="group" aria-label="Confirm player account removal" aria-busy={removing}>
-                        <p><strong>{user.name || user.username || 'Player'}</strong>
-                            {user.name && user.username && user.username !== user.name && <span> ({user.username})</span>}
+                    <Form className="admin-account-removal__review" role="group" aria-label="Confirm permanent deletion" aria-busy={removing}
+                        onSubmit={event => { event.preventDefault(); void this.removeAccount(authUser); }}>
+                        <p><strong>{removeTarget.name || removeTarget.username || 'Player'}</strong>
+                            {removeTarget.name && removeTarget.username && removeTarget.username !== removeTarget.name && <span> ({removeTarget.username})</span>}
+                            {removeTarget.email && <><br />{removeTarget.email}</>}
                             <br />Player ID <code>{playerId}</code>
                         </p>
+                        <Form.Group controlId="confirm-player-deletion">
+                            <Form.Label>Type the player ID to confirm permanent deletion</Form.Label>
+                            <Form.Control autoFocus autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false}
+                                value={confirmation} disabled={removing} onChange={event => this.setState({ confirmation: event.target.value })} />
+                        </Form.Group>
                         {removeError && <p role="alert">{removeError}</p>}
                         <div className="admin-account-removal__actions">
-                            <Button type="button" variant="danger" disabled={removing} onClick={() => this.removeAccount(authUser)}>
-                                {removing ? 'Removing account…' : 'Confirm removal'}
+                            <Button type="submit" variant="danger" disabled={removing || saving || confirmation !== playerId}>
+                                {removing ? 'Deleting account…' : 'Permanently delete player'}
                             </Button>
-                            <Button autoFocus type="button" variant="outline-secondary" disabled={removing}
-                                onClick={() => this.setState({ removeTarget: null, removeError: null }, () => this.reviewRemovalButton.current?.focus())}>Cancel</Button>
+                            <Button type="button" variant="outline-secondary" disabled={removing}
+                                onClick={() => this.setState({ removeTarget: null, confirmation: '', attemptedRemoval: false, removeError: null },
+                                    () => this.reviewRemovalButton.current?.focus())}>Cancel</Button>
                         </div>
-                    </div>
+                    </Form>
                 )}
             </section>
         );
@@ -374,7 +409,7 @@ class UserOptions extends Component {
     }
 
     async updateUser(authUser, emailOnly = false) {
-        if (this.saveRequest || !this.state.user || this.state.user.accountRemovedAt) return;
+        if (this.saveRequest || this.removeRequest || this.state.removeTarget || !this.state.user || this.state.user.accountRemovedAt) return;
         const { firebase } = this.props;
         const uid = this.props.router.params.id;
         const { oldEmail, password, user } = this.state;
@@ -466,8 +501,17 @@ class UserOptions extends Component {
         this.setState({ reviewWaiver: null, error: null });
         try {
             const [url, metadata] = await Promise.all([getDownloadURL(storageRef), getMetadata(storageRef)]);
-            tab.location.replace(url);
             const created = Date.parse(metadata.timeCreated);
+            if (this.props.router.params.id !== uid) {
+                tab.close();
+                return;
+            }
+            if (this.state.user?.accountRemovedAt && !(created > waiverArchiveStart() && created <= Date.now())) {
+                tab.close();
+                this.setState({ error: 'This waiver is outside the one-year archive.' });
+                return;
+            }
+            tab.location.replace(url);
             const data = metadata.customMetadata || {};
             if (this.props.router.params.id === uid && created > waiverArchiveStart() && created <= Date.now() &&
                 metadata.generation && data.usawSignedMemberForm !== 'v1' && data.usawReviewedGeneration !== metadata.generation) {
@@ -538,12 +582,18 @@ class UserOptions extends Component {
                                     <Breadcrumb.Item active>User Options</Breadcrumb.Item>
                                 </Breadcrumb>
                                 </div>
-                                {!user || user.accountRemovedAt ? (
+                                {!user || user.accountRemovedAt || this.state.deleted ? (
                                     <section className="admin-account-removal">
-                                        <p role="status">{user?.accountRemovedAt ? 'This player account was removed.' : error || 'This player account was not found.'}</p>
-                                        {user?.accountRemovedAt && <Button variant="outline-info" onClick={() => this.openWaiver()}>Open retained waiver</Button>}
+                                        {this.state.deleted ? <p role="status">Player account permanently deleted. The email and username have been released.</p>
+                                            : user?.accountRemovedAt ? <p role="status">This player account is archived.</p>
+                                            : !this.state.removeTarget && <p role="status">{error || 'This player account was not found.'}</p>}
+                                        {this.state.deleted && <Link to="/admin/waiverlookup">Find retained waiver</Link>}
+                                        {user?.accountRemovedAt && !this.state.deleted && <>
+                                            <Button variant="outline-info" onClick={() => this.openWaiver()}>Open retained waiver</Button>
+                                            {error && <p role="alert">{error}</p>}
+                                        </>}
                                     </section>
-                                ) : <>
+                                ) : (!this.state.removeTarget || !this.canRemoveAccount(authUser, this.props.router.params.id)) && <>
                                 <Row className="row-uo admin-user-options-card">
                                     <Col md={4} className="admin-user-options-sidebar">
                                         <div className="team-single-img">
@@ -757,8 +807,8 @@ class UserOptions extends Component {
                                         <p className="super-status-uo-admin">{this.state.super_status}</p>
                                     </Col> : null}
                                 </Row> : null}
-                                {this.renderAccountRemoval(authUser)}
                                 </>}
+                                {this.renderAccountRemoval(authUser)}
                             </Container>
                             : <h2 className="pagePlaceholder">Loading...</h2>}
                         <Snackbar open={notification !== null} autoHideDuration={6000} onClose={() => this.setState({ notification: null })}>

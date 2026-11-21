@@ -113,6 +113,8 @@ class Firebase {
 
     updatePlayerSignInEmail = () => httpsCallable(this.func, 'updatePlayerSignInEmail');
 
+    permanentlyDeletePlayerAccount = () => httpsCallable(this.func, 'permanentlyDeletePlayerAccount');
+
     checkRecaptcha = () => httpsCallable(this.func, 'checkRecaptcha');
 
     sendReceipt = () => httpsCallable(this.func, 'sendReceipt');

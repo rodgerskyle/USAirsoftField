@@ -1,10 +1,10 @@
-# Player sign-in email administration
+# USAW player account administration
 
-This directory deploys the website's `updatePlayerSignInEmail` HTTPS callable to `us-central1` in the `usairsoftfield` Firebase project. It uses the function's runtime service account to access Firebase Authentication and the official Realtime Database at `https://usairsoftfield.firebaseio.com`.
+This directory deploys the website's `updatePlayerSignInEmail` and `permanentlyDeletePlayerAccount` HTTPS callables to `us-central1` in the `usairsoftfield` Firebase project. It uses the function's runtime service account to access Firebase Authentication and the official Realtime Database at `https://usairsoftfield.firebaseio.com`.
 
 ## Deployment
 
-From this directory, use Node.js 22 and a Firebase CLI authenticated to the official project. The deploy command selects the one callable in its own codebase.
+From this directory, use Node.js 22 and a Firebase CLI authenticated to the official project. Each deploy command selects one callable in the existing `admin-player-email` codebase.
 
 ```sh
 npm ci --prefix functions
@@ -13,6 +13,35 @@ firebase deploy --config firebase.json --project usairsoftfield --only functions
 ```
 
 The deployer needs permission to deploy second-generation functions and use the selected runtime service account. The runtime service account needs Firebase Authentication user read/update access and read/write access to the official Realtime Database. If deployment or a capability check reports insufficient permissions, the project owner should check the selected project, runtime service account and associated IAM grants.
+
+## Deploy permanent deletion
+
+Publish the Companion version that supports `preparePermanentDeletion` before enabling the new website action. From the root of the merged website checkout, deploy the new function with an account authorized on the USAW Firebase project.
+
+```sh
+cd firebase/admin-player-email
+npm ci --prefix functions
+npm test --prefix functions
+firebase deploy --config firebase.json --project usairsoftfield --only functions:admin-player-email:permanentlyDeletePlayerAccount
+```
+
+The deletion callable runs as `874564019415-compute@developer.gserviceaccount.com`, the USAW runtime identity that Companion verifies. The deployer needs permission to act as this service account. It needs to read and delete Firebase Auth users, read the official database and update player and team records, and delete profile images (`storage.objects.delete` for `images/{uid}/profilepic.png` in `usairsoftfield.appspot.com`). If Cloud Run blocks the website before the callable receives the Firebase ID token, the project owner can grant invocation on this function:
+
+```sh
+gcloud functions add-invoker-policy-binding permanentlyDeletePlayerAccount --project=usairsoftfield --region=us-central1 --member=allUsers
+```
+
+Invocation lets the browser reach the callable. Each deletion still requires a valid Firebase admin sign-in and the server-side authorization checks below. An unsigned request to the deployed callable with a JSON body of `{"data":{}}` should return the structured `UNAUTHENTICATED` error. This reachability check does not select or delete a player.
+
+## Permanently deleting a player
+
+The caller must meet the same administrator requirements as for email edits. The request supplies one exact UID in both `playerId` and `confirmation`. Current and previously archived profiles are supported. Staff accounts, the signed-in administrator, and team owners are protected. Transfer an owned team before retrying. The caller cannot select players by email or username.
+
+The function checks the selected UID and sends the original administrator's Firebase ID token to the official Companion `/api/staff-player-accounts` endpoint with `action: "preparePermanentDeletion"`. The callable also supplies a Google-signed ID token for its own runtime identity, bound by audience to the admin UID and selected player UID. Companion retains the waiver lookup and historical field records and cleans up the active Companion identity. The function requires a positive receipt for that UID and verifies the archive marker before it removes the field roster entries, join requests, avatar, Auth user and official profile. The on-file waiver PDF and the mailing list are separate from the avatar and account.
+
+A successful request returns `{deleted:true, playerId}`. After a network or permission failure, retry the same player ID. An archived profile remains available for the admin to retry until the last step. A completed retry makes no further writes. A new registration using the released email or username has its own UID and is independent of the deletion. The function handles one player per confirmed request.
+
+For end-to-end deletion tests in the Functions emulator use a demo project with Auth, Realtime Database and Storage emulators, plus `COMPANION_ACCOUNT_EMULATOR_ORIGIN` pointing to an explicitly configured loopback HTTP test server. Production uses the fixed official Companion origin.
 
 ## Who can change an email
 

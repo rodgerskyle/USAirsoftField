@@ -1,5 +1,7 @@
 'use strict';
 const { initializeApp } = require('firebase-admin/app');
+const { getStorage } = require('firebase-admin/storage');
+const { removePlayer } = require('./player-deletion');
 const { getAuth } = require('firebase-admin/auth');
 const { getDatabaseWithUrl } = require('firebase-admin/database');
 const { HttpsError, onCall } = require('firebase-functions/v2/https');
@@ -22,3 +24,19 @@ function services() {
 
 exports.updatePlayerSignInEmail = onCall({ region: 'us-central1', timeoutSeconds: 30 }, request =>
   handle(request, services()));
+
+exports.permanentlyDeletePlayerAccount = onCall({
+  region: 'us-central1', timeoutSeconds: 120,
+  serviceAccount: '874564019415-compute@developer.gserviceaccount.com',
+}, request => {
+  const dependencies = services();
+  const emulator = process.env.FUNCTIONS_EMULATOR === 'true';
+  if (emulator && !process.env.FIREBASE_STORAGE_EMULATOR_HOST) {
+    throw new HttpsError('failed-precondition', 'Local deletion testing requires a Storage emulator.');
+  }
+  const bucket = emulator ? (app.options.storageBucket || `${process.env.GCLOUD_PROJECT}.appspot.com`) : 'usairsoftfield.appspot.com';
+  return removePlayer(request, {
+    ...dependencies,
+    removeAvatar: uid => getStorage(app).bucket(bucket).file(`images/${uid}/profilepic.png`).delete({ ignoreNotFound: true }),
+  });
+});

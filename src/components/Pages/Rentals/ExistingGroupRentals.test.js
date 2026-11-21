@@ -1,6 +1,6 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { get, onValue, runTransaction, set } from 'firebase/database';
+import { get, onValue, query, runTransaction, set, startAfter } from 'firebase/database';
 import EditForm from './EditForm';
 import ReturnForm from './ReturnForm';
 import GroupRentalPicker from './GroupRentalPicker';
@@ -11,7 +11,7 @@ jest.mock('../../session', () => ({ withAuthorization: () => component => compon
 jest.mock('./GroupRentalPicker', () => jest.fn());
 jest.mock('firebase/database', () => ({
     get: jest.fn(), onValue: jest.fn(), runTransaction: jest.fn(), set: jest.fn(),
-    query: jest.fn(), ref: jest.fn(), orderByChild: jest.fn(), startAt: jest.fn(), endAt: jest.fn(), limitToLast: jest.fn(),
+    query: jest.fn(), ref: jest.fn(), orderByChild: jest.fn(), startAt: jest.fn(), startAfter: jest.fn(), endAt: jest.fn(), limitToFirst: jest.fn(), limitToLast: jest.fn(),
 }));
 
 const firebase = { auth: { currentUser: { uid: 'staff' } }, rentalGroups: () => 'forms', rentalGroup: key => key, rentalOptions: () => 'options', digitalWaivers: () => 'waivers' };
@@ -116,7 +116,7 @@ test('a return check preserves imported identity, manual fields and arrivals add
     view.rerender(<ReturnForm firebase={firebase} rentalForms={[{ key: 'other', name: 'Another form' }, { ...current, key: '0' }]} />);
     expect(screen.getByText('Group: Birthday rental')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Complete Form' }));
-    expect(screen.getByText(/email for receipt/)).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Complete rental return' })).toBeVisible();
 });
 
 test('rejects imports for a different linked group or a returned or deleted record', async () => {
@@ -162,4 +162,32 @@ test('protects an older manually selected form against a reused key during a pen
     expect(current.checkInGroup).toBeUndefined();
     view.rerender(<EditForm {...formProps()} initialFormKey={null} />);
     expect(screen.getByText('This rental form is no longer open.')).toBeVisible();
+});
+
+
+test.each([null, { name: 'Former member', accountRemovedAt: 10 }])('a member removed after a rental search cannot be added', async deletedProfile => {
+    const archived = Object.fromEntries(Array.from({ length: 50 }, (_, index) => [`old-${index}`, {
+        name: 'Archived member', nameLower: 'member archived', usernameLower: 'memberarchived', accountRemovedAt: 5,
+    }]));
+    const matching = { existing: { name: 'Former member', nameLower: 'member former', usernameLower: 'memberformer' } };
+    startAfter.mockImplementation((value, key) => ({ after: key }));
+    query.mockImplementation((path, ...constraints) => path === 'users'
+        ? (constraints.some(constraint => constraint?.after) ? 'users/next-page' : 'users/first-page') : path);
+    get.mockImplementation(async path => {
+        const value = path === 'users/first-page' ? archived : path === 'users/next-page' ? matching :
+            path === 'users/existing' ? deletedProfile : null;
+        return { exists: () => Boolean(value), val: () => value, forEach: visit =>
+            Object.entries(value || {}).forEach(([key, row]) => visit({ key, val: () => row })) };
+    });
+    const desk = { ...firebase, users: () => 'users', user: uid => `users/${uid}` };
+    render(<EditForm {...formProps()} firebase={desk} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Add Participant' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Members' }));
+    fireEvent.change(await screen.findByPlaceholderText(/Search members by/), { target: { value: 'mem' } });
+    const member = await screen.findByText('Former member');
+    expect(screen.queryByText('Archived member')).toBeNull();
+    fireEvent.click(member);
+    expect(await screen.findByText(/This player account was removed/)).toBeVisible();
+    expect(runTransaction).not.toHaveBeenCalled();
+    expect(current.participants).toEqual([handEntered]);
 });

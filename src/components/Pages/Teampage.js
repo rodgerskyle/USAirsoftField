@@ -16,8 +16,7 @@ function TeamDetail({ firebase, teamId, source }) {
     const authUser = useContext(AuthUserContext);
     const [fieldTeam, setFieldTeam] = useState(null);
     const [fieldStatus, setFieldStatus] = useState('loading');
-    const [fieldCaptain, setFieldCaptain] = useState('');
-    const [removedMembers, setRemovedMembers] = useState({});
+    const [fieldNames, setFieldNames] = useState({});
     const companion = source === 'companion';
     const shared = useCompanionTeamDirectory(firebase, { enabled: companion, id: teamId });
     const team = companion ? shared.record?.team : fieldTeam;
@@ -40,28 +39,42 @@ function TeamDetail({ firebase, teamId, source }) {
     }, [companion, firebase, teamId]);
 
     const captainId = companion ? team?.captainId : team?.leader;
-    useEffect(() => {
-        setFieldCaptain('');
-        if (companion || !captainId) return undefined;
-        return onValue(child(firebase.user(captainId), 'name'), (snapshot) => {
-            setFieldCaptain(snapshot.val() || '');
-        }, () => setFieldCaptain(''));
-    }, [companion, firebase, captainId]);
-
     const fieldMembers = companion ? [] : Object.values(team?.members || {}).filter(member =>
-            Array.isArray(member) && typeof member[0] === 'string' && typeof member[1] === 'string' && member[1]
-        ).map(([name, id]) => ({ name, id }));
-    const fieldMemberIds = fieldMembers.map(member => member.id).filter(id => /^[A-Za-z0-9_-]{10,128}$/.test(id)).join(',');
+        Array.isArray(member) && typeof member[0] === 'string' && typeof member[1] === 'string'
+    ).map(([name, id]) => ({ name, id }));
+    const fieldPlayerIds = [...new Set([...fieldMembers.map(member => member.id), companion ? null : captainId])]
+        .filter(id => typeof id === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(id)).sort().join(',');
     useEffect(() => {
-        setRemovedMembers({});
-        if (!fieldMemberIds) return undefined;
-        const stops = fieldMemberIds.split(',').map(id => onValue(child(firebase.user(id), 'accountRemovedAt'), snapshot => {
-            setRemovedMembers(previous => ({ ...previous, [id]: Boolean(snapshot.val()) }));
-        }, () => {}));
-        return () => stops.forEach(stop => stop());
-    }, [fieldMemberIds, firebase]);
-    const members = companion ? team?.members ?? [] : fieldMembers.filter(member => !removedMembers[member.id]);
-    const captain = fieldCaptain || members.find(member => member.id === captainId)?.name;
+        setFieldNames({});
+        if (!fieldPlayerIds) return undefined;
+        let listening = true;
+        const stops = fieldPlayerIds.split(',').map(id => {
+            const profile = firebase.user(id);
+            let stopName;
+            const saveName = name => {
+                if (listening) setFieldNames(previous => ({ ...previous, [id]: name }));
+            };
+            const hide = () => {
+                stopName?.();
+                stopName = undefined;
+                saveName(null);
+            };
+            const stopRemoval = onValue(child(profile, 'accountRemovedAt'), snapshot => {
+                hide();
+                if (snapshot.val()) return;
+                // A missing profile also lacks a removal marker. A registered name
+                // must exist before this entry from the cached team roster can appear.
+                stopName = onValue(child(profile, 'name'), row => saveName(row.val()), () => saveName(null));
+            }, hide);
+            return () => { stopRemoval(); stopName?.(); };
+        });
+        return () => {
+            listening = false;
+            stops.forEach(stop => stop());
+        };
+    }, [fieldPlayerIds, firebase]);
+    const members = companion ? team?.members ?? [] : fieldMembers.filter(member => fieldNames[member.id]);
+    const captain = companion ? members.find(member => member.id === captainId)?.name : fieldNames[captainId];
     const points = Number(team?.points);
     const title = team?.name || teamId;
     const joining = new URLSearchParams({ team: teamId }).toString();

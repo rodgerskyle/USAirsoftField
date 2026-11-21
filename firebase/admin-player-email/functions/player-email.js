@@ -31,9 +31,10 @@ function protectedProfile(profile) {
   return profile.accountRemovedAt || hasRole(roles, staffRoles) ||
     (roles && typeof roles === 'object' && Object.entries(roles).some(([role, value]) => enabled(value, role)));
 }
+function hasStaffClaims(user) { return hasCustomRole(user, staffRoles); }
 function validateSignIn(user) {
   if (user.disabled || !user.email) throw fail('failed-precondition', 'The selected player needs an active, email-based Firebase sign-in.');
-  if (hasCustomRole(user, staffRoles)) {
+  if (hasStaffClaims(user)) {
     throw fail('permission-denied', 'Staff accounts require a separate recovery path.');
   }
 }
@@ -189,4 +190,4 @@ async function handle(request, { auth, db }) {
     }
   } catch (error) { throw translate(error); }
 }
-module.exports = { handle };
+module.exports = { handle, authorize, hasStaffClaims };

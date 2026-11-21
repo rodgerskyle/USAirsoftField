@@ -16,7 +16,7 @@ import CustomMenu from '../constants/custommenu'
 import * as ROLES from '../constants/roles';
 
 import { Helmet } from 'react-helmet-async';
-import { getDownloadURL, listAll } from 'firebase/storage';
+import { getDownloadURL, getMetadata, listAll } from 'firebase/storage';
 import { endAt, endBefore, get, limitToLast, onValue, orderByChild, push, query, remove, set, startAt } from 'firebase/database';
 
 import { FormControlLabel, Switch } from '@mui/material';
@@ -24,6 +24,7 @@ import { FormControlLabel, Switch } from '@mui/material';
 import SignedWaiver from './SignedWaiver';
 import WaiverCardSearch from './WaiverCardSearch';
 import PaperWaiverReview from './PaperWaiverReview';
+import { requestStaffFieldTool } from '../constants/fieldStaffApi';
 import { pdf } from '@react-pdf/renderer';
 import { findPotentialBans, normalizePersonName } from '../utils/banMatching';
 
@@ -49,6 +50,7 @@ class WaiverLookup extends Component {
             loadingOlder: false,
             loadError: "",
             searchIncomplete: false,
+            memberWaiverNotice: '',
             activeMonth: null,
             activeDay: null,
             activeYear: null,
@@ -197,6 +199,8 @@ class WaiverLookup extends Component {
 
     stopArchive = () => {
         this.generation++;
+        this.memberSearch?.abort();
+        this.memberSearch = null;
         this.olderRequest = null;
         clearTimeout(this.searchTimer);
         if (this.unsubscribeWaivers) this.unsubscribeWaivers();
@@ -237,7 +241,7 @@ class WaiverLookup extends Component {
     loadWaivers = () => {
         this.stopArchive();
         const generation = this.generation;
-        this.setState({ loading: true, waivers: [], currentPage: 1, hasOlder: false, loadingOlder: false, loadError: '', searchIncomplete: false });
+        this.setState({ loading: true, waivers: [], currentPage: 1, hasOlder: false, loadingOlder: false, loadError: '', searchIncomplete: false, memberWaiverNotice: '' });
         const failed = () => {
             if (generation === this.generation) this.setState({ loading: false, loadError: 'Unable to load the waiver archive.' });
         };
@@ -251,14 +255,31 @@ class WaiverLookup extends Component {
         const { search, activeYear, activeMonth, activeDay } = this.state;
         if (search.trim()) {
             if (!this.searchIndex) this.searchIndex = loadWaiverSearchIndex(this.props.firebase);
-            this.searchIndex.then(batches => {
+            const term = search.trim();
+            const canSearchMembers = this.props.adminUid && term.length >= 2 && term.length <= 120;
+            this.memberSearch = new AbortController();
+            const members = canSearchMembers
+                ? requestStaffFieldTool(this.props.firebase, this.props.adminUid, '/api/waivers/retained-members', {
+                    method: 'POST', body: { search: term }, signal: this.memberSearch.signal,
+                })
+                : Promise.resolve({ matches: [] });
+            Promise.allSettled([this.searchIndex, members]).then(([digital, member]) => {
                 if (generation !== this.generation) return;
+                const batches = digital.status === 'fulfilled' ? digital.value : [];
                 const rows = new Map();
                 batches.forEach(batch => batch.rows.forEach(row => rows.set(row.ref, row)));
                 (this.recentRows || []).forEach(row => rows.set(row.ref, row));
-                this.setState({ waivers: [...rows.values()], loading: false, searchIncomplete: batches.some(batch => batch.missing) });
-            }).catch(() => {
-                if (generation === this.generation) this.setState({ waivers: this.recentRows || [], loading: false, searchIncomplete: true });
+                const result = member.status === 'fulfilled' ? member.value : null;
+                const retained = (result?.matches || []).map(row => ({
+                    ...row, name: row.name || 'Unnamed member waiver', date: new Date(row.createdAt),
+                    ref: this.props.firebase.membersWaivers(row.memberId + '.pdf'), isRetainedMember: true,
+                }));
+                this.setState({
+                    waivers: [...rows.values(), ...retained], loading: false,
+                    searchIncomplete: digital.status === 'rejected' || batches.some(batch => batch.missing),
+                    memberWaiverNotice: !result ? 'Retained member waivers could not be searched. Try the search again.' :
+                        result.hasMore ? 'More retained member waivers match. Enter a longer name to narrow the search.' : '',
+                });
             });
             return;
         }
@@ -300,7 +321,7 @@ class WaiverLookup extends Component {
         const { search, activeMonth, activeDay, activeYear } = this.state;
         if (!waiver.name || !(waiver.date > cutoff && waiver.date <= now)) return false;
         const term = search.trim().toLowerCase();
-        return term ? waiver.name.toLowerCase().includes(term) : compareDate(activeMonth, activeDay, activeYear, waiver.date);
+        return term ? (waiver.isRetainedMember || waiver.name.toLowerCase().includes(term)) : compareDate(activeMonth, activeDay, activeYear, waiver.date);
     }
 
     ensureMatches = () => {
@@ -329,6 +350,28 @@ class WaiverLookup extends Component {
 
     toggleWaiverType = () => {
         this.setState(state => ({ useLegacy: !state.useLegacy }), this.loadWaivers);
+    }
+
+    openRetainedMember = async waiver => {
+        const tab = window.open();
+        if (!tab) {
+            this.setState({ loadError: 'Allow the member waiver PDF to open and try again.' });
+            return;
+        }
+        tab.opener = null;
+        try {
+            const [url, metadata] = await Promise.all([getDownloadURL(waiver.ref), getMetadata(waiver.ref)]);
+            const createdAt = Date.parse(metadata.timeCreated);
+            if (this.props.firebase.auth.currentUser?.uid !== this.props.adminUid ||
+                metadata.generation !== waiver.generation || createdAt !== waiver.createdAt ||
+                createdAt <= waiverArchiveStart() || createdAt > Date.now()) {
+                throw new Error('Waiver changed');
+            }
+            tab.location.replace(url);
+        } catch {
+            tab.close();
+            this.setState({ loadError: 'This member waiver could not be opened. Refresh the search and try again.' });
+        }
     }
 
     // Opens User's waiver
@@ -543,6 +586,7 @@ class WaiverLookup extends Component {
 
                                 <Card.Body className="usa-waiver-body">
                                     <p>Waivers created in the past year</p>
+                                    {this.state.memberWaiverNotice && <Alert variant="warning">{this.state.memberWaiverNotice}</Alert>}
                                     {this.state.searchIncomplete && <Alert variant="warning">Some months have no search index. Clear the name and browse by creation date to check the signed records.</Alert>}
                                     {!this.state.useLegacy && !search.trim() && <Button size="sm" variant="outline-secondary" onClick={this.loadWaivers}>Refresh waivers</Button>}
                                     {this.state.loadError && <Alert variant="danger">{this.state.loadError} <Button size="sm" onClick={this.loadWaivers}>Retry</Button></Alert>}
@@ -570,6 +614,7 @@ class WaiverLookup extends Component {
                                                                         <div className="usa-waiver-info">
                                                                             <span className="usa-waiver-index">#{rowIndex}</span>
                                                                             <span className="usa-waiver-name">{waiverName}</span>
+                                                                            {waiver.isRetainedMember && <small className="ms-2">Retained member waiver</small>}
                                                                             {waiver.isDigital && <details className="ms-2">
                                                                                 <summary>Waiver reference</summary>
                                                                                 <input aria-label={`Waiver reference for ${waiverName}`} value={waiver.ref} readOnly onFocus={event => event.target.select()} />
@@ -590,11 +635,11 @@ class WaiverLookup extends Component {
                                                                         </div>
                                                                         <Button
                                                                             className={`usa-waiver-button ${waiver.isDigital ? 'usa-waiver-button-view' : 'usa-waiver-button-open'}`}
-                                                                            onClick={() => this.openWaiver(waiver.ref, waiver.isDigital)}
+                                                                            onClick={() => waiver.isRetainedMember ? this.openRetainedMember(waiver) : this.openWaiver(waiver.ref, waiver.isDigital)}
                                                                         >
                                                                             {waiver.isDigital ? 'View' : 'Open'}
                                                                         </Button>
-                                                                        {!waiver.isDigital && <PaperWaiverReview firebase={this.props.firebase}
+                                                                        {!waiver.isDigital && !waiver.isRetainedMember && <PaperWaiverReview firebase={this.props.firebase}
                                                                             uid={authUser.uid} waiver={waiver} />}
                                                                     </div>
                                                                 </div>
@@ -773,7 +818,13 @@ function compareDate(month, day, year, date2) {
 const condition = authUser =>
     authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]);
 
-export default withAuthorization(condition)(withFirebase(WaiverLookup));
+function WaiverLookupByAccount(props) {
+    const user = React.useContext(AuthUserContext);
+    const adminUid = user?.roles?.[ROLES.ADMIN] ? user.uid : null;
+    return <WaiverLookup key={user?.uid + ':' + Boolean(adminUid)} {...props} adminUid={adminUid} />;
+}
+
+export default withAuthorization(condition)(withFirebase(WaiverLookupByAccount));
 
 // export default composeHooks(
 //     withAuthorization(condition),
