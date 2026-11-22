@@ -13,3 +13,9 @@ export function officialAccountRoles(roles) {
     }
     return next;
 }
+
+export function canUseRentalDesk(roles) {
+    const { ADMIN, WAIVER, STATIC } = officialAccountRoles(roles);
+    const waiverDesk = ['1', 'true', 'waiver'].includes(String(WAIVER).trim().toLowerCase());
+    return !(STATIC && WAIVER) && Boolean(ADMIN || waiverDesk);
+}

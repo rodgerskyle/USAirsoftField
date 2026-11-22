@@ -30,3 +30,41 @@
 .group-desk [role='status']:not(:empty) { border-inline-start: 3px solid var(--desk-emphasis); padding: .6rem .85rem; margin: .5rem 0 1rem; }
 @media (max-width: 760px) { .group-desk__layout { grid-template-columns: 1fr; } }
 .group-desk__roster li { flex-wrap: wrap; }
+
+.field-tools .group-desk__layout { grid-template-columns: minmax(15rem, .85fr) minmax(0, 1.65fr); }
+.field-tools .group-desk__directory-heading {
+  padding-bottom: .75rem;
+  border-bottom: 1px solid var(--desk-line);
+}
+.group-desk__visit-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
+.field-tools .group-desk__choice:is(:hover, :focus-visible),
+.field-tools .group-desk__choice[aria-pressed='true'] { background: var(--admin-accent-soft); }
+.field-tools .group-desk__roster > li {
+  margin-top: .55rem;
+  padding: .85rem;
+  justify-content: flex-start;
+  border: 1px solid var(--desk-line);
+  border-radius: .65rem;
+  background: var(--admin-surface-muted);
+}
+.field-tools .group-desk__roster > li > div:first-child { flex-basis: 100%; }
+.field-tools .group-desk__roster details { min-width: 0; max-width: 100%; }
+.field-tools .group-desk__roster details[open] { flex-basis: 100%; }
+.field-tools .group-desk__roster summary {
+  min-height: 44px;
+  padding: .5rem .65rem;
+  border: 1px solid var(--desk-line);
+  border-radius: .5rem;
+  background: var(--desk-surface);
+  color: var(--desk-emphasis);
+  font-weight: 650;
+  cursor: pointer;
+}
+.field-tools .group-desk__roster > li > a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+@media (max-width: 850px) {
+  .field-tools .group-desk__layout { grid-template-columns: minmax(0, 1fr); }
+}

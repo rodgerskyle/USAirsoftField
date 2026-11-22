@@ -9,6 +9,8 @@ import { Helmet } from 'react-helmet-async';
 import { Breadcrumb } from 'react-bootstrap';
 import { LinkContainer } from 'react-router-bootstrap';
 import { AuthUserContext } from '../session';
+import WalkOnRentalStart from './Rentals/WalkOnRentalStart';
+import { validWalkOnRental } from '../constants/groupRentalLink';
 import CreateRentalForm from './Rentals/CreateRentalForm';
 import EditForm from './Rentals/EditForm';
 import { onValue } from 'firebase/database';
@@ -21,7 +23,7 @@ import {
     Paper,
     Typography,
     Chip,
-    IconButton
+    Button
 } from '@mui/material';
 import { AddBox, EditNote, AssignmentReturn, Inventory2, Lock, LockOpen } from '@mui/icons-material';
 import { useLocation, useSearchParams } from 'react-router-dom';
@@ -55,18 +57,29 @@ function RentalsManagement(props) {
     }, [searchParams]);
 
     const roles = ROLES.officialAccountRoles(authUser?.roles);
-    const isSharedKiosk = Boolean(roles.STATIC && roles.WAIVER);
-    const canImportGroup = Boolean(authUser?.uid && !isNavHidden && !isSharedKiosk &&
-        (roles.ADMIN || ['1', 'true', 'waiver'].includes(String(roles.WAIVER).trim().toLowerCase())));
+    const rentalDesk = Boolean(authUser?.uid && ROLES.canUseRentalDesk(roles));
+    const canImportGroup = rentalDesk && !isNavHidden;
     const requestedGroup = searchParams.get('group');
-    const groupId = canImportGroup && GROUP_ID.test(requestedGroup) ? requestedGroup : null;
-    const linkedForm = groupId && rentalForms.find(form => !form.returned && form.checkInGroup?.id === groupId);
+    const walkOnId = searchParams.get('walkOn');
+    const date = searchParams.get('date');
+    const isWalkOn = rentalDesk && validWalkOnRental(walkOnId, date) && !requestedGroup;
+    const fromCompanion = searchParams.get('from') === 'companion';
+    const groupId = canImportGroup && !walkOnId && GROUP_ID.test(requestedGroup) ? requestedGroup : null;
+    const checkInPath = fromCompanion || !roles.ADMIN ? 'https://app.usairsoftfield.com/#staff-check-in' : '/admin/field/check-in';
+    const linkedForm = rentalForms.find(form => !form.returned && (
+        (groupId && form.checkInGroup?.id === groupId) ||
+        (isWalkOn && form.walkOnCheckIn?.playerId === walkOnId && form.walkOnCheckIn.date === date)));
+    const RentalStart = isWalkOn ? WalkOnRentalStart : CreateRentalForm;
+    const draftKey = [authUser?.uid, isWalkOn ? walkOnId + date : groupId || 'manual'].join('/');
 
     useEffect(() => {
         if (loading || !authUser?.uid || handledLocation.current === location.key) return;
         handledLocation.current = location.key;
         if (activeView === 'new' && linkedForm) {
-            setSearchParams({ view: 'edit', group: groupId, form: String(linkedForm.key) }, { replace: true });
+            const next = new URLSearchParams(searchParams);
+            next.set('view', 'edit');
+            next.set('form', String(linkedForm.key));
+            setSearchParams(next, { replace: true });
         } else if (!searchParams.get('view')) {
             const params = new URLSearchParams(searchParams);
             params.set('view', 'new');
@@ -75,7 +88,12 @@ function RentalsManagement(props) {
     }, [loading, authUser?.uid, location.key, activeView, linkedForm, groupId, searchParams, setSearchParams]);
 
     const openExisting = (key, id) => {
-        if (canImportGroup && key != null && GROUP_ID.test(id)) {
+        if (key != null && isWalkOn && id === walkOnId) {
+            const next = new URLSearchParams(searchParams);
+            next.set('view', 'edit');
+            next.set('form', String(key));
+            setSearchParams(next);
+        } else if (canImportGroup && key != null && GROUP_ID.test(id)) {
             setSearchParams({ view: 'edit', group: id, form: String(key) });
         }
     };
@@ -219,13 +237,15 @@ function RentalsManagement(props) {
                                             <Chip label={`${pendingFormsCount} pending`} size="small" sx={{ backgroundColor: 'var(--admin-warning-bg)', color: 'var(--admin-warning)' }} />
                                         </Box>
 
-                                        <IconButton
+                                        <Button
+                                            aria-expanded={!isNavHidden}
+                                            startIcon={isNavHidden ? <LockOpen /> : <Lock />}
                                             onClick={toggleNavVisibility}
                                             title={isNavHidden ? 'Show navigation' : 'Hide navigation'}
                                             sx={{ border: '1px solid var(--admin-border)', color: 'var(--admin-subtext)', backgroundColor: 'var(--admin-surface-muted)' }}
                                         >
-                                            {isNavHidden ? <LockOpen /> : <Lock />}
-                                        </IconButton>
+                                            {isNavHidden ? 'Show navigation' : 'Hide navigation'}
+                                        </Button>
                                     </Box>
 
                                     {!isNavHidden && (
@@ -270,9 +290,13 @@ function RentalsManagement(props) {
                                         </Row>
                                     ) : null}
 
-                                    {!loading && activeView === 'new' ? (
-                                        <CreateRentalForm
-                                            key={requestedGroup || 'manual'}
+                                    {isWalkOn && !isNavHidden && <p><a className="btn btn-outline-primary" href={checkInPath}>Back to player check-in</a></p>}
+                                    {!loading && canImportGroup && walkOnId && !isWalkOn && activeView === 'new' &&
+                                        <p role="alert">This walk-on rental link is incomplete. Reopen the player in check-in.</p>}
+                                    {!loading && activeView === 'new' && !(canImportGroup && walkOnId && !isWalkOn) ? (
+                                        <RentalStart
+                                            key={draftKey}
+                                            {...(isWalkOn && { playerId: walkOnId, date })}
                                             {...props}
                                             uid={authUser?.uid}
                                             canImportGroup={canImportGroup}
@@ -285,7 +309,7 @@ function RentalsManagement(props) {
 
                                     {!loading && activeView === 'edit' ? (
                                         <EditForm
-                                            key={requestedGroup || 'manual'}
+                                            key={draftKey}
                                             {...props}
                                             uid={authUser?.uid}
                                             canImportGroup={canImportGroup}
@@ -322,6 +346,6 @@ function RentalsManagement(props) {
 }
 
 const condition = authUser =>
-    authUser && (!!authUser.roles[ROLES.ADMIN] || !!authUser.roles[ROLES.WAIVER]);
+    authUser && (ROLES.canUseRentalDesk(authUser.roles) || (authUser.roles[ROLES.STATIC] && authUser.roles[ROLES.WAIVER]));
 
 export default withAuthorization(condition)(withFirebase(RentalsManagement));

@@ -7,11 +7,8 @@ import { AuthUserContext, withAuthorization } from '../session';
 
 import { archiveDateRanges, recentPaperWaivers, waiverArchiveStart } from '../utils/waiverArchive';
 import { loadWaiverSearchIndex } from '../utils/waiverArchiveSearch';
-import { Alert, Badge, Button, Form, Card, Breadcrumb, Spinner, Dropdown, Modal } from 'react-bootstrap/';
+import { Alert, Badge, Button, Form, Card, Breadcrumb, Spinner, Modal } from 'react-bootstrap/';
 import { LinkContainer } from 'react-router-bootstrap';
-
-import CustomToggle from '../constants/customtoggle'
-import CustomMenu from '../constants/custommenu'
 
 import * as ROLES from '../constants/roles';
 
@@ -54,7 +51,7 @@ class WaiverLookup extends Component {
             activeMonth: null,
             activeDay: null,
             activeYear: null,
-            days: [...Array(31).keys()].map(String),
+            days: Array.from({ length: 31 }, (_, i) => i + 1),
             years: [],
             months: [],
             useLegacy: false,
@@ -447,8 +444,8 @@ class WaiverLookup extends Component {
                             <div className="usa-waiver-breadcrumb admin-page-header">
                                 <h2 className="admin-header">Waiver Lookup</h2>
                                 <Breadcrumb>
-                                    <LinkContainer to="/admin">
-                                        <Breadcrumb.Item>Admin</Breadcrumb.Item>
+                                    <LinkContainer to="..">
+                                        <Breadcrumb.Item>Back to tools</Breadcrumb.Item>
                                     </LinkContainer>
                                     <Breadcrumb.Item active>Waiver Lookup</Breadcrumb.Item>
                                 </Breadcrumb>
@@ -459,77 +456,30 @@ class WaiverLookup extends Component {
                                     <WaiverCardSearch key={authUser?.uid} firebase={this.props.firebase} uid={authUser?.uid}
                                         value={search} onChange={name => this.setState({ search: name, currentPage: 1 })} />
 
-                                    {!!authUser?.roles[ROLES.ADMIN] && (
-                                        <Button
-                                            variant="outline-danger"
-                                            className="usa-waiver-manage-bans"
-                                            onClick={() => this.setState({ banManagerOpen: true, banError: null, banStatus: null })}
-                                        >
-                                            Manage flagged names ({bannedNames.length})
-                                        </Button>
-                                    )}
-
-                                    {/* Date Filters */}
-                                    <div className="usa-waiver-date-filters">
-                                        <Dropdown className="usa-waiver-date-dropdown">
-                                            <Dropdown.Toggle as={CustomToggle}>
-                                                Month: {activeMonth !== 13 ? this.state.months[activeMonth - 1] : "All"}
-                                            </Dropdown.Toggle>
-                                            <Dropdown.Menu as={CustomMenu}>
-                                                <Dropdown.Item onClick={() => this.setState({ activeMonth: 13 })}>
-                                                    All Months
-                                                </Dropdown.Item>
-                                                {this.state.months.map((month, index) => (
-                                                    <Dropdown.Item
-                                                        key={month}
-                                                        onClick={() => this.setState({ activeMonth: index + 1 })}
-                                                    >
-                                                        {month}
-                                                    </Dropdown.Item>
-                                                ))}
-                                            </Dropdown.Menu>
-                                        </Dropdown>
-
-                                        <Dropdown className="usa-waiver-date-dropdown">
-                                            <Dropdown.Toggle as={CustomToggle}>
-                                                Day: {activeDay !== 32 ? activeDay : "All"}
-                                            </Dropdown.Toggle>
-                                            <Dropdown.Menu as={CustomMenu}>
-                                                <Dropdown.Item onClick={() => this.setState({ activeDay: 32 })}>
-                                                    All Days
-                                                </Dropdown.Item>
-                                                {this.state.days.map((day, index) => (
-                                                    <Dropdown.Item
-                                                        key={day}
-                                                        onClick={() => this.setState({ activeDay: index + 1 })}
-                                                    >
-                                                        {index + 1}
-                                                    </Dropdown.Item>
-                                                ))}
-                                            </Dropdown.Menu>
-                                        </Dropdown>
-
-                                        <Dropdown className="usa-waiver-date-dropdown">
-                                            <Dropdown.Toggle as={CustomToggle}>
-                                                Year: {activeYear !== new Date().getFullYear() + 1 ? activeYear : "All"}
-                                            </Dropdown.Toggle>
-                                            <Dropdown.Menu as={CustomMenu}>
-                                                <Dropdown.Item
-                                                    onClick={() => this.setState({ activeYear: new Date().getFullYear() + 1 })}
-                                                >
-                                                    All Years
-                                                </Dropdown.Item>
-                                                {this.state.years.map(year => (
-                                                    <Dropdown.Item
-                                                        key={year}
-                                                        onClick={() => this.setState({ activeYear: year })}
-                                                    >
-                                                        {year}
-                                                    </Dropdown.Item>
-                                                ))}
-                                            </Dropdown.Menu>
-                                        </Dropdown>
-                                    </div>
+                                    <fieldset className="usa-waiver-date-filters" disabled={Boolean(search.trim())}>
+                                        <legend>Browse by signing date</legend>
+                                        {search.trim() && <p>Name searches include all available dates.</p>}
+                                        <div className="usa-waiver-date-fields">
+                                            <label>Month
+                                                <Form.Select value={activeMonth ?? 13} onChange={e => this.setState({ activeMonth: Number(e.target.value) })}>
+                                                    <option value={13}>All months</option>
+                                                    {this.state.months.map((month, i) => <option key={month} value={i + 1}>{month}</option>)}
+                                                </Form.Select>
+                                            </label>
+                                            <label>Day
+                                                <Form.Select value={activeDay ?? 32} onChange={e => this.setState({ activeDay: Number(e.target.value) })}>
+                                                    <option value={32}>All days</option>
+                                                    {this.state.days.map(day => <option key={day} value={day}>{day}</option>)}
+                                                </Form.Select>
+                                            </label>
+                                            <label>Year
+                                                <Form.Select value={activeYear ?? new Date().getFullYear() + 1} onChange={e => this.setState({ activeYear: Number(e.target.value) })}>
+                                                    <option value={new Date().getFullYear() + 1}>All years</option>
+                                                    {this.state.years.map(year => <option key={year} value={year}>{year}</option>)}
+                                                </Form.Select>
+                                            </label>
+                                        </div>
+                                    </fieldset>
 
                                     <FormControlLabel
                                         control={
@@ -542,6 +492,15 @@ class WaiverLookup extends Component {
                                         label="Use Legacy Waivers"
                                         className="usa-waiver-switch"
                                     />
+                                    {!!authUser?.roles[ROLES.ADMIN] && (
+                                        <Button
+                                            variant="outline-danger"
+                                            className="usa-waiver-manage-bans"
+                                            onClick={() => this.setState({ banManagerOpen: true, banError: null, banStatus: null })}
+                                        >
+                                            Manage flagged names ({bannedNames.length})
+                                        </Button>
+                                    )}
                                 </Card.Header>
 
                                 {this.state.bannedNamesLoadError && (
@@ -646,17 +605,19 @@ class WaiverLookup extends Component {
                                                             );
                                                         })}
                                                     </div>
-                                                    <div className="usa-waiver-pagination">
+                                                    <nav aria-label="Waiver result pages" className="usa-waiver-pagination">
                                                         {Array.from({ length: Math.ceil(filteredWaivers.length / itemsPerPage) }, (_, i) => (
                                                             <Button
                                                                 key={i + 1}
+                                                                aria-label={`Page ${i + 1}`}
+                                                                aria-current={currentPage === i + 1 ? 'page' : undefined}
                                                                 onClick={() => this.handlePageChange(i + 1)}
                                                                 className={`usa-waiver-page-button ${currentPage === i + 1 ? 'active' : ''}`}
                                                             >
                                                                 {i + 1}
                                                             </Button>
                                                         ))}
-                                                    </div>
+                                                    </nav>
                                                 </>
                                             ) : (!this.state.hasOlder && !this.state.loadError && (
                                                 <div className="usa-waiver-no-results">

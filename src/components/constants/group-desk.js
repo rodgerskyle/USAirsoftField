@@ -89,8 +89,10 @@ function detailMarkup(group, confirmDelete) {
   const schedule = group.partyStatus === 'confirmed' ? ' · Party Calendar linked' : group.partyStatus === 'review' ? ' · Booking needs review' : '';
   return `<h2 tabindex="-1" data-selection-title>${escape(group.name)}</h2>
     <p>${escape(displayDay(group.date))} · ${people(group.entries.length)}${schedule}${partySummary(group.party?.start, group.party?.size)}</p>
-    ${group.id && group.date === pacificToday() ? `<p><a class="btn btn-primary" href="/admin/field/check-in?group=${escape(encodeURIComponent(group.id))}#arriving-group">Check in this group</a></p>` : ''}
-    ${group.id && group.partyStatus !== 'review' ? `<p><a class="btn btn-secondary" href="${escape(groupRentalLink(group.id))}" target="_blank" rel="noopener noreferrer">Open rental form</a></p>` : ''}
+    <div class="group-desk__visit-actions">
+    ${group.id && group.date === pacificToday() ? `<a class="btn btn-primary" href="/admin/field/check-in?group=${escape(encodeURIComponent(group.id))}#arriving-group">Check in this group</a>` : ''}
+    ${group.id && group.partyStatus !== 'review' ? `<a class="btn btn-secondary" href="${escape(groupRentalLink(group.id))}" target="_blank" rel="noopener noreferrer">Open rental form</a>` : ''}
+    </div>
     <div class="group-desk__code"><label>Invitation code<input readonly data-invite value="${escape(group.code)}" autocomplete="off"></label>
       <button class="btn btn-secondary" type="button" data-copy>Copy code</button></div>
     ${group.expiresAt ? `<p>Expires ${escape(new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', dateStyle: 'medium', timeStyle: 'short' }).format(new Date(group.expiresAt)))} Pacific</p>` : ''}
@@ -99,6 +101,7 @@ function detailMarkup(group, confirmDelete) {
       ${group.entries.some(entry => entry.waiverStatus === 'unavailable' || !entry.waiverStatus) ? '<button type="button" class="btn btn-secondary" data-refresh-waivers>Retry waiver verification</button>' : ''}
       <ul class="group-desk__roster">${group.entries.map(rosterRow).join('')}</ul>` : '<p>No players on the list yet.</p>'}
     <div data-staff-member-picker></div>
+    <h3>Add a walk-on</h3>
     <form data-add class="group-desk__form">${waiverPickerMarkup()}<label>Player name or callsign<input required name="displayName" minlength="2" maxlength="80" autocomplete="off"></label>
       <label>Airsoft experience<select name="experienceBand">${experienceOptions()}</select></label>
       <button class="btn btn-primary" type="submit">Add player</button></form>

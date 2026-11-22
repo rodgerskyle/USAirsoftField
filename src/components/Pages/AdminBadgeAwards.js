@@ -467,7 +467,7 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
               )}
             </div>
           </fieldset>
-          {feedback && <p role={feedback.error ? 'alert' : 'status'}>{feedback.text}</p>}
+          {feedback && <p className="admin-badge-awards__feedback" role={feedback.error ? 'alert' : 'status'}>{feedback.text}</p>}
         </form>
       ) : (
         <form key="unlock" className="admin-badge-awards__card admin-badge-awards__unlock" onSubmit={unlock}
@@ -490,7 +490,7 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
           <div className="admin-badge-awards__actions">
             <button type="submit" disabled={busy}>{busy ? 'Unlocking…' : 'Unlock badge controls'}</button>
           </div>
-          {feedback && <p role={feedback.error ? 'alert' : 'status'}>{feedback.text}</p>}
+          {feedback && <p className="admin-badge-awards__feedback" role={feedback.error ? 'alert' : 'status'}>{feedback.text}</p>}
         </form>
       )}
       {badgeServiceConfigured && <StaffBattleBadges allowOverride firebase={firebase} token={staffToken}

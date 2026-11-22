@@ -411,7 +411,7 @@ class SignUpFormBase extends Component {
                         <Form className="waiver-form-rp admin-signup-form-grid" autoComplete="off" onSubmit={e => { e.preventDefault(); }}>
                         <Row>
                           <Col>
-                            <Form.Group>
+                            <Form.Group controlId="new-member-fname">
                               <Form.Label>First Name:</Form.Label>
                               <Form.Control
                                 name="fname"
@@ -424,7 +424,7 @@ class SignUpFormBase extends Component {
                             </Form.Group>
                           </Col>
                           <Col>
-                            <Form.Group>
+                            <Form.Group controlId="new-member-lname">
                               <Form.Label>Last Name:</Form.Label>
                               <Form.Control
                                 name="lname"
@@ -439,26 +439,26 @@ class SignUpFormBase extends Component {
                         </Row>
                         <Row>
                           <Col>
-                            <Form.Group>
+                            <Form.Group controlId="new-member-email">
                               <Form.Label>Email:</Form.Label>
                               <Form.Control
                                 name="email"
                                 value={email}
                                 onChange={this.onChange}
-                                type="text"
+                                type="text" inputMode="email"
                                 autoComplete="off"
                                 placeholder="Email Address"
                               />
                             </Form.Group>
                           </Col>
                           <Col>
-                            <Form.Group>
+                            <Form.Group controlId="new-member-phone">
                               <Form.Label>Phone Number:</Form.Label>
                               <Form.Control
                                 name="phone"
                                 value={phone}
                                 onChange={this.onChange}
-                                type="phone"
+                                type="tel"
                                 autoComplete="off"
                                 placeholder="Phone #"
                               />
@@ -467,7 +467,7 @@ class SignUpFormBase extends Component {
                         </Row>
                         <Row>
                           <Col>
-                            <Form.Group>
+                            <Form.Group controlId="new-member-address">
                               <Form.Label>Address:</Form.Label>
                               <Form.Control
                                 name="address"
@@ -480,7 +480,7 @@ class SignUpFormBase extends Component {
                             </Form.Group>
                           </Col>
                           <Col>
-                            <Form.Group>
+                            <Form.Group controlId="new-member-city">
                               <Form.Label>City:</Form.Label>
                               <Form.Control
                                 name="city"
@@ -493,7 +493,7 @@ class SignUpFormBase extends Component {
                             </Form.Group>
                           </Col>
                           <Col>
-                            <Form.Group>
+                            <Form.Group controlId="new-member-state">
                               <Form.Label>State:</Form.Label>
                               <Form.Control
                                 name="state"
@@ -508,7 +508,7 @@ class SignUpFormBase extends Component {
                         </Row>
                         <Row>
                           <Col>
-                            <Form.Group>
+                            <Form.Group controlId="new-member-dob">
                               <Form.Label>Date Of Birth:</Form.Label>
                               <Form.Control
                                 name="dob"
@@ -521,7 +521,7 @@ class SignUpFormBase extends Component {
                             </Form.Group>
                           </Col>
                           <Col>
-                            <Form.Group>
+                            <Form.Group controlId="new-member-zipcode">
                               <Form.Label>Zipcode:</Form.Label>
                               <Form.Control
                                 name="zipcode"
@@ -580,7 +580,7 @@ class SignUpFormBase extends Component {
                             </Row>
                             <Row>
                               <Col>
-                                <Form.Group>
+                                <Form.Group controlId="new-member-pgname">
                                   <Form.Label>Parent/Guardian Full Name:</Form.Label>
                                   <Form.Control
                                     name="pgname"
@@ -593,13 +593,13 @@ class SignUpFormBase extends Component {
                                 </Form.Group>
                               </Col>
                               <Col>
-                                <Form.Group>
+                                <Form.Group controlId="new-member-pgphone">
                                   <Form.Label>Emergency Number:</Form.Label>
                                   <Form.Control
                                     name="pgphone"
                                     value={pgphone}
                                     onChange={this.onChange}
-                                    type="phone"
+                                    type="tel"
                                     autoComplete="off"
                                     placeholder="Phone"
                                   />
@@ -647,7 +647,7 @@ class SignUpFormBase extends Component {
                           : null}
                         </Form>
                         <Row className="row-rp">
-                          {errorWaiver && <p className="error-text-rp">{errorWaiver}</p>}
+                          {errorWaiver && <p role="alert" className="error-text-rp">{errorWaiver}</p>}
                         </Row>
                       </div>
                     </div>
@@ -690,7 +690,7 @@ class SignUpFormBase extends Component {
                       <Col>
                         <Row>
                           <Col>
-                            <Form.Group>
+                            <Form.Group controlId="new-member-fname-profile">
                               <Form.Label>First Name:</Form.Label>
                               <Form.Control
                                 name="fname"
@@ -704,7 +704,7 @@ class SignUpFormBase extends Component {
                             </Form.Group>
                           </Col>
                           <Col>
-                            <Form.Group>
+                            <Form.Group controlId="new-member-lname-profile">
                               <Form.Label>Last Name:</Form.Label>
                               <Form.Control
                                 name="lname"
@@ -720,13 +720,13 @@ class SignUpFormBase extends Component {
                         </Row>
                         <Row>
                           <Col>
-                            <Form.Group>
+                            <Form.Group controlId="new-member-email-profile">
                               <Form.Label>Email:</Form.Label>
                               <Form.Control
                                 name="email"
                                 value={email}
                                 onChange={this.onChange}
-                                type="text"
+                                type="text" inputMode="email"
                                 autoComplete="off"
                                 placeholder="Email Address"
                                 disabled={!this.state.selectedWaiver || Boolean(this.state.uid)}
@@ -736,7 +736,7 @@ class SignUpFormBase extends Component {
                         </Row>
                         <Row>
                           <Col>
-                            <Form.Group>
+                            <Form.Group controlId="new-member-passwordOne">
                               <Form.Label>Password:</Form.Label>
                               <Form.Control
                                 name="passwordOne"
@@ -749,7 +749,7 @@ class SignUpFormBase extends Component {
                             </Form.Group>
                           </Col>
                           <Col>
-                            <Form.Group>
+                            <Form.Group controlId="new-member-passwordTwo">
                               <Form.Label>Confirm Password:</Form.Label>
                               <Form.Control
                                 name="passwordTwo"
@@ -863,7 +863,7 @@ class SignUpFormBase extends Component {
               </Row>
               {this.state.error ?
                 <Row className="justify-content-row">
-                  <p className="p-error-text-dashboard">{this.state.error}</p>
+                  <p role="alert" className="p-error-text-dashboard">{this.state.error}</p>
                 </Row> : null}
             </Container>
           </div>

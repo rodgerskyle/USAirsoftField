@@ -1,63 +1,20 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Form, Spinner } from 'react-bootstrap/';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { onValue } from 'firebase/database';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faCalendar, faCalendarDays, faChevronRight, faClipboardList,
-  faComments, faGift, faIdCard, faPeopleGroup, faQrcode, faSearch, faStopwatch,
-  faTrophy, faTv, faUserGear, faUserPen, faUserPlus,
-} from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faAward, faChevronRight, faSearch } from '@fortawesome/free-solid-svg-icons';
 
 import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
 import * as ROLES from '../constants/roles';
-import { fieldStaffPaths } from '../constants/fieldStaffApi';
+import { adminToolGroups } from '../constants/deskTools';
 import UserTable from '../constants/usertable';
 import AdminBadgeAwards from './AdminBadgeAwards';
 import '../../App.css';
 import '../constants/admin.css';
 import './AdminDashboard.css';
-
-const ACTION_GROUPS = [
-  {
-    id: 'game-day',
-    title: 'Game day',
-    actions: [
-      { title: 'Player Check-In', path: fieldStaffPaths.checkIn, icon: faPeopleGroup, primary: true },
-      { title: 'Round Controls', path: fieldStaffPaths.rounds, icon: faStopwatch },
-      { title: 'Rotation & Briefings', path: fieldStaffPaths.missionTools, icon: faClipboardList },
-      { title: 'Field Game Days', path: '/schedule', icon: faCalendarDays, primary: true },
-      { title: 'Wins & Losses', path: '/admin/scores', icon: faTrophy },
-      { title: 'Check Free Games', path: '/admin/freegames', icon: faGift },
-    ],
-  },
-  {
-    id: 'members',
-    title: 'Membership and waivers',
-    actions: [
-      { title: 'New Member', path: '/admin/signup', icon: faUserPlus },
-      { title: 'Renew Member', path: '/admin/renewal', icon: faUserGear },
-      { title: 'Verify Membership', path: fieldStaffPaths.membership, icon: faIdCard },
-      { title: 'Sign Waiver', path: '/admin/waiverform', icon: faUserPen },
-      { title: 'Scan Waiver', path: '/admin/scanwaiver', icon: faQrcode },
-      { title: 'Search Waiver', path: '/admin/waiverlookup', icon: faSearch },
-    ],
-  },
-  {
-    id: 'field-operations',
-    title: 'Field operations',
-    actions: [
-      { title: 'Rental Form', path: '/admin/rentalform', icon: faClipboardList },
-      { title: 'Party Calendar', path: '/admin/birthday', icon: faCalendar },
-      { title: 'Manage Groups', path: fieldStaffPaths.groups, icon: faPeopleGroup },
-      { title: 'Team Reports', path: fieldStaffPaths.reports, icon: faComments },
-      { title: 'Player Feedback', path: fieldStaffPaths.feedback, icon: faComments },
-      { title: 'Barracks Game Day TV', path: fieldStaffPaths.tv, icon: faTv },
-    ],
-  },
-];
 
 const userCount = new Intl.NumberFormat('en-US');
 const normalized = value => typeof value === 'string' ? value.toLowerCase() : '';
@@ -70,17 +27,19 @@ function matchesQuery(user, query) {
     || query.split(/\s+/).every(part => nameParts.includes(part));
 }
 
-function ActionGroup({ group }) {
+function ActionGroup({ group, featured = false }) {
   return (
-    <section className="staff-dashboard__group" aria-labelledby={`staff-${group.id}`}>
+    <section className={featured ? 'staff-dashboard__game-day' : 'staff-dashboard__group'}
+      aria-labelledby={`staff-${group.id}`}>
       <h2 id={`staff-${group.id}`}>{group.title}</h2>
       <ul className="staff-dashboard__actions">
-        {group.actions.map(({ title, path, icon, primary }) => (
+        {group.actions.map(({ title, path, icon }) => (
           <li key={path}>
-            <Link to={path} className={primary ? 'staff-dashboard__action staff-dashboard__action--primary' : 'staff-dashboard__action'}>
+            <Link to={path} className="staff-dashboard__action">
               <span className="staff-dashboard__action-icon"><FontAwesomeIcon icon={icon} aria-hidden="true" /></span>
               <span>{title}</span>
-              <FontAwesomeIcon className="staff-dashboard__action-chevron" icon={faChevronRight} aria-hidden="true" />
+              <FontAwesomeIcon className="staff-dashboard__action-arrow"
+                icon={featured ? faArrowRight : faChevronRight} aria-hidden="true" />
             </Link>
           </li>
         ))}
@@ -90,6 +49,7 @@ function ActionGroup({ group }) {
 }
 
 function AdminPage({ firebase }) {
+  const { hash } = useLocation();
   const [users, setUsers] = useState([]);
   const [directoryStatus, setDirectoryStatus] = useState('loading');
   const [search, setSearch] = useState('');
@@ -108,6 +68,13 @@ function AdminPage({ firebase }) {
     });
   }, [firebase]);
 
+  // Direct links from another desk can arrive before the admin guard finishes.
+  useEffect(() => {
+    if (hash === '#staff-directory' || hash === '#admin-badges-title') {
+      document.getElementById(hash.slice(1))?.scrollIntoView?.({ block: 'start' });
+    }
+  }, [hash]);
+
   const badgePlayers = useMemo(() => users
     .filter(user => !user.accountRemovedAt && !user.roles?.[ROLES.WAIVER])
     .map(({ uid, name, username }) => ({ uid, name, username })), [users]);
@@ -123,43 +90,39 @@ function AdminPage({ firebase }) {
     <div className="admin-container staff-dashboard">
       <Helmet><title>US Airsoft Field Staff Operations</title></Helmet>
       <main className="admin-content staff-dashboard__content">
-        <header className="staff-dashboard__hero">
-          <div>
+        <header className="staff-dashboard__masthead">
+          <div className="staff-dashboard__intro">
             <h1>Staff operations</h1>
             <nav className="staff-dashboard__jump" aria-label="Staff shortcuts">
-              <a href="#staff-directory">Find a player</a>
-              <a href="#admin-badges-title">Award badges</a>
+              <a href="#staff-directory"><FontAwesomeIcon icon={faSearch} aria-hidden="true" />Find a player</a>
+              <a href="#admin-badges-title"><FontAwesomeIcon icon={faAward} aria-hidden="true" />Award badges</a>
             </nav>
-          </div>
-          <div className="staff-dashboard__count">
-            <strong>{directoryStatus === 'ready' ? userCount.format(users.filter(user => !user.accountRemovedAt).length) : '—'}</strong>
-            <span>Directory records</span>
           </div>
         </header>
 
+        <ActionGroup group={adminToolGroups[0]} featured />
         <div className="staff-dashboard__groups">
-          {ACTION_GROUPS.map(group => <ActionGroup group={group} key={group.id} />)}
+          {adminToolGroups.slice(1).map(group => <ActionGroup group={group} key={group.id} />)}
         </div>
 
-        <AdminBadgeAwards
-          key={firebase.auth.currentUser?.uid}
-          firebase={firebase}
-          players={badgePlayers}
-          loading={loading}
-          directoryUnavailable={directoryUnavailable}
-        />
-
         <section className="staff-dashboard__directory" aria-labelledby="staff-directory">
-          <h2 id="staff-directory">Player directory</h2>
+          <header className="staff-dashboard__directory-header">
+            <h2 id="staff-directory">Player directory</h2>
+            <span className="staff-dashboard__count">
+              Active records <strong>{directoryStatus === 'ready' ? userCount.format(users.filter(user => !user.accountRemovedAt).length) : '—'}</strong>
+            </span>
+          </header>
           <Form className="staff-dashboard__search" onSubmit={event => event.preventDefault()}>
-            <Form.Label htmlFor="staff-directory-search">Search users</Form.Label>
-            <Form.Control
-              id="staff-directory-search"
-              type="search"
-              placeholder="Name, username, email, or player ID"
-              value={search}
-              onChange={event => setSearch(event.target.value)}
-            />
+            <div className="staff-dashboard__query">
+              <Form.Label htmlFor="staff-directory-search">Find a player</Form.Label>
+              <Form.Control
+                id="staff-directory-search"
+                type="search"
+                placeholder="Name, username, email, or player ID"
+                value={search}
+                onChange={event => setSearch(event.target.value)}
+              />
+            </div>
             <Form.Check id="staff-directory-show-removed" label="Include archived accounts"
               checked={showRemoved} onChange={event => setShowRemoved(event.target.checked)} />
           </Form>
@@ -177,6 +140,14 @@ function AdminPage({ firebase }) {
             </p>
           )}
         </section>
+
+        <AdminBadgeAwards
+          key={firebase.auth.currentUser?.uid}
+          firebase={firebase}
+          players={badgePlayers}
+          loading={loading}
+          directoryUnavailable={directoryUnavailable}
+        />
       </main>
     </div>
   );

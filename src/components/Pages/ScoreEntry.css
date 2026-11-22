@@ -175,3 +175,37 @@
         padding: .25rem;
     }
 }
+
+.score-entry-page .score-entry-section-heading h2,
+.score-entry-page h2.card-header {
+    font-size: 1.1rem;
+    line-height: 1.35;
+    font-weight: 700;
+    margin: 0;
+}
+.score-entry-page .score-entry-context .form-label { font-weight: 650; }
+.score-entry-page .score-entry-selected {
+    border: 1px solid var(--admin-border);
+    border-inline-start: .25rem solid var(--admin-accent);
+    border-radius: .65rem;
+    padding: .9rem;
+    background: var(--admin-surface-muted);
+}
+.score-entry-page .score-patch-panel:first-child { border: 0; padding: 0; margin: 0; }
+.score-entry-page .field-section-links { margin-bottom: 1rem; }
+@media (max-width: 650px) {
+    .score-entry-page .score-patch-grid {
+        grid-auto-flow: row;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 5.5rem), 1fr));
+        overflow: visible;
+    }
+}
+
+.score-entry-award-link a, .score-entry-return {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: var(--admin-accent-text);
+    font-weight: 650;
+    text-underline-offset: .18em;
+}

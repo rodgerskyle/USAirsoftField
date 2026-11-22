@@ -4,8 +4,15 @@ import {
     LIVE_ROUNDS_PATH, ROUND_CATALOG_PATH, STAFF_ROUNDS_PATH, RoundRespawns, runningBarracksClock, useLiveFieldBoard,
 } from './FieldRoundsShared';
 import { FieldPinPicker, readMapPins, roundPinLocation } from './FieldRoundMap';
+import FieldSectionLinks from './FieldSectionLinks';
 import './FieldRounds.css';
 
+const roundSections = [
+    ['field-break-title', 'TV countdown'],
+    ['field-rounds-current', 'Rounds'],
+    ['field-rounds-schedule', 'Schedule'],
+    ['field-rounds-vote', 'Game mode vote'],
+];
 const defaultVoteModes = ['countdown', 'three-flag', 'downed-pilot'];
 const actions = {
     startRound: 'Round started. The countdown is live.',
@@ -46,7 +53,7 @@ function BarracksClockControls({ clock, now, disabled, onSave }) {
     }
     return (
         <section className="field-rounds-panel field-break-controls" aria-labelledby="field-break-title">
-            <h2 id="field-break-title">Barracks TV countdown</h2>
+            <h2 id="field-break-title" tabIndex={-1}>Barracks TV countdown</h2>
             {active ? <p>{name} {safetyBrief ? 'starts at' : 'ends at'} {formatFieldTime(clock.endsAt)} · <strong role="timer" aria-label={safetyBrief ? 'Time until safety brief' : 'Break time remaining'}>
                 {formatRoundCountdown(Date.parse(clock.endsAt) - now)}
             </strong></p> : <p>{clock?.endsAt && name ? name + ' countdown finished.' : 'No countdown running.'}</p>}
@@ -243,7 +250,7 @@ function RoundMvpControls({ poll, rounds, pastResults = [], now, disabled, onSav
     }
     return (
         <section className="field-rounds-panel" aria-labelledby="field-round-mvp">
-            <h2 id="field-round-mvp">Round MVP voting</h2>
+            <h2 id="field-round-mvp" tabIndex={-1}>Round MVP voting</h2>
             {poll && <div className="field-rounds-vote-results">
                 <h3>{poll.roundTitle}</h3>
                 <p>{formatFieldTime(poll.startsAt)} · {open ? 'Voting closes ' + formatFieldTime(poll.closesAt) : 'Voting closed'}
@@ -436,8 +443,13 @@ export default function AdminFieldRounds({ request }) {
         }
     }
 
+    const showMvp = !error && board?.isStaff && Array.isArray(board.mvpRounds);
     return (
-        <div className="field-rounds" aria-busy={busy}>
+        <div className="field-rounds field-rounds--staff" aria-busy={busy}>
+            {board && <FieldSectionLinks label="Round control sections" items={[
+                ...roundSections, ...(showMvp ? [['field-round-mvp', 'MVP vote']] : []),
+                ...(canPublish ? [['field-rounds-publish', 'Publish winner']] : []),
+            ]} />}
             <div className="field-rounds-status">
                 <p role="status">{busy ? 'Saving update…' : board ? `Updated ${formatFieldTime(board.serverNow)}` : 'Loading live field board…'}</p>
                 <button className="btn btn-outline-secondary" type="button" onClick={() => void refresh()} disabled={busy}>Refresh board</button>
@@ -447,7 +459,7 @@ export default function AdminFieldRounds({ request }) {
             {board && <>
                 <BarracksClockControls clock={board.barracksClock} now={now} disabled={disabled} onSave={save} />
                 <section className="field-rounds-panel" aria-labelledby="field-rounds-current">
-                    <h2 id="field-rounds-current">Current and scheduled rounds</h2>
+                    <h2 id="field-rounds-current" tabIndex={-1}>Current and scheduled rounds</h2>
                     {!rounds.active.length && !rounds.upcoming.length && <p>No rounds are scheduled in the next 48 hours.</p>}
                     {rounds.active.map(round => <RoundCard key={round.id + ':' + round.revision}
                         round={round} live now={now} disabled={disabled} onSave={save} />)}
@@ -455,7 +467,7 @@ export default function AdminFieldRounds({ request }) {
                         round={round} hasCurrentRound={Boolean(rounds.current)} now={now} disabled={disabled} onSave={save} />)}
                 </section>
                 {canPublish && <section className="field-rounds-panel" aria-labelledby="field-rounds-publish">
-                    <h2 id="field-rounds-publish">Publish the vote winner</h2>
+                    <h2 id="field-rounds-publish" tabIndex={-1}>Publish the vote winner</h2>
                     {poll.winnerModeIds.length > 1 && <p>The vote is tied. Choose one of the winning modes.</p>}
                     <RoundForm key={poll.id} poll={poll} now={now} disabled={disabled} onSave={save} />
                 </section>}
@@ -465,12 +477,12 @@ export default function AdminFieldRounds({ request }) {
                 </div>}
                 <div className="field-rounds-workbench">
                     <section className="field-rounds-panel" aria-labelledby="field-rounds-schedule">
-                        <h2 id="field-rounds-schedule">Schedule a round</h2>
+                        <h2 id="field-rounds-schedule" tabIndex={-1}>Schedule a round</h2>
                         {catalog ? <RoundForm catalog={catalog} now={now} disabled={disabled} onSave={save} /> :
                             !catalogError && <p role="status">Loading game modes…</p>}
                     </section>
                     <section className="field-rounds-panel" aria-labelledby="field-rounds-vote">
-                        <h2 id="field-rounds-vote">Player voting</h2>
+                        <h2 id="field-rounds-vote" tabIndex={-1}>Player voting</h2>
                         {poll ? <div className="field-rounds-vote-results">
                             <h3>{poll.title}</h3>
                             <p>{open ? `Closes ${formatFieldTime(poll.closesAt)}` : 'Voting closed'} · {poll.totalVotes} votes</p>
@@ -485,7 +497,7 @@ export default function AdminFieldRounds({ request }) {
                             !catalogError && <p role="status">Loading game modes…</p>)}
                     </section>
                 </div>
-                {!error && board.isStaff && Array.isArray(board.mvpRounds) && <RoundMvpControls
+                {showMvp && <RoundMvpControls
                     poll={board.mvpPoll} rounds={board.mvpRounds} pastResults={board.mvpPastResults} now={now} disabled={disabled} onSave={save} />}
             </>}
         </div>

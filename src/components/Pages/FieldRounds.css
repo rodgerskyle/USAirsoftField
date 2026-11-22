@@ -322,3 +322,46 @@
   .field-rounds-fields { grid-template-columns: minmax(0, 1fr); }
   .field-barracks-controls { width: 100%; margin-inline-start: 0; }
 }
+
+.field-rounds--staff .field-section-links { margin-bottom: 0; }
+.field-rounds--staff .field-break-controls {
+  border-top: 3px solid var(--admin-accent);
+  background: var(--admin-surface);
+}
+.field-rounds--staff .field-break-controls [role='timer'] {
+  display: inline-block;
+  color: var(--admin-accent-text);
+  font-size: 1.45rem;
+  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+}
+.field-rounds--staff .field-break-controls .field-rounds-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+}
+.field-rounds--staff .field-break-custom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: .75rem;
+  border-top: 1px solid var(--admin-border);
+  padding-top: .85rem;
+}
+.field-rounds--staff .field-rounds-form .field-rounds-option {
+  min-height: 44px;
+  padding: .35rem .65rem;
+  border-bottom: 1px solid var(--admin-border);
+  cursor: pointer;
+}
+.field-rounds--staff .field-rounds-option input { flex: none; accent-color: var(--admin-action-bg); }
+.field-rounds--staff .field-rounds-panel summary {
+  min-height: 44px;
+  border: 1px solid var(--admin-border);
+  border-radius: .5rem;
+  padding: .65rem .8rem;
+  color: var(--admin-accent-text);
+  cursor: pointer;
+}
+@media (max-width: 780px) {
+  .field-rounds--staff .field-rounds-workbench { grid-template-columns: 1fr; }
+}

@@ -1,46 +1,57 @@
-.waiver-dashboard-grid {
-    width: 100%;
+.waiver-desk-sections {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    align-items: start;
+    gap: 1rem;
 }
 
-.waiver-dashboard-row {
-    margin-bottom: 0.2rem;
+.waiver-desk-section {
+    padding: 1rem;
+    border: 1px solid var(--admin-border);
+    border-top: 3px solid var(--admin-accent);
+    border-radius: 14px;
+    background: var(--admin-surface);
+    color: var(--admin-text);
 }
 
-.waiver-dashboard-col {
-    margin-bottom: 1rem;
+.waiver-desk-section h3 {
+    margin: 0 0 .85rem;
+    font-size: 1.125rem;
+    font-weight: 700;
 }
 
-.waiver-dashboard-link {
+.waiver-desk-section ul {
+    display: grid;
+    gap: .5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.waiver-desk-section a {
+    display: grid;
+    grid-template-columns: 1.4rem 1fr auto;
+    align-items: center;
+    gap: .5rem;
+    min-height: 48px;
+    padding: .55rem .75rem;
+    border: 1px solid var(--admin-border);
+    border-radius: 9px;
+    color: var(--admin-text);
+    background: var(--admin-surface-muted);
+    font-weight: 600;
     text-decoration: none;
 }
 
-.waiver-dashboard-card {
-    background: var(--admin-surface);
-    border: 1px solid var(--admin-border);
-    border-radius: 18px;
-    box-shadow: var(--admin-shadow);
-    transition: transform 0.2s, border-color 0.2s, background-color 0.2s;
-}
+.waiver-desk-section a .fa { color: var(--admin-accent-text); }
 
-.waiver-dashboard-card:hover {
-    transform: translateY(-4px);
-    border-color: var(--admin-border-strong);
-}
-
-.waiver-dashboard-card-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.waiver-desk-section a:is(:hover, :focus-visible) {
+    background: var(--admin-surface-hover);
+    border-color: var(--admin-accent-text);
     color: var(--admin-text);
-    padding: 0.35rem 0.1rem;
 }
 
-.waiver-dashboard-card-title {
-    font-size: 1.02rem;
-    font-weight: 600;
-}
-
-.waiver-dashboard-card-icon {
-    font-size: 1.25rem;
-    color: var(--admin-accent-text);
+.waiver-desk-section a:focus-visible {
+    outline: 2px solid var(--admin-focus);
+    outline-offset: 2px;
 }

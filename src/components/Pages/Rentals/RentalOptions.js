@@ -2,122 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { withFirebase } from '../../Firebase';
 import * as ROLES from '../../constants/roles';
 import { withAuthorization } from '../../session';
-import {
-    Container,
-    Paper,
-    Typography,
-    TextField,
-    Button,
-    Box,
-    Grid,
-    Snackbar,
-    CircularProgress,
-    Card,
-    CardContent
-} from '@mui/material';
-import { Save, Refresh, Inventory2 } from '@mui/icons-material';
-import MuiAlert from '@mui/lab/Alert';
-import { onValue, set } from 'firebase/database';
-
-const Alert = React.forwardRef((props, ref) => (
-    <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />
-));
-
-const RentalRow = ({ rental, onMaxChange }) => {
-    return (
-        <Card
-            elevation={0}
-            sx={{
-                mb: 2,
-                border: '1px solid',
-                borderColor: 'var(--admin-border)',
-                borderRadius: 2,
-                backgroundColor: 'var(--admin-surface)',
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                    boxShadow: 'var(--admin-shadow)',
-                    transform: 'translateY(-2px)'
-                }
-            }}
-        >
-            <CardContent sx={{ py: 3 }}>
-                <Grid container spacing={3} alignItems="center">
-                    <Grid item xs={12} md={4}>
-                        <Typography
-                            variant="h6"
-                            sx={{
-                                color: 'var(--admin-text)',
-                                fontWeight: 500
-                            }}
-                        >
-                            {rental.label}
-                        </Typography>
-                    </Grid>
-                    <Grid item xs={6} md={4}>
-                        <TextField
-                            fullWidth
-                            label="In Use"
-                            type="number"
-                            value={rental.stock}
-                            disabled
-                            variant="outlined"
-                            InputProps={{
-                                startAdornment: <Inventory2 sx={{ color: 'var(--admin-subtext)', mr: 1 }} />
-                            }}
-                            sx={{
-                                '& .MuiInputLabel-root': {
-                                    color: 'var(--admin-subtext)'
-                                },
-                                '& .MuiInputLabel-root.Mui-focused': {
-                                    color: 'var(--admin-text)'
-                                },
-                                '& .MuiOutlinedInput-root': {
-                                    backgroundColor: 'var(--admin-surface-muted)',
-                                    color: 'var(--admin-text)',
-                                    '& fieldset': {
-                                        borderColor: 'var(--admin-border)'
-                                    }
-                                }
-                            }}
-                        />
-                    </Grid>
-                    <Grid item xs={6} md={4}>
-                        <TextField
-                            fullWidth
-                            label="Maximum"
-                            type="number"
-                            value={rental.max}
-                            onChange={(e) => onMaxChange(e.target.value)}
-                            variant="outlined"
-                            color="primary"
-                            sx={{
-                                '& .MuiInputLabel-root': {
-                                    color: 'var(--admin-subtext)'
-                                },
-                                '& .MuiInputLabel-root.Mui-focused': {
-                                    color: 'var(--admin-text)'
-                                },
-                                '& .MuiOutlinedInput-root': {
-                                    backgroundColor: 'var(--admin-surface-muted)',
-                                    color: 'var(--admin-text)',
-                                    '& fieldset': {
-                                        borderColor: 'var(--admin-border)'
-                                    },
-                                    '&:hover fieldset': {
-                                        borderColor: 'var(--admin-border-strong)'
-                                    },
-                                    '&.Mui-focused fieldset': {
-                                        borderColor: 'var(--admin-accent)'
-                                    }
-                                }
-                            }}
-                        />
-                    </Grid>
-                </Grid>
-            </CardContent>
-        </Card>
-    );
-};
+import { set } from 'firebase/database';
+import '../FrontDeskForms.css';
 
 const RentalOptions = (props) => {
     const { firebase, rentalOptions } = props;
@@ -143,12 +29,17 @@ const RentalOptions = (props) => {
     }, [rentalOptions]);
 
     const handleMaxChange = (index, value) => {
-        const updatedOptions = [...localOptions];
-        updatedOptions[index].max = parseInt(value);
-        setLocalOptions(updatedOptions);
+        setSuccess(null);
+        setError(null);
+        setLocalOptions(options => options.map((option, i) =>
+            i === index ? { ...option, max: value === '' ? '' : Number(value) } : option
+        ));
     };
 
-    const handleSubmit = async () => {
+    const handleSubmit = async event => {
+        event.preventDefault();
+        setError(null);
+        setSuccess(null);
         try {
             for (let option of localOptions) {
                 if (option.stock > option.max) {
@@ -164,6 +55,8 @@ const RentalOptions = (props) => {
     };
 
     const handleReset = async () => {
+        setError(null);
+        setSuccess(null);
         try {
             const resetOptions = localOptions.map(option => ({
                 ...option,
@@ -178,82 +71,42 @@ const RentalOptions = (props) => {
     };
 
     return (
-        <Box sx={{
-            minHeight: '100vh',
-            pt: 4,
-            pb: 8
-        }}>
-            <Container maxWidth="lg">
-                <Box sx={{ mb: 6 }}>
-                    <Typography
-                        variant="h4"
-                        sx={{
-                            fontWeight: 600,
-                            color: 'var(--admin-text)',
-                            mb: 1
-                        }}
-                    >
-                        Rental Inventory Management
-                    </Typography>
-                    <Typography
-                        variant="body1"
-                        sx={{
-                            color: 'var(--admin-subtext)',
-                            mb: 4
-                        }}
-                    >
-                        Manage your rental equipment inventory and maximum capacity
-                    </Typography>
-                </Box>
-
-                <Box sx={{ mb: 4 }}>
-                    {localOptions?.map((rental, index) => (
-                        <RentalRow
-                            key={index}
-                            rental={rental}
-                            onMaxChange={(value) => handleMaxChange(index, value)}
-                        />
-                    ))}
-                </Box>
-
-                <Box
-                    sx={{
-                        display: 'flex',
-                        gap: 2,
-                        justifyContent: 'flex-end'
-                    }}
-                >
-                    <Button
-                        variant="contained"
-                        startIcon={<Save />}
-                        onClick={handleSubmit}
-                        sx={{
-                            textTransform: 'none',
-                            px: 4,
-                            py: 1,
-                            borderRadius: 2
-                        }}
-                    >
-                        Save Changes
-                    </Button>
-                    {authUser?.roles[ROLES.SUPER] && (
-                        <Button
-                            variant="contained"
-                            startIcon={<Refresh />}
-                            onClick={handleReset}
-                            sx={{
-                                textTransform: 'none',
-                                px: 4,
-                                py: 1,
-                                borderRadius: 2
-                            }}
-                        >
-                            Reset Inventory
-                        </Button>
-                    )}
-                </Box>
-            </Container>
-        </Box>
+        <section className="desk-inventory" aria-labelledby="rental-inventory-title">
+            <h3 id="rental-inventory-title">Rental inventory</h3>
+            {localOptions?.length ? (
+                <form onSubmit={handleSubmit}>
+                    <table>
+                        <thead>
+                            <tr><th scope="col">Equipment</th><th scope="col">In use</th><th scope="col">Maximum</th></tr>
+                        </thead>
+                        <tbody>
+                            {localOptions.map((rental, index) => (
+                                <tr key={rental.value || index}>
+                                    <th scope="row">{rental.label}</th>
+                                    <td>{rental.stock}</td>
+                                    <td>
+                                        <input className="form-control" type="number" min={Math.max(0, Number(rental.stock) || 0)} step="1"
+                                            inputMode="numeric" required aria-label={`Maximum for ${rental.label}`}
+                                            value={rental.max ?? ''} onChange={event => handleMaxChange(index, event.target.value)} />
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    <div className="desk-inventory-actions">
+                        <button type="submit" className="btn btn-primary">Save changes</button>
+                        {authUser?.roles[ROLES.SUPER] && (
+                            <button type="button" onClick={handleReset} className="btn btn-outline-danger"
+                                disabled={localOptions.some(option => option.max === '' || !Number.isInteger(Number(option.max)) || Number(option.max) < 0)}>
+                                Reset in-use counts
+                            </button>
+                        )}
+                    </div>
+                    {error && <p role="alert" className="alert alert-danger">{error}</p>}
+                    {success && <p role="status" className="alert alert-success">{success}</p>}
+                </form>
+            ) : <p role="status">No rental equipment is listed.</p>}
+        </section>
     );
 };
 

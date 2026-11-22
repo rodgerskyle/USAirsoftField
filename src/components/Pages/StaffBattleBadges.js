@@ -218,7 +218,7 @@ export default function StaffBattleBadges({ firebase, token, player, roundSide, 
                     Each MVP after that earns a silver star. Every 20 silver stars become a gold star.</p></div>
         </div>
         {token ? <>
-            <button type="button" className="btn btn-outline-secondary" aria-expanded={open}
+            <button type="button" className={open ? 'btn btn-outline-secondary' : 'btn btn-primary'} aria-expanded={open}
                 onClick={() => setOpen(!open)}>{open ? 'Close MVP controls' : 'Manage game MVPs'}</button>
             {open && <BattleDesk key={token} {...{ firebase, token, player, roundSide, mode, allowOverride }} onLock={sessionExpired} />}
         </> : onRequestUnlock ? <button type="button" className="btn btn-outline-secondary"

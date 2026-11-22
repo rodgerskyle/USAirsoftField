@@ -463,3 +463,17 @@ test('staff open an MVP write-in vote for a specific played round and review tie
         expect(screen.getByLabelText('Round for MVP voting').querySelector('option[value="' + game.id + '"]')).toBeInTheDocument();
     } finally { confirm.mockRestore(); }
 });
+
+
+test('round shortcuts focus the chosen controls without submitting an action', async () => {
+    const request = jest.fn(async path => path === ROUND_CATALOG_PATH ? catalog : {
+        serverNow, isStaff: true, games: [], poll: null, mvpRounds: [],
+    });
+    render(<AdminFieldRounds request={request} />);
+    const sections = await screen.findByRole('navigation', { name: 'Round control sections' });
+    fireEvent.click(within(sections).getByRole('link', { name: 'MVP vote' }));
+    expect(screen.getByRole('heading', { name: 'Round MVP voting' })).toHaveFocus();
+    fireEvent.click(within(sections).getByRole('link', { name: 'TV countdown' }));
+    expect(screen.getByRole('heading', { name: 'Barracks TV countdown' })).toHaveFocus();
+    expect(request.mock.calls.some(([, options]) => options?.method === 'POST')).toBe(false);
+});

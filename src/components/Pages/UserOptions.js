@@ -300,7 +300,7 @@ class UserOptions extends Component {
     // Updates User's privilege level
     updatePrivilege = (choice) => {
         if (choice === "admin" || choice === "waiver" || choice === "clear" || choice === "check") {
-            this.setState({ status: null, error: null })
+            this.setState({ status: null, error: null, super_status: null, ul_error: null })
             let user = this.props.router.params.id
 
             // Update token for the firebase uid
@@ -614,12 +614,12 @@ class UserOptions extends Component {
                         {!this.state.loading ?
                             <Container className="admin-content">
                                 <div className="admin-page-header">
-                                <h2 className="admin-header">User Options</h2>
+                                <h2 className="admin-header">Player account</h2>
                                 <Breadcrumb className="admin-breadcrumb admin-page-breadcrumb">
                                     <LinkContainer to="/admin">
                                         <Breadcrumb.Item>Admin</Breadcrumb.Item>
                                     </LinkContainer>
-                                    <Breadcrumb.Item active>User Options</Breadcrumb.Item>
+                                    <Breadcrumb.Item active>Player account</Breadcrumb.Item>
                                 </Breadcrumb>
                                 </div>
                                 {!user || user.accountRemovedAt || this.state.deleted ? (
@@ -642,10 +642,11 @@ class UserOptions extends Component {
                                         <Button variant="outline-danger" onClick={() => {
                                             this.setState({ profileicon: default_profile, profilepic: false })
                                         }} disabled={!this.state.profilepic}>
-                                            Remove
+                                            Remove photo
                                         </Button>
                                     </Col>
                                     <Col className="admin-user-options-main">
+                                        <h3 className="player-edit-heading">Account details</h3>
                                         <Row>
                                             <Col>
                                                 <Form>
@@ -696,9 +697,10 @@ class UserOptions extends Component {
                                             <Col>
                                                 <Form>
                                                     <Form.Group controlId="form.password">
-                                                        <Form.Label>Password:</Form.Label>
+                                                        <Form.Label>New password</Form.Label>
                                                         <Form.Control
-                                                            type="text"
+                                                            type="password"
+                                                            autoComplete="new-password"
                                                             name="password"
                                                             value={this.state.password}
                                                             onChange={this.onChange}
@@ -708,15 +710,16 @@ class UserOptions extends Component {
                                             </Col>
                                         </Row>
                                         {this.state.error ? <Row className="justify-content-row">
-                                            <p className="text-red">{this.state.error}</p>
+                                            <p role="alert" className="text-red">{this.state.error}</p>
                                         </Row> : null}
-                                        <Row>
+                                        <h3 className="player-edit-heading">Game record</h3>
+                                        <Row className="player-edit-stats">
                                             <Col>
                                                 <Form>
                                                     <Form.Group controlId="form.wins">
                                                         <Form.Label>Wins:</Form.Label>
                                                         <Form.Control
-                                                            type="text"
+                                                            type="text" inputMode="numeric"
                                                             name="wins"
                                                             value={this.state.wins}
                                                             onChange={this.onChange}
@@ -729,7 +732,7 @@ class UserOptions extends Component {
                                                     <Form.Group controlId="form.losses">
                                                         <Form.Label>Losses:</Form.Label>
                                                         <Form.Control
-                                                            type="text"
+                                                            type="text" inputMode="numeric"
                                                             name="losses"
                                                             value={this.state.losses}
                                                             onChange={this.onChange}
@@ -755,7 +758,7 @@ class UserOptions extends Component {
                                                     <Form.Group controlId="form.freegames">
                                                         <Form.Label>Free Games:</Form.Label>
                                                         <Form.Control
-                                                            type="text"
+                                                            type="text" inputMode="numeric"
                                                             name="freegames"
                                                             value={this.state.freegames}
                                                             onChange={this.onChange}
@@ -767,7 +770,7 @@ class UserOptions extends Component {
                                         <Row>
                                             <Col>
                                                 <Form>
-                                                    <Form.Group controlId="form.points">
+                                                    <Form.Group controlId="form.renewal">
                                                         <Form.Label>Renewal:</Form.Label>
                                                         <Form.Control
                                                             className={this.checkDate(this.state.renewal) ? "form-control-expired-uo" : null}
@@ -780,73 +783,40 @@ class UserOptions extends Component {
                                                 </Form>
                                             </Col>
                                             <Col className="col-button-renew-uo">
-                                                <Link to={"/admin/renewal/" + this.props.router.params.id}>
-                                                    <Button variant="primary">Renew</Button>
-                                                </Link>
+                                                <Link className="btn btn-outline-primary" to={"/admin/renewal/" + this.props.router.params.id}>Renew</Link>
                                             </Col>
                                         </Row>
                                     </Col>
                                 </Row>
-                                <Row className="row-buttons-uo admin-user-options-actions">
-                                    <Button variant="outline-info" onClick={() => this.openWaiver()}>
-                                        Open Waiver
+                                <div className="player-edit-actions" role="group" aria-label="Player account actions">
+                                    <Button variant="primary" disabled={this.state.saving} onClick={() => this.updateUser(authUser)}>
+                                        Update
                                     </Button>
+                                    <Button variant="outline-secondary" disabled={this.state.saving} onClick={() => this.resetOptions()}>
+                                        Reset
+                                    </Button>
+                                    <Button variant="outline-primary" onClick={() => this.openWaiver()}>Open Waiver</Button>
                                     {this.state.reviewWaiver && <Button variant="outline-primary" onClick={this.confirmReviewedWaiver}>
                                         Confirm reviewed signatures
                                     </Button>}
-                                    <Button variant="outline-primary" className="button-update-uo"
-                                        disabled={this.state.saving} onClick={() => this.resetOptions()}>
-                                        Reset
-                                    </Button>
-                                    <Button variant="outline-primary" className="button-update-uo"
-                                        disabled={this.state.saving} onClick={() => this.updateUser(authUser)}>
-                                        Update
-                                    </Button>
-                                    <Button variant="outline-primary" className="button-update-uo"
-                                        onClick={() => this.copyToClipboard(this.props.router.params.id, this.state.name)}>
+                                    <Button variant="outline-primary" onClick={() => this.copyToClipboard(this.props.router.params.id, this.state.name)}>
                                         Copy Profile Link
                                     </Button>
-                                    {this.state.status ?
-                                        <p className="status-uo-admin">{this.state.status}</p>
-                                        : null}
-                                </Row>
-                                {authUser && !!authUser.roles[ROLES.SUPER] ? <Row className="row-priv-buttons-uo admin-user-options-actions">
-                                    <Col md="auto">
-                                        <Button className="button-options-style-admin"
-                                            type="button" id="update" variant="primary" onClick={() => {
-                                                this.updatePrivilege("admin")
-                                            }}>
-                                            Upgrade to Admin
-                                        </Button>
-                                    </Col>
-                                    <Col md="auto">
-                                        <Button className="button-options-style-admin" onClick={() => {
-                                            this.updatePrivilege("waiver")
-                                        }}
-                                            type="button" id="update" variant="warning">
-                                            Upgrade to Waiver
-                                        </Button>
-                                    </Col>
-                                    <Col md="auto">
-                                        <Button className="button-options-style-admin" onClick={() => {
-                                            this.updatePrivilege("clear")
-                                        }}
-                                            type="button" id="update" variant="danger">
-                                            Clear Privilege
-                                        </Button>
-                                    </Col>
-                                    <Col md="auto">
-                                        <Button className="button-options-style-admin" onClick={() => {
-                                            this.updatePrivilege("check")
-                                        }}
-                                            type="button" id="update" variant="info">
-                                            <i className="fa fa-question fa-1x text-white"></i>
-                                        </Button>
-                                    </Col>
-                                    {this.state.super_status ? <Col className="status-col-uo">
-                                        <p className="super-status-uo-admin">{this.state.super_status}</p>
-                                    </Col> : null}
-                                </Row> : null}
+                                </div>
+                                {this.state.status && <p role="status" className="status-uo-admin">{this.state.status}</p>}
+                                {authUser && !!authUser.roles[ROLES.SUPER] && (
+                                    <section className="player-edit-access" aria-labelledby="player-edit-access">
+                                        <h3 id="player-edit-access" className="player-edit-heading">Staff access</h3>
+                                        <div className="player-edit-actions">
+                                            <Button variant="outline-primary" onClick={() => this.updatePrivilege("check")}>Check current access</Button>
+                                            <Button variant="outline-primary" onClick={() => this.updatePrivilege("admin")}>Grant admin access</Button>
+                                            <Button variant="outline-primary" onClick={() => this.updatePrivilege("waiver")}>Grant waiver access</Button>
+                                            <Button variant="outline-danger" onClick={() => this.updatePrivilege("clear")}>Clear staff access</Button>
+                                        </div>
+                                        {this.state.super_status && <p role="status">{this.state.super_status}</p>}
+                                        {this.state.ul_error && <p role="alert" className="text-red">{this.state.ul_error}</p>}
+                                    </section>
+                                )}
                                 </>}
                                 {this.renderAccountRemoval(authUser)}
                             </Container>

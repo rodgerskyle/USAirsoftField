@@ -40,7 +40,11 @@ it('opens a retained PDF by the old account ID and never offers a check-in link 
         render(<MemoryRouter future={{ v7_startTransition:true,v7_relativeSplatPath:true }}><HelmetProvider>
             <AuthUserContext.Provider value={user}><WaiverLookup firebase={firebase} /></AuthUserContext.Provider>
         </HelmetProvider></MemoryRouter>);
-        fireEvent.change(screen.getByRole('searchbox'),{target:{value:'Rider'}});
+        const month = screen.getByRole('combobox', { name: 'Month' });
+        fireEvent.change(month, { target: { value: '3' } });
+        expect(month).toHaveValue('3');
+        fireEvent.change(screen.getByRole('searchbox', { name: 'Search waivers by name' }),{target:{value:'Rider'}});
+        expect(month).toBeDisabled();
         await screen.findByText('Retained member waiver');
         expect(screen.queryByText('Review for check-in')).toBeNull();
         expect(screen.queryByText('Waiver reference')).toBeNull();

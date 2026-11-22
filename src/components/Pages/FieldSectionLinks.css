@@ -1,0 +1,35 @@
+.field-section-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .25rem .5rem;
+  margin-bottom: .85rem;
+}
+
+.field-section-links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: .45rem .85rem;
+  color: var(--admin-accent-text);
+  border: 1px solid var(--admin-border-strong);
+  border-radius: .6rem;
+  background: var(--admin-surface);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.field-section-links a:is(:hover, :focus-visible) {
+  color: var(--admin-text);
+  background: var(--admin-accent-soft);
+  border-color: var(--admin-accent);
+}
+
+.field-section-links a:focus-visible {
+  outline: 3px solid var(--admin-focus);
+  outline-offset: 2px;
+}
+
+:where(.field-tools, .score-entry-page) :where(h2, h3, summary)[id] {
+  scroll-margin-top: 5rem;
+}

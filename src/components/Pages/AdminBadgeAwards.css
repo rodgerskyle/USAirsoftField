@@ -237,3 +237,27 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.admin-badge-awards .admin-badge-awards__feedback {
+  padding: .7rem .9rem;
+  margin-top: .85rem;
+  border: 1px solid var(--admin-success-border);
+  border-inline-start-width: .25rem;
+  border-radius: .55rem;
+  background: var(--admin-success-bg);
+  color: var(--admin-success);
+  overflow-wrap: anywhere;
+}
+.admin-badge-awards .admin-badge-awards__feedback[role='alert'] {
+  border-color: var(--admin-danger-border);
+  background: var(--admin-danger-bg);
+  color: var(--admin-danger);
+}
+.admin-badge-awards__player, .admin-badge-awards__patch { min-width: 0; }
+.admin-badge-awards__session {
+  padding-bottom: .8rem;
+  border-bottom: 1px solid var(--admin-border);
+}
+@media (max-width: 700px) {
+  .admin-badge-awards__patch { border-top: 1px solid var(--admin-border); padding-top: 1rem; }
+}

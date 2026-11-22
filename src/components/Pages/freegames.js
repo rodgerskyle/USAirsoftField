@@ -1,5 +1,6 @@
 import React, { Component, useState } from 'react';
 import '../../App.css';
+import './FrontDeskForms.css';
 
 import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
@@ -21,18 +22,17 @@ class FreeGames extends Component {
             loading: true,
             users: [],
             search: "",
-            UpdateUserState: this.updateUser,
         };
     }
 
 
     componentWillUnmount() {
-        // this.props.firebase.users().off();
+        this.unsubscribeUsers?.();
     }
 
     componentDidMount() {
-        onValue(this.props.firebase.users(), snapshot => {
-            const usersObject = snapshot.val()
+        this.unsubscribeUsers = onValue(this.props.firebase.users(), snapshot => {
+            const usersObject = snapshot.val() || {}
 
             const usersList = Object.keys(usersObject).map(key => ({
                 ...usersObject[key],
@@ -101,10 +101,10 @@ class FreeGames extends Component {
                                 <Card.Header>
                                     <Form className="team-manage-text admin-freegames-search" onSubmit={e => { e.preventDefault(); }}>
                                         <Form.Group controlId="input1">
-                                            <Form.Label className="search-label-admin">Search by Username</Form.Label>
+                                            <Form.Label className="search-label-admin">Search by name or username</Form.Label>
                                             <Form.Control
-                                                type="name"
-                                                placeholder="ex: JohnDoe"
+                                                type="search"
+                                                placeholder="Player name or username"
                                                 autoComplete="off"
                                                 value={this.state.search}
                                                 onChange={(e) => {
@@ -115,8 +115,7 @@ class FreeGames extends Component {
                                     </Form>
                                 </Card.Header>
                                 {!this.state.loading ?
-                                    <UserBox users={this.state.users} index={0} length={this.state.users.length}
-                                        search={this.state.search} update={this.state.UpdateUserState} />
+                                    <UserBox users={this.state.users} search={this.state.search} update={this.updateUser} />
                                     : <Row className="justify-content-row padding-5px"><Spinner animation="border" /></Row>}
                             </Card>
                         </Col>
@@ -127,97 +126,35 @@ class FreeGames extends Component {
     }
 }
 
-function UserBox({ users, index, search, update, length }) {
-    const [ButtonArray, setButtonArray] = useState(new Array(length).fill(false));
-
-    const handleConfirm = (user, i) => {
-        if (user.freegames > 0) {
-            update(user.uid);
-            let tempArray = [...ButtonArray];
-            tempArray[i] = false;
-            setButtonArray(tempArray);
-        }
-    };
-
-    const renderUserRow = (user, i, rowIndex, isEven) => {
-        const rowClass = isEven ? "row-fg admin-freegames-user-row" : "status-card-offrow-admin-fg admin-freegames-user-row";
-
-        return (
-            <Row className={rowClass} key={rowIndex}>
-                <Col className="col-name-fg">
-                    <Card.Text>
-                        {"(" + rowIndex + ") " + user.name}
-                    </Card.Text>
-                </Col>
-                <Col>
-                    <Row>
-                        <Col className="col-name-fg">
-                            {user.freegames + " Free Game(s)"}
-                        </Col>
-                        {ButtonArray[i] === false ? (
-                            <Col xs={12} md={4} className="admin-freegames-action-col">
-                                <Button
-                                    className="button-submit-admin2"
-                                    onClick={() => {
-                                        let tempArray = [...ButtonArray];
-                                        tempArray.fill(false);
-                                        tempArray[i] = true;
-                                        setButtonArray(tempArray);
-                                    }}
-                                    disabled={user.freegames <= 0}
-                                    type="submit"
-                                    variant={user.freegames > 0 ? "success" : "secondary"}
-                                >
-                                    Use 1
-                                </Button>
-                            </Col>
-                        ) : (
-                            <Col xs={12} md={4} className="admin-freegames-action-col">
-                                <Row className="g-2">
-                                    <Col>
-                                        <Button
-                                            className="button-submit-admin2"
-                                            onClick={() => handleConfirm(user, i)}
-                                            type="submit"
-                                            variant="success"
-                                            size="sm"
-                                        >
-                                            Confirm
-                                        </Button>
-                                    </Col>
-                                    <Col>
-                                        <Button
-                                            className="button-submit-admin2"
-                                            onClick={() => {
-                                                let tempArray = [...ButtonArray];
-                                                tempArray[i] = false;
-                                                setButtonArray(tempArray);
-                                            }}
-                                            type="submit"
-                                            variant="danger"
-                                            size="sm"
-                                        >
-                                            Cancel
-                                        </Button>
-                                    </Col>
-                                </Row>
-                            </Col>
-                        )}
-                    </Row>
-                </Col>
-            </Row>
-        );
-    };
+function UserBox({ users, search, update }) {
+    const [confirmUid, setConfirmUid] = useState(null);
+    const term = search.trim().toLowerCase();
+    const matches = users.filter(user => [user.name, user.username].some(value => String(value || '').toLowerCase().includes(term)));
 
     return (
-        <Card.Body className="status-card-body-fg-admin admin-freegames-body">
-            {users.map((user, i) => {
-                if (search !== "" && !user.username.toLowerCase().includes(search.toLowerCase())) {
-                    return null;
-                }
-                index++;
-                return renderUserRow(user, i, index, index % 2 === 0);
-            })}
+        <Card.Body className="desk-freegames-list">
+            {matches.length === 0 && <p role="status">
+                {term ? 'No players with free games match that search.' : 'No players have free games to redeem.'}
+            </p>}
+            {matches.map(user => (
+                <div className="desk-freegames-row" key={user.uid}>
+                    <div>
+                        <strong>{user.name || user.username}</strong>
+                        {user.username && <small>{user.username}</small>}
+                    </div>
+                    <span>{user.freegames} free {Number(user.freegames) === 1 ? 'game' : 'games'}</span>
+                    {confirmUid === user.uid ? (
+                        <div className="desk-freegames-actions" role="group" aria-label={`Redeem for ${user.name || user.username}`}>
+                            <Button variant="success" disabled={user.freegames <= 0} onClick={() => {
+                                setConfirmUid(null);
+                                update(user.uid);
+                            }}>Confirm redemption</Button>
+                            <Button variant="outline-secondary" onClick={() => setConfirmUid(null)}>Cancel</Button>
+                        </div>
+                    ) : <Button variant="outline-primary" disabled={user.freegames <= 0}
+                        onClick={() => setConfirmUid(user.uid)}>Redeem one game</Button>}
+                </div>
+            ))}
         </Card.Body>
     );
 }

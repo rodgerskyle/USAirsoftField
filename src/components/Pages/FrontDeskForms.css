@@ -1,0 +1,99 @@
+.desk-booking-create {
+    display: flex;
+    align-items: end;
+    flex-wrap: wrap;
+    gap: .75rem;
+    margin-block: 1rem;
+}
+
+.desk-booking-times {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+    gap: .75rem;
+    margin-block: .25rem 1.25rem;
+}
+
+.desk-booking-time {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .55rem;
+    min-width: 0;
+    padding: 0 .65rem .7rem;
+    border: 1px solid var(--admin-border);
+    border-radius: .65rem;
+}
+
+.desk-booking-time legend {
+    float: none;
+    width: auto;
+    padding-inline: .25rem;
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.desk-booking-create label,
+.desk-booking-time label {
+    display: grid;
+    gap: .35rem;
+    min-width: 0;
+    color: var(--admin-text);
+    font-weight: 600;
+}
+
+.desk-booking-create :is(input, button),
+.desk-booking-time select {
+    min-height: 44px;
+}
+
+.desk-booking-time select {
+    color: var(--admin-text);
+    background-color: var(--admin-surface-muted);
+    border-color: var(--admin-border-strong);
+}
+
+.desk-booking-time select:focus-visible {
+    outline: 2px solid var(--admin-focus);
+    outline-offset: 2px;
+}
+
+.desk-inventory {
+    padding: clamp(.75rem, 2.5vw, 1.5rem);
+    border: 1px solid var(--admin-border);
+    border-radius: .9rem;
+    color: var(--admin-text);
+    background: var(--admin-surface);
+}
+
+.desk-inventory h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; }
+.desk-inventory table { width: 100%; border-collapse: collapse; }
+.desk-inventory thead { color: var(--admin-subtext); background: var(--admin-surface-muted); }
+.desk-inventory :is(th, td) { padding: .55rem clamp(.3rem, 2vw, 1rem); border-bottom: 1px solid var(--admin-border); }
+.desk-inventory th { overflow-wrap: anywhere; }
+.desk-inventory .form-control { min-height: 44px; width: 6rem; max-width: 100%; }
+.desk-inventory-actions { display: flex; gap: .75rem; flex-wrap: wrap; margin-block: 1rem; }
+.desk-inventory-actions .btn { min-height: 44px; }
+
+.desk-freegames-list { display: grid; gap: .5rem; }
+.desk-freegames-row {
+    display: grid;
+    grid-template-columns: minmax(7rem, 1fr) minmax(5rem, auto) auto;
+    gap: .65rem 1rem;
+    align-items: center;
+    padding: .7rem .85rem;
+    border: 1px solid var(--admin-border);
+    border-radius: .65rem;
+    background: var(--admin-surface-muted);
+    color: var(--admin-text);
+}
+
+.desk-freegames-row strong,
+.desk-freegames-row small { display: block; overflow-wrap: anywhere; }
+.desk-freegames-row small { color: var(--admin-subtext); }
+.desk-freegames-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.desk-freegames-row .btn { min-height: 44px; }
+
+@media (max-width: 620px) {
+    .desk-freegames-row { grid-template-columns: 1fr auto; }
+    .desk-freegames-row > :last-child { grid-column: 1 / -1; justify-self: start; }
+}

@@ -418,7 +418,7 @@ class WaiverPageFormBase extends Component {
                       </Row>
                       <Row>
                         <Col>
-                          <Form.Group>
+                          <Form.Group controlId="sign-waiver-fname">
                             <Form.Label>First Name:</Form.Label>
                             <Form.Control
                               name="fname"
@@ -431,7 +431,7 @@ class WaiverPageFormBase extends Component {
                           </Form.Group>
                         </Col>
                         <Col>
-                          <Form.Group>
+                          <Form.Group controlId="sign-waiver-lname">
                             <Form.Label>Last Name:</Form.Label>
                             <Form.Control
                               name="lname"
@@ -446,26 +446,26 @@ class WaiverPageFormBase extends Component {
                       </Row>
                       <Row>
                         <Col>
-                          <Form.Group>
+                          <Form.Group controlId="sign-waiver-email">
                             <Form.Label>Email:</Form.Label>
                             <Form.Control
                               name="email"
                               value={email}
                               onChange={this.onChange}
-                              type="text"
+                              type="text" inputMode="email"
                               autoComplete="off"
                               placeholder="Email Address"
                             />
                           </Form.Group>
                         </Col>
                         <Col>
-                          <Form.Group>
+                          <Form.Group controlId="sign-waiver-phone">
                             <Form.Label>Phone Number:</Form.Label>
                             <Form.Control
                               name="phone"
                               value={phone}
                               onChange={this.onChange}
-                              type="phone"
+                              type="tel"
                               autoComplete="off"
                               placeholder="Phone #"
                             />
@@ -474,7 +474,7 @@ class WaiverPageFormBase extends Component {
                       </Row>
                       <Row>
                         <Col>
-                          <Form.Group>
+                          <Form.Group controlId="sign-waiver-address">
                             <Form.Label>Address:</Form.Label>
                             <Form.Control
                               name="address"
@@ -487,7 +487,7 @@ class WaiverPageFormBase extends Component {
                           </Form.Group>
                         </Col>
                         <Col>
-                          <Form.Group>
+                          <Form.Group controlId="sign-waiver-city">
                             <Form.Label>City:</Form.Label>
                             <Form.Control
                               name="city"
@@ -500,7 +500,7 @@ class WaiverPageFormBase extends Component {
                           </Form.Group>
                         </Col>
                         <Col>
-                          <Form.Group>
+                          <Form.Group controlId="sign-waiver-state">
                             <Form.Label>State:</Form.Label>
                             <Form.Control
                               name="state"
@@ -515,7 +515,7 @@ class WaiverPageFormBase extends Component {
                       </Row>
                       <Row>
                         <Col>
-                          <Form.Group>
+                          <Form.Group controlId="sign-waiver-dob">
                             <Form.Label>Date Of Birth:</Form.Label>
                             <Form.Control
                               name="dob"
@@ -528,7 +528,7 @@ class WaiverPageFormBase extends Component {
                           </Form.Group>
                         </Col>
                         <Col>
-                          <Form.Group>
+                          <Form.Group controlId="sign-waiver-zipcode">
                             <Form.Label>Zipcode:</Form.Label>
                             <Form.Control
                               name="zipcode"
@@ -587,7 +587,7 @@ class WaiverPageFormBase extends Component {
                           </Row>
                           <Row>
                             <Col>
-                              <Form.Group>
+                              <Form.Group controlId="sign-waiver-pgname">
                                 <Form.Label>Parent/Guardian Full Name:</Form.Label>
                                 <Form.Control
                                   name="pgname"
@@ -600,13 +600,13 @@ class WaiverPageFormBase extends Component {
                               </Form.Group>
                             </Col>
                             <Col>
-                              <Form.Group>
+                              <Form.Group controlId="sign-waiver-pgphone">
                                 <Form.Label>Emergency Number:</Form.Label>
                                 <Form.Control
                                   name="pgphone"
                                   value={pgphone}
                                   onChange={this.onChange}
-                                  type="phone"
+                                  type="tel"
                                   autoComplete="off"
                                   placeholder="Phone"
                                 />
@@ -670,7 +670,7 @@ class WaiverPageFormBase extends Component {
                     </Row>
                     : null}
                   <Row className="row-rp">
-                    {errorWaiver && <p className="error-text-rp">{errorWaiver}</p>}
+                    {errorWaiver && <p role="alert" className="error-text-rp">{errorWaiver}</p>}
                   </Row>
                 </Col>
               </Row>

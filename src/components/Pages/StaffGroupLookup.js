@@ -198,7 +198,7 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
     });
   }
 
-  return <details id="arriving-group" className="admin-group-lookup" open><summary>Find an arriving group</summary>
+  return <details id="arriving-group" className="admin-group-lookup" open><summary id="admin-checkin-arrivals">Find an arriving group</summary>
     {hint && <p>Party Calendar booking for {hint.date}. Find the group by its name or invitation code.</p>}
     <p>Search by group name or invitation code. <a href="/admin/field/groups">Manage groups</a></p>
     <form onSubmit={lookup}><label>Group name or code<input name="group" minLength={1} maxLength={80} autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} required disabled={locked} /></label><button className="btn btn-secondary" disabled={locked}>{busy ? 'Working…' : 'Find group'}</button><button type="button" className="btn btn-outline-primary" disabled={locked} onClick={() => find('', 1, true)}>Show today’s groups</button></form>

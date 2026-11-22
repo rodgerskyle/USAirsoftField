@@ -1,10 +1,11 @@
 import React, { useContext, useMemo } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { Navbar, Nav, Container } from 'react-bootstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 import { createTheme, ThemeProvider, useTheme } from '@mui/material/styles';
 import { useAppearance } from '../../Appearance';
 import AppearanceControl from '../../AppearanceControl';
-import logo from '../../assets/usairsoft-small-logo.png';
+import logo from '../../assets/usairsoft-wide-logo.png';
 import lightLogo from '../../assets/usairsoft-wide-logo-light.png';
 import { AuthUserContext } from '../session';
 import { officialAccountRoles, WAIVER } from './roles';
@@ -34,17 +35,29 @@ export function AdminThemeRoute({ children }) {
   const theme = useMemo(() => createTheme({
     typography,
     palette,
-    ...(palette.mode === 'light' && {
-      components: {
-        MuiButton: {
-          styleOverrides: {
+    components: {
+      MuiButton: {
+        styleOverrides: {
+          root: { minHeight: 44, borderRadius: 8, textTransform: 'none' },
+          ...(palette.mode === 'light' && {
             contained: {
               color: 'var(--admin-on-accent)',
               backgroundColor: 'var(--admin-action-bg)',
               '&:hover, &:active': { backgroundColor: 'var(--admin-action-hover)' },
             },
-          },
+          }),
         },
+      },
+      MuiIconButton: { styleOverrides: { root: { minHeight: 44, minWidth: 44 } } },
+      MuiMenuItem: {
+        styleOverrides: {
+          root: ({ theme: menuTheme }) => ({
+            minHeight: 44,
+            [menuTheme.breakpoints.up('sm')]: { minHeight: 44 },
+          }),
+        },
+      },
+      ...(palette.mode === 'light' && {
         MuiAlert: {
           styleOverrides: {
             filled: ({ ownerState }) => {
@@ -57,8 +70,8 @@ export function AdminThemeRoute({ children }) {
             },
           },
         },
-      },
-    }),
+      }),
+    },
   }), [typography, palette]);
 
   return (
@@ -81,24 +94,25 @@ export default function AdminLayout() {
   const { pathname } = useLocation();
   const roles = useContext(AuthUserContext)?.roles;
   const isAdmin = Boolean(officialAccountRoles(roles).ADMIN);
-  const showShortcuts = (isAdmin || roles?.[WAIVER]) && pathname.replace(/\/$/, '') !== '/admin'
-    && !pathname.startsWith('/admin/field/');
+  const showShortcuts = (isAdmin || roles?.[WAIVER]) && pathname.replace(/\/$/, '') !== '/admin';
 
   return (
     <AdminThemeRoute>
       <div className="admin-layout">
-        <Navbar className="admin-navbar" aria-label="Staff navigation">
-          <Container fluid>
-            <Navbar.Brand as={Link} to={isAdmin ? '/admin' : '/'}>
-              <img src={appearance?.theme === 'light' ? lightLogo : logo} alt="" className="admin-nav-logo" />
-              <span>{isAdmin ? 'Staff' : 'US Airsoft'}</span>
-            </Navbar.Brand>
-            <Nav className="admin-nav-actions">
-              <Link to="/" className="admin-site-link" aria-label="Back to website">Website</Link>
+        <header className="admin-masthead">
+          <nav className="admin-navbar" aria-label="Staff navigation">
+            <Link className="admin-nav-brand" to={isAdmin ? '/admin' : roles?.[WAIVER] ? '/dashboard' : '/'}>
+              <img src={appearance?.theme === 'light' ? lightLogo : logo} alt="US Airsoft" className="admin-nav-logo" />
+              <span>{isAdmin ? 'Staff desk' : roles?.[WAIVER] ? 'Waiver desk' : 'Website'}</span>
+            </Link>
+            <div className="admin-nav-actions">
+              <Link to="/" className="admin-site-link" aria-label="Back to website">
+                <span>Website</span><FontAwesomeIcon icon={faArrowUpRightFromSquare} aria-hidden="true" />
+              </Link>
               {appearance && <AppearanceControl {...appearance} />}
-            </Nav>
-          </Container>
-        </Navbar>
+            </div>
+          </nav>
+        </header>
         {showShortcuts && <DeskNavigation admin={isAdmin} />}
         <div className="admin-main-content"><Outlet /></div>
       </div>

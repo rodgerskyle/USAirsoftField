@@ -6,6 +6,8 @@ import { groupExperienceLabels } from '../constants/groupExperience';
 import WaiverStatus from './WaiverStatus';
 import StaffWaiverPicker from './StaffWaiverPicker';
 import StaffGroupLookup from './StaffGroupLookup';
+import FieldSectionLinks from './FieldSectionLinks';
+import { walkOnRentalLink } from '../constants/groupRentalLink';
 import './AdminFieldCheckIn.css';
 
 const path = '/api/game-day-check-in';
@@ -92,13 +94,21 @@ function assignmentMessage({ outcome, player }) {
   return `${displayName} checked in as ${sides[side]}.`;
 }
 
+const checkInSections = [
+  ['admin-checkin-find', 'Members'],
+  ['admin-checkin-walk-on', 'Walk-ons'],
+  ['admin-checkin-arrivals', 'Arriving groups'],
+  ['admin-checkin-roster', 'Roster'],
+  ['admin-checkin-talent', 'Team balance'],
+];
+
 function TeamTalent({ board }) {
   const totalStrength = board ? (board.balance?.camo?.strength ?? 0) + (board.balance?.solid?.strength ?? 0) : 0;
   const camoShare = totalStrength > 0 ? Math.round(board.balance.camo.strength / totalStrength * 100) : null;
   return (
     <section aria-labelledby="admin-checkin-talent">
       <div className="admin-checkin__heading">
-        <h2 id="admin-checkin-talent">Team talent</h2>
+        <h2 id="admin-checkin-talent" tabIndex={-1}>Team talent</h2>
         <span>{board?.counts?.total ?? '—'} checked in</span>
       </div>
       <div className="admin-checkin__teams">
@@ -164,12 +174,18 @@ function PlayerRows({ players, onSelect, checkedIn, disabled }) {
   );
 }
 
-function SelectedPlayer({ player, suggestion, working, onAssessment, onAssign, request, onWaiver, onRetry, onRename, onNext }) {
+function savedRentalLink(player, date) {
+  return player?.membershipStatus === 'guest' && sides[player.side] && player.waiverStatus === 'signed'
+    ? walkOnRentalLink(player.playerId, date) : null;
+}
+
+function SelectedPlayer({ player, date, suggestion, working, rentalRequested, onRentalChange, onAssessment, onAssign, request, onWaiver, onRetry, onRename, onNext }) {
   const { side, membershipStatus, experienceBand, assignedExperienceBand, canSetExperience, gamesLogged } = player;
   const heading = useRef(null);
   useEffect(() => { heading.current?.focus(); }, [player.playerId]);
   const oppositeSide = side === 'camo' ? 'solid' : 'camo';
   const choices = side ? [oppositeSide] : Object.keys(sides);
+  const rentalLink = savedRentalLink(player, date);
   const membership = memberships[membershipStatus] || memberships.unconfirmed;
   const ratingChanged = experienceBand !== (assignedExperienceBand || 'unrated');
   return (
@@ -208,12 +224,17 @@ function SelectedPlayer({ player, suggestion, working, onAssessment, onAssign, r
         {suggestion ? `${suggestion.side === side ? 'Current side fits' : 'Suggested side'} · ${sides[suggestion.side]} · ${reasons[suggestion.reason]}` : 'Either side fits the current balance.'}
       </p>
       {membershipStatus !== 'active' && <p className="admin-checkin__hint">Confirm admission at the desk. Check-in records attendance and team assignment only.</p>}
+      {membershipStatus === 'guest' && !side && <label className="admin-checkin__rental-option">
+        <input type="checkbox" checked={rentalRequested} disabled={working} onChange={event => onRentalChange(event.target.checked)} />
+        Open rental form after check-in
+      </label>}
       <div className="admin-checkin__buttons">
         {choices.map(choice => (
           <button className={`btn btn-${side ? 'outline-primary' : 'primary'}`} type="button" key={choice} disabled={working || (!side && player.waiverStatus !== 'signed')} onClick={() => onAssign(choice)}>
-            {side ? 'Move to ' : 'Check in as '}{sides[choice]}
+            {side ? 'Move to ' : 'Check in as '}{sides[choice]}{!side && rentalRequested && membershipStatus === 'guest' ? ' & open rental' : ''}
           </button>
         ))}
+        {rentalLink && !working && <a className="btn btn-outline-primary" href={rentalLink}>Open rental form</a>}
         {side && <button type="button" className="btn btn-primary" disabled={working} onClick={onNext}>Check in next player</button>}
         {side && canSetExperience && ratingChanged && (
           <button type="button" className="btn btn-primary" disabled={working} onClick={() => onAssign(side)}>Save balance estimate</button>
@@ -226,6 +247,7 @@ function SelectedPlayer({ player, suggestion, working, onAssessment, onAssign, r
 export default function AdminFieldCheckIn({ request }) {
   const [board, setBoard] = useState(null);
   const [selected, setSelected] = useState(null);
+  const [rentalRequested, setRentalRequested] = useState(false);
   const [matches, setMatches] = useState([]);
   const [walkOnWaiverQuery, setWalkOnWaiverQuery] = useState(null);
   const [working, setWorking] = useState(false);
@@ -321,6 +343,7 @@ export default function AdminFieldCheckIn({ request }) {
   }
 
   function resetLookup() {
+    setRentalRequested(false);
     setSelected(null);
     setMatches([]);
     setWalkOnWaiverQuery(null);
@@ -362,8 +385,9 @@ export default function AdminFieldCheckIn({ request }) {
     }
   }
 
-  function lookup(input, guest = false, expectedGroupDate) {
-    if (clearConfirmation) return;
+  function lookup(input, guest = false, expectedGroupDate, withRental = false) {
+    if (clearConfirmation || operation.current) return;
+    setRentalRequested(withRental);
     void run(signal => loadLookup(signal, input, guest, expectedGroupDate));
   }
 
@@ -396,7 +420,7 @@ export default function AdminFieldCheckIn({ request }) {
     lookup({
       ...(isNewGuest ? { displayName: player.displayName } : { playerId: player.playerId }),
       ...(!player.side && proof ? { waiverRef: proof } : {}),
-    }, isNewGuest);
+    }, isNewGuest, undefined, isNewGuest && rentalRequested);
   }
 
   function applyAssignment(data, player) {
@@ -467,6 +491,14 @@ export default function AdminFieldCheckIn({ request }) {
         applyAssignment(data, player);
         setCheckInRevision(value => value + 1);
         setStatus(assignmentMessage(data));
+        if (newGuest && rentalRequested) {
+          const destination = savedRentalLink(data.player, data.date);
+          if (destination) {
+            window.location.assign(destination);
+            return;
+          }
+          setStatus(assignmentMessage(data) + ' Reopen the saved walk-on to verify their waiver and start the rental.');
+        }
         const input = newGuest ? guestInput.current : memberInput.current;
         if (input) {
           input.value = '';
@@ -554,10 +586,11 @@ export default function AdminFieldCheckIn({ request }) {
 
   return (
     <div className="admin-checkin">
+      <FieldSectionLinks label="Check-in sections" items={checkInSections} />
       <p className="admin-checkin__date">{dateLabel}</p>
       <div className="admin-checkin__columns">
         <section className="admin-checkin__card" aria-labelledby="admin-checkin-find">
-          <h2 id="admin-checkin-find">Member search</h2>
+          <h2 id="admin-checkin-find" tabIndex={-1}>Member search</h2>
           <form className="admin-checkin__form" role="search" aria-labelledby="admin-checkin-find" onSubmit={submitLookup}>
             <label htmlFor="admin-checkin-player">
               Member name, ID or card link
@@ -577,7 +610,7 @@ export default function AdminFieldCheckIn({ request }) {
           {status && <p className="admin-checkin__status" role="status">{status}</p>}
           {error && <p className="alert alert-danger" role="alert">{error}</p>}
           {matches.length > 0 && <PlayerRows players={matches} onSelect={lookup} disabled={checkInLocked} />}
-          {selected && <SelectedPlayer player={selected.player} suggestion={recommendation} working={checkInLocked} request={request}
+          {selected && <SelectedPlayer player={selected.player} date={selected.date} rentalRequested={rentalRequested} onRentalChange={setRentalRequested} suggestion={recommendation} working={checkInLocked} request={request}
             onWaiver={match => verifySelected(match.ref)} onRetry={() => verifySelected()} onAssessment={updateAssessment} onAssign={assign} onRename={renameWalkOn} onNext={nextPlayer} />}
           {walkOnWaiverQuery !== null && !selected && <section id="admin-checkin-waiver-search" aria-labelledby="admin-checkin-waiver-title">
             <h3 id="admin-checkin-waiver-title">Check in a walk-on by waiver</h3>
@@ -586,7 +619,7 @@ export default function AdminFieldCheckIn({ request }) {
               onChoose={match => lookup({ displayName: match.name, waiverRef: match.ref }, true)} />
           </section>}
           <details className="admin-checkin__walk-on">
-            <summary>Add a walk-on</summary>
+            <summary id="admin-checkin-walk-on">Add a walk-on</summary>
             <form className="admin-checkin__form" onSubmit={event => {
               event.preventDefault();
               lookup({ displayName: guestInput.current.value.trim() }, true);
@@ -597,6 +630,10 @@ export default function AdminFieldCheckIn({ request }) {
                   onChange={resetLookup} />
               </label>
               <button className="btn btn-outline-primary" type="submit" disabled={checkInLocked}>Continue</button>
+              <button className="btn btn-outline-primary" type="button" disabled={checkInLocked}
+                onClick={event => {
+                  if (event.currentTarget.form.reportValidity()) lookup({ displayName: guestInput.current.value.trim() }, true, undefined, true);
+                }}>Continue with rental</button>
             </form>
           </details>
           <StaffGroupLookup request={request} onSelect={lookup} disabled={working || Boolean(clearConfirmation)}
@@ -609,7 +646,7 @@ export default function AdminFieldCheckIn({ request }) {
         </section>
         <section className="admin-checkin__card" aria-labelledby="admin-checkin-roster">
           <div className="admin-checkin__heading">
-            <h2 id="admin-checkin-roster">Recent check-ins</h2>
+            <h2 id="admin-checkin-roster" tabIndex={-1}>Recent check-ins</h2>
             <div className="admin-checkin__buttons">
               <button className="btn btn-outline-primary" type="button" disabled={working || refreshing} onClick={refreshRoster}>Refresh</button>
               {canClear && (

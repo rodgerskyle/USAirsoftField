@@ -283,7 +283,7 @@ class RenewSubscription extends Component {
                                                         <Form.Group controlId="input1">
                                                             <Form.Label className="search-label-admin">Search by username or name:</Form.Label>
                                                             <Form.Control
-                                                                type="name"
+                                                                type="text"
                                                                 name="search"
                                                                 placeholder="ex: JohnDoe"
                                                                 value={this.state.search}
@@ -350,7 +350,7 @@ class RenewSubscription extends Component {
                                                             <Form className="waiver-form-rp admin-renew-form-grid">
                                                                     <Row>
                                                                         <Col>
-                                                                            <Form.Group>
+                                                                            <Form.Group controlId="renew-member-fname">
                                                                                 <Form.Label>First Name:</Form.Label>
                                                                                 <Form.Control
                                                                                     name="fname"
@@ -363,7 +363,7 @@ class RenewSubscription extends Component {
                                                                             </Form.Group>
                                                                         </Col>
                                                                         <Col>
-                                                                            <Form.Group>
+                                                                            <Form.Group controlId="renew-member-lname">
                                                                                 <Form.Label>Last Name:</Form.Label>
                                                                                 <Form.Control
                                                                                     name="lname"
@@ -378,26 +378,26 @@ class RenewSubscription extends Component {
                                                                     </Row>
                                                                     <Row>
                                                                         <Col>
-                                                                            <Form.Group>
+                                                                            <Form.Group controlId="renew-member-email">
                                                                                 <Form.Label>Email:</Form.Label>
                                                                                 <Form.Control
                                                                                     name="email"
                                                                                     value={email}
                                                                                     onChange={this.onChange}
-                                                                                    type="text"
+                                                                                    type="text" inputMode="email"
                                                                                     autoComplete="off"
                                                                                     placeholder="Email Address"
                                                                                 />
                                                                             </Form.Group>
                                                                         </Col>
                                                                         <Col>
-                                                                            <Form.Group>
+                                                                            <Form.Group controlId="renew-member-phone">
                                                                                 <Form.Label>Phone Number:</Form.Label>
                                                                                 <Form.Control
                                                                                     name="phone"
                                                                                     value={phone}
                                                                                     onChange={this.onChange}
-                                                                                    type="phone"
+                                                                                    type="tel"
                                                                                     autoComplete="off"
                                                                                     placeholder="Phone #"
                                                                                 />
@@ -406,7 +406,7 @@ class RenewSubscription extends Component {
                                                                     </Row>
                                                                     <Row>
                                                                         <Col>
-                                                                            <Form.Group>
+                                                                            <Form.Group controlId="renew-member-address">
                                                                                 <Form.Label>Address:</Form.Label>
                                                                                 <Form.Control
                                                                                     name="address"
@@ -419,7 +419,7 @@ class RenewSubscription extends Component {
                                                                             </Form.Group>
                                                                         </Col>
                                                                         <Col>
-                                                                            <Form.Group>
+                                                                            <Form.Group controlId="renew-member-city">
                                                                                 <Form.Label>City:</Form.Label>
                                                                                 <Form.Control
                                                                                     name="city"
@@ -432,7 +432,7 @@ class RenewSubscription extends Component {
                                                                             </Form.Group>
                                                                         </Col>
                                                                         <Col>
-                                                                            <Form.Group>
+                                                                            <Form.Group controlId="renew-member-state">
                                                                                 <Form.Label>State:</Form.Label>
                                                                                 <Form.Control
                                                                                     name="state"
@@ -447,7 +447,7 @@ class RenewSubscription extends Component {
                                                                     </Row>
                                                                     <Row>
                                                                         <Col>
-                                                                            <Form.Group>
+                                                                            <Form.Group controlId="renew-member-dob">
                                                                                 <Form.Label>Date Of Birth:</Form.Label>
                                                                                 <Form.Control
                                                                                     name="dob"
@@ -460,7 +460,7 @@ class RenewSubscription extends Component {
                                                                             </Form.Group>
                                                                         </Col>
                                                                         <Col>
-                                                                            <Form.Group>
+                                                                            <Form.Group controlId="renew-member-zipcode">
                                                                                 <Form.Label>Zipcode:</Form.Label>
                                                                                 <Form.Control
                                                                                     name="zipcode"
@@ -519,7 +519,7 @@ class RenewSubscription extends Component {
                                                                             </Row>
                                                                             <Row>
                                                                                 <Col>
-                                                                                    <Form.Group>
+                                                                                    <Form.Group controlId="renew-member-pgname">
                                                                                         <Form.Label>Parent/Guardian Full Name:</Form.Label>
                                                                                         <Form.Control
                                                                                             name="pgname"
@@ -532,13 +532,13 @@ class RenewSubscription extends Component {
                                                                                     </Form.Group>
                                                                                 </Col>
                                                                                 <Col>
-                                                                                    <Form.Group>
+                                                                                    <Form.Group controlId="renew-member-pgphone">
                                                                                         <Form.Label>Emergency Number:</Form.Label>
                                                                                         <Form.Control
                                                                                             name="pgphone"
                                                                                             value={pgphone}
                                                                                             onChange={this.onChange}
-                                                                                            type="phone"
+                                                                                            type="tel"
                                                                                             autoComplete="off"
                                                                                             placeholder="Phone"
                                                                                         />
@@ -586,7 +586,7 @@ class RenewSubscription extends Component {
                                                                         : null}
                                                                 </Form>
                                                             <Row className="row-renew">
-                                                                {errorWaiver && <p className="error-text-rp">{errorWaiver}</p>}
+                                                                {errorWaiver && <p role="alert" className="error-text-rp">{errorWaiver}</p>}
                                                             </Row>
                                                         </div>
                                                     </div>

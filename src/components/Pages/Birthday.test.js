@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { HelmetProvider } from 'react-helmet-async';
 import { MemoryRouter } from 'react-router-dom';
 import { webcrypto } from 'crypto';
@@ -58,6 +58,24 @@ beforeEach(() => {
     return { committed: true };
   });
   requestStaffFieldTool.mockResolvedValue({});
+});
+
+test('starts a booking from a date and saves the selected start and end times', async () => {
+  openPage();
+  fireEvent.change(await screen.findByLabelText('Booking date'), { target: { value: '2026-12-12' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Add booking' }));
+  fireEvent.change(screen.getByLabelText('Group Name'), { target: { value: 'Saturday party' } });
+  const start = within(screen.getByRole('group', { name: 'Start time' }));
+  const end = within(screen.getByRole('group', { name: 'End time' }));
+  fireEvent.change(start.getByLabelText('Hour'), { target: { value: '13' } });
+  fireEvent.change(start.getByLabelText('Minutes'), { target: { value: '20' } });
+  fireEvent.change(end.getByLabelText('Hour'), { target: { value: '15' } });
+  fireEvent.change(end.getByLabelText('Minutes'), { target: { value: '40' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Create' }));
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  const [booking] = Object.values(records);
+  expect(new Date(booking.start)).toEqual(new Date(2026, 11, 12, 13, 20));
+  expect(new Date(booking.end)).toEqual(new Date(2026, 11, 12, 15, 40));
 });
 
 test('retrying create after a lost acknowledgment keeps the original reservation', async () => {

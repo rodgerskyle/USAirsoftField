@@ -174,3 +174,47 @@
   border-radius: .5rem;
   font-weight: 700;
 }
+
+.field-tools .admin-checkin__columns {
+  align-items: start;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+}
+.field-tools .admin-checkin__card {
+  border-color: var(--admin-border);
+  background: var(--admin-surface);
+}
+.field-tools .admin-checkin__card:first-child { border-top: 3px solid var(--admin-accent); }
+.field-tools .admin-checkin__walk-on { padding: 0; border: 0; background: transparent; }
+.field-tools .admin-checkin details > summary { background-color: var(--admin-surface-muted); }
+.field-tools .admin-checkin details > summary:is(:hover, :focus-visible) { border-color: var(--admin-accent); }
+.field-tools .admin-checkin__players button {
+  padding-inline: .6rem;
+  border-radius: .45rem;
+}
+.field-tools .admin-checkin__players button:is(:hover, :focus-visible) {
+  color: var(--admin-text);
+  background: var(--admin-accent-soft);
+}
+.admin-checkin__rental-option {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  min-height: 48px;
+  margin: .75rem 0;
+  padding: .5rem .75rem;
+  border: 1px solid var(--admin-border-strong);
+  border-radius: .6rem;
+  background: var(--admin-surface-muted);
+  font-weight: 650;
+  cursor: pointer;
+}
+.admin-checkin__rental-option input[type='checkbox'] {
+  flex: none;
+  width: 1.2rem;
+  height: 1.2rem;
+  min-height: 0;
+  accent-color: var(--admin-action-bg);
+}
+@media (max-width: 850px) {
+  .field-tools .admin-checkin__columns { grid-template-columns: 1fr; }
+}
