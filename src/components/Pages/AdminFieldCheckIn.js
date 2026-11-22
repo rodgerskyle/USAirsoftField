@@ -145,7 +145,7 @@ function PlayerRows({ players, onSelect, checkedIn, disabled }) {
           <button type="button" disabled={disabled} onClick={() => onSelect({ playerId: player.playerId })}>
             <span>
               <strong>{player.displayName}</strong>
-              <small>{checkedIn ? `${memberships[player.membershipStatus] || memberships.unconfirmed} · ${classificationLabel(player)}` : player.playerId}</small>
+              <small>{checkedIn ? `${memberships[player.membershipStatus] || memberships.unconfirmed} · ${classificationLabel(player)}` : player.membershipStatus === 'guest' ? 'Walk-on · ' + sides[player.side] : player.playerId}</small>
               <WaiverStatus status={player.waiverStatus ?? 'unavailable'} />
             </span>
             <span className={checkedIn ? 'admin-checkin__pill' : undefined} data-side={checkedIn ? player.side : undefined} aria-hidden={checkedIn ? undefined : true}>
@@ -158,7 +158,7 @@ function PlayerRows({ players, onSelect, checkedIn, disabled }) {
   );
 }
 
-function SelectedPlayer({ player, suggestion, working, onAssessment, onAssign, request, onWaiver, onRetry }) {
+function SelectedPlayer({ player, suggestion, working, onAssessment, onAssign, request, onWaiver, onRetry, onRename, onNext }) {
   const { side, membershipStatus, experienceBand, assignedExperienceBand, canSetExperience, gamesLogged } = player;
   const heading = useRef(null);
   useEffect(() => { heading.current?.focus(); }, [player.playerId]);
@@ -169,6 +169,11 @@ function SelectedPlayer({ player, suggestion, working, onAssessment, onAssign, r
   return (
     <section className="admin-checkin__selection" aria-labelledby="admin-checkin-selection">
       <h3 id="admin-checkin-selection" tabIndex={-1} ref={heading}>{player.displayName}</h3>
+      {membershipStatus === 'guest' && <details className="admin-checkin__edit-name" key={player.playerId + player.displayName}><summary>Edit walk-on name</summary>
+        <form className="admin-checkin__form" onSubmit={event => { event.preventDefault(); onRename(event.currentTarget.elements.displayName.value.trim()); }}>
+          <label>Walk-on name or callsign<input name="displayName" defaultValue={player.displayName} minLength={2} maxLength={80} required readOnly={working} /></label>
+          <button type="submit" className="btn btn-secondary" disabled={working}>Save walk-on name</button>
+        </form></details>}
       {membershipStatus !== 'guest' && <p className="admin-checkin__id">{player.playerId}</p>}
       <div className="admin-checkin__badges">
         <span className="admin-checkin__pill" data-membership={membershipStatus}>{membership}</span>
@@ -203,6 +208,7 @@ function SelectedPlayer({ player, suggestion, working, onAssessment, onAssign, r
             {side ? 'Move to ' : 'Check in as '}{sides[choice]}
           </button>
         ))}
+        {side && <button type="button" className="btn btn-primary" disabled={working} onClick={onNext}>Check in next player</button>}
         {side && canSetExperience && ratingChanged && (
           <button type="button" className="btn btn-primary" disabled={working} onClick={() => onAssign(side)}>Save balance estimate</button>
         )}
@@ -334,9 +340,10 @@ export default function AdminFieldCheckIn({ request }) {
         setStatus(data.player.side ? 'This player is already checked in.' : data.player.waiverStatus === 'signed' ? 'Choose a side to check in.' : 'Verify the player’s signed waiver below.');
       } else if (data.matches?.length) {
         setMatches(data.matches);
-        setStatus('Select the matching player.');
+        setStatus(data.directoryUnavailable ? 'Showing today’s walk-ons. Account search is temporarily unavailable.' : 'Select the matching player.');
       } else {
-        setStatus('No matching player. Check the name or use Find a waiver for a walk-on.');
+        if (input.query) setWalkOnWaiverQuery(input.query);
+        setStatus(input.query ? 'No matching player account. Choose a signed waiver below for a walk-on.' : 'No matching player. Check the name or use Find a waiver for a walk-on.');
       }
     } catch (failure) {
       if (!signal.aborted) {
@@ -399,6 +406,36 @@ export default function AdminFieldCheckIn({ request }) {
         },
       });
     }
+  }
+
+  function renameWalkOn(displayName) {
+    if (!selected || selected.player.membershipStatus !== 'guest' || clearConfirmation) return;
+    const { player, date, rosterVersion } = selected;
+    if (!player.side) {
+      setSelected({ ...selected, player: { ...player, displayName } });
+      setStatus('Walk-on name updated for this check-in.');
+      return;
+    }
+    void run(async signal => {
+      try {
+        const data = await request(path, { method: 'POST', signal, body: { action: 'renameWalkOn', playerId: player.playerId,
+          displayName, date, rosterVersion, revision: player.revision } });
+        if (signal.aborted) return;
+        applyAssignment(data, player);
+        setCheckInRevision(value => value + 1);
+        setStatus('Walk-on name saved.');
+      } catch (failure) {
+        if (!signal.aborted && failure.status === 409) await loadLookup(signal, { playerId: player.playerId }, false);
+        throw failure;
+      }
+    });
+  }
+
+  function nextPlayer() {
+    resetLookup();
+    memberInput.current.value = '';
+    if (guestInput.current) guestInput.current.value = '';
+    memberInput.current.focus();
   }
 
   function assign(side) {
@@ -512,7 +549,6 @@ export default function AdminFieldCheckIn({ request }) {
   return (
     <div className="admin-checkin">
       <p className="admin-checkin__date">{dateLabel}</p>
-      <TeamTalent board={board} />
       <div className="admin-checkin__columns">
         <section className="admin-checkin__card" aria-labelledby="admin-checkin-find">
           <h2 id="admin-checkin-find">Find a player</h2>
@@ -536,11 +572,11 @@ export default function AdminFieldCheckIn({ request }) {
           {error && <p className="alert alert-danger" role="alert">{error}</p>}
           {matches.length > 0 && <PlayerRows players={matches} onSelect={lookup} disabled={checkInLocked} />}
           {selected && <SelectedPlayer player={selected.player} suggestion={recommendation} working={checkInLocked} request={request}
-            onWaiver={match => verifySelected(match.ref)} onRetry={() => verifySelected()} onAssessment={updateAssessment} onAssign={assign} />}
+            onWaiver={match => verifySelected(match.ref)} onRetry={() => verifySelected()} onAssessment={updateAssessment} onAssign={assign} onRename={renameWalkOn} onNext={nextPlayer} />}
           {walkOnWaiverQuery !== null && !selected && <section id="admin-checkin-waiver-search" aria-labelledby="admin-checkin-waiver-title">
             <h3 id="admin-checkin-waiver-title">Check in a walk-on by waiver</h3>
             <p>Choose the participant’s signed waiver to review their walk-on check-in.</p>
-            <StaffWaiverPicker request={request} name={walkOnWaiverQuery} focus disabled={checkInLocked}
+            <StaffWaiverPicker request={request} name={walkOnWaiverQuery} autoSearch focus disabled={checkInLocked}
               onChoose={match => lookup({ displayName: match.name, waiverRef: match.ref }, true)} />
           </section>}
           <details className="admin-checkin__walk-on">
@@ -600,6 +636,7 @@ export default function AdminFieldCheckIn({ request }) {
           {players.length > 0 && <PlayerRows players={players} onSelect={lookup} checkedIn disabled={checkInLocked} />}
         </section>
       </div>
+      <TeamTalent board={board} />
     </div>
   );
 }

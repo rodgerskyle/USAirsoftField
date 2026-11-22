@@ -59,4 +59,5 @@ export function bindWaiverPicker(root, { signal, search, onChoose, isBusy = () =
     try { await onChoose(match, picker); }
     catch (error) { if (!signal.aborted) picker.querySelector('[data-waiver-message]').textContent = error.message; }
   }, { signal });
+  return find;
 }

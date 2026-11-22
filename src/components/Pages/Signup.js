@@ -6,6 +6,7 @@ import { Button, Form, Container, Row, Col, Breadcrumb, Spinner } from 'react-bo
 import { LinkContainer } from 'react-router-bootstrap';
 import SignatureCanvas from 'react-signature-canvas';
 import SignedWaiver from './SignedWaiver';
+import MembershipWaiverCheck, { membershipWaiverRequest } from './MembershipWaiverCheck';
 import { memberWaiverDocument, memberWaiverMetadata } from '../utils/memberWaiverDocument';
 import '../../App.css';
 import { encode } from 'firebase-encode';
@@ -26,7 +27,7 @@ import PinCode from '../constants/pincode'
 import { initializeApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { Helmet } from 'react-helmet-async';
-import { get, onValue, set } from 'firebase/database';
+import { get, onValue, set, update } from 'firebase/database';
 import { uploadBytes } from 'firebase/storage';
 const config = {
   apiKey: process.env.REACT_APP_API_KEY,
@@ -92,6 +93,8 @@ const INITIAL_STATE = {
   cards: cardimages,
   index: 0,
   pageIndex: 0,
+  waiverMethod: 'check',
+  selectedWaiver: null,
   hideWaiver: false,
   agecheck: true,
   age: "",
@@ -149,72 +152,57 @@ class SignUpFormBase extends Component {
     this.setState({ [event.target.name]: event.target.checked });
   };
 
-  // In the SignUpFormBase class, update the onSubmit method:
-  onSubmit = (event, myProps) => {
+  onSubmit = async (event, myProps) => {
     event.preventDefault();
-    this.setState({ submitted: true })
-    const { email, passwordOne, fname, lname } = this.state;
-    const points = 50;
-    const wins = 0;
-    const losses = 0;
-    const cmwins = 0;
-    const cmlosses = 0;
-    const pmwins = 0;
-    const pmlosses = 0;
-    const renewal = (new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear() + 1);
-    const username = this.createUsername((fname + lname).replace(/\s/, "").toLowerCase());
-    const name = fname + " " + lname;
-    const normalizedName = name.trim().toLowerCase();
-    const normalizedUsername = username.trim().toLowerCase();
-    const profilepic = false;
-    const freegames = 0;
-    const team = '';
-    const roles = [];
-
+    if (this.creating) return;
+    const { email, passwordOne, fname, lname, selectedWaiver } = this.state;
     if (!this.validateEmail(email)) {
-      this.setState({ error: "Email is not properly formatted.", submitted: false, })
+      this.setState({ error: 'Enter a valid sign-in email address.' });
+      return;
     }
-    else {
-      // Create auth instance for secondary app
-      const secondaryAuth = getAuth(this.state.secondaryApp);
-
-      // Use new Firebase auth methods
-      createUserWithEmailAndPassword(secondaryAuth, email, passwordOne)
-        .then(authUser => {
-          // Create a user in your Firebase realtime database
-          this.setState({ uid: authUser.user.uid })
-          const memberId = authUser.user.uid;
-          return set(this.props.firebase.user(memberId), {
-            name,
-            nameLower: normalizedName,
-            email,
-            roles,
-            points,
-            wins,
-            losses,
-            freegames,
-            username,
-            usernameLower: normalizedUsername,
-            team,
-            cmwins,
-            cmlosses,
-            pmwins,
-            pmlosses,
-            renewal,
-            profilepic
-          }).then(() => memberId);
-        })
-        .then(memberId => {
-          this.emailSignUp();
-          // Sign out of secondary app
-          signOut(secondaryAuth);
-          return this.completeWaiver(myProps, memberId)
-        })
-        .catch(error => {
-          this.setState({ error, submitted: false });
+    this.creating = true;
+    this.setState({ submitted: true, error: null });
+    const secondary = getAuth(this.state.secondaryApp);
+    try {
+      // Save the UID before the next network operation. Retrying a waiver or
+      // profile write must resume this registration, not create a second login.
+      if (!this.pendingRegistration) {
+        const username = this.createUsername((fname + lname).replace(/\s/g, '').toLowerCase());
+        const name = fname.trim() + ' ' + lname.trim();
+        const created = await createUserWithEmailAndPassword(secondary, email, passwordOne);
+        this.pendingRegistration = { uid: created.user.uid, profile: {
+          name, nameLower: name.toLowerCase(), email, roles: [], points: 50, wins: 0, losses: 0, freegames: 0,
+          username, usernameLower: username.trim().toLowerCase(), team: '', cmwins: 0, cmlosses: 0, pmwins: 0, pmlosses: 0, profilepic: false,
+        } };
+        this.setState({ uid: created.user.uid });
+      }
+      const registration = this.pendingRegistration;
+      if (!registration.profileSaved) {
+        await set(this.props.firebase.user(registration.uid), registration.profile);
+        registration.profileSaved = true;
+      }
+      if (registration.profile.name.toLowerCase() !== (fname.trim() + ' ' + lname.trim()).toLowerCase()) {
+        throw new Error('Use the registered participant name for this account.');
+      }
+      if (selectedWaiver) {
+        await membershipWaiverRequest(this.props.firebase, {
+          action: 'link', memberId: registration.uid, dob: this.state.dob, ...selectedWaiver,
         });
+      } else {
+        await this.completeWaiver(myProps, registration.uid);
+      }
+      const now = new Date();
+      const renewal = (now.getMonth() + 1) + '-' + now.getDate() + '-' + (now.getFullYear() + 1);
+      await update(this.props.firebase.user(registration.uid), { renewal });
+      this.emailSignUp();
+      this.setState({ submitted: false, showLander: true, loading: false });
+      this.pendingRegistration = null;
+    } catch (error) {
+      this.setState({ error: error.message || 'Could not finish registration. Retry to continue.', submitted: false });
+    } finally {
+      this.creating = false;
+      await signOut(secondary).catch(() => {});
     }
-    event.preventDefault();
   }
 
   onChange = event => {
@@ -251,12 +239,11 @@ class SignUpFormBase extends Component {
     const signed = memberWaiverDocument(myProps);
     const blob = await pdf(<SignedWaiver {...signed} />).toBlob();
     await uploadBytes(this.props.firebase.membersWaivers(memberId + '.pdf'), blob, memberWaiverMetadata);
-    this.setState({ submitted: false, showLander: true, loading: false });
   }
 
   componentDidMount() {
-    onValue(this.props.firebase.users(), snapshot => {
-      const usersObject = snapshot.val();
+    this.unsubscribeUsers = onValue(this.props.firebase.users(), snapshot => {
+      const usersObject = snapshot.val() || {};
 
       const usersList = Object.keys(usersObject).map(key => ({
         ...usersObject[key],
@@ -269,14 +256,16 @@ class SignUpFormBase extends Component {
         authUser: usersObject[this.props.firebase.uid()],
         loading: false,
       }, () => {
-        if (!!this.state.authUser.roles[ROLES.WAIVER])
+        if (this.pinInitialized) return;
+        this.pinInitialized = true;
+        if (this.state.authUser?.roles?.[ROLES.WAIVER])
           this.setState({ authorized: false })
       });
     });
   }
 
   componentWillUnmount() {
-    // this.props.firebase.users().off()
+    this.unsubscribeUsers?.();
   }
 
   // Remaps user array to map to usernames rather than key
@@ -354,6 +343,7 @@ class SignUpFormBase extends Component {
       submitted,
     } = this.state;
 
+    const checkFirst = this.state.waiverMethod === 'check';
     const myProps = { fname, lname, email, address, city, state, zipcode, phone, dob, pgname, pgphone, participantImg, pgImg, age, member, uid, }
 
     const isInvalid =
@@ -380,7 +370,16 @@ class SignUpFormBase extends Component {
                 </div>
               </div>
               <Row className="justify-content-row">
-                {this.state.pageIndex === 0 ?
+                {this.state.pageIndex === 0 && checkFirst ?
+                  <MembershipWaiverCheck firebase={this.props.firebase} initial={{fname,lname,dob}}
+                    onNew={identity => {
+                      const age = waiverAge(identity.dob);
+                      this.setState({ ...identity, age, agecheck: age === null || age >= 18, waiverMethod: 'new', selectedWaiver: null, errorWaiver: '' });
+                    }}
+                    onUse={(selectedWaiver, identity) => {
+                      this.setState({ ...identity, selectedWaiver, pageIndex: 1, error: null });
+                    }} />
+                  : this.state.pageIndex === 0 ?
                   <Col className="col-waiver">
                     <div className="admin-signup-waiver-layout">
                       <div className="admin-signup-panel admin-signup-preview-panel">
@@ -730,7 +729,7 @@ class SignUpFormBase extends Component {
                                 type="text"
                                 autoComplete="off"
                                 placeholder="Email Address"
-                                disabled
+                                disabled={!this.state.selectedWaiver || Boolean(this.state.uid)}
                               />
                             </Form.Group>
                           </Col>
@@ -775,7 +774,7 @@ class SignUpFormBase extends Component {
                           : null}
                         <Row className="justify-content-row">
                           {status && <p>{status}</p>}
-                          {error && <p>{error.message}</p>}
+                          {error && <p role="alert">{error.message || error}</p>}
                           {loading ? <Spinner animation="border" /> : null}
                         </Row>
                       </Col>
@@ -789,13 +788,15 @@ class SignUpFormBase extends Component {
                 {this.state.pageIndex > 0 ?
                   <Button className="prev-button-rp admin-signup-nav-button" variant="info" type="button"
                     onClick={() => {
-                      this.setState({ pageIndex: this.state.pageIndex - 1 })
+                      this.setState({ pageIndex: 0, error: null })
                     }}>
                     Back
                   </Button>
                   : <div className="admin-signup-nav-spacer" />
                 }
-                {this.state.pageIndex === 0 ?
+                {this.state.pageIndex === 0 && !checkFirst &&
+                  <Button variant="outline-secondary" type="button" onClick={() => this.setState({ waiverMethod: 'check' })}>Check existing waiver</Button>}
+                {this.state.pageIndex === 0 && !checkFirst ?
                   <Button className="next-button-rp admin-signup-nav-button" variant="info" type="button"
                     onClick={() => {
                       if (address === "" || fname === "" || lname === "" || email === "" || address === "" ||

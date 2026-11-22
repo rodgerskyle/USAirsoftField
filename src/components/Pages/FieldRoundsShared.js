@@ -65,6 +65,10 @@ export function formatRoundCountdown(milliseconds) {
     return hours ? `${hours}:${minutes}:${remainder}` : `${minutes}:${remainder}`;
 }
 
+export function runningBarracksClock(clock, now) {
+    return (clock?.kind === 'lunch' || clock?.kind === 'break') && Date.parse(clock.endsAt) > now;
+}
+
 export function useLiveFieldBoard(request, path = LIVE_ROUNDS_PATH) {
     const [snapshot, setSnapshot] = useState(null);
     const [error, setError] = useState('');

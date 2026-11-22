@@ -164,3 +164,13 @@
 @media (max-width: 380px) {
   .admin-checkin__teams { grid-template-columns: 1fr; }
 }
+
+.admin-checkin > section { margin-top: 1.25rem; }
+.admin-checkin summary, .group-desk__roster summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding: .65rem .85rem;
+  border: 1px solid var(--usaw-line, #a8b6c8);
+  border-radius: .5rem;
+  font-weight: 700;
+}

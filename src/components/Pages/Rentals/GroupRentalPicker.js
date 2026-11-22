@@ -6,7 +6,7 @@ import './GroupRentalPicker.css';
 const endpoint = '/api/rental-groups';
 const kindLabel = group => group.kind === 'party' ? 'Birthday / private event' : 'Check-in group';
 
-export default function GroupRentalPicker({ firebase, uid, initialGroupId, linkedGroupId, existingEntries = [], onAdd, disabled = false }) {
+export default function GroupRentalPicker({ firebase, uid, initialGroupId, linkedGroupId, existingEntries = [], onAdd, onPrefill, disabled = false }) {
     const [query, setQuery] = useState('');
     const [date, setDate] = useState('');
     const [results, setResults] = useState(null);
@@ -20,7 +20,7 @@ export default function GroupRentalPicker({ firebase, uid, initialGroupId, linke
     const applying = useRef(false);
     const targetId = linkedGroupId || initialGroupId;
 
-    const load = useCallback(async (params) => {
+    const load = useCallback(async (params, prefill = false) => {
         active.current?.abort();
         const operation = new AbortController();
         active.current = operation;
@@ -38,6 +38,7 @@ export default function GroupRentalPicker({ firebase, uid, initialGroupId, linke
             if (params.id) {
                 if (data.group?.id !== params.id || !Array.isArray(data.group.entries)) throw new Error('The group roster could not be loaded.');
                 setGroup(data.group);
+                if (prefill && data.group.entries.length) onPrefill?.(data.group, data.group.entries);
             } else {
                 if (!Array.isArray(data.groups)) throw new Error('Group search is unavailable.');
                 setResults({ ...data, params });
@@ -50,7 +51,7 @@ export default function GroupRentalPicker({ firebase, uid, initialGroupId, linke
                 setLoading(false);
             }
         }
-    }, [firebase, uid]);
+    }, [firebase, uid, onPrefill]);
 
     useEffect(() => {
         setResults(null);
@@ -58,7 +59,7 @@ export default function GroupRentalPicker({ firebase, uid, initialGroupId, linke
         setStatus('');
         setError('');
         setLoading(false);
-        if (uid && targetId) load({ id: targetId });
+        if (uid && targetId) load({ id: targetId }, true);
         return () => active.current?.abort();
     }, [uid, targetId, load]);
 
@@ -145,7 +146,7 @@ export default function GroupRentalPicker({ firebase, uid, initialGroupId, linke
             </> : <p>This group has no players yet.</p>}
         </div>}
         {!group && error && targetId && <button type="button" className="btn btn-outline-secondary" disabled={locked}
-            onClick={() => load({ id: targetId })}>Retry linked roster</button>}
+            onClick={() => load({ id: targetId }, true)}>Retry linked roster</button>}
         {status && <p role="status">{status}</p>}
     </section>;
 }

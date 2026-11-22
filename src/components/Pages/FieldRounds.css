@@ -6,6 +6,88 @@
 
 .field-rounds p { margin: 0; }
 
+.field-break-controls .field-break-custom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: .75rem;
+}
+.field-break-custom input { max-width: 6rem; }
+.field-break-controls :is(button, input, select) { min-height: 44px; }
+.field-barracks-break {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: .65rem 1.5rem;
+  background: var(--barracks-panel);
+  border: 1px solid var(--barracks-line);
+  border-inline-start: .5rem solid #f3bc68;
+  border-radius: .7rem;
+  padding: clamp(1rem, 2.1vw, 2rem);
+  margin-top: 1rem;
+}
+.field-barracks-break h2 { margin: 0; font-size: clamp(2rem, 5vw, 5rem); }
+.field-barracks-break p { margin: .4rem 0 0; font-size: clamp(1rem, 2vw, 1.65rem); }
+.field-barracks-break strong { color: #ffcc81; font-variant-numeric: tabular-nums; font-size: clamp(3rem, 8vw, 8rem); line-height: 1; }
+
+.field-barracks-award {
+  --award-ink: #b1d4ff;
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(9rem, .8fr) minmax(0, 1.6fr);
+  align-items: center;
+  gap: clamp(1rem, 4vw, 4rem);
+  overflow: hidden;
+  padding: clamp(1rem, 2.3vw, 2.5rem) clamp(1.25rem, 4.5vw, 4rem);
+  margin-top: 1rem;
+  border: 1px solid #4d6484;
+  border-inline-start: .5rem solid var(--award-ink);
+  border-radius: .7rem;
+  background: radial-gradient(ellipse at 20% 50%, #31405a, transparent 55%),
+    linear-gradient(115deg, #152539 15%, #102136 66%, #321c2f);
+}
+.field-barracks-award[data-kind='battle'] { --award-ink: #ffd384; }
+.field-barracks-award-art { display: grid; place-items: center; position: relative; isolation: isolate; }
+.field-barracks-award-art::before,
+.field-barracks-award-art::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: 140%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 5deg, transparent 0deg 18deg, var(--award-ink) 19deg 20deg, transparent 21deg 36deg);
+  mask-image: radial-gradient(circle, transparent 25%, black 40%, transparent 70%);
+  opacity: 0;
+  animation: field-award-sparks 1s ease-out both;
+}
+.field-barracks-award-art::after { rotate: 16deg; width: 110%; animation-delay: .08s; }
+.field-barracks-award-art img {
+  display: block;
+  width: min(100%, 15rem);
+  height: clamp(7.5rem, 17vw, 15rem);
+  object-fit: contain;
+  filter: drop-shadow(0 .45rem .7rem #030913);
+  animation: field-award-pop .65s cubic-bezier(.18,.84,.3,1.25) both;
+}
+.field-barracks-award-copy { min-width: 0; overflow-wrap: anywhere; }
+.field-barracks .field-barracks-award-copy p { margin: 0; color: var(--award-ink); font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.field-barracks-award-copy h2 { margin: .25rem 0; font-size: clamp(2.75rem, 6.5vw, 7rem); line-height: .98; }
+.field-barracks-award-copy strong { font-size: clamp(1.3rem, 2.5vw, 2.6rem); color: var(--award-ink); }
+@keyframes field-award-pop { from { transform: scale(.3) rotate(-8deg); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes field-award-sparks { 0% { transform: scale(.32); opacity: 0; } 18% { opacity: .8; } 100% { transform: scale(1.5); opacity: 0; } }
+@media (max-width: 520px) {
+  .field-barracks-award { grid-template-columns: minmax(4.5rem, .6fr) minmax(0, 1.4fr); gap: .85rem; padding: 1rem; }
+  .field-barracks-award-copy h2 { font-size: clamp(1.9rem, 8vw, 3rem); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .field-barracks-award-art img,
+  .field-barracks-award-art::before,
+  .field-barracks-award-art::after { animation: none; }
+}
+
 .field-rounds-status,
 .field-rounds-card-header,
 .field-rounds-actions {

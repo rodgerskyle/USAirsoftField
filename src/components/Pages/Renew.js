@@ -8,6 +8,7 @@ import { withRouter } from '../constants/withRouter';
 
 
 import SignedWaiver from './SignedWaiver';
+import MembershipWaiverCheck, { membershipWaiverRequest } from './MembershipWaiverCheck';
 import { memberWaiverDocument, memberWaiverMetadata } from '../utils/memberWaiverDocument';
 import SignatureCanvas from 'react-signature-canvas';
 import waiver from '../../assets/Waiver-cutoff.png'
@@ -30,6 +31,7 @@ const INITIAL_STATE = {
     search: "",
     showLander: false,
     showWaiver: false,
+    waiverMethod: 'check',
     member: true,
     fname: '',
     lname: '',
@@ -134,6 +136,34 @@ class RenewSubscription extends Component {
         }
     }
 
+    async useCurrentWaiver(selected, identity) {
+        if (this.renewing) return;
+        this.renewing = true;
+        this.setState({ submitted: true, errorWaiver: null });
+        const uid = this.state.uid;
+        try {
+            const body = selected.ref
+                ? { action: 'link', memberId: uid, dob: identity.dob, ...selected }
+                : { action: 'current', memberId: uid };
+            const { check } = await membershipWaiverRequest(this.props.firebase, body);
+            if (check.status !== 'signed' || check.signedAt !== selected.signedAt) {
+                throw new Error('The waiver changed. Check again or sign a new waiver.');
+            }
+            await this.saveRenewal(uid);
+        } catch (error) {
+            this.setState({ submitted: false, errorWaiver: error.message || 'Could not finish renewal. Retry the waiver check.' });
+        } finally {
+            this.renewing = false;
+        }
+    }
+
+    async saveRenewal(uid) {
+        const now = new Date();
+        const renewal = (now.getMonth() + 1) + "-" + now.getDate() + "-" + (now.getFullYear() + 1);
+        await update(this.props.firebase.user(uid), { renewal });
+        this.setState({ showLander: true, submitted: false });
+    }
+
     async completeWaiver(myProps) {
         const uid = this.state.uid;
         try {
@@ -145,10 +175,7 @@ class RenewSubscription extends Component {
             }
             const blob = await pdf(<SignedWaiver {...signed} />).toBlob();
             await uploadBytes(this.props.firebase.membersWaivers(uid + '.pdf'), blob, memberWaiverMetadata);
-            const now = new Date();
-            const renewal = (now.getMonth() + 1) + "-" + now.getDate() + "-" + (now.getFullYear() + 1);
-            await update(this.props.firebase.user(uid), { renewal });
-            this.setState({ showLander: true, submitted: false });
+            await this.saveRenewal(uid);
         } catch (error) {
             this.setState({ submitted: false, errorWaiver: error.message || 'Unable to save the signed renewal.' });
         }
@@ -168,7 +195,7 @@ class RenewSubscription extends Component {
 
     updateUser = (uid) => {
         //Show waiver and set uid in state
-        this.setState({ showWaiver: true, uid })
+        this.setState({ ...INITIAL_STATE, search: this.state.search, showWaiver: true, uid })
     }
 
     onChange = event => {
@@ -274,8 +301,23 @@ class RenewSubscription extends Component {
                                                 <Card.Body>{directoryStatus}</Card.Body>
                                                 : !showWaiver ?
                                                 <UserBox users={users} search={this.state.search} update={this.updateUser} />
+                                                : this.state.waiverMethod === 'check' ?
+                                                <MembershipWaiverCheck key={uid} firebase={this.props.firebase} member={selectedUser}
+                                                    busy={submitted} error={errorWaiver} onBack={() => {
+                                                        if (this.props.router.params.id) this.props.router.navigate('/admin/renewal');
+                                                        else this.setState({ ...INITIAL_STATE, search: this.state.search });
+                                                    }}
+                                                    onUse={(selected, identity) => this.useCurrentWaiver(selected, identity)}
+                                                    onNew={({dob}) => {
+                                                        const names = selectedUser.registeredName.split(/\s+/);
+                                                        const age = waiverAge(dob);
+                                                        this.setState({ waiverMethod: 'new', fname: names.shift(), lname: names.join(' '),
+                                                            dob, age, agecheck: age === null || age >= 18, errorWaiver: '' });
+                                                    }} />
                                                 :
                                                 <div className="admin-renew-detail">
+                                                    <Button variant="outline-secondary" type="button" disabled={submitted}
+                                                        onClick={() => this.setState({ waiverMethod: 'check', errorWaiver: '' })}>Check existing waiver</Button>
                                                     <div className="admin-renew-layout">
                                                         <div className="admin-renew-preview-panel">
                                                             <div className="admin-renew-panel-header">

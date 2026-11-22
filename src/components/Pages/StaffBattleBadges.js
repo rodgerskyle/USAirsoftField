@@ -11,9 +11,13 @@ const teams = { camo: 'Camo', solid: 'Solid' };
 const fieldDate = new Intl.DateTimeFormat('en-US', {
     weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC',
 });
+const gameTime = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' });
 const dateLabel = day => fieldDate.format(new Date(day + 'T12:00:00Z'));
 
-function BattleDesk({ firebase, token, player, roundSide, onLock, allowOverride }) {
+function BattleDesk({ firebase, token, player, roundSide, mode, onLock, allowOverride }) {
+    const [selectedGame, setSelectedGame] = useState('');
+    const [gameTitle, setGameTitle] = useState('');
+    const [addingGame, setAddingGame] = useState(null);
     const [side, setSide] = useState('');
     const [quantityInput, setQuantityInput] = useState('1');
     const quantity = Number(quantityInput);
@@ -28,6 +32,9 @@ function BattleDesk({ firebase, token, player, roundSide, onLock, allowOverride 
     const lockRef = useRef(onLock);
     lockRef.current = onLock;
     const chosenSide = roundSide === undefined ? side : roundSide;
+    const games = day?.games || [];
+    const game = games.find(row => row.id === selectedGame) || (games.length === 1 ? games[0] : null);
+    const winner = game && day.awards.find(row => row.gameId === game.id);
     const playerName = player?.name || player?.username || player?.uid;
 
     useEffect(() => {
@@ -42,6 +49,7 @@ function BattleDesk({ firebase, token, player, roundSide, onLock, allowOverride 
         return () => controller.abort();
     }, [firebase, token, refresh]);
     useEffect(() => () => mutation.current?.abort(), []);
+    useEffect(() => { setSelectedGame(''); }, [mode]);
 
     function reload() {
         setDay(null);
@@ -53,19 +61,19 @@ function BattleDesk({ firebase, token, player, roundSide, onLock, allowOverride 
     function save(awardToRemove, override = false) {
         if (!day || mutation.current) return;
         if (!awardToRemove && (!player || !teams[chosenSide])) return;
-        if (!awardToRemove && (override ? !allowOverride || !validQuantity : day.awards.length > 0)) return;
+        if (!awardToRemove && (override ? !allowOverride || !validQuantity : !game || winner)) return;
         const date = day.date;
         if (awardToRemove && !window.confirm('Remove the Battle Badge awarded to ' + awardToRemove.playerName +
             ' on ' + dateLabel(date) + (awardToRemove.overrideQuantity
                 ? '? This removes all ' + awardToRemove.overrideQuantity + ' badges in this override.'
-                : '? This reopens that day’s MVP selection.'))) return;
-        const key = !awardToRemove && [date, player.uid, chosenSide, override ? quantity : 'daily'].join(':');
+                : '? This reopens that game’s MVP selection.'))) return;
+        const key = !awardToRemove && [date, player.uid, chosenSide, override ? 'override-' + quantity : game.id].join(':');
         if (key && !requests.current.has(key)) requests.current.set(key, newScoreId());
         const body = awardToRemove ? { action: 'revoke', id: awardToRemove.id, date } : {
-            action: override ? 'override' : 'award', ...(override && { quantity }), playerId: player.uid, side: chosenSide, date, requestId: requests.current.get(key),
+            action: override ? 'override' : 'award', ...(override ? { quantity } : { gameId: game.id }), playerId: player.uid, side: chosenSide, date, requestId: requests.current.get(key),
         };
         const outcome = awardToRemove ? 'Battle Badge removed from ' + awardToRemove.playerName + '.' :
-            override ? 'Override applied successfully.' : 'Daily Battle Badge awarded to ' + playerName + '.';
+            override ? 'Override applied successfully.' : 'Game MVP Battle Badge awarded to ' + playerName + '.';
         return mutate(body, outcome, key);
     }
 
@@ -86,6 +94,11 @@ function BattleDesk({ firebase, token, player, roundSide, onLock, allowOverride 
             if (controller.signal.aborted) return;
             setDay(result);
             if (key) requests.current.delete(key);
+            if (body.action === 'registerGame') {
+                setSelectedGame(result.registeredGameId);
+                setAddingGame(null);
+                setGameTitle('');
+            }
             if (body.action === 'override') {
                 setQuantityInput('1');
                 setShowOverrides(false);
@@ -95,11 +108,12 @@ function BattleDesk({ firebase, token, player, roundSide, onLock, allowOverride 
             if (controller.signal.aborted) return;
             if (error.status === 401) { lockRef.current(); return; }
             if (error.status === 409 || error.status === 404) {
+                if (body.action === 'registerGame') setAddingGame(null);
                 if (key) requests.current.delete(key);
                 setDay(null);
                 setRefresh(value => value + 1);
             }
-            const action = { award: 'Daily award', override: 'Override', clearOverrideLog: 'Log clearing', revoke: 'Badge removal' }[body.action];
+            const action = { registerGame: 'Game entry', award: 'Game award', override: 'Override', clearOverrideLog: 'Log clearing', revoke: 'Badge removal' }[body.action];
             setFeedback({ error: true, heading: action + ' could not be confirmed.', text: error.message });
         } finally {
             if (!controller.signal.aborted) {
@@ -111,27 +125,48 @@ function BattleDesk({ firebase, token, player, roundSide, onLock, allowOverride 
 
     return <div className="staff-battle-desk" aria-busy={busy}>
         {day ? <>
-            <h4>Field MVP · {dateLabel(day.date)}</h4>
-            {day.awards.map(award => {
+            <h4>Game MVP · {dateLabel(day.date)}</h4>
+            <label>Game played
+                <select className="form-select" value={game?.id || ''} disabled={busy || !games.length}
+                    onChange={event => setSelectedGame(event.target.value)}>
+                    <option value="">{games.length ? 'Choose a game' : 'No games recorded yet'}</option>
+                    {games.map((row, index) => <option key={row.id} value={row.id}>
+                        {games.length - index}. {row.title} · {gameTime.format(new Date(row.startsAt))}
+                        {day.awards.some(award => award.gameId === row.id) ? ' · MVP awarded' : ''}
+                    </option>)}
+                </select>
+            </label>
+            <button type="button" className="btn btn-outline-secondary" disabled={busy} aria-expanded={Boolean(addingGame)}
+                onClick={() => { setAddingGame(addingGame ? null : { date: day.date, number: day.nextGameNumber }); setGameTitle(mode || ''); }}>
+                {addingGame ? 'Cancel game entry' : 'Add an unscheduled game'}
+            </button>
+            {addingGame && <div>
+                <label>Game name<input className="form-control" maxLength="80" value={gameTitle} disabled={busy}
+                    onChange={event => setGameTitle(event.target.value)} /></label>
+                <button type="button" className="btn btn-primary" disabled={busy || !gameTitle.trim()}
+                    onClick={() => mutate({ action: 'registerGame', ...addingGame,
+                        title: gameTitle.trim() }, 'Game added to both MVP desks.')}>Save played game</button>
+            </div>}
+            {day.awards.filter(award => !award.gameId || award.id === winner?.id).map(award => {
                 const tier = battleBadgeForAward(award.progress?.totalAwards);
                 return <div className="staff-battle-recipient" key={award.id}>
                     {tier && <img src={battleBadgeArtUrl(tier.id)} alt="" width="60" height="75" />}
-                    <div><strong>{award.playerName}</strong><span>{teams[award.side]} team · {tier?.name || 'MVP awarded'}</span></div>
+                    <div><strong>{award.playerName}</strong><span>{!award.gameId && 'Previous daily award · '}{teams[award.side]} team · {tier?.name || 'MVP awarded'}</span></div>
                     <button type="button" className="btn btn-outline-secondary" disabled={busy}
                         onClick={() => save(award)}>Remove Battle Badge</button>
                 </div>;
             })}
-            {(!day.awards.length || (allowOverride && day.overrides)) && <>
+            {(!winner || (allowOverride && day.overrides)) && <>
                 <p>{player ? <>Selected player · <strong>{playerName}</strong></> :
-                    'Find and select a player to award today’s MVP.'}</p>
+                    'Find and select a player to award this game’s MVP.'}</p>
                 {roundSide === undefined ? <label>MVP team
                     <select className="form-select" disabled={busy} value={side} onChange={event => setSide(event.target.value)}>
                         <option value="">Choose a team</option>
                         <option value="camo">Camo</option><option value="solid">Solid</option>
                     </select>
                 </label> : <p>{teams[chosenSide] ? 'MVP team · ' + teams[chosenSide] : 'Choose the player’s team in Round details.'}</p>}
-                {!day.awards.length && <button type="button" className="btn btn-primary" disabled={!player || !teams[chosenSide] || busy}
-                    onClick={() => save()}>{busy ? 'Saving…' : 'Award daily MVP'}</button>}
+                {!winner && <button type="button" className="btn btn-primary" disabled={!game || !player || !teams[chosenSide] || busy}
+                    onClick={() => save()}>{busy ? 'Saving…' : 'Award game MVP'}</button>}
             </>}
             {allowOverride && Array.isArray(day.overrides) && <div className="staff-battle-override">
                 <h4>Admin Battle Badge override</h4>
@@ -161,11 +196,11 @@ function BattleDesk({ firebase, token, player, roundSide, onLock, allowOverride 
         {feedback && <p className="staff-battle-feedback" role={feedback.error ? 'alert' : 'status'}>
             {feedback.heading && <><strong>{feedback.heading}</strong>{' '}</>}<span>{feedback.text}</span>
         </p>}
-        {(day || feedback?.error) && <button type="button" className="btn btn-link" disabled={busy} onClick={reload}>Refresh field day</button>}
+        {(day || feedback?.error) && <button type="button" className="btn btn-link" disabled={busy} onClick={reload}>Refresh games</button>}
     </div>;
 }
 
-export default function StaffBattleBadges({ firebase, token, player, roundSide, onLock, onRequestUnlock, allowOverride = false }) {
+export default function StaffBattleBadges({ firebase, token, player, roundSide, mode, onLock, onRequestUnlock, allowOverride = false }) {
     const [open, setOpen] = useState(false);
     const [accessError, setAccessError] = useState('');
     const account = useContext(AuthUserContext);
@@ -179,16 +214,16 @@ export default function StaffBattleBadges({ firebase, token, player, roundSide, 
         <div className="staff-battle-heading">
             <img src={battleBadgeArtUrl('tower-of-power')} alt="Tower of Power Battle Badge" width="66" height="78" />
             <div><h3>{title}</h3>
-                <p>Choose one daily MVP from Camo or Solid. Eight colored badges lead to the Tower of Power.
+                <p>Choose one MVP per game from Camo or Solid. Eight colored badges lead to the Tower of Power.
                     Each MVP after that earns a silver star. Every 20 silver stars become a gold star.</p></div>
         </div>
         {token ? <>
             <button type="button" className="btn btn-outline-secondary" aria-expanded={open}
-                onClick={() => setOpen(!open)}>{open ? 'Close MVP controls' : 'Manage today’s MVP'}</button>
-            {open && <BattleDesk key={token} {...{ firebase, token, player, roundSide, allowOverride }} onLock={sessionExpired} />}
+                onClick={() => setOpen(!open)}>{open ? 'Close MVP controls' : 'Manage game MVPs'}</button>
+            {open && <BattleDesk key={token} {...{ firebase, token, player, roundSide, mode, allowOverride }} onLock={sessionExpired} />}
         </> : onRequestUnlock ? <button type="button" className="btn btn-outline-secondary"
             onClick={() => { setOpen(true); onRequestUnlock(); }}>Unlock MVP controls</button> :
-            <p>Unlock badge controls above to manage today’s MVP.</p>}
+            <p>Unlock badge controls above to manage game MVPs.</p>}
         {!token && accessError && <p role="alert">{accessError}</p>}
     </section>;
 }

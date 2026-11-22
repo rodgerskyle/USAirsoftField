@@ -6,9 +6,10 @@ import wordmark from '../../assets/usairsoft-wide-logo-light.png';
 import shield from '../../assets/usairsoft-small-logo.png';
 import { requestPublicFieldTool } from '../constants/fieldStaffApi';
 import {
-    formatFieldTime, formatRoundCountdown, isOpenVote, liveRounds, RoundRespawns, useLiveFieldBoard,
+    formatFieldTime, formatRoundCountdown, isOpenVote, liveRounds, RoundRespawns, runningBarracksClock, useLiveFieldBoard,
 } from './FieldRoundsShared';
 import { RoundMapViewer, roundPinLocation } from './FieldRoundMap';
+import BarracksPatchCelebrations from './BarracksPatchCelebrations';
 import './FieldRounds.css';
 
 function VotingDisplay({ poll, now, stale }) {
@@ -44,6 +45,8 @@ export default function BarracksTV({ request = requestPublicFieldTool }) {
     const next = current ? upcoming[0] : upcoming[1];
     const timeRemaining = round ? Date.parse(current ? round.endsAt : round.startsAt) - now : 0;
     const showTimer = Boolean(current || (round && Date.parse(round.startsAt) > displayTime));
+    const clock = board?.barracksClock;
+    const showBreak = runningBarracksClock(clock, displayTime);
 
     useEffect(() => {
         function updateFullscreen() {
@@ -85,6 +88,13 @@ export default function BarracksTV({ request = requestPublicFieldTool }) {
                 <button type="button" onClick={() => void refresh()}>Retry</button>
             </div>}
             {!board && !error && <p className="field-barracks-notice" role="status">Loading the field schedule…</p>}
+            {showBreak && <section className="field-barracks-break" aria-labelledby="barracks-break">
+                <div><h2 id="barracks-break">{clock.kind === 'lunch' ? 'Lunch break' : 'Break between games'}</h2>
+                    <p>Return at {formatFieldTime(clock.endsAt)} Pacific</p></div>
+                <strong role="timer" aria-label="Time until break ends">{error ? '—' : formatRoundCountdown(Date.parse(clock.endsAt) - now)}</strong>
+            </section>}
+            {Number.isSafeInteger(board?.celebrationCursor) && board.celebrationCursor >= 0 &&
+                <BarracksPatchCelebrations initialCursor={board.celebrationCursor} request={request} />}
             {board && <div className="field-barracks-grid" data-side={Boolean(next || board.poll)}>
                 <section className="field-barracks-main" data-live={Boolean(current)} aria-labelledby="barracks-round">
                     <div className="field-barracks-kicker">{current ? 'Now playing' : round ? 'Up next' : 'Field schedule'}</div>

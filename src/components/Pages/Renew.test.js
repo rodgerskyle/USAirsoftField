@@ -2,7 +2,9 @@ import React from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { HelmetProvider } from 'react-helmet-async';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { onValue } from 'firebase/database';
+import { requestStaffFieldTool } from '../constants/fieldStaffApi';
+import { uploadBytes } from 'firebase/storage';
+import { onValue, update } from 'firebase/database';
 import { FirebaseContext } from '../Firebase';
 import { AuthUserContext } from '../session';
 import RenewSubscription from './Renew';
@@ -11,6 +13,7 @@ jest.mock('../Firebase', () => {
     const context = jest.requireActual('../Firebase/context');
     return { FirebaseContext: context.default, withFirebase: context.withFirebase };
 });
+jest.mock('../constants/fieldStaffApi');
 jest.mock('firebase/database', () => ({ onValue: jest.fn(), update: jest.fn() }));
 jest.mock('firebase/storage', () => ({ uploadBytes: jest.fn() }));
 jest.mock('@react-pdf/renderer', () => ({ pdf: jest.fn() }));
@@ -24,6 +27,8 @@ function renderRenewal(path = '/admin/renewal', authUser = { roles: { ADMIN: tru
     const unsubscribeUsers = jest.fn();
     onValue.mockImplementation(() => unsubscribeUsers);
     const firebase = {
+        auth: { currentUser: { uid: 'desk-staff' } },
+        user: uid => 'users/' + uid,
         users: () => 'users',
         onAuthUserListener: (next, fallback) => {
             let active = true;
@@ -60,7 +65,12 @@ function renderRenewal(path = '/admin/renewal', authUser = { roles: { ADMIN: tru
     };
 }
 
-beforeEach(() => onValue.mockReset());
+beforeEach(() => {
+    onValue.mockReset();
+    requestStaffFieldTool.mockReset().mockResolvedValue({ check: { status: 'missing' } });
+    update.mockReset().mockResolvedValue();
+    uploadBytes.mockReset();
+});
 
 test('lists legacy members safely and preserves renewal date order and formatting', () => {
     const { loadUsers } = renderRenewal();
@@ -118,10 +128,12 @@ test('reports a directory read failure', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
 });
 
-test('opens the existing signed-waiver form when waiver staff select a member', () => {
+test('waiver staff can use the fresh signature form when the check finds no current waiver', async () => {
     const { loadUsers } = renderRenewal('/dashboard/renewal', { roles: { WAIVER: true } });
     loadUsers({ found: { name: 'Existing Player', username: 'existing', renewal: 'N/A' } });
     fireEvent.click(screen.getByRole('button', { name: 'Renew' }));
+    expect(await screen.findByText(/No current waiver linked/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Sign a new waiver' }));
     expect(screen.getByText('Renewal Agreement')).toBeInTheDocument();
     expect(screen.getByText('Existing Player')).toBeInTheDocument();
 });
@@ -130,4 +142,27 @@ test.each([null, { roles: {} }])('redirects a visitor without a staff role (%p)'
     renderRenewal('/admin/renewal', authUser);
     expect(await screen.findByText('Sign in')).toBeInTheDocument();
     expect(onValue).not.toHaveBeenCalled();
+});
+
+
+test('renewal rechecks the same signed member waiver then updates only the membership date', async () => {
+    const signedAt = Date.now() - 86_400_000;
+    requestStaffFieldTool.mockResolvedValue({ check: { status: 'signed', signedAt } });
+    const { loadUsers } = renderRenewal('/admin/renewal/player');
+    loadUsers({ player: { name: 'Existing Player' } });
+    fireEvent.click(await screen.findByRole('button', { name: 'Renew with this waiver' }));
+    expect(await screen.findByText('Successful Member Renewal.')).toBeInTheDocument();
+    expect(requestStaffFieldTool).toHaveBeenCalledTimes(2);
+    expect(update).toHaveBeenCalledWith('users/player', { renewal: expect.any(String) });
+    expect(uploadBytes).not.toHaveBeenCalled();
+});
+
+test('if the signature changes between check and renewal the update is held', async () => {
+    requestStaffFieldTool.mockResolvedValueOnce({ check: { status: 'signed', signedAt: Date.now() } })
+        .mockResolvedValueOnce({ check: { status: 'missing' } });
+    const { loadUsers } = renderRenewal('/admin/renewal/player');
+    loadUsers({ player: { name: 'Existing Player' } });
+    fireEvent.click(await screen.findByRole('button', { name: 'Renew with this waiver' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('The waiver changed');
+    expect(update).not.toHaveBeenCalled();
 });

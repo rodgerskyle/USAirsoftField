@@ -362,15 +362,17 @@ test('badge awards uses the selected member for MVP and reconciles another staff
   const member = { ...user, name: 'Morgan Lane' };
   unlockBadgeStaff.mockResolvedValue({ staffToken: 'staff-token', expiresAt: new Date(Date.now() + 60_000).toISOString() });
   getStaffBadgeCounts.mockResolvedValue({ counts: {} });
-  const recipient = { id: 'recorded', playerId: 'another-player', playerName: 'Sam Hayes', side: 'solid' };
+  const game = { id:'shared', title:'Capture the Flag', startsAt:date+'T19:00:00Z' };
+  const games = [game];
+  const recipient = { id: 'recorded', gameId:game.id, playerId: 'another-player', playerName: 'Sam Hayes', side: 'solid' };
   const extra = { id: 'extra', playerId, playerName: member.name, side: 'camo', overrideQuantity: 20 };
   const concurrent = { ...extra, id: 'newer', playerName: 'Another player', overrideQuantity: 5 };
-  staffBattleBadgeDay.mockResolvedValueOnce({ date, awards: [] })
+  staffBattleBadgeDay.mockResolvedValueOnce({ date, games, nextGameNumber:1, awards: [] })
     .mockRejectedValueOnce(Object.assign(new Error('Today’s MVP was already awarded.'), { status: 409 }))
-    .mockResolvedValueOnce({ date, awards: [recipient], overrides: [] })
+    .mockResolvedValueOnce({ date, games, nextGameNumber:1, awards: [recipient], overrides: [] })
     .mockRejectedValueOnce(Object.assign(new Error('Network unavailable.'), { status: 503 }))
-    .mockResolvedValueOnce({ date, awards: [recipient], overrides: [extra] })
-    .mockResolvedValueOnce({ date, awards: [recipient], overrides: [concurrent] });
+    .mockResolvedValueOnce({ date, games, nextGameNumber:1, awards: [recipient], overrides: [extra] })
+    .mockResolvedValueOnce({ date, games, nextGameNumber:1, awards: [recipient], overrides: [concurrent] });
   renderPage(<AdminBadgeAwards firebase={firebase} players={[member]} loading={false} directoryUnavailable={false} />,
     { authUser: { uid: 'field-admin', roles: { ADMIN: true } } });
   fireEvent.change(screen.getByLabelText('Staff email'), { target: { value: 'staff@example.com' } });
@@ -379,11 +381,11 @@ test('badge awards uses the selected member for MVP and reconciles another staff
   fireEvent.change(await screen.findByRole('searchbox', { name: 'Find a player' }), { target: { value: member.name } });
   fireEvent.click(screen.getByRole('button', { name: /Morgan Lane/ }));
   const desk = within(screen.getByRole('region', { name: 'US Airsoft World Battle Badges' }));
-  fireEvent.click(desk.getByRole('button', { name: 'Manage today’s MVP' }));
+  fireEvent.click(desk.getByRole('button', { name: 'Manage game MVPs' }));
   fireEvent.change(await desk.findByLabelText('MVP team'), { target: { value: 'camo' } });
-  fireEvent.click(desk.getByRole('button', { name: 'Award daily MVP' }));
+  fireEvent.click(desk.getByRole('button', { name: 'Award game MVP' }));
   expect(await desk.findByText('Sam Hayes')).toBeVisible();
-  expect(desk.queryByRole('button', { name: 'Award daily MVP' })).toBeNull();
+  expect(desk.queryByRole('button', { name: 'Award game MVP' })).toBeNull();
   fireEvent.change(desk.getByLabelText('Number of Battle Badges'), { target: { value: '20' } });
   fireEvent.click(desk.getByRole('button', { name: 'Grant extra Battle Badges' }));
   expect(await desk.findByRole('alert')).toHaveTextContent('Override could not be confirmed. Network unavailable.');

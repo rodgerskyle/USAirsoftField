@@ -12,6 +12,11 @@ const assignmentPath = '/api/game-day-check-in';
 const teamLabels = { camo: 'Camo', solid: 'Solid' };
 const fieldToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 
+function incomingGroupId() {
+  const id = new URLSearchParams(window.location.search).get('group');
+  return /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(id || '') ? id : null;
+}
+
 function calendarHint() {
   if (window.location.hash !== '#arriving-group') return null;
   const params = new URLSearchParams(window.location.search);
@@ -24,6 +29,7 @@ function calendarHint() {
 
 export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoardRead, disabled, rosterVersion, checkInRevision, onWorking }) {
   const [hint] = useState(calendarHint);
+  const [incoming] = useState(incomingGroupId);
   const [data, setData] = useState(null);
   const [search, setSearch] = useState(null);
   const [assignments, setAssignments] = useState(null);
@@ -78,26 +84,32 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
   }
 
   async function openById(id, signal) {
-    const result = await request(endpoint + '?staff=1&id=' + encodeURIComponent(id), { signal });
+    const result = await request(endpoint + '?staff=1&id=' + encodeURIComponent(id) + '&arrival=1', { signal });
     await openGroup(result, signal);
   }
 
-  function find(query, page = 1) {
+  useEffect(() => {
+    if (incoming) void run(signal => openById(incoming, signal));
+    // The URL selects the initial group once per desk visit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [incoming]);
+
+  function find(query, page = 1, todayOnly = false) {
     void run(async signal => {
       setData(null); setAssignments(null); setSearch(null); clearChoices();
       // A shared code identifies a single group, even from another booking date.
       if (page === 1 && isGroupCode(query)) {
         let exact;
-        try { exact = await request(endpoint + '?staff=1&code=' + encodeURIComponent(query), { signal }); }
+        try { exact = await request(endpoint + '?staff=1&code=' + encodeURIComponent(query) + '&arrival=1', { signal }); }
         catch (error) { if (error.status !== 404) throw error; }
         if (signal.aborted) return;
         if (exact?.group) { await openGroup(exact, signal); return; }
       }
-      const params = new URLSearchParams({ [hint ? 'date' : 'from']: hint?.date || fieldToday(), q: query, page: String(page) });
+      const params = new URLSearchParams({ [hint || todayOnly ? 'date' : 'from']: hint?.date || fieldToday(), q: query, page: String(page) });
       const result = await request('/api/staff-groups?' + params, { signal });
       if (signal.aborted) return;
       if (!result.groups.length) { setNotice('No matching groups. Check the name or code and try again.'); return; }
-      if (result.totalPages > 1 || result.groups.length > 1) setSearch({ ...result, query });
+      if (result.totalPages > 1 || result.groups.length > 1) setSearch({ ...result, query, todayOnly });
       else await openById(result.groups[0].id, signal);
     });
   }
@@ -138,18 +150,19 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
     });
   }
 
-  function assign(side, entry) {
-    if (!current || !fresh || !(entry ? cleared(positions.get(entry.id)) : groupCleared)) return;
+  const readyCount = fresh ? [...positions.values()].filter(row => !row.side && row.waiverStatus === 'signed').length : 0;
+  function assign(side, entry, readyOnly = false) {
+    if (!current || !fresh || !(readyOnly ? readyCount : entry ? cleared(positions.get(entry.id)) : groupCleared)) return;
     void run(async signal => {
       try {
         const result = await request(assignmentPath, { method: 'POST', signal, body: {
           action: 'assignGroup', groupId: group.id, date: group.date, side,
-          rosterVersion: assignments.rosterVersion, assignmentVersion: assignments.version, ...(entry && { entryId: entry.id }),
+          rosterVersion: assignments.rosterVersion, assignmentVersion: assignments.version, ...(entry && { entryId: entry.id }), ...(readyOnly && { readyOnly: true }),
         } });
         if (signal.aborted) return;
         setAssignments({ ...result.groupAssignments, rosterVersion: result.rosterVersion, revision: checkInRevision });
         onAssigned?.(result);
-        setNotice((entry ? entry.displayName : group.name) + ' assigned to ' + teamLabels[side] + '.');
+        setNotice((readyOnly ? result.checkedInCount + (result.checkedInCount === 1 ? ' ready player' : ' ready players') : entry ? entry.displayName : group.name) + ' assigned to ' + teamLabels[side] + '.');
       } catch (error) {
         if (signal.aborted) return;
         setAssignments(null);
@@ -185,23 +198,23 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
     });
   }
 
-  return <details id="arriving-group" className="admin-group-lookup" open={hint ? true : undefined}><summary>Find an arriving group</summary>
+  return <details id="arriving-group" className="admin-group-lookup" open><summary>Find an arriving group</summary>
     {hint && <p>Party Calendar booking for {hint.date}. Find the group by its name or invitation code.</p>}
     <p>Search by group name or invitation code. <a href="/admin/field/groups">Manage groups</a></p>
-    <form onSubmit={lookup}><label>Group name or code<input name="group" minLength={1} maxLength={80} autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} required disabled={locked} /></label><button className="btn btn-secondary" disabled={locked}>{busy ? 'Working…' : 'Find group'}</button></form>
+    <form onSubmit={lookup}><label>Group name or code<input name="group" minLength={1} maxLength={80} autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} required disabled={locked} /></label><button className="btn btn-secondary" disabled={locked}>{busy ? 'Working…' : 'Find group'}</button><button type="button" className="btn btn-outline-primary" disabled={locked} onClick={() => find('', 1, true)}>Show today’s groups</button></form>
     {search && <div><p>Choose a matching group.</p><ul>{search.groups.map(item => <li key={item.id}>
       <button type="button" className="btn btn-outline-primary" disabled={locked} onClick={() => void run(signal => openById(item.id, signal))}>
         <strong>{item.name}</strong><span>{item.date} · {item.memberCount} players</span>
       </button></li>)}</ul>
       {search.totalPages > 1 && <nav aria-label="Group search pages" className="admin-checkin__buttons">
-        <button type="button" disabled={locked || search.page <= 1} onClick={() => find(search.query, search.page - 1)}>Previous</button>
+        <button type="button" disabled={locked || search.page <= 1} onClick={() => find(search.query, search.page - 1, search.todayOnly)}>Previous</button>
         <span>Page {search.page} of {search.totalPages}</span>
-        <button type="button" disabled={locked || search.page >= search.totalPages} onClick={() => find(search.query, search.page + 1)}>Next</button></nav>}</div>}
-    {group && <><h3>{group.name}</h3><p>{group.date}</p>{!current && <p>This group is planned for a different date.</p>}
+        <button type="button" disabled={locked || search.page >= search.totalPages} onClick={() => find(search.query, search.page + 1, search.todayOnly)}>Next</button></nav>}</div>}
+    {group && <><h3>{group.name}</h3><p>{group.date} · <a href={'/admin/field/groups?group=' + encodeURIComponent(group.id)}>Edit group roster</a></p>{!current && <p>This group is planned for a different date.</p>}
       <GroupPartySchedule group={group} staff />
       {group.id && !busy && group.partyStatus !== 'review' && !missingBooking && !data.partyCalendarUnavailable &&
         (!hint || (hint.date === group.date && (!hint.key || hint.key === group.partyKey))) &&
-        <p><a href={groupRentalLink(group.id)} target="_blank" rel="noopener noreferrer">Open rental form</a></p>}
+        <p><a className="btn btn-secondary" href={groupRentalLink(group.id)} target="_blank" rel="noopener noreferrer">Open rental form</a></p>}
       <div className="visit-party-tools">
         <button className="btn btn-secondary" type="button" disabled={locked} onClick={() => void run(signal => loadBookings(group, signal))}>{parties ? 'Refresh Party Calendar bookings' : 'Find bookings in the Party Calendar'}</button>
         {missingBooking && <p role="alert">The last confirmed booking no longer matches the Party Calendar for this date. Review the reservation and confirm the updated booking or unlink it.</p>}
@@ -220,7 +233,11 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
       </div>
       <section className="group-placement" aria-label="Group team assignments"><h4>Team assignments</h4>
         {current && <>
-          <p>Confirm everyone is ready for check-in before assigning the whole group. Assign any player separately below.</p>
+          <p>{fresh ? readyCount + ' of ' + group.entries.length + ' ready for check-in.' : 'Checking group waivers and team assignments…'}</p>
+          {readyCount > 0 && readyCount < group.entries.length && <div className="group-placement__actions">
+            {Object.entries(teamLabels).map(([side, label]) => <button type="button" key={side} className="btn btn-primary"
+              disabled={locked} onClick={() => assign(side, null, true)}>Check in {readyCount} ready to {label}</button>)}
+          </div>}
           <div className="group-placement__actions">{Object.entries(teamLabels).map(([side, label]) =>
             <button key={side} type="button" className="btn btn-outline-primary" data-team={side}
               disabled={locked || !groupCleared}
@@ -233,7 +250,7 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
         </>}
         <ul>{group.entries.map(entry => {
           const position = fresh ? positions.get(entry.id) : undefined;
-          const waiverStatus = position?.waiverStatus ?? entry.waiverStatus ?? 'unavailable';
+          const waiverStatus = (current ? position?.waiverStatus : entry.waiverStatus) ?? 'unavailable';
           const playerId = position?.playerId || entry.playerId;
           const playerName = position?.displayName ?? entry.displayName;
           const experience = position?.experienceBand ?? entry.experienceBand;

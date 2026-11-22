@@ -1327,3 +1327,23 @@ button.btn-pin-code-link {
     border-radius: .75rem;
     background: var(--admin-surface);
 }
+
+.rental-roster-fields { margin-block: .75rem; }
+.rental-roster-fields legend { font-size: 1rem; font-weight: 600; }
+.rental-roster-line, .rental-roster-choice, .rental-name-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .65rem;
+}
+.rental-roster-line { margin-block: .5rem; }
+.rental-roster-line .form-control { flex: 1 1 11rem; min-width: 0; min-height: 44px; }
+.rental-roster-choice { min-height: 44px; margin: 0; cursor: pointer; }
+.rental-roster-choice input { width: 1.15rem; height: 1.15rem; }
+.participant-card .participant-header, .participant-card .participant-actions { flex-wrap: wrap; gap: .5rem; }
+.participant-card .participant-header { align-items: flex-start; }
+.participant-card .participant-header h6 { width: 100%; overflow-wrap: anywhere; }
+.participant-card .participant-actions button, .rental-name-actions button { min-height: 44px; }
+.rental-name-editor { margin-block: .75rem; }
+.rental-name-editor label { display: block; font-weight: 600; }
+.rental-name-editor input { margin-block: .25rem .65rem; min-height: 44px; }

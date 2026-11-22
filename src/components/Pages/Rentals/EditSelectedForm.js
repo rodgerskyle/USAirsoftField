@@ -20,7 +20,7 @@ import { v4 as uuid } from 'uuid';
 import { withFirebase } from '../../Firebase';
 import GroupRentalPicker from './GroupRentalPicker';
 import { editRentalInventory } from './utils/editRentalInventory';
-import { importRentalParticipants, changeOpenRental, rentalIdentity, rentalParticipants, rentalRows } from './utils/openRental';
+import { importRentalParticipants, changeOpenRental, renameRentalParticipant, rentalIdentity, rentalParticipants, rentalRows } from './utils/openRental';
 
 import '../../../App.css';
 import { get, onValue, query, orderByKey, startAt, startAfter, endAt, orderByChild, limitToFirst, limitToLast, ref as dbRef } from "firebase/database";
@@ -346,10 +346,29 @@ const TransactionDialog = ({ open, onClose, onSubmit, error, value, onChange }) 
     );
 };
 
-const ParticipantCard = ({ participant, index, canIssue, onDelete, onRemoveRental, onAddRental, availableRentals, onEditRentalNumber }) => {
+const ParticipantCard = ({ participant, index, canIssue, onDelete, onRemoveRental, onAddRental, availableRentals, onEditRentalNumber, onRename }) => {
+    const [nameEdit, setNameEdit] = useState(null);
+    const [savingName, setSavingName] = useState(false);
+    const [nameMessage, setNameMessage] = useState(null);
     const [showRentalMenu, setShowRentalMenu] = useState(false);
     const [editingRental, setEditingRental] = useState(null);
     const [tempNumber, setTempNumber] = useState('');
+
+    async function saveName(event) {
+        event.preventDefault();
+        if (savingName || !nameEdit.value.trim()) return;
+        setSavingName(true);
+        setNameMessage(null);
+        try {
+            await onRename(index, nameEdit.reviewed, nameEdit.value);
+            setNameEdit(null);
+            setNameMessage({ text: 'Rental name saved.' });
+        } catch (error) {
+            setNameMessage({ failed: true, text: error.message || 'The name could not be saved. Try again.' });
+        } finally {
+            setSavingName(false);
+        }
+    }
 
     // Get unique rentals with counts
     const getUniqueRentals = () => {
@@ -395,24 +414,31 @@ const ParticipantCard = ({ participant, index, canIssue, onDelete, onRemoveRenta
             <div className="participant-header">
                 <Typography variant="h6">{participant.name}</Typography>
                 <div className="participant-actions">
-                    <IconButton
-                        onClick={() => setShowRentalMenu(!showRentalMenu)}
-                        color="primary"
-                        title="Add Rental"
-                        disabled={!canIssue}
-                    >
-                        <Add />
-                    </IconButton>
-                    <IconButton
-                        onClick={() => onDelete(index)}
-                        color="error"
-                        title="Remove Participant"
-                    >
-                        <Delete />
-                    </IconButton>
+                    {onRename && !nameEdit && <MUIButton variant="outlined" size="small" startIcon={<Edit />} onClick={() => {
+                        setNameEdit({ reviewed: participant, value: participant.name || '' });
+                        setNameMessage(null);
+                    }}>Edit name</MUIButton>}
+                    <MUIButton variant="outlined" size="small" startIcon={<Add />}
+                        aria-expanded={showRentalMenu} onClick={() => setShowRentalMenu(!showRentalMenu)} disabled={!canIssue}>Add Rental</MUIButton>
+                    <MUIButton variant="text" size="small" color="error" startIcon={<Delete />}
+                        onClick={() => onDelete(index)}>Remove Participant</MUIButton>
                 </div>
             </div>
 
+            {onRename && nameEdit && <form className="rental-name-editor" onSubmit={saveName}>
+                <label>Rental player name
+                    <input className="form-control" value={nameEdit.value} maxLength={120} autoFocus required
+                        disabled={savingName} onChange={event => setNameEdit({ ...nameEdit, value: event.target.value })} />
+                </label>
+                <div className="rental-name-actions">
+                    <MUIButton type="submit" variant="contained" disabled={savingName || !nameEdit.value.trim()}>
+                        {savingName ? 'Saving…' : 'Save name'}
+                    </MUIButton>
+                    <MUIButton type="button" variant="outlined" disabled={savingName}
+                        onClick={() => { setNameEdit(null); setNameMessage(null); }}>Cancel</MUIButton>
+                </div>
+            </form>}
+            {nameMessage && <p role={nameMessage.failed ? 'alert' : 'status'}>{nameMessage.text}</p>}
             {/* Rental Items List */}
             {participant.rentals && participant.rentals.length > 0 && (
                 <div className="participant-rentals-list">
@@ -436,25 +462,26 @@ const ParticipantCard = ({ participant, index, canIssue, onDelete, onRemoveRenta
                                             value={tempNumber}
                                             onChange={(e) => setTempNumber(e.target.value)}
                                             placeholder="Rental #"
+                                            inputProps={{ 'aria-label': rental.label + ' equipment number' }}
                                             type="number"
                                             autoFocus
                                             className="rental-number-input"
                                         />
-                                        <IconButton size="small" type="submit">
+                                        <IconButton size="small" type="submit" aria-label="Save equipment number">
                                             <CheckCircle fontSize="small" />
                                         </IconButton>
-                                        <IconButton size="small" onClick={handleCancelEdit}>
+                                        <IconButton size="small" aria-label="Cancel number edit" onClick={handleCancelEdit}>
                                             <Cancel fontSize="small" />
                                         </IconButton>
                                     </Paper>
                                 ) : (
-                                    <Typography
-                                        variant="caption"
-                                        className="rental-number"
-                                        onClick={canIssue ? () => handleEditNumber(rental, rentalIndex) : undefined}
+                                    <MUIButton
+                                        type="button" size="small" variant="outlined" disabled={!canIssue}
+                                        aria-label={'Edit ' + rental.label + ' equipment number'}
+                                        onClick={() => handleEditNumber(rental, rentalIndex)}
                                     >
-                                        {rental.number || 'Set #'}
-                                    </Typography>
+                                        {rental.number || 'Set number'}
+                                    </MUIButton>
                                 )}
                             </div>
                         </div>
@@ -466,6 +493,7 @@ const ParticipantCard = ({ participant, index, canIssue, onDelete, onRemoveRenta
             <Collapse in={showRentalMenu}>
                 <Paper className="rental-menu">
                     <div className="rental-menu-items">
+                        {!availableRentals?.length && <p>No equipment available on this rental form.</p>}
                         {getUniqueRentals().map((rental, rentalIndex) => (
                             <MUIButton
                                 key={rentalIndex}
@@ -1263,6 +1291,11 @@ class EditSelectedForm extends Component {
         });
     };
 
+    handleRenameParticipant = (index, reviewed, name) => {
+        const { firebase, form } = this.props;
+        return renameRentalParticipant(firebase.rentalGroup(form.key), form, index, reviewed, name);
+    };
+
     handleDeleteParticipant = (index) => {
         // Use props.form instead of state to get the latest data
         const { participants, available } = this.props.form;
@@ -1749,6 +1782,7 @@ class EditSelectedForm extends Component {
                             canIssue={Boolean(this.props.form.complete)}
                             index={index}
                             onDelete={this.handleDeleteParticipant}
+                            onRename={this.props.canImportGroup ? this.handleRenameParticipant : null}
                             onRemoveRental={this.handleRemoveRental}
                             onAddRental={this.handleAddRental}
                             onEditRentalNumber={this.handleEditRentalNumber}

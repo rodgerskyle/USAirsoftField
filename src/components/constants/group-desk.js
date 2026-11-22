@@ -55,6 +55,9 @@ function rosterRow(entry) {
   const kind = entry.kind === 'guest' ? 'Guest player' : 'USAW player';
   return `<li><div><strong>${escape(entry.displayName)}</strong><small>${kind}${entry.isOrganizer ? ' · Organizer' : ''} · ${groupExperienceLabels[entry.experienceBand] || groupExperienceLabels.unrated}</small>${waiverStatusMarkup(entry.waiverStatus)}</div>
     ${entry.waiverStatus !== 'signed' ? `<details data-waiver-entry="${escape(entry.id)}"><summary>Link signed waiver<span class="visually-hidden"> for ${escape(entry.displayName)}</span></summary>${waiverPickerMarkup({ name: entry.displayName })}</details>` : ''}
+    <details><summary>Edit player name<span class="visually-hidden"> for ${escape(entry.displayName)}</span></summary>
+      <form data-rename-entry="${escape(entry.id)}" class="group-desk__form"><label>Roster name or callsign<input required name="displayName" minlength="2" maxlength="80" value="${escape(entry.displayName)}"></label>
+      <button class="btn btn-secondary">Save player name</button></form></details>
     <details><summary>Edit experience<span class="visually-hidden"> for ${escape(entry.displayName)}</span></summary>
       <form data-experience="${escape(entry.id)}" class="group-desk__form"><label>Experience for ${escape(entry.displayName)}<select name="experienceBand">${experienceOptions(entry.experienceBand)}</select></label>
       <button class="btn btn-secondary">Save experience</button></form></details>
@@ -66,7 +69,8 @@ function detailMarkup(group, confirmDelete) {
   const schedule = group.partyStatus === 'confirmed' ? ' · Party Calendar linked' : group.partyStatus === 'review' ? ' · Booking needs review' : '';
   return `<h2 tabindex="-1" data-selection-title>${escape(group.name)}</h2>
     <p>${escape(displayDay(group.date))} · ${people(group.entries.length)}${schedule}${partySummary(group.party?.start, group.party?.size)}</p>
-    ${group.id && group.partyStatus !== 'review' ? `<p><a href="${escape(groupRentalLink(group.id))}" target="_blank" rel="noopener noreferrer">Open rental form</a></p>` : ''}
+    ${group.id && group.date === pacificToday() ? `<p><a class="btn btn-primary" href="/admin/field/check-in?group=${escape(encodeURIComponent(group.id))}#arriving-group">Check in this group</a></p>` : ''}
+    ${group.id && group.partyStatus !== 'review' ? `<p><a class="btn btn-secondary" href="${escape(groupRentalLink(group.id))}" target="_blank" rel="noopener noreferrer">Open rental form</a></p>` : ''}
     <div class="group-desk__code"><label>Invitation code<input readonly data-invite value="${escape(group.code)}" autocomplete="off"></label>
       <button class="btn btn-secondary" type="button" data-copy>Copy code</button></div>
     ${group.expiresAt ? `<p>Expires ${escape(new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', dateStyle: 'medium', timeStyle: 'short' }).format(new Date(group.expiresAt)))} Pacific</p>` : ''}
@@ -194,6 +198,8 @@ export function bindGroupDesk(root, { request, signal, initialId }) {
       void run(loadList);
     } else if (selected && form.matches('[data-add]')) {
       void run(() => change('addGuest', { ...(form.dataset.waiverRef ? {waiverRef: form.dataset.waiverRef} : {}), displayName: form.elements.displayName.value.trim(), experienceBand: form.elements.experienceBand.value }, 'Player added.'));
+    } else if (selected && form.matches('[data-rename-entry]')) {
+      void run(() => change('renameEntry', { entryId: form.dataset.renameEntry, displayName: form.elements.displayName.value.trim() }, 'Player name saved.'));
     } else if (selected && form.matches('[data-experience]')) {
       void run(() => change('setExperience', { entryId: form.dataset.experience, experienceBand: form.elements.experienceBand.value }, 'Experience saved.'));
     } else if (selected && form.matches('[data-rename]')) {

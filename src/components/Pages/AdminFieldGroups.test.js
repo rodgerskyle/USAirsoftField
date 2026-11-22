@@ -143,3 +143,20 @@ test('staff can recover a pending verification and link a signed waiver to an ex
   expect(screen.getByText('1 of 1 waivers verified')).toBeVisible();
   expect(screen.getByText('Waiver verified')).toBeVisible();
 });
+
+test('saves a roster spelling correction against the selected entry and reviewed version', async () => {
+  const group={...initial,entries:[{...initial.entries[0],waiverStatus:'signed'}]};
+  const saved={...group,version:'corrected',entries:[{...group.entries[0],displayName:'Jordan Ray'}]};
+  const request=jest.fn().mockResolvedValueOnce({group}).mockResolvedValueOnce(list(group))
+    .mockResolvedValueOnce({group:saved}).mockResolvedValueOnce(list(saved));
+  open(request);
+  const entry=within((await screen.findByText('Organizer',{selector:'strong'})).closest('li'));
+  fireEvent.click(entry.getByText('Edit player name'));
+  const name=entry.getByLabelText('Roster name or callsign');
+  await waitFor(()=>expect(name).toBeEnabled());
+  fireEvent.change(name,{target:{value:'Jordan Ray'}});
+  fireEvent.click(entry.getByRole('button',{name:'Save player name'}));
+  await screen.findByText('Player name saved.');
+  expect(request.mock.calls[2][1].body).toEqual({action:'renameEntry',id,version:group.version,entryId:group.entries[0].id,displayName:'Jordan Ray'});
+  expect(within(screen.getByText('Jordan Ray',{selector:'strong'}).closest('li')).getByText('Waiver verified')).toBeVisible();
+});

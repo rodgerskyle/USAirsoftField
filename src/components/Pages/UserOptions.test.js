@@ -3,12 +3,16 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { HelmetProvider } from 'react-helmet-async';
 import { MemoryRouter } from 'react-router-dom';
 import { get, onValue, update } from 'firebase/database';
+import { getMetadata, getDownloadURL } from 'firebase/storage';
+import { pdf } from '@react-pdf/renderer';
 import { requestStaffFieldTool } from '../constants/fieldStaffApi';
 import { AuthUserContext } from '../session';
 import UserOptions from './UserOptions';
 
 jest.mock('firebase/database', () => ({ get: jest.fn(), onValue: jest.fn(), update: jest.fn() }));
-jest.mock('firebase/storage', () => ({ getDownloadURL: jest.fn() }));
+jest.mock('firebase/storage', () => ({ getDownloadURL: jest.fn(), getMetadata: jest.fn() }));
+jest.mock('@react-pdf/renderer', () => ({ pdf: jest.fn() }));
+jest.mock('./SignedWaiver', () => () => null);
 jest.mock('../constants/fieldStaffApi', () => ({ requestStaffFieldTool: jest.fn() }));
 jest.mock('../session', () => ({
     AuthUserContext: jest.requireActual('react').createContext(null),
@@ -22,7 +26,7 @@ const player = { name: 'Jordan Rivera', username: 'JRivera', wins: 1, losses: 0,
 const manageProfile = jest.fn();
 const emailService = jest.fn();
 const deletePlayer = jest.fn();
-const firebase = { permanentlyDeletePlayerAccount: () => deletePlayer, auth: { currentUser: staff, onAuthStateChanged: jest.fn() }, user: uid => uid, manageProfile: () => manageProfile, updatePlayerSignInEmail: () => emailService };
+const firebase = { membersWaivers: name => 'member/' + name, nonmembersWaivers: name => 'nonmember/' + name, digitalWaiver: ref => 'digital/' + ref, permanentlyDeletePlayerAccount: () => deletePlayer, auth: { currentUser: staff, onAuthStateChanged: jest.fn() }, user: uid => uid, manageProfile: () => manageProfile, updatePlayerSignInEmail: () => emailService };
 
 function page(id) {
     return <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
@@ -422,4 +426,34 @@ describe('Find Player > More Info email edits', () => {
         expect(screen.queryByText(/Player email updated/)).toBeNull();
         expect(update).not.toHaveBeenCalled();
     });
+});
+
+
+test.each(['digital', 'paper'])('Open Waiver opens the original linked %s document for this account', async type => {
+    const tab = { opener: window, location: { replace: jest.fn() }, close: jest.fn() };
+    const popup = jest.spyOn(window, 'open').mockReturnValue(tab);
+    const signedAt = Date.now() - 4000;
+    const ref = 'source-waiver';
+    const objectName = 'waivers/non-members/2026-11/source.pdf';
+    const document = type === 'digital' ? { type, ref, signedAt } : { type, objectName, signedAt, generation: '55' };
+    getMetadata.mockRejectedValueOnce(Object.assign(new Error(), { code: 'storage/object-not-found' }));
+    requestStaffFieldTool.mockResolvedValueOnce({ document });
+    URL.createObjectURL = jest.fn(() => 'blob:verified-document');
+    URL.revokeObjectURL = jest.fn();
+    if (type === 'digital') {
+        get.mockResolvedValueOnce({ val: () => ({ timestamp: signedAt, name: player.name }) });
+        pdf.mockReturnValue({ toBlob: () => Promise.resolve(new Blob(['verified'])) });
+    } else {
+        getMetadata.mockResolvedValueOnce({ generation: document.generation });
+        getDownloadURL.mockResolvedValueOnce('https://example.org/original-scan');
+    }
+    try {
+        render(page(firstId));
+        fireEvent.click(screen.getByRole('button', { name: 'Open Waiver' }));
+        await waitFor(() => expect(tab.location.replace).toHaveBeenCalledWith(
+            type === 'digital' ? 'blob:verified-document' : 'https://example.org/original-scan'));
+        expect(requestStaffFieldTool).toHaveBeenCalledWith(firebase, staff.uid, '/api/waivers/membership', {
+            method: 'POST', body: { action: 'document', memberId: firstId }, signal: expect.anything(),
+        });
+    } finally { popup.mockRestore(); }
 });

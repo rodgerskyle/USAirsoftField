@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
     fieldTimeInput, fieldTimeISO, formatFieldTime, formatRoundCountdown, isOpenVote, liveRounds,
-    LIVE_ROUNDS_PATH, ROUND_CATALOG_PATH, STAFF_ROUNDS_PATH, RoundRespawns, useLiveFieldBoard,
+    LIVE_ROUNDS_PATH, ROUND_CATALOG_PATH, STAFF_ROUNDS_PATH, RoundRespawns, runningBarracksClock, useLiveFieldBoard,
 } from './FieldRoundsShared';
 import { FieldPinPicker, readMapPins, roundPinLocation } from './FieldRoundMap';
 import './FieldRounds.css';
@@ -17,7 +17,44 @@ const actions = {
     createPoll: 'Player voting is open.',
     closePoll: 'Voting closed.',
     publishWinner: 'Winning round added to the field schedule.',
+    setBarracksClock: 'Countdown sent to Barracks TV.',
+    clearBarracksClock: 'TV countdown stopped.',
 };
+
+function BarracksClockControls({ clock, now, disabled, onSave }) {
+    const active = runningBarracksClock(clock, now);
+    const name = clock?.kind === 'lunch' ? 'Lunch' : 'Break';
+    const revision = clock?.revision ?? 0;
+    function start(kind, durationMinutes) {
+        void onSave({ action: 'setBarracksClock', kind, durationMinutes, revision });
+    }
+    function setCustom(event) {
+        event.preventDefault();
+        const data = new FormData(event.currentTarget);
+        start(data.get('kind'), Number(data.get('minutes')));
+    }
+    return (
+        <section className="field-rounds-panel field-break-controls" aria-labelledby="field-break-title">
+            <h2 id="field-break-title">Barracks TV countdown</h2>
+            {active ? <p>{name} ends at {formatFieldTime(clock.endsAt)} · <strong role="timer" aria-label="Break time remaining">
+                {formatRoundCountdown(Date.parse(clock.endsAt) - now)}
+            </strong></p> : <p>{clock?.endsAt ? name + ' finished.' : 'No break timer running.'}</p>}
+            <div className="field-rounds-actions">
+                <button type="button" className="btn btn-primary" disabled={disabled} onClick={() => start('break', 5)}>5-minute break</button>
+                <button type="button" className="btn btn-primary" disabled={disabled} onClick={() => start('lunch', 30)}>30-minute lunch</button>
+                {active && <button type="button" className="btn btn-outline-danger" disabled={disabled}
+                    onClick={() => void onSave({ action: 'clearBarracksClock', revision })}>Stop timer</button>}
+            </div>
+            <form className="field-rounds-form" onSubmit={setCustom}>
+                <fieldset className="field-break-custom" disabled={disabled}>
+                    <label>Timer type<select name="kind" defaultValue="break"><option value="break">Break between games</option><option value="lunch">Lunch</option></select></label>
+                    <label>Minutes<input name="minutes" type="number" min="1" max="180" defaultValue="10" required /></label>
+                    <button className="btn btn-outline-primary" type="submit">{active ? 'Replace timer' : 'Start custom timer'}</button>
+                </fieldset>
+            </form>
+        </section>
+    );
+}
 
 function formText(data, name) {
     return String(data.get(name) ?? '').trim();
@@ -324,6 +361,7 @@ export default function AdminFieldRounds({ request }) {
             {error && <p className="field-rounds-error" role="alert">{error} {board && 'Round controls will resume when the board reconnects.'}</p>}
             {notice && <p role={notice.error ? 'alert' : 'status'} className={notice.error ? 'field-rounds-error' : 'field-rounds-success'}>{notice.text}</p>}
             {board && <>
+                <BarracksClockControls clock={board.barracksClock} now={now} disabled={disabled} onSave={save} />
                 <section className="field-rounds-panel" aria-labelledby="field-rounds-current">
                     <h2 id="field-rounds-current">Current and scheduled rounds</h2>
                     {!rounds.active.length && !rounds.upcoming.length && <p>No rounds are scheduled in the next 48 hours.</p>}

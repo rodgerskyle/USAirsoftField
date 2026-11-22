@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { Link, Navigate, NavLink, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 
 import { withFirebase } from '../Firebase';
@@ -14,6 +14,7 @@ import AdminFieldReports from './AdminFieldReports';
 import AdminFieldFeedback from './AdminFieldFeedback';
 import AdminFieldMissionTools from './AdminFieldMissionTools';
 import AdminAccountUnlock from './AdminAccountUnlock';
+import DeskNavigation from '../constants/DeskNavigation';
 import '../constants/admin.css';
 import './AdminDashboard.css';
 import './AdminFieldTools.css';
@@ -174,10 +175,7 @@ function StaffToolsWorkspace({ firebase, uid, tool }) {
           )}
         </header>
 
-        <nav className="field-tools__nav" aria-label="Field staff tools">
-          {fieldTools.map(({ id, title: label, path }) => <NavLink key={id} to={path}>{label}</NavLink>)}
-          <Link to={fieldStaffPaths.tv}>Barracks TV</Link>
-        </nav>
+        <DeskNavigation admin />
 
         {notice && <p className="field-tools__notice" role="alert">{notice}</p>}
         {unlocked

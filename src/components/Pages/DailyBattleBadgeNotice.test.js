@@ -46,7 +46,7 @@ test('a private unread daily award links its recipient to milestones and acknowl
     const firebase = { auth: { currentUser: teammate } };
     const view = render(desk(firebase, teammate));
     await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
-    expect(screen.queryByLabelText('Your daily Battle Badge')).toBeNull();
+    expect(screen.queryByLabelText('Your Battle Badge')).toBeNull();
     firebase.auth.currentUser = player;
     view.rerender(desk(firebase, player));
     expect(await screen.findByText('You earned the Tower of Power!')).toBeVisible();
@@ -56,7 +56,7 @@ test('a private unread daily award links its recipient to milestones and acknowl
     await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(3));
     expect(global.fetch.mock.calls[2][1]).toMatchObject({ method: 'POST', headers: { Authorization: 'Bearer mvp-token' } });
     expect(screen.getByLabelText('Current route')).toHaveTextContent('/account?section=milestones');
-    await waitFor(() => expect(screen.queryByLabelText('Your daily Battle Badge')).toBeNull());
+    await waitFor(() => expect(screen.queryByLabelText('Your Battle Badge')).toBeNull());
     expect(unread).toBe(false);
 });
 
@@ -72,7 +72,7 @@ test('discards an outstanding private response when accounts switch and keeps si
     await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
     expect(global.fetch.mock.calls[0][1].signal.aborted).toBe(true);
     await act(async () => { finish(ok({ notifications: [notice] })); });
-    expect(screen.queryByLabelText('Your daily Battle Badge')).toBeNull();
+    expect(screen.queryByLabelText('Your Battle Badge')).toBeNull();
     firebase.auth.currentUser = null;
     view.rerender(desk(firebase, null));
     fireEvent(document, new Event('visibilitychange'));
