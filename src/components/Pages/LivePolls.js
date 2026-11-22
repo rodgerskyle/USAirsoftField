@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { withFirebase } from '../Firebase';
 import { requestPlayerPoll } from '../constants/fieldStaffApi';
 import { formatRoundCountdown, isOpenVote, useLiveFieldBoard } from './FieldRoundsShared';
+import MvpBallot from './MvpBallot';
 import './Schedule.css';
 import './LivePolls.css';
 
@@ -53,46 +54,54 @@ function PollBallot({ user }) {
   }
 
   return (
-    <section className="field-schedule__section live-polls__ballot" aria-labelledby="live-poll-heading">
-      <header className="field-schedule__section-header live-polls__poll-header">
-        <h2 id="live-poll-heading">{poll?.title || 'Game mode voting'}</h2>
-        {open && !error && <div className="live-polls__timer">Closes in <strong role="timer" aria-label="Voting time remaining">
-          {formatRoundCountdown(Date.parse(poll.closesAt) - now)}
-        </strong></div>}
-        {poll && !open && <span className="live-polls__timer">Voting closed</span>}
-      </header>
-      {error && <div className="field-schedule__notice live-polls__notice" role="alert">
-        <span>Could not refresh the live poll.</span>
-        <button className="field-schedule__action" type="button" onClick={refresh}>Retry</button>
-      </div>}
-      {!board && !error && <p className="field-schedule__empty" role="status">Loading the live poll…</p>}
-      {board && !poll && <p className="field-schedule__empty" role="status">There’s no live poll right now. Check back when staff open voting.</p>}
-      {poll && <form className="live-polls__form" onSubmit={vote} aria-busy={submitting}>
-        <fieldset disabled={!canVote || submitting}>
-          <legend>{open ? 'Choose a game mode' : 'Poll results'}</legend>
-          <ul className="live-polls__options">
-            {poll.options.map(option => (
-              <li key={option.modeId}>
-                <Option className="live-polls__option" data-selected={selected === option.modeId}>
-                  {open && <input type="radio" name="game-mode" value={option.modeId} checked={selected === option.modeId}
-                    onChange={() => setChoice({ pollId: poll.id, modeId: option.modeId })} />}
-                  <span>{option.label}</span>
-                  {!open && poll.winnerModeIds?.includes(option.modeId) && <span className="live-polls__winner">Top vote</span>}
-                  <strong>{option.votes} {option.votes === 1 ? 'vote' : 'votes'}</strong>
-                </Option>
-              </li>
-            ))}
-          </ul>
-        </fieldset>
-        {open && <button className="field-schedule__action field-schedule__action--primary" type="submit"
-          disabled={!canVote || submitting || !selected || selected === poll.myVote}>
-          {submitting ? 'Saving vote…' : poll.myVote ? 'Update my vote' : 'Cast my vote'}
-        </button>}
-        {poll.myVote && <p>Your vote · <strong>{poll.options.find(option => option.modeId === poll.myVote)?.label}</strong></p>}
-        {poll.publishedGameId && <p>Staff added the winning game to the round schedule.</p>}
-        {status && <p className={status.error ? 'live-polls__error' : undefined} role={status.error ? 'alert' : 'status'}>{status.message}</p>}
-      </form>}
-    </section>
+    <>
+      {board?.mvpPoll && <MvpBallot key={board.mvpPoll.id} poll={board.mvpPoll} user={user} now={now} error={error}
+        refresh={refresh} submitting={submitting} setSubmitting={setSubmitting} submission={submission} />}
+      {board && !board.mvpPoll && window.location.hash === '#round-mvp' && <section id="round-mvp" className="field-schedule__section">
+        <h2>Round MVP</h2><p>No MVP vote is open right now.</p>
+      </section>}
+      <section className="field-schedule__section live-polls__ballot" aria-labelledby="live-poll-heading">
+        <header className="field-schedule__section-header live-polls__poll-header">
+          <h2 id="live-poll-heading">{poll?.title || 'Game mode voting'}</h2>
+          {open && !error && <div className="live-polls__timer">Closes in <strong role="timer" aria-label="Voting time remaining">
+            {formatRoundCountdown(Date.parse(poll.closesAt) - now)}
+          </strong></div>}
+          {poll && !open && <span className="live-polls__timer">Voting closed</span>}
+        </header>
+        {error && <div className="field-schedule__notice live-polls__notice" role="alert">
+          <span>Could not refresh the live poll.</span>
+          <button className="field-schedule__action" type="button" onClick={refresh}>Retry</button>
+        </div>}
+        {!board && !error && <p className="field-schedule__empty" role="status">Loading the live poll…</p>}
+        {board && !poll && !board.mvpPoll && <p className="field-schedule__empty" role="status">There’s no live poll right now. Check back when staff open voting.</p>}
+        {board?.mvpPoll && !poll && <p>No game mode vote is open.</p>}
+        {poll && <form className="live-polls__form" onSubmit={vote} aria-busy={submitting}>
+          <fieldset disabled={!canVote || submitting}>
+            <legend>{open ? 'Choose a game mode' : 'Poll results'}</legend>
+            <ul className="live-polls__options">
+              {poll.options.map(option => (
+                <li key={option.modeId}>
+                  <Option className="live-polls__option" data-selected={selected === option.modeId}>
+                    {open && <input type="radio" name="game-mode" value={option.modeId} checked={selected === option.modeId}
+                      onChange={() => setChoice({ pollId: poll.id, modeId: option.modeId })} />}
+                    <span>{option.label}</span>
+                    {!open && poll.winnerModeIds?.includes(option.modeId) && <span className="live-polls__winner">Top vote</span>}
+                    <strong>{option.votes} {option.votes === 1 ? 'vote' : 'votes'}</strong>
+                  </Option>
+                </li>
+              ))}
+            </ul>
+          </fieldset>
+          {open && <button className="field-schedule__action field-schedule__action--primary" type="submit"
+            disabled={!canVote || submitting || !selected || selected === poll.myVote}>
+            {submitting ? 'Saving vote…' : poll.myVote ? 'Update my vote' : 'Cast my vote'}
+          </button>}
+          {poll.myVote && <p>Your vote · <strong>{poll.options.find(option => option.modeId === poll.myVote)?.label}</strong></p>}
+          {poll.publishedGameId && <p>Staff added the winning game to the round schedule.</p>}
+          {status && <p className={status.error ? 'live-polls__error' : undefined} role={status.error ? 'alert' : 'status'}>{status.message}</p>}
+        </form>}
+      </section>
+    </>
   );
 }
 
@@ -108,7 +117,7 @@ function LivePolls({ firebase }) {
         <div className="field-schedule__heading-copy">
           <p>US Airsoft World <span aria-hidden="true">/</span> Anderson, CA</p>
           <h1>Live Polls</h1>
-          <p>Vote for what we play next. Open to everyone.</p>
+          <p>Vote for the next game mode or nominate the MVP of a round. Open to everyone.</p>
         </div>
         <Link to="/schedule" className="field-schedule__action">Field schedule</Link>
       </header>
