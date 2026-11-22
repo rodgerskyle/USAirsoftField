@@ -13,7 +13,7 @@ const STARTER_ITEMS = ['Eye and face protection', 'Barrel cover', 'Magazines and
 
 const FIELD_LINKS = [
   { to: '/schedule', icon: 'calendar', title: 'Field schedule', copy: 'See upcoming events and open play.' },
-  { to: '/live-polls', icon: 'flag', title: 'Live polls', copy: 'Vote for the next game at USAW.' },
+  { to: '/live-polls', icon: 'flag', title: 'Live polls', copy: 'Vote for the next game or nominate your round MVP.' },
   { to: '/map', icon: 'map', title: 'Field map', copy: 'Get your bearings before the briefing.' },
   { to: '/information/rules', icon: 'shield', title: 'Field rules', copy: 'Know the safety rules and equipment requirements.' },
   { to: '/information/gametypes', icon: 'flag', title: 'Game modes', copy: 'Learn the objectives for each game.' },

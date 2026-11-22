@@ -263,6 +263,16 @@
 .field-barracks-grid[data-side='true'] { grid-template-columns: minmax(0, 1.8fr) minmax(16rem, 1fr); }
 .field-barracks-side { display: grid; align-content: start; gap: clamp(.8rem, 2vw, 1.5rem); }
 
+.field-barracks-mvp-link {
+  display: inline-grid;
+  justify-items: start;
+  justify-self: start;
+  gap: .5rem;
+  color: inherit;
+  font-weight: 650;
+}
+.field-barracks-mvp-link img { width: clamp(8rem, 11vw, 14rem); max-width: 100%; height: auto; image-rendering: pixelated; }
+
 .field-barracks-main,
 .field-barracks-support {
   display: grid;

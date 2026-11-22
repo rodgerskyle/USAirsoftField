@@ -71,3 +71,49 @@ test('Barracks TV drops a cleared vote and can display the next one while the sa
     expect(screen.queryByText('Evening poll')).not.toBeInTheDocument();
   } finally { jest.useRealTimers(); }
 });
+
+test('Barracks TV advertises only the open round MVP ballot and keeps other voting visible', async () => {
+  jest.useFakeTimers();
+  try {
+    const started = Date.now();
+    const at = seconds => new Date(started + seconds * 1000).toISOString();
+    const ballot = {id:'mvp-1', gameId:'round', roundTitle:'Courtyard round', startsAt:at(-600),
+      closesAt:at(25), closed:false, myVote:{firstName:'PrivateFirst', lastName:'PrivateLast'}};
+    let mvp = ballot;
+    let offline = false;
+    const poll = {id:'mode', title:'Vote for the next mode', closesAt:at(300), closed:false,
+      options:[{modeId:'countdown', label:'Countdown', votes:2}]};
+    const request = async () => {
+      if (offline) throw new Error('Disconnected');
+      return {serverNow:new Date().toISOString(), games:[], mvpPoll:mvp, poll};
+    };
+    render(<HelmetProvider><MemoryRouter future={{v7_startTransition:true, v7_relativeSplatPath:true}}>
+      <BarracksTV request={request} />
+    </MemoryRouter></HelmetProvider>);
+    await act(async () => {});
+    const ballotLink = () => screen.queryByRole('link', {name:'Scan or tap to vote'});
+    expect(ballotLink()).toHaveAttribute('href','/live-polls#round-mvp');
+    expect(ballotLink().querySelector('img')).toBeInTheDocument();
+    expect(screen.getByText('Courtyard round')).toBeInTheDocument();
+    expect(screen.queryByText(/PrivateFirst|PrivateLast/)).not.toBeInTheDocument();
+    mvp = {...ballot, closed:true};
+    await act(async () => { jest.advanceTimersByTime(10000); });
+    expect(ballotLink()).not.toBeInTheDocument();
+    expect(screen.getByRole('heading',{name:poll.title})).toBeInTheDocument();
+    mvp = {...ballot, id:'mvp-2', roundTitle:'Tower round'};
+    await act(async () => { jest.advanceTimersByTime(10000); });
+    expect(screen.getByText('Tower round')).toBeInTheDocument();
+    await act(async () => { jest.advanceTimersByTime(5001); });
+    expect(ballotLink()).not.toBeInTheDocument();
+    mvp = {...mvp, closesAt:at(90)};
+    await act(async () => { jest.advanceTimersByTime(5000); });
+    expect(ballotLink()).toBeInTheDocument();
+    offline = true;
+    await act(async () => { jest.advanceTimersByTime(10000); });
+    expect(ballotLink()).not.toBeInTheDocument();
+    offline = false; mvp = null;
+    await act(async () => { jest.advanceTimersByTime(10000); });
+    expect(ballotLink()).not.toBeInTheDocument();
+    expect(screen.getByRole('heading',{name:poll.title})).toBeInTheDocument();
+  } finally { jest.useRealTimers(); }
+});

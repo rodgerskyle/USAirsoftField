@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useAppearance } from '../../Appearance';
 import wordmark from '../../assets/usairsoft-wide-logo-light.png';
 import shield from '../../assets/usairsoft-small-logo.png';
+import mvpBallotQr from '../../assets/round-mvp-ballot-qr.png';
 import { requestPublicFieldTool } from '../constants/fieldStaffApi';
 import {
     barracksClockTitles, formatFieldTime, formatRoundCountdown, isOpenVote, liveRounds, RoundRespawns, runningBarracksClock, useLiveFieldBoard,
@@ -46,6 +47,7 @@ export default function BarracksTV({ request = requestPublicFieldTool }) {
     const timeRemaining = round ? Date.parse(current ? round.endsAt : round.startsAt) - now : 0;
     const showTimer = Boolean(current || (round && Date.parse(round.startsAt) > displayTime));
     const poll = error ? null : board?.poll;
+    const mvp = !error && isOpenVote(board?.mvpPoll, now) ? board.mvpPoll : null;
     const clock = board?.barracksClock;
     const showClock = runningBarracksClock(clock, displayTime);
     const safetyBrief = clock?.kind === 'safetyBrief';
@@ -97,7 +99,7 @@ export default function BarracksTV({ request = requestPublicFieldTool }) {
             </section>}
             {Number.isSafeInteger(board?.celebrationCursor) && board.celebrationCursor >= 0 &&
                 <BarracksPatchCelebrations initialCursor={board.celebrationCursor} request={request} />}
-            {board && <div className="field-barracks-grid" data-side={Boolean(next || poll)}>
+            {board && <div className="field-barracks-grid" data-side={Boolean(next || poll || mvp)}>
                 <section className="field-barracks-main" data-live={Boolean(current)} aria-labelledby="barracks-round">
                     <div className="field-barracks-kicker">{current ? 'Now playing' : round ? 'Up next' : 'Field schedule'}</div>
                     <h2 id="barracks-round">{round?.title || 'No round on the board'}</h2>
@@ -121,7 +123,16 @@ export default function BarracksTV({ request = requestPublicFieldTool }) {
                         {round.notes && <p className="field-barracks-round-note">{round.notes}</p>}
                     </> : <p>Check here for the next round and its briefing location.</p>}
                 </section>
-                {(next || poll) && <aside className="field-barracks-side" aria-label="Upcoming rounds and voting">
+                {(next || poll || mvp) && <aside className="field-barracks-side" aria-label="Upcoming rounds and voting">
+                    {mvp && <section className="field-barracks-support field-barracks-mvp" aria-labelledby="barracks-mvp">
+                        <h2 id="barracks-mvp">Vote for round MVP</h2>
+                        <p><strong>{mvp.roundTitle}</strong> · {formatFieldTime(mvp.startsAt)}</p>
+                        <Link to="/live-polls#round-mvp" className="field-barracks-mvp-link">
+                            <img src={mvpBallotQr} alt="" width="370" height="370" />
+                            <span>Scan or tap to vote</span>
+                        </Link>
+                        <p>Voting closes {formatFieldTime(mvp.closesAt)} Pacific</p>
+                    </section>}
                     {next && <section className="field-barracks-support" aria-labelledby="barracks-next-round">
                         <div className="field-barracks-kicker">{current ? 'Next round' : 'Then on the field'}</div>
                         <h2 id="barracks-next-round">{next.title}</h2>

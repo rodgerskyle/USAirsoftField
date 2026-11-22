@@ -91,3 +91,72 @@ test('a player with a ballot open sees the vote disappear and the next ballot st
     expect(screen.getByRole('button', {name:'Cast my vote'})).toBeDisabled();
   } finally { jest.useRealTimers(); }
 });
+
+const mvpPoll = {
+  id: 'mvp-poll-1', gameId: 'round-1', roundTitle: 'Battle Flag', startsAt: board.serverNow,
+  closesAt: poll.closesAt, closed: false, myVote: null, totalVotes: 2,
+};
+
+test.each([null, {uid:'member-id', getIdToken:async () => 'signed-token'}])(
+  'a player can cast and update an independent, two-part round MVP write-in', async user => {
+    let current = mvpPoll;
+    const posts = [];
+    global.fetch.mockImplementation(async (_, options) => {
+      if (options.method === 'POST') {
+        const body = JSON.parse(options.body);
+        posts.push(body);
+        expect(options.credentials).toBe('include');
+        expect(options.headers.Authorization).toBe(user ? 'Bearer signed-token' : undefined);
+        current = {...current, myVote:{firstName:body.firstName, lastName:body.lastName}};
+        return reply({ok:true, pollId:current.id, myVote:current.myVote});
+      }
+      return reply({...board, mvpPoll:{...current, nominations:[{firstName:'Private', lastName:'Aggregate'}]}});
+    });
+    renderFor(user);
+    const first = await screen.findByLabelText('First name');
+    const last = screen.getByLabelText('Last name');
+    expect(screen.queryByText(/Private Aggregate/)).not.toBeInTheDocument();
+    expect(screen.getByRole('radio', {name:/Countdown/})).toBeEnabled();
+    fireEvent.change(first, {target:{value:' María José '}});
+    expect(screen.getByRole('button', {name:'Submit MVP vote'})).toBeDisabled();
+    fireEvent.change(last, {target:{value:'O’Neil-Santos'}});
+    fireEvent.click(screen.getByRole('button', {name:'Submit MVP vote'}));
+    expect(await screen.findByText('María José O’Neil-Santos')).toBeInTheDocument();
+    expect(posts).toEqual([{action:'voteMvp', pollId:current.id, firstName:'María José', lastName:'O’Neil-Santos'}]);
+    await act(async () => {});
+    expect(screen.getByRole('button', {name:'Update my MVP vote'})).toBeDisabled();
+    fireEvent.change(first, {target:{value:'Al'}});
+    fireEvent.click(screen.getByRole('button', {name:'Update my MVP vote'}));
+    expect(await screen.findByText('Al O’Neil-Santos')).toBeInTheDocument();
+    expect(posts).toHaveLength(2);
+  },
+);
+
+test('MVP draft and focus survive board refreshes, then reset when staff change rounds', async () => {
+  jest.useFakeTimers();
+  let current = mvpPoll;
+  try {
+    global.fetch.mockImplementation(async () => reply({...board, poll:null, canVote:false, mvpPoll:current}));
+    renderFor(null);
+    await act(async () => {});
+    fireEvent.change(screen.getByLabelText('First name'), {target:{value:'Dee'}});
+    const last = screen.getByLabelText('Last name');
+    last.focus();
+    fireEvent.change(last, {target:{value:'Li'}});
+    await act(async () => { jest.advanceTimersByTime(10000); });
+    expect(last).toHaveFocus();
+    expect(last).toHaveValue('Li');
+    expect(screen.getByRole('button',{name:'Submit MVP vote'})).toBeEnabled();
+
+    current = {...current, closed:true};
+    await act(async () => { jest.advanceTimersByTime(10000); });
+    expect(screen.getByText('MVP voting is closed for this round.')).toBeInTheDocument();
+    expect(screen.queryByLabelText('First name')).not.toBeInTheDocument();
+    current = null;
+    await act(async () => { jest.advanceTimersByTime(10000); });
+    expect(screen.queryByRole('heading', {name:'Round MVP'})).not.toBeInTheDocument();
+    current = {...mvpPoll, id:'mvp-poll-2', roundTitle:'Countdown'};
+    await act(async () => { jest.advanceTimersByTime(10000); });
+    expect(screen.getByLabelText('First name')).toHaveValue('');
+  } finally { jest.useRealTimers(); }
+});
