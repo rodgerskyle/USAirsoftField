@@ -186,6 +186,68 @@ test('uses catalog options for voting and publishes a staff-selected winner from
     }
 });
 
+const currentPoll = {
+    id: '95f68466-2c3d-4259-9801-9b449d9be09e', title: 'Which mode is next?',
+    closesAt: '2026-11-16T18:15:00.000Z', closed: false, totalVotes: 8, winnerModeIds: ['countdown'],
+    options: [{ modeId: 'countdown', label: 'Countdown', votes: 5 }, { modeId: 'three-flag', label: '3 Flag', votes: 3 }],
+};
+
+test.each([
+    ['open', {}],
+    ['closed with a scheduled winner', { closed: true, publishedGameId: scheduled.id }],
+    ['expired', { closesAt: serverNow }],
+])('staff can clear an %s vote and immediately open a fresh vote', async (_, state) => {
+    let poll = { ...currentPoll, ...state };
+    const request = jest.fn(async (path, options) => {
+        if (path === ROUND_CATALOG_PATH) return catalog;
+        if (options.method !== 'POST') return { serverNow, isStaff: true, games: [scheduled], poll };
+        poll = null;
+        return { ok: true };
+    });
+    const confirm = jest.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true);
+    try {
+        render(<AdminFieldRounds request={request} />);
+        const staffVoting = within(await screen.findByRole('region', { name: 'Player voting' }));
+        const clear = await staffVoting.findByRole('button', { name: 'Clear vote' });
+        fireEvent.click(clear);
+        expect(confirm).toHaveBeenCalledWith(expect.stringContaining(currentPoll.title));
+        expect(request.mock.calls.some(([, options]) => options.method === 'POST')).toBe(false);
+        expect(staffVoting.getByRole('heading', { name: currentPoll.title })).toBeInTheDocument();
+        fireEvent.click(clear);
+        expect(await staffVoting.findByText('No vote is on Barracks TV.')).toBeInTheDocument();
+        expect(request).toHaveBeenCalledWith(LIVE_ROUNDS_PATH, expect.objectContaining({
+            method: 'POST', body: { action: 'clearPoll', pollId: currentPoll.id },
+        }));
+        expect(screen.getByText('Vote cleared from Barracks TV and player voting.')).toBeInTheDocument();
+        expect(staffVoting.queryByRole('button', { name: 'Clear vote' })).not.toBeInTheDocument();
+        expect(staffVoting.getByRole('button', { name: 'Open voting' })).toBeEnabled();
+        expect(screen.getByRole('heading', { name: scheduled.title })).toBeInTheDocument();
+    } finally {
+        confirm.mockRestore();
+    }
+});
+
+test('a stale clear shows the error and reloads the newer vote for review', async () => {
+    let poll = currentPoll;
+    const request = jest.fn(async (path, options) => {
+        if (path === ROUND_CATALOG_PATH) return catalog;
+        if (options.method !== 'POST') return { serverNow, isStaff: true, games: [], poll };
+        poll = { ...currentPoll, id: '5983801c-1c9b-4a65-ae98-46965c9e1d8b', title: 'New game vote' };
+        throw Object.assign(new Error('The vote has changed.'), { status: 409 });
+    });
+    const confirm = jest.spyOn(window, 'confirm').mockReturnValue(true);
+    try {
+        render(<AdminFieldRounds request={request} />);
+        fireEvent.click(await screen.findByRole('button', { name: 'Clear vote' }));
+        expect(await screen.findByRole('alert')).toHaveTextContent('The vote has changed.');
+        expect(await screen.findByRole('heading', { name: 'New game vote' })).toBeInTheDocument();
+        expect(screen.queryByText('Vote cleared from Barracks TV and player voting.')).not.toBeInTheDocument();
+        expect(request.mock.calls.filter(([, options]) => options.method === 'POST')).toHaveLength(1);
+    } finally {
+        confirm.mockRestore();
+    }
+});
+
 test('uses a read-only public board and displays live round and both respawns in Barracks TV', async () => {
     const request = jest.fn().mockResolvedValue({ serverNow, isStaff: false, poll: null, games: [playing] });
     render(<HelmetProvider><MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
@@ -247,25 +309,43 @@ test('staff start a preset TV timer, replace its remaining time and stop it', as
     fireEvent.click(region.getByRole('button', { name: 'Replace timer' }));
     await waitFor(() => expect(region.getByRole('timer')).toHaveTextContent('24:00'));
     expect(clock.kind).toBe('lunch');
+    fireEvent.click(region.getByRole('button', { name: '60 min to safety brief' }));
+    expect(await region.findByRole('timer', { name: 'Time until safety brief' })).toHaveTextContent('1:00:00');
+    expect(request).toHaveBeenCalledWith(LIVE_ROUNDS_PATH, expect.objectContaining({
+        method: 'POST', body: { action: 'setBarracksClock', kind: 'safetyBrief', durationMinutes: 60, revision: 2 },
+    }));
+    expect(region.getByText(/Safety brief starts at/)).toBeInTheDocument();
+    expect(region.getByLabelText('Timer type')).toHaveValue('safetyBrief');
+    expect(region.getByLabelText('Minutes')).toHaveValue(60);
+    fireEvent.change(region.getByLabelText('Minutes'), { target: { value: '12' } });
+    fireEvent.click(region.getByRole('button', { name: 'Replace timer' }));
+    await waitFor(() => expect(region.getByRole('timer', { name: 'Time until safety brief' })).toHaveTextContent('12:00'));
+    expect(request).toHaveBeenCalledWith(LIVE_ROUNDS_PATH, expect.objectContaining({
+        method: 'POST', body: { action: 'setBarracksClock', kind: 'safetyBrief', durationMinutes: 12, revision: 3 },
+    }));
     fireEvent.click(region.getByRole('button', { name: 'Stop timer' }));
-    expect(await region.findByText('No break timer running.')).toBeInTheDocument();
+    expect(await region.findByText('No countdown running.')).toBeInTheDocument();
 });
 
-test('a public TV reads a remote lunch deadline, counts down against server time and returns to the round', async () => {
+test.each([
+    ['lunch', 'Lunch break', 'Time until break ends', 'Return at'],
+    ['safetyBrief', 'Safety brief', 'Time until safety brief', 'Safety brief starts at'],
+])('a public TV reads a remote %s deadline, counts down against server time and returns to the round', async (kind, heading, timerLabel, deadlineText) => {
     jest.useFakeTimers();
     try {
         const request = jest.fn().mockResolvedValue({ serverNow, games: [scheduled], isStaff: false,
-            barracksClock: { kind: 'lunch', endsAt: '2026-11-16T18:00:03.000Z', revision: 4 } });
+            barracksClock: { kind, endsAt: '2026-11-16T18:00:03.000Z', revision: 4 } });
         render(<HelmetProvider><MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <BarracksTV request={request} />
         </MemoryRouter></HelmetProvider>);
         await act(async () => {});
-        expect(screen.getByRole('heading', { name: 'Lunch break' })).toBeInTheDocument();
-        expect(screen.getByRole('timer', { name: 'Time until break ends' })).toHaveTextContent('00:03');
+        expect(screen.getByRole('heading', { name: heading })).toBeInTheDocument();
+        expect(screen.getByText(new RegExp(deadlineText))).toHaveTextContent(/10:00 AM Pacific/);
+        expect(screen.getByRole('timer', { name: timerLabel })).toHaveTextContent('00:03');
         act(() => jest.advanceTimersByTime(2000));
-        expect(screen.getByRole('timer', { name: 'Time until break ends' })).toHaveTextContent('00:01');
+        expect(screen.getByRole('timer', { name: timerLabel })).toHaveTextContent('00:01');
         act(() => jest.advanceTimersByTime(1000));
-        expect(screen.queryByRole('heading', { name: 'Lunch break' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: heading })).not.toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'Countdown' })).toBeInTheDocument();
         expect(request).toHaveBeenCalledWith(LIVE_ROUNDS_PATH, { signal: expect.anything() });
     } finally {

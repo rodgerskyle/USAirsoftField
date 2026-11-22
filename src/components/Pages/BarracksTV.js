@@ -6,13 +6,13 @@ import wordmark from '../../assets/usairsoft-wide-logo-light.png';
 import shield from '../../assets/usairsoft-small-logo.png';
 import { requestPublicFieldTool } from '../constants/fieldStaffApi';
 import {
-    formatFieldTime, formatRoundCountdown, isOpenVote, liveRounds, RoundRespawns, runningBarracksClock, useLiveFieldBoard,
+    barracksClockTitles, formatFieldTime, formatRoundCountdown, isOpenVote, liveRounds, RoundRespawns, runningBarracksClock, useLiveFieldBoard,
 } from './FieldRoundsShared';
 import { RoundMapViewer, roundPinLocation } from './FieldRoundMap';
 import BarracksPatchCelebrations from './BarracksPatchCelebrations';
 import './FieldRounds.css';
 
-function VotingDisplay({ poll, now, stale }) {
+function VotingDisplay({ poll, now }) {
     if (!poll) return null;
     const open = isOpenVote(poll, now);
     const winners = poll.winnerModeIds || [];
@@ -21,7 +21,7 @@ function VotingDisplay({ poll, now, stale }) {
             <div className="field-barracks-kicker">{open ? 'Voting open' : 'Voting closed'}</div>
             <h2 id="barracks-voting">{poll.title}</h2>
             {open && <p>Closes in <strong role="timer" aria-label="Voting time remaining">
-                {stale ? '—' : formatRoundCountdown(Date.parse(poll.closesAt) - now)}
+                {formatRoundCountdown(Date.parse(poll.closesAt) - now)}
             </strong></p>}
             <ul className="field-barracks-votes">
                 {poll.options.map(option => <li data-winner={!open && winners.includes(option.modeId)} key={option.modeId}>
@@ -45,8 +45,10 @@ export default function BarracksTV({ request = requestPublicFieldTool }) {
     const next = current ? upcoming[0] : upcoming[1];
     const timeRemaining = round ? Date.parse(current ? round.endsAt : round.startsAt) - now : 0;
     const showTimer = Boolean(current || (round && Date.parse(round.startsAt) > displayTime));
+    const poll = error ? null : board?.poll;
     const clock = board?.barracksClock;
-    const showBreak = runningBarracksClock(clock, displayTime);
+    const showClock = runningBarracksClock(clock, displayTime);
+    const safetyBrief = clock?.kind === 'safetyBrief';
 
     useEffect(() => {
         function updateFullscreen() {
@@ -88,14 +90,14 @@ export default function BarracksTV({ request = requestPublicFieldTool }) {
                 <button type="button" onClick={() => void refresh()}>Retry</button>
             </div>}
             {!board && !error && <p className="field-barracks-notice" role="status">Loading the field schedule…</p>}
-            {showBreak && <section className="field-barracks-break" aria-labelledby="barracks-break">
-                <div><h2 id="barracks-break">{clock.kind === 'lunch' ? 'Lunch break' : 'Break between games'}</h2>
-                    <p>Return at {formatFieldTime(clock.endsAt)} Pacific</p></div>
-                <strong role="timer" aria-label="Time until break ends">{error ? '—' : formatRoundCountdown(Date.parse(clock.endsAt) - now)}</strong>
+            {showClock && <section className="field-barracks-break" aria-labelledby="barracks-break">
+                <div><h2 id="barracks-break">{barracksClockTitles[clock.kind]}</h2>
+                    <p>{safetyBrief ? 'Safety brief starts at' : 'Return at'} {formatFieldTime(clock.endsAt)} Pacific</p></div>
+                <strong role="timer" aria-label={safetyBrief ? 'Time until safety brief' : 'Time until break ends'}>{error ? '—' : formatRoundCountdown(Date.parse(clock.endsAt) - now)}</strong>
             </section>}
             {Number.isSafeInteger(board?.celebrationCursor) && board.celebrationCursor >= 0 &&
                 <BarracksPatchCelebrations initialCursor={board.celebrationCursor} request={request} />}
-            {board && <div className="field-barracks-grid" data-side={Boolean(next || board.poll)}>
+            {board && <div className="field-barracks-grid" data-side={Boolean(next || poll)}>
                 <section className="field-barracks-main" data-live={Boolean(current)} aria-labelledby="barracks-round">
                     <div className="field-barracks-kicker">{current ? 'Now playing' : round ? 'Up next' : 'Field schedule'}</div>
                     <h2 id="barracks-round">{round?.title || 'No round on the board'}</h2>
@@ -119,7 +121,7 @@ export default function BarracksTV({ request = requestPublicFieldTool }) {
                         {round.notes && <p className="field-barracks-round-note">{round.notes}</p>}
                     </> : <p>Check here for the next round and its briefing location.</p>}
                 </section>
-                {(next || board.poll) && <aside className="field-barracks-side" aria-label="Upcoming rounds and voting">
+                {(next || poll) && <aside className="field-barracks-side" aria-label="Upcoming rounds and voting">
                     {next && <section className="field-barracks-support" aria-labelledby="barracks-next-round">
                         <div className="field-barracks-kicker">{current ? 'Next round' : 'Then on the field'}</div>
                         <h2 id="barracks-next-round">{next.title}</h2>
@@ -132,7 +134,7 @@ export default function BarracksTV({ request = requestPublicFieldTool }) {
                         </>}</p>
                         <RoundMapViewer key={next.id} round={next} />
                     </section>}
-                    <VotingDisplay poll={board.poll} now={displayTime} stale={Boolean(error)} />
+                    <VotingDisplay poll={poll} now={displayTime} />
                 </aside>}
             </div>}
             {board && <p className="field-barracks-update">Last field update · {formatFieldTime(board.serverNow)} Pacific</p>}

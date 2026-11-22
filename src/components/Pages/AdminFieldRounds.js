@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-    fieldTimeInput, fieldTimeISO, formatFieldTime, formatRoundCountdown, isOpenVote, liveRounds,
+    barracksClockTitles, fieldTimeInput, fieldTimeISO, formatFieldTime, formatRoundCountdown, isOpenVote, liveRounds,
     LIVE_ROUNDS_PATH, ROUND_CATALOG_PATH, STAFF_ROUNDS_PATH, RoundRespawns, runningBarracksClock, useLiveFieldBoard,
 } from './FieldRoundsShared';
 import { FieldPinPicker, readMapPins, roundPinLocation } from './FieldRoundMap';
@@ -16,17 +16,25 @@ const actions = {
     createGame: 'Round added to the field schedule.',
     createPoll: 'Player voting is open.',
     closePoll: 'Voting closed.',
+    clearPoll: 'Vote cleared from Barracks TV and player voting.',
     publishWinner: 'Winning round added to the field schedule.',
     setBarracksClock: 'Countdown sent to Barracks TV.',
     clearBarracksClock: 'TV countdown stopped.',
 };
 
 function BarracksClockControls({ clock, now, disabled, onSave }) {
+    const form = useRef(null);
     const active = runningBarracksClock(clock, now);
-    const name = clock?.kind === 'lunch' ? 'Lunch' : 'Break';
+    const safetyBrief = clock?.kind === 'safetyBrief';
+    const name = barracksClockTitles[clock?.kind];
     const revision = clock?.revision ?? 0;
     function start(kind, durationMinutes) {
         void onSave({ action: 'setBarracksClock', kind, durationMinutes, revision });
+    }
+    function startPreset(kind, minutes) {
+        form.current.elements.kind.value = kind;
+        form.current.elements.minutes.value = minutes;
+        start(kind, minutes);
     }
     function setCustom(event) {
         event.preventDefault();
@@ -36,18 +44,21 @@ function BarracksClockControls({ clock, now, disabled, onSave }) {
     return (
         <section className="field-rounds-panel field-break-controls" aria-labelledby="field-break-title">
             <h2 id="field-break-title">Barracks TV countdown</h2>
-            {active ? <p>{name} ends at {formatFieldTime(clock.endsAt)} · <strong role="timer" aria-label="Break time remaining">
+            {active ? <p>{name} {safetyBrief ? 'starts at' : 'ends at'} {formatFieldTime(clock.endsAt)} · <strong role="timer" aria-label={safetyBrief ? 'Time until safety brief' : 'Break time remaining'}>
                 {formatRoundCountdown(Date.parse(clock.endsAt) - now)}
-            </strong></p> : <p>{clock?.endsAt ? name + ' finished.' : 'No break timer running.'}</p>}
+            </strong></p> : <p>{clock?.endsAt && name ? name + ' countdown finished.' : 'No countdown running.'}</p>}
             <div className="field-rounds-actions">
-                <button type="button" className="btn btn-primary" disabled={disabled} onClick={() => start('break', 5)}>5-minute break</button>
-                <button type="button" className="btn btn-primary" disabled={disabled} onClick={() => start('lunch', 30)}>30-minute lunch</button>
+                <button type="button" className="btn btn-primary" disabled={disabled} onClick={() => startPreset('break', 5)}>5-minute break</button>
+                <button type="button" className="btn btn-primary" disabled={disabled} onClick={() => startPreset('lunch', 30)}>30-minute lunch</button>
+                <button type="button" className="btn btn-primary" disabled={disabled} onClick={() => startPreset('safetyBrief', 60)}>60 min to safety brief</button>
                 {active && <button type="button" className="btn btn-outline-danger" disabled={disabled}
                     onClick={() => void onSave({ action: 'clearBarracksClock', revision })}>Stop timer</button>}
             </div>
-            <form className="field-rounds-form" onSubmit={setCustom}>
+            <form ref={form} className="field-rounds-form" onSubmit={setCustom}>
                 <fieldset className="field-break-custom" disabled={disabled}>
-                    <label>Timer type<select name="kind" defaultValue="break"><option value="break">Break between games</option><option value="lunch">Lunch</option></select></label>
+                    <label>Timer type<select name="kind" defaultValue={active ? clock.kind : 'break'}>
+                        <option value="break">Break between games</option><option value="lunch">Lunch</option><option value="safetyBrief">Safety brief</option>
+                    </select></label>
                     <label>Minutes<input name="minutes" type="number" min="1" max="180" defaultValue="10" required /></label>
                     <button className="btn btn-outline-primary" type="submit">{active ? 'Replace timer' : 'Start custom timer'}</button>
                 </fieldset>
@@ -351,6 +362,12 @@ export default function AdminFieldRounds({ request }) {
             void save({ action: 'closePoll', pollId: poll.id });
         }
     }
+    function clearPoll() {
+        const question = `Clear “${poll.title}” from Barracks TV and player voting?`;
+        if (window.confirm(open ? question + ' Voting will end immediately.' : question)) {
+            void save({ action: 'clearPoll', pollId: poll.id });
+        }
+    }
 
     return (
         <div className="field-rounds" aria-busy={busy}>
@@ -387,15 +404,18 @@ export default function AdminFieldRounds({ request }) {
                     </section>
                     <section className="field-rounds-panel" aria-labelledby="field-rounds-vote">
                         <h2 id="field-rounds-vote">Player voting</h2>
-                        {poll && <div className="field-rounds-vote-results">
+                        {poll ? <div className="field-rounds-vote-results">
                             <h3>{poll.title}</h3>
                             <p>{open ? `Closes ${formatFieldTime(poll.closesAt)}` : 'Voting closed'} · {poll.totalVotes} votes</p>
                             <ul>{poll.options.map(option => <li key={option.modeId}><span>{option.label}</span><strong>{option.votes}</strong></li>)}</ul>
                             {poll.publishedGameId && <p>Winning round published.</p>}
-                        </div>}
-                        {open ? <button className="btn btn-outline-danger" type="button" disabled={disabled} onClick={closePoll}>Close this vote</button> :
-                            catalog ? <PollForm key={poll?.id ?? 'new'} catalog={catalog} now={now} disabled={disabled} onSave={save} /> :
-                                !catalogError && <p role="status">Loading game modes…</p>}
+                            <div className="field-rounds-actions">
+                                {open && <button className="btn btn-outline-secondary" type="button" disabled={disabled} onClick={closePoll}>Close this vote</button>}
+                                <button className="btn btn-outline-danger" type="button" disabled={disabled} onClick={clearPoll}>Clear vote</button>
+                            </div>
+                        </div> : <p>No vote is on Barracks TV.</p>}
+                        {!open && (catalog ? <PollForm key={poll?.id ?? 'new'} catalog={catalog} now={now} disabled={disabled} onSave={save} /> :
+                            !catalogError && <p role="status">Loading game modes…</p>)}
                     </section>
                 </div>
             </>}

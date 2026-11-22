@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { HelmetProvider } from 'react-helmet-async';
 import { MemoryRouter } from 'react-router-dom';
 import { FirebaseContext } from '../Firebase';
@@ -65,4 +65,29 @@ test('a closed poll shows results without an option to vote', async () => {
   expect(screen.getByText('Top vote')).toBeInTheDocument();
   expect(screen.queryByRole('radio')).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Cast my vote' })).not.toBeInTheDocument();
+});
+
+test('a player with a ballot open sees the vote disappear and the next ballot starts with no selection', async () => {
+  jest.useFakeTimers();
+  try {
+    let live = board;
+    global.fetch.mockImplementation(async () => reply(live));
+    renderFor(null);
+    await act(async () => {});
+    fireEvent.click(screen.getByRole('radio', {name:/Countdown/}));
+    expect(screen.getByRole('button', {name:'Cast my vote'})).toBeEnabled();
+
+    live = { ...board, poll:null, canVote:false };
+    await act(async () => { jest.advanceTimersByTime(10000); });
+    expect(screen.getByText(/no live poll right now/i)).toBeInTheDocument();
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', {name:'Cast my vote'})).not.toBeInTheDocument();
+    expect(screen.queryByText(poll.title)).not.toBeInTheDocument();
+
+    live = { ...board, poll:{...poll, id:'new-poll', title:'Choose the evening game'} };
+    await act(async () => { jest.advanceTimersByTime(10000); });
+    expect(screen.getByRole('heading', {name:'Choose the evening game'})).toBeInTheDocument();
+    expect(screen.getByRole('radio', {name:/Countdown/})).not.toBeChecked();
+    expect(screen.getByRole('button', {name:'Cast my vote'})).toBeDisabled();
+  } finally { jest.useRealTimers(); }
 });
