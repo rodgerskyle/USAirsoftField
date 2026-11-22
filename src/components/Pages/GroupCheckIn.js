@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { withFirebase } from '../Firebase';
 import { getGroupGuestSession, guestSessionKey } from '../constants/groupGuestSession';
 import { groupExperienceLabels } from '../constants/groupExperience';
+import { mountGroupMemberPicker } from '../constants/group-member-picker';
 import WaiverStatus from './WaiverStatus';
 import GroupPartySchedule from './GroupPartySchedule';
 import './GroupCheckIn.css';
@@ -13,6 +14,32 @@ const Waiver = React.lazy(() => import('./Waiver'));
 const endpoint = 'https://app.usairsoftfield.com/api/check-in-groups';
 const dateLabel = date => new Intl.DateTimeFormat('en-US', { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(date + 'T00:00:00Z'));
 const fieldToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+
+const profileHref = playerId => '/profilelookup/' + encodeURIComponent(playerId);
+const memberSearchEndpoint = 'https://app.usairsoftfield.com/api/leaderboard';
+
+function OrganizerMemberPicker({ group, busy, onAdd }) {
+  const container = useRef(null);
+  const picker = useRef(null);
+  const latest = useRef(null);
+  latest.current = { group, onAdd };
+
+  useEffect(() => {
+    picker.current = mountGroupMemberPicker(container.current, {
+      endpoint: memberSearchEndpoint, profileHref,
+      rosterIds: () => latest.current.group.entries.map(entry => entry.playerId).filter(Boolean),
+      isFull: () => {
+        const current = latest.current.group;
+        return (current.memberCount ?? current.entries.length) >= current.capacity;
+      },
+      onAdd: playerId => latest.current.onAdd(playerId),
+    });
+    return () => picker.current();
+  }, []);
+  useEffect(() => { picker.current.refresh(); }, [group]);
+
+  return <fieldset disabled={busy}><div ref={container} /></fieldset>;
+}
 
 function RosterName({ label, onSign }) {
   const input = useRef(null);
@@ -42,7 +69,11 @@ async function groupRequest(firebase, session, query, body, signal) {
   current();
   const data = await response.json().catch(() => null);
   current();
-  if (!response.ok || !data) throw new Error(data?.error || 'The group service is unavailable. Try again.');
+  if (!response.ok || !data) {
+    const error = new Error(data?.error || 'The group service is unavailable. Try again.');
+    error.status = response.status;
+    throw error;
+  }
   return data;
 }
 
@@ -92,14 +123,26 @@ function GroupCheckIn({ firebase }) {
 
   useEffect(() => () => operation.current?.abort(), []);
 
-  async function run(work) {
-    if (!session || operation.current) return;
+  async function run(work, propagateError = false) {
+    if (!session || operation.current) {
+      if (propagateError) throw new Error('Wait for the current group update to finish.');
+      return;
+    }
     const controller = new AbortController();
     operation.current = controller;
     setBusy(true);
     setNotice('');
     try { await work(controller.signal); }
-    catch (error) { if (!controller.signal.aborted) setNotice(error.message || 'Your group could not be updated.'); }
+    catch (error) {
+      if (!controller.signal.aborted) {
+        if (error.status === 401 || error.status === 403 || error.status === 404) {
+          setSelected(null);
+          setGroups([]);
+        }
+        setNotice(error.message || 'Your group could not be updated.');
+      }
+      if (propagateError) throw error;
+    }
     finally { if (operation.current === controller) { operation.current = null; setBusy(false); } }
   }
 
@@ -109,6 +152,21 @@ function GroupCheckIn({ firebase }) {
     const list = await groupRequest(firebase, session, '', undefined, signal);
     setGroups(list.groups);
     setNotice(body.action === 'create' ? 'Group created. Share the invitation code with your friends.' : 'Group updated.');
+  }
+
+  function addMember(playerId) {
+    return run(async signal => {
+      const id = selected.id;
+      const data = await groupRequest(firebase, session, '', { action: 'addMember', id, playerId }, signal);
+      const updated = data.group;
+      if (!updated?.isOwner || updated.id !== id || !updated.entries.some(entry => entry.playerId === playerId)) {
+        setSelected(null);
+        throw new Error('Reopen the group to verify its current roster.');
+      }
+      setSelected(updated);
+      const memberCount = updated.memberCount ?? updated.entries.length;
+      setGroups(current => current.map(item => item.id === id ? { ...item, memberCount } : item));
+    }, true);
   }
 
   function create(event) {
@@ -157,6 +215,7 @@ function GroupCheckIn({ firebase }) {
           <ExperienceField label="Your airsoft experience" />
           <label>Organizer’s group code<input name="code" maxLength={64} autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} required /></label><button className="ph-button">Join group</button>
         </fieldset></form><h2>Your groups</h2>{groups.length ? <ul className="visit-groups__choices">{groups.map(group => <li key={group.id}><button disabled={busy} onClick={() => void run(async signal => {
+          setSelected(null);
           const data = await groupRequest(firebase, session, '?id=' + encodeURIComponent(group.id), undefined, signal);
           setSelected(data.group);
         })}><strong>{group.name}</strong><span>{group.kind === 'party' && 'Birthday or event · '}{dateLabel(group.date)} · {group.memberCount} players</span></button></li>)}</ul> : <p>No upcoming groups yet.</p>}</section>
@@ -170,7 +229,9 @@ function GroupCheckIn({ firebase }) {
           <p>Share this code so friends can join on the website or in the Companion. {selected.isOwner && 'You can also add players directly to your roster.'}</p>
           {selected.expiresAt && <p>Group expires <time dateTime={selected.expiresAt}>{new Date(selected.expiresAt).toLocaleString('en-US', { timeZone: 'America/Los_Angeles', dateStyle: 'medium', timeStyle: 'short' })} Pacific</time>.</p>}
           {selected.rosterPrivate && <p>Only the organizer and staff can see the full roster.</p>}
-          <ul className="visit-groups__entries">{selected.entries.map(entry => <li key={entry.id}><div><strong>{entry.displayName}</strong><small>{entry.isYou ? 'You' : entry.kind === 'guest' ? 'Guest player' : 'USAW player'}</small>
+          <ul className="visit-groups__entries">{selected.entries.map(entry => <li key={entry.id}><div><strong>{entry.playerId && (selected.isOwner || entry.isYou)
+              ? <a href={profileHref(entry.playerId)} target="_blank" rel="noopener noreferrer">{entry.displayName}</a> : entry.displayName}</strong><small>{entry.isYou ? 'You' : entry.kind === 'guest' ? 'Guest player' : 'USAW player'}</small>
+            {entry.pending && <small>Added by organizer</small>}
             <small>Experience · {groupExperienceLabels[entry.experienceBand] || groupExperienceLabels.unrated}</small>
             {entry.waiverStatus && <WaiverStatus status={entry.waiverStatus} />}</div>
             {(selected.isOwner || entry.isYou) && <details className="visit-groups__experience"><summary>Edit experience<span className="visually-hidden"> for {entry.displayName}</span></summary>
@@ -179,7 +240,8 @@ function GroupCheckIn({ firebase }) {
               </fieldset></form></details>}
             {entry.canRemove && <button className="ph-button" disabled={busy} onClick={() => void run(signal => change({ action: 'remove', id: selected.id, entryId: entry.id }, signal))}>Remove from group</button>}</li>)}</ul>
           {selected.isOwner ? <><form onSubmit={event => edit('rename', event)} key={selected.id + selected.name}><fieldset disabled={busy}><label>Group name<input name="name" required maxLength={80} defaultValue={selected.name} /></label><button className="ph-button">Save name</button></fieldset></form>
-            <form onSubmit={event => edit('addGuest', event)}><fieldset disabled={busy}><RosterName label="Player name or callsign" onSign={setWaiverInput} /><ExperienceField /><button className="ph-button ph-button-primary">Add player</button></fieldset></form>
+            <OrganizerMemberPicker key={selected.id} group={selected} busy={busy} onAdd={addMember} />
+            <form onSubmit={event => edit('addGuest', event)}><fieldset disabled={busy}><RosterName label="Guest name or callsign" onSign={setWaiverInput} /><ExperienceField /><button className="ph-button ph-button-primary">Add guest</button></fieldset></form>
             <button className="ph-button" disabled={busy} onClick={() => { if (window.confirm('Cancel this planned group and remove its preparation list? Field check-ins and player scores are kept.')) void run(signal => change({ action: 'cancel', id: selected.id }, signal)); }}>Cancel this group</button>
           </> : <button className="ph-button" disabled={busy} onClick={() => void run(signal => change({ action: 'leave', id: selected.id }, signal))}>Leave group</button>}
         </> : <><h2>Get your group ready</h2><p>Select a group or create one to share an invitation code and prepare your party’s list.</p></>}</section>

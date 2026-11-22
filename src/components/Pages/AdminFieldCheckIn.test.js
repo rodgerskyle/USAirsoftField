@@ -1,8 +1,11 @@
 import React from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import AdminFieldCheckIn from './AdminFieldCheckIn';
+import { StaffCardScanner } from './StaffCardScanner';
 
-jest.mock('./StaffCardScanner', () => ({ StaffCardScanner: () => null }), { virtual: true });
+jest.mock('./StaffCardScanner', () => ({ StaffCardScanner: jest.fn() }), { virtual: true });
+
+beforeEach(() => { StaffCardScanner.mockReturnValue(null); });
 
 const date = '2026-11-16';
 const estimates = { unrated: 100, limited: 95, regular: 108, veteran: 125, elite: 155 };
@@ -96,14 +99,15 @@ test('recent check-ins and search matches show their individual waiver status', 
   render(<AdminFieldCheckIn request={request} />);
   const roster = await screen.findByRole('list', { name: 'Recent players' });
   expect(within(roster).getByText('Verification pending')).toBeVisible();
-  fireEvent.change(screen.getByLabelText('Player name, ID or card link'), { target: { value: 'Sam' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Find player' }));
+  const search = screen.getByRole('search', { name: 'Member search' });
+  fireEvent.change(within(search).getByRole('searchbox', { name: 'Member name, ID or card link' }), { target: { value: 'Sam' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Search members' }));
   const results = await screen.findByRole('list', { name: 'Matching players' });
   expect(within(results).getByRole('button', { name: /Sam Lee.*Waiver verified/ })).toBeVisible();
   expect(within(results).getByRole('button', { name: /Sam Lane.*Waiver needed/ })).toBeVisible();
 });
 
-test('resolves a connected scanner Code 128 or an official card link on the website', async () => {
+test('opens staff check-in from a connected member ID, a legacy printed name or an official card link', async () => {
   const playerId = 'Wi23kdJBktOzimVScc29CA728S4k';
   const cardToken = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef';
   const player = {
@@ -113,14 +117,13 @@ test('resolves a connected scanner Code 128 or an official card link on the webs
   };
   const request = jest.fn()
     .mockResolvedValueOnce(initialRoster)
-    .mockResolvedValueOnce({ ...initialRoster, player })
-    .mockResolvedValueOnce({ ...initialRoster, player });
+    .mockResolvedValue({ ...initialRoster, player });
 
   render(<AdminFieldCheckIn request={request} />);
   await screen.findByText('2 checked in');
   expect(screen.queryByRole('button', { name: 'Clear players' })).not.toBeInTheDocument();
-  const input = screen.getByLabelText('Player name, ID or card link');
-  const search = screen.getByRole('button', { name: 'Find player' });
+  const input = screen.getByLabelText('Member name, ID or card link');
+  const search = screen.getByRole('button', { name: 'Search members' });
 
   fireEvent.change(input, { target: { value: ']C0' + playerId } });
   fireEvent.click(search);
@@ -134,6 +137,20 @@ test('resolves a connected scanner Code 128 or an official card link on the webs
   fireEvent.click(search);
   await screen.findByRole('heading', { name: 'Registered Member' });
   expect(request.mock.calls[2][1].body).toEqual({ action: 'lookup', includeBalance: true, cardToken });
+  for (const [value, expected] of [
+    [']C0FoxRiver', { barcodeValue: 'FoxRiver' }],
+    ['https://www.usairsoftfield.com/profilelookup/' + playerId, { playerId }],
+  ]) {
+    fireEvent.change(input, { target: { value } });
+    fireEvent.click(search);
+    await screen.findByRole('heading', { name: 'Registered Member' });
+    expect(request.mock.calls.at(-1)[1].body).toEqual({ action: 'lookup', includeBalance: true, ...expected });
+  }
+  const scanner = StaffCardScanner.mock.calls.at(-1)[0];
+  expect(scanner.verifyLegacyCards).toBe(true);
+  await act(async () => { scanner.onScan({ barcodeValue: 'FoxRiver' }); });
+  expect(request.mock.calls.at(-1)[1].body).toEqual({ action: 'lookup', includeBalance: true, barcodeValue: 'FoxRiver' });
+
 });
 
 test('shows the five official tier ranges and leaves an unverified prior check-in out of those counts', async () => {
@@ -194,9 +211,9 @@ test('clears both sides and the current lookup without letting an older refresh 
   render(<AdminFieldCheckIn request={request} />);
 
   const trigger = await screen.findByRole('button', { name: 'Clear players' });
-  const input = screen.getByLabelText('Player name, ID or card link');
+  const input = screen.getByLabelText('Member name, ID or card link');
   fireEvent.change(input, { target: { value: 'Registered Member' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Find player' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Search members' }));
   await screen.findByRole('heading', { name: checkedInPlayer.displayName });
   fireEvent.click(screen.getByText('Add a walk-on'));
   const walkOn = screen.getByLabelText('Player name or callsign');
@@ -296,8 +313,8 @@ test('starts an individual walk-on from a waiver even when no account matches', 
     .mockResolvedValueOnce({ date, player: { ...pending, waiverStatus: 'signed', side: 'camo' } });
   render(<AdminFieldCheckIn request={request} />);
   await screen.findByText('2 checked in');
-  fireEvent.change(screen.getByLabelText('Player name, ID or card link'), { target: { value: waiverMatch.name } });
-  fireEvent.click(screen.getByRole('button', { name: 'Find player' }));
+  fireEvent.change(screen.getByLabelText('Member name, ID or card link'), { target: { value: waiverMatch.name } });
+  fireEvent.click(screen.getByRole('button', { name: 'Search members' }));
   expect(await screen.findByText(/No matching player/)).toBeVisible();
   const field = screen.getByLabelText('Participant name or waiver reference');
   expect(field).toHaveValue(waiverMatch.name);
@@ -326,9 +343,9 @@ test('selected member waiver search uses their registered name and keeps their a
     .mockResolvedValueOnce({ date, player: { ...member, waiverStatus: 'signed', waiverRef: waiverMatch.ref } });
   render(<AdminFieldCheckIn request={request} />);
   await screen.findByText('2 checked in');
-  const field = screen.getByLabelText('Player name, ID or card link');
+  const field = screen.getByLabelText('Member name, ID or card link');
   fireEvent.change(field, { target: { value: member.playerId } });
-  fireEvent.click(screen.getByRole('button', { name: 'Find player' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Search members' }));
   expect(await screen.findByLabelText('Participant name or waiver reference')).toHaveValue(waiverMatch.name);
   expect(screen.queryByRole('button', { name: 'Find a waiver' })).toBeNull();
   await chooseWaiver();
@@ -379,6 +396,6 @@ test('edits a checked-in walk-on in place and starts the next player without lea
   expect(request.mock.calls[2][1].body).toEqual({ action:'renameWalkOn', date, playerId:saved.playerId, revision:3, rosterVersion:'initial', displayName:'River Fox' });
   expect(within(roster).getByText('River Fox')).toBeVisible();
   fireEvent.click(screen.getByRole('button', { name:'Check in next player' }));
-  expect(screen.getByLabelText('Player name, ID or card link')).toHaveFocus();
+  expect(screen.getByLabelText('Member name, ID or card link')).toHaveFocus();
   expect(screen.queryByRole('region', { name:'River Fox' })).toBeNull();
 });

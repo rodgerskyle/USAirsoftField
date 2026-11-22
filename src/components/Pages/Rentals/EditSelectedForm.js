@@ -3,10 +3,9 @@ import Box from '@mui/material/Box';
 import MUIButton from '@mui/material/Button';
 import Collapse from '@mui/material/Collapse';
 import IconButton from '@mui/material/IconButton';
-import InputBase from '@mui/material/InputBase';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
-import { Add, Cancel, CheckCircle, Delete, Edit, Close, AutoAwesome } from '@mui/icons-material';
+import { Add, CheckCircle, Delete, Edit, Close, AutoAwesome } from '@mui/icons-material';
 import React, { Component, useState, useEffect } from 'react';
 import { Button, Spinner } from 'react-bootstrap/';
 import * as ROLES from '../../constants/roles';
@@ -346,13 +345,82 @@ const TransactionDialog = ({ open, onClose, onSubmit, error, value, onChange }) 
     );
 };
 
+function EquipmentNumberField({ rental, label, canIssue, onSave, onRemove }) {
+    const savedNumber = String(rental.number ?? '');
+    const [draft, setDraft] = useState(null);
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState('');
+    const number = draft?.value ?? savedNumber;
+
+    function discard() {
+        setDraft(null);
+        setError('');
+    }
+
+    async function save(event) {
+        event.preventDefault();
+        if (!canIssue || saving || !draft || !number.trim()) return;
+        if (savedNumber !== draft.original && savedNumber !== number.trim()) {
+            setError('Another desk changed this number. Cancel to see the current number.');
+            return;
+        }
+        setSaving(true);
+        setError('');
+        try {
+            await onSave(number.trim());
+            discard();
+        } catch (failure) {
+            setError(failure.message || 'Could not save this equipment number. Try again.');
+        } finally {
+            setSaving(false);
+        }
+    }
+
+    return <li className="rental-unit">
+        <div className="rental-unit-heading">
+            <strong>{label}</strong>
+            {rental.checked && <CheckCircle titleAccess="Returned" fontSize="small" color="success" />}
+            {canIssue && <IconButton type="button" className="rental-unit-remove"
+                aria-label={'Remove ' + label} disabled={saving} onClick={onRemove}>
+                <Close fontSize="small" />
+            </IconButton>}
+        </div>
+        <form className="rental-unit-number" onSubmit={save}>
+            <label>Equipment number
+                <input className="form-control" type="text" inputMode="numeric" autoComplete="off"
+                    aria-label={label + ' equipment number'} placeholder="Enter number"
+                    value={number} readOnly={!canIssue || saving}
+                    onChange={e => {
+                        setError('');
+                        setDraft({ original: draft?.original ?? savedNumber, value: e.target.value });
+                    }} />
+            </label>
+            {canIssue && draft && <div className="rental-unit-actions">
+                <MUIButton type="submit" size="small" variant="contained" disabled={saving || !number.trim()}>
+                    {saving ? 'Saving…' : 'Save number'}
+                </MUIButton>
+                <MUIButton type="button" size="small" variant="outlined" disabled={saving} onClick={discard}>
+                    Cancel
+                </MUIButton>
+            </div>}
+            {error && <p role="alert">{error}</p>}
+        </form>
+    </li>;
+}
+
 const ParticipantCard = ({ participant, index, canIssue, onDelete, onRemoveRental, onAddRental, availableRentals, onEditRentalNumber, onRename }) => {
     const [nameEdit, setNameEdit] = useState(null);
     const [savingName, setSavingName] = useState(false);
     const [nameMessage, setNameMessage] = useState(null);
     const [showRentalMenu, setShowRentalMenu] = useState(false);
-    const [editingRental, setEditingRental] = useState(null);
-    const [tempNumber, setTempNumber] = useState('');
+
+    const rentals = participant.rentals || [];
+    const unitsByLabel = new Map();
+    for (const rental of rentals) {
+        const units = unitsByLabel.get(rental.label) || [];
+        units.push(rental);
+        unitsByLabel.set(rental.label, units);
+    }
 
     async function saveName(event) {
         event.preventDefault();
@@ -391,24 +459,6 @@ const ParticipantCard = ({ participant, index, canIssue, onDelete, onRemoveRenta
         }, []);
     };
 
-    const handleEditNumber = (rental, rentalIndex) => {
-        setEditingRental(rentalIndex);
-        setTempNumber(rental.number || '');
-    };
-
-    const handleSubmitNumber = (rentalIndex) => {
-        if (tempNumber.trim()) {
-            onEditRentalNumber(index, rentalIndex, tempNumber.trim());
-        }
-        setEditingRental(null);
-        setTempNumber('');
-    };
-
-    const handleCancelEdit = () => {
-        setEditingRental(null);
-        setTempNumber('');
-    };
-
     return (
         <Paper className="participant-card" elevation={2} key={index}>
             <div className="participant-header">
@@ -440,53 +490,18 @@ const ParticipantCard = ({ participant, index, canIssue, onDelete, onRemoveRenta
             </form>}
             {nameMessage && <p role={nameMessage.failed ? 'alert' : 'status'}>{nameMessage.text}</p>}
             {/* Rental Items List */}
-            {participant.rentals && participant.rentals.length > 0 && (
-                <div className="participant-rentals-list">
-                    {participant.rentals?.map((rental, rentalIndex) => (
-                        <div key={rentalIndex} className="rental-item">
-                            <div className="rental-content">
-                                <Chip
-                                    label={rental.label}
-                                    onDelete={canIssue ? () => onRemoveRental(index, rentalIndex) : undefined}
-                                    className="rental-chip"
-                                    icon={rental.checked ? <CheckCircle color="success" /> : null}
-                                />
-                                {editingRental === rentalIndex ? (
-                                    <Paper component="form" className="rental-number-edit"
-                                        onSubmit={(e) => {
-                                            e.preventDefault();
-                                            handleSubmitNumber(rentalIndex);
-                                        }}
-                                    >
-                                        <InputBase
-                                            value={tempNumber}
-                                            onChange={(e) => setTempNumber(e.target.value)}
-                                            placeholder="Rental #"
-                                            inputProps={{ 'aria-label': rental.label + ' equipment number' }}
-                                            type="number"
-                                            autoFocus
-                                            className="rental-number-input"
-                                        />
-                                        <IconButton size="small" type="submit" aria-label="Save equipment number">
-                                            <CheckCircle fontSize="small" />
-                                        </IconButton>
-                                        <IconButton size="small" aria-label="Cancel number edit" onClick={handleCancelEdit}>
-                                            <Cancel fontSize="small" />
-                                        </IconButton>
-                                    </Paper>
-                                ) : (
-                                    <MUIButton
-                                        type="button" size="small" variant="outlined" disabled={!canIssue}
-                                        aria-label={'Edit ' + rental.label + ' equipment number'}
-                                        onClick={() => handleEditNumber(rental, rentalIndex)}
-                                    >
-                                        {rental.number || 'Set number'}
-                                    </MUIButton>
-                                )}
-                            </div>
-                        </div>
-                    ))}
-                </div>
+            {rentals.length > 0 && (
+                <ul className="participant-rentals-list" aria-label={'Equipment for ' + participant.name}>
+                    {rentals.map((rental, rentalIndex) => {
+                        const units = unitsByLabel.get(rental.label);
+                        const label = units.length > 1
+                            ? rental.label + ' (' + (units.indexOf(rental) + 1) + ' of ' + units.length + ')' : rental.label;
+                        return <EquipmentNumberField key={rental.id || rental.value + '-' + rentalIndex}
+                            rental={rental} label={label} canIssue={canIssue}
+                            onSave={number => onEditRentalNumber(index, rentalIndex, number)}
+                            onRemove={() => onRemoveRental(index, rentalIndex)} />;
+                    })}
+                </ul>
             )}
 
             {/* Quick Add Rental Menu */}
@@ -1377,7 +1392,7 @@ class EditSelectedForm extends Component {
         updatedParticipants[participantIndex].rentals[rentalIndex].number = number;
 
         // Update state and firebase
-        this.saveRoster({ participants: updatedParticipants }).catch(error => this.setState({ error: error.message }));
+        return this.saveRoster({ participants: updatedParticipants });
     };
 
     getAvailableItemsSummary = () => {

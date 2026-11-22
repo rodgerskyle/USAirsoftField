@@ -63,12 +63,63 @@ test('keeps current stock assignments when a second desk adds a renter during eq
     await screen.findByRole('button', { name: 'Import arrivals' });
     const late = { name: 'Arrival', ref: 'walk-on-late' };
     current = { ...current, participants: [...current.participants, late] };
-    fireEvent.click(screen.getByText('8'));
-    const input = screen.getByPlaceholderText('Rental #');
+    const input = screen.getByRole('textbox', { name: 'Vest equipment number' });
     fireEvent.change(input, { target: { value: '12' } });
     fireEvent.submit(input.closest('form'));
     await waitFor(() => expect(current.participants[0].rentals[0].number).toBe('12'));
     expect(current.participants[1]).toMatchObject(late);
+});
+
+test('numbers each issued unit directly and keeps a canceled edit separate', async () => {
+    const second = { ...gear, id: 'vest-9', number: '' };
+    current.participants = [{ ...handEntered, rentals: [gear, second] }];
+    const view = render(<EditForm {...formProps()} />);
+    const list = await screen.findByRole('list', { name: 'Equipment for Walk-on' });
+    const firstBox = within(list).getByRole('textbox', { name: 'Vest (1 of 2) equipment number' });
+    const secondBox = within(list).getByRole('textbox', { name: 'Vest (2 of 2) equipment number' });
+    expect(firstBox).toHaveValue('8');
+    expect(secondBox).toHaveAttribute('inputmode', 'numeric');
+    fireEvent.change(firstBox, { target: { value: '88' } });
+    fireEvent.change(secondBox, { target: { value: '0042' } });
+    fireEvent.click(within(firstBox.closest('form')).getByRole('button', { name: 'Cancel' }));
+    expect(firstBox).toHaveValue('8');
+    expect(secondBox).toHaveValue('0042');
+    expect(runTransaction).not.toHaveBeenCalled();
+    fireEvent.click(within(secondBox.closest('form')).getByRole('button', { name: 'Save number' }));
+    await waitFor(() => expect(current.participants[0].rentals).toEqual([gear, { ...second, number: '0042' }]));
+    view.rerender(<EditForm {...formProps()} />);
+    expect(secondBox).toHaveValue('0042');
+    expect(within(list).queryByRole('button', { name: 'Save number' })).toBeNull();
+});
+
+test('opens a number field for equipment issued through Edit Form and Add Participant', async () => {
+    const member = { name: 'Test Driver', username: 'driver', nameLower: 'test driver', usernameLower: 'driver' };
+    current.participants = [];
+    current.available = [{ id: 'reserve-mask', value: 'mask', label: 'Full face mask' }];
+    const desk = { ...firebase, users: () => 'users', user: id => 'users/' + id };
+    query.mockImplementation(path => path);
+    get.mockImplementation(async path => {
+        const result = path === 'users' ? { driver: member } : path === 'users/driver' ? member : null;
+        return { exists: () => !!result, val: () => result,
+            forEach: visit => Object.entries(result || {}).forEach(([key, row]) => visit({ key, val: () => row })) };
+    });
+    const view = render(<EditForm {...formProps()} firebase={desk} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Add Participant' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Members' }));
+    fireEvent.change(await screen.findByPlaceholderText(/Search members by/), { target: { value: 'driver' } });
+    fireEvent.click(await screen.findByText('Test Driver'));
+    await waitFor(() => expect(current.participants).toHaveLength(1));
+    view.rerender(<EditForm {...formProps()} firebase={desk} />);
+    const card = (await screen.findByRole('heading', { name: 'Test Driver' })).closest('.participant-card');
+    fireEvent.click(within(card).getByRole('button', { name: 'Add Rental' }));
+    fireEvent.click(await within(card).findByRole('button', { name: /Full face mask/ }));
+    await waitFor(() => expect(current.participants[0].rentals).toHaveLength(1));
+    view.rerender(<EditForm {...formProps()} firebase={desk} />);
+    const box = within(card).getByRole('textbox', { name: 'Full face mask equipment number' });
+    fireEvent.change(box, { target: { value: '007' } });
+    fireEvent.click(within(card).getByRole('button', { name: 'Save number' }));
+    await waitFor(() => expect(current.participants[0].rentals[0].number).toBe('007'));
+    expect(current.participants[0].ref).toBe('driver');
 });
 
 test('issues one available item to the selected group participant alongside a handwritten renter', async () => {
@@ -152,8 +203,7 @@ test('protects an older manually selected form against a reused key during a pen
     fireEvent.click(screen.getByRole('button', { name: 'Edit Form' }));
     await screen.findByRole('button', { name: 'Import arrivals' });
     current = { ...current, createRequestId: 'new-record', name: 'Replacement' };
-    fireEvent.click(screen.getByText('8'));
-    const input = screen.getByPlaceholderText('Rental #');
+    const input = screen.getByRole('textbox', { name: 'Vest equipment number' });
     fireEvent.change(input, { target: { value: '17' } });
     fireEvent.submit(input.closest('form'));
     expect(await screen.findByRole('alert')).toHaveTextContent('rental form changed');

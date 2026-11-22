@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import { readScannedMemberCard } from '../constants/scoreCards';
+import { isLegacyCardName, readScannedMemberCard, readScannedPlayerProfile } from '../constants/scoreCards';
 import { StaffCardScanner } from './StaffCardScanner';
 import { groupExperienceLabels } from '../constants/groupExperience';
 import WaiverStatus from './WaiverStatus';
@@ -62,8 +62,14 @@ function lookupInput(raw) {
   const value = raw.trim();
   const token = readScannedMemberCard(value);
   if (token) return { cardToken: token };
-  const barcodeId = /^\]C[01]([A-Za-z0-9_-]{10,128})$/.exec(value)?.[1];
-  if (barcodeId) return { playerId: barcodeId };
+  const profileId = readScannedPlayerProfile(value);
+  if (profileId && /^[A-Za-z0-9_-]{10,128}$/.test(profileId)) return { playerId: profileId };
+  const barcodeId = /^\]C[01](.*)$/.exec(value)?.[1];
+  if (barcodeId !== undefined) {
+    if (isLegacyCardName(barcodeId)) return { barcodeValue: barcodeId };
+    if (/^[A-Za-z0-9_-]{10,128}$/.test(barcodeId)) return { playerId: barcodeId };
+    throw new Error('Scan the member card again or enter a player name or ID.');
+  }
   if (/^https?:/i.test(value)) throw new Error('Enter a USAW membership card link or search by player name or ID.');
   if (value.length < 2 || value.length > 128) throw new Error('Enter 2–128 characters from a player name or ID.');
   return { query: value };
@@ -551,13 +557,13 @@ export default function AdminFieldCheckIn({ request }) {
       <p className="admin-checkin__date">{dateLabel}</p>
       <div className="admin-checkin__columns">
         <section className="admin-checkin__card" aria-labelledby="admin-checkin-find">
-          <h2 id="admin-checkin-find">Find a player</h2>
-          <form className="admin-checkin__form" onSubmit={submitLookup}>
+          <h2 id="admin-checkin-find">Member search</h2>
+          <form className="admin-checkin__form" role="search" aria-labelledby="admin-checkin-find" onSubmit={submitLookup}>
             <label htmlFor="admin-checkin-player">
-              Player name, ID or card link
-              <input id="admin-checkin-player" ref={memberInput} type="text" maxLength={500} autoCapitalize="none" autoComplete="off" autoCorrect="off" spellCheck={false} required readOnly={checkInLocked} onChange={resetLookup} />
+              Member name, ID or card link
+              <input id="admin-checkin-player" ref={memberInput} type="search" enterKeyHint="search" maxLength={500} autoCapitalize="none" autoComplete="off" autoCorrect="off" spellCheck={false} required readOnly={checkInLocked} onChange={resetLookup} />
             </label>
-            <button className="btn btn-primary" type="submit" disabled={checkInLocked}>Find player</button>
+            <button className="btn btn-primary" type="submit" disabled={checkInLocked}>Search members</button>
             {!selected && <button type="button" className="btn btn-outline-primary" disabled={checkInLocked}
               aria-expanded={walkOnWaiverQuery !== null} aria-controls="admin-checkin-waiver-search"
               onClick={() => {
@@ -566,8 +572,8 @@ export default function AdminFieldCheckIn({ request }) {
                 if (open) setWalkOnWaiverQuery(memberInput.current.value.trim());
               }}>Find a waiver</button>}
           </form>
-          <StaffCardScanner disabled={checkInLocked} onScan={lookup} />
-          <p className="admin-checkin__hint">Scan with the camera or a connected reader, or enter the player’s name or ID.</p>
+          <StaffCardScanner verifyLegacyCards disabled={checkInLocked} onScan={lookup} />
+          <p className="admin-checkin__hint">Point the camera at the QR code or barcode on the member’s USAW card. You can also type their name or scan into the search field.</p>
           {status && <p className="admin-checkin__status" role="status">{status}</p>}
           {error && <p className="alert alert-danger" role="alert">{error}</p>}
           {matches.length > 0 && <PlayerRows players={matches} onSelect={lookup} disabled={checkInLocked} />}

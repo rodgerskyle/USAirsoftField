@@ -160,3 +160,69 @@ test('saves a roster spelling correction against the selected entry and reviewed
   expect(request.mock.calls[2][1].body).toEqual({action:'renameEntry',id,version:group.version,entryId:group.entries[0].id,displayName:'Jordan Ray'});
   expect(within(screen.getByText('Jordan Ray',{selector:'strong'}).closest('li')).getByText('Waiver verified')).toBeVisible();
 });
+
+test('staff can create a party in the directory, safely retry, and start with an empty roster', async () => {
+  const previous = window.crypto;
+  Object.defineProperty(window, 'crypto', { configurable: true, value: { randomUUID: () => id } });
+  try {
+    const group = { ...initial, name: 'November birthday', code: 'november-birthday-7', entries: [], partyStatus: null, party: null };
+    const request = jest.fn().mockResolvedValueOnce(list(null)).mockRejectedValueOnce(new Error('Connection interrupted'))
+      .mockResolvedValueOnce({ group }).mockResolvedValueOnce(list(group));
+    open(request, '');
+    const toggle = screen.getByRole('button', { name: 'New group' });
+    await waitFor(() => expect(toggle).toBeEnabled());
+    fireEvent.click(toggle);
+    const form = within(screen.getByRole('form', { name: 'New group' }));
+    fireEvent.change(form.getByLabelText('New group name'), { target: { value: group.name } });
+    fireEvent.change(form.getByLabelText('Visit date'), { target: { value: date } });
+    fireEvent.change(form.getByLabelText('Visit type'), { target: { value: 'party' } });
+    fireEvent.change(form.getByLabelText('Expected players'), { target: { value: '7' } });
+    fireEvent.submit(screen.getByRole('form', { name: 'New group' }));
+    expect(await screen.findByText('Connection interrupted')).toBeVisible();
+    expect(form.getByLabelText('New group name')).toHaveValue(group.name);
+    fireEvent.submit(screen.getByRole('form', { name: 'New group' }));
+    const detail = within(screen.getByRole('region', { name: 'Selected group' }));
+    expect(await detail.findByRole('heading', { name: group.name })).toBeVisible();
+    expect(detail.getByLabelText('Invitation code')).toHaveValue(group.code);
+    expect(detail.getByText('No players on the list yet.')).toBeVisible();
+    expect(detail.getByRole('link', { name: 'Open rental form' })).toHaveAttribute('href', '/admin/rentalform?view=new&group=' + id);
+    expect(request.mock.calls[1][1].body).toEqual({ action: 'create', requestId: id, name: group.name, kind: 'party', date, headcount: 7 });
+    expect(request.mock.calls[2][1].body).toEqual(request.mock.calls[1][1].body);
+    expect(request.mock.calls[3][0]).toBe('/api/staff-groups?date=' + date + '&page=1');
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  } finally {
+    Object.defineProperty(window, 'crypto', { configurable: true, value: previous });
+  }
+});
+
+test('staff can find a registered profile and add its account to an existing group', async () => {
+  const member = { id: 'profile-member-42', name: 'River' };
+  const previous = global.fetch;
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ players: [member], page: 1, totalPages: 1 }) });
+  try {
+    const added = { ...initial, version: 'version-two', entries: [...initial.entries, {
+      id: 'new-entry', playerId: member.id, displayName: member.name, kind: 'player', canRemove: true,
+    }] };
+    const request = jest.fn().mockResolvedValueOnce({ group: initial }).mockResolvedValueOnce(list(initial))
+      .mockResolvedValueOnce({ group: added }).mockResolvedValueOnce(list(added))
+      .mockResolvedValueOnce({ group: initial }).mockResolvedValueOnce(list(initial));
+    open(request);
+    const detail = within(screen.getByRole('region', { name: 'Selected group' }));
+    const search = await detail.findByRole('search', { name: 'Group member search' });
+    fireEvent.change(within(search).getByRole('searchbox'), { target: { value: 'River' } });
+    fireEvent.submit(search);
+    const add = await detail.findByRole('button', { name: 'Add to group' });
+    expect(detail.getByRole('link', { name: 'View profile' })).toHaveAttribute('href', '/profilelookup/' + member.id);
+    fireEvent.click(add);
+    expect(await screen.findByText('Member added to the group.')).toBeVisible();
+    expect(request.mock.calls[2][1].body).toEqual({ action: 'addMember', id, version: initial.version, playerId: member.id });
+    expect(detail.getByRole('link', { name: 'View profile for River' })).toHaveAttribute('href', '/profilelookup/' + member.id);
+    const nextSearch = detail.getByRole('search');
+    fireEvent.change(within(nextSearch).getByRole('searchbox'), { target: { value: 'River' } });
+    fireEvent.submit(nextSearch);
+    expect(await detail.findByRole('button', { name: 'On roster' })).toBeDisabled();
+    fireEvent.click(detail.getByRole('button', { name: 'Remove River' }));
+    expect(await screen.findByText('Player removed from the group.')).toBeVisible();
+    expect(request.mock.calls[4][1].body).toEqual({ action: 'removeMember', id, version: added.version, entryId: 'new-entry' });
+  } finally { global.fetch = previous; }
+});

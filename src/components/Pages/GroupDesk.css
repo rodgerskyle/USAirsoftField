@@ -1,3 +1,4 @@
+@import "./GroupMemberPicker.css";
 .group-desk {
   --desk-line: var(--admin-border, var(--line, #a9b6c5));
   --desk-surface: var(--admin-surface, var(--card, #fff));
@@ -8,6 +9,12 @@
 .group-desk__section { min-width: 0; border: 1px solid var(--desk-line); border-radius: 14px; padding: clamp(1rem, 2vw, 1.55rem); background: var(--desk-surface); }
 .group-desk__section h2 { margin: 0 0 .65rem; font-size: 1.45rem; overflow-wrap: anywhere; }
 .group-desk__section h3 { margin: 1.25rem 0 .5rem; font-size: 1.1rem; }
+.group-desk__directory-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .65rem; }
+.group-desk__directory-heading h2 { margin: 0; }
+.group-desk .group-desk__create[hidden] { display: none; }
+.group-desk__create { border-block: 1px solid var(--desk-line); padding: .9rem 0; }
+.group-desk__create small { flex-basis: 100%; }
+.group-desk__create .group-desk__actions { margin: 0; }
 .group-desk__form, .group-desk__code, .group-desk__actions { display: flex; flex-wrap: wrap; align-items: end; gap: .65rem; margin: .9rem 0; }
 .group-desk__form label, .group-desk__code label { display: grid; gap: .3rem; flex: 1 1 9rem; margin: 0; font-weight: 600; }
 .group-desk input, .group-desk select { min-width: 0; width: 100%; min-height: 44px; padding: .5rem .65rem; border: 1px solid var(--desk-line); border-radius: 6px; background: var(--desk-surface); color: inherit; font: inherit; }

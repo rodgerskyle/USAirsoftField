@@ -1,0 +1,24 @@
+.group-member-picker { min-width: 0; margin-block: 1.25rem; }
+.group-member-picker h3 { margin: 0 0 .6rem; font-size: 1.15rem; }
+.group-member-picker form, .group-member-picker nav, .group-member-picker li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .6rem .85rem;
+}
+.group-member-picker form { align-items: end; }
+.group-member-picker label {
+  display: grid;
+  flex: 1 1 14rem;
+  gap: .35rem;
+  margin: 0;
+  min-width: 0;
+}
+.group-member-picker input { width: 100%; min-width: 0; }
+.group-member-picker ul { list-style: none; padding: 0; margin: .5rem 0; }
+.group-member-picker li { padding: .65rem 0; border-bottom: 1px solid var(--desk-line, var(--line, #8599b467)); }
+.group-member-picker li > div { flex: 1 1 11rem; min-width: 0; overflow-wrap: anywhere; }
+.group-member-picker small { display: block; font-size: .83rem; }
+.group-member-picker button, .group-member-picker input, .group-member-picker a { min-height: 44px; }
+.group-member-picker a { display: inline-flex; align-items: center; text-decoration: underline; }
+.group-member-picker [role=status]:empty { margin: 0; }

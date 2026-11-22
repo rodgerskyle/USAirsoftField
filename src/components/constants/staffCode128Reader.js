@@ -106,7 +106,7 @@ function decodeRuns(runs, acceptsAdditionalValue) {
 }
 
 function decodeLine(samples, count, low, high, acceptsAdditionalValue) {
-  if (count < 100 || high - low < 65) return null;
+  if (count < 100 || high - low < 40) return null;
   const cutoff = (high + low) / 2;
   const runs = [];
   let dark = false;

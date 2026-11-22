@@ -128,7 +128,7 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
     && (!rosterVersion || assignments.rosterVersion === rosterVersion)
     && group?.entries.length === positions.size && group.entries.every(entry => positions.has(entry.id));
 
-  const cleared = position => position && (position.side || position.waiverStatus === 'signed');
+  const cleared = position => position && !position.otherGroup && (position.side || position.waiverStatus === 'signed');
   const groupCleared = fresh && group.entries.length > 0 && group.entries.every(entry => cleared(positions.get(entry.id)));
 
   function linkWaiver(entry, match) {
@@ -150,7 +150,7 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
     });
   }
 
-  const readyCount = fresh ? [...positions.values()].filter(row => !row.side && row.waiverStatus === 'signed').length : 0;
+  const readyCount = fresh ? [...positions.values()].filter(row => !row.otherGroup && !row.side && row.waiverStatus === 'signed').length : 0;
   function assign(side, entry, readyOnly = false) {
     if (!current || !fresh || !(readyOnly ? readyCount : entry ? cleared(positions.get(entry.id)) : groupCleared)) return;
     void run(async signal => {
@@ -255,9 +255,9 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
           const playerName = position?.displayName ?? entry.displayName;
           const experience = position?.experienceBand ?? entry.experienceBand;
           return <li className="group-placement__player" key={entry.id}>
-            <strong>{playerName}</strong><small>{groupExperienceLabels[experience] || groupExperienceLabels.unrated}{position && ' · ' + (teamLabels[position.side] || 'Awaiting check-in')}</small>
+            <strong>{playerName}</strong><small>{groupExperienceLabels[experience] || groupExperienceLabels.unrated}{position && ' · ' + (position.otherGroup ? 'On another group today' : teamLabels[position.side] || 'Awaiting check-in')}</small>
             <WaiverStatus status={waiverStatus} />
-            {current && position && !position.side && waiverStatus !== 'signed' &&
+            {current && position && !position.otherGroup && !position.side && waiverStatus !== 'signed' &&
               <StaffWaiverPicker request={request} disabled={locked} name={entry.displayName} onChoose={match => linkWaiver(entry, match)} />}
             {current && <div className="group-placement__actions">
               {Object.entries(teamLabels).map(([side, label]) => <button type="button" className="btn btn-outline-primary"
