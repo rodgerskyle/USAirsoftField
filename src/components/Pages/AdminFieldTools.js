@@ -14,7 +14,6 @@ import AdminFieldReports from './AdminFieldReports';
 import AdminFieldFeedback from './AdminFieldFeedback';
 import AdminFieldMissionTools from './AdminFieldMissionTools';
 import AdminAccountUnlock from './AdminAccountUnlock';
-import DeskNavigation from '../constants/DeskNavigation';
 import '../constants/admin.css';
 import './AdminDashboard.css';
 import './AdminFieldTools.css';
@@ -174,8 +173,6 @@ function StaffToolsWorkspace({ firebase, uid, tool }) {
             </button>
           )}
         </header>
-
-        <DeskNavigation admin />
 
         {notice && <p className="field-tools__notice" role="alert">{notice}</p>}
         {unlocked

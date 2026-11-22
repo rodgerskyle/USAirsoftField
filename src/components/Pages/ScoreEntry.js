@@ -18,6 +18,7 @@ import { StaffCardScanner } from './StaffCardScanner';
 import { ScorePatchAwards, emptyPatchSelection } from './ScorePatchAwards';
 import { FlaggedRoundReceipts, requestScoreReceipts } from './FlaggedRoundReceipts';
 import '../constants/admin.css';
+import FieldSectionLinks from './FieldSectionLinks';
 import './ScoreEntry.css';
 
 const teamNames = { camo: 'Camo · Yellow', solid: 'Solid · Blue' };
@@ -357,14 +358,18 @@ function ScoreEntry({ firebase, actor }) {
             <Helmet><title>US Airsoft Field: Wins and losses</title></Helmet>
             <Container fluid className="admin-content">
                 <div className="admin-page-header">
-                    <h2 className="admin-header">Wins and losses</h2>
+                    <h1 className="admin-header">Wins and losses</h1>
                     <Breadcrumb className="admin-breadcrumb admin-page-breadcrumb">
                         <LinkContainer to="/admin"><Breadcrumb.Item>Admin</Breadcrumb.Item></LinkContainer>
                         <Breadcrumb.Item active>Wins and losses</Breadcrumb.Item>
                     </Breadcrumb>
                 </div>
+                <FieldSectionLinks label="Score desk sections" items={[
+                    ['score-desk-round', 'Game setup'], ['score-desk-player', 'Player scoring'],
+                    ['score-desk-awards', 'Awards'], ['score-desk-recent', 'Results'], ['score-desk-flags', 'Receipt flags'],
+                ]} />
                 <Card className="admin-panel-card">
-                    <Card.Header>Round details</Card.Header>
+                    <Card.Header as="h2" id="score-desk-round" tabIndex={-1}>Round details</Card.Header>
                     <Card.Body>
                         <div className="score-entry-context">
                             <Form.Group controlId="score-mode"><Form.Label>Game mode</Form.Label>
@@ -382,14 +387,10 @@ function ScoreEntry({ firebase, actor }) {
                             <Button variant="outline-secondary" disabled={busy} onClick={startRound}>Start new round</Button>
                         </div>
                         <Form.Text id="score-mode-help">Choose another mode to score the next game. Use Start new round to play the same mode again.</Form.Text>
-                        <ScorePatchAwards firebase={firebase} mode={round.mode} player={selected && nameOf(selected)}
-                            member={selected} roundSide={round.side}
-                            disabled={Boolean(busy || saved || blocks)} selection={patchSelection} onChange={setPatchSelection}
-                            jobs={desk.patchJobs || []} updateJob={updatePatchJob} />
                     </Card.Body>
                 </Card>
                 <Card className="admin-panel-card admin-points-card">
-                    <Card.Header className="score-entry-section-heading">Find a player
+                    <Card.Header className="score-entry-section-heading"><h2 id="score-desk-player" tabIndex={-1}>Find a player</h2>
                         <Button variant="outline-secondary" type="button" disabled={busy} onClick={clearEntries}>Clear entries</Button>
                     </Card.Header>
                     <Card.Body>
@@ -432,6 +433,10 @@ function ScoreEntry({ firebase, actor }) {
                             {saved ? <p role="status">{resultLabel(saved.outcome)} already recorded for this player in this round.</p>
                                 : blocks ? <p>Review this player’s pending submission below.</p>
                                 : !round.mode || !round.side ? <p>Select the game mode and team to record a result.</p> : null}
+                            {round.mode && !saved && !blocks && <p className="score-entry-award-link">
+                                <a href="#score-desk-awards">{patchSelection.badgeIds.length
+                                    ? 'Change selected patches (' + patchSelection.badgeIds.length + ')' : 'Choose patches for this result'}</a>
+                            </p>}
                             <div className="score-entry-mode">
                                 {(resultHint === 'loss' ? ['loss', 'win'] : ['win', 'loss']).map(outcome =>
                                     <Button key={outcome} className={'score-result-' + outcome} variant={outcome === 'win' ? 'success' : 'danger'}
@@ -441,8 +446,18 @@ function ScoreEntry({ firebase, actor }) {
                         </section>}
                     </Card.Body>
                 </Card>
+                <Card className="admin-panel-card">
+                    <Card.Header as="h2" id="score-desk-awards" tabIndex={-1}>Patches &amp; Battle Badges</Card.Header>
+                    <Card.Body>
+                        <ScorePatchAwards firebase={firebase} mode={round.mode} player={selected && nameOf(selected)}
+                            member={selected} roundSide={round.side}
+                            disabled={Boolean(busy || saved || blocks)} selection={patchSelection} onChange={setPatchSelection}
+                            jobs={desk.patchJobs || []} updateJob={updatePatchJob} />
+                        {selected && !saved && <a className="score-entry-return" href="#score-desk-player">Return to player scoring</a>}
+                    </Card.Body>
+                </Card>
                 {selected && history && <Card className="admin-panel-card">
-                    <Card.Header ref={historyPanel} tabIndex={-1}>Recorded results · {nameOf(selected)}</Card.Header>
+                    <Card.Header as="h2" ref={historyPanel} tabIndex={-1}>Recorded results · {nameOf(selected)}</Card.Header>
                     <Card.Body>
                         {correction ? <div className="score-entry-correction" aria-live="polite">
                             <strong>Remove one {correction.outcome} on {dateOf(correction)}?</strong>
@@ -482,7 +497,7 @@ function ScoreEntry({ firebase, actor }) {
                     </Card.Body>
                 </Card>}
                 {(visible.length > 0 || hiddenCount > 0) && <Card className="admin-panel-card">
-                    <Card.Header>Pending confirmations</Card.Header>
+                    <Card.Header as="h2">Pending confirmations</Card.Header>
                     <Card.Body>
                         {visible.map(op => {
                             const member = membersById.get(op.uid);
@@ -508,7 +523,7 @@ function ScoreEntry({ firebase, actor }) {
                     </Card.Body>
                 </Card>}
                 <Card className="status-card-admin admin-panel-card admin-status-card">
-                    <Card.Header>Recent results</Card.Header>
+                    <Card.Header as="h2" id="score-desk-recent" tabIndex={-1}>Recent results</Card.Header>
                     <Card.Body className="status-card-body-admin" aria-live="polite" aria-relevant="additions text">
                         {recent.length ? recent.map((item, index) => {
                             const member = membersById.get(item.uid);

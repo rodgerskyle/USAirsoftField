@@ -82,7 +82,7 @@ export function FlaggedRoundReceipts({ request, getPlayerName, disabled, onRevie
     }
 
     return <Card className="admin-panel-card">
-        <Card.Header className="score-entry-section-heading">Flagged round receipts
+        <Card.Header className="score-entry-section-heading"><h2 id="score-desk-flags" tabIndex={-1}>Flagged round receipts</h2>
             <Button variant="outline-secondary" disabled={disabled || busy} onClick={() => load()}>
                 {flags ? 'Refresh flags' : 'View flagged receipts'}
             </Button>

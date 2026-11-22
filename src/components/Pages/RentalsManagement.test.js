@@ -3,9 +3,11 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { HelmetProvider } from 'react-helmet-async';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { onValue } from 'firebase/database';
+import { requestStaffFieldTool } from '../constants/fieldStaffApi';
 import AuthUserContext from '../session/context';
 import RentalsManagement from './RentalsManagement';
 
+jest.mock('../constants/fieldStaffApi', () => ({ requestStaffFieldTool: jest.fn() }));
 jest.mock('firebase/database', () => ({ onValue: jest.fn() }));
 jest.mock('../Firebase', () => ({ withFirebase: component => component }));
 jest.mock('../session', () => ({
@@ -15,10 +17,11 @@ jest.mock('../session', () => ({
 jest.mock('../constants/pincode', () => () => null);
 jest.mock('./Rentals/RentalOptions', () => () => null);
 jest.mock('./Rentals/ReturnForm', () => () => null);
-jest.mock('./Rentals/CreateRentalForm', () => ({ initialGroupId, canImportGroup, onOpenExisting }) => (
+jest.mock('./Rentals/CreateRentalForm', () => ({ initialGroupId, canImportGroup, onOpenExisting, walkOn }) => (
     <section aria-label="New rental">
         <p>Group {initialGroupId}</p>
-        <input aria-label="Draft name" />
+        {walkOn && <p>Renter {walkOn.displayName}</p>}
+        <input aria-label="Draft name" defaultValue={walkOn?.displayName} />
         {canImportGroup && <button>Find check-in group</button>}
         <button onClick={() => onOpenExisting(0, initialGroupId)}>Open saved rental</button>
     </section>
@@ -114,4 +117,58 @@ test.each([
     open('view=new&group=' + groupId, [], { ...staff, roles });
     await screen.findByRole('region', { name: 'New rental' });
     expect(Boolean(screen.queryByRole('button', { name: 'Find check-in group' }))).toBe(allowed);
+});
+
+const walkOn = { playerId: 'guest:' + 'a'.repeat(64), date: '2026-11-22', displayName: 'Riley West' };
+const handoff = new URLSearchParams({ view: 'new', walkOn: walkOn.playerId, date: walkOn.date });
+
+test('a walk-on handoff retries a mismatched roster record before opening the named rental', async () => {
+    requestStaffFieldTool.mockResolvedValueOnce({ walkOn: { ...walkOn, date: '2026-11-21' } }).mockResolvedValueOnce({ walkOn });
+    open(handoff.toString());
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not confirm this walk-on');
+    expect(screen.queryByRole('region', { name: 'New rental' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry walk-on lookup' }));
+    expect(await screen.findByText('Renter Riley West')).toBeVisible();
+    const [, uid, path] = requestStaffFieldTool.mock.calls.slice(-1)[0];
+    expect(uid).toBe(staff.uid);
+    const url = new URL(path, 'https://example.test');
+    expect(url.pathname).toBe('/api/rental-groups');
+    expect(Object.fromEntries(url.searchParams)).toEqual({ walkOn: walkOn.playerId, date: walkOn.date });
+    expect(screen.getByRole('link', { name: 'Back to player check-in' })).toHaveAttribute('href', '/admin/field/check-in');
+});
+
+test('reopens the open walk-on rental for this day and keeps the Companion check-in return link', async () => {
+    requestStaffFieldTool.mockResolvedValue({ walkOn });
+    open(handoff + '&from=companion', [
+        { key: '0', walkOnCheckIn: walkOn, returned: true },
+        { key: '1', walkOnCheckIn: { ...walkOn, date: '2026-11-21' } },
+        { key: '2', walkOnCheckIn: { ...walkOn, playerId: 'guest:' + 'b'.repeat(64) } },
+        { key: '3', walkOnCheckIn: walkOn },
+    ]);
+    expect(await screen.findByText('Rental key 3')).toBeVisible();
+    expect(screen.queryByRole('region', { name: 'New rental' })).toBeNull();
+    expect(screen.getByRole('link', { name: 'Back to player check-in' })).toHaveAttribute('href', 'https://app.usairsoftfield.com/#staff-check-in');
+    expect(Object.fromEntries(new URLSearchParams(screen.getByLabelText('Current query').textContent))).toEqual({
+        view: 'edit', walkOn: walkOn.playerId, date: walkOn.date, form: '3', from: 'companion',
+    });
+});
+
+test('an incomplete walk-on link does not silently open a blank draft', async () => {
+    open('view=new&walkOn=' + encodeURIComponent(walkOn.playerId));
+    expect(await screen.findByRole('alert')).toHaveTextContent('walk-on rental link is incomplete');
+    expect(screen.queryByRole('region', { name: 'New rental' })).toBeNull();
+});
+
+test('hiding and showing navigation keeps an authorized walk-on rental draft intact', async () => {
+    requestStaffFieldTool.mockResolvedValue({ walkOn });
+    open(handoff.toString());
+    const draftName = await screen.findByLabelText('Draft name');
+    expect(draftName).toHaveValue(walkOn.displayName);
+    fireEvent.change(draftName, { target: { value: 'Riley Weston' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Hide navigation' }));
+    expect(screen.getByLabelText('Draft name')).toHaveValue('Riley Weston');
+    expect(screen.queryByRole('link', { name: 'Back to player check-in' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Show navigation' }));
+    expect(screen.getByLabelText('Draft name')).toHaveValue('Riley Weston');
+    expect(screen.getByRole('link', { name: 'Back to player check-in' })).toBeVisible();
 });

@@ -40,9 +40,12 @@ export default function WaiverCardSearch({ firebase, uid, value, onChange }) {
 
     return (
         <>
-            <Form.Control type="search" aria-label="Search waivers by name" placeholder="Search by name..."
-                value={value} readOnly={busy} onChange={event => { setError(''); onChange(event.target.value); }}
-                className="usa-waiver-search" />
+            <label className="usa-waiver-search-label">
+                Search waivers by name
+                <Form.Control type="search" placeholder="Player’s registered name"
+                    value={value} readOnly={busy} onChange={event => { setError(''); onChange(event.target.value); }}
+                    className="usa-waiver-search" />
+            </label>
             <StaffCardScanner disabled={busy} verifyLegacyCards onScan={scan}
                 manualFallback="Enter the player’s registered name." />
             {busy && <p role="status">Looking up the registered name…</p>}

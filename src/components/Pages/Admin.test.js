@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { onValue } from 'firebase/database';
 import { HelmetProvider } from 'react-helmet-async';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -19,7 +19,7 @@ jest.mock('./AdminBadgeAwards', () => () => <h2 id="admin-badges-title">Badge aw
 const admin = { uid: 'field-admin', roles: { ADMIN: true } };
 const member = { uid: 'field-member', roles: {} };
 
-function openAdmin(user) {
+function openAdmin(user, path = '/admin') {
   let onAuthChange;
   const firebase = {
     auth: { currentUser: user },
@@ -30,7 +30,7 @@ function openAdmin(user) {
     },
   };
   render(
-    <MemoryRouter initialEntries={['/admin']} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <MemoryRouter initialEntries={[path]} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <FirebaseContext.Provider value={firebase}>
         <AuthUserContext.Provider value={user}>
           <HelmetProvider>
@@ -84,6 +84,36 @@ test('links each native field tool once and keeps website scoring, scheduling, w
   expect(screen.queryByRole('link', { name: /Enter Wins|Enter Losses/ })).not.toBeInTheDocument();
   expect(screen.getByRole('heading', { name: 'Badge awards' })).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: 'Player directory' })).toBeInTheDocument();
+});
+
+test('places the five game-day desks together and exposes player and badge shortcuts', () => {
+  openAdmin(admin)();
+  const desks = within(screen.getByRole('region', { name: 'Game day' })).getAllByRole('link');
+  expect(desks.map(link => link.textContent)).toEqual([
+    'Player Check-In', 'Manage Groups', 'Rental Form', 'Wins & Losses', 'Round Controls',
+  ]);
+  for (const name of ['Membership', 'Waivers & parties', 'Field operations']) {
+    expect(within(screen.getByRole('region', { name })).getAllByRole('link').length).toBeGreaterThan(0);
+  }
+  for (const name of ['Find a player', 'Award badges']) {
+    const hash = screen.getByRole('link', { name }).getAttribute('href');
+    expect(document.getElementById(hash.slice(1))).toBeInTheDocument();
+  }
+});
+
+test('opens the linked directory section after verifying access', () => {
+  const scroll = jest.fn();
+  const previous = HTMLElement.prototype.scrollIntoView;
+  HTMLElement.prototype.scrollIntoView = scroll;
+  try {
+    const verify = openAdmin(admin, '/admin#staff-directory');
+    expect(scroll).not.toHaveBeenCalled();
+    verify();
+    expect(scroll.mock.instances[0]).toBe(screen.getByRole('heading', { name: 'Player directory' }));
+  } finally {
+    if (previous) HTMLElement.prototype.scrollIntoView = previous;
+    else delete HTMLElement.prototype.scrollIntoView;
+  }
 });
 
 test('keeps staff tools behind the website administrator guard', () => {

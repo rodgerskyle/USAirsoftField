@@ -106,7 +106,9 @@ async function saveRentalForm(firebase, form, reservations) {
         if (current === null) return null;
         const groups = current.group || {};
         existing = Object.entries(groups).find(([, row]) => row?.createRequestId === form.createRequestId ||
-            (form.checkInGroup && !row?.returned && row?.checkInGroup?.id === form.checkInGroup.id));
+            (!row?.returned && ((form.checkInGroup && row?.checkInGroup?.id === form.checkInGroup.id) ||
+                (form.walkOnCheckIn && row?.walkOnCheckIn?.playerId === form.walkOnCheckIn.playerId &&
+                    row.walkOnCheckIn.date === form.walkOnCheckIn.date))));
         if (existing) return undefined;
         const options = { ...current?.options };
         const available = [];
@@ -148,6 +150,10 @@ class CreateRentalForm extends Component {
             rentalForms: [],
             members: null,
             ...INITIAL_STATE,
+            ...(props.walkOn && {
+                rentalName: props.walkOn.displayName, numParticipants: 1,
+                participants: [{ ref: props.walkOn.playerId, name: props.walkOn.displayName, date: props.walkOn.date, rentals: [] }],
+            }),
             selectedRentals: {},
             rentalQuantities: {},
             totalPrice: 0,
@@ -193,7 +199,7 @@ class CreateRentalForm extends Component {
         const { cvc, number, expiry, name, zipcode, rentalName, numParticipants, rentalQuantities, checkInGroup } = this.state;
         const participants = this.state.participants.filter(row => !this.state.excludedEntries.includes(row.groupEntryId))
             .map(row => ({ ...row, name: row.name.trim() }));
-        if (checkInGroup && (!participants.length || participants.some(row => !row.name))) {
+        if ((checkInGroup || this.props.walkOn) && (!participants.length || participants.some(row => !row.name))) {
             this.setState({ rentalsError: 'Select at least one renter and enter a name for each selected player.' });
             return;
         }
@@ -216,13 +222,17 @@ class CreateRentalForm extends Component {
             name: rentalName.trim(), size, cc: { cvc, number, expiry, name, zipcode },
             complete: false, createRequestId: this.createRequestId,
             ...(checkInGroup && { checkInGroup, participants }),
+            ...(this.props.walkOn && { walkOnCheckIn: { playerId: this.props.walkOn.playerId, date: this.props.walkOn.date }, participants }),
         };
         try {
+            if (this.props.walkOn) await this.props.verifyWalkOn().catch(failure => {
+                throw new RentalReservationError(failure.message || 'Could not verify this walk-on. Please retry.');
+            });
             const result = await saveRentalForm(this.props.firebase, form, reservations);
             if (result.duplicate) {
                 this.setState({
-                    existingRental: { key: result.key, groupId: checkInGroup.id },
-                    submitting: false, rentalsError: 'This check-in group already has a rental form. Open it in Edit Form.',
+                    existingRental: { key: result.key, groupId: checkInGroup?.id || this.props.walkOn?.playerId },
+                    submitting: false, rentalsError: 'An open rental already exists for this check-in.',
                 });
                 return;
             }
@@ -362,9 +372,10 @@ class CreateRentalForm extends Component {
         const options = Object.values(this.props.rentalOptions || {}).filter(Boolean);
 
         if (success) {
-            const assignGear = this.props.canImportGroup && this.props.onOpenExisting && this.state.checkInGroup
-                ? () => this.props.onOpenExisting(this.state.createdIndex, this.state.checkInGroup.id) : null;
-            return <SuccessScreen message={successMessage} onAssignGear={assignGear} />;
+            const sourceId = this.state.checkInGroup?.id || this.props.walkOn?.playerId;
+            const assignGear = this.props.canImportGroup && this.props.onOpenExisting && sourceId
+                ? () => this.props.onOpenExisting(this.state.createdIndex, sourceId) : null;
+            return <SuccessScreen message={successMessage} onAssignGear={assignGear} walkOn={this.props.walkOn} />;
         }
 
         return (
@@ -373,7 +384,15 @@ class CreateRentalForm extends Component {
                     <Card className="card-rental-form">
                         <Card.Body>
                             <h1 className="rental-form-header">New Rental Form</h1>
-                            {this.props.canImportGroup && !this.state.checkInGroup && <GroupRentalPicker
+                            {this.props.walkOn && <section className="rental-roster-review" aria-label="Checked-in walk-on">
+                                <h2>Walk-on rental</h2>
+                                <label>Participant name
+                                    <input className="form-control" autoComplete="off" maxLength={120} disabled={submitting}
+                                        value={this.state.participants[0]?.name || ''}
+                                        onChange={event => this.setState({ participants: [{ ...this.state.participants[0], name: event.target.value }] })} />
+                                </label>
+                            </section>}
+                            {this.props.canImportGroup && !this.props.walkOn && !this.state.checkInGroup && <GroupRentalPicker
                                 firebase={this.props.firebase} uid={this.props.uid} initialGroupId={this.state.clearedInitialGroup ? null : this.props.initialGroupId}
                                 existingEntries={this.state.participants} disabled={submitting} onAdd={this.importRoster} onPrefill={this.importRoster}
                             />}
@@ -562,7 +581,7 @@ class CreateRentalForm extends Component {
     }
 }
 
-const SuccessScreen = ({ message, onAssignGear }) => (
+const SuccessScreen = ({ message, onAssignGear, walkOn }) => (
     <Paper
         elevation={3}
         sx={{
@@ -604,14 +623,14 @@ const SuccessScreen = ({ message, onAssignGear }) => (
         {onAssignGear && <MUIButton variant="contained" color="primary" onClick={onAssignGear}>
             Assign rental gear
         </MUIButton>}
-        <MUIButton
+        {!walkOn && <MUIButton
             variant="contained"
             color="primary"
             onClick={() => window.location.reload()}
             startIcon={<Add />}
         >
             Create Another Rental
-        </MUIButton>
+        </MUIButton>}
     </Paper>
 );
 

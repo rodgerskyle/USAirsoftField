@@ -12,3 +12,44 @@
 .admin-account-removal code { color: inherit; overflow-wrap: anywhere; }
 .admin-account-removal__review { max-width: 36rem; }
 .admin-account-removal__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-block-start: 1rem; }
+
+.player-edit-heading {
+    margin-bottom: .75rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.row + .player-edit-heading {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--admin-border);
+}
+
+.admin-user-options-main .row { row-gap: .75rem; margin-bottom: .7rem; }
+
+.player-edit-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .65rem;
+    margin-block: 1rem;
+}
+
+.player-edit-actions .btn { min-height: 44px; }
+
+.player-edit-access {
+    padding: 1rem;
+    background: var(--admin-surface);
+    border: 1px solid var(--admin-border);
+    border-radius: .85rem;
+}
+
+.player-edit-access .player-edit-actions { margin-block: .5rem 0; }
+.player-edit-access p { margin: .75rem 0 0; }
+
+@media (max-width: 680px) {
+    .admin-user-options-main .row > .col { flex: 1 1 100%; }
+    .admin-user-options-main .player-edit-stats > .col { flex: 1 1 40%; }
+    .admin-compact-page .admin-user-options-sidebar .team-single-img { min-height: 0; }
+    .admin-compact-page .admin-user-options-sidebar .profile-pic { width: 5.5rem; }
+}

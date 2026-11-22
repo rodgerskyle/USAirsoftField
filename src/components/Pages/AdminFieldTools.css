@@ -68,3 +68,25 @@
 .field-tools .btn {
   min-height: 44px;
 }
+
+.field-tools :where(.field-tool__panel, .field-rounds, .group-desk, .admin-checkin) :is(select, textarea, input:not([type='checkbox'], [type='radio'])) {
+  max-width: 100%;
+  min-height: 44px;
+  font-size: 1rem;
+}
+.field-tools :where(button, a, summary, input, select, textarea):focus-visible {
+  outline: 3px solid var(--admin-focus);
+  outline-offset: 2px;
+}
+.field-tools :where(.field-tool__controls, .field-tools__unlock-form) label {
+  font-weight: 650;
+}
+.field-tools .field-tool__panel[aria-label='Field staff access'] { max-width: 48rem; }
+.field-tools .field-tool__panel[aria-label='Field staff access'] > p {
+  margin-block: .75rem;
+  color: var(--admin-subtext);
+}
+@media (max-width: 580px) {
+  .field-tools .field-tool__controls,
+  .field-tools .field-tools__unlock-form { grid-template-columns: 1fr; }
+}

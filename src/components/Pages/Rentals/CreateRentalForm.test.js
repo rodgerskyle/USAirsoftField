@@ -20,7 +20,7 @@ jest.mock('./GroupRentalPicker', () => ({ onAdd }) => {
 
 const equipment = { id: 'mask', value: 'mask', label: 'Mask', stock: 0, max: 6, cost: 5 };
 
-function fixture({ canImportGroup = true, groups = {}, loseFirstReceipt = false, stock = 0 } = {}) {
+function fixture({ canImportGroup = true, groups = {}, loseFirstReceipt = false, stock = 0, walkOn, verifyWalkOn } = {}) {
     let rentals = { group: groups, options: [{ ...equipment, stock }], unrelated: { active: true } };
     const snapshot = () => ({ child: path => ({ val: () => path.split('/').reduce((value, key) => value?.[key], rentals) }) });
     runTransaction.mockImplementation(async (path, apply, options) => {
@@ -37,19 +37,19 @@ function fixture({ canImportGroup = true, groups = {}, loseFirstReceipt = false,
         return { committed: true, snapshot: snapshot() };
     });
     const open = jest.fn();
-    render(<CreateRentalForm firebase={{ rentals: () => 'rentals' }} canImportGroup={canImportGroup}
+    const openDesk = () => render(<CreateRentalForm walkOn={walkOn} verifyWalkOn={verifyWalkOn} firebase={{ rentals: () => 'rentals' }} canImportGroup={canImportGroup}
         uid="staff" onOpenExisting={open} rentalOptions={[equipment]} rentalForms={[]} />);
-    return { data: () => rentals, open };
+    return { data: () => rentals, open, openDesk, desk: openDesk() };
 }
 
-function reserveAndPay(quantity = 1) {
-    const check = screen.getByRole('checkbox', { name: /Mask/ });
+function reserveAndPay(quantity = 1, scope = screen) {
+    const check = scope.getByRole('checkbox', { name: /Mask/ });
     fireEvent.click(check);
     if (quantity === 2) fireEvent.click(check);
     for (const [key, value] of Object.entries({ name: 'Rental desk fixture', number: '4242424242424242', cvc: '123', expiry: '1128', zipcode: '96007' })) {
-        fireEvent.change(screen.getByLabelText('Payment ' + key), { target: { value } });
+        fireEvent.change(scope.getByLabelText('Payment ' + key), { target: { value } });
     }
-    fireEvent.click(screen.getByRole('button', { name: /Create Rental \(/ }));
+    fireEvent.click(scope.getByRole('button', { name: /Create Rental \(/ }));
 }
 beforeEach(() => runTransaction.mockReset());
 
@@ -124,4 +124,44 @@ test('staff can exclude a non-renter without losing the other player or changing
     reserveAndPay();
     await screen.findByText('Success!');
     expect(data().group[0].participants).toEqual([expect.objectContaining({ groupEntryId: 'guest-entry', name: 'Fox' })]);
+});
+
+
+const walkOn = { playerId: 'guest:' + 'a'.repeat(64), date: '2026-11-22', displayName: 'Riley West' };
+
+test('prefills the walk-on and preserves edits and stock when check-in reverification needs a retry', async () => {
+    const verifyWalkOn = jest.fn().mockRejectedValueOnce(new Error('Check-in lookup is offline.')).mockResolvedValue(walkOn);
+    const { data, open } = fixture({ walkOn, verifyWalkOn });
+    expect(screen.getByLabelText('Rental Name', { exact: false })).toHaveValue('Riley West');
+    expect(screen.getByRole('spinbutton')).toHaveValue(1);
+    expect(screen.getByRole('textbox', { name: 'Participant name' })).toHaveValue('Riley West');
+    expect(screen.queryByRole('button', { name: 'Import reviewed members' })).toBeNull();
+    fireEvent.change(screen.getByRole('textbox', { name: 'Participant name' }), { target: { value: '  Riley Weston  ' } });
+    reserveAndPay();
+    expect(await screen.findByText('Check-in lookup is offline.')).toBeVisible();
+    expect(runTransaction).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: /Create Rental \(/ }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Assign rental gear' }));
+    expect(verifyWalkOn).toHaveBeenCalledTimes(2);
+    expect(data().group[0]).toMatchObject({
+        name: 'Riley West', size: 1, walkOnCheckIn: { playerId: walkOn.playerId, date: walkOn.date },
+        participants: [{ name: 'Riley Weston', ref: walkOn.playerId, date: walkOn.date, rentals: [] }],
+    });
+    expect(open).toHaveBeenCalledWith(0, walkOn.playerId);
+});
+
+test('two desks creating a rental for one walk-on on the same day reserve gear only once', async () => {
+    const verifyWalkOn = jest.fn().mockResolvedValue(walkOn);
+    const { data, desk, openDesk, open } = fixture({ walkOn, verifyWalkOn });
+    const first = within(desk.container);
+    const second = within(openDesk().container);
+    reserveAndPay(1, first);
+    reserveAndPay(1, second);
+    await first.findByText('Success!');
+    fireEvent.click(await second.findByRole('button', { name: 'Open existing rental form' }));
+    expect(verifyWalkOn).toHaveBeenCalledTimes(2);
+    expect(runTransaction).toHaveBeenCalledTimes(2);
+    expect(Object.keys(data().group)).toEqual(['0']);
+    expect(data().options[0].stock).toBe(1);
+    expect(open).toHaveBeenCalledWith('0', walkOn.playerId);
 });

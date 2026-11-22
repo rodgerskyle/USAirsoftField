@@ -6,6 +6,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { FirebaseContext } from '../Firebase';
 import { AuthUserContext } from '../session';
 import AdminFieldTools from './AdminFieldTools';
+import AdminLayout from '../constants/admindrawer';
 
 jest.mock('../Firebase', () => {
   const context = jest.requireActual('../Firebase/context');
@@ -49,7 +50,9 @@ function openCheckIn(user, { verify = true, path = '/admin/field/check-in', reau
         <AuthUserContext.Provider value={user}>
           <HelmetProvider>
             <Routes>
-              <Route path="/admin/field/:tool" element={<AdminFieldTools />} />
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route path="field/:tool" element={<AdminFieldTools />} />
+              </Route>
               <Route path="/login" element={<h1>Sign in</h1>} />
             </Routes>
           </HelmetProvider>

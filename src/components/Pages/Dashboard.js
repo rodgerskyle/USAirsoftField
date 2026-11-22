@@ -4,7 +4,7 @@ import '../../App.css';
 import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
 
-import { Container, Row, Col, Breadcrumb, Card } from 'react-bootstrap/';
+import { Container, Row, Breadcrumb } from 'react-bootstrap/';
 
 import { Link } from 'react-router-dom';
 import logo from '../../assets/usairsoft-small-logo.png';
@@ -14,6 +14,23 @@ import * as ROLES from '../constants/roles';
 import PinCode from '../constants/pincode'
 import { Helmet } from 'react-helmet-async';
 import '../constants/dashboard.css';
+
+const deskSections = [
+  { name: 'Waivers', links: [
+    ['waiverlookup', 'Find a signed waiver', 'search'],
+    ['waiverform', 'Sign a waiver', 'pencil'],
+    ['scanwaiver', 'Scan a paper waiver', 'camera'],
+  ] },
+  { name: 'Membership', links: [
+    ['signup', 'Register a member', 'user-plus'],
+    ['renewal', 'Renew a membership', 'refresh'],
+    ['freegames', 'Redeem a free game', 'ticket'],
+  ] },
+  { name: 'Parties and rentals', links: [
+    ['birthday', 'Party calendar', 'calendar'],
+    ['rentalform', 'Rental forms', 'list-alt'],
+  ] },
+];
 
 class WaiverDashboard extends Component {
   constructor(props) {
@@ -70,112 +87,24 @@ class WaiverDashboard extends Component {
                   <Breadcrumb.Item active>Dashboard</Breadcrumb.Item>
                 </Breadcrumb>
               </div>
-              <Row>
-                <Col className="waiver-dashboard-grid">
-                  {/* First Row of Cards */}
-                  <Row className="waiver-dashboard-row">
-                    <Col lg={3} md={6} sm={12} className="waiver-dashboard-col">
-                      <Link to={"/dashboard/signup"} className="waiver-dashboard-link">
-                        <Card className="waiver-dashboard-card">
-                          <Card.Body>
-                            <div className="waiver-dashboard-card-content">
-                              <span className="waiver-dashboard-card-title">New Member</span>
-                              <i className="fa fa-angle-double-right waiver-dashboard-card-icon"></i>
-                            </div>
-                          </Card.Body>
-                        </Card>
-                      </Link>
-                    </Col>
-                    <Col lg={3} md={6} sm={12} className="waiver-dashboard-col">
-                      <Link to={"/dashboard/renewal"} className="waiver-dashboard-link">
-                        <Card className="waiver-dashboard-card">
-                          <Card.Body>
-                            <div className="waiver-dashboard-card-content">
-                              <span className="waiver-dashboard-card-title">Renew Member</span>
-                              <i className="fa fa-angle-double-right waiver-dashboard-card-icon"></i>
-                            </div>
-                          </Card.Body>
-                        </Card>
-                      </Link>
-                    </Col>
-                    <Col lg={3} md={6} sm={12} className="waiver-dashboard-col">
-                      <Link to={"/dashboard/rentalform"} className="waiver-dashboard-link">
-                        <Card className="waiver-dashboard-card">
-                          <Card.Body>
-                            <div className="waiver-dashboard-card-content">
-                              <span className="waiver-dashboard-card-title">Rental Forms</span>
-                              <i className="fa fa-angle-double-right waiver-dashboard-card-icon"></i>
-                            </div>
-                          </Card.Body>
-                        </Card>
-                      </Link>
-                    </Col>
-                    <Col lg={3} md={6} sm={12} className="waiver-dashboard-col">
-                      <Link to={"/dashboard/birthday"} className="waiver-dashboard-link">
-                        <Card className="waiver-dashboard-card">
-                          <Card.Body>
-                            <div className="waiver-dashboard-card-content">
-                              <span className="waiver-dashboard-card-title">Party Calendar</span>
-                              <i className="fa fa-angle-double-right waiver-dashboard-card-icon"></i>
-                            </div>
-                          </Card.Body>
-                        </Card>
-                      </Link>
-                    </Col>
-                  </Row>
-                  {/* Second Row of Cards */}
-                  <Row className="waiver-dashboard-row">
-                    <Col lg={3} md={6} sm={12} className="waiver-dashboard-col">
-                      <Link to={"/dashboard/waiverform"} className="waiver-dashboard-link">
-                        <Card className="waiver-dashboard-card">
-                          <Card.Body>
-                            <div className="waiver-dashboard-card-content">
-                              <span className="waiver-dashboard-card-title">Sign Waiver</span>
-                              <i className="fa fa-angle-double-right waiver-dashboard-card-icon"></i>
-                            </div>
-                          </Card.Body>
-                        </Card>
-                      </Link>
-                    </Col>
-                    <Col lg={3} md={6} sm={12} className="waiver-dashboard-col">
-                      <Link to={"/dashboard/waiverlookup"} className="waiver-dashboard-link">
-                        <Card className="waiver-dashboard-card">
-                          <Card.Body>
-                            <div className="waiver-dashboard-card-content">
-                              <span className="waiver-dashboard-card-title">Search Waiver</span>
-                              <i className="fa fa-angle-double-right waiver-dashboard-card-icon"></i>
-                            </div>
-                          </Card.Body>
-                        </Card>
-                      </Link>
-                    </Col>
-                    <Col lg={3} md={6} sm={12} className="waiver-dashboard-col">
-                      <Link to={"/dashboard/scanwaiver"} className="waiver-dashboard-link">
-                        <Card className="waiver-dashboard-card">
-                          <Card.Body>
-                            <div className="waiver-dashboard-card-content">
-                              <span className="waiver-dashboard-card-title">Scan Waiver</span>
-                              <i className="fa fa-angle-double-right waiver-dashboard-card-icon"></i>
-                            </div>
-                          </Card.Body>
-                        </Card>
-                      </Link>
-                    </Col>
-                    <Col lg={3} md={6} sm={12} className="waiver-dashboard-col">
-                      <Link to={"/dashboard/freegames"} className="waiver-dashboard-link">
-                        <Card className="waiver-dashboard-card">
-                          <Card.Body>
-                            <div className="waiver-dashboard-card-content">
-                              <span className="waiver-dashboard-card-title">Check Free Games</span>
-                              <i className="fa fa-angle-double-right waiver-dashboard-card-icon"></i>
-                            </div>
-                          </Card.Body>
-                        </Card>
-                      </Link>
-                    </Col>
-                  </Row>
-                </Col>
-              </Row>
+              <nav aria-label="Front desk tasks" className="waiver-desk-sections">
+                {deskSections.map(({ name, links }) => (
+                  <section key={name} className="waiver-desk-section">
+                    <h3>{name}</h3>
+                    <ul>
+                      {links.map(([path, title, icon]) => (
+                        <li key={path}>
+                          <Link to={`/dashboard/${path}`}>
+                            <i className={`fa fa-${icon}`} aria-hidden="true" />
+                            {title}
+                            <i className="fa fa-angle-right" aria-hidden="true" />
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                ))}
+              </nav>
           </Container>
           :
           <div className="admin-pin-shell">
@@ -191,7 +120,7 @@ class WaiverDashboard extends Component {
               </Row>
               {this.state.error ?
                 <Row className="justify-content-row">
-                  <p className="p-error-text-dashboard">{this.state.error}</p>
+                  <p role="alert" className="p-error-text-dashboard">{this.state.error}</p>
                 </Row> : null}
             </Container>
           </div>

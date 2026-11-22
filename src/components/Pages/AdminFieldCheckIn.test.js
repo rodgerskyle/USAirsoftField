@@ -399,3 +399,51 @@ test('edits a checked-in walk-on in place and starts the next player without lea
   expect(screen.getByLabelText('Member name, ID or card link')).toHaveFocus();
   expect(screen.queryByRole('region', { name:'River Fox' })).toBeNull();
 });
+
+test('opens rental paperwork only after the server confirms a signed walk-on check-in', async () => {
+  const saved = { ...guest, playerId: 'guest:' + 'ab'.repeat(32), side: 'solid', revision: 1 };
+  const request = jest.fn().mockResolvedValueOnce(versionedRoster)
+    .mockResolvedValueOnce({ ...versionedRoster, player: guest })
+    .mockRejectedValueOnce(new Error('Check-in interrupted'))
+    .mockResolvedValueOnce({ ...versionedRoster, player: saved, players: [saved], outcome: 'checked-in' });
+  const original = Object.getOwnPropertyDescriptor(window, 'location');
+  const assign = jest.fn();
+  Object.defineProperty(window, 'location', { configurable: true, value: { ...window.location, assign } });
+  try {
+    render(<AdminFieldCheckIn request={request} />);
+    await screen.findByText('2 checked in');
+    fireEvent.click(screen.getByRole('link', { name: 'Walk-ons' }));
+    expect(screen.getByText('Add a walk-on')).toHaveFocus();
+    fireEvent.change(screen.getByLabelText('Player name or callsign'), { target: { value: guest.displayName } });
+    fireEvent.click(screen.getByRole('button', { name: 'Continue with rental' }));
+    expect(await screen.findByLabelText('Open rental form after check-in')).toBeChecked();
+    const submit = screen.getByRole('button', { name: 'Check in as Solid & open rental' });
+    fireEvent.click(submit);
+    await screen.findByText('Check-in interrupted');
+    expect(assign).not.toHaveBeenCalled();
+    fireEvent.click(submit);
+    const link = await screen.findByRole('link', { name: 'Open rental form' });
+    const destination = '/admin/rentalform?view=new&walkOn=' + encodeURIComponent(saved.playerId) + '&date=' + date;
+    expect(link).toHaveAttribute('href', destination);
+    expect(assign).toHaveBeenCalledTimes(1);
+    expect(assign).toHaveBeenCalledWith(destination);
+    expect(request.mock.calls[3][1].body).toMatchObject({ action: 'guestCheckIn', side: 'solid' });
+  } finally {
+    Object.defineProperty(window, 'location', original);
+  }
+});
+
+test('the rental handoff is available only on a signed and assigned walk-on', async () => {
+  const saved = { ...guest, playerId: 'guest:' + '12'.repeat(32), side: 'camo', revision: 1 };
+  const request = jest.fn().mockResolvedValueOnce({ ...versionedRoster, players: [saved] })
+    .mockResolvedValueOnce({ ...versionedRoster, player: { ...saved, waiverStatus: 'missing' } })
+    .mockResolvedValueOnce({ ...versionedRoster, player: saved });
+  render(<AdminFieldCheckIn request={request} />);
+  const roster = await screen.findByRole('list', { name: 'Recent players' });
+  fireEvent.click(within(roster).getByRole('button', { name: /Field Guest/ }));
+  await screen.findByRole('button', { name: 'Retry waiver check' });
+  expect(screen.queryByRole('link', { name: 'Open rental form' })).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Retry waiver check' }));
+  expect(await screen.findByRole('link', { name: 'Open rental form' })).toHaveAttribute('href',
+    '/admin/rentalform?view=new&walkOn=' + encodeURIComponent(saved.playerId) + '&date=' + date);
+});

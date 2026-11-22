@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import '../../App.css';
+import './FrontDeskForms.css';
 
 import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
@@ -17,15 +18,37 @@ import * as ROLES from '../constants/roles';
 import { Helmet } from 'react-helmet-async';
 import {
     Dialog, DialogActions, DialogContent, DialogTitle, Button,
-    TextField, Checkbox, Select, MenuItem, InputLabel, FormControl
+    TextField, Checkbox, FormControlLabel
 } from '@mui/material';
-import { Add, ArrowForward, Delete, Save } from '@mui/icons-material';
+import { Add, Delete, Save } from '@mui/icons-material';
 import PartyBookingCheckInLink from './PartyBookingCheckInLink';
 import { requestStaffFieldTool } from '../constants/fieldStaffApi';
 import { mutatePartyCalendar, newPartyBookingId } from '../constants/partyCalendarRecords';
 
 function samePartyBooking(left, right) {
     return Boolean(left && right && ['bookingId', 'title', 'size', 'start', 'end'].every(field => left[field] === right[field]));
+}
+
+function BookingTime({ label, hour, minute, onHour, onMinute }) {
+    const minutes = [0, 10, 20, 30, 40, 50];
+    if (Number.isInteger(minute) && !minutes.includes(minute)) minutes.push(minute);
+    return (
+        <fieldset className="desk-booking-time">
+            <legend>{label}</legend>
+            <label>Hour
+                <select className="form-select" value={hour} onChange={e => onHour(Number(e.target.value))}>
+                    {Array.from({ length: 24 }, (_, value) => (
+                        <option key={value} value={value}>{value % 12 || 12} {value < 12 ? 'AM' : 'PM'}</option>
+                    ))}
+                </select>
+            </label>
+            <label>Minutes
+                <select className="form-select" value={minute} onChange={e => onMinute(Number(e.target.value))}>
+                    {minutes.sort((a, b) => a - b).map(value => <option key={value} value={value}>{String(value).padStart(2, '0')}</option>)}
+                </select>
+            </label>
+        </fieldset>
+    );
 }
 
 class Birthday extends Component {
@@ -198,37 +221,29 @@ class Birthday extends Component {
 
     // Handles start time for calendar selection
     handleStartHour = (val) => {
-        console.log(val)
         let startTemp = this.state.start
         startTemp.setHours(val)
-        console.log(startTemp)
         this.setState({ start: startTemp, startTimeHours: val })
     }
 
     // Handles start time for calendar selection
     handleStartMinutes = (val) => {
-        console.log(val)
         let startTemp = this.state.start
         startTemp.setMinutes(val)
-        console.log(startTemp)
         this.setState({ start: startTemp, startTimeMinutes: val })
     }
 
     // Handles start time for calendar selection
     handleEndHour = (val) => {
-        console.log(val)
         let endTemp = this.state.end
         endTemp.setHours(val)
-        console.log(endTemp)
         this.setState({ end: endTemp, endTimeHours: val })
     }
 
     // Handles start time for calendar selection
     handleEndMinutes = (val) => {
-        console.log(val)
         let endTemp = this.state.end
         endTemp.setMinutes(val)
-        console.log(endTemp)
         this.setState({ end: endTemp, endTimeMinutes: val })
     }
 
@@ -290,6 +305,16 @@ class Birthday extends Component {
                             </button>
                         </div>}
                         {this.state.lastSaved && <PartyBookingCheckInLink firebase={this.props.firebase} booking={this.state.lastSaved} afterSave />}
+                        <form className="desk-booking-create" onSubmit={event => {
+                            event.preventDefault();
+                            this.handleSelect({ start: new Date(event.currentTarget.elements.bookingDate.value + 'T12:00:00') });
+                        }}>
+                            <label>Booking date
+                                <input name="bookingDate" className="form-control" type="date" required
+                                    defaultValue={moment().format('YYYY-MM-DD')} />
+                            </label>
+                            <button type="submit" className="btn btn-primary">Add booking</button>
+                        </form>
                         <div className="div-main-birthday admin-panel-card">
                             <Calendar
                                 selectable
@@ -312,140 +337,16 @@ class Birthday extends Component {
                                 className="dialog-create-birthday"
                                 onClose={this.handleClose}>
                                 <DialogTitle>
-                                    {`Selected Date: ${start !== null ? start.toDateString() : start}`}
+                                    {`New booking · ${start ? start.toDateString() : ''}`}
                                 </DialogTitle>
                                 <DialogContent className="content-create-birthday">
                                     {this.state.saveError && <p role="alert" className="alert alert-warning">{this.state.saveError}</p>}
-                                    <Row>
-                                        <Col md={7}>
-                                            Start Time
-                                        </Col>
-                                        <Col md={5}>
-                                            End Time
-                                        </Col>
-                                    </Row>
-                                    <Row className="margin15-bottom justify-content-row">
-                                        {/* Start time hours */}
-                                        <Col md={2}>
-                                            <FormControl fullWidth className="tester-test">
-                                                <InputLabel style={{ fontSize: 12 }} id="time-start-hours-label">Hour</InputLabel>
-                                                <Select
-                                                    labelId='time-start-hours-label'
-                                                    id='time-start-hours-label'
-                                                    value={startTimeHours}
-                                                    label="Start Time Hour"
-                                                    onChange={(e) => this.handleStartHour(e.target.value)}
-                                                    MenuProps={{ style: { maxHeight: 'calc(50% - 96px)' } }}
-                                                >
-                                                    <MenuItem value={0}>0</MenuItem>
-                                                    <MenuItem value={1}>1</MenuItem>
-                                                    <MenuItem value={2}>2</MenuItem>
-                                                    <MenuItem value={3}>3</MenuItem>
-                                                    <MenuItem value={4}>4</MenuItem>
-                                                    <MenuItem value={5}>5</MenuItem>
-                                                    <MenuItem value={6}>6</MenuItem>
-                                                    <MenuItem value={7}>7</MenuItem>
-                                                    <MenuItem value={8}>8</MenuItem>
-                                                    <MenuItem value={9}>9</MenuItem>
-                                                    <MenuItem value={10}>10</MenuItem>
-                                                    <MenuItem value={11}>11</MenuItem>
-                                                    <MenuItem value={12}>12</MenuItem>
-                                                    <MenuItem value={13}>13</MenuItem>
-                                                    <MenuItem value={14}>14</MenuItem>
-                                                    <MenuItem value={15}>15</MenuItem>
-                                                    <MenuItem value={16}>16</MenuItem>
-                                                    <MenuItem value={17}>17</MenuItem>
-                                                    <MenuItem value={18}>18</MenuItem>
-                                                    <MenuItem value={19}>19</MenuItem>
-                                                    <MenuItem value={20}>20</MenuItem>
-                                                    <MenuItem value={21}>21</MenuItem>
-                                                    <MenuItem value={22}>22</MenuItem>
-                                                    <MenuItem value={23}>23</MenuItem>
-                                                </Select>
-                                            </FormControl>
-                                        </Col>
-                                        <Col md={3}>
-                                            <FormControl fullWidth>
-                                                <InputLabel style={{ fontSize: 12 }} id="time-start-minutes-label">Minutes</InputLabel>
-                                                <Select
-                                                    labelId='time-start-minutes-label'
-                                                    id='time-start-minutes-label'
-                                                    value={startTimeMinutes}
-                                                    label="Start Time Minutes"
-                                                    onChange={(e) => this.handleStartMinutes(e.target.value)}
-                                                >
-                                                    <MenuItem value={0}>00</MenuItem>
-                                                    <MenuItem value={10}>10</MenuItem>
-                                                    <MenuItem value={20}>20</MenuItem>
-                                                    <MenuItem value={30}>30</MenuItem>
-                                                    <MenuItem value={40}>40</MenuItem>
-                                                    <MenuItem value={50}>50</MenuItem>
-                                                </Select>
-                                            </FormControl>
-                                        </Col>
-                                        <Col md={2} className="col-center-middle">
-                                            <ArrowForward />
-                                        </Col>
-                                        {/* End time hours */}
-                                        <Col md={2}>
-                                            <FormControl fullWidth>
-                                                <InputLabel style={{ fontSize: 12 }} id="time-start-hours-label">Hour</InputLabel>
-                                                <Select
-                                                    labelId='time-start-hours-label'
-                                                    id='time-start-hours-label'
-                                                    value={endTimeHours}
-                                                    label="Start Time Hour"
-                                                    className="hour-select-birthday"
-                                                    onChange={(e) => this.handleEndHour(e.target.value)}
-                                                    MenuProps={{ style: { maxHeight: 'calc(50% - 96px)' } }}
-                                                >
-                                                    <MenuItem value={0}>0</MenuItem>
-                                                    <MenuItem value={1}>1</MenuItem>
-                                                    <MenuItem value={2}>2</MenuItem>
-                                                    <MenuItem value={3}>3</MenuItem>
-                                                    <MenuItem value={4}>4</MenuItem>
-                                                    <MenuItem value={5}>5</MenuItem>
-                                                    <MenuItem value={6}>6</MenuItem>
-                                                    <MenuItem value={7}>7</MenuItem>
-                                                    <MenuItem value={8}>8</MenuItem>
-                                                    <MenuItem value={9}>9</MenuItem>
-                                                    <MenuItem value={10}>10</MenuItem>
-                                                    <MenuItem value={11}>11</MenuItem>
-                                                    <MenuItem value={12}>12</MenuItem>
-                                                    <MenuItem value={13}>13</MenuItem>
-                                                    <MenuItem value={14}>14</MenuItem>
-                                                    <MenuItem value={15}>15</MenuItem>
-                                                    <MenuItem value={16}>16</MenuItem>
-                                                    <MenuItem value={17}>17</MenuItem>
-                                                    <MenuItem value={18}>18</MenuItem>
-                                                    <MenuItem value={19}>19</MenuItem>
-                                                    <MenuItem value={20}>20</MenuItem>
-                                                    <MenuItem value={21}>21</MenuItem>
-                                                    <MenuItem value={22}>22</MenuItem>
-                                                    <MenuItem value={23}>23</MenuItem>
-                                                </Select>
-                                            </FormControl>
-                                        </Col>
-                                        <Col md={3}>
-                                            <FormControl fullWidth>
-                                                <InputLabel style={{ fontSize: 12 }} id="time-start-minutes-label">Minutes</InputLabel>
-                                                <Select
-                                                    labelId='time-end-minutes-label'
-                                                    id='time-end-minutes-label'
-                                                    value={endTimeMinutes}
-                                                    label="End Time Minutes"
-                                                    onChange={(e) => this.handleEndMinutes(e.target.value)}
-                                                >
-                                                    <MenuItem value={0}>00</MenuItem>
-                                                    <MenuItem value={10}>10</MenuItem>
-                                                    <MenuItem value={20}>20</MenuItem>
-                                                    <MenuItem value={30}>30</MenuItem>
-                                                    <MenuItem value={40}>40</MenuItem>
-                                                    <MenuItem value={50}>50</MenuItem>
-                                                </Select>
-                                            </FormControl>
-                                        </Col>
-                                    </Row>
+                                    <div className="desk-booking-times">
+                                        <BookingTime label="Start time" hour={startTimeHours} minute={startTimeMinutes}
+                                            onHour={this.handleStartHour} onMinute={this.handleStartMinutes} />
+                                        <BookingTime label="End time" hour={endTimeHours} minute={endTimeMinutes}
+                                            onHour={this.handleEndHour} onMinute={this.handleEndMinutes} />
+                                    </div>
                                     <Row className='mb-2'>
                                         <Col>
                                             <TextField
@@ -479,14 +380,9 @@ class Birthday extends Component {
                                         </Col>
                                     </Row>
                                     <Row className="row-deposit-birthday">
-                                        <Col xs={"auto"} className="align-items-center-col">
-                                            <p className="no-margin-bottom">Deposit:</p>
-                                        </Col>
-                                        <Col xs={"auto"} className="align-items-center-col">
-                                            <Checkbox
-                                                value={deposit}
-                                                onChange={this.handleDeposit}
-                                            />
+                                        <Col xs="auto" className="align-items-center-col">
+                                            <FormControlLabel label="Deposit received"
+                                                control={<Checkbox checked={deposit} onChange={this.handleDeposit} />} />
                                         </Col>
                                     </Row>
                                     <Row>
@@ -514,7 +410,7 @@ class Birthday extends Component {
                                 </DialogContent>
                                 <DialogActions className="actions-create-birthday">
                                     <Col md={8}>
-                                        <Button disabled={this.state.saving} onClick={this.createEvent} type="button" color="primary"
+                                        <Button disabled={this.state.saving} onClick={this.createEvent} type="button" variant="contained" color="primary"
                                             endIcon={<Add />}>
                                             Create
                                         </Button>
@@ -533,142 +429,19 @@ class Birthday extends Component {
                                 className="dialog-edit-birthday"
                                 onClose={this.handleEditClose}>
                                 <DialogTitle>
-                                    {`Selected Date: ${start !== null ? start.toDateString() : start}`}
+                                    {`Edit booking · ${start ? start.toDateString() : ''}`}
                                 </DialogTitle>
                                 <DialogContent className="content-create-birthday">
                                     {this.state.saveError && <p role="alert" className="alert alert-warning">{this.state.saveError}</p>}
                                     {editDialog && (samePartyBooking(this.state.savedBooking, this.state.obj?.[this.state.index])
                                         ? <PartyBookingCheckInLink firebase={this.props.firebase} booking={this.state.savedBooking} />
                                         : <p role="status">The saved party changed. Reopen it on the calendar to manage its group code.</p>)}
-                                    <Row>
-                                        <Col md={7}>
-                                            Start Time
-                                        </Col>
-                                        <Col md={5}>
-                                            End Time
-                                        </Col>
-                                    </Row>
-                                    <Row className="margin15-bottom justify-content-row">
-                                        {/* Start time hours */}
-                                        <Col md={2}>
-                                            <FormControl fullWidth>
-                                                <InputLabel style={{ fontSize: 12 }} id="time-start-hours-label">Hour</InputLabel>
-                                                <Select
-                                                    labelId='time-start-hours-label'
-                                                    id='time-start-hours-label'
-                                                    value={startTimeHours}
-                                                    label="Start Time Hour"
-                                                    onChange={(e) => this.handleStartHour(e.target.value)}
-                                                    MenuProps={{ style: { maxHeight: 'calc(50% - 96px)' } }}
-                                                >
-                                                    <MenuItem value={0}>0</MenuItem>
-                                                    <MenuItem value={1}>1</MenuItem>
-                                                    <MenuItem value={2}>2</MenuItem>
-                                                    <MenuItem value={3}>3</MenuItem>
-                                                    <MenuItem value={4}>4</MenuItem>
-                                                    <MenuItem value={5}>5</MenuItem>
-                                                    <MenuItem value={6}>6</MenuItem>
-                                                    <MenuItem value={7}>7</MenuItem>
-                                                    <MenuItem value={8}>8</MenuItem>
-                                                    <MenuItem value={9}>9</MenuItem>
-                                                    <MenuItem value={10}>10</MenuItem>
-                                                    <MenuItem value={11}>11</MenuItem>
-                                                    <MenuItem value={12}>12</MenuItem>
-                                                    <MenuItem value={13}>13</MenuItem>
-                                                    <MenuItem value={14}>14</MenuItem>
-                                                    <MenuItem value={15}>15</MenuItem>
-                                                    <MenuItem value={16}>16</MenuItem>
-                                                    <MenuItem value={17}>17</MenuItem>
-                                                    <MenuItem value={18}>18</MenuItem>
-                                                    <MenuItem value={19}>19</MenuItem>
-                                                    <MenuItem value={20}>20</MenuItem>
-                                                    <MenuItem value={21}>21</MenuItem>
-                                                    <MenuItem value={22}>22</MenuItem>
-                                                    <MenuItem value={23}>23</MenuItem>
-                                                </Select>
-                                            </FormControl>
-                                        </Col>
-                                        <Col md={3}>
-                                            <FormControl fullWidth>
-                                                <InputLabel style={{ fontSize: 12 }} id="time-start-minutes-label">Minutes</InputLabel>
-                                                <Select
-                                                    labelId='time-start-minutes-label'
-                                                    id='time-start-minutes-label'
-                                                    value={startTimeMinutes}
-                                                    label="Start Time Minutes"
-                                                    onChange={(e) => this.handleStartMinutes(e.target.value)}
-                                                >
-                                                    <MenuItem value={0}>00</MenuItem>
-                                                    <MenuItem value={10}>10</MenuItem>
-                                                    <MenuItem value={20}>20</MenuItem>
-                                                    <MenuItem value={30}>30</MenuItem>
-                                                    <MenuItem value={40}>40</MenuItem>
-                                                    <MenuItem value={50}>50</MenuItem>
-                                                </Select>
-                                            </FormControl>
-                                        </Col>
-                                        <Col md={2} className="col-center-middle">
-                                            <ArrowForward />
-                                        </Col>
-                                        {/* End time hours */}
-                                        <Col md={2}>
-                                            <FormControl fullWidth>
-                                                <InputLabel style={{ fontSize: 12 }} id="time-start-hours-label">Hour</InputLabel>
-                                                <Select
-                                                    labelId='time-start-hours-label'
-                                                    id='time-start-hours-label'
-                                                    value={endTimeHours}
-                                                    label="Start Time Hour"
-                                                    onChange={(e) => this.handleEndHour(e.target.value)}
-                                                    MenuProps={{ style: { maxHeight: 'calc(50% - 96px)' } }}
-                                                >
-                                                    <MenuItem value={0}>0</MenuItem>
-                                                    <MenuItem value={1}>1</MenuItem>
-                                                    <MenuItem value={2}>2</MenuItem>
-                                                    <MenuItem value={3}>3</MenuItem>
-                                                    <MenuItem value={4}>4</MenuItem>
-                                                    <MenuItem value={5}>5</MenuItem>
-                                                    <MenuItem value={6}>6</MenuItem>
-                                                    <MenuItem value={7}>7</MenuItem>
-                                                    <MenuItem value={8}>8</MenuItem>
-                                                    <MenuItem value={9}>9</MenuItem>
-                                                    <MenuItem value={10}>10</MenuItem>
-                                                    <MenuItem value={11}>11</MenuItem>
-                                                    <MenuItem value={12}>12</MenuItem>
-                                                    <MenuItem value={13}>13</MenuItem>
-                                                    <MenuItem value={14}>14</MenuItem>
-                                                    <MenuItem value={15}>15</MenuItem>
-                                                    <MenuItem value={16}>16</MenuItem>
-                                                    <MenuItem value={17}>17</MenuItem>
-                                                    <MenuItem value={18}>18</MenuItem>
-                                                    <MenuItem value={19}>19</MenuItem>
-                                                    <MenuItem value={20}>20</MenuItem>
-                                                    <MenuItem value={21}>21</MenuItem>
-                                                    <MenuItem value={22}>22</MenuItem>
-                                                    <MenuItem value={23}>23</MenuItem>
-                                                </Select>
-                                            </FormControl>
-                                        </Col>
-                                        <Col md={3}>
-                                            <FormControl fullWidth>
-                                                <InputLabel style={{ fontSize: 12 }} id="time-start-minutes-label">Minutes</InputLabel>
-                                                <Select
-                                                    labelId='time-end-minutes-label'
-                                                    id='time-end-minutes-label'
-                                                    value={endTimeMinutes}
-                                                    label="End Time Minutes"
-                                                    onChange={(e) => this.handleEndMinutes(e.target.value)}
-                                                >
-                                                    <MenuItem value={0}>00</MenuItem>
-                                                    <MenuItem value={10}>10</MenuItem>
-                                                    <MenuItem value={20}>20</MenuItem>
-                                                    <MenuItem value={30}>30</MenuItem>
-                                                    <MenuItem value={40}>40</MenuItem>
-                                                    <MenuItem value={50}>50</MenuItem>
-                                                </Select>
-                                            </FormControl>
-                                        </Col>
-                                    </Row>
+                                    <div className="desk-booking-times">
+                                        <BookingTime label="Start time" hour={startTimeHours} minute={startTimeMinutes}
+                                            onHour={this.handleStartHour} onMinute={this.handleStartMinutes} />
+                                        <BookingTime label="End time" hour={endTimeHours} minute={endTimeMinutes}
+                                            onHour={this.handleEndHour} onMinute={this.handleEndMinutes} />
+                                    </div>
                                     <Row>
                                         <Col>
                                             <TextField
@@ -704,15 +477,9 @@ class Birthday extends Component {
                                         </Col>
                                     </Row>
                                     <Row className="row-deposit-birthday">
-                                        <Col xs={"auto"} className="align-items-center-col">
-                                            <p className="no-margin-bottom">Deposit:</p>
-                                        </Col>
-                                        <Col xs={"auto"} className="align-items-center-col">
-                                            <Checkbox
-                                                checked={deposit}
-                                                value={deposit}
-                                                onChange={this.handleDeposit}
-                                            />
+                                        <Col xs="auto" className="align-items-center-col">
+                                            <FormControlLabel label="Deposit received"
+                                                control={<Checkbox checked={deposit} onChange={this.handleDeposit} />} />
                                         </Col>
                                     </Row>
                                     <Row>
@@ -742,11 +509,11 @@ class Birthday extends Component {
                                 </DialogContent>
                                 <DialogActions className="actions-create-birthday">
                                     <Col md={8}>
-                                        <Button disabled={this.state.saving} onClick={this.handleUpdate} type="button" color="primary"
+                                        <Button disabled={this.state.saving} onClick={this.handleUpdate} type="button" variant="contained" color="primary"
                                             endIcon={<Save />}>
                                             Update
                                         </Button>
-                                        <Button disabled={this.state.saving} onClick={this.handleRemoval} color="primary"
+                                        <Button disabled={this.state.saving} onClick={this.handleRemoval} color="error"
                                             endIcon={<Delete />}>
                                             Remove
                                         </Button>
