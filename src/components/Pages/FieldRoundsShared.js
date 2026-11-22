@@ -65,8 +65,10 @@ export function formatRoundCountdown(milliseconds) {
     return hours ? `${hours}:${minutes}:${remainder}` : `${minutes}:${remainder}`;
 }
 
+export const barracksClockTitles = { break: 'Break between games', lunch: 'Lunch break', safetyBrief: 'Safety brief' };
+
 export function runningBarracksClock(clock, now) {
-    return (clock?.kind === 'lunch' || clock?.kind === 'break') && Date.parse(clock.endsAt) > now;
+    return Boolean(clock && Object.hasOwn(barracksClockTitles, clock.kind) && Date.parse(clock.endsAt) > now);
 }
 
 export function useLiveFieldBoard(request, path = LIVE_ROUNDS_PATH) {
