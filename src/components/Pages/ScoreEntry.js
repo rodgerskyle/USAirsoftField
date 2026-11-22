@@ -316,11 +316,12 @@ function ScoreEntry({ firebase, actor }) {
     }
 
     function startRound() {
-        if (active.current || !window.confirm('Start a new round? Choose the new game mode and team. Pending submissions stay available with their original details.')) return;
-        updateDesk(old => ({ ...old, round: newScoreRound() }));
-        resetSearch(); setError(''); setStatus('New round started. Select the game mode and team.');
+        if (active.current || !window.confirm('Start a new scoring round with the current mode and team?')) return;
+        updateDesk(old => ({ ...old, round: { ...newScoreRound(), mode: old.round.mode, side: old.round.side } }));
+        resetSearch(); setError(''); setStatus('New round started.');
         setCameraKey(old => old + 1);
-        modeInput.current?.focus();
+        if (state.current.round.mode && state.current.round.side) input.current?.focus();
+        else modeInput.current?.focus();
     }
 
     function clearEntries() {
@@ -332,12 +333,22 @@ function ScoreEntry({ firebase, actor }) {
     }
 
     function changeRound(field, next) {
-        if (field === 'mode') setPatchSelection(emptyPatchSelection);
+        const current = state.current;
+        if (field === 'mode' && next !== current.round.mode) {
+            setPatchSelection(emptyPatchSelection);
+            const hasEntries = Object.keys(current.round.scored).length > 0 ||
+                current.pending.some(op => op.roundId === current.round.id);
+            if (hasEntries) {
+                updateDesk(old => ({ ...old, round: { ...newScoreRound(), mode: next, side: old.round.side } }));
+                setError('');
+                setStatus(`Scoring a new round of ${next}.`);
+                return;
+            }
+        }
         updateDesk(old => ({ ...old, round: { ...old.round, [field]: next } }));
         if (field === 'side' && next && !selected) input.current?.focus();
     }
 
-    const modeLocked = Object.keys(round.scored).length > 0 || desk.pending.some(op => op.roundId === round.id);
     const visible = desk.pending.filter(op => !op.hidden);
     const hiddenCount = desk.pending.length - visible.length;
     const resultHint = new URLSearchParams(useLocation().search).get('result');
@@ -357,8 +368,8 @@ function ScoreEntry({ firebase, actor }) {
                     <Card.Body>
                         <div className="score-entry-context">
                             <Form.Group controlId="score-mode"><Form.Label>Game mode</Form.Label>
-                                <Form.Select ref={modeInput} value={round.mode} disabled={busy || modeLocked} onChange={e => changeRound('mode', e.target.value)}>
-                                    <option value="">Choose a game mode</option>
+                                <Form.Select ref={modeInput} value={round.mode} disabled={busy} aria-describedby="score-mode-help" onChange={e => changeRound('mode', e.target.value)}>
+                                    <option value="" disabled>Choose a game mode</option>
                                     {gameModeNames.map(name => <option key={name} value={name}>{name}</option>)}
                                 </Form.Select>
                             </Form.Group>
@@ -370,7 +381,7 @@ function ScoreEntry({ firebase, actor }) {
                             </Form.Group>
                             <Button variant="outline-secondary" disabled={busy} onClick={startRound}>Start new round</Button>
                         </div>
-                        <Form.Text>These details appear on the player’s Companion receipt. Switch teams as you scan the other side.</Form.Text>
+                        <Form.Text id="score-mode-help">Choose another mode to score the next game. Use Start new round to play the same mode again.</Form.Text>
                         <ScorePatchAwards firebase={firebase} mode={round.mode} player={selected && nameOf(selected)}
                             member={selected} roundSide={round.side}
                             disabled={Boolean(busy || saved || blocks)} selection={patchSelection} onChange={setPatchSelection}

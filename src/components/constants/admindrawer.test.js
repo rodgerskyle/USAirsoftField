@@ -6,7 +6,7 @@ import { useTheme } from '@mui/material/styles';
 import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
 import { AppearanceProvider } from '../../Appearance';
 import AuthUserContext from '../session/context';
-import AdminLayout, { AdminThemeRoute } from './admindrawer';
+import AdminLayout, { DashboardDeskLayout } from './admindrawer';
 
 const preferenceKey = 'usaw-field-theme';
 
@@ -39,7 +39,7 @@ function openPage(path, user) {
               <Route path="renewal/:id" element={<Page name="Renew member" />} />
               <Route path="field/:tool" element={<Page name="Round controls" />} />
             </Route>
-            <Route path="/dashboard" element={<AdminThemeRoute />}>
+            <Route path="/dashboard" element={<DashboardDeskLayout />}>
               <Route path="rentalform" element={<Page name="Rental form" />} />
             </Route>
           </Routes>
@@ -59,6 +59,8 @@ test('uses one theme switch across staff routes and updates portaled controls', 
   const staff = { roles: { ADMIN: true } };
   const { unmount } = openPage('/admin/renewal/player', staff);
   expect(screen.getByRole('heading', { name: 'Renew member' })).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Player Check-In' })).toHaveAttribute('href', '/admin/field/check-in');
+  expect(screen.getByRole('link', { name: 'Rentals' })).toHaveAttribute('href', '/admin/rentalform');
   const switcher = screen.getByRole('button', { name: 'Dark mode' });
   expect(switcher).toHaveAttribute('aria-pressed', 'false');
   expect(screen.getByLabelText('Dialog theme')).toHaveTextContent('light');
@@ -92,6 +94,9 @@ test('applies the saved theme to a dashboard alias while keeping its navigation 
   expect(screen.getByRole('heading', { name: 'Rental form' })).toBeInTheDocument();
   expect(screen.getByLabelText('Dialog theme')).toHaveTextContent('dark');
   expect(screen.queryByRole('navigation', { name: 'Staff navigation' })).not.toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Rentals' })).toHaveAttribute('aria-current', 'page');
+  expect(screen.getByRole('link', { name: 'Find a waiver' })).toHaveAttribute('href', '/dashboard/waiverlookup');
+  expect(screen.queryByRole('link', { name: 'Wins & Losses' })).not.toBeInTheDocument();
 });
 
 test('keeps the theme switch available for a legacy page without exposing Staff Operations', () => {

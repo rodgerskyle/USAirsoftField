@@ -174,7 +174,7 @@ test('staff can find groups by name, confirm the right one, assign everyone and 
     .mockResolvedValueOnce(allCamo).mockResolvedValueOnce(split);
   const onSelect = jest.fn(), onAssigned = jest.fn();
   render(<StaffGroupLookup request={request} onSelect={onSelect} onAssigned={onAssigned} />);
-  fireEvent.click(screen.getByText('Find an arriving group'));
+  expect(screen.getByLabelText('Group name or code')).toBeVisible();
   fireEvent.change(screen.getByLabelText('Group name or code'), { target: { value: 'Family' } });
   fireEvent.click(screen.getByRole('button', { name: 'Find group' }));
   fireEvent.click(await screen.findByRole('button', { name: /Family game day/ }));
@@ -238,7 +238,7 @@ test('staff calendar handoff preselects a verified booking and requires explicit
     expect(picker).toHaveValue(booking.key);
     expect(picker.querySelector('option[disabled]')).not.toBeNull();
     expect(request.mock.calls.map(([path]) => path)).toEqual([
-      '/api/check-in-groups?staff=1&code=' + group.code, '/api/check-in-groups?staff=1&parties=' + group.date, '/api/game-day-check-in',
+      '/api/check-in-groups?staff=1&code=' + group.code + '&arrival=1', '/api/check-in-groups?staff=1&parties=' + group.date, '/api/game-day-check-in',
     ]);
     fireEvent.click(screen.getByRole('button', { name: 'Confirm booking for group' }));
     expect(await screen.findByText('Schedule confirmed by staff')).toBeVisible();
@@ -317,4 +317,34 @@ test('a birthday guest can fill their own roster name after signing without losi
   expect(create.form.elements.kind).toHaveValue('party');
   expect(create.form.elements.name).toHaveValue('Birthday group');
   expect(screen.getByRole('button', { name: 'Join group' }).form.elements.displayName).toHaveValue('');
+});
+
+test('shows today’s groups without a search and checks in just the ready players', async () => {
+  const entries = [{ id:'one', displayName:'One' },{ id:'two', displayName:'Two' }];
+  const positions = [{ entryId:'one', waiverStatus:'signed', side:null },{ entryId:'two', waiverStatus:'missing', side:null }];
+  const ready = { ...group, entries };
+  const request=jest.fn().mockResolvedValueOnce({groups:[ready],totalPages:1,page:1})
+    .mockResolvedValueOnce({group:ready,today:group.date}).mockResolvedValueOnce(boardFor('before',positions))
+    .mockResolvedValueOnce({...boardFor('after',[{...positions[0],side:'camo'},positions[1]]),checkedInCount:1});
+  render(<StaffGroupLookup request={request} />);
+  fireEvent.click(screen.getByRole('button',{name:'Show today’s groups'}));
+  const button=await screen.findByRole('button',{name:'Check in 1 ready to Camo'});
+  await waitFor(()=>expect(button).toBeEnabled());
+  expect(screen.getByRole('button',{name:'Assign group to Camo'})).toBeDisabled();
+  fireEvent.click(button);
+  await waitFor(()=>expect(request).toHaveBeenCalledTimes(4));
+  expect(request.mock.calls[0][0]).toMatch(/staff-groups\?date=/);
+  expect(request.mock.calls[3][1].body).toMatchObject({action:'assignGroup',groupId:group.id,side:'camo',readyOnly:true,assignmentVersion:'before'});
+});
+
+test('opens a group sent from group management without another lookup', async () => {
+  const initial = window.location.href;
+  window.history.replaceState(null,'','/admin/field/check-in?group='+group.id+'#arriving-group');
+  try {
+    const request = jest.fn().mockResolvedValueOnce({ group, today:group.date }).mockResolvedValueOnce(emptyAssignments);
+    render(<StaffGroupLookup request={request} />);
+    await screen.findByRole('heading',{name:group.name});
+    expect(request.mock.calls[0][0]).toEqual('/api/check-in-groups?staff=1&id='+group.id+'&arrival=1');
+    expect(screen.getByRole('link',{name:'Edit group roster'})).toHaveAttribute('href','/admin/field/groups?group='+group.id);
+  } finally { window.history.replaceState(null,'',initial); }
 });

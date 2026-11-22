@@ -1,0 +1,8 @@
+.membership-waiver-check { width: min(100%, 42rem); margin: 1rem auto; padding: clamp(1rem, 3vw, 2rem); border: 1px solid currentColor; border-radius: .75rem; text-align: left; }
+.membership-waiver-check h3 { margin-bottom: 1rem; }
+.membership-waiver-check label { display: block; font-weight: 600; margin: .65rem 0 .3rem; }
+.membership-waiver-check .btn, .membership-waiver-check .form-control, .membership-waiver-check summary { min-height: 44px; }
+.membership-waiver-check .btn { display: block; margin: .8rem 0 .25rem; white-space: normal; }
+.membership-waiver-check summary { padding: .65rem 0; cursor: pointer; }
+.membership-waiver-check p { margin: .6rem 0; }
+.membership-waiver-names { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(12rem,100%),1fr)); gap: .75rem; }

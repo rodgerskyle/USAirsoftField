@@ -260,6 +260,8 @@ test('keeps a confirmed player protected after clearing entries and only awards 
         expect(recordButton('loss')).toBeDisabled();
         expect(recordPlayerResult).toHaveBeenCalledTimes(1);
         fireEvent.click(screen.getByRole('button', { name: /start new round/i }));
+        expect(modeField()).toHaveValue('Countdown');
+        expect(teamField()).toHaveValue('solid');
         selectRound();
         await scan(firstId);
         await record('loss');
@@ -267,6 +269,52 @@ test('keeps a confirmed player protected after clearing entries and only awards 
         expect(recordPlayerResult.mock.calls[1][4]).not.toEqual(recordPlayerResult.mock.calls[0][4]);
         expect(recordPlayerResult.mock.calls[1][5]).toEqual({ mode: 'Countdown', side: 'camo' });
     } finally { confirm.mockRestore(); }
+});
+
+test('staff can select a new mode after scoring and score the same player in the next game', async () => {
+    let page = renderScore();
+    await page.verify(admin);
+    selectRound('solid');
+    await scan(firstId);
+    await record('win');
+    await scan(firstId);
+    expect(recordButton('loss')).toBeDisabled();
+    expect(modeField()).toBeEnabled();
+    fireEvent.change(modeField(), { target: { value: 'Bottle Domination' } });
+    expect(teamField()).toHaveValue('solid');
+    expect(recordButton('loss')).toBeEnabled();
+    await record('loss');
+    page.unmount();
+    page = renderScore();
+    await page.verify(admin);
+    expect(modeField()).toHaveValue('Bottle Domination');
+    await scan(firstId);
+    expect(recordButton('win')).toBeDisabled();
+    const [first, second] = recordPlayerResult.mock.calls;
+    expect(first[5]).toEqual({ mode: 'Countdown', side: 'solid' });
+    expect(second[5]).toEqual({ mode: 'Bottle Domination', side: 'solid' });
+    expect(second[4]).not.toEqual(first[4]);
+});
+
+test('retrying a saved submission after changing mode keeps its original game and team', async () => {
+    recordPlayerResult.mockRejectedValueOnce(new Error('No response.'));
+    checkScoreOperation.mockResolvedValue({ confirmed: false });
+    const page = renderScore();
+    await page.verify(admin);
+    selectRound('solid');
+    await scan(firstId);
+    await record('win');
+    expect(modeField()).toBeEnabled();
+    fireEvent.change(modeField(), { target: { value: 'Bottle Domination' } });
+    fireEvent.change(teamField(), { target: { value: 'camo' } });
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Retry same submission' })));
+    const [first, retry] = recordPlayerResult.mock.calls;
+    expect(first[5]).toEqual({ mode: 'Countdown', side: 'solid' });
+    expect(retry.slice(1)).toEqual(first.slice(1));
+    await scan(firstId);
+    expect(recordButton('loss')).toBeEnabled();
+    expect(modeField()).toHaveValue('Bottle Domination');
+    expect(teamField()).toHaveValue('camo');
 });
 
 test('a pending write keeps its original submission after clear and reload and cannot double-submit', async () => {
@@ -499,9 +547,43 @@ async function unlockRoundPatches() {
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Unlock badge awards' })));
 }
 
+test('MVP game choices distinguish repeated modes and share a newly logged game between desks', async () => {
+    const date = '2026-11-20';
+    const games = [
+        { id: 'second', title: 'Elimination', startsAt: date + 'T20:00:00Z' },
+        { id: 'first', title: 'Elimination', startsAt: date + 'T19:00:00Z' },
+    ];
+    const winner = { id: 'mvp', gameId: 'first', playerId:firstId, playerName:'River Lane', side:'solid', progress:{totalAwards:1} };
+    const day = {date, games, nextGameNumber:1, awards:[winner]};
+    const logged = {id:'shared-new',title:'Lunch scrimmage',startsAt:date+'T21:00:00Z'};
+    staffBattleBadgeDay.mockResolvedValueOnce(day).mockResolvedValueOnce({
+        ...day, games:[logged,...games], registeredGameId: logged.id, nextGameNumber:2,
+    });
+    const page = renderScore();
+    await page.verify(admin);
+    await scan(firstId);
+    fireEvent.change(teamField(), { target: { value: 'solid' } });
+    const desk = within(screen.getByRole('region', { name: 'US Airsoft World Battle Badges' }));
+    fireEvent.click(desk.getByRole('button', {name:'Unlock MVP controls'}));
+    await unlockRoundPatches();
+    const choices = await desk.findByLabelText('Game played');
+    expect(desk.getByRole('button', {name:'Award game MVP'})).toBeDisabled();
+    fireEvent.change(choices, {target:{value:'first'}});
+    expect(desk.getByRole('button', {name:'Remove Battle Badge'})).toBeEnabled();
+    fireEvent.change(choices, {target:{value:'second'}});
+    expect(desk.getByRole('button', {name:'Award game MVP'})).toBeEnabled();
+    fireEvent.click(desk.getByRole('button', {name:'Add an unscheduled game'}));
+    fireEvent.change(desk.getByLabelText('Game name'), {target:{value:logged.title}});
+    await act(async () => fireEvent.click(desk.getByRole('button', {name:'Save played game'})));
+    expect(staffBattleBadgeDay.mock.calls[1][2].body).toEqual({action:'registerGame', number:1, date, title:logged.title});
+    expect(choices).toHaveValue(logged.id);
+    expect(recordPlayerResult).not.toHaveBeenCalled();
+});
+
 test('the score desk can grant a Battle Badge and correct it independently of wins, losses and round patches', async () => {
-    const emptyDay = { date: '2026-11-20', awards: [] };
-    const awarded = { id: 'award-id', playerId: firstId, playerName: 'River Lane', side: 'solid', progress: { totalAwards: 29 } };
+    const game = {id:'shared-game-id', title:'Capture the Flag', startsAt:'2026-11-20T18:00:00Z'};
+    const emptyDay = { date: '2026-11-20', games:[game], nextGameNumber:1, awards: [] };
+    const awarded = { id: 'award-id', gameId:game.id, playerId: firstId, playerName: 'River Lane', side: 'solid', progress: { totalAwards: 29 } };
     staffBattleBadgeDay.mockResolvedValueOnce(emptyDay)
         .mockRejectedValueOnce(new Error('Connection lost')).mockResolvedValueOnce({ ...emptyDay, awards: [awarded] })
         .mockResolvedValueOnce(emptyDay);
@@ -513,18 +595,18 @@ test('the score desk can grant a Battle Badge and correct it independently of wi
     fireEvent.click(desk.getByRole('button', { name: 'Unlock MVP controls' }));
     expect(staffBattleBadgeDay).not.toHaveBeenCalled();
     await unlockRoundPatches();
-    const award = await desk.findByRole('button', { name: 'Award daily MVP' });
+    const award = await desk.findByRole('button', { name: 'Award game MVP' });
     await act(async () => fireEvent.click(award));
     expect(await desk.findByText('Connection lost')).toBeVisible();
     await act(async () => fireEvent.click(award));
     expect(staffBattleBadgeDay.mock.calls[1][2].body).toEqual({
-        action: 'award', date: emptyDay.date, playerId: firstId, side: 'solid', requestId: expect.stringMatching(/^[a-f0-9-]{36}$/),
+        action: 'award', gameId:game.id, date: emptyDay.date, playerId: firstId, side: 'solid', requestId: expect.stringMatching(/^[a-f0-9-]{36}$/),
     });
     expect(staffBattleBadgeDay.mock.calls[1][2].body).toEqual(staffBattleBadgeDay.mock.calls[2][2].body);
     expect(desk.getByText('Solid team · Gold Star')).toBeVisible();
     expect(desk.getByText('Solid team · Gold Star').closest('.staff-battle-recipient').querySelector('img'))
         .toHaveAttribute('src', '/assets/battle-badges/field-badges.svg#gold-star');
-    expect(desk.queryByRole('button', { name: 'Award daily MVP' })).toBeNull();
+    expect(desk.queryByRole('button', { name: 'Award game MVP' })).toBeNull();
     const confirm = jest.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true);
     try {
         const remove = desk.getByRole('button', { name: 'Remove Battle Badge' });
@@ -532,7 +614,7 @@ test('the score desk can grant a Battle Badge and correct it independently of wi
         expect(staffBattleBadgeDay).toHaveBeenCalledTimes(3);
         await act(async () => fireEvent.click(remove));
         expect(staffBattleBadgeDay.mock.calls[3][2].body).toEqual({ action: 'revoke', id: awarded.id, date: emptyDay.date });
-        expect(desk.getByRole('button', { name: 'Award daily MVP' })).toBeEnabled();
+        expect(desk.getByRole('button', { name: 'Award game MVP' })).toBeEnabled();
         expect(recordPlayerResult).not.toHaveBeenCalled();
         expect(awardRoundPatch).not.toHaveBeenCalled();
     } finally { confirm.mockRestore(); }

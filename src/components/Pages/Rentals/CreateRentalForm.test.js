@@ -60,7 +60,8 @@ test('a reviewed birthday roster is saved with distinct stable participant IDs a
     expect(screen.getByLabelText('Rental Name', { exact: false })).toHaveValue('Friday birthday');
     expect(screen.getByRole('spinbutton')).toHaveValue(2);
     const review = screen.getByRole('region', { name: 'Imported check-in group' });
-    expect(within(review).getAllByText('Fox')).toHaveLength(2);
+    expect(within(review).getAllByDisplayValue('Fox')).toHaveLength(2);
+    fireEvent.change(within(review).getByLabelText('Renter 2 name'), { target: { value: '  Fox Junior  ' } });
     expect(runTransaction).not.toHaveBeenCalled();
     reserveAndPay(2);
     fireEvent.click(await screen.findByRole('button', { name: 'Assign rental gear' }));
@@ -69,7 +70,7 @@ test('a reviewed birthday roster is saved with distinct stable participant IDs a
     expect(form.size).toBe(2);
     expect(form.complete).toBe(false);
     expect(form.participants.map(person => [person.name, person.groupEntryId, person.ref, person.rentals])).toEqual([
-        ['Fox', 'member-entry', 'memberABC123', []], ['Fox', 'guest-entry', 'group:group-21:guest-entry', []],
+        ['Fox', 'member-entry', 'memberABC123', []], ['Fox Junior', 'guest-entry', 'group:group-21:guest-entry', []],
     ]);
     expect(form.available).toHaveLength(2);
     expect(new Set(form.available.map(item => item.id)).size).toBe(2);
@@ -112,4 +113,15 @@ test('a stock change between review and save leaves the entire reservation unapp
     expect(await screen.findByText(/no longer enough Mask available/)).toBeVisible();
     expect(data().group).toEqual({});
     expect(data().options[0].stock).toBe(equipment.max);
+});
+
+test('staff can exclude a non-renter without losing the other player or changing the group roster', async () => {
+    const { data } = fixture();
+    fireEvent.click(screen.getByRole('button', { name: 'Import reviewed members' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Include renter 1' }));
+    expect(screen.getByLabelText('Renter 1 name')).toBeDisabled();
+    expect(screen.getByRole('spinbutton')).toHaveValue(1);
+    reserveAndPay();
+    await screen.findByText('Success!');
+    expect(data().group[0].participants).toEqual([expect.objectContaining({ groupEntryId: 'guest-entry', name: 'Fox' })]);
 });

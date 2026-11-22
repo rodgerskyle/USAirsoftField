@@ -299,11 +299,10 @@ test('starts an individual walk-on from a waiver even when no account matches', 
   fireEvent.change(screen.getByLabelText('Player name, ID or card link'), { target: { value: waiverMatch.name } });
   fireEvent.click(screen.getByRole('button', { name: 'Find player' }));
   expect(await screen.findByText(/No matching player/)).toBeVisible();
-  fireEvent.click(screen.getByRole('button', { name: 'Find a waiver' }));
   const field = screen.getByLabelText('Participant name or waiver reference');
   expect(field).toHaveValue(waiverMatch.name);
   expect(field).toHaveFocus();
-  await chooseWaiver();
+  fireEvent.click(await screen.findByRole('button', { name: /Jordan Smith ·/ }));
   const selected = await screen.findByRole('region', { name: waiverMatch.name });
   expect(selected.compareDocumentPosition(screen.getByText('Add a walk-on')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(selected.compareDocumentPosition(screen.getByText('Find an arriving group')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -362,4 +361,24 @@ test.each(['guest', 'active'])('links a checked-in %s in place, refreshing the s
     date, rosterVersion: 'initial', revision: 2, waiverRef: waiverMatch.ref });
   expect(within(screen.getByRole('region', { name: seated.displayName })).getByText('Checked in · Camo')).toBeVisible();
   expect(request.mock.calls.some(([, options]) => ['guestPreview', 'reassign', 'guestCheckIn', 'checkIn'].includes(options.body?.action))).toBe(false);
+});
+
+test('edits a checked-in walk-on in place and starts the next player without leaving the desk', async () => {
+  const saved = { ...guest, side: 'solid', revision: 3 };
+  const renamed = { ...saved, displayName: 'River Fox', revision: 4 };
+  const request = jest.fn().mockResolvedValueOnce({ ...versionedRoster, players: [saved] })
+    .mockResolvedValueOnce({ ...versionedRoster, player: saved })
+    .mockResolvedValueOnce({ ...versionedRoster, players: [renamed], player: renamed });
+  render(<AdminFieldCheckIn request={request} />);
+  const roster = await screen.findByRole('list', { name: 'Recent players' });
+  fireEvent.click(within(roster).getByRole('button', { name: /Field Guest/ }));
+  fireEvent.click(await screen.findByText('Edit walk-on name'));
+  fireEvent.change(screen.getByLabelText('Walk-on name or callsign'), { target: {value:'River Fox'} });
+  fireEvent.click(screen.getByRole('button', { name:'Save walk-on name' }));
+  await screen.findByText('Walk-on name saved.');
+  expect(request.mock.calls[2][1].body).toEqual({ action:'renameWalkOn', date, playerId:saved.playerId, revision:3, rosterVersion:'initial', displayName:'River Fox' });
+  expect(within(roster).getByText('River Fox')).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name:'Check in next player' }));
+  expect(screen.getByLabelText('Player name, ID or card link')).toHaveFocus();
+  expect(screen.queryByRole('region', { name:'River Fox' })).toBeNull();
 });

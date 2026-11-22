@@ -141,7 +141,7 @@ export function ScorePatchAwards({ firebase, mode, player, member, roundSide, di
             {unlockError && <p role="alert">{unlockError}</p>}
       </form>}
       {token && <button type="button" className="btn btn-link" onClick={lock}>Lock badge awards</button>}
-      <StaffBattleBadges firebase={firebase} token={token} player={member} roundSide={roundSide} onLock={lock}
+      <StaffBattleBadges firebase={firebase} token={token} player={member} mode={mode} roundSide={roundSide} onLock={lock}
           onRequestUnlock={() => { setBattleAccessRequested(true); emailInput.current?.focus(); }} />
     </>;
 }

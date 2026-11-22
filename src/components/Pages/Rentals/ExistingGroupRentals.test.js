@@ -191,3 +191,45 @@ test.each([null, { name: 'Former member', accountRemovedAt: 10 }])('a member rem
     expect(runTransaction).not.toHaveBeenCalled();
     expect(current.participants).toEqual([handEntered]);
 });
+
+test('saves the selected renter name after another desk reorders duplicate names and numbers gear', async () => {
+    const original = { ...handEntered, groupId: group.id, groupEntryId: 'one' };
+    const second = { name: original.name, groupId: group.id, groupEntryId: 'two', ref: 'guest:two' };
+    current.participants = [original, second];
+    render(<EditForm {...formProps()} />);
+    const row = (await screen.findAllByRole('heading', { name: original.name }))[0].closest('.participant-card');
+    fireEvent.click(within(row).getByRole('button', { name: 'Edit name' }));
+    const input = within(row).getByRole('textbox', { name: 'Rental player name' });
+    fireEvent.change(input, { target: { value: '  New rental name  ' } });
+    const issued = { ...gear, number: '24' };
+    current.participants = { 4: second, 7: { ...original, rentals: [issued] } };
+    fireEvent.click(within(row).getByRole('button', { name: 'Save name' }));
+    await within(row).findByText('Rental name saved.');
+    expect(current.participants).toEqual({ 4: second, 7: { ...original, rentals: [issued], name: 'New rental name' } });
+    expect(current.transaction).toBe('T100');
+});
+
+test('protects a newer rental name and preserves the desk draft after a conflict', async () => {
+    render(<EditForm {...formProps()} />);
+    const row = (await screen.findByRole('heading', { name: handEntered.name })).closest('.participant-card');
+    fireEvent.click(within(row).getByRole('button', { name: 'Edit name' }));
+    const input = within(row).getByRole('textbox', { name: 'Rental player name' });
+    fireEvent.change(input, { target: { value: 'Draft' } });
+    current.participants = [{ ...handEntered, name: 'Other desk' }];
+    fireEvent.click(within(row).getByRole('button', { name: 'Save name' }));
+    expect(await within(row).findByRole('alert')).toHaveTextContent('Another staff member');
+    expect(current.participants[0].name).toBe('Other desk');
+    expect(input).toHaveValue('Draft');
+});
+
+test('lets staff correct a legacy name-only renter and an unnumbered item stays assigned', async () => {
+    const legacy = { name: 'Guest', rentals: [{ ...gear, number: '' }] };
+    current.participants = { 3: legacy };
+    render(<EditForm {...formProps()} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit name' }));
+    const input = await screen.findByLabelText('Rental player name');
+    fireEvent.change(input, { target: { value: 'Guest One' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save name' }));
+    await screen.findByText('Rental name saved.');
+    expect(current.participants).toEqual({ 3: { ...legacy, name: 'Guest One' } });
+});

@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { HelmetProvider } from 'react-helmet-async';
 import { MemoryRouter } from 'react-router-dom';
 import AdminFieldRounds from './AdminFieldRounds';
@@ -226,4 +226,95 @@ test('opens the selected public map pin and labels it with the round location', 
 test('rejects nonexistent and repeated times during California clock changes', () => {
     expect(() => fieldTimeISO('2026-03-08T02:30')).toThrow('does not exist');
     expect(() => fieldTimeISO('2026-11-01T01:30')).toThrow('occurs twice');
+});
+
+test('staff start a preset TV timer, replace its remaining time and stop it', async () => {
+    let clock = { kind: null, endsAt: null, revision: 0 };
+    const request = jest.fn(async (path, { method, body }) => {
+        if (path === ROUND_CATALOG_PATH) return catalog;
+        if (method !== 'POST') return { serverNow, games: [], isStaff: true, barracksClock: clock };
+        expect(body.revision).toBe(clock.revision);
+        clock = { kind: body.kind ?? null, revision: clock.revision + 1,
+            endsAt: body.kind ? new Date(Date.parse(serverNow) + body.durationMinutes * 60000).toISOString() : null };
+        return { ok: true };
+    });
+    render(<AdminFieldRounds request={request} />);
+    const region = within(await screen.findByRole('region', { name: 'Barracks TV countdown' }));
+    fireEvent.click(region.getByRole('button', { name: '5-minute break' }));
+    expect(await region.findByRole('timer')).toHaveTextContent('05:00');
+    fireEvent.change(region.getByLabelText('Timer type'), { target: { value: 'lunch' } });
+    fireEvent.change(region.getByLabelText('Minutes'), { target: { value: '24' } });
+    fireEvent.click(region.getByRole('button', { name: 'Replace timer' }));
+    await waitFor(() => expect(region.getByRole('timer')).toHaveTextContent('24:00'));
+    expect(clock.kind).toBe('lunch');
+    fireEvent.click(region.getByRole('button', { name: 'Stop timer' }));
+    expect(await region.findByText('No break timer running.')).toBeInTheDocument();
+});
+
+test('a public TV reads a remote lunch deadline, counts down against server time and returns to the round', async () => {
+    jest.useFakeTimers();
+    try {
+        const request = jest.fn().mockResolvedValue({ serverNow, games: [scheduled], isStaff: false,
+            barracksClock: { kind: 'lunch', endsAt: '2026-11-16T18:00:03.000Z', revision: 4 } });
+        render(<HelmetProvider><MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <BarracksTV request={request} />
+        </MemoryRouter></HelmetProvider>);
+        await act(async () => {});
+        expect(screen.getByRole('heading', { name: 'Lunch break' })).toBeInTheDocument();
+        expect(screen.getByRole('timer', { name: 'Time until break ends' })).toHaveTextContent('00:03');
+        act(() => jest.advanceTimersByTime(2000));
+        expect(screen.getByRole('timer', { name: 'Time until break ends' })).toHaveTextContent('00:01');
+        act(() => jest.advanceTimersByTime(1000));
+        expect(screen.queryByRole('heading', { name: 'Lunch break' })).not.toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Countdown' })).toBeInTheDocument();
+        expect(request).toHaveBeenCalledWith(LIVE_ROUNDS_PATH, { signal: expect.anything() });
+    } finally {
+        jest.useRealTimers();
+    }
+});
+
+test('Barracks TV starts with new awards, retries a failed fetch, and plays every patch in a burst while the break clock runs', async () => {
+    jest.useFakeTimers();
+    try {
+        const awards = [
+            { sequence: 13, playerName: 'North Star', patchName: 'Tower of Power', kind: 'battle', imageUrl: 'https://app.usairsoftfield.com/assets/battle-badges/field-badges.svg#tower-of-power' },
+            { sequence: 14, playerName: 'Mongoose', patchName: 'Battle Buddy', kind: 'virtual', imageUrl: 'https://app.usairsoftfield.com/assets/badges/battle-buddy.webp' },
+            { sequence: 15, playerName: 'North Star', patchName: 'Silver Star', kind: 'battle', imageUrl: 'https://app.usairsoftfield.com/assets/battle-badges/field-badges.svg#silver-star' },
+        ];
+        let firstAttempt = true;
+        const request = jest.fn(async path => {
+            if (path === LIVE_ROUNDS_PATH) return { serverNow, games: [scheduled], isStaff: false, celebrationCursor: firstAttempt ? 12 : 15,
+                barracksClock: { kind: 'break', endsAt: '2026-11-16T18:05:00.000Z', revision: 7 } };
+            if (path.endsWith('After=12')) {
+                if (firstAttempt) { firstAttempt = false; throw Error('Offline'); }
+                return { cursor: 14, events: awards.slice(0, 2), hasMore: true };
+            }
+            if (path.endsWith('After=14')) return { cursor: 15, events: awards.slice(1), hasMore: false };
+            return { cursor: 15, events: [], hasMore: false };
+        });
+        render(<HelmetProvider><MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <BarracksTV request={request} />
+        </MemoryRouter></HelmetProvider>);
+        await act(async () => {});
+        expect(screen.queryByLabelText('Patch celebration')).not.toBeInTheDocument();
+        await act(async () => { jest.advanceTimersByTime(3000); });
+        let card = screen.getByLabelText('Patch celebration');
+        expect(within(card).getByRole('heading', { name: 'North Star' })).toBeInTheDocument();
+        expect(card.querySelector('img')).toHaveAttribute('src', awards[0].imageUrl);
+        expect(card).toHaveTextContent('Tower of Power');
+        expect(screen.getByRole('timer', { name: 'Time until break ends' })).toHaveTextContent('04:57');
+        await act(async () => { jest.advanceTimersByTime(1); });
+        await act(async () => { jest.advanceTimersByTime(5999); });
+        card = screen.getByLabelText('Patch celebration');
+        expect(card).toHaveTextContent('Mongoose');
+        expect(card).toHaveTextContent('Battle Buddy');
+        await act(async () => { jest.advanceTimersByTime(6000); });
+        expect(screen.getByLabelText('Patch celebration')).toHaveTextContent('Silver Star');
+        await act(async () => { jest.advanceTimersByTime(6000); });
+        expect(screen.queryByLabelText('Patch celebration')).not.toBeInTheDocument();
+        expect(request.mock.calls.some(([path]) => path.endsWith('After=0'))).toBe(false);
+        expect(screen.getByRole('heading', { name: 'Countdown' })).toBeInTheDocument();
+    } finally {
+        jest.useRealTimers();
+    }
 });

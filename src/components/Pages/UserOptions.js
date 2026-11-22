@@ -139,6 +139,7 @@ class UserOptions extends Component {
     }
 
     loadAccount() {
+        this.waiverRequest?.abort();
         this.unsubscribeUser?.();
         this.saveRequest?.abort();
         this.saveRequest = null;
@@ -196,6 +197,7 @@ class UserOptions extends Component {
     }
 
     componentWillUnmount() {
+        this.waiverRequest?.abort();
         this.saveRequest?.abort();
         this.unsubscribeUser?.();
         this.removeRequest?.abort();
@@ -491,35 +493,73 @@ class UserOptions extends Component {
 
     async openWaiver() {
         const uid = this.props.router.params.id;
-        const storageRef = this.props.firebase.membersWaivers(uid + '.pdf');
+        const firebase = this.props.firebase;
+        const staff = firebase.auth.currentUser;
+        const storageRef = firebase.membersWaivers(uid + '.pdf');
         const tab = window.open();
         if (!tab) {
             this.setState({ error: 'Allow the waiver PDF to open and try again.' });
             return;
         }
         tab.opener = null;
+        this.waiverRequest?.abort();
+        const controller = new AbortController();
+        this.waiverRequest = controller;
+        const sameAccount = () => !controller.signal.aborted && this.props.router.params.id === uid && firebase.auth.currentUser === staff;
         this.setState({ reviewWaiver: null, error: null });
         try {
-            const [url, metadata] = await Promise.all([getDownloadURL(storageRef), getMetadata(storageRef)]);
-            const created = Date.parse(metadata.timeCreated);
-            if (this.props.router.params.id !== uid) {
-                tab.close();
-                return;
+            let metadata;
+            try {
+                metadata = await getMetadata(storageRef);
+            } catch (error) {
+                if (error.code !== 'storage/object-not-found') throw error;
             }
-            if (this.state.user?.accountRemovedAt && !(created > waiverArchiveStart() && created <= Date.now())) {
-                tab.close();
-                this.setState({ error: 'This waiver is outside the one-year archive.' });
-                return;
+            const created = Date.parse(metadata?.timeCreated);
+            const current = created > waiverArchiveStart() && created <= Date.now();
+            const data = metadata?.customMetadata || {};
+            const reviewed = current && (data.usawSignedMemberForm === 'v1' ||
+                (metadata?.generation && data.usawReviewedGeneration === metadata.generation));
+
+            // A registration or renewal can reuse the existing signed source instead of creating a member PDF.
+            let url;
+            if (!reviewed && !this.state.user?.accountRemovedAt && sameAccount()) {
+                const { document } = await requestStaffFieldTool(firebase, staff.uid, '/api/waivers/membership', {
+                    method: 'POST', body: { action: 'document', memberId: uid }, signal: controller.signal,
+                }).catch(error => {
+                    // The separately authorized legacy member PDF is still available for manual review.
+                    if (metadata && (!error.status || error.status >= 500)) return { document: null };
+                    throw error;
+                });
+                if (document?.type === 'digital') {
+                    const record = (await get(firebase.digitalWaiver(document.ref))).val();
+                    if (!record || Number(record.timestamp) !== document.signedAt) throw new Error('Waiver changed');
+                    const [{ pdf }, { default: SignedWaiver }] = await Promise.all([import('@react-pdf/renderer'), import('./SignedWaiver')]);
+                    const blob = await pdf(<SignedWaiver {...record} />).toBlob();
+                    if (!sameAccount()) { tab.close(); return; }
+                    url = URL.createObjectURL(blob);
+                    window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+                } else if (document?.type === 'paper') {
+                    const prefix = 'waivers/non-members/';
+                    if (!document.objectName.startsWith(prefix)) throw new Error('Incorrect waiver document');
+                    const scan = firebase.nonmembersWaivers(document.objectName.slice(prefix.length));
+                    if ((await getMetadata(scan)).generation !== document.generation) throw new Error('The scan changed');
+                    url = await getDownloadURL(scan);
+                }
             }
-            tab.location.replace(url);
-            const data = metadata.customMetadata || {};
-            if (this.props.router.params.id === uid && created > waiverArchiveStart() && created <= Date.now() &&
-                metadata.generation && data.usawSignedMemberForm !== 'v1' && data.usawReviewedGeneration !== metadata.generation) {
-                this.setState({ reviewWaiver: { uid, storageRef, generation: metadata.generation } });
+            if (!url) {
+                if (!metadata || (this.state.user?.accountRemovedAt && !current)) {
+                    throw new Error('No member waiver available');
+                }
+                url = await getDownloadURL(storageRef);
+                if (sameAccount() && current && metadata.generation && !reviewed) {
+                    this.setState({ reviewWaiver: { uid, storageRef, generation: metadata.generation } });
+                }
             }
+            if (sameAccount()) tab.location.replace(url);
+            else tab.close();
         } catch {
             tab.close();
-            if (this.props.router.params.id === uid) this.setState({ error: 'Unable to open the member waiver.' });
+            if (sameAccount()) this.setState({ error: 'Unable to open the member waiver. Refresh the player and try again.' });
         }
     }
 

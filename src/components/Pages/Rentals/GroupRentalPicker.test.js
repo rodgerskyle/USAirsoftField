@@ -103,3 +103,13 @@ it('keeps the original search and visit date while paging through group results'
     expect(requestStaffFieldTool.mock.calls[1][2]).toBe('/api/rental-groups?page=2&q=Rebels&date=2026-11-21');
     expect(screen.getByRole('button', {name:'More groups'})).toBeDisabled();
 });
+
+it('prefills the draft on a direct group link without submitting a rental or requesting a second search', async () => {
+    const prefill = jest.fn();
+    const add = jest.fn();
+    requestStaffFieldTool.mockResolvedValueOnce({ group: party });
+    render(<GroupRentalPicker {...props} initialGroupId={party.id} onPrefill={prefill} onAdd={add} />);
+    await waitFor(() => expect(prefill).toHaveBeenCalledWith(party, party.entries));
+    expect(requestStaffFieldTool).toHaveBeenCalledTimes(1);
+    expect(add).not.toHaveBeenCalled();
+});

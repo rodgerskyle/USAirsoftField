@@ -1,14 +1,16 @@
 import React, { useEffect, useRef } from 'react';
 import { bindWaiverPicker, waiverPickerMarkup } from '../constants/staff-waiver-picker';
 
-export default function StaffWaiverPicker({ request, name = '', focus = false, disabled, onChoose }) {
+export default function StaffWaiverPicker({ request, name = '', focus = false, autoSearch = false, disabled, onChoose }) {
   const root = useRef(null);
   const latest = useRef();
+  const pendingSearch = useRef(null);
+  const pendingFocus = useRef(false);
   latest.current = { disabled, onChoose };
   useEffect(() => {
     const controller = new AbortController();
     root.current.innerHTML = waiverPickerMarkup({ name });
-    bindWaiverPicker(root.current, {
+    const find = bindWaiverPicker(root.current, {
       signal: controller.signal,
       isBusy: () => latest.current.disabled,
       search: query => request('/api/staff-waivers', {
@@ -16,8 +18,21 @@ export default function StaffWaiverPicker({ request, name = '', focus = false, d
       }),
       onChoose: match => latest.current.onChoose(match),
     });
-    if (focus) root.current.querySelector('[data-waiver-name]')?.focus();
+    pendingSearch.current = autoSearch && name.trim().length >= 2 ? () => find(root.current.querySelector('[data-waiver-picker]')) : null;
+    pendingFocus.current = focus;
     return () => controller.abort();
-  }, [request, name, focus]);
+  }, [request, name, focus, autoSearch]);
+  useEffect(() => {
+    if (disabled) return;
+    if (pendingFocus.current) {
+      pendingFocus.current = false;
+      root.current.querySelector('[data-waiver-name]')?.focus();
+    }
+    if (pendingSearch.current) {
+      const find = pendingSearch.current;
+      pendingSearch.current = null;
+      void find();
+    }
+  }, [request, name, focus, autoSearch, disabled]);
   return <fieldset disabled={disabled}><div ref={root} /></fieldset>;
 }

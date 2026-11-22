@@ -1,5 +1,5 @@
 import React, { useContext, useMemo } from 'react';
-import { Link, Outlet } from 'react-router-dom';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 import { Navbar, Nav, Container } from 'react-bootstrap';
 import { createTheme, ThemeProvider, useTheme } from '@mui/material/styles';
 import { useAppearance } from '../../Appearance';
@@ -7,7 +7,8 @@ import AppearanceControl from '../../AppearanceControl';
 import logo from '../../assets/usairsoft-small-logo.png';
 import lightLogo from '../../assets/usairsoft-wide-logo-light.png';
 import { AuthUserContext } from '../session';
-import { ADMIN } from './roles';
+import { officialAccountRoles, WAIVER } from './roles';
+import DeskNavigation from './DeskNavigation';
 import './admin-theme.css';
 
 const adminPalettes = {
@@ -65,9 +66,23 @@ export function AdminThemeRoute({ children }) {
   );
 }
 
+export function DashboardDeskLayout() {
+  const { pathname } = useLocation();
+  const roles = useContext(AuthUserContext)?.roles;
+  return <AdminThemeRoute>
+    {pathname.replace(/\/$/, '') !== '/dashboard' && (officialAccountRoles(roles).ADMIN || roles?.[WAIVER]) &&
+      <DeskNavigation base="/dashboard" />}
+    <Outlet />
+  </AdminThemeRoute>;
+}
+
 export default function AdminLayout() {
   const appearance = useAppearance();
-  const isAdmin = Boolean(useContext(AuthUserContext)?.roles?.[ADMIN]);
+  const { pathname } = useLocation();
+  const roles = useContext(AuthUserContext)?.roles;
+  const isAdmin = Boolean(officialAccountRoles(roles).ADMIN);
+  const showShortcuts = (isAdmin || roles?.[WAIVER]) && pathname.replace(/\/$/, '') !== '/admin'
+    && !pathname.startsWith('/admin/field/');
 
   return (
     <AdminThemeRoute>
@@ -84,6 +99,7 @@ export default function AdminLayout() {
             </Nav>
           </Container>
         </Navbar>
+        {showShortcuts && <DeskNavigation admin={isAdmin} />}
         <div className="admin-main-content"><Outlet /></div>
       </div>
     </AdminThemeRoute>

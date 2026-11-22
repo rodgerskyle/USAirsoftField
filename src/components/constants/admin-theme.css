@@ -128,3 +128,94 @@
   outline: 2px solid var(--admin-focus);
   outline-offset: 2px;
 }
+
+/* Shortcuts follow the same order at each desk, including on a phone or tablet. */
+.desk-navigation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+  align-items: flex-start;
+  max-width: 1240px;
+  margin: .75rem auto;
+  padding: 0 clamp(.75rem, 3vw, 1.75rem);
+  color: var(--admin-text);
+}
+.field-tools .desk-navigation { margin: 0 0 1rem; padding: 0; }
+.desk-navigation :is(a, summary) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 44px;
+  border: 1px solid var(--admin-border-strong);
+  border-radius: .5rem;
+  padding: .4rem .8rem;
+  color: var(--admin-text);
+  background: var(--admin-surface);
+  font-weight: 650;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+.desk-navigation :is(a:hover, summary:hover, details[open] summary) {
+  color: var(--admin-accent-text);
+  background: var(--admin-accent-soft);
+}
+.desk-navigation a[aria-current="page"] {
+  border-color: var(--admin-accent-text);
+  box-shadow: inset 0 -3px var(--admin-accent-text);
+}
+.desk-navigation details { position: relative; }
+.desk-navigation summary { gap: .65rem; list-style: none; }
+.desk-navigation summary::-webkit-details-marker { display: none; }
+.desk-navigation summary::after {
+  content: '';
+  width: .5rem; height: .5rem;
+  border-right: 2px solid currentColor; border-bottom: 2px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+}
+.desk-navigation details[open] summary::after { transform: translateY(2px) rotate(225deg); }
+.desk-navigation__menu {
+  position: absolute; z-index: 8;
+  inset-inline-end: 0; top: calc(100% + .25rem);
+  width: max-content; max-width: 90vw;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .35rem;
+  padding: .5rem;
+  border: 1px solid var(--admin-border-strong); border-radius: .6rem;
+  background: var(--admin-surface); box-shadow: var(--admin-shadow);
+}
+.desk-navigation__menu a { justify-content: flex-start; text-align: start; }
+.desk-navigation :is(a, summary):focus-visible,
+:is(.admin-layout, .admin-compact-page) :is(button, select, summary, [role="combobox"]):focus-visible {
+  outline: 3px solid var(--admin-focus);
+  outline-offset: 2px;
+}
+:is(.admin-layout .admin-main-content, .admin-compact-page) :is(.btn, .MuiButton-root, select) {
+  min-block-size: 44px;
+}
+:is(.admin-layout .admin-main-content, .admin-compact-page) select:not([multiple]):not([size]) {
+  appearance: none;
+  border: 1px solid var(--admin-border-strong);
+  border-radius: .5rem;
+  background-color: var(--admin-surface);
+  color: var(--admin-text);
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: right 1rem center, right .65rem center;
+  background-size: .36rem .36rem;
+  background-repeat: no-repeat;
+  padding-inline-end: 2.25rem;
+  cursor: pointer;
+}
+@media (max-width: 44rem) {
+  .desk-navigation { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .desk-navigation :is(a, summary) { padding: .45rem .25rem; font-size: .92rem; }
+  .desk-navigation details { position: static; }
+  .desk-navigation { position: relative; }
+  .desk-navigation__menu { inset-inline: 0; width: auto; max-width: none; }
+}
+@media (forced-colors: active) {
+  :is(.admin-layout .admin-main-content, .admin-compact-page) select:not([multiple]):not([size]) {
+    appearance: auto; background-image: none;
+  }
+}

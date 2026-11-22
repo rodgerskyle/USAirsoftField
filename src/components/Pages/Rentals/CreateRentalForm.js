@@ -65,6 +65,8 @@ const INITIAL_STATE = {
     addingParticipant: false,
     submitting: false,
     checkInGroup: null,
+    excludedEntries: [],
+    clearedInitialGroup: false,
     existingRental: null,
 };
 
@@ -164,19 +166,37 @@ class CreateRentalForm extends Component {
         const participants = mergeRentalRoster([], group, entries);
         if (!participants.length) return false;
         this.setState({
-            participants, existingRental: null, checkInGroup: rentalGroupSource(group), rentalName: group.name,
+            participants, excludedEntries: [], existingRental: null, checkInGroup: rentalGroupSource(group), rentalName: group.name,
             numParticipants: participants.length, rentalnameError: null, numparticipantsError: null, rentalsError: null,
         });
     };
 
     clearRoster = () => {
-        this.setState({ participants: [], existingRental: null, checkInGroup: null, rentalName: '', numParticipants: '', rentalsError: null });
+        this.setState({ participants: [], excludedEntries: [], clearedInitialGroup: true, existingRental: null, checkInGroup: null, rentalName: '', numParticipants: '', rentalsError: null });
+    };
+
+    includeParticipant = (entryId, include) => {
+        this.setState(state => {
+            const excludedEntries = include ? state.excludedEntries.filter(id => id !== entryId) : [...state.excludedEntries, entryId];
+            const minimum = state.participants.length - excludedEntries.length;
+            return { excludedEntries, numParticipants: Math.max(minimum, (Number(state.numParticipants) || 0) + (include ? 1 : -1)) };
+        });
+    };
+
+    setParticipantName = (entryId, name) => {
+        this.setState(state => ({ participants: state.participants.map(row => row.groupEntryId === entryId ? { ...row, name } : row) }));
     };
 
     createForm = async event => {
         event.preventDefault();
         if (this.saving || !this.validateCreateForm()) return;
-        const { cvc, number, expiry, name, zipcode, rentalName, numParticipants, rentalQuantities, participants, checkInGroup } = this.state;
+        const { cvc, number, expiry, name, zipcode, rentalName, numParticipants, rentalQuantities, checkInGroup } = this.state;
+        const participants = this.state.participants.filter(row => !this.state.excludedEntries.includes(row.groupEntryId))
+            .map(row => ({ ...row, name: row.name.trim() }));
+        if (checkInGroup && (!participants.length || participants.some(row => !row.name))) {
+            this.setState({ rentalsError: 'Select at least one renter and enter a name for each selected player.' });
+            return;
+        }
         const size = Number(numParticipants);
         if (!rentalName.trim() || !Number.isSafeInteger(size) || size < 1 || size < participants.length) {
             this.setState({ rentalsError: 'Enter a rental name and a participant count that includes everyone on this form.' });
@@ -338,6 +358,7 @@ class CreateRentalForm extends Component {
             submitting
         } = this.state;
 
+        const includedCount = this.state.participants.length - this.state.excludedEntries.length;
         const options = Object.values(this.props.rentalOptions || {}).filter(Boolean);
 
         if (success) {
@@ -353,13 +374,28 @@ class CreateRentalForm extends Component {
                         <Card.Body>
                             <h1 className="rental-form-header">New Rental Form</h1>
                             {this.props.canImportGroup && !this.state.checkInGroup && <GroupRentalPicker
-                                firebase={this.props.firebase} uid={this.props.uid} initialGroupId={this.props.initialGroupId}
-                                existingEntries={this.state.participants} disabled={submitting} onAdd={this.importRoster}
+                                firebase={this.props.firebase} uid={this.props.uid} initialGroupId={this.state.clearedInitialGroup ? null : this.props.initialGroupId}
+                                existingEntries={this.state.participants} disabled={submitting} onAdd={this.importRoster} onPrefill={this.importRoster}
                             />}
                             {this.props.canImportGroup && this.state.checkInGroup && <section className="rental-roster-review" aria-label="Imported check-in group">
                                 <h2>{this.state.checkInGroup.name}</h2>
-                                <p>{this.state.participants.length} players on this rental form</p>
-                                <ul>{this.state.participants.map(player => <li key={player.ref}>{player.name}</li>)}</ul>
+                                <p>{includedCount} {includedCount === 1 ? 'player' : 'players'} on this rental form</p>
+                                <fieldset className="rental-roster-fields" disabled={submitting}>
+                                    <legend>Choose renters and edit their names</legend>
+                                    {this.state.participants.map((player, index) => {
+                                        const included = !this.state.excludedEntries.includes(player.groupEntryId);
+                                        return <div className="rental-roster-line" key={player.groupEntryId}>
+                                            <label className="rental-roster-choice">
+                                                <input type="checkbox" checked={included} aria-label={'Include renter ' + (index + 1)}
+                                                    onChange={event => this.includeParticipant(player.groupEntryId, event.target.checked)} />
+                                                Renter {index + 1}
+                                            </label>
+                                            <input className="form-control" aria-label={'Renter ' + (index + 1) + ' name'}
+                                                value={player.name} disabled={!included} maxLength={120} autoComplete="off"
+                                                onChange={event => this.setParticipantName(player.groupEntryId, event.target.value)} />
+                                        </div>;
+                                    })}
+                                </fieldset>
                                 <button type="button" className="btn btn-outline-secondary" disabled={submitting} onClick={this.clearRoster}>Remove imported group</button>
                             </section>}
                             {this.props.canImportGroup && this.props.onOpenExisting && this.state.existingRental && <button
@@ -387,7 +423,7 @@ class CreateRentalForm extends Component {
                                         className="rental-form-input"
                                         label="Number of Participants"
                                         type="number"
-                                        inputProps={{ min: this.state.participants.length || 1, step: 1 }}
+                                        inputProps={{ min: includedCount || 1, step: 1 }}
                                         value={numParticipants}
                                         onChange={(e) => this.setState({ numParticipants: e.target.value })}
                                         disabled={submitting}

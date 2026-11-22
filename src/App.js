@@ -19,7 +19,7 @@ import DailyBattleBadgeNotice from './components/Pages/DailyBattleBadgeNotice';
 import GroupCheckIn from './components/Pages/GroupCheckIn';
 import VirtualPatches from './components/Pages/VirtualPatches';
 import Admin from './components/Pages/Admin'
-import AdminLayout, { AdminThemeRoute } from './components/constants/admindrawer';
+import AdminLayout, { DashboardDeskLayout } from './components/constants/admindrawer';
 import AdminFieldTools from './components/Pages/AdminFieldTools';
 import BarracksTV from './components/Pages/BarracksTV';
 import { fieldStaffPaths } from './components/constants/fieldStaffApi';
@@ -129,7 +129,7 @@ const App = () => (
       </Route>
       <Route path={fieldStaffPaths.tv} element={<BarracksTV />} />
       <Route path={LEGACY_LEADERBOARD_TV_PATH} element={<LegacyLeaderboardTvRedirect />} />
-      <Route path="/dashboard" element={<AdminThemeRoute />}>
+      <Route path="/dashboard" element={<DashboardDeskLayout />}>
         <Route index element={<WaiverDashboard />} />
         <Route path="waiverform" element={<WaiverForm />} />
         <Route path="scanwaiver" element={<ScanWaiver />} />

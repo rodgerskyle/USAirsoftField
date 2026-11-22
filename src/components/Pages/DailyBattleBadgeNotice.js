@@ -50,7 +50,7 @@ function PlayerNotice({ firebase, uid }) {
   const notice = notices[0];
   if (!notice) return null;
   const badge = battleBadgeForAward(notice.totalAwards);
-  return <aside className="daily-battle-notice" aria-label="Your daily Battle Badge" role="status">
+  return <aside className="daily-battle-notice" aria-label="Your Battle Badge" role="status">
     {badge && <img src={battleBadgeArtUrl(badge.id)} alt="" width="42" height="50" />}
     <span><strong>You earned {badge ? 'the ' + badge.name : 'a Battle Badge'}!</strong>
       <small>Field MVP · {milestoneDate(notice.date, 'day')}</small></span>
