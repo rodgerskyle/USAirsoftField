@@ -2,7 +2,7 @@ import React from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { isLegacyCardName } from '../constants/scoreCards';
 import { readPlayerIdBarcode } from '../constants/staffCode128Reader';
-import { StaffCardScanner } from './StaffCardScanner';
+import { createReader, StaffCardScanner } from './StaffCardScanner';
 
 const originalMedia = Object.getOwnPropertyDescriptor(window.navigator, 'mediaDevices');
 const originalDetector = Object.getOwnPropertyDescriptor(window, 'BarcodeDetector');
@@ -71,13 +71,16 @@ it('decodes a short legacy name in software when the membership scanner opts in'
     expect(readPlayerIdBarcode(image, isLegacyCardName)).toBe('ab');
 });
 
-it.each([true, false])('reads physical cards with software while the QR asset loads (native detector available: %s)', async native => {
+it.each(['throws', 'probe stalls', 'detection stalls', 'unavailable'])('reads physical cards in software when native detection %s', async mode => {
     const image = legacyBarcodeFrame();
     installCamera(jest.fn().mockResolvedValue({ getTracks: () => [] }));
     jest.spyOn(window.HTMLMediaElement.prototype, 'play').mockResolvedValue();
-    Object.defineProperty(window, 'BarcodeDetector', { configurable: true, value: native ? class {
-        static async getSupportedFormats() { return ['qr_code', 'code_128']; }
-        async detect() { throw new Error('Frame unreadable'); }
+    Object.defineProperty(window, 'BarcodeDetector', { configurable: true, value: mode !== 'unavailable' ? class {
+        static async getSupportedFormats() { return mode === 'probe stalls' ? new Promise(() => {}) : ['qr_code', 'code_128']; }
+        async detect() {
+            if (mode === 'detection stalls') return new Promise(() => {});
+            throw new Error('Frame unreadable');
+        }
     } : undefined });
     jest.spyOn(window.HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
         drawImage: jest.fn(), getImageData: () => image,
@@ -106,4 +109,41 @@ it('releases a late camera stream after staff leaves the tool', async () => {
         resolvePermission({ getTracks: () => [{ stop: stopTrack }] });
     });
     expect(stopTrack).toHaveBeenCalledTimes(1);
+});
+
+it('lets staff reopen the camera after a denial and releases it when the page is hidden', async () => {
+    const denied = new DOMException('Denied', 'NotAllowedError');
+    const stopTrack = jest.fn();
+    const getUserMedia = jest.fn().mockRejectedValueOnce(denied)
+        .mockResolvedValueOnce({ getTracks: () => [{ stop: stopTrack }] });
+    installCamera(getUserMedia);
+    jest.spyOn(window.HTMLMediaElement.prototype, 'play').mockResolvedValue();
+    const { container } = render(<StaffCardScanner onScan={jest.fn()} verifyLegacyCards />);
+    fireEvent.click(screen.getByRole('button', { name: 'Scan with camera' }));
+    await screen.findByText(/Allow camera access/);
+    fireEvent.click(screen.getByRole('button', { name: 'Scan with camera' }));
+    await screen.findByText(/Center the whole QR/);
+    expect(getUserMedia).toHaveBeenLastCalledWith(expect.objectContaining({
+        audio: false, video: expect.objectContaining({ facingMode: { ideal: 'environment' } }),
+    }));
+    expect(container.querySelector('video')).toHaveAttribute('playsinline');
+    act(() => { window.dispatchEvent(new Event('pagehide')); });
+    expect(stopTrack).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: 'Scan with camera' })).toBeEnabled();
+});
+
+it('samples the whole tablet image and then the center at its original resolution', async () => {
+    const frame = { width: 1, height: 1, data: new Uint8ClampedArray(4) };
+    const drawImage = jest.fn();
+    jest.spyOn(window.HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+        drawImage, getImageData: () => frame,
+    });
+    const video = { readyState: 2, videoWidth: 1920, videoHeight: 1080 };
+    const read = createReader(true);
+    await read(video);
+    await read(video);
+    expect(drawImage.mock.calls).toEqual([
+        [video, 0, 0, 1920, 1080, 0, 0, 1200, 675],
+        [video, 360, 202, 1200, 675, 0, 0, 1200, 675],
+    ]);
 });

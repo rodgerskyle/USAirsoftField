@@ -1,11 +1,18 @@
+import { mountGroupMemberPicker } from './group-member-picker.js';
+import { newScoreId as newRequestId } from './scoreHistory.js';
 import { groupRentalLink } from './groupRentalLink.js';
 import { bindWaiverPicker, waiverPickerMarkup } from './staff-waiver-picker.js';
 import { groupExperienceLabels } from './groupExperience.js';
 import { waiverStatusMarkup } from './waiver-status.js';
 
 const endpoint = '/api/staff-groups';
+const memberProfileHref = id => '/profilelookup/' + encodeURIComponent(id);
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const pacificToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+const fieldDate = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' });
+function pacificToday() {
+  const { year, month, day } = Object.fromEntries(fieldDate.formatToParts(new Date()).map(part => [part.type, part.value]));
+  return `${year}-${month}-${day}`;
+}
 const displayDay = date => new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(date + 'T12:00:00Z'));
 const calendarTime = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', hour: 'numeric', minute: '2-digit' });
 function partySummary(start, size) {
@@ -22,7 +29,18 @@ export function groupDeskMarkup() {
     <p data-desk-status role="status" aria-live="polite"></p>
     <div class="group-desk__layout">
       <section class="group-desk__section" aria-label="Group directory">
-        <h2>Group directory</h2>
+        <div class="group-desk__directory-heading"><h2>Group directory</h2>
+          <button class="btn btn-primary" type="button" data-new-group aria-controls="staff-new-group" aria-expanded="false">New group</button>
+        </div>
+        <form id="staff-new-group" data-create-group class="group-desk__form group-desk__create" aria-label="New group" hidden>
+          <label>New group name<input name="name" maxlength="80" required></label>
+          <label>Visit date<input type="date" name="date" min="${pacificToday()}" required></label>
+          <label>Visit type<select name="kind"><option value="visit">Game-day group</option><option value="party">Birthday or private event</option></select></label>
+          <label>Expected players<input name="headcount" type="number" inputmode="numeric" min="1" max="30" value="1" required></label>
+          <small>Group invitation codes and rosters expire five days after creation.</small>
+          <div class="group-desk__actions"><button class="btn btn-primary" type="submit">Create group</button>
+            <button class="btn btn-secondary" type="button" data-cancel-create>Cancel</button></div>
+        </form>
         <form data-directory class="group-desk__form">
           <label>Show groups<select name="range"><option value="from">On or after date</option><option value="date">On this date</option></select></label>
           <label>Field date<input type="date" name="date" required value="${pacificToday()}"></label>
@@ -55,13 +73,15 @@ function rosterRow(entry) {
   const kind = entry.kind === 'guest' ? 'Guest player' : 'USAW player';
   return `<li><div><strong>${escape(entry.displayName)}</strong><small>${kind}${entry.isOrganizer ? ' · Organizer' : ''} · ${groupExperienceLabels[entry.experienceBand] || groupExperienceLabels.unrated}</small>${waiverStatusMarkup(entry.waiverStatus)}</div>
     ${entry.waiverStatus !== 'signed' ? `<details data-waiver-entry="${escape(entry.id)}"><summary>Link signed waiver<span class="visually-hidden"> for ${escape(entry.displayName)}</span></summary>${waiverPickerMarkup({ name: entry.displayName })}</details>` : ''}
+    ${entry.playerId ? `<a href="${escape(memberProfileHref(entry.playerId))}" target="_blank" rel="noopener noreferrer" aria-label="View profile for ${escape(entry.displayName)}">View profile</a>` : ''}
+    ${entry.pending && entry.playerId ? `<button class="btn btn-secondary" type="button" data-confirm-member="${escape(entry.playerId)}">Confirm member<span class="visually-hidden"> ${escape(entry.displayName)}</span></button>` : ''}
     <details><summary>Edit player name<span class="visually-hidden"> for ${escape(entry.displayName)}</span></summary>
       <form data-rename-entry="${escape(entry.id)}" class="group-desk__form"><label>Roster name or callsign<input required name="displayName" minlength="2" maxlength="80" value="${escape(entry.displayName)}"></label>
       <button class="btn btn-secondary">Save player name</button></form></details>
     <details><summary>Edit experience<span class="visually-hidden"> for ${escape(entry.displayName)}</span></summary>
       <form data-experience="${escape(entry.id)}" class="group-desk__form"><label>Experience for ${escape(entry.displayName)}<select name="experienceBand">${experienceOptions(entry.experienceBand)}</select></label>
       <button class="btn btn-secondary">Save experience</button></form></details>
-    ${entry.canRemove && entry.kind === 'guest' ? `<button type="button" class="btn btn-secondary" data-remove="${escape(entry.id)}" aria-label="Remove ${escape(entry.displayName)}">Remove</button>` : ''}</li>`;
+    ${entry.canRemove ? `<button type="button" class="btn btn-secondary" data-remove="${escape(entry.id)}" data-entry-kind="${escape(entry.kind)}" aria-label="Remove ${escape(entry.displayName)}">Remove</button>` : ''}</li>`;
 }
 
 function detailMarkup(group, confirmDelete) {
@@ -78,6 +98,7 @@ function detailMarkup(group, confirmDelete) {
     ${group.entries.length ? `<p>${group.entries.filter(entry => entry.waiverStatus === 'signed').length} of ${group.entries.length} waivers verified</p>
       ${group.entries.some(entry => entry.waiverStatus === 'unavailable' || !entry.waiverStatus) ? '<button type="button" class="btn btn-secondary" data-refresh-waivers>Retry waiver verification</button>' : ''}
       <ul class="group-desk__roster">${group.entries.map(rosterRow).join('')}</ul>` : '<p>No players on the list yet.</p>'}
+    <div data-staff-member-picker></div>
     <form data-add class="group-desk__form">${waiverPickerMarkup()}<label>Player name or callsign<input required name="displayName" minlength="2" maxlength="80" autocomplete="off"></label>
       <label>Airsoft experience<select name="experienceBand">${experienceOptions()}</select></label>
       <button class="btn btn-primary" type="submit">Add player</button></form>
@@ -93,10 +114,27 @@ export function bindGroupDesk(root, { request, signal, initialId }) {
   const detail = root.querySelector('[data-desk-detail]');
   const status = root.querySelector('[data-desk-status]');
   const filters = root.querySelector('[data-directory]');
+  const createForm = root.querySelector('[data-create-group]');
+  const createButton = root.querySelector('[data-new-group]');
+  let createAttempt = null;
   let range = 'from', date = filters.elements.date.value, page = 1;
   let selected = null, directory = null, confirming = false, busy = false;
   const drawList = () => { list.innerHTML = directory ? listMarkup(directory, selected?.id) : ''; };
-  const drawDetail = () => { detail.innerHTML = detailMarkup(selected, confirming); };
+  let disposeMemberPicker;
+  function drawDetail() {
+    disposeMemberPicker?.();
+    disposeMemberPicker = null;
+    detail.innerHTML = detailMarkup(selected, confirming);
+    if (selected) {
+      disposeMemberPicker = mountGroupMemberPicker(detail.querySelector('[data-staff-member-picker]'), {
+        endpoint: 'https://app.usairsoftfield.com/api/leaderboard', profileHref: memberProfileHref,
+        rosterIds: () => selected.entries.map(entry => entry.playerId).filter(Boolean),
+        isFull: () => selected.entries.length >= (selected.capacity ?? 30),
+        onAdd: playerId => run(() => change('addMember', { playerId }, 'Member added to the group.'), true),
+      });
+    }
+  }
+  signal.addEventListener('abort', () => disposeMemberPicker?.(), { once: true });
 
   bindWaiverPicker(root, { signal, isBusy: () => busy,
     search: name => request('/api/staff-waivers', { method: 'POST', body: { name }, signal }),
@@ -139,12 +177,17 @@ export function bindGroupDesk(root, { request, signal, initialId }) {
     confirming = false;
     drawDetail(); drawList();
   }
-  async function run(work) {
-    if (busy || signal.aborted) return;
+  async function run(work, reportToPicker = false) {
+    if (busy || signal.aborted) {
+      if (reportToPicker) throw new Error('Please wait for the current group change.');
+      return;
+    }
     busy = true;
     root.setAttribute('aria-busy', 'true');
     status.textContent = '';
-    root.querySelectorAll('button,form input,select').forEach(el => { el.disabled = true; });
+    // Member search manages its own duplicate, capacity and pagination controls.
+    const controls = [...root.querySelectorAll('button,form input,select')].filter(el => !el.disabled && !el.closest('[data-staff-member-picker]'));
+    controls.forEach(el => { el.disabled = true; });
     try { await work(); }
     catch (error) {
       if (signal.aborted) return;
@@ -152,13 +195,42 @@ export function bindGroupDesk(root, { request, signal, initialId }) {
         selected = null; directory = null; drawDetail(); drawList();
       }
       status.textContent = error.message || 'Group management could not load. Please try again.';
+      if (reportToPicker) throw error;
     } finally {
       if (!signal.aborted) {
         busy = false;
         root.removeAttribute('aria-busy');
-        root.querySelectorAll('button,form input,select').forEach(el => { el.disabled = false; });
+        controls.forEach(el => { el.disabled = false; });
       }
     }
+  }
+  function showCreate(open) {
+    createForm.hidden = !open;
+    createButton.setAttribute('aria-expanded', String(open));
+    if (open) {
+      createForm.elements.date.value = date >= pacificToday() ? date : pacificToday();
+      createForm.elements.name.focus();
+    } else {
+      createForm.reset();
+      createAttempt = null;
+    }
+  }
+  async function createGroup() {
+    const fields = { name: createForm.elements.name.value.trim(), date: createForm.elements.date.value,
+      kind: createForm.elements.kind.value, headcount: Number(createForm.elements.headcount.value) };
+    const key = JSON.stringify(fields);
+    if (key !== createAttempt?.key) createAttempt = { key, id: newRequestId() };
+    const result = await request(endpoint, { method: 'POST', signal,
+      body: { action: 'create', requestId: createAttempt.id, ...fields } });
+    if (signal.aborted) return;
+    selected = result.group;
+    confirming = false;
+    showCreate(false);
+    range = 'date'; date = selected.date; page = 1;
+    filters.elements.range.value = range; filters.elements.date.value = date;
+    drawDetail();
+    detail.querySelector('[data-selection-title]')?.focus();
+    await refreshAfterSave('Group created. You can now add players.');
   }
   async function change(action, fields, message) {
     const { id, version } = selected;
@@ -177,6 +249,9 @@ export function bindGroupDesk(root, { request, signal, initialId }) {
       }
       throw error;
     }
+    await refreshAfterSave(message);
+  }
+  async function refreshAfterSave(message) {
     // Display the saved roster immediately even if a directory refresh fails.
     try { await loadList(); }
     catch (error) {
@@ -192,7 +267,9 @@ export function bindGroupDesk(root, { request, signal, initialId }) {
     const form = event.target;
     event.preventDefault();
     if (busy) return;
-    if (form === filters) {
+    if (form === createForm) {
+      void run(createGroup);
+    } else if (form === filters) {
       range = filters.elements.range.value; date = filters.elements.date.value; page = 1;
       selected = null; directory = null; confirming = false; drawDetail(); drawList();
       void run(loadList);
@@ -209,13 +286,18 @@ export function bindGroupDesk(root, { request, signal, initialId }) {
   root.addEventListener('click', event => {
     const button = event.target.closest('button');
     if (!button || busy) return;
-    if (button.dataset.open) {
+    if (button === createButton || button.hasAttribute('data-cancel-create')) {
+      showCreate(button === createButton && createForm.hidden);
+      if (createForm.hidden) createButton.focus();
+    } else if (button.dataset.open) {
       const id = button.dataset.open;
       void run(async () => { await open(id); if (!signal.aborted) detail.querySelector('[data-selection-title]')?.focus(); });
     } else if (button.dataset.page) {
       page = Number(button.dataset.page); void run(loadList);
     } else if (!selected) return;
-    else if (button.hasAttribute('data-refresh-waivers')) {
+    else if (button.dataset.confirmMember) {
+      void run(() => change('addMember', { playerId: button.dataset.confirmMember }, 'Member confirmed on the group roster.'));
+    } else if (button.hasAttribute('data-refresh-waivers')) {
       void run(async () => {
         await open(selected.id);
         if (!signal.aborted) status.textContent = 'Waiver statuses refreshed.';
@@ -228,7 +310,8 @@ export function bindGroupDesk(root, { request, signal, initialId }) {
         catch { if (!signal.aborted) status.textContent = 'The invitation code is selected. Use Copy on this device.'; }
       });
     } else if (button.dataset.remove) {
-      void run(() => change('removeGuest', { entryId: button.dataset.remove }, 'Player removed from the group.'));
+      const action = button.dataset.entryKind === 'player' ? 'removeMember' : 'removeGuest';
+      void run(() => change(action, { entryId: button.dataset.remove }, 'Player removed from the group.'));
     } else if (button.hasAttribute('data-confirm-delete') || button.hasAttribute('data-keep')) {
       confirming = button.hasAttribute('data-confirm-delete'); drawDetail();
       detail.querySelector(confirming ? '[data-keep]' : '[data-confirm-delete]')?.focus();

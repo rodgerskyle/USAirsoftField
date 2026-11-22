@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { isLegacyCardName, readScannedMemberCard, readScannedPlayerProfile } from '../constants/scoreCards';
 import { readPlayerIdBarcode } from '../constants/staffCode128Reader';
+import { cameraFrameReader, openCardCamera, playCardCamera } from '../constants/cardCameraFrames';
 import './StaffCardScanner.css';
 
 const playerId = /^[A-Za-z0-9_-]{10,128}$/;
@@ -52,40 +53,12 @@ function loadQRReader() {
     return qrDecoder;
 }
 
-async function createReader(verifyLegacyCards) {
-    let detector;
-    try {
-        const supported = await window.BarcodeDetector?.getSupportedFormats();
-        const formats = ['qr_code', 'code_128'].filter(format => supported?.includes(format));
-        if (formats.length) detector = new window.BarcodeDetector({ formats });
-    } catch { /* Use the software readers when native detection is unavailable. */ }
-    // A slow QR asset must never delay reading a physical Code 128 card.
-    let decodeQr;
-    loadQRReader().then(reader => { decodeQr = reader; }).catch(() => {});
-    const canvas = document.createElement('canvas');
-
-    return async video => {
-        if (video.readyState < 2 || !video.videoWidth || !video.videoHeight) return null;
-        if (detector) {
-            try {
-                for (const { rawValue, format } of await detector.detect(video)) {
-                    const value = scannedValue(rawValue, format, verifyLegacyCards);
-                    if (value) return value;
-                }
-            } catch { /* A browser decoder can skip an unreadable frame. */ }
-        }
-        const scale = Math.min(1, 1200 / Math.max(video.videoWidth, video.videoHeight));
-        canvas.width = Math.max(1, Math.round(video.videoWidth * scale));
-        canvas.height = Math.max(1, Math.round(video.videoHeight * scale));
-        const frame = canvas.getContext('2d', { willReadFrequently: true });
-        if (!frame) return null;
-        frame.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const image = frame.getImageData(0, 0, canvas.width, canvas.height);
-        const code = readPlayerIdBarcode(image, verifyLegacyCards ? isLegacyCardName : undefined);
-        if (code) return scannedValue(code, 'code_128', verifyLegacyCards);
-        const qr = decodeQr?.(image.data, image.width, image.height, { inversionAttempts: 'attemptBoth' })?.data;
-        return qr ? scannedValue(qr, 'qr_code', verifyLegacyCards) : null;
-    };
+export function createReader(verifyLegacyCards = false) {
+    return cameraFrameReader({
+        parse: (raw, format) => scannedValue(raw, format, verifyLegacyCards),
+        readBarcode: image => readPlayerIdBarcode(image, verifyLegacyCards ? isLegacyCardName : undefined),
+        loadQR: loadQRReader,
+    });
 }
 
 export function StaffCardScanner({ disabled = false, onScan, verifyLegacyCards = false, manualFallback }) {
@@ -101,6 +74,7 @@ export function StaffCardScanner({ disabled = false, onScan, verifyLegacyCards =
         camera.current = null;
         if (!current) return;
         clearTimeout(current.timer);
+        current.removeEnded?.();
         current.stream?.getTracks().forEach(track => track.stop());
         if (video.current?.srcObject) video.current.srcObject = null;
     }, []);
@@ -110,7 +84,21 @@ export function StaffCardScanner({ disabled = false, onScan, verifyLegacyCards =
         setOpen(false);
     }, [release]);
 
-    useEffect(() => release, [release]);
+    useEffect(() => {
+        const suspend = () => {
+            if (!camera.current) return;
+            stop();
+            setStatus('Open the camera again to scan a member card.');
+        };
+        const onVisibility = () => { if (document.hidden) suspend(); };
+        window.addEventListener('pagehide', suspend);
+        document.addEventListener('visibilitychange', onVisibility);
+        return () => {
+            window.removeEventListener('pagehide', suspend);
+            document.removeEventListener('visibilitychange', onVisibility);
+            release();
+        };
+    }, [release, stop]);
     useEffect(() => {
         if (disabled && camera.current) {
             stop();
@@ -129,20 +117,25 @@ export function StaffCardScanner({ disabled = false, onScan, verifyLegacyCards =
         setOpen(true);
         setStatus('Opening the camera…');
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                audio: false,
-                video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } },
-            });
+            const stream = await openCardCamera();
             if (camera.current !== current || !video.current) {
                 stream.getTracks().forEach(track => track.stop());
                 return;
             }
             current.stream = stream;
-            video.current.srcObject = stream;
-            await video.current.play();
-            const read = await createReader(verifyLegacyCards);
+            const onEnd = () => {
+                if (camera.current === current) {
+                    stop();
+                    setStatus('Camera stopped. Open it again to scan a member card.');
+                }
+            };
+            const track = stream.getVideoTracks?.()[0];
+            track?.addEventListener('ended', onEnd, { once: true });
+            current.removeEnded = () => track?.removeEventListener('ended', onEnd);
+            const read = createReader(verifyLegacyCards);
+            await playCardCamera(video.current, stream);
             if (camera.current !== current) return;
-            setStatus('Hold a USAW QR code or Code 128 barcode steady in the frame.');
+            setStatus('Center the whole QR code or barcode in the frame. Move closer until the bars are sharp.');
 
             async function scanFrame() {
                 if (camera.current !== current || !video.current) return;

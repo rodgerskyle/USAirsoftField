@@ -62,6 +62,72 @@ test('creates an authenticated planned group, permits owner cancellation, and cl
   expect(screen.queryByText('New Friend')).not.toBeInTheDocument();
 });
 
+test('the organizer searches public profiles and adds a registered member to a party roster', async () => {
+  const member = { id: 'OfficialPlayer555', name: 'Raven' };
+  const party = { ...group, kind: 'party', memberCount: 2 };
+  const added = { ...party, memberCount: 3, entries: [...party.entries,
+    { id: 'added-member', playerId: member.id, displayName: member.name, kind: 'player', pending: true }] };
+  global.fetch.mockResolvedValueOnce(reply({ groups: [party] })).mockResolvedValueOnce(reply({ group: party }))
+    .mockResolvedValueOnce(reply({ players: [member] })).mockResolvedValueOnce(reply({ group: added }));
+  setup(false);
+  fireEvent.click(await screen.findByRole('button', { name: /Family game day/ }));
+  const picker = await screen.findByRole('search', { name: 'Group member search' });
+  fireEvent.change(within(picker).getByRole('searchbox'), { target: { value: 'Raven' } });
+  fireEvent.submit(picker);
+  const profile = await screen.findByRole('link', { name: 'View profile' });
+  expect(profile).toHaveAttribute('href', '/profilelookup/' + member.id);
+  fireEvent.click(screen.getByRole('button', { name: 'Add to group' }));
+  expect(await screen.findByText('Raven is on the roster.')).toBeVisible();
+  expect(screen.getByRole('button', { name: 'On roster' })).toBeDisabled();
+  expect(screen.getByRole('link', { name: 'Raven' })).toHaveAttribute('href', '/profilelookup/' + member.id);
+  expect(screen.getByText('Added by organizer')).toBeVisible();
+  expect(screen.getByRole('button', { name: 'Add guest' })).toBeVisible();
+  const [searchUrl, options] = global.fetch.mock.calls[2];
+  expect(searchUrl).toContain('/api/leaderboard?lookup=players&q=Raven');
+  expect(options.credentials).toBe('omit');
+  expect(options.headers.Authorization).toBeUndefined();
+  const add = global.fetch.mock.calls[3][1];
+  expect(JSON.parse(add.body)).toEqual({ action: 'addMember', id: group.id, playerId: member.id });
+  expect(add.headers.Authorization).toMatch(/^Guest /);
+});
+
+test('adding a guest refreshes the open member search when the group reaches capacity', async () => {
+  const nearlyFull = { ...group, capacity: 3, memberCount: 2 };
+  const full = { ...nearlyFull, memberCount: 3, entries: [...group.entries, {id:'last', kind:'guest', displayName:'Kai'}] };
+  global.fetch.mockResolvedValueOnce(reply({groups:[nearlyFull]})).mockResolvedValueOnce(reply({group:nearlyFull}))
+    .mockResolvedValueOnce(reply({players:[{id:'OfficialPlayer555', name:'Raven'}]}))
+    .mockResolvedValueOnce(reply({group:full})).mockResolvedValueOnce(reply({groups:[full]}));
+  setup();
+  fireEvent.click(await screen.findByRole('button', {name:/Family game day/}));
+  const picker = await screen.findByRole('search');
+  fireEvent.change(within(picker).getByRole('searchbox'), {target:{value:'Raven'}});
+  fireEvent.submit(picker);
+  expect(await screen.findByRole('button', {name:'Add to group'})).toBeEnabled();
+  const addGuest = screen.getByRole('button', {name:'Add guest'});
+  fireEvent.change(addGuest.form.elements.displayName, {target:{value:'Kai'}});
+  fireEvent.click(addGuest);
+  expect(await screen.findByRole('button', {name:'Group full'})).toBeDisabled();
+  expect(screen.getByText('1 match')).toBeVisible();
+});
+
+test('denied organizer access clears the private roster, search results and profile links', async () => {
+  const player = { id: 'NewPlayer1234', name: 'New player' };
+  const owner = { ...group, entries: [{ id: 'owner', displayName: 'Owner', isYou: true, playerId: 'OwnerAccount123' }] };
+  global.fetch.mockResolvedValueOnce(reply({ groups: [owner] })).mockResolvedValueOnce(reply({ group: owner }))
+    .mockResolvedValueOnce(reply({ players: [player] }))
+    .mockResolvedValueOnce({ ok: false, status: 403, json: async () => ({ error: 'Organizer access expired.' }) });
+  setup();
+  fireEvent.click(await screen.findByRole('button', { name: /Family game day/ }));
+  const picker = await screen.findByRole('search');
+  fireEvent.change(within(picker).getByRole('searchbox'), { target: { value: 'New' } });
+  fireEvent.submit(picker);
+  fireEvent.click(await screen.findByRole('button', { name: 'Add to group' }));
+  expect(await screen.findByText('Organizer access expired.')).toBeVisible();
+  expect(screen.queryByRole('search')).toBeNull();
+  expect(screen.queryByRole('link', { name: 'Owner' })).toBeNull();
+  expect(screen.queryByRole('link', { name: 'View profile' })).toBeNull();
+});
+
 test('a signed-out organizer can create a party, return to it in the same browser and copy the share code', async () => {
   const guestGroup = { ...group, kind: 'party', entries: [{ id: 'guest-organizer', displayName: 'Field guest', kind: 'guest', isYou: true }] };
   const list = { groups: [{ ...guestGroup, memberCount: 1 }] };
@@ -127,6 +193,7 @@ test('a guest joins with a code and a sign-in during lookup discards outstanding
   expect(await screen.findByText(group.code)).toBeVisible();
   expect(JSON.parse(global.fetch.mock.calls[1][1].body)).toEqual({ action: 'join', code: group.code, displayName: 'Guest 2', experienceBand: 'regular' });
   expect(screen.queryByRole('button', { name: 'Cancel this group' })).toBeNull();
+  expect(screen.queryByRole('search', { name: 'Group member search' })).toBeNull();
   act(() => view.authChange({ uid: 'Verified', getIdToken: async () => 'verified' }));
   await act(async () => { finishList(reply({ groups: [{ ...joined, memberCount: 2 }] })); });
   expect(screen.queryByText(group.code)).toBeNull();
@@ -320,16 +387,18 @@ test('a birthday guest can fill their own roster name after signing without losi
 });
 
 test('shows today’s groups without a search and checks in just the ready players', async () => {
-  const entries = [{ id:'one', displayName:'One' },{ id:'two', displayName:'Two' }];
-  const positions = [{ entryId:'one', waiverStatus:'signed', side:null },{ entryId:'two', waiverStatus:'missing', side:null }];
+  const entries = [{ id:'one', displayName:'One' },{ id:'two', displayName:'Two' },{ id:'other', displayName:'Other party' }];
+  const positions = [{ entryId:'one', waiverStatus:'signed', side:null },{ entryId:'two', waiverStatus:'missing', side:null },{ entryId:'other', waiverStatus:'signed', side:null, otherGroup:true }];
   const ready = { ...group, entries };
   const request=jest.fn().mockResolvedValueOnce({groups:[ready],totalPages:1,page:1})
     .mockResolvedValueOnce({group:ready,today:group.date}).mockResolvedValueOnce(boardFor('before',positions))
-    .mockResolvedValueOnce({...boardFor('after',[{...positions[0],side:'camo'},positions[1]]),checkedInCount:1});
+    .mockResolvedValueOnce({...boardFor('after',[{...positions[0],side:'camo'},positions[1],positions[2]]),checkedInCount:1});
   render(<StaffGroupLookup request={request} />);
   fireEvent.click(screen.getByRole('button',{name:'Show today’s groups'}));
   const button=await screen.findByRole('button',{name:'Check in 1 ready to Camo'});
   await waitFor(()=>expect(button).toBeEnabled());
+  expect(screen.getByText(/On another group today/)).toBeInTheDocument();
+  expect(screen.getByRole('button',{name:'Assign Other party to Camo'})).toBeDisabled();
   expect(screen.getByRole('button',{name:'Assign group to Camo'})).toBeDisabled();
   fireEvent.click(button);
   await waitFor(()=>expect(request).toHaveBeenCalledTimes(4));
