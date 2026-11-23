@@ -443,3 +443,17 @@ test('removes only a surplus legacy result without touching a recorded receipt o
         global.fetch = originalFetch;
     }
 });
+
+test('score review distinguishes override credits from their original round', async () => {
+    const sourceEventId = '5fcb785c-4ecc-40fc-b8fa-2a3740f92e77';
+    const extraId = '2020c15f-09bd-4be5-b588-56623a1638d1';
+    const day = '2026-10-30';
+    const event = { outcome: 'win', at: scoringTime.getTime(), mode: 'Countdown', side: 'solid' };
+    get.mockResolvedValueOnce(transactionResult({
+        games: { [day]: { wins: 2 } },
+        gameResultHistory: { [day]: { [sourceEventId]: event, [extraId]: { ...event, sourceEventId } } },
+    }).snapshot);
+    const { history } = await loadPlayerScoreHistory(firebase, playerId);
+    expect(history[0].events.find(item => item.id === sourceEventId)).not.toHaveProperty('sourceEventId');
+    expect(history[0].events.find(item => item.id === extraId)).toHaveProperty('sourceEventId', sourceEventId);
+});

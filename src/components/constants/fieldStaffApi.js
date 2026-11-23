@@ -15,6 +15,7 @@ export const fieldStaffPaths = Object.freeze({
 const staffEndpoints = new Set([
   '/api/staff-session',
   '/api/staff-round-result-receipts',
+  '/api/staff-score-overrides',
   '/api/staff-player-accounts',
   '/api/staff-player-accounts/email-service',
   '/api/game-day-check-in',
@@ -92,7 +93,7 @@ export async function requestStaffFieldTool(firebase, uid, path, { method = 'GET
     method,
     headers,
     body: body === undefined ? undefined : JSON.stringify(body),
-    credentials: ['/api/staff-player-accounts/email-service', '/api/party-check-in', '/api/rental-groups', '/api/staff-round-result-receipts', '/api/member-card/waiver-name', '/api/waivers/review-paper', '/api/waivers/retained-members', '/api/waivers/membership'].includes(endpoint.pathname) ? 'omit' : 'include',
+    credentials: ['/api/staff-player-accounts/email-service', '/api/party-check-in', '/api/rental-groups', '/api/staff-round-result-receipts', '/api/staff-score-overrides', '/api/member-card/waiver-name', '/api/waivers/review-paper', '/api/waivers/retained-members', '/api/waivers/membership'].includes(endpoint.pathname) ? 'omit' : 'include',
     cache: 'no-store',
     redirect: 'error',
     signal,
