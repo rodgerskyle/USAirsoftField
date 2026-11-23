@@ -677,3 +677,145 @@ test('a first-award reason can be supplied after reload without awarding success
     expect(recordPlayerResult).toHaveBeenCalledTimes(1);
     expect(screen.getByText('Objective MVP awarded to River Lane.')).toBeInTheDocument();
 });
+
+const overrideEndpoint = '/api/staff-score-overrides';
+const sourceId = 'c2461ef1-01b5-4794-971c-4e05f2e3752f';
+const sourceDay = '2026-10-18';
+const originalScore = { day: sourceDay, eventId: sourceId };
+const extraWinId = '59ed427d-ff70-4886-acaa-c01a7e3e9225';
+
+function overrideRequests() {
+    return requestStaffFieldTool.mock.calls.filter(call => call[2] === overrideEndpoint).map(call => call[3].body);
+}
+
+async function chooseExtra(quantity, result) {
+    fireEvent.click(screen.getByRole('button', { name: 'Add extra results' }));
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Number to add' }), { target: { value: String(quantity) } });
+    fireEvent.click(screen.getByRole('button', { name: result === 'win' ? 'Add wins' : 'Add losses' }));
+}
+
+function officialHistory(events) {
+    return { history: [{ day: sourceDay, date: '2026-11-18', wins: events.filter(row => row.outcome === 'win').length,
+        losses: events.filter(row => row.outcome === 'loss').length, events }] };
+}
+
+test('admin confirms the player, original round, and quantity before granting extra results from Recent results', async () => {
+    const page = renderScore();
+    await page.verify(admin);
+    selectRound('solid');
+    await scan(firstId);
+    expect(screen.queryByRole('button', { name: 'Add extra results' })).toBeNull();
+    recordPlayerResult.mockResolvedValue(originalScore);
+    requestStaffFieldTool.mockImplementation(async (_firebase, _actor, endpoint) => endpoint === overrideEndpoint
+        ? { ok: true, confirmed: true, day: sourceDay, eventIds: [webcrypto.randomUUID(), webcrypto.randomUUID()], wins: 7, losses: 4 } : {});
+    await record('win');
+
+    await chooseExtra(21, 'loss');
+    expect(screen.getByRole('button', { name: 'Add losses' })).toBeDisabled();
+    expect(overrideRequests()).toHaveLength(0);
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Number to add' }), { target: { value: '2' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Add losses' }));
+    const panel = screen.getByRole('region', { name: 'Admin score override' });
+    expect(panel).toHaveTextContent('River Lane');
+    expect(panel).toHaveTextContent('Countdown');
+    expect(panel).toHaveTextContent('Solid');
+    expect(overrideRequests()).toHaveLength(0);
+    fireEvent.click(within(panel).getByRole('button', { name: 'Cancel' }));
+    expect(overrideRequests()).toHaveLength(0);
+    await chooseExtra(2, 'loss');
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Confirm 2 extra losses' })));
+    expect(overrideRequests()).toEqual([{ action: 'override', playerId: firstId, result: 'loss', quantity: 2,
+        operationId: expect.any(String), operationAt: expect.any(Number), sourceDay, sourceEventId: sourceId }]);
+    expect(screen.getByText('Added 2 extra losses for River Lane. Career totals: 7 wins and 4 losses.')).toBeVisible();
+    expect(recordPlayerResult).toHaveBeenCalledTimes(1);
+    expect(awardRoundPatch).not.toHaveBeenCalled();
+    await scan(firstId);
+    expect(recordButton('win')).toBeDisabled();
+    expect(recordButton('loss')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Add extra results' })).toBeEnabled();
+});
+
+test('uncertain override retains its original UUID, quantity, and source after a reload and never opens regular scoring', async () => {
+    let page = renderScore();
+    await page.verify(admin);
+    selectRound();
+    await scan(firstId);
+    recordPlayerResult.mockResolvedValue(originalScore);
+    let saved = false;
+    requestStaffFieldTool.mockImplementation(async (_firebase, _actor, endpoint, { body }) => {
+        if (endpoint !== overrideEndpoint) return {};
+        if (body.action === 'status') return { ok: true, confirmed: false, retryable: true };
+        if (!saved) throw new Error('No response from service');
+        return { ok: true, confirmed: true, eventIds: [extraWinId], day: sourceDay };
+    });
+    await record('win');
+    await chooseExtra(1, 'win');
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Confirm 1 extra win' })));
+    const first = overrideRequests()[0];
+    expect(overrideRequests()[1]).toEqual({ ...first, action: 'status' });
+    expect(screen.getByText(/extra results are pending/i)).toBeVisible();
+    page.unmount();
+    page = renderScore();
+    await page.verify(admin);
+    await scan(firstId);
+    expect(recordButton('win')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Add extra results' })).toBeDisabled();
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Check saved status' })));
+    saved = true;
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Retry same submission' })));
+    expect(overrideRequests().slice(2)).toEqual([{ ...first, action: 'status' }, first]);
+    expect(screen.getByText('Added 1 extra win for River Lane.')).toBeVisible();
+    expect(recordPlayerResult).toHaveBeenCalledTimes(1);
+});
+
+test('history on another desk can add a score to the original field day and excludes extra credit as a source', async () => {
+    const page = renderScore();
+    await page.verify(admin);
+    await scan(firstId);
+    const original = { id: sourceId, at: Date.UTC(2026, 10, 19, 0), mode: 'Bottle Domination', outcome: 'win', side: 'camo' };
+    loadPlayerScoreHistory.mockResolvedValue(officialHistory([original, { ...original, id: extraWinId, sourceEventId: sourceId }]));
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Review results' })));
+    expect(screen.getAllByRole('button', { name: 'Add extra results' })).toHaveLength(1);
+    await chooseExtra(3, 'win');
+    expect(screen.getByRole('region', { name: 'Admin score override' })).toHaveTextContent('Bottle Domination');
+    requestStaffFieldTool.mockRejectedValueOnce(Object.assign(new Error('Original score has been removed.'), {data: {retryable: false}}));
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Confirm 3 extra wins' })));
+    expect(overrideRequests()[0]).toMatchObject({ playerId: firstId, sourceDay, sourceEventId: sourceId, quantity: 3 });
+    expect(screen.getByText('Original score has been removed.')).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Retry same submission' })).toBeNull();
+});
+
+test('removing an original leaves regular scoring locked until every extra is removed', async () => {
+    const page = renderScore();
+    await page.verify(admin);
+    selectRound();
+    await scan(firstId);
+    recordPlayerResult.mockResolvedValue(originalScore);
+    await record('win');
+    const original = { id: sourceId, at: Date.now(), mode: 'Countdown', side: 'camo', outcome: 'win' };
+    const extra = { ...original, id: extraWinId, sourceEventId: sourceId, outcome: 'loss' };
+    // A second desk awarded this extra; it was never in this desk's recent list.
+    loadPlayerScoreHistory.mockResolvedValue(officialHistory([original, extra]));
+    async function remove(outcome, id) {
+        await scan(firstId);
+        await act(async () => fireEvent.click(screen.getAllByRole('button', { name: 'Review results' })[0]));
+        fireEvent.click(screen.getByRole('button', { name: 'Remove this ' + outcome }));
+        voidPlayerResult.mockResolvedValueOnce({ eventId: id, day: sourceDay });
+        await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Remove ' + outcome })));
+    }
+    await remove('win', sourceId);
+    await scan(firstId);
+    expect(recordButton('win')).toBeDisabled();
+    expect(screen.getByText('Extra results remain on this game.')).toBeVisible();
+    loadPlayerScoreHistory.mockResolvedValue(officialHistory([extra]));
+    await remove('loss', extraWinId);
+    await scan(firstId);
+    expect(recordButton('win')).toBeEnabled();
+});
+
+test('the website rejects a false-valued official admin role', async () => {
+    const page = renderScore();
+    await page.verify({uid:'non-admin-staff', roles:{ADMIN:'false'}});
+    expect(screen.getByRole('heading', { name: 'Sign in' })).toBeVisible();
+    expect(requestStaffFieldTool).not.toHaveBeenCalled();
+});

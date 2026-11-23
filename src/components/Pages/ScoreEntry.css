@@ -209,3 +209,15 @@
     font-weight: 650;
     text-underline-offset: .18em;
 }
+
+.score-entry-override {
+    flex-basis: 100%;
+    border-inline-start: 3px solid var(--admin-accent);
+    background: var(--admin-surface-muted);
+    padding: 1rem;
+    margin-block: .5rem;
+}
+.score-entry-override h4 { font-size: 1rem; font-weight: 700; }
+.score-entry-override label { display: grid; gap: .3rem; font-weight: 650; }
+.score-entry-override input { width: 7rem; min-height: 44px; }
+.score-entry-override p { margin: .45rem 0 .75rem; }

@@ -7,7 +7,9 @@ import { onValue } from 'firebase/database';
 
 import { withFirebase } from '../Firebase';
 import { AuthUserContext, withAuthorization } from '../session';
-import { ADMIN, WAIVER } from '../constants/roles';
+import { officialAccountRoles, WAIVER } from '../constants/roles';
+import { requestStaffFieldTool } from '../constants/fieldStaffApi';
+import ScoreOverride, { extraResultsLabel } from './ScoreOverride';
 import { getAllPlayerDisplayNames } from '../constants/playerDisplayNames';
 import { isLegacyCardName, readScannedMemberCard, readScannedPlayerProfile, verifyScannedMemberCard } from '../constants/scoreCards';
 import { newScoreId } from '../constants/scoreHistory';
@@ -28,6 +30,10 @@ const textValue = value => typeof value === 'string' ? value.trim().replace(/\s+
 const normalized = value => textValue(value).toLowerCase();
 const nameOf = member => member.name || member.username || member.uid;
 const dateOf = row => dateFormat.format(new Date(row.date + 'T00:00:00Z'));
+const dateOfFieldDay = day => {
+    const [year, month, date] = day.split('-').map(Number);
+    return dateFormat.format(new Date(Date.UTC(year, month, date)));
+};
 const resultLabel = outcome => outcome === 'win' ? 'Win' : 'Loss';
 const detailsOf = entry => [entry.mode, teamNames[entry.side]].filter(Boolean).join(' · ');
 
@@ -233,23 +239,77 @@ function ScoreEntry({ firebase, actor }) {
         const removing = Boolean(op.day);
         updateDesk(old => {
             let scored = { ...old.round.scored };
-            if (!removing && op.roundId === old.round.id) {
-                scored = { ...scored, [op.uid]: { outcome: op.outcome, eventId: saved?.eventId, mode: op.mode, side: op.side } };
-            } else if (removing && scored[op.uid]?.eventId && scored[op.uid].eventId === (saved?.eventId || op.targetEventId)) {
-                delete scored[op.uid];
+            const previous = Object.hasOwn(scored, op.uid) ? scored[op.uid] : null;
+            if (op.sourceEventId) {
+                if (previous?.eventId === op.sourceEventId) {
+                    scored[op.uid] = { ...previous, extraIds: [...new Set([...(previous.extraIds || []), ...saved.eventIds])] };
+                }
+            } else if (!removing && op.roundId === old.round.id) {
+                scored[op.uid] = { outcome: op.outcome, eventId: saved?.eventId, day: saved?.day, at: op.at, mode: op.mode, side: op.side };
+            } else if (removing && previous) {
+                const removedId = saved?.eventId || op.targetEventId;
+                if (removedId && (previous.eventId === removedId || previous.extraIds?.includes(removedId))) {
+                    const originalVoided = previous.originalVoided || previous.eventId === removedId;
+                    const checkedEvents = saved?.history?.find(row => row.day === op.day)?.events;
+                    const extraIds = checkedEvents
+                        ? checkedEvents.filter(event => event.sourceEventId === previous.eventId).map(event => event.id)
+                        : [...new Set([...(previous.extraIds || []), ...(op.knownExtraIds || [])])].filter(id => id !== removedId);
+                    if (originalVoided && !extraIds.length) delete scored[op.uid];
+                    else scored[op.uid] = { ...previous, originalVoided, extraIds };
+                }
             }
             const next = { ...old, round: { ...old.round, scored }, pending: old.pending.filter(item => item.id !== op.id) };
-            if (!removing && op.patches?.badgeIds.length) {
+            if (!removing && !op.sourceEventId && op.patches?.badgeIds.length) {
                 const job = { id: op.id, playerId: op.uid, playerName: op.registeredName, mode: op.mode,
                     day: saved.day, eventId: saved.eventId, ...op.patches };
                 next.patchJobs = [...(old.patchJobs || []).filter(item => item.id !== op.id), job];
             }
             return next;
         });
-        setRecent(old => [op, ...old].slice(0, 20));
-        void syncReceipt(op, saved);
+        setRecent(old => [{ ...op, confirmedEventId: saved?.eventId, confirmedDay: saved?.day }, ...old].slice(0, 20));
+        if (op.sourceEventId) {
+            const totals = Number.isFinite(saved.wins) && Number.isFinite(saved.losses)
+                ? ` Career totals: ${saved.wins} wins and ${saved.losses} losses.` : '';
+            setStatus(`Added ${extraResultsLabel(op.quantity, op.outcome)} for ${op.registeredName || 'the player'}.${totals}`);
+        } else void syncReceipt(op, saved);
         resetSearch();
         input.current?.focus();
+    }
+
+    async function saveOverride(op, checkOnly, current, signal) {
+        const request = action => withinDeskTimeout(requestStaffFieldTool(firebase, actor, '/api/staff-score-overrides', {
+            method: 'POST', signal, body: { action, playerId: op.uid, result: op.outcome, quantity: op.quantity,
+                sourceDay: op.sourceDay, sourceEventId: op.sourceEventId, operationId: op.id, operationAt: op.at },
+        }));
+        try {
+            let result;
+            if (!checkOnly) {
+                try {
+                    result = await request('override');
+                } catch (error) {
+                    if (!current() || (error?.data?.retryable === false && error.data.code !== 'operation_expired')) throw error;
+                }
+            }
+            if (!current()) return;
+            if (!result?.confirmed) result = await request('status');
+            if (!current()) return;
+            if (result.confirmed && Array.isArray(result.eventIds) && result.eventIds.length === op.quantity) {
+                finish(op, result);
+            } else if (result.confirmed === false && result.retryable === false) {
+                updateDesk(old => ({ ...old, pending: old.pending.filter(entry => entry.id !== op.id) }));
+                setError('This override was not recorded and its retry window has closed. Review the player’s results.');
+            } else {
+                setStatus('Extra results are pending. Check saved status or retry the same submission.');
+            }
+        } catch (error) {
+            if (!current()) return;
+            if (error?.data?.retryable === false) {
+                updateDesk(old => ({ ...old, pending: old.pending.filter(entry => entry.id !== op.id) }));
+                setError(error.message || 'The override could not be applied.');
+            } else {
+                setError('Could not confirm the extra results. Check saved status or retry the same submission.');
+            }
+        }
     }
 
     function saveScore(op, checkOnly = false) {
@@ -268,6 +328,10 @@ function ScoreEntry({ firebase, actor }) {
                 }
             }
             if (!pending) updateDesk(old => ({ ...old, pending: [...old.pending, op] }));
+            if (op.sourceEventId) {
+                await saveOverride(op, checkOnly, current, signal);
+                return;
+            }
             let writeFailure;
             if (!checkOnly) {
                 try {
@@ -308,6 +372,20 @@ function ScoreEntry({ firebase, actor }) {
     const blocks = selected && desk.pending.some(op => op.uid === selected.uid &&
         (op.day || !op.roundId || op.roundId === round.id));
     const canRecord = selected && !saved && !blocks && round.mode && round.side && !busy;
+
+    function extraScoreControl(source, day, member) {
+        if (!member || !source?.id || !day || source.sourceEventId || source.originalVoided) return null;
+        const blocked = busy || desk.pending.some(op => op.uid === member.uid &&
+            (op.day || op.sourceEventId === source.id || (!op.sourceEventId && (!op.roundId || op.roundId === round.id))));
+        return <ScoreOverride key={member.uid + '/' + source.id} player={nameOf(member)}
+            roundLabel={[Number.isSafeInteger(source.at) ? fieldTime.format(source.at) + ' Pacific' : dateOfFieldDay(day), detailsOf(source)].filter(Boolean).join(' · ')}
+            disabled={blocked} onConfirm={(outcome, quantity) => {
+                if (blocked || active.current || !Number.isInteger(quantity) || quantity < 1 || quantity > 20) return;
+                saveScore({ uid: member.uid, registeredName: registeredName(member.name, member.uid), outcome, quantity,
+                    sourceDay: day, sourceEventId: source.id, sourceAt: source.at, mode: source.mode, side: source.side,
+                    ...(Object.hasOwn(round.scored, member.uid) && round.scored[member.uid].eventId === source.id && { roundId: round.id }), id: newScoreId(), at: Date.now() });
+            }} />;
+    }
 
     function record(outcome) {
         if (!canRecord || active.current) return;
@@ -430,7 +508,7 @@ function ScoreEntry({ firebase, actor }) {
                         {selected && <section aria-label="Selected player" className="score-entry-selected">
                             <h3>{nameOf(selected)}</h3>
                             <p>{[displayNames[selected.uid], selected.uid].filter(Boolean).join(' · ')}</p>
-                            {saved ? <p role="status">{resultLabel(saved.outcome)} already recorded for this player in this round.</p>
+                            {saved ? <p role="status">{saved.originalVoided ? 'Extra results remain on this game.' : resultLabel(saved.outcome) + ' already recorded for this player in this round.'}</p>
                                 : blocks ? <p>Review this player’s pending submission below.</p>
                                 : !round.mode || !round.side ? <p>Select the game mode and team to record a result.</p> : null}
                             {round.mode && !saved && !blocks && <p className="score-entry-award-link">
@@ -442,6 +520,7 @@ function ScoreEntry({ firebase, actor }) {
                                     <Button key={outcome} className={'score-result-' + outcome} variant={outcome === 'win' ? 'success' : 'danger'}
                                         disabled={!canRecord} onClick={() => record(outcome)}>Record {outcome}</Button>)}
                                 <Button variant="outline-secondary" disabled={busy} onClick={() => review(selected)}>Review results</Button>
+                                {saved && !history && extraScoreControl({ ...saved, id: saved.eventId }, saved.day, selected)}
                             </div>
                         </section>}
                     </Card.Body>
@@ -468,6 +547,8 @@ function ScoreEntry({ firebase, actor }) {
                                     uid: selected.uid, registeredName: registeredName(selected.name, selected.uid),
                                     day: correction.day, outcome: correction.outcome, expectedCount: correction.expectedCount,
                                     targetEventId: correction.targetEventId, mode: correction.mode, side: correction.side, id: newScoreId(), at: Date.now(),
+                                    ...(correction.targetEventId && { knownExtraIds: (correction.events || []).filter(event =>
+                                        event.sourceEventId === correction.targetEventId).map(event => event.id) }),
                                     ...(correction.legacyOnly && { legacyOnly: true }), ...(correction.fromFlag && { fromFlag: true }),
                                 })}>Remove {correction.outcome}</Button>
                                 <Button variant="outline-secondary" disabled={busy} onClick={() => setCorrection(null)}>Cancel</Button>
@@ -477,11 +558,12 @@ function ScoreEntry({ firebase, actor }) {
                                 <div><strong>{dateOf(row)}</strong><small>{row.wins} wins · {row.losses} losses</small></div>
                                 <div className="score-entry-day-events">
                                     {(row.events || []).map(event => <div className="score-entry-recent" key={event.id}>
-                                        <span>{resultLabel(event.outcome)} · {fieldTime.format(event.at)} Pacific
+                                        <span>{event.sourceEventId ? 'Extra ' + event.outcome : resultLabel(event.outcome)} · {fieldTime.format(event.at)} Pacific
                                             <small>{detailsOf(event)}</small></span>
                                         <Button variant="outline-danger" disabled={busy || blocks} onClick={() => setCorrection({
                                             ...row, ...event, targetEventId: event.id, expectedCount: event.outcome === 'win' ? row.wins : row.losses,
                                         })}>Remove this {event.outcome}</Button>
+                                        {extraScoreControl(event, row.day, selected)}
                                     </div>)}
                                     {['win', 'loss'].map(outcome => {
                                         const count = outcome === 'win' ? row.wins : row.losses;
@@ -503,7 +585,7 @@ function ScoreEntry({ firebase, actor }) {
                             const member = membersById.get(op.uid);
                             const expired = !isCurrentScoreOperation(op.id, op.at);
                             return <section className="score-entry-pending" key={op.id}>
-                                <strong>{op.day ? 'Remove ' : ''}{resultLabel(op.outcome)} · {member ? nameOf(member) : op.uid}</strong>
+                                <strong>{op.sourceEventId ? extraResultsLabel(op.quantity, op.outcome) : (op.day ? 'Remove ' : '') + resultLabel(op.outcome)} · {member ? nameOf(member) : op.uid}</strong>
                                 <p>{[detailsOf(op), fieldTime.format(op.at) + ' Pacific'].filter(Boolean).join(' · ')}</p>
                                 <small>Reference {op.id}</small>
                                 <div className="score-entry-mode">
@@ -528,11 +610,18 @@ function ScoreEntry({ firebase, actor }) {
                         {recent.length ? recent.map((item, index) => {
                             const member = membersById.get(item.uid);
                             const name = registeredName(member?.name, item.uid) || registeredName(item.registeredName, item.uid);
+                            const sourceId = item.sourceEventId || item.confirmedEventId;
+                            const newerEntry = recent.slice(0, index).some(entry => entry.uid === item.uid &&
+                                (entry.sourceEventId === sourceId || entry.targetEventId === sourceId));
                             const action = item.day ? ' removed' : ' recorded';
+                            const result = item.sourceEventId ? extraResultsLabel(item.quantity, item.outcome) : resultLabel(item.outcome);
                             return <div key={item.id} className={(index % 2 ? 'status-card-row-admin' : 'status-card-offrow-admin') + ' score-entry-recent'}>
-                                <span><strong data-outcome={item.outcome}>{resultLabel(item.outcome)}{action}{name ? ' for ' + name + '.' : ' · Player name unavailable.'}</strong>
+                                <span><strong data-outcome={item.outcome}>{result}{action}{name ? ' for ' + name + '.' : ' · Player name unavailable.'}</strong>
                                     <small>{detailsOf(item)}</small></span>
                                 <Button variant="outline-secondary" disabled={busy || !member} onClick={() => review(member)}>Review results</Button>
+                                {!selected && !item.day && !newerEntry &&
+                                    extraScoreControl({ id: sourceId, at: item.sourceEventId ? item.sourceAt : item.at,
+                                        mode: item.mode, side: item.side }, item.sourceDay || item.confirmedDay, member)}
                             </div>;
                         }) : <Card.Text className="status-card-row-admin">No results recorded in this session.</Card.Text>}
                     </Card.Body>
@@ -550,5 +639,5 @@ function StaffScoreDesk({ firebase }) {
     return <ScoreEntry key={actor} actor={actor} firebase={firebase} />;
 }
 
-const isAdmin = user => Boolean(user?.roles?.[ADMIN]);
+const isAdmin = user => Boolean(officialAccountRoles(user?.roles).ADMIN);
 export default withAuthorization(isAdmin, { verifyOnMount: true })(withFirebase(StaffScoreDesk));
