@@ -4,6 +4,8 @@ import {
     LIVE_ROUNDS_PATH, ROUND_CATALOG_PATH, STAFF_ROUNDS_PATH, RoundRespawns, runningBarracksClock, useLiveFieldBoard,
 } from './FieldRoundsShared';
 import { FieldPinPicker, readMapPins, roundPinLocation } from './FieldRoundMap';
+import { RoundBriefingEditor } from './RoundBriefing';
+import { fieldStaffPaths } from '../constants/fieldStaffApi';
 import FieldSectionLinks from './FieldSectionLinks';
 import './FieldRounds.css';
 
@@ -324,7 +326,7 @@ function EditRoundLocations({ round, disabled, onSave }) {
     );
 }
 
-function RoundCard({ round, live, hasCurrentRound, now, disabled, onSave }) {
+function RoundCard({ round, live, hasCurrentRound, now, disabled, onSave, request, board, onDisplayChange }) {
     function change(action) {
         const prompt = { endRound: 'End this round now?', cancelGame: 'Remove this round from the schedule?' }[action];
         if (prompt && !window.confirm(prompt)) return;
@@ -347,6 +349,8 @@ function RoundCard({ round, live, hasCurrentRound, now, disabled, onSave }) {
                     {disabled ? '—' : formatRoundCountdown(Date.parse(round.endsAt) - now)}
                 </span>}
             </div>
+            <RoundBriefingEditor game={round} request={request} displayGameId={board.briefingGameId}
+                displayRevision={board.briefingDisplayRevision} onDisplayChange={onDisplayChange} disabled={disabled} />
             <RoundRespawns round={round} />
             <div className="field-rounds-actions">
                 {live ? <button className="btn btn-outline-danger" type="button" disabled={disabled} onClick={() => change('endRound')}>End round</button>
@@ -356,7 +360,7 @@ function RoundCard({ round, live, hasCurrentRound, now, disabled, onSave }) {
                         <button className="btn btn-outline-danger" type="button" disabled={disabled} onClick={() => change('cancelGame')}>Cancel round</button>
                     </>}
             </div>
-            <EditRoundLocations round={round} disabled={disabled} onSave={onSave} />
+            <EditRoundLocations key={round.revision} round={round} disabled={disabled} onSave={onSave} />
         </article>
     );
 }
@@ -459,12 +463,16 @@ export default function AdminFieldRounds({ request }) {
             {board && <>
                 <BarracksClockControls clock={board.barracksClock} now={now} disabled={disabled} onSave={save} />
                 <section className="field-rounds-panel" aria-labelledby="field-rounds-current">
-                    <h2 id="field-rounds-current" tabIndex={-1}>Current and scheduled rounds</h2>
+                    <div className="field-rounds-card-header">
+                        <h2 id="field-rounds-current" tabIndex={-1}>Current and scheduled rounds</h2>
+                        <a className="btn btn-outline-secondary" href={fieldStaffPaths.tv} target="_blank" rel="noreferrer">Open Barracks TV</a>
+                    </div>
+                    {(rounds.active.length > 0 || rounds.upcoming.length > 0) &&
+                        <p>Leave Barracks TV open on the display. Choose a round’s briefing map below to present from this device.</p>}
                     {!rounds.active.length && !rounds.upcoming.length && <p>No rounds are scheduled in the next 48 hours.</p>}
-                    {rounds.active.map(round => <RoundCard key={round.id + ':' + round.revision}
-                        round={round} live now={now} disabled={disabled} onSave={save} />)}
-                    {rounds.upcoming.map(round => <RoundCard key={round.id + ':' + round.revision}
-                        round={round} hasCurrentRound={Boolean(rounds.current)} now={now} disabled={disabled} onSave={save} />)}
+                    {[...rounds.active, ...rounds.upcoming].map(round => <RoundCard key={round.id}
+                        round={round} live={rounds.active.includes(round)} hasCurrentRound={Boolean(rounds.current)}
+                        now={now} disabled={disabled} onSave={save} request={request} board={board} onDisplayChange={refresh} />)}
                 </section>
                 {canPublish && <section className="field-rounds-panel" aria-labelledby="field-rounds-publish">
                     <h2 id="field-rounds-publish" tabIndex={-1}>Publish the vote winner</h2>

@@ -131,6 +131,9 @@
 .field-rounds-countdown { font-weight: 750; font-size: 1.35rem; font-variant-numeric: tabular-nums; }
 .field-rounds-card summary { cursor: pointer; font-weight: 650; }
 .field-rounds-card details form { margin-top: .75rem; }
+.field-round-briefing { min-width: 0; }
+.field-round-briefing > [role='region']:not([hidden]) { margin-top: .75rem; }
+.field-briefing-on-tv { color: var(--admin-accent-text); font-weight: 700; }
 
 .field-rounds-form fieldset {
   display: grid;
@@ -216,6 +219,10 @@
 }
 
 .field-barracks:fullscreen { width: 100%; height: 100%; }
+.field-barracks[data-briefing='true'] { padding: clamp(.5rem, 1vw, 1rem); }
+.field-barracks[data-briefing='true'] .field-barracks-header { padding-bottom: .4rem; }
+.field-barracks[data-briefing='true'] .field-barracks-header h1 { font-size: clamp(1.25rem, 2.4vw, 2rem); }
+.field-barracks[data-briefing='true'] .field-barracks-brand img { max-height: 2.75rem; width: auto; }
 .field-barracks :is(h1, h2) { color: var(--barracks-text); font-family: var(--usaw-font-display); overflow-wrap: anywhere; }
 .field-barracks p { color: var(--barracks-muted); }
 

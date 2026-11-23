@@ -7,6 +7,7 @@ import BarracksTV from './BarracksTV';
 import { fieldTimeISO, LIVE_ROUNDS_PATH, ROUND_CATALOG_PATH, STAFF_ROUNDS_PATH } from './FieldRoundsShared';
 
 const serverNow = '2026-11-16T18:00:00.000Z';
+const briefingPath = LIVE_ROUNDS_PATH + '?briefing=1';
 const scheduled = {
     id: '4705884b-9fea-4206-bb3a-e7cbdebe2184', revision: 6, status: 'queued',
     title: 'Countdown', startsAt: '2026-11-16T18:15:00.000Z', endsAt: '2026-11-16T18:40:00.000Z',
@@ -249,7 +250,8 @@ test('a stale clear shows the error and reloads the newer vote for review', asyn
 });
 
 test('uses a read-only public board and displays live round and both respawns in Barracks TV', async () => {
-    const request = jest.fn().mockResolvedValue({ serverNow, isStaff: false, poll: null, games: [playing] });
+    const request = jest.fn(async path => path === briefingPath ? { briefing: null, displayRevision: 0 } :
+        { serverNow, isStaff: false, poll: null, games: [playing] });
     render(<HelmetProvider><MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <BarracksTV request={request} />
     </MemoryRouter></HelmetProvider>);
@@ -260,13 +262,14 @@ test('uses a read-only public board and displays live round and both respawns in
     expect(screen.getByRole('timer', { name: 'Round time remaining' })).toHaveTextContent('25:00');
     expect(screen.queryByRole('button', { name: 'End round' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /on map/i })).not.toBeInTheDocument();
-    expect(request).toHaveBeenCalledTimes(1);
+    expect(request.mock.calls.map(([path]) => path).sort()).toEqual([LIVE_ROUNDS_PATH, briefingPath]);
     expect(request).toHaveBeenCalledWith(LIVE_ROUNDS_PATH, { signal: expect.anything() });
 });
 
 test('opens the selected public map pin and labels it with the round location', async () => {
     const round = { ...playing, briefingLocation: '', mapPins: { briefing: { x: .25, y: .8 }, camp: { x: .1, y: .2 }, solid: { x: .7, y: .35 } } };
-    const request = jest.fn().mockResolvedValue({ serverNow, isStaff: false, poll: null, games: [round] });
+    const request = jest.fn(async path => path === briefingPath ? { briefing: null, displayRevision: 0 } :
+        { serverNow, isStaff: false, poll: null, games: [round] });
     render(<HelmetProvider><MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <BarracksTV request={request} />
     </MemoryRouter></HelmetProvider>);
@@ -282,7 +285,71 @@ test('opens the selected public map pin and labels it with the round location', 
     fireEvent.click(screen.getByRole('button', { name: 'Show Briefing on map' }));
     expect(solid).toHaveAttribute('aria-pressed', 'false');
     expect(screen.getByRole('img', { name: /highlighting Briefing/ })).toBeInTheDocument();
-    expect(request).toHaveBeenCalledTimes(1);
+    expect(request.mock.calls.map(([path]) => path).sort()).toEqual([LIVE_ROUNDS_PATH, briefingPath]);
+});
+
+test('the staff device can prepare and present a round while a separate TV follows the marks and zoom', async () => {
+    let game = { ...scheduled, briefingRevision: 0, briefingMap: { marks: [], view: { zoom: 1, x: .5, y: .5 } } };
+    let displayGameId = null;
+    let displayRevision = 0;
+    const staffRequest = jest.fn(async (path, { body } = {}) => {
+        if (path === ROUND_CATALOG_PATH) return catalog;
+        if (path === STAFF_ROUNDS_PATH) return { serverNow, games: [game], isStaff: true, briefingGameId: displayGameId, briefingDisplayRevision: displayRevision };
+        if (body.gameId !== game.id) throw Error('Wrong round');
+        if (body.action === 'saveBriefingMap') {
+            expect(body.revision).toBe(game.briefingRevision);
+            game = { ...game, briefingMap: body.map, briefingRevision: game.briefingRevision + 1 };
+            return { ok: true, revision: game.briefingRevision };
+        }
+        expect(body.displayRevision).toBe(displayRevision);
+        displayGameId = body.action === 'showBriefingMap' ? game.id : null;
+        return { ok: true, displayRevision: ++displayRevision };
+    });
+    const publicRequest = jest.fn(async path => {
+        if (path === LIVE_ROUNDS_PATH) return { serverNow, games: [], isStaff: false };
+        if (path === briefingPath) return { displayRevision, briefing: displayGameId && {
+            gameId: game.id, title: game.title, mapPins: {}, map: game.briefingMap, revision: game.briefingRevision,
+        } };
+        throw Error('Unexpected public request');
+    });
+    const staff = within(render(<AdminFieldRounds request={staffRequest} />).container);
+    const tv = within(render(<HelmetProvider><MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <BarracksTV request={publicRequest} />
+    </MemoryRouter></HelmetProvider>).container);
+    const receive = () => act(async () => { window.dispatchEvent(new Event('online')); });
+
+    fireEvent.click(await staff.findByRole('button', { name: 'Open briefing map' }));
+    const editor = within(staff.getByRole('region', { name: 'Briefing map for Countdown' }));
+    const stage = editor.getByRole('img', { name: 'Official field map' });
+    fireEvent.keyDown(stage, { key: 'Enter' });
+    await waitFor(() => expect(game.briefingMap.marks).toHaveLength(1));
+    expect(tv.queryByRole('region', { name: 'Round briefing' })).not.toBeInTheDocument();
+    fireEvent.click(editor.getByRole('button', { name: 'Show on Barracks TV' }));
+    await editor.findByRole('button', { name: 'Stop showing on TV' });
+    await receive();
+    const display = within(tv.getByRole('region', { name: 'Round briefing' }));
+    expect(display.getByRole('heading', { name: game.title })).toBeVisible();
+    const screenMap = display.getByRole('img', { name: 'Official field map' });
+    expect(screenMap.querySelector('[data-layer="drawings"]').childElementCount).toBeGreaterThan(0);
+    expect(tv.getByRole('button', { name: 'Full screen' })).toBeVisible();
+    expect(tv.queryByRole('heading', { name: 'No round on the board' })).not.toBeInTheDocument();
+    expect(tv.queryByRole('button', { name: 'Zoom in' })).not.toBeInTheDocument();
+
+    // A round can go live and move to the top of the board while staff are drawing.
+    game = { ...game, status: 'live', startsAt: serverNow, revision: game.revision + 1 };
+    fireEvent.click(staff.getByRole('button', { name: 'Refresh board' }));
+    await staff.findByRole('button', { name: 'End round' });
+    expect(editor.getByRole('img', { name: 'Official field map' })).toBe(stage);
+    fireEvent.click(editor.getByRole('button', { name: 'Zoom in' }));
+    await waitFor(() => expect(game.briefingMap.view.zoom).toBeGreaterThan(1));
+    await receive();
+    expect(screenMap.getAttribute('viewBox')).toBe(stage.getAttribute('viewBox'));
+    fireEvent.click(editor.getByRole('button', { name: 'Stop showing on TV' }));
+    await editor.findByRole('button', { name: 'Show on Barracks TV' });
+    await receive();
+    expect(tv.getByRole('heading', { name: 'No round on the board' })).toBeVisible();
+    expect(tv.queryByRole('region', { name: 'Round briefing' })).not.toBeInTheDocument();
+    expect(publicRequest.mock.calls.every(([, options]) => !options?.method || options.method === 'GET')).toBe(true);
 });
 
 test('rejects nonexistent and repeated times during California clock changes', () => {
