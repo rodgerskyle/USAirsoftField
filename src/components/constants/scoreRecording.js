@@ -79,6 +79,7 @@ function scoreHistory(uid, player) {
             .filter(([id]) => operationIdPattern.test(id))
             .map(([id, event]) => ({ id, outcome: event.outcome, at: event.at,
                 ...(typeof event.mode === 'string' && { mode: event.mode }),
+                ...(typeof event.sourceEventId === 'string' && { sourceEventId: event.sourceEventId }),
                 ...(['camo', 'solid'].includes(event.side) && { side: event.side }) }))
             .sort((a, b) => b.at - a.at || b.id.localeCompare(a.id));
         return [{ day, date, wins, losses, events }];
