@@ -10,6 +10,7 @@ import {
     barracksClockTitles, formatFieldTime, formatRoundCountdown, isOpenVote, liveRounds, RoundRespawns, runningBarracksClock, useLiveFieldBoard,
 } from './FieldRoundsShared';
 import { RoundMapViewer, roundPinLocation } from './FieldRoundMap';
+import { RoundBriefingDisplay } from './RoundBriefing';
 import BarracksPatchCelebrations from './BarracksPatchCelebrations';
 import './FieldRounds.css';
 
@@ -40,6 +41,7 @@ export default function BarracksTV({ request = requestPublicFieldTool }) {
     const display = useRef(null);
     const [fullscreen, setFullscreen] = useState(false);
     const [fullscreenError, setFullscreenError] = useState('');
+    const [briefingActive, setBriefingActive] = useState(false);
     const displayTime = error && board ? Date.parse(board.serverNow) : now;
     const { current, upcoming } = liveRounds(board?.games, displayTime);
     const round = current || upcoming[0];
@@ -73,7 +75,7 @@ export default function BarracksTV({ request = requestPublicFieldTool }) {
     }
 
     return (
-        <main className="field-barracks" ref={display}>
+        <main className="field-barracks" data-briefing={briefingActive} ref={display}>
             <Helmet>
                 <title>USAW Barracks TV</title>
                 <meta name="robots" content="noindex, nofollow" />
@@ -87,6 +89,8 @@ export default function BarracksTV({ request = requestPublicFieldTool }) {
                 </div>
             </header>
             {fullscreenError && <p className="field-barracks-notice" role="status">{fullscreenError}</p>}
+            <RoundBriefingDisplay request={request} onActiveChange={setBriefingActive} />
+            <div hidden={briefingActive}>
             {error && <div className="field-barracks-notice" role="alert">
                 <span>{board ? 'Live updates interrupted. Showing the last field update.' : 'The field board is temporarily unavailable.'}</span>
                 <button type="button" onClick={() => void refresh()}>Retry</button>
@@ -149,6 +153,7 @@ export default function BarracksTV({ request = requestPublicFieldTool }) {
                 </aside>}
             </div>}
             {board && <p className="field-barracks-update">Last field update · {formatFieldTime(board.serverNow)} Pacific</p>}
+            </div>
         </main>
     );
 }
