@@ -15,32 +15,31 @@ function AccountIdentity({ member }) {
 
 function ManualMatch({ member, request, onBack, onSaved }) {
   const [match, setMatch] = useState(null);
-  const [dob, setDob] = useState('');
   const [confirmed, setConfirmed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const saveRequest = useRef(null);
-  const dateInput = useRef(null);
+  const confirmation = useRef(null);
   const searchWaivers = useCallback((search, signal) => request(membership, {
     method: 'POST', body: { action: 'reviewSearch', memberId: member.playerId, search }, signal,
   }), [request, member.playerId]);
 
   useEffect(() => () => saveRequest.current?.abort(), []);
-  useEffect(() => { if (match) dateInput.current?.focus(); }, [match]);
+  useEffect(() => { if (match) confirmation.current?.focus(); }, [match]);
 
   function select(waiver) {
-    setError(''); setDob(''); setConfirmed(false); setMatch(waiver);
+    setError(''); setConfirmed(false); setMatch(waiver);
   }
   async function attach(event) {
     event.preventDefault();
-    if (!match || !confirmed || !dob || saveRequest.current) return;
+    if (!match || !confirmed || saveRequest.current) return;
     const controller = new AbortController();
     saveRequest.current = controller;
     setSaving(true); setError('');
     try {
       const result = await request(membership, {
         method: 'POST', signal: controller.signal,
-        body: { action: 'reviewLink', memberId: member.playerId, ref: match.ref, signedAt: match.signedAt, dob, confirmed },
+        body: { action: 'reviewLink', memberId: member.playerId, ref: match.ref, signedAt: match.signedAt, confirmed },
       });
       if (controller.signal.aborted) return;
       if (result?.check?.status !== 'signed' || result.check.signedAt !== match.signedAt) {
@@ -65,18 +64,14 @@ function ManualMatch({ member, request, onBack, onSaved }) {
         <strong>{match.name}</strong>
         <span>{sources[match.source] || 'Signed waiver'} · Signed {signedDate.format(new Date(match.signedAt))} PT</span>
       </p>
-      <label className="member-waiver-review__dob">Participant’s date of birth
-        <input type="date" autoComplete="off" ref={dateInput} value={dob} required disabled={saving}
-          onChange={event => { setDob(event.target.value); setConfirmed(false); setError(''); }} />
-      </label>
       <label className="admin-checkin__rental-option">
-        <input type="checkbox" required checked={confirmed} disabled={saving}
+        <input type="checkbox" ref={confirmation} required checked={confirmed} disabled={saving}
           onChange={event => setConfirmed(event.target.checked)} />
         I verified this waiver belongs to {member.name || 'this member'}.
       </label>
       {error && <p className="alert alert-danger" role="alert">{error}</p>}
       <div className="admin-checkin__buttons">
-        <button type="submit" className="btn btn-primary" disabled={saving || !dob || !confirmed}>
+        <button type="submit" className="btn btn-primary" disabled={saving || !confirmed}>
           {saving ? 'Attaching waiver…' : 'Attach waiver to profile'}
         </button>
         <button type="button" className="btn btn-outline-secondary" disabled={saving}
