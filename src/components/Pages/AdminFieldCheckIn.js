@@ -91,6 +91,7 @@ function putResult(board, data) {
 function assignmentMessage({ outcome, player }) {
   const { displayName, side } = player;
   if (outcome === 'reassigned') return `${displayName} moved to ${sides[side]}.`;
+  if (outcome === 'updated' && player.membershipStatus === 'guest') return `Walk-on experience saved for ${displayName}.`;
   if (outcome === 'updated') return `Team balance estimate updated for ${displayName}.`;
   if (outcome === 'already-checked-in') return `${displayName} is already checked in as ${sides[side]}.`;
   return `${displayName} checked in as ${sides[side]}.`;
@@ -155,6 +156,14 @@ function TeamTalent({ board }) {
   );
 }
 
+function rosterPlayerLabel(player) {
+  if (player.membershipStatus === 'guest') {
+    const experience = groupExperienceLabels[player.experienceBand] || groupExperienceLabels.unrated;
+    return `Walk-on · Experience: ${experience}`;
+  }
+  return `${memberships[player.membershipStatus] || memberships.unconfirmed} · ${classificationLabel(player)}`;
+}
+
 function PlayerRows({ players, onSelect, checkedIn, disabled, rowActions }) {
   return (
     <ul className="admin-checkin__players" aria-label={checkedIn ? 'Checked-in players' : 'Matching players'}>
@@ -163,7 +172,7 @@ function PlayerRows({ players, onSelect, checkedIn, disabled, rowActions }) {
           <button className="admin-checkin__player-select" type="button" disabled={disabled} onClick={() => onSelect({ playerId: player.playerId })}>
             <span>
               <strong>{player.displayName}</strong>
-              <small>{checkedIn ? `${memberships[player.membershipStatus] || memberships.unconfirmed} · ${classificationLabel(player)}` : player.membershipStatus === 'guest' ? 'Walk-on · ' + sides[player.side] : player.playerId}</small>
+              <small>{checkedIn ? rosterPlayerLabel(player) : player.membershipStatus === 'guest' ? 'Walk-on · ' + sides[player.side] : player.playerId}</small>
               <WaiverStatus status={player.waiverStatus ?? 'unavailable'} />
             </span>
             <span className={checkedIn ? 'admin-checkin__pill' : undefined} data-side={checkedIn ? player.side : undefined} aria-hidden={checkedIn ? undefined : true}>
@@ -207,7 +216,7 @@ function SelectedPlayer({ player, date, suggestion, working, rentalRequested, on
           {side ? `Checked in · ${sides[side]}` : 'Awaiting check-in'}
         </span>
         <WaiverStatus status={player.waiverStatus ?? 'unavailable'} />
-        <span className="admin-checkin__pill">{classificationLabel(player)}</span>
+        <span className="admin-checkin__pill">{membershipStatus === 'guest' && 'Logged-game tier · '}{classificationLabel(player)}</span>
         {Number.isSafeInteger(gamesLogged) && <span className="admin-checkin__hint">
           {countFormat.format(gamesLogged)} {gamesLogged === 1 ? 'game' : 'games'} logged
         </span>}
@@ -218,7 +227,7 @@ function SelectedPlayer({ player, date, suggestion, working, rentalRequested, on
       </div>}
       {canSetExperience && (
         <label className="admin-checkin__rating" htmlFor="admin-checkin-rating">
-          Team balance estimate
+          {membershipStatus === 'guest' ? 'Walk-on experience' : 'Team balance estimate'}
           <select id="admin-checkin-rating" value={experienceBand || 'unrated'} disabled={working} onChange={event => onAssessment(event.target.value)}>
             {Object.entries(groupExperienceLabels).map(([band, label]) => <option value={band} key={band}>{label}</option>)}
           </select>
@@ -242,7 +251,7 @@ function SelectedPlayer({ player, date, suggestion, working, rentalRequested, on
         {rentalLink && !working && <a className="btn btn-outline-primary" href={rentalLink}>Open rental form</a>}
         {side && <button type="button" className="btn btn-primary" disabled={working} onClick={onNext}>Check in next player</button>}
         {side && canSetExperience && ratingChanged && (
-          <button type="button" className="btn btn-primary" disabled={working} onClick={() => onAssign(side)}>Save balance estimate</button>
+          <button type="button" className="btn btn-primary" disabled={working} onClick={() => onAssign(side)}>{membershipStatus === 'guest' ? 'Save experience' : 'Save balance estimate'}</button>
         )}
       </div>
     </section>
@@ -432,7 +441,7 @@ export default function AdminFieldCheckIn({ request }) {
       if (expectedGroupDate && data.date !== expectedGroupDate) throw new Error('The field day changed. Find the group again before checking in.');
       if (data.counts && data.balance) setBoard(current => putResult(current, data));
       if (data.player) {
-        setSelected({ date: data.date, rosterVersion: data.rosterVersion, player: data.player });
+        setSelected({ date: data.date, rosterVersion: data.rosterVersion, player: data.player, experienceEdited: guest && input.experienceBand !== undefined });
         setStatus(data.player.side ? 'This player is already checked in.' : data.player.waiverStatus === 'signed' ? 'Choose a side to check in.' : 'Verify the player’s signed waiver below.');
       } else if (data.matches?.length) {
         setMatches(data.matches);
@@ -487,6 +496,7 @@ export default function AdminFieldCheckIn({ request }) {
     const isNewGuest = !player.side && player.membershipStatus === 'guest';
     lookup({
       ...(isNewGuest ? { displayName: player.displayName } : { playerId: player.playerId }),
+      ...(isNewGuest && selected.experienceEdited ? { experienceBand: player.experienceBand } : {}),
       ...(!player.side && proof ? { waiverRef: proof } : {}),
     }, isNewGuest, undefined, rentalRequested);
   }
@@ -552,7 +562,7 @@ export default function AdminFieldCheckIn({ request }) {
             ...(!player.side && player.waiverRef ? { waiverRef: player.waiverRef } : {}),
             ...(rosterVersion ? { rosterVersion } : {}),
             ...(newGuest ? { displayName: player.displayName } : { playerId: player.playerId, revision: player.revision }),
-            ...(player.canSetExperience ? { experienceBand: player.experienceBand } : {}),
+            ...(player.canSetExperience && (!newGuest || selected.experienceEdited) ? { experienceBand: player.experienceBand } : {}),
           },
         });
         if (signal.aborted) return;
@@ -729,7 +739,7 @@ export default function AdminFieldCheckIn({ request }) {
     setSelected(current => {
       const balanceScore = current?.player.experienceOptions?.[experienceBand];
       if (!Number.isFinite(balanceScore)) return current;
-      return { ...current, player: { ...current.player, experienceBand, balanceScore } };
+      return { ...current, experienceEdited: true, player: { ...current.player, experienceBand, balanceScore } };
     });
   }
 
