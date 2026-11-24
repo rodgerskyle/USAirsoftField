@@ -22,8 +22,8 @@ const date = '2026-11-22';
 const companion = new URLSearchParams({ view: 'new', walkOn, date, from: 'companion' });
 
 function Location() {
-  const { pathname, search } = useLocation();
-  return <output aria-label="Current route">{pathname + search}</output>;
+  const { pathname, search, hash } = useLocation();
+  return <output aria-label="Current route">{pathname + search + hash}</output>;
 }
 
 function renderRoute(initialPath, roles = {}) {
@@ -105,4 +105,10 @@ test.each([
   renderRoute('/login?resume=' + resume + '&player=RegisteredMember1&date=' + date + '&from=companion&returnTo=https://example.test',roles);
   await signIn();
   await waitFor(() => expect(screen.getByLabelText('Current route').textContent).toBe(expected));
+});
+
+test('returns a signed-in guest to their specific website group invitation', async () => {
+  renderRoute({ pathname: '/login', state: { groupInvite: 'rebels-4' } });
+  await signIn();
+  await waitFor(() => expect(screen.getByLabelText('Current route').textContent).toBe('/group-check-in#join/rebels-4'));
 });

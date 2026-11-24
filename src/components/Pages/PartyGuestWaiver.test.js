@@ -4,7 +4,7 @@ import PartyGuestWaiver, { partyWaiverRoute } from './PartyGuestWaiver';
 
 const token = 'a'.repeat(64);
 const form = { name: 'Sample Player', recaptchaToken: 'fixture' };
-const reply = (waiverStatus, waiverSubmissionStatus, role = 'guest') => ({ ok: true, json: async () => ({ role, group: { name: 'Birthday afternoon',
+const reply = (waiverStatus, waiverSubmissionStatus, role = 'guest', kind = 'party') => ({ ok: true, json: async () => ({ role, group: { kind, name: 'Afternoon players',
   entries: [{ id: 'entry', displayName: 'Sample Player', preparation: { waiverStatus, waiverSubmissionStatus } }],
 } }) });
 const mount = (value = token) => render(<PartyGuestWaiver token={value}>{sign => <button type="button" onClick={() => sign(form)}>Sign fixture waiver</button>}</PartyGuestWaiver>);
@@ -18,7 +18,7 @@ test('posts only to the current guest endpoint, confirms verified status and ret
   fireEvent.click(await screen.findByRole('button', { name: 'Sign fixture waiver' }));
   await screen.findByText(/Waiver verified/);
   expect(screen.queryByRole('button', { name: 'Sign fixture waiver' })).toBeNull();
-  expect(screen.getByRole('link', { name: 'Return to my party checklist' })).toHaveAttribute('href', 'https://app.usairsoftfield.com/#group-check-in/guest/' + token);
+  expect(screen.getByRole('link', { name: 'Return to my party checklist' })).toHaveAttribute('href', 'https://www.usairsoftfield.com/group-check-in#guest/' + token);
   expect(fetch).toHaveBeenCalledTimes(2);
   for (const [url, opts] of fetch.mock.calls) {
     expect(url).toBe('https://app.usairsoftfield.com/api/party-readiness');
@@ -51,4 +51,14 @@ test('a malformed or organizer link cannot open a waiver form for a guest', asyn
   await screen.findByRole('alert');
   expect(screen.queryByText('Sample Player')).toBeNull();
   expect(screen.queryByRole('button', { name: 'Sign fixture waiver' })).toBeNull();
+});
+
+test('a regular visit guest can sign the official form and return to their own group checklist', async () => {
+  fetch.mockResolvedValueOnce(reply('missing', 'none', 'guest', 'visit'))
+    .mockResolvedValueOnce(reply('signed', 'confirmed', 'guest', 'visit'));
+  mount();
+  fireEvent.click(await screen.findByRole('button', { name: 'Sign fixture waiver' }));
+  await screen.findByText(/Waiver verified/);
+  expect(screen.getByRole('link', { name: 'Return to my group checklist' })).toHaveAttribute('href', 'https://www.usairsoftfield.com/group-check-in#guest/' + token);
+  expect(JSON.parse(fetch.mock.calls[1][1].body)).toEqual({ action: 'signWaiver', waiverData: form });
 });

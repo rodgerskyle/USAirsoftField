@@ -8,6 +8,7 @@ import { PasswordForgetLink } from './passwordForgot';
 import ThemedCaptcha from './components/ThemedCaptcha';
 import { Container, Row, Col, Form, Button } from 'react-bootstrap/';
 
+import { isGroupCode } from './components/constants/groupCode';
 import { deskAfterLogin } from './components/constants/checkInHandoff';
 import { walkOnAfterLogin } from './components/constants/groupRentalLink';
 import * as ROLES from './components/constants/roles';
@@ -98,7 +99,10 @@ class SignInFormBase extends Component {
           const rental = ROLES.canUseRentalDesk(roles) &&
             walkOnAfterLogin(this.props.router.location.search, Boolean(roles.ADMIN));
           const desk = deskAfterLogin(this.props.router.location.search, roles);
-          if (desk || rental) {
+          const groupInvite = this.props.router.location.state?.groupInvite;
+          if (isGroupCode(groupInvite)) {
+            this.props.history.replace('/group-check-in#join/' + groupInvite);
+          } else if (desk || rental) {
             this.props.history.replace(desk || rental);
           } else if (userObject.roles && !!userObject.roles[ROLES.WAIVER]) {
             this.props.history.push("/dashboard");

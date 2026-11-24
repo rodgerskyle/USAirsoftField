@@ -92,6 +92,6 @@ test('calendar staff can copy a separate private organizer checklist for a confi
   render(view('WAIVER'));
   expect(await screen.findByText('8 of 10 ready')).toBeVisible();
   fireEvent.click(screen.getByRole('button',{name:'Copy organizer link'}));
-  expect(await screen.findByLabelText('Copy this private link')).toHaveValue('https://app.usairsoftfield.com/#group-check-in/organizer/' + organizerToken);
+  expect(await screen.findByLabelText('Copy this private link')).toHaveValue('https://www.usairsoftfield.com/group-check-in#organizer/' + organizerToken);
   expect(screen.queryByRole('button',{name:/Copy guest checklist/})).toBeNull();
 });

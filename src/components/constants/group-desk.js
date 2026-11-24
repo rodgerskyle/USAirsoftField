@@ -1,5 +1,6 @@
 import { mountGroupMemberPicker } from './group-member-picker.js';
 import { newScoreId as newRequestId } from './scoreHistory.js';
+import { websiteInvitationLink } from './groupInvitationLinks.js';
 import { groupRentalLink } from './groupRentalLink.js';
 import { bindWaiverPicker, waiverPickerMarkup } from './staff-waiver-picker.js';
 import { groupExperienceLabels } from './groupExperience.js';
@@ -76,19 +77,23 @@ function guestPreparation(prep) {
 }
 
 function arrivalSummary(group) {
-  if (!group.readiness) return '';
+  const organizerUrl = websiteInvitationLink('organizer', group.organizerToken);
+  const organizerActions = organizerUrl ? `<a class="btn btn-secondary" href="${escape(organizerUrl)}" rel="noreferrer" target="_blank">Open organizer readiness link</a>
+    <button type="button" class="btn btn-secondary" data-copy-link="${escape(organizerUrl)}">Copy organizer link</button>` : '';
+  if (!group.readiness) return organizerActions;
   const {ready, expected, unlisted, rentalsRequested} = group.readiness;
-  const organizerUrl = /^[a-f0-9]{64}$/.test(group.organizerToken || '') ? 'https://app.usairsoftfield.com/#group-check-in/organizer/' + group.organizerToken : null;
   return `<section aria-label="Party readiness"><h3>Party readiness</h3>
     <p><strong>${escape(ready)} of ${escape(expected)} ready</strong> · ${escape(rentalsRequested)} rental ${rentalsRequested === 1 ? 'request' : 'requests'}</p>
     ${unlisted ? `<p>${escape(unlisted)} expected ${unlisted === 1 ? 'guest still needs' : 'guests still need'} to be added to the roster.</p>` : ''}
     <button type="button" class="btn btn-secondary" data-refresh-party>Refresh party readiness</button>
-    ${organizerUrl ? `<a class="btn btn-secondary" href="${organizerUrl}" rel="noreferrer" target="_blank">Open organizer readiness link</a>` : ''}</section>`;
+    ${organizerActions}</section>`;
 }
 
 function rosterRow(entry) {
   const kind = entry.kind === 'guest' ? 'Guest player' : 'USAW player';
+  const guestUrl = websiteInvitationLink('guest', entry.preparation?.guestToken);
   return `<li><div><strong>${escape(entry.displayName)}</strong><small>${kind}${entry.isOrganizer ? ' · Organizer' : ''} · ${groupExperienceLabels[entry.experienceBand] || groupExperienceLabels.unrated}</small>${waiverStatusMarkup(entry.waiverStatus)}${guestPreparation(entry.preparation)}</div>
+    ${guestUrl ? `<button type="button" class="btn btn-secondary" data-copy-link="${escape(guestUrl)}">Copy guest checklist<span class="visually-hidden"> for ${escape(entry.displayName)}</span></button>` : ''}
     ${entry.waiverStatus !== 'signed' ? `<details data-waiver-entry="${escape(entry.id)}"><summary>Link signed waiver<span class="visually-hidden"> for ${escape(entry.displayName)}</span></summary>${waiverPickerMarkup({ name: entry.displayName })}</details>` : ''}
     ${entry.playerId ? `<a href="${escape(memberProfileHref(entry.playerId))}" target="_blank" rel="noopener noreferrer" aria-label="View profile for ${escape(entry.displayName)}">View profile</a>` : ''}
     ${entry.pending && entry.playerId ? `<button class="btn btn-secondary" type="button" data-confirm-member="${escape(entry.playerId)}">Confirm member<span class="visually-hidden"> ${escape(entry.displayName)}</span></button>` : ''}
@@ -103,6 +108,7 @@ function rosterRow(entry) {
 
 function detailMarkup(group, confirmDelete) {
   if (!group) return '<h2>Group details</h2><p>Select a group to see its roster and invitation code.</p>';
+  const inviteUrl = websiteInvitationLink('join', group.code);
   const schedule = group.partyStatus === 'confirmed' ? ' · Party Calendar linked' : group.partyStatus === 'review' ? ' · Booking needs review' : '';
   return `<h2 tabindex="-1" data-selection-title>${escape(group.name)}</h2>
     <p>${escape(displayDay(group.date))} · ${people(group.entries.length)}${schedule}${partySummary(group.party?.start, group.party?.size)}</p>
@@ -111,7 +117,8 @@ function detailMarkup(group, confirmDelete) {
     ${group.id && group.partyStatus !== 'review' ? `<a class="btn btn-secondary" href="${escape(groupRentalLink(group.id))}" target="_blank" rel="noopener noreferrer">Open rental form</a>` : ''}
     </div>
     <div class="group-desk__code"><label>Invitation code<input readonly data-invite value="${escape(group.code)}" autocomplete="off"></label>
-      <button class="btn btn-secondary" type="button" data-copy>Copy code</button></div>
+      <button class="btn btn-secondary" type="button" data-copy>Copy code</button>
+      ${inviteUrl ? `<button class="btn btn-secondary" type="button" data-copy-link="${escape(inviteUrl)}">Copy guest invitation</button>` : ''}</div>
     ${group.expiresAt ? `<p>Expires ${escape(new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', dateStyle: 'medium', timeStyle: 'short' }).format(new Date(group.expiresAt)))} Pacific</p>` : ''}
         ${arrivalSummary(group)}
     <h3>Group roster</h3>
@@ -322,6 +329,23 @@ export function bindGroupDesk(root, { request, signal, initialId }) {
       void run(async () => {
         await open(selected.id);
         if (!signal.aborted) status.textContent = button.hasAttribute('data-refresh-party') ? 'Party readiness refreshed.' : 'Waiver statuses refreshed.';
+      });
+    } else if (button.dataset.copyLink) {
+      const url = button.dataset.copyLink;
+      void run(async () => {
+        try {
+          await navigator.clipboard.writeText(url);
+          if (button.isConnected) status.textContent = 'Link copied.';
+        } catch {
+          if (!button.isConnected) return;
+          const field = document.createElement('input');
+          field.readOnly = true;
+          field.value = url;
+          field.setAttribute('aria-label', 'Copy this link');
+          status.replaceChildren('Select and copy the link. ', field);
+          field.focus();
+          field.select();
+        }
       });
     } else if (button.hasAttribute('data-copy')) {
       const field = detail.querySelector('[data-invite]');
