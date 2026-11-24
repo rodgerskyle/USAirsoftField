@@ -8,6 +8,7 @@ import { PasswordForgetLink } from './passwordForgot';
 import ThemedCaptcha from './components/ThemedCaptcha';
 import { Container, Row, Col, Form, Button } from 'react-bootstrap/';
 
+import { deskAfterLogin } from './components/constants/checkInHandoff';
 import { walkOnAfterLogin } from './components/constants/groupRentalLink';
 import * as ROLES from './components/constants/roles';
 import { Helmet } from 'react-helmet-async';
@@ -96,8 +97,9 @@ class SignInFormBase extends Component {
           const roles = ROLES.officialAccountRoles(userObject.roles);
           const rental = ROLES.canUseRentalDesk(roles) &&
             walkOnAfterLogin(this.props.router.location.search, Boolean(roles.ADMIN));
-          if (rental) {
-            this.props.history.replace(rental);
+          const desk = deskAfterLogin(this.props.router.location.search, roles);
+          if (desk || rental) {
+            this.props.history.replace(desk || rental);
           } else if (userObject.roles && !!userObject.roles[ROLES.WAIVER]) {
             this.props.history.push("/dashboard");
           } else {

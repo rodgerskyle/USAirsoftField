@@ -95,3 +95,14 @@ test('an invalid walk-on id or external return target cannot change the sign-in 
   await signIn();
   await waitFor(() => expect(screen.getByLabelText('Current route').textContent).toBe('/'));
 });
+
+test.each([
+  ['renewal', {ADMIN:true}, '/admin/renewal/RegisteredMember1?from=companion&date=' + date],
+  ['renewal', {WAIVER:true}, '/admin/renewal/RegisteredMember1?from=companion&date=' + date],
+  ['check-in', {ADMIN:true}, '/admin/field/check-in?player=RegisteredMember1&date=' + date],
+  ['check-in', {}, '/'],
+])('a staff login restores the scanned player for %s only for an eligible role', async (resume, roles, expected) => {
+  renderRoute('/login?resume=' + resume + '&player=RegisteredMember1&date=' + date + '&from=companion&returnTo=https://example.test',roles);
+  await signIn();
+  await waitFor(() => expect(screen.getByLabelText('Current route').textContent).toBe(expected));
+});
