@@ -4,6 +4,7 @@ import { withRouter } from '../constants/withRouter';
 
 import { withFirebase } from '../Firebase';
 import { walkOnAfterLogin } from '../constants/groupRentalLink';
+import { deskLoginLink } from '../constants/checkInHandoff';
 import AuthUserContext from './context';
 
 
@@ -16,7 +17,8 @@ const withAuthorization = (condition, { verifyOnMount = false } = {}) => Compone
                 if (verifyOnMount) this.setState({ verifiedUid: null });
                 const { pathname, search } = this.props.router.location;
                 const handoff = signedOut && /^\/(admin|dashboard)\/rentalform\/?$/.test(pathname) && walkOnAfterLogin(search, true);
-                this.props.router.navigate(handoff ? '/login?' + handoff.split('?')[1] : '/login');
+                const desk = signedOut && deskLoginLink(pathname, search);
+                this.props.router.navigate(desk || (handoff ? '/login?' + handoff.split('?')[1] : '/login'));
             };
             this.listener = this.props.firebase.onAuthUserListener((authUser) => {
                 if (!condition(authUser)) {
