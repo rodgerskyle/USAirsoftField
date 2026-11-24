@@ -6,6 +6,7 @@ import { fieldStaffPaths, requestStaffFieldTool } from '../constants/fieldStaffA
 import { isGroupCode } from '../constants/groupCode';
 import { normalizePartyBooking, partyBookingKey } from '../constants/partyBookingKey';
 import './PartyBookingCheckInLink.css';
+import { PartyReadinessSummary, CopyPartyLink, partyChecklistLink } from './PartyReadiness';
 
 const endpoint = '/api/party-check-in';
 
@@ -90,6 +91,14 @@ function CodeControls({ firebase, uid, date, partyKey, isAdmin }) {
       <div className="party-code-row"><label>Group code<input ref={codeInput} className="form-control" readOnly value={group.code} onFocus={event => event.target.select()} /></label>
         <button type="button" className="btn btn-primary" onClick={copyCode}>Copy code</button></div>
       <small>Find this group in Player Check-In by name or code.</small>
+      {group.date === date && !needsReview && !error && !busy && <>
+        <PartyReadinessSummary readiness={group.readiness} />
+        {partyChecklistLink('organizer', group.organizerToken) && <>
+          <CopyPartyLink url={partyChecklistLink('organizer', group.organizerToken)} label="Copy organizer link" />
+          <small>Share privately with the party organizer so they can prepare the guest list before arrival.</small>
+        </>}
+        {group.readiness && <button type="button" className="btn btn-outline-primary" onClick={() => request('load')}>Refresh party readiness</button>}
+      </>}
       {group.id && group.date === date && !needsReview && !error && !busy &&
         <a href={groupRentalLink(group.id, isAdmin)} target="_blank" rel="noopener noreferrer">Open rental form</a>}
       {isAdmin && group.id && <a href={`/admin/field/groups?group=${encodeURIComponent(group.id)}`} target="_blank" rel="noopener noreferrer">Manage this group <span className="visually-hidden">(opens in a new tab)</span></a>}
@@ -103,7 +112,7 @@ function CodeControls({ firebase, uid, date, partyKey, isAdmin }) {
         event.preventDefault(); request('create', event.currentTarget.elements.groupName.value.trim());
       }}><label>Public group name (optional)<input name="groupName" className="form-control" maxLength={80} placeholder="Scheduled party" /></label>
         <button type="submit" className="btn btn-outline-primary" disabled={busy}>Create group code</button></form>
-      <small>Create the group within five days of the party. Its code uses the public group name and booked party size.</small>
+      <small>Create the checklist before the party and share it with the organizer. The group code uses the public name and booked party size.</small>
     </>}
     {busy && <p role="status">{group === undefined ? 'Looking up the party’s group…' : 'Updating the party’s group…'}</p>}
     {message && <p role="status">{message}</p>}

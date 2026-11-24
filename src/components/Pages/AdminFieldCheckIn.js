@@ -7,7 +7,8 @@ import WaiverStatus from './WaiverStatus';
 import StaffWaiverPicker from './StaffWaiverPicker';
 import StaffGroupLookup from './StaffGroupLookup';
 import FieldSectionLinks from './FieldSectionLinks';
-import { walkOnRentalLink } from '../constants/groupRentalLink';
+import { checkInRentalLink } from '../constants/groupRentalLink';
+import { checkInSelection, renewalFromCheckIn } from '../constants/checkInHandoff';
 import './AdminFieldCheckIn.css';
 
 const path = '/api/game-day-check-in';
@@ -175,8 +176,8 @@ function PlayerRows({ players, onSelect, checkedIn, disabled }) {
 }
 
 function savedRentalLink(player, date) {
-  return player?.membershipStatus === 'guest' && sides[player.side] && player.waiverStatus === 'signed'
-    ? walkOnRentalLink(player.playerId, date) : null;
+  return player && sides[player.side] && player.waiverStatus === 'signed'
+    ? checkInRentalLink(player.playerId, date) : null;
 }
 
 function SelectedPlayer({ player, date, suggestion, working, rentalRequested, onRentalChange, onAssessment, onAssign, request, onWaiver, onRetry, onRename, onNext }) {
@@ -186,6 +187,7 @@ function SelectedPlayer({ player, date, suggestion, working, rentalRequested, on
   const oppositeSide = side === 'camo' ? 'solid' : 'camo';
   const choices = side ? [oppositeSide] : Object.keys(sides);
   const rentalLink = savedRentalLink(player, date);
+  const renewLink = membershipStatus === 'expired' && renewalFromCheckIn(player.playerId, date);
   const membership = memberships[membershipStatus] || memberships.unconfirmed;
   const ratingChanged = experienceBand !== (assignedExperienceBand || 'unrated');
   return (
@@ -224,14 +226,15 @@ function SelectedPlayer({ player, date, suggestion, working, rentalRequested, on
         {suggestion ? `${suggestion.side === side ? 'Current side fits' : 'Suggested side'} · ${sides[suggestion.side]} · ${reasons[suggestion.reason]}` : 'Either side fits the current balance.'}
       </p>
       {membershipStatus !== 'active' && <p className="admin-checkin__hint">Confirm admission at the desk. Check-in records attendance and team assignment only.</p>}
-      {membershipStatus === 'guest' && !side && <label className="admin-checkin__rental-option">
+      {renewLink && !working && <p><a className="btn btn-outline-primary" href={renewLink}>Renew this membership</a></p>}
+      {!side && <label className="admin-checkin__rental-option">
         <input type="checkbox" checked={rentalRequested} disabled={working} onChange={event => onRentalChange(event.target.checked)} />
         Open rental form after check-in
       </label>}
       <div className="admin-checkin__buttons">
         {choices.map(choice => (
           <button className={`btn btn-${side ? 'outline-primary' : 'primary'}`} type="button" key={choice} disabled={working || (!side && player.waiverStatus !== 'signed')} onClick={() => onAssign(choice)}>
-            {side ? 'Move to ' : 'Check in as '}{sides[choice]}{!side && rentalRequested && membershipStatus === 'guest' ? ' & open rental' : ''}
+            {side ? 'Move to ' : 'Check in as '}{sides[choice]}{!side && rentalRequested ? ' & open rental' : ''}
           </button>
         ))}
         {rentalLink && !working && <a className="btn btn-outline-primary" href={rentalLink}>Open rental form</a>}
@@ -259,6 +262,7 @@ export default function AdminFieldCheckIn({ request }) {
   const [error, setError] = useState('');
   const [clearConfirmation, setClearConfirmation] = useState(null);
   const lifecycle = useRef(null);
+  const pendingReturn = useRef(checkInSelection(window.location.search));
   const operation = useRef(null);
   const refreshCall = useRef(null);
   const generation = useRef(0);
@@ -342,7 +346,43 @@ export default function AdminFieldCheckIn({ request }) {
     }
   }
 
+  // A handoff only selects a record. The live roster supplies the date and staff authorization.
+  useEffect(() => {
+    const target = pendingReturn.current;
+    if (!target || !board?.date) return;
+    pendingReturn.current = null;
+    if (target.date !== board.date) {
+      setError('This check-in link is for a different field day. Scan or search for the player for today.');
+      return;
+    }
+    void run(signal => loadLookup(signal, { playerId: target.playerId }, false, target.date, target.playerId));
+    // Consume the incoming player once after the authoritative field day loads.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [board?.date]);
+
+  useEffect(() => {
+    if (!selected || (selected.player.membershipStatus === 'guest' && !selected.player.side)) return;
+    const { date, player: { playerId } } = selected;
+    const restore = event => {
+      if (event.persisted) void run(signal => loadLookup(signal, { playerId }, false, date, playerId));
+    };
+    window.addEventListener('pageshow', restore);
+    return () => window.removeEventListener('pageshow', restore);
+    // The read uses this selected player and the current staff request exclusively.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, request]);
+
+  function clearReturnSelection() {
+    pendingReturn.current = null;
+    const url = new URL(window.location.href);
+    if (!checkInSelection(url.search)) return;
+    url.searchParams.delete('player');
+    url.searchParams.delete('date');
+    window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+  }
+
   function resetLookup() {
+    clearReturnSelection();
     setRentalRequested(false);
     setSelected(null);
     setMatches([]);
@@ -351,7 +391,7 @@ export default function AdminFieldCheckIn({ request }) {
     setError('');
   }
 
-  async function loadLookup(signal, input, guest, expectedGroupDate) {
+  async function loadLookup(signal, input, guest, expectedGroupDate, expectedPlayerId) {
     setWalkOnWaiverQuery(null);
     setSelected(null);
     setMatches([]);
@@ -362,6 +402,9 @@ export default function AdminFieldCheckIn({ request }) {
         body: guest ? { action: 'guestPreview', ...input } : { action: 'lookup', includeBalance: true, ...input },
       });
       if (signal.aborted) return;
+      if (expectedPlayerId && (data.date !== expectedGroupDate || data.player?.playerId !== expectedPlayerId)) {
+        throw new Error('This player could not be confirmed for this field day. Scan or search for the player again.');
+      }
       if (expectedGroupDate && data.date !== expectedGroupDate) throw new Error('The field day changed. Find the group again before checking in.');
       if (data.counts && data.balance) setBoard(current => putResult(current, data));
       if (data.player) {
@@ -387,6 +430,7 @@ export default function AdminFieldCheckIn({ request }) {
 
   function lookup(input, guest = false, expectedGroupDate, withRental = false) {
     if (clearConfirmation || operation.current) return;
+    if (!input.playerId || input.playerId !== checkInSelection(window.location.search)?.playerId) clearReturnSelection();
     setRentalRequested(withRental);
     void run(signal => loadLookup(signal, input, guest, expectedGroupDate));
   }
@@ -420,7 +464,7 @@ export default function AdminFieldCheckIn({ request }) {
     lookup({
       ...(isNewGuest ? { displayName: player.displayName } : { playerId: player.playerId }),
       ...(!player.side && proof ? { waiverRef: proof } : {}),
-    }, isNewGuest, undefined, isNewGuest && rentalRequested);
+    }, isNewGuest, undefined, rentalRequested);
   }
 
   function applyAssignment(data, player) {
@@ -491,13 +535,13 @@ export default function AdminFieldCheckIn({ request }) {
         applyAssignment(data, player);
         setCheckInRevision(value => value + 1);
         setStatus(assignmentMessage(data));
-        if (newGuest && rentalRequested) {
+        if (!player.side && rentalRequested) {
           const destination = savedRentalLink(data.player, data.date);
           if (destination) {
             window.location.assign(destination);
             return;
           }
-          setStatus(assignmentMessage(data) + ' Reopen the saved walk-on to verify their waiver and start the rental.');
+          setStatus(assignmentMessage(data) + ' Reopen this player to verify their waiver and start the rental.');
         }
         const input = newGuest ? guestInput.current : memberInput.current;
         if (input) {

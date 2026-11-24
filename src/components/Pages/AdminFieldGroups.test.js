@@ -226,3 +226,18 @@ test('staff can find a registered profile and add its account to an existing gro
     expect(request.mock.calls[4][1].body).toEqual({ action: 'removeMember', id, version: added.version, entryId: 'new-entry' });
   } finally { global.fetch = previous; }
 });
+
+test('staff see expected guests, rental needs, waiver gaps and a private organizer link before arrival', async () => {
+  const group = { ...initial, organizerToken: 'a'.repeat(64),
+    readiness:{ready:1,expected:4,unlisted:2,rentalsRequested:1},
+    entries:[{...initial.entries[0],waiverStatus:'signed',preparation:{ready:true,rentalIntent:'requested'}},
+      {id:'second',kind:'guest',displayName:'Second Guest',waiverStatus:'missing',preparation:{ready:false,rentalIntent:'unknown'}}] };
+  open(jest.fn().mockResolvedValueOnce({group}).mockResolvedValueOnce(list(group)));
+  const summary = await screen.findByRole('region',{name:'Party readiness'});
+  expect(summary).toHaveTextContent('1 of 4 ready');
+  expect(summary).toHaveTextContent('2 expected guests');
+  expect(within(summary).getByRole('link',{name:'Open organizer readiness link'})).toHaveAttribute('href',
+    'https://app.usairsoftfield.com/#group-check-in/organizer/'+'a'.repeat(64));
+  expect(screen.getByText('Second Guest').closest('li')).toHaveTextContent('Rental choice needed');
+  expect(screen.getByText('Organizer').closest('li')).toHaveTextContent('Rental gear requested');
+});

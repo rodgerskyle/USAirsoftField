@@ -7,6 +7,7 @@ import { AuthUserContext, withAuthorization } from '../session';
 import { withRouter } from '../constants/withRouter';
 
 
+import { renewalCheckInReturn } from '../constants/checkInHandoff';
 import SignedWaiver from './SignedWaiver';
 import MembershipWaiverCheck, { membershipWaiverRequest } from './MembershipWaiverCheck';
 import { memberWaiverDocument, memberWaiverMetadata } from '../utils/memberWaiverDocument';
@@ -231,6 +232,7 @@ class RenewSubscription extends Component {
             directoryUnavailable,
             submitted,
         } = this.state
+        const returnToCheckIn = renewalCheckInReturn(uid, this.props.router.location.search);
         const selectedUser = uid ? users.find((user) => user.uid === uid) : null;
         let directoryStatus = null;
         if (loading) {
@@ -264,6 +266,7 @@ class RenewSubscription extends Component {
                             <Container className="admin-content">
                                 <div className="admin-page-header">
                                 <h2 className="admin-header">Renew Member</h2>
+                                {returnToCheckIn && !submitted && <a className="btn btn-outline-secondary" href={returnToCheckIn}>Back to player check-in</a>}
                                 {selectedUser && <p className="admin-page-subtitle admin-renew-member-name">{selectedUser.name}</p>}
                                 {authUser?.roles?.[ROLES.ADMIN] ?
                                     <Breadcrumb className="admin-breadcrumb admin-page-breadcrumb">
@@ -631,13 +634,13 @@ class RenewSubscription extends Component {
                                             <h2 className="page-header">Successful Member Renewal.</h2>
                                         </Row>
                                         <Row className="row-notice">
-                                            <p className="notice-text-g">Please let your U.S. Airsoft employee know that you have finished.</p>
+                                            <p className="notice-text-g">{returnToCheckIn ? 'Return to check-in to see the updated membership and waiver.' : 'Please let your U.S. Airsoft employee know that you have finished.'}</p>
                                         </Row>
                                         <Row className="justify-content-row">
-                                            <Button className="next-button-rp" variant="info" type="button"
+                                            {returnToCheckIn ? <a className="btn btn-primary" href={returnToCheckIn}>Return to player check-in</a> : <Button className="next-button-rp" variant="info" type="button"
                                                 onClick={() => {
                                                     this.setState({ ...INITIAL_STATE })
-                                                }}>Return</Button>
+                                                }}>Return</Button>}
                                         </Row>
                                         <Row className="row-notice">
                                             <img src={logo} alt="US Airsoft logo" className="small-logo-home" />

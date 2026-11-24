@@ -9,8 +9,9 @@ import { Helmet } from 'react-helmet-async';
 import { Breadcrumb } from 'react-bootstrap';
 import { LinkContainer } from 'react-router-bootstrap';
 import { AuthUserContext } from '../session';
-import WalkOnRentalStart from './Rentals/WalkOnRentalStart';
-import { validWalkOnRental } from '../constants/groupRentalLink';
+import useCheckedInRenter from './Rentals/WalkOnRentalStart';
+import { rentalCheckInParams, returnToPlayerCheckIn } from '../constants/groupRentalLink';
+import { linkedPlayerRental } from './Rentals/utils/checkInRenter';
 import CreateRentalForm from './Rentals/CreateRentalForm';
 import EditForm from './Rentals/EditForm';
 import { onValue } from 'firebase/database';
@@ -60,20 +61,18 @@ function RentalsManagement(props) {
     const rentalDesk = Boolean(authUser?.uid && ROLES.canUseRentalDesk(roles));
     const canImportGroup = rentalDesk && !isNavHidden;
     const requestedGroup = searchParams.get('group');
-    const walkOnId = searchParams.get('walkOn');
-    const date = searchParams.get('date');
-    const isWalkOn = rentalDesk && validWalkOnRental(walkOnId, date) && !requestedGroup;
-    const fromCompanion = searchParams.get('from') === 'companion';
-    const groupId = canImportGroup && !walkOnId && GROUP_ID.test(requestedGroup) ? requestedGroup : null;
-    const checkInPath = fromCompanion || !roles.ADMIN ? 'https://app.usairsoftfield.com/#staff-check-in' : '/admin/field/check-in';
-    const linkedForm = rentalForms.find(form => !form.returned && (
-        (groupId && form.checkInGroup?.id === groupId) ||
-        (isWalkOn && form.walkOnCheckIn?.playerId === walkOnId && form.walkOnCheckIn.date === date)));
-    const RentalStart = isWalkOn ? WalkOnRentalStart : CreateRentalForm;
-    const draftKey = [authUser?.uid, isWalkOn ? walkOnId + date : groupId || 'manual'].join('/');
+    const requestedPlayer = searchParams.has('walkOn') || searchParams.has('member');
+    const handoff = rentalDesk && requestedPlayer ? rentalCheckInParams(searchParams) : null;
+    const renter = useCheckedInRenter(props.firebase, authUser?.uid, handoff);
+    const groupId = canImportGroup && !requestedPlayer && GROUP_ID.test(requestedGroup) ? requestedGroup : null;
+    const returnPath = handoff && returnToPlayerCheckIn(handoff, searchParams.get('from') === 'companion' || !roles.ADMIN);
+    const linkedForm = handoff ? linkedPlayerRental(rentalForms, renter.player) :
+        rentalForms.find(form => !form.returned && groupId && form.checkInGroup?.id === groupId);
+    const draftKey = [authUser?.uid, handoff ? handoff.playerId + handoff.date : groupId || 'manual'].join('/');
+    const waitingForPlayer = requestedPlayer && (!handoff || !renter.player);
 
     useEffect(() => {
-        if (loading || !authUser?.uid || handledLocation.current === location.key) return;
+        if (loading || waitingForPlayer || !authUser?.uid || handledLocation.current === location.key) return;
         handledLocation.current = location.key;
         if (activeView === 'new' && linkedForm) {
             const next = new URLSearchParams(searchParams);
@@ -85,10 +84,10 @@ function RentalsManagement(props) {
             params.set('view', 'new');
             setSearchParams(params, { replace: true });
         }
-    }, [loading, authUser?.uid, location.key, activeView, linkedForm, groupId, searchParams, setSearchParams]);
+    }, [loading, waitingForPlayer, authUser?.uid, location.key, activeView, linkedForm, searchParams, setSearchParams]);
 
     const openExisting = (key, id) => {
-        if (key != null && isWalkOn && id === walkOnId) {
+        if (key != null && handoff && (id === handoff.playerId || id === renter.player?.groupId)) {
             const next = new URLSearchParams(searchParams);
             next.set('view', 'edit');
             next.set('form', String(key));
@@ -163,7 +162,12 @@ function RentalsManagement(props) {
     };
 
     const setView = (view) => {
-        setSearchParams({ view });
+        if (!handoff) return setSearchParams({ view });
+        const next = new URLSearchParams(searchParams);
+        next.set('view', view);
+        if (view === 'edit' && linkedForm) next.set('form', String(linkedForm.key));
+        else next.delete('form');
+        setSearchParams(next);
     };
 
     const activeFormsCount = rentalForms.filter(form => !!form.complete).length;
@@ -290,13 +294,20 @@ function RentalsManagement(props) {
                                         </Row>
                                     ) : null}
 
-                                    {isWalkOn && !isNavHidden && <p><a className="btn btn-outline-primary" href={checkInPath}>Back to player check-in</a></p>}
-                                    {!loading && canImportGroup && walkOnId && !isWalkOn && activeView === 'new' &&
-                                        <p role="alert">This walk-on rental link is incomplete. Reopen the player in check-in.</p>}
-                                    {!loading && activeView === 'new' && !(canImportGroup && walkOnId && !isWalkOn) ? (
-                                        <RentalStart
+                                    {handoff && !isNavHidden && <section className="rental-checkin-return">
+                                        {renter.player && <strong>{renter.player.displayName}</strong>}
+                                        <a className="btn btn-outline-primary" href={returnPath}>Back to player check-in</a>
+                                    </section>}
+                                    {!loading && requestedPlayer && !handoff && <p role="alert">This {searchParams.has('walkOn') ? 'walk-on' : 'member'} rental link is incomplete. Reopen the player in check-in.</p>}
+                                    {handoff && !renter.player && (renter.error ? <section className="admin-panel-card p-3">
+                                        <p role="alert">{renter.error}</p>
+                                        <button className="btn btn-outline-primary" onClick={renter.retry}>Retry {handoff.key === 'walkOn' ? 'walk-on' : 'member'} lookup</button>
+                                    </section> : <p role="status">Loading the checked-in player…</p>)}
+                                    {!loading && !waitingForPlayer && activeView === 'new' ? (
+                                        <CreateRentalForm
                                             key={draftKey}
-                                            {...(isWalkOn && { playerId: walkOnId, date })}
+                                            checkedInPlayer={renter.player}
+                                            verifyCheckedInPlayer={renter.verify}
                                             {...props}
                                             uid={authUser?.uid}
                                             canImportGroup={canImportGroup}
@@ -307,12 +318,15 @@ function RentalsManagement(props) {
                                         />
                                     ) : null}
 
-                                    {!loading && activeView === 'edit' ? (
+                                    {!loading && !waitingForPlayer && activeView === 'edit' && (!handoff || (linkedForm && String(linkedForm.key) === searchParams.get('form'))) ? (
                                         <EditForm
                                             key={draftKey}
                                             {...props}
                                             uid={authUser?.uid}
                                             canImportGroup={canImportGroup}
+                                            checkedInPlayer={renter.player}
+                                            verifyCheckedInPlayer={renter.verify}
+                                            returnToCheckIn={!isNavHidden && returnPath}
                                             initialLinkedGroupId={groupId}
                                             initialFormKey={linkedForm && String(linkedForm.key) === searchParams.get('form') ? linkedForm.key : null}
                                             rentalForms={rentalForms}
@@ -320,7 +334,15 @@ function RentalsManagement(props) {
                                         />
                                     ) : null}
 
-                                    {!loading && activeView === 'return' ? (
+                                    {!loading && handoff && renter.player && activeView === 'edit' && (!linkedForm || String(linkedForm.key) !== searchParams.get('form')) && <section role="status">
+                                        <p>This player’s selected rental is no longer open.</p>
+                                        <button className="btn btn-outline-primary" onClick={() => {
+                                            if (linkedForm) openExisting(linkedForm.key, handoff.playerId);
+                                            else setView('new');
+                                        }}>{linkedForm ? 'Open current rental' : 'Start a rental for this player'}</button>
+                                    </section>}
+
+                                    {!loading && !waitingForPlayer && activeView === 'return' ? (
                                         <ReturnForm
                                             {...props}
                                             rentalForms={rentalForms}
@@ -328,7 +350,7 @@ function RentalsManagement(props) {
                                         />
                                     ) : null}
 
-                                    {!loading && activeView === 'inventory' ? (
+                                    {!loading && !waitingForPlayer && activeView === 'inventory' ? (
                                         <RentalOptions
                                             {...props}
                                             rentalOptions={rentalOptions}

@@ -1,5 +1,6 @@
 import { waiverAge } from '../utils/waiverAge';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import PartyGuestWaiver, { partyWaiverRoute } from './PartyGuestWaiver';
 import waiver from './waiver.pdf';
 import '../../App.css';
 import { Helmet } from 'react-helmet-async';
@@ -31,8 +32,13 @@ const FormField = React.memo(({ label, name, value, onChange, type = "text", pla
     </Form.Group>
 ));
 
-const Waiver = (props) => {
+const WaiverForm = (props) => {
     const { firebase } = props;
+    const active = useRef(true);
+    useEffect(() => {
+        active.current = true;
+        return () => { active.current = false; };
+    }, []);
 
     const [hideWaiver, setHideWaiver] = useState(false);
     const [formState, setFormState] = useState({
@@ -170,6 +176,7 @@ const Waiver = (props) => {
 
         try {
             const token = await executeRecaptcha('submit_waiver');
+            if (!active.current) return;
 
             const waiverData = {
                 name: `${formState.values.fname} ${formState.values.lname}`,
@@ -193,8 +200,13 @@ const Waiver = (props) => {
                 }
             };
 
+            if (props.signPartyWaiver) {
+                await props.signPartyWaiver(waiverData);
+                return;
+            }
             const submitWaiver = firebase.submitWaiver();
             const result = await submitWaiver(waiverData);
+            if (!active.current) return;
 
             if (result.data.success) {
                 if (props.onSigned) props.onSigned(waiverData.name.trim());
@@ -203,10 +215,11 @@ const Waiver = (props) => {
                 throw new Error('Waiver submission failed');
             }
         } catch (error) {
+            if (!active.current) return;
             console.error('Error submitting waiver:', error);
             setErrorWaiver(error.message || 'Failed to submit waiver. Please try again.');
         } finally {
-            setLoading(false);
+            if (active.current) setLoading(false);
         }
     };
 
@@ -650,5 +663,19 @@ const Waiver = (props) => {
         </div>
     );
 };
+
+function Waiver(props) {
+    const [hash, setHash] = useState(() => window.location.hash);
+    useEffect(() => {
+        const onChange = () => setHash(window.location.hash);
+        window.addEventListener('hashchange', onChange);
+        return () => window.removeEventListener('hashchange', onChange);
+    }, []);
+    const party = !props.onSigned && partyWaiverRoute(hash);
+    if (party) return <PartyGuestWaiver token={party.token} key={party.token}>
+        {signPartyWaiver => <WaiverForm {...props} signPartyWaiver={signPartyWaiver} />}
+    </PartyGuestWaiver>;
+    return <WaiverForm {...props} />;
+}
 
 export default withFirebase(Waiver);

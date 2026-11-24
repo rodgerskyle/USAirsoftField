@@ -447,3 +447,75 @@ test('the rental handoff is available only on a signed and assigned walk-on', as
   expect(await screen.findByRole('link', { name: 'Open rental form' })).toHaveAttribute('href',
     '/admin/rentalform?view=new&walkOn=' + encodeURIComponent(saved.playerId) + '&date=' + date);
 });
+
+test('a returned player is rechecked once by ID and field day without another check-in', async () => {
+  const player = { ...checkedInPlayer, membershipStatus: 'expired', waiverStatus: 'signed' };
+  window.history.replaceState(null, '', '/admin/field/check-in?player=' + player.playerId + '&date=' + date);
+  try {
+    const request = jest.fn().mockResolvedValueOnce(versionedRoster).mockResolvedValueOnce({ ...versionedRoster, player });
+    render(<AdminFieldCheckIn request={request} />);
+    const region = await screen.findByRole('region', { name: player.displayName });
+    expect(within(region).getByRole('link', { name: 'Renew this membership' })).toHaveAttribute('href',
+      '/admin/renewal/' + player.playerId + '?from=check-in&date=' + date);
+    expect(within(region).getByRole('link', { name: 'Open rental form' })).toHaveAttribute('href',
+      '/admin/rentalform?view=new&member=' + player.playerId + '&date=' + date);
+    expect(request.mock.calls.map(([,opts])=>opts.body?.action)).toEqual([undefined,'lookup']);
+    expect(request.mock.calls[1][1].body.playerId).toBe(player.playerId);
+    fireEvent.click(within(region).getByRole('button', { name:'Check in next player' }));
+    expect(window.location.search).toBe('');
+  } finally { window.history.replaceState(null, '', '/'); }
+});
+
+test.each(['wrong day','wrong player'])('rejects a returned player for the %s', async reason => {
+  const id = checkedInPlayer.playerId;
+  window.history.replaceState(null, '', '/admin/field/check-in?player=' + id + '&date=' + date);
+  try {
+    const request = jest.fn().mockResolvedValueOnce({ ...versionedRoster, date: reason === 'wrong day' ? '2026-11-17' : date })
+      .mockResolvedValueOnce({ ...versionedRoster, player: { ...checkedInPlayer, playerId: 'DifferentMember10' } });
+    render(<AdminFieldCheckIn request={request} />);
+    expect(await screen.findByRole('alert')).toHaveTextContent(/different field day|could not be confirmed/);
+    expect(request).toHaveBeenCalledTimes(reason === 'wrong day' ? 1 : 2);
+    expect(screen.queryByRole('button', { name:'Check in next player' })).toBeNull();
+  } finally { window.history.replaceState(null, '', '/'); }
+});
+
+test('a scanned member carries directly into rentals after a confirmed assignment', async () => {
+  const saved = { ...checkedInPlayer, waiverStatus:'signed' };
+  const request = jest.fn().mockResolvedValueOnce(versionedRoster)
+    .mockResolvedValueOnce({ ...versionedRoster, player: { ...saved, side:null } })
+    .mockResolvedValueOnce({ ...versionedRoster, player:saved, outcome:'checked-in' });
+  const original = Object.getOwnPropertyDescriptor(window, 'location');
+  const assign = jest.fn();
+  Object.defineProperty(window, 'location', {configurable:true,value:{ ...window.location,assign }});
+  try {
+    render(<AdminFieldCheckIn request={request} />);
+    await screen.findByText('2 checked in');
+    act(() => StaffCardScanner.mock.calls.at(-1)[0].onScan({playerId:saved.playerId}));
+    const choice = await screen.findByLabelText('Open rental form after check-in');
+    fireEvent.click(choice);
+    fireEvent.click(screen.getByRole('button',{name:'Check in as Camo & open rental'}));
+    await screen.findByText('Registered Member checked in as Camo.');
+    expect(assign).toHaveBeenCalledWith('/admin/rentalform?view=new&member=' + saved.playerId + '&date=' + date);
+    expect(request.mock.calls.map(([,opts])=>opts.body?.action)).toEqual([undefined,'lookup','checkIn']);
+  } finally { Object.defineProperty(window, 'location', original); }
+});
+
+test('browser Back from renewal rechecks the selected member before resuming', async () => {
+  const player = {...checkedInPlayer,side:null,membershipStatus:'expired',waiverStatus:'signed'};
+  const request = jest.fn().mockResolvedValueOnce(versionedRoster)
+    .mockResolvedValueOnce({...versionedRoster,player})
+    .mockResolvedValueOnce({...versionedRoster,player:{...player,membershipStatus:'active'}});
+  render(<AdminFieldCheckIn request={request} />);
+  await screen.findByText('2 checked in');
+  act(() => StaffCardScanner.mock.calls.at(-1)[0].onScan({playerId:player.playerId}));
+  await screen.findByRole('link',{name:'Renew this membership'});
+  const show = new Event('pageshow');
+  Object.defineProperty(show,'persisted',{value:true});
+  act(() => { window.dispatchEvent(show); });
+  await screen.findByText('Membership active', {selector:'span'});
+  expect(screen.queryByRole('link',{name:'Renew this membership'})).toBeNull();
+  expect(request.mock.calls.slice(1).map(([,opts])=>opts.body)).toEqual([
+    {action:'lookup',includeBalance:true,playerId:player.playerId},
+    {action:'lookup',includeBalance:true,playerId:player.playerId},
+  ]);
+});
