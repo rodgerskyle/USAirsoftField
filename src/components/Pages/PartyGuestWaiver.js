@@ -22,14 +22,16 @@ async function guestRequest(token, signal, waiverData) {
   const response = await fetch(endpoint, options);
   const data = await response.json().catch(() => null);
   if (!response.ok) {
-    const error = new Error(data?.error || 'The party waiver service could not confirm the request.');
+    const error = new Error(data?.error || 'The waiver service could not confirm the request.');
     error.status = response.status;
     throw error;
   }
-  if (data?.role !== 'guest' || data.group?.entries?.length !== 1 || !data.group.entries[0].preparation) {
+  const entry = data?.group?.entries?.[0];
+  if (data?.role !== 'guest' || data.group?.entries?.length !== 1 || !entry?.preparation ||
+      (entry.preparation.guestToken && entry.preparation.guestToken !== token)) {
     throw new Error('Open the personal checklist sent for this player.');
   }
-  return { groupName: data.group.name, entry: data.group.entries[0] };
+  return { groupName: data.group.name, kind: data.group.kind, entry };
 }
 
 export default function PartyGuestWaiver({ token, children }) {
@@ -86,15 +88,16 @@ export default function PartyGuestWaiver({ token, children }) {
   const signed = preparation?.waiverStatus === 'signed';
   const pending = ['pending', 'review', 'confirmed'].includes(preparation?.waiverSubmissionStatus);
   const canSign = view && !signed && !pending && !uncertain;
+  const label = view && view.kind !== 'visit' ? 'party' : 'group';
   return <>
-    <section className="party-waiver-intro" aria-label="Party waiver">
-      <h2>{view ? `Party waiver for ${view.entry.displayName}` : 'Your party waiver'}</h2>
+    <section className="party-waiver-intro" aria-label="Field waiver for your visit">
+      <h2>{view ? `Field waiver for ${view.entry.displayName}` : 'Your field waiver'}</h2>
       {view && <p>{view.groupName}</p>}
       {signed ? <p role="status">Waiver verified. Return to your checklist to check your rental choice.</p> :
         pending || uncertain ? <p role="status">Waiver verification is pending. Check the status before submitting another form. Staff can help at check-in.</p> :
         view ? <p>Use the player’s first and last name on the agreement. A parent or guardian must also sign for a minor.</p> : busy && <p role="status">Checking your personal link…</p>}
       {error && <p role="alert">{error}</p>}
-      <a className="btn btn-outline-primary me-2" href={returnUrl} rel="noreferrer">Return to my party checklist</a>
+      <a className="btn btn-outline-primary me-2" href={returnUrl} rel="noreferrer">Return to my {label} checklist</a>
       {!signed && !canSign && <button className="btn btn-outline-primary" type="button" disabled={busy} onClick={refresh}>Check waiver status</button>}
     </section>
     {canSign && children(sign)}

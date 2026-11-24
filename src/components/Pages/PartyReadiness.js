@@ -2,17 +2,12 @@ import React, { useState } from 'react';
 import WaiverStatus from './WaiverStatus';
 import './PartyReadiness.css';
 
-const companion = 'https://app.usairsoftfield.com';
-export const validPartyToken = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
-export function partyChecklistLink(role, token) {
-  if (!['guest', 'organizer'].includes(role) || !validPartyToken(token)) return null;
-  return `${companion}/#group-check-in/${role}/${token}`;
-}
+export { websiteInvitationLink as partyChecklistLink, validPartyToken } from '../constants/groupInvitationLinks';
 
-export function PartyReadinessSummary({ readiness }) {
+export function PartyReadinessSummary({ readiness, kind }) {
   if (!readiness) return null;
   const { ready, expected, unlisted, rentalsRequested } = readiness;
-  return <section className="party-readiness-summary" aria-label="Party readiness before arrival">
+  return <section className="party-readiness-summary" aria-label={kind === 'visit' ? 'Group readiness before arrival' : 'Party readiness before arrival'}>
     <h3>Ready before arrival</h3>
     <p><strong>{ready} of {expected} ready</strong></p>
     <p>Ready means the player has a verified waiver and has answered the rental question.</p>
@@ -30,7 +25,7 @@ export function PartyEntryReadiness({ preparation }) {
   </div>;
 }
 
-export function CopyPartyLink({ url, label, context = '' }) {
+export function CopyPartyLink({ url, label, context = '', privateLink = true }) {
   const [copied, setCopied] = useState(null);
   if (!url) return null;
   async function copy() {
@@ -42,6 +37,6 @@ export function CopyPartyLink({ url, label, context = '' }) {
     }
   }
   return <div className="party-copy-link"><button type="button" className="ph-button" onClick={copy}>{label}<span className="visually-hidden">{context && ` for ${context}`}</span></button>
-    {copied?.url === url && (copied.ok ? <span role="status">Link copied.</span> : <label>Copy this private link<input readOnly value={url} onFocus={event => event.target.select()} /></label>)}
+    {copied?.url === url && (copied.ok ? <span role="status">Link copied.</span> : <label>{privateLink ? 'Copy this private link' : 'Copy this invitation link'}<input readOnly value={url} onFocus={event => event.target.select()} /></label>)}
   </div>;
 }

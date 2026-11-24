@@ -93,6 +93,7 @@ function CodeControls({ firebase, uid, date, partyKey, isAdmin }) {
       <small>Find this group in Player Check-In by name or code.</small>
       {group.date === date && !needsReview && !error && !busy && <>
         <PartyReadinessSummary readiness={group.readiness} />
+        <CopyPartyLink url={partyChecklistLink('join', group.code)} label="Copy guest invitation" privateLink={false} />
         {partyChecklistLink('organizer', group.organizerToken) && <>
           <CopyPartyLink url={partyChecklistLink('organizer', group.organizerToken)} label="Copy organizer link" />
           <small>Share privately with the party organizer so they can prepare the guest list before arrival.</small>

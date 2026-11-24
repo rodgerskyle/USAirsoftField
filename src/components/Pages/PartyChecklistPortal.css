@@ -1,0 +1,29 @@
+.party-checklist {
+  max-width: 72rem;
+  margin: 2rem auto 4rem;
+  padding: 0 clamp(1rem, 3vw, 2rem);
+  color: var(--usaw-text, inherit);
+}
+.party-checklist header { margin-bottom: 1.25rem; }
+.party-checklist h1, .party-checklist h2, .party-checklist h3 { color: inherit; }
+.party-checklist h2, .party-checklist legend { font-size: 1.45rem; font-weight: 650; }
+.party-checklist h3 { font-size: 1.1rem; margin: 1.25rem 0 .5rem; }
+.party-checklist__layout { display: grid; gap: 1.25rem; grid-template-columns: minmax(14rem, 2fr) minmax(20rem, 3fr); align-items: start; }
+.party-checklist__card { min-width: 0; border: 1px solid var(--usaw-line, #8599b45e); border-radius: 1rem; padding: clamp(1rem, 2.5vw, 1.75rem); background: var(--usaw-surface, #fff); }
+.party-checklist__card > .party-readiness-summary { margin-top: 0; }
+.party-checklist form { margin: 1.35rem 0 .75rem; }
+.party-checklist fieldset { display: grid; gap: .65rem; border: 0; margin: 0; padding: 0; min-width: 0; }
+.party-checklist fieldset > button { justify-self: start; }
+.party-checklist label { display: grid; gap: .35rem; }
+.party-checklist .party-checklist__choice { display: flex; align-items: center; gap: .6rem; min-height: 44px; cursor: pointer; }
+.party-checklist input:not([type=radio]) { width: 100%; min-width: 0; padding: .6rem; color: inherit; background: transparent; border: 1px solid #8599b4; border-radius: .4rem; }
+.party-checklist input[type=number] { max-width: 8rem; }
+.party-checklist input[type=radio] { min-width: 1rem; min-height: 1rem; }
+.party-checklist ul { list-style: none; padding: 0; }
+.party-checklist li { padding: .5rem 0; border-bottom: 1px solid var(--usaw-line, #8599b45e); }
+.party-checklist li h3 { margin-top: .4rem; }
+.party-checklist .btn { min-height: 44px; display: inline-flex; align-items: center; }
+.party-checklist footer { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; margin-top: 1rem; }
+.party-checklist footer p { margin: 0; }
+.night-mode .party-checklist__card { background: #102037; color: #e5edf7; }
+@media (max-width: 700px) { .party-checklist__layout { grid-template-columns: minmax(0, 1fr); } }

@@ -33,3 +33,5 @@
 .admin-group-lookup .group-placement__player button { width: auto; }
 .group-placement button[data-team=camo] { border-inline-start: 4px solid #eaba30; }
 .group-placement button[data-team=solid] { border-inline-start: 4px solid #488fda; }
+
+.visit-groups__invite-layout { max-width: 48rem; }

@@ -237,7 +237,7 @@ test('staff see expected guests, rental needs, waiver gaps and a private organiz
   expect(summary).toHaveTextContent('1 of 4 ready');
   expect(summary).toHaveTextContent('2 expected guests');
   expect(within(summary).getByRole('link',{name:'Open organizer readiness link'})).toHaveAttribute('href',
-    'https://app.usairsoftfield.com/#group-check-in/organizer/'+'a'.repeat(64));
+    'https://www.usairsoftfield.com/group-check-in#organizer/'+'a'.repeat(64));
   expect(screen.getByText('Second Guest').closest('li')).toHaveTextContent('Rental choice needed');
   expect(screen.getByText('Organizer').closest('li')).toHaveTextContent('Rental gear requested');
 });

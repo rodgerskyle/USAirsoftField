@@ -13,11 +13,11 @@ const reply = data => ({ ok: true, json: async () => data });
 const group = { id: '00000000-0000-4000-8000-000000000001', name: 'Family game day', date: '2026-12-05', code: 'abcdefgh12345678', isOwner: true, capacity: 30,
   entries: [{ id: 'owner-entry', displayName: 'Owner', isYou: true, kind: 'player' }, { id: 'guest-entry', displayName: 'New Friend', kind: 'guest', canRemove: true }] };
 
-function setup(signedIn = true) {
+function setup(signedIn = true, path = '/group-check-in') {
   const user = signedIn ? { uid: 'PlayerAccountAAA', getIdToken: jest.fn().mockResolvedValue('test-owner-token') } : null;
   let authChange;
   const firebase = { auth: { currentUser: user, onAuthStateChanged: handler => { authChange = handler; handler(user); return () => {}; } } };
-  const view = render(<HelmetProvider><MemoryRouter><GroupCheckIn firebase={firebase} /></MemoryRouter></HelmetProvider>);
+  const view = render(<HelmetProvider><MemoryRouter initialEntries={[path]}><GroupCheckIn firebase={firebase} /></MemoryRouter></HelmetProvider>);
   return { ...view, firebase, authChange: value => { firebase.auth.currentUser = value; authChange(value); } };
 }
 
@@ -454,6 +454,70 @@ test('organizer checks expected headcount, missing waiver and equipment choices,
   expect(within(guest).getByText('Rental choice needed')).toBeVisible();
   expect(within(guest).getByText(/Waiver needed/)).toBeVisible();
   fireEvent.click(within(guest).getByRole('button', {name:'Copy guest checklist for New Friend'}));
-  expect(await within(guest).findByLabelText('Copy this private link')).toHaveValue('https://app.usairsoftfield.com/#group-check-in/guest/' + guestToken);
-  expect(screen.getByRole('link',{name:'Open organizer checklist'})).toHaveAttribute('href','https://app.usairsoftfield.com/#group-check-in/organizer/' + organizerToken);
+  expect(await within(guest).findByLabelText('Copy this private link')).toHaveValue('https://www.usairsoftfield.com/group-check-in#guest/' + guestToken);
+  fireEvent.click(screen.getByRole('button', {name:'Copy guest invitation'}));
+  expect(await screen.findByLabelText('Copy this invitation link')).toHaveValue('https://www.usairsoftfield.com/group-check-in#join/' + group.code);
+  expect(screen.getByRole('link',{name:'Open organizer checklist'})).toHaveAttribute('href','https://www.usairsoftfield.com/group-check-in#organizer/' + organizerToken);
+});
+
+test('a website guest invitation prefills only its own group without joining or opening unrelated groups automatically', async () => {
+  const invited = { ...group, code: 'rebels-4', isOwner: false, entries: [{ ...group.entries[1], isYou: true }] };
+  global.fetch.mockResolvedValueOnce(reply({ preview: { id: group.id, name: group.name, date: group.date } }))
+    .mockResolvedValueOnce(reply({ group: invited }));
+  setup(false, '/group-check-in#join/rebels-4');
+  const code = await screen.findByLabelText('Organizer’s group code');
+  expect(code).toHaveValue('rebels-4');
+  expect(code).toHaveAttribute('readonly');
+  expect(screen.queryByRole('button', { name: 'Create group' })).toBeNull();
+  expect(fetch).toHaveBeenCalledTimes(1);
+  expect(fetch.mock.calls[0][0]).toBe('https://app.usairsoftfield.com/api/check-in-groups?code=rebels-4');
+  expect(fetch.mock.calls[0][1].method).toBe('GET');
+  fireEvent.change(screen.getByLabelText('Your name or callsign'), { target: { value: 'New Friend' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Join group' }));
+  expect(await screen.findByRole('heading', { name: invited.name })).toBeVisible();
+  expect(fetch).toHaveBeenCalledTimes(2);
+  expect(JSON.parse(fetch.mock.calls[1][1].body)).toMatchObject({ action: 'join', code: invited.code, displayName: 'New Friend' });
+  expect(screen.queryByRole('button', { name: 'Copy organizer link' })).toBeNull();
+});
+
+test('joining a birthday invitation opens the joining participant’s own website checklist', async () => {
+  const guestToken = 'b'.repeat(64);
+  const guest = { ...group.entries[1], isYou: true, preparation: { guestToken, waiverStatus: 'missing', rentalIntent: 'unknown' } };
+  global.fetch.mockResolvedValueOnce(reply({ preview: { id: group.id, date: group.date, name: group.name } }))
+    .mockResolvedValueOnce(reply({ group: { ...group, entries: [
+    { ...group.entries[0], isYou: false, preparation: { guestToken: 'a'.repeat(64) } }, guest] } }))
+    .mockResolvedValueOnce(reply({ role: 'guest', group: { ...group, entries: [guest] } }));
+  setup(true, '/group-check-in#join/' + group.code);
+  fireEvent.click(await screen.findByRole('button', { name: 'Join group' }));
+  expect(await screen.findByRole('heading', { name: 'Your party checklist' })).toBeVisible();
+  expect(await screen.findByRole('link', { name: 'Complete my waiver' })).toHaveAttribute('href', '/waiver#party/' + guestToken);
+  expect(fetch.mock.calls[2][1].headers.Authorization).toBe('Party ' + guestToken);
+  expect(fetch.mock.calls[2][0]).not.toContain(guestToken);
+});
+
+test('declines a different returned group before displaying names or following a personal link', async () => {
+  global.fetch.mockResolvedValueOnce(reply({ preview: { id: group.id, name: 'Invited group' } }))
+    .mockResolvedValueOnce(reply({ group: { ...group, code: 'wrong-4' } }));
+  setup(true, '/group-check-in#join/our-team-5');
+  fireEvent.click(await screen.findByRole('button', { name: 'Join group' }));
+  expect(await screen.findByText(/could not confirm this invitation/)).toBeVisible();
+  expect(screen.queryByRole('heading', { name: group.name })).toBeNull();
+  expect(fetch).toHaveBeenCalledTimes(2);
+});
+
+test.each(['#guest/broken','#organizer/' + 'a'.repeat(64) + '/extra','#join/../../admin','#unknown/abc'])('an invalid website invitation %s opens no private data', hash => {
+  setup(true, '/group-check-in' + hash);
+  expect(screen.getByRole('heading', { name: 'Invitation unavailable' })).toBeVisible();
+  expect(fetch).not.toHaveBeenCalled();
+});
+
+test('a recognized ordinary-group organizer opens the existing roster without a second join', async () => {
+  const organizerToken = 'a'.repeat(64);
+  global.fetch.mockResolvedValueOnce(reply({ group: { ...group, kind: 'visit', organizerToken } }));
+  setup(true, '/group-check-in#join/' + group.code);
+  expect(await screen.findByRole('heading', { name: group.name })).toBeVisible();
+  expect(screen.queryByRole('button', { name: 'Join group' })).toBeNull();
+  expect(screen.getByRole('link', { name: 'Open organizer checklist' })).toHaveAttribute('href',
+    'https://www.usairsoftfield.com/group-check-in#organizer/' + organizerToken);
+  expect(fetch).toHaveBeenCalledTimes(1);
 });
