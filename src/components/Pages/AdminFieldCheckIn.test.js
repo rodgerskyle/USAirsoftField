@@ -4,6 +4,7 @@ import AdminFieldCheckIn from './AdminFieldCheckIn';
 import { StaffCardScanner } from './StaffCardScanner';
 
 jest.mock('./StaffCardScanner', () => ({ StaffCardScanner: jest.fn() }), { virtual: true });
+jest.mock('./MemberWaiverSync', () => () => null, { virtual: true });
 
 beforeEach(() => { StaffCardScanner.mockReturnValue(null); });
 
@@ -79,7 +80,7 @@ test('uses a walk-on team balance estimate while their classification stays Unra
   expect(request.mock.calls[2][1].body).toEqual({
     action: 'guestCheckIn', date, side: 'solid', displayName: 'Field Guest', experienceBand: 'veteran', rosterVersion: 'initial',
   });
-  expect(within(screen.getByRole('list', { name: 'Recent players' })).getByText('Walk-on · Unrated')).toBeTruthy();
+  expect(within(screen.getByRole('list', { name: 'Checked-in players' })).getByText('Walk-on · Unrated')).toBeTruthy();
   expect(screen.getByRole('progressbar', { name: 'Solid estimated strength share' })).toHaveValue(60);
 
   fireEvent.click(screen.getByRole('button', { name: 'Move to Camo' }));
@@ -97,7 +98,7 @@ test('recent check-ins and search matches show their individual waiver status', 
   const request = jest.fn().mockResolvedValueOnce(versionedRoster)
     .mockResolvedValueOnce({ date, matches });
   render(<AdminFieldCheckIn request={request} />);
-  const roster = await screen.findByRole('list', { name: 'Recent players' });
+  const roster = await screen.findByRole('list', { name: 'Checked-in players' });
   expect(within(roster).getByText('Verification pending')).toBeVisible();
   const search = screen.getByRole('search', { name: 'Member search' });
   fireEvent.change(within(search).getByRole('searchbox', { name: 'Member name, ID or card link' }), { target: { value: 'Sam' } });
@@ -269,7 +270,7 @@ test('loads the current board when a reset races a lookup', async () => {
   render(<AdminFieldCheckIn request={request} />);
   await screen.findByText(checkedInPlayer.displayName);
 
-  fireEvent.click(screen.getByRole('button', { name: new RegExp(checkedInPlayer.displayName) }));
+  fireEvent.click(screen.getByRole('button', { name: /^Registered Member/ }));
   expect(await screen.findByRole('alert')).toHaveTextContent('The roster was cleared. Look up the player again.');
   expect(screen.getByText('0 checked in')).toBeInTheDocument();
   expect(screen.queryByText(checkedInPlayer.displayName)).not.toBeInTheDocument();
@@ -367,7 +368,7 @@ test.each(['guest', 'active'])('links a checked-in %s in place, refreshing the s
     .mockResolvedValueOnce({ matches: [waiverMatch] })
     .mockResolvedValueOnce({ ...versionedRoster, player: { ...seated, revision: 3, waiverStatus: 'signed' } });
   render(<AdminFieldCheckIn request={request} />);
-  fireEvent.click(await screen.findByRole('button', { name: /Registered Member/ }));
+  fireEvent.click(await screen.findByRole('button', { name: /^Registered Member/ }));
   await screen.findByRole('heading', { name: seated.displayName });
   await chooseWaiver();
   expect(await screen.findByRole('alert')).toHaveTextContent('The attendance record changed.');
@@ -387,8 +388,8 @@ test('edits a checked-in walk-on in place and starts the next player without lea
     .mockResolvedValueOnce({ ...versionedRoster, player: saved })
     .mockResolvedValueOnce({ ...versionedRoster, players: [renamed], player: renamed });
   render(<AdminFieldCheckIn request={request} />);
-  const roster = await screen.findByRole('list', { name: 'Recent players' });
-  fireEvent.click(within(roster).getByRole('button', { name: /Field Guest/ }));
+  const roster = await screen.findByRole('list', { name: 'Checked-in players' });
+  fireEvent.click(within(roster).getByRole('button', { name: /^Field Guest/ }));
   fireEvent.click(await screen.findByText('Edit walk-on name'));
   fireEvent.change(screen.getByLabelText('Walk-on name or callsign'), { target: {value:'River Fox'} });
   fireEvent.click(screen.getByRole('button', { name:'Save walk-on name' }));
@@ -439,8 +440,8 @@ test('the rental handoff is available only on a signed and assigned walk-on', as
     .mockResolvedValueOnce({ ...versionedRoster, player: { ...saved, waiverStatus: 'missing' } })
     .mockResolvedValueOnce({ ...versionedRoster, player: saved });
   render(<AdminFieldCheckIn request={request} />);
-  const roster = await screen.findByRole('list', { name: 'Recent players' });
-  fireEvent.click(within(roster).getByRole('button', { name: /Field Guest/ }));
+  const roster = await screen.findByRole('list', { name: 'Checked-in players' });
+  fireEvent.click(within(roster).getByRole('button', { name: /^Field Guest/ }));
   await screen.findByRole('button', { name: 'Retry waiver check' });
   expect(screen.queryByRole('link', { name: 'Open rental form' })).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: 'Retry waiver check' }));
@@ -518,4 +519,100 @@ test('browser Back from renewal rechecks the selected member before resuming', a
     {action:'lookup',includeBalance:true,playerId:player.playerId},
     {action:'lookup',includeBalance:true,playerId:player.playerId},
   ]);
+});
+
+const rosterGuest = { ...guest, playerId: 'guest:' + 'a'.repeat(64), side: 'solid', revision: 3 };
+const mixedRoster = { ...versionedRoster, players: [checkedInPlayer, rosterGuest] };
+
+function rosterWithOnly(player, rosterVersion) {
+  return { ...clearedRoster, rosterVersion, players: [player], counts: { camo: 0, solid: 0, [player.side]: 1, total: 1 } };
+}
+
+test('edits a walk-on directly on the roster without issuing a member lookup or changing sides', async () => {
+  const updated = { ...rosterGuest, displayName: 'Blue Fox', revision: 4 };
+  const request = jest.fn().mockResolvedValueOnce(mixedRoster)
+    .mockResolvedValueOnce({ ...mixedRoster, players: [checkedInPlayer, updated], player: updated, outcome: 'renamed' });
+  render(<AdminFieldCheckIn request={request} />);
+  const roster = await screen.findByRole('list', { name: 'Checked-in players' });
+  expect(within(roster).queryByRole('button', { name: 'Edit name for Registered Member' })).toBeNull();
+  const edit = within(roster).getByRole('button', { name: 'Edit name for Field Guest' });
+  fireEvent.click(edit);
+  const input = within(roster).getByRole('textbox', { name: 'New walk-on name or callsign' });
+  expect(input).toHaveValue('Field Guest');
+  expect(input).toHaveFocus();
+  fireEvent.change(input, { target: { value: '   ' } });
+  fireEvent.submit(input.form);
+  expect(request).toHaveBeenCalledTimes(1);
+  fireEvent.change(input, { target: { value: ' Blue Fox ' } });
+  fireEvent.click(within(roster).getByRole('button', { name: 'Save name' }));
+  await screen.findByText('Walk-on name saved as Blue Fox.');
+  expect(request.mock.calls.map(([, options]) => options.body)).toEqual([undefined,
+    { action: 'renameWalkOn', date, playerId: rosterGuest.playerId, revision: 3, rosterVersion: 'initial', displayName: 'Blue Fox' }]);
+  expect(within(roster).getByRole('button', { name: /^Blue Fox/ })).toHaveTextContent('Solid');
+  expect(within(roster).getByRole('button', { name: 'Edit name for Blue Fox' })).toHaveFocus();
+  expect(screen.queryByRole('heading', { name: 'Blue Fox' })).toBeNull();
+});
+
+test('requires named confirmation to remove one member and keeps the unrelated walk-on selected with the fresh board version', async () => {
+  const request = jest.fn().mockResolvedValueOnce(mixedRoster)
+    .mockResolvedValueOnce({ ...mixedRoster, player: rosterGuest })
+    .mockResolvedValueOnce({ ...rosterWithOnly(rosterGuest, 'after-removal'), outcome: 'removed' })
+    .mockResolvedValueOnce({ ...rosterWithOnly({ ...rosterGuest, side: 'camo' }, 'after-removal'),
+      player: { ...rosterGuest, side: 'camo', revision: 4 }, outcome: 'reassigned' });
+  render(<AdminFieldCheckIn request={request} />);
+  const roster = await screen.findByRole('list', { name: 'Checked-in players' });
+  fireEvent.click(within(roster).getByRole('button', { name: /^Field Guest/ }));
+  await screen.findByRole('heading', { name: 'Field Guest' });
+  const remove = within(roster).getByRole('button', { name: 'Remove Registered Member from roster' });
+  fireEvent.click(remove);
+  expect(within(roster).getByRole('heading', { name: 'Remove Registered Member from today’s Camo roster?' })).toBeVisible();
+  const cancel = within(roster).getByRole('button', { name: 'Cancel' });
+  expect(cancel).toHaveFocus();
+  fireEvent.click(cancel);
+  expect(remove).toHaveFocus();
+  expect(request).toHaveBeenCalledTimes(2);
+  fireEvent.click(remove);
+  fireEvent.click(within(roster).getByRole('button', { name: 'Confirm removal' }));
+  await screen.findByText('Registered Member removed from today’s check-in roster.');
+  expect(request.mock.calls[2][1].body).toEqual({ action: 'removePlayer', playerId: checkedInPlayer.playerId, date, revision: 1, rosterVersion: 'initial' });
+  expect(within(roster).queryByText('Registered Member')).toBeNull();
+  expect(screen.getByText('1 checked in')).toBeVisible();
+  expect(screen.getByRole('heading', { name: 'Check-in roster' })).toHaveFocus();
+  fireEvent.click(screen.getByRole('button', { name: 'Move to Camo' }));
+  await screen.findByText('Field Guest moved to Camo.');
+  expect(request.mock.calls[3][1].body).toMatchObject({ action: 'reassign', playerId: rosterGuest.playerId, rosterVersion: 'after-removal', revision: 3 });
+});
+
+test('removing the selected walk-on clears the rental return selection', async () => {
+  const location = window.location.href;
+  window.history.replaceState(null, '', '/admin/field/check-in?' + new URLSearchParams({ player: rosterGuest.playerId, date }));
+  try {
+    const request = jest.fn().mockResolvedValueOnce(mixedRoster)
+      .mockResolvedValueOnce({ ...mixedRoster, player: rosterGuest })
+      .mockResolvedValueOnce({ ...rosterWithOnly(checkedInPlayer, 'after-removal'), outcome: 'removed' });
+    render(<AdminFieldCheckIn request={request} />);
+    await screen.findByRole('heading', { name: 'Field Guest' });
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Field Guest from roster' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm removal' }));
+    await screen.findByText('Field Guest removed from today’s check-in roster.');
+    expect(screen.queryByRole('heading', { name: 'Field Guest' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Open rental form' })).toBeNull();
+    expect(window.location.search).toBe('');
+  } finally { window.history.replaceState(null, '', location); }
+});
+
+test('a changed check-in closes the old confirmation and requires staff to review the updated side', async () => {
+  const updated = { ...rosterGuest, side: 'camo', revision: 4 };
+  const failure = Object.assign(new Error('This check-in changed on another device.'),
+    { status: 409, data: rosterWithOnly(updated, 'initial') });
+  const request = jest.fn().mockResolvedValueOnce(mixedRoster).mockRejectedValueOnce(failure);
+  render(<AdminFieldCheckIn request={request} />);
+  const remove = await screen.findByRole('button', { name: 'Remove Field Guest from roster' });
+  fireEvent.click(remove);
+  fireEvent.click(screen.getByRole('button', { name: 'Confirm removal' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('This check-in changed on another device.');
+  expect(screen.queryByRole('button', { name: 'Confirm removal' })).toBeNull();
+  fireEvent.click(remove);
+  expect(screen.getByRole('heading', { name: 'Remove Field Guest from today’s Camo roster?' })).toBeVisible();
+  expect(request).toHaveBeenCalledTimes(2);
 });

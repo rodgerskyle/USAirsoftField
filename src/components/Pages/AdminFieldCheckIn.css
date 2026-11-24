@@ -138,7 +138,7 @@
 
 .admin-checkin__players { padding: 0; margin: .65rem 0 0; list-style: none; }
 .admin-checkin__players li + li { border-top: 1px solid var(--usaw-line, #ccd6e1); }
-.admin-checkin__players button {
+.admin-checkin__player-select {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -152,7 +152,9 @@
   text-align: left;
 }
 
-.admin-checkin__players button:hover { color: var(--usaw-accent, #2d5382); }
+.admin-checkin__player-select:hover { color: var(--usaw-accent, #2d5382); }
+.admin-checkin__row-actions { display: flex; flex-wrap: wrap; gap: .5rem; padding: .2rem .55rem .65rem; }
+.admin-checkin__row-actions .btn { padding: .45rem .8rem; font-size: .875rem; }
 .admin-checkin__players strong, .admin-checkin__players small { display: block; overflow-wrap: anywhere; }
 .admin-checkin__players small { color: var(--usaw-muted, #48566a); }
 .admin-checkin .btn { min-height: 44px; }
@@ -187,11 +189,11 @@
 .field-tools .admin-checkin__walk-on { padding: 0; border: 0; background: transparent; }
 .field-tools .admin-checkin details > summary { background-color: var(--admin-surface-muted); }
 .field-tools .admin-checkin details > summary:is(:hover, :focus-visible) { border-color: var(--admin-accent); }
-.field-tools .admin-checkin__players button {
+.field-tools .admin-checkin__player-select {
   padding-inline: .6rem;
   border-radius: .45rem;
 }
-.field-tools .admin-checkin__players button:is(:hover, :focus-visible) {
+.field-tools .admin-checkin__player-select:is(:hover, :focus-visible) {
   color: var(--admin-text);
   background: var(--admin-accent-soft);
 }

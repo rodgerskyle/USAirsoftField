@@ -506,7 +506,7 @@ class UserOptions extends Component {
         const controller = new AbortController();
         this.waiverRequest = controller;
         const sameAccount = () => !controller.signal.aborted && this.props.router.params.id === uid && firebase.auth.currentUser === staff;
-        this.setState({ reviewWaiver: null, error: null });
+        this.setState({ reviewWaiver: null, error: null, status: null });
         try {
             let metadata;
             try {
@@ -544,6 +544,14 @@ class UserOptions extends Component {
                     const scan = firebase.nonmembersWaivers(document.objectName.slice(prefix.length));
                     if ((await getMetadata(scan)).generation !== document.generation) throw new Error('The scan changed');
                     url = await getDownloadURL(scan);
+                } else if (document?.type === 'party-receipt') {
+                    if (!sameAccount()) { tab.close(); return; }
+                    const date = new Intl.DateTimeFormat('en-US', {
+                        timeZone: 'America/Los_Angeles', year: 'numeric', month: 'short', day: 'numeric',
+                    }).format(document.signedAt);
+                    this.setState({ status: `Party waiver submission confirmed for ${document.name} on ${date}. Search the waiver archive by name to open the original signed form.` });
+                    if (!current) { tab.close(); return; }
+                    // A current member PDF is still available for staff to inspect and review below.
                 }
             }
             if (!url) {
