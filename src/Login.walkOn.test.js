@@ -112,3 +112,16 @@ test('returns a signed-in guest to their specific website group invitation', asy
   await signIn();
   await waitFor(() => expect(screen.getByLabelText('Current route').textContent).toBe('/group-check-in#join/rebels-4'));
 });
+
+test('signing in from the public member waiver returns to the field waiver', async () => {
+  renderRoute('/login?waiver=member&returnTo=https://example.test');
+  await signIn();
+  await waitFor(() => expect(screen.getByLabelText('Current route').textContent).toBe('/waiver'));
+});
+
+test('member sign-in returns to the same private waiver invitation using its fragment', async () => {
+  const token = 'f'.repeat(64);
+  renderRoute('/login?waiver=member#party/' + token);
+  await signIn();
+  await waitFor(() => expect(screen.getByLabelText('Current route').textContent).toBe('/waiver?member=self#party/' + token));
+});

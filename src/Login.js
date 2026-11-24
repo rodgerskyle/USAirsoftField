@@ -10,6 +10,7 @@ import { Container, Row, Col, Form, Button } from 'react-bootstrap/';
 
 import { isGroupCode } from './components/constants/groupCode';
 import { deskAfterLogin } from './components/constants/checkInHandoff';
+import { validPartyToken } from './components/constants/groupInvitationLinks';
 import { walkOnAfterLogin } from './components/constants/groupRentalLink';
 import * as ROLES from './components/constants/roles';
 import { Helmet } from 'react-helmet-async';
@@ -102,6 +103,10 @@ class SignInFormBase extends Component {
           const groupInvite = this.props.router.location.state?.groupInvite;
           if (isGroupCode(groupInvite)) {
             this.props.history.replace('/group-check-in#join/' + groupInvite);
+          } else if (new URLSearchParams(this.props.router.location.search).get('waiver') === 'member') {
+            const hash = this.props.router.location.hash || '';
+            const partyToken = hash.startsWith('#party/') ? hash.slice(7) : '';
+            this.props.history.replace(validPartyToken(partyToken) ? '/waiver?member=self#party/' + partyToken : '/waiver');
           } else if (desk || rental) {
             this.props.history.replace(desk || rental);
           } else if (userObject.roles && !!userObject.roles[ROLES.WAIVER]) {
