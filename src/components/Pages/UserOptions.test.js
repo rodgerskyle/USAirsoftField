@@ -498,3 +498,48 @@ test('a party receipt still lets staff inspect a current, unreviewed member PDF'
         expect(screen.getByRole('button', { name: /signatures/i })).toBeVisible();
     } finally { popup.mockRestore(); }
 });
+
+test.each([true, false])('Open Waiver chooses the most recent verified source when both are present (newer linked waiver: %s)', async newerLink => {
+    const tab = { opener: window, location: { replace: jest.fn() }, close: jest.fn() };
+    const popup = jest.spyOn(window, 'open').mockReturnValue(tab);
+    const signedAt = Date.now() - 120000;
+    const pdfCreated = signedAt + (newerLink ? -60000 : 60000);
+    getMetadata.mockResolvedValueOnce({ timeCreated: new Date(pdfCreated).toISOString(), customMetadata: { usawSignedMemberForm: 'v1' } });
+    requestStaffFieldTool.mockResolvedValueOnce({ document: { type: 'digital', ref: 'matching-form', signedAt } });
+    if (newerLink) {
+        get.mockResolvedValueOnce({ val: () => ({ name: player.name, timestamp: signedAt }) });
+        pdf.mockReturnValue({ toBlob: () => Promise.resolve(new Blob(['signed'])) });
+        URL.createObjectURL = jest.fn(() => 'blob:newer-linked-waiver');
+        URL.revokeObjectURL = jest.fn();
+    } else {
+        getDownloadURL.mockResolvedValueOnce('https://example.org/newer-member-pdf');
+    }
+    try {
+        render(page(firstId));
+        fireEvent.click(screen.getByRole('button', { name: 'Open Waiver' }));
+        await waitFor(() => expect(tab.location.replace).toHaveBeenCalledWith(newerLink
+            ? 'blob:newer-linked-waiver' : 'https://example.org/newer-member-pdf'));
+    } finally { popup.mockRestore(); }
+});
+
+test('Open Waiver renders the member submission with the original participant and guardian signatures', async () => {
+    const tab = { opener: window, location: { replace: jest.fn() }, close: jest.fn() };
+    const popup = jest.spyOn(window, 'open').mockReturnValue(tab);
+    const signedAt = Date.now() - 4000;
+    const guardian = { name: 'Test Guardian', signature: 'guardian-signature' };
+    const record = { name: player.name, participantSignature: 'participant-signature', timestamp: signedAt,
+        additionalFields: { dob: '2014-03-12', age: 12, guardian } };
+    getMetadata.mockRejectedValueOnce(Object.assign(new Error(), { code: 'storage/object-not-found' }));
+    requestStaffFieldTool.mockResolvedValueOnce({ document: { type: 'member-submission', signedAt, record } });
+    URL.createObjectURL = jest.fn(() => 'blob:signed-member-document');
+    URL.revokeObjectURL = jest.fn();
+    pdf.mockReturnValue({ toBlob: () => Promise.resolve(new Blob(['signed'])) });
+    try {
+        render(page(firstId));
+        fireEvent.click(screen.getByRole('button', { name: 'Open Waiver' }));
+        await waitFor(() => expect(tab.location.replace).toHaveBeenCalledWith('blob:signed-member-document'));
+        expect(pdf.mock.calls.at(-1)[0].props).toEqual(expect.objectContaining({
+            name: player.name, participantSignature: record.participantSignature, dob: record.additionalFields.dob, guardian,
+        }));
+    } finally { popup.mockRestore(); }
+});

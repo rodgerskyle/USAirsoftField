@@ -520,21 +520,24 @@ class UserOptions extends Component {
             const reviewed = current && (data.usawSignedMemberForm === 'v1' ||
                 (metadata?.generation && data.usawReviewedGeneration === metadata.generation));
 
-            // A registration or renewal can reuse the existing signed source instead of creating a member PDF.
+            // A member can sign a newer waiver after their account PDF was created.
             let url;
-            if (!reviewed && !this.state.user?.accountRemovedAt && sameAccount()) {
-                const { document } = await requestStaffFieldTool(firebase, staff.uid, '/api/waivers/membership', {
+            if (!this.state.user?.accountRemovedAt && sameAccount()) {
+                const { document: linked } = await requestStaffFieldTool(firebase, staff.uid, '/api/waivers/membership', {
                     method: 'POST', body: { action: 'document', memberId: uid }, signal: controller.signal,
                 }).catch(error => {
                     // The separately authorized legacy member PDF is still available for manual review.
                     if (metadata && (!error.status || error.status >= 500)) return { document: null };
                     throw error;
                 });
-                if (document?.type === 'digital') {
-                    const record = (await get(firebase.digitalWaiver(document.ref))).val();
+                if (!sameAccount()) { tab.close(); return; }
+                const document = linked && (!reviewed || linked.signedAt > created) ? linked : null;
+                if (document?.type === 'digital' || document?.type === 'member-submission') {
+                    const record = document.type === 'member-submission'
+                        ? document.record : (await get(firebase.digitalWaiver(document.ref))).val();
                     if (!record || Number(record.timestamp) !== document.signedAt) throw new Error('Waiver changed');
                     const [{ pdf }, { default: SignedWaiver }] = await Promise.all([import('@react-pdf/renderer'), import('./SignedWaiver')]);
-                    const blob = await pdf(<SignedWaiver {...record} />).toBlob();
+                    const blob = await pdf(<SignedWaiver {...record.additionalFields} {...record} />).toBlob();
                     if (!sameAccount()) { tab.close(); return; }
                     url = URL.createObjectURL(blob);
                     window.setTimeout(() => URL.revokeObjectURL(url), 60000);

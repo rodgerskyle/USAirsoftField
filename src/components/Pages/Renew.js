@@ -8,15 +8,14 @@ import { withRouter } from '../constants/withRouter';
 
 
 import { renewalCheckInReturn } from '../constants/checkInHandoff';
-import SignedWaiver from './SignedWaiver';
+import { memberWaiverSaver } from './saveMemberWaiver';
 import MembershipWaiverCheck, { membershipWaiverRequest } from './MembershipWaiverCheck';
-import { memberWaiverDocument, memberWaiverMetadata } from '../utils/memberWaiverDocument';
+import { memberWaiverDocument } from '../utils/memberWaiverDocument';
 import SignatureCanvas from 'react-signature-canvas';
 import waiver from '../../assets/Waiver-cutoff.png'
 
 import logo from '../../assets/usairsoft-small-logo.png';
 
-import { pdf } from '@react-pdf/renderer';
 
 import { Button, Form, Container, Card, Row, Col, Breadcrumb, Spinner } from 'react-bootstrap/';
 
@@ -24,7 +23,6 @@ import * as ROLES from '../constants/roles';
 import { LinkContainer } from 'react-router-bootstrap';
 import { Helmet } from 'react-helmet-async';
 import { onValue, update } from 'firebase/database';
-import { uploadBytes } from 'firebase/storage';
 
 const INITIAL_STATE = {
     value: '',
@@ -165,20 +163,25 @@ class RenewSubscription extends Component {
         this.setState({ showLander: true, submitted: false });
     }
 
+    saveSignedWaiver = memberWaiverSaver();
+
     async completeWaiver(myProps) {
+        if (this.renewing) return;
+        this.renewing = true;
         const uid = this.state.uid;
         try {
             const signed = memberWaiverDocument(myProps);
             const registeredName = this.state.users.find(user => user.uid === uid)?.registeredName;
             const normalize = text => text.trim().replace(/\s+/g, ' ').toLowerCase();
-            if (registeredName && normalize(signed.name) !== normalize(registeredName)) {
+            if (!registeredName || normalize(signed.name) !== normalize(registeredName)) {
                 throw new Error('Enter the registered participant name for this member, or update their account before renewing.');
             }
-            const blob = await pdf(<SignedWaiver {...signed} />).toBlob();
-            await uploadBytes(this.props.firebase.membersWaivers(uid + '.pdf'), blob, memberWaiverMetadata);
+            await this.saveSignedWaiver(this.props.firebase, uid, signed);
             await this.saveRenewal(uid);
         } catch (error) {
             this.setState({ submitted: false, errorWaiver: error.message || 'Unable to save the signed renewal.' });
+        } finally {
+            this.renewing = false;
         }
     }
 

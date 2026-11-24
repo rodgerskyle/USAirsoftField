@@ -5,12 +5,11 @@ import logo from '../../assets/usairsoft-small-logo.png';
 import { Button, Form, Container, Row, Col, Breadcrumb, Spinner } from 'react-bootstrap/';
 import { LinkContainer } from 'react-router-bootstrap';
 import SignatureCanvas from 'react-signature-canvas';
-import SignedWaiver from './SignedWaiver';
+import { memberWaiverSaver } from './saveMemberWaiver';
 import MembershipWaiverCheck, { membershipWaiverRequest } from './MembershipWaiverCheck';
-import { memberWaiverDocument, memberWaiverMetadata } from '../utils/memberWaiverDocument';
+import { memberWaiverDocument } from '../utils/memberWaiverDocument';
 import '../../App.css';
 import { encode } from 'firebase-encode';
-import { pdf } from '@react-pdf/renderer';
 
 import cardimages from '../constants/cardimgs';
 import waiver from '../../assets/Waiver-cutoff.png'
@@ -28,7 +27,6 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { Helmet } from 'react-helmet-async';
 import { get, onValue, set, update } from 'firebase/database';
-import { uploadBytes } from 'firebase/storage';
 const config = {
   apiKey: process.env.REACT_APP_API_KEY,
   authDomain: process.env.REACT_APP_AUTH_DOMAIN,
@@ -197,6 +195,7 @@ class SignUpFormBase extends Component {
       this.emailSignUp();
       this.setState({ submitted: false, showLander: true, loading: false });
       this.pendingRegistration = null;
+      this.saveSignedWaiver = memberWaiverSaver();
     } catch (error) {
       this.setState({ error: error.message || 'Could not finish registration. Retry to continue.', submitted: false });
     } finally {
@@ -227,18 +226,10 @@ class SignUpFormBase extends Component {
     return re.test(String(email).toLowerCase());
   }
 
-  /* OLD WAY
-  // Prop to pass to waiver to call when complete
-  completeWaiver = (blob) => {
-    this.props.firebase.membersWaivers(`${this.state.uid}.pdf`).put(blob).then(() => {
-      this.setState({submitted: false, showLander: true, loading: false})
-    })
-  } */
+  saveSignedWaiver = memberWaiverSaver();
 
   async completeWaiver(myProps, memberId) {
-    const signed = memberWaiverDocument(myProps);
-    const blob = await pdf(<SignedWaiver {...signed} />).toBlob();
-    await uploadBytes(this.props.firebase.membersWaivers(memberId + '.pdf'), blob, memberWaiverMetadata);
+    await this.saveSignedWaiver(this.props.firebase, memberId, memberWaiverDocument(myProps));
   }
 
   componentDidMount() {

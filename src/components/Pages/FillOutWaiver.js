@@ -1,3 +1,5 @@
+import WaiverMemberPicker from './WaiverMemberPicker';
+import { membershipWaiverRequest } from './MembershipWaiverCheck';
 import { waiverAge } from '../utils/waiverAge';
 import React, { Component } from 'react';
 import logo from '../../assets/usairsoft-small-logo.png';
@@ -92,6 +94,7 @@ const INITIAL_STATE = {
   acceptEmailSubscription: true,
   loading: false,
   selectedGroup: [],
+  selectedMember: null,
   submitted: false,
 };
 
@@ -104,8 +107,10 @@ class WaiverPageFormBase extends Component {
   }
 
   async completeWaiver() {
+    if (this.saving) return;
+    this.saving = true;
     try {
-      this.setState({ loading: true }); // Only set loading initially
+      this.setState({ loading: true, errorWaiver: null }); // Only set loading initially
 
       // More flexible phone validation - strip non-digits and check length
       const cleanPhone = this.state.phone.replace(/\D/g, '');
@@ -174,10 +179,30 @@ class WaiverPageFormBase extends Component {
         };
       }
 
-      // Push to digital_waivers
-      const digitalWaiversRef = this.props.firebase.digitalWaivers();
-      const newWaiverRef = push(digitalWaiversRef);
-      await set(newWaiverRef, waiverData);
+      const member = this.state.selectedMember;
+      const normalize = text => text.trim().replace(/\s+/g, ' ').toLowerCase();
+      if (member?.unverified) throw new Error('Verify the member selection before signing.');
+      if (member && normalize(member.name) !== normalize(waiverData.name)) {
+        throw new Error('The signed participant name must match the selected member profile.');
+      }
+      const fingerprint = JSON.stringify({ ...waiverData, timestamp: undefined });
+      if (!this.pendingWaiver || this.pendingWaiver.fingerprint !== fingerprint) {
+        this.pendingWaiver = { ref: push(this.props.firebase.digitalWaivers()), timestamp: waiverData.timestamp, fingerprint };
+      }
+      const saved = this.pendingWaiver;
+      const newWaiverRef = saved.ref;
+      if (!saved.written) {
+        await set(newWaiverRef, { ...waiverData, timestamp: saved.timestamp });
+        saved.written = true;
+      }
+      if (member) {
+        const { check } = await membershipWaiverRequest(this.props.firebase, {
+          action: 'link', memberId: member.id, dob: waiverData.dob, ref: newWaiverRef.key, signedAt: saved.timestamp,
+        });
+        if (check?.status !== 'signed' || check.signedAt !== saved.timestamp) {
+          throw new Error('Retry to confirm this waiver on the member profile.');
+        }
+      }
 
       // Handle email subscription
       if (this.state.acceptEmailSubscription) {
@@ -206,7 +231,8 @@ class WaiverPageFormBase extends Component {
 
           // Check if group is at capacity
           const currentParticipants = groupData.participants || [];
-          if (groupData.size && currentParticipants.length >= groupData.size) {
+          const alreadyAdded = currentParticipants.some(entry => entry?.ref === newWaiverRef.key);
+          if (!alreadyAdded && groupData.size && currentParticipants.length >= groupData.size) {
             this.setState({
               errorWaiver: "Selected group is at maximum capacity",
               loading: false
@@ -222,7 +248,7 @@ class WaiverPageFormBase extends Component {
             rentals: []
           };
 
-          await update(groupRef, {
+          if (!alreadyAdded) await update(groupRef, {
             participants: [...currentParticipants, newParticipant]
           });
         } else {
@@ -234,6 +260,7 @@ class WaiverPageFormBase extends Component {
         }
       }
 
+      this.pendingWaiver = null;
       // Only set submitted and show success screen after everything is complete
       this.setState({
         showSuccessScreen: true,
@@ -243,9 +270,11 @@ class WaiverPageFormBase extends Component {
     } catch (error) {
       console.error('Error submitting waiver:', error);
       this.setState({
-        errorWaiver: 'Failed to submit waiver. Please try again.',
+        errorWaiver: error.message || 'Failed to submit waiver. Please try again.',
         loading: false
       });
+    } finally {
+      this.saving = false;
     }
   }
 
@@ -365,7 +394,6 @@ class WaiverPageFormBase extends Component {
       saveButton,
       saveButton2,
       showSuccessScreen,
-      emailAdded,
       loading,
       acceptEmailSubscription,
       submitted
@@ -398,6 +426,12 @@ class WaiverPageFormBase extends Component {
                   </Row>
                   <Row className="row-rp">
                     <Form className="waiver-form-rp">
+                      <WaiverMemberPicker firebase={this.props.firebase} selected={this.state.selectedMember}
+                        disabled={loading} onChange={selectedMember => {
+                          const names = selectedMember && !selectedMember.unverified && selectedMember.name.split(/\s+/);
+                          this.setState({ selectedMember, ...(names && !fname && !lname &&
+                            { fname: names[0], lname: names.slice(1).join(' ') }) });
+                        }} />
                       <Row>
                         <Col>
                           <p className="p-groupname-rp">Party Name: (If Applicable)</p>
@@ -678,7 +712,7 @@ class WaiverPageFormBase extends Component {
                 <div>
                   <Row className="nav-row-rp">
                     <Button className="next-button-rp mt-1" variant="info" type="button"
-                      disabled={loading}
+                      disabled={loading || Boolean(this.state.selectedMember?.unverified)}
                       onClick={() => {
                         if (address === "" || fname === "" || lname === "" || email === "" || address === "" ||
                           city === "" || state === "" || zipcode === "" || phone === "" || dob === "") {
@@ -731,7 +765,7 @@ class WaiverPageFormBase extends Component {
                 </Row>
                 <Row className="justify-content-row">
                   <Button className="next-button-rp" variant="info" type="button"
-                    disabled={!emailAdded} onClick={() => {
+                    onClick={() => {
                       this.setState({ showSuccessScreen: false })
                       this.setState({ ...INITIAL_STATE, status: "Completed" });
                     }}>Sign Another</Button>
@@ -772,4 +806,4 @@ const WaiverForm = withAuthorization(condition)(withFirebase(WaiverPageFormBase)
 
 export default WaiverPage;
 
-export { WaiverForm };
+export { WaiverForm, WaiverPageFormBase };

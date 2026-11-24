@@ -9,7 +9,7 @@ export function partyWaiverRoute(hash) {
   return { token: validPartyToken(token) ? token : '' };
 }
 
-async function guestRequest(token, signal, waiverData) {
+async function guestRequest(token, signal, waiverData, memberToken) {
   const options = {
     method: waiverData ? 'POST' : 'GET',
     headers: { Accept: 'application/json', Authorization: 'Party ' + token },
@@ -17,7 +17,7 @@ async function guestRequest(token, signal, waiverData) {
   };
   if (waiverData) {
     options.headers['Content-Type'] = 'application/json';
-    options.body = JSON.stringify({ action: 'signWaiver', waiverData });
+    options.body = JSON.stringify({ action: 'signWaiver', waiverData, ...(memberToken && { memberToken }) });
   }
   const response = await fetch(endpoint, options);
   const data = await response.json().catch(() => null);
@@ -62,12 +62,12 @@ export default function PartyGuestWaiver({ token, children }) {
     return () => { operation.current?.abort(); operation.current = null; };
   }, [refresh]);
 
-  async function sign(waiverData) {
+  async function sign(waiverData, memberToken) {
     if (operation.current) throw new Error('Please wait for the current request.');
     const controller = new AbortController();
     operation.current = controller;
     try {
-      const result = await guestRequest(token, controller.signal, waiverData);
+      const result = await guestRequest(token, controller.signal, waiverData, memberToken);
       if (!controller.signal.aborted) {
         setView(result);
         if (result.entry.preparation.waiverStatus !== 'signed') setUncertain(true);

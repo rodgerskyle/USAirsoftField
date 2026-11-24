@@ -1,5 +1,8 @@
 import { waiverAge } from '../utils/waiverAge';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
+import { AuthUserContext } from '../session';
+import { newSubmissionId } from '../utils/submissionId';
+import { memberToken, submitMemberSignature } from './memberSignature';
 import PartyGuestWaiver, { partyWaiverRoute } from './PartyGuestWaiver';
 import waiver from './waiver.pdf';
 import '../../App.css';
@@ -34,6 +37,21 @@ const FormField = React.memo(({ label, name, value, onChange, type = "text", pla
 
 const WaiverForm = (props) => {
     const { firebase } = props;
+    const account = useContext(AuthUserContext);
+    const [participantChoice, setParticipantChoice] = useState(null);
+    const memberId = account?.name?.trim() && account.uid;
+    const sharedAccount = ['ADMIN', 'WAIVER', 'STATIC', 'SUPER'].some(role => Boolean(account?.roles?.[role]));
+    const requestedSelf = new URLSearchParams(window.location.search).get('member') === 'self';
+    const defaultSelf = Boolean(memberId && !sharedAccount && !props.onSigned && (!props.signPartyWaiver || requestedSelf));
+    useEffect(() => {
+        if (memberId) setParticipantChoice(previous => previous || { uid: memberId, self: defaultSelf });
+    }, [memberId, defaultSelf]);
+    const selfUid = participantChoice ? (participantChoice.self && participantChoice.uid) : (defaultSelf && memberId);
+    const myProfile = Boolean(selfUid && selfUid === memberId);
+    const sending = useRef(false);
+    const pending = useRef(null);
+    const [retryMember, setRetryMember] = useState(false);
+    const [linked, setLinked] = useState(false);
     const active = useRef(true);
     useEffect(() => {
         active.current = true;
@@ -166,18 +184,33 @@ const WaiverForm = (props) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!validateForm()) {
+        if (sending.current) return;
+        if (!retryMember && !validateForm()) {
             setErrorWaiver('Please correct the errors in the form');
             return;
         }
 
+        sending.current = true;
         setLoading(true);
         setErrorWaiver(null);
 
         try {
+            const uid = pending.current?.uid || selfUid;
+            if (uid && (uid !== memberId || firebase.auth?.currentUser?.uid !== uid)) {
+                throw new Error('Your signed-in account changed. Sign back into the participant’s account, or select another participant.');
+            }
+            if (uid && !pending.current) {
+                const normalize = value => value.trim().replace(/\s+/g, ' ').toLowerCase();
+                if (normalize(account.name) !== normalize(formState.values.fname + ' ' + formState.values.lname)) {
+                    throw new Error('Use the participant name on your member profile, or select “Another participant”.');
+                }
+            }
+            recaptchaRef.current?.reset?.();
             const token = await executeRecaptcha('submit_waiver');
             if (!active.current) return;
 
+            const bearer = uid ? await memberToken(firebase, uid) : null;
+            if (!active.current) return;
             const waiverData = {
                 name: `${formState.values.fname} ${formState.values.lname}`,
                 email: formState.values.email,
@@ -201,11 +234,27 @@ const WaiverForm = (props) => {
             };
 
             if (props.signPartyWaiver) {
-                await props.signPartyWaiver(waiverData);
+                await props.signPartyWaiver(waiverData, bearer);
                 return;
             }
-            const submitWaiver = firebase.submitWaiver();
-            const result = await submitWaiver(waiverData);
+            if (uid) {
+                if (!pending.current) pending.current = { uid, id: newSubmissionId(), waiver: waiverData };
+                try {
+                    await submitMemberSignature(bearer, pending.current.id, { ...pending.current.waiver, recaptchaToken: token });
+                } catch (error) {
+                    if (error.definite) pending.current = null;
+                    setRetryMember(Boolean(pending.current));
+                    throw error;
+                }
+                if (!active.current) return;
+                pending.current = null;
+                setRetryMember(false);
+                setLinked(true);
+                if (props.onSigned) props.onSigned(waiverData.name.trim());
+                else setShowSuccessScreen(true);
+                return;
+            }
+            const result = await firebase.submitWaiver()(waiverData);
             if (!active.current) return;
 
             if (result.data.success) {
@@ -219,6 +268,7 @@ const WaiverForm = (props) => {
             console.error('Error submitting waiver:', error);
             setErrorWaiver(error.message || 'Failed to submit waiver. Please try again.');
         } finally {
+            sending.current = false;
             if (active.current) setLoading(false);
         }
     };
@@ -299,6 +349,7 @@ const WaiverForm = (props) => {
                                     <FontAwesomeIcon icon={faCheckCircle} style={{ fontSize: '32px' }} />
                                     <h3 className="mb-3">Waiver Submitted Successfully!</h3>
                                     <p>Thank you for submitting your waiver. You're now ready to play at US Airsoft Field!</p>
+                                    {linked && <p>Signed waiver attached to your member profile.</p>}
                                     {acceptEmailSubscription && (
                                         <p className="mt-2">You've been added to our mailing list and will receive updates about events and promotions.</p>
                                     )}
@@ -321,6 +372,8 @@ const WaiverForm = (props) => {
                                             variant="outline-primary"
                                             onClick={() => {
                                                 setShowSuccessScreen(false);
+                                                setLinked(false);
+                                                setParticipantChoice(memberId ? { uid: memberId, self: false } : null);
                                                 setSubmitted(false);
                                                 // Reset all form fields to initial state
                                                 setFormState({
@@ -355,6 +408,21 @@ const WaiverForm = (props) => {
                         <Row className="justify-content-center form-container">
                             <Col xl={10}>
                                 <Form onSubmit={handleSubmit} className="waiver-form-shell">
+                                    <fieldset disabled={loading || retryMember} style={{ minWidth: 0 }}>
+                                    {memberId ? <fieldset className="waiver-form-section">
+                                        <legend>Who is this waiver for?</legend>
+                                        <Form.Check type="radio" id="waiver-self" name="waiver-owner"
+                                            label={'My member profile · ' + account.name} checked={Boolean(myProfile)}
+                                            onChange={() => setParticipantChoice({ uid: memberId, self: true })} />
+                                        <Form.Check type="radio" id="waiver-other" name="waiver-owner" label="Another participant"
+                                            checked={!myProfile} onChange={() => setParticipantChoice({ uid: memberId, self: false })} />
+                                    </fieldset> : !props.onSigned && <p>
+                                        Have a membership? <a href={'/login?waiver=member' + (props.partyToken ? '#party/' + props.partyToken : '')}
+                                            rel="noreferrer">Sign in to attach this waiver to your profile.</a>
+                                        {selfUid && <Button type="button" variant="link" onClick={() => setParticipantChoice({ self: false })}>
+                                            Continue as another participant
+                                        </Button>}
+                                    </p>}
                                     <div className="waiver-form-section">
                                         <div className="waiver-section-heading">
                                             <h2 className="waiver-section-title">Participant Information</h2>
@@ -647,6 +715,11 @@ const WaiverForm = (props) => {
                                             </Row>
                                         )}
                                     </div>
+                                    </fieldset>
+                                    {retryMember && <div role="status">
+                                        <p>Your member waiver is awaiting confirmation. Check again with the same submission.</p>
+                                        <Button type="submit" disabled={loading}>Retry member waiver</Button>
+                                    </div>}
                                 </Form>
                             </Col>
                         </Row>
@@ -673,7 +746,7 @@ function Waiver(props) {
     }, []);
     const party = !props.onSigned && partyWaiverRoute(hash);
     if (party) return <PartyGuestWaiver token={party.token} key={party.token}>
-        {signPartyWaiver => <WaiverForm {...props} signPartyWaiver={signPartyWaiver} />}
+        {signPartyWaiver => <WaiverForm {...props} partyToken={party.token} signPartyWaiver={signPartyWaiver} />}
     </PartyGuestWaiver>;
     return <WaiverForm {...props} />;
 }
