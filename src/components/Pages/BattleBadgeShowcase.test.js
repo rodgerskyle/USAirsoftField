@@ -1,6 +1,7 @@
 import React from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import BattleBadgeShowcase from './BattleBadgeShowcase';
+import AuthUserContext from '../session/context';
 import { requestPlayerExperience } from '../constants/playerExperience';
 
 jest.mock('../constants/playerExperience', () => ({ requestPlayerExperience: jest.fn() }));
@@ -9,6 +10,21 @@ const empty = { totalAwards: 0, colorBadgeCount: 0, towerOfPower: false, silverS
 const decorated = { totalAwards: 30, colorBadgeCount: 8, towerOfPower: true, silverStars: 1, goldStars: 1 };
 
 beforeEach(() => requestPlayerExperience.mockReset());
+
+test('shows the physical scanner on the signed-in player’s own profile only', async () => {
+  requestPlayerExperience.mockResolvedValue({ progress: empty });
+  const showcase = uid => <AuthUserContext.Provider value={uid && { uid }}>
+    <BattleBadgeShowcase playerId="field-member" />
+  </AuthUserContext.Provider>;
+  const view = render(showcase(null));
+  await screen.findByText('No Battle Badges earned yet.');
+  const link = () => screen.queryByRole('link', { name: 'Scan a physical Battle Badge' });
+  expect(link()).toBeNull();
+  view.rerender(showcase('field-member'));
+  expect(link()).toHaveAttribute('href', 'https://app.usairsoftfield.com/#badge-scanner');
+  view.rerender(showcase('different-member'));
+  expect(link()).toBeNull();
+});
 
 test('shows the physical badges in order and displays both star patches and counts', async () => {
   requestPlayerExperience.mockResolvedValue({ progress: decorated });
