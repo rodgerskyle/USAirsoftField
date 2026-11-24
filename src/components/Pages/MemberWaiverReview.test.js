@@ -21,7 +21,6 @@ async function openMatch(request) {
 }
 
 function verifySigner() {
-  fireEvent.change(screen.getByLabelText('Participant’s date of birth'), { target: { value: '2002-01-17' } });
   fireEvent.click(screen.getByLabelText('I verified this waiver belongs to Ali Reed.'));
 }
 
@@ -38,12 +37,12 @@ test('matches the selected account, waits for a confirmed save and reloads the c
   expect(screen.getByText('@ali-one')).toBeVisible();
   expect(screen.getByText(/Digital waiver · Signed/)).toBeVisible();
   expect(button('Attach waiver to profile')).toBeDisabled();
-  expect(screen.getByLabelText('Participant’s date of birth')).toHaveValue('');
+  expect(screen.queryByLabelText(/birth/i)).toBeNull();
 
   verifySigner();
   fireEvent.click(button('Attach waiver to profile'));
   expect(request).toHaveBeenNthCalledWith(3, matchPath, payload({
-    action: 'reviewLink', memberId: ali.playerId, ref: waiver.ref, signedAt: waiver.signedAt, dob: '2002-01-17', confirmed: true,
+    action: 'reviewLink', memberId: ali.playerId, ref: waiver.ref, signedAt: waiver.signedAt, confirmed: true,
   }));
   expect(button('Attaching waiver…')).toBeDisabled();
   expect(screen.queryByText(/Signed waiver attached to the profile/)).toBeNull();
@@ -54,29 +53,23 @@ test('matches the selected account, waits for a confirmed save and reloads the c
   expect(request).toHaveBeenNthCalledWith(4, listPath, payload({ action: 'list' }));
 });
 
-test('keeps failures visible, requires confirmation after DOB changes and clears DOB when selecting a new waiver', async () => {
+test('keeps failures visible and requires fresh confirmation after selecting a different waiver', async () => {
   const request = jest.fn()
     .mockResolvedValueOnce(page([ali]))
     .mockResolvedValueOnce({ matches: [waiver] })
     .mockResolvedValueOnce({ check: { status: 'missing' } })
-    .mockRejectedValueOnce(new Error('Date of birth does not match the participant.'))
     .mockRejectedValueOnce(new Error('This waiver was linked to another member.'))
-    .mockResolvedValueOnce({ matches: [waiver] });
+    .mockResolvedValueOnce({ matches: [{ ...waiver, ref: 'digital:different-record', name: 'Ali Reed' }] });
   await openMatch(request);
   verifySigner();
   fireEvent.click(button('Attach waiver to profile'));
   expect(await screen.findByRole('alert')).toHaveTextContent('could not confirm');
   fireEvent.click(button('Attach waiver to profile'));
-  await screen.findByText('Date of birth does not match the participant.');
-  fireEvent.change(screen.getByLabelText('Participant’s date of birth'), { target: { value: '2002-01-18' } });
-  expect(button('Attach waiver to profile')).toBeDisabled();
-  fireEvent.click(screen.getByRole('checkbox'));
-  fireEvent.click(button('Attach waiver to profile'));
   await screen.findByText('This waiver was linked to another member.');
   expect(screen.queryByText(/Signed waiver attached to the profile/)).toBeNull();
   fireEvent.click(button('Choose a different waiver'));
-  fireEvent.click(await screen.findByRole('button', { name: /Alice Reed ·/ }));
-  expect(screen.getByLabelText('Participant’s date of birth')).toHaveValue('');
+  fireEvent.click(await screen.findByRole('button', { name: /Ali Reed ·/ }));
+  expect(button('Attach waiver to profile')).toBeDisabled();
   expect(screen.getByRole('checkbox')).not.toBeChecked();
 });
 

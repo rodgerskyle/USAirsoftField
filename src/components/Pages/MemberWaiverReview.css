@@ -6,4 +6,3 @@
 .member-waiver-review__match h3 { margin-top: .9rem; }
 .member-waiver-review__identity > *, .member-waiver-review__proof > * { display: block; overflow-wrap: anywhere; }
 .member-waiver-review__proof { padding: .75rem; border-inline-start: 3px solid var(--usaw-blue, #4074ac); background: var(--usaw-raised, #f0f4f8); }
-.member-waiver-review__dob { display: grid; gap: .25rem; max-width: 16rem; font-weight: 600; }
