@@ -1,22 +1,58 @@
+const guestId = /^guest:[0-9a-f]{64}$/;
+const memberId = /^[A-Za-z0-9_-]{10,128}$/;
+
 export function groupRentalLink(id, isAdmin = true) {
   const path = isAdmin ? '/admin/rentalform' : '/dashboard/rentalform';
   return path + '?' + new URLSearchParams({ view: 'new', group: id });
 }
 
-export function validWalkOnRental(playerId, date) {
-  return typeof playerId === 'string' && /^guest:[0-9a-f]{64}$/.test(playerId) &&
-    typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date);
+function validDate(date) {
+  if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+  const timestamp = Date.parse(date);
+  return Number.isFinite(timestamp) && new Date(timestamp).toISOString().slice(0, 10) === date;
 }
 
-export function walkOnRentalLink(playerId, date, isAdmin = true, fromCompanion = false) {
-  if (!validWalkOnRental(playerId, date)) return null;
+export function validWalkOnRental(playerId, date) {
+  return typeof playerId === 'string' && guestId.test(playerId) && validDate(date);
+}
+
+export function validMemberCheckIn(playerId, date) {
+  return typeof playerId === 'string' && memberId.test(playerId) && validDate(date);
+}
+
+export function validCheckInSelection(playerId, date) {
+  return validMemberCheckIn(playerId, date) || validWalkOnRental(playerId, date);
+}
+
+export function rentalCheckInParams(params) {
+  const walkOn = params.has('walkOn');
+  const key = walkOn ? 'walkOn' : 'member';
+  const playerId = params.get(key), date = params.get('date');
+  if (params.has('group') || (walkOn && params.has('member')) ||
+      params.getAll(key).length !== 1 || params.getAll('date').length !== 1 ||
+      !validDate(date) || !(walkOn ? guestId : memberId).test(playerId)) return null;
+  return { playerId, date, key };
+}
+
+export function checkInRentalLink(playerId, date, isAdmin = true, fromCompanion = false) {
+  if (!validCheckInSelection(playerId, date)) return null;
   const path = isAdmin ? '/admin/rentalform' : '/dashboard/rentalform';
-  const params = new URLSearchParams({ view: 'new', walkOn: playerId, date });
+  const params = new URLSearchParams({ view: 'new', [guestId.test(playerId) ? 'walkOn' : 'member']: playerId, date });
   if (fromCompanion) params.set('from', 'companion');
   return path + '?' + params;
 }
 
+export function walkOnRentalLink(playerId, date, isAdmin = true, fromCompanion = false) {
+  return validWalkOnRental(playerId, date) ? checkInRentalLink(playerId, date, isAdmin, fromCompanion) : null;
+}
+
 export function walkOnAfterLogin(search, isAdmin) {
   const params = new URLSearchParams(search);
-  return walkOnRentalLink(params.get('walkOn'), params.get('date'), isAdmin, params.get('from') === 'companion');
+  const player = rentalCheckInParams(params);
+  return player && checkInRentalLink(player.playerId, player.date, isAdmin, params.get('from') === 'companion');
+}
+
+export function returnToPlayerCheckIn({ playerId, date }, companion) {
+  if (companion) return 'https://app.usairsoftfield.com/#staff-check-in/player/' + encodeURIComponent(playerId) + '/' + date;
+  return '/admin/field/check-in?' + new URLSearchParams({ player: playerId, date });
 }
