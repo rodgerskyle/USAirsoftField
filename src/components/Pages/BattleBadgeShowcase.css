@@ -27,6 +27,22 @@ body:not(.night-mode) .player-hero-card .battle-showcase {
   font-weight: 750;
   line-height: 1.25;
 }
+.battle-showcase__scan {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: .65rem;
+  padding: .45rem .9rem;
+  border: 1px solid var(--battle-edge);
+  border-radius: .45rem;
+  color: var(--battle-ink);
+  font-weight: 650;
+}
+.battle-showcase__scan:hover,
+.battle-showcase__scan:focus-visible {
+  color: var(--battle-ink);
+  text-decoration: underline;
+}
 .battle-showcase .battle-showcase__message,
 .battle-showcase .battle-showcase__total {
   color: var(--battle-muted);
