@@ -7,6 +7,7 @@ import WaiverStatus from './WaiverStatus';
 import StaffWaiverPicker from './StaffWaiverPicker';
 import StaffGroupLookup from './StaffGroupLookup';
 import FieldSectionLinks from './FieldSectionLinks';
+import MemberWaiverSync from './MemberWaiverSync';
 import { checkInRentalLink } from '../constants/groupRentalLink';
 import { checkInSelection, renewalFromCheckIn } from '../constants/checkInHandoff';
 import './AdminFieldCheckIn.css';
@@ -154,12 +155,12 @@ function TeamTalent({ board }) {
   );
 }
 
-function PlayerRows({ players, onSelect, checkedIn, disabled }) {
+function PlayerRows({ players, onSelect, checkedIn, disabled, rowActions }) {
   return (
-    <ul className="admin-checkin__players" aria-label={checkedIn ? 'Recent players' : 'Matching players'}>
+    <ul className="admin-checkin__players" aria-label={checkedIn ? 'Checked-in players' : 'Matching players'}>
       {players.map(player => (
         <li key={player.playerId}>
-          <button type="button" disabled={disabled} onClick={() => onSelect({ playerId: player.playerId })}>
+          <button className="admin-checkin__player-select" type="button" disabled={disabled} onClick={() => onSelect({ playerId: player.playerId })}>
             <span>
               <strong>{player.displayName}</strong>
               <small>{checkedIn ? `${memberships[player.membershipStatus] || memberships.unconfirmed} · ${classificationLabel(player)}` : player.membershipStatus === 'guest' ? 'Walk-on · ' + sides[player.side] : player.playerId}</small>
@@ -169,6 +170,7 @@ function PlayerRows({ players, onSelect, checkedIn, disabled }) {
               {checkedIn ? sides[player.side] : '›'}
             </span>
           </button>
+          {rowActions?.(player)}
         </li>
       ))}
     </ul>
@@ -261,6 +263,10 @@ export default function AdminFieldCheckIn({ request }) {
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   const [clearConfirmation, setClearConfirmation] = useState(null);
+  const [rosterEdit, setRosterEdit] = useState(null);
+  const [rosterNotice, setRosterNotice] = useState('');
+  const rosterTrigger = useRef(null);
+  const rosterHeading = useRef(null);
   const lifecycle = useRef(null);
   const pendingReturn = useRef(checkInSelection(window.location.search));
   const operation = useRef(null);
@@ -307,14 +313,32 @@ export default function AdminFieldCheckIn({ request }) {
   }, [refreshRoster]);
 
   useEffect(() => {
+    if (working) return;
     if (selected && board?.date && selected.date < board.date) {
       setSelected(null);
       setStatus('A new field day has started. Look up the player again.');
     } else if (selected?.rosterVersion && board?.rosterVersion && selected.rosterVersion !== board.rosterVersion) {
       setSelected(null);
-      setStatus('The roster was cleared. Look up the player again.');
+      setStatus('The roster changed. Look up the player again.');
     }
-  }, [board, selected]);
+  }, [board, selected, working]);
+
+  useEffect(() => {
+    if (working || !rosterEdit || !board) return;
+    const current = board.players.find(row => row.playerId === rosterEdit.player.playerId);
+    if (board.date !== rosterEdit.date || board.rosterVersion !== rosterEdit.rosterVersion || current?.revision !== rosterEdit.player.revision) {
+      setRosterEdit(null);
+      setRosterNotice('This check-in changed. Review the current roster before editing.');
+    }
+  }, [board, rosterEdit, working]);
+
+  useEffect(() => {
+    if (!rosterEdit && !working && rosterTrigger.current) {
+      const trigger = rosterTrigger.current;
+      rosterTrigger.current = null;
+      (trigger.isConnected ? trigger : rosterHeading.current)?.focus({ preventScroll: true });
+    }
+  }, [rosterEdit, working]);
 
   useEffect(() => {
     if (working) return;
@@ -429,7 +453,7 @@ export default function AdminFieldCheckIn({ request }) {
   }
 
   function lookup(input, guest = false, expectedGroupDate, withRental = false) {
-    if (clearConfirmation || operation.current) return;
+    if (clearConfirmation || rosterEdit || operation.current) return;
     if (!input.playerId || input.playerId !== checkInSelection(window.location.search)?.playerId) clearReturnSelection();
     setRentalRequested(withRental);
     void run(signal => loadLookup(signal, input, guest, expectedGroupDate));
@@ -570,6 +594,7 @@ export default function AdminFieldCheckIn({ request }) {
 
   function openClearConfirmation() {
     setRosterError('');
+    setRosterNotice('');
     setClearConfirmation({ date: board.date, rosterVersion: board.rosterVersion });
   }
 
@@ -604,6 +629,92 @@ export default function AdminFieldCheckIn({ request }) {
     });
   }
 
+  function openRosterEdit(action, player, trigger) {
+    if (!board?.rosterVersion || operation.current || groupWorking || clearConfirmation) return;
+    rosterTrigger.current = trigger;
+    setRosterError('');
+    setRosterNotice('');
+    setRosterEdit({ action, player, date: board.date, rosterVersion: board.rosterVersion });
+  }
+
+  function saveRosterEdit(displayName) {
+    if (!rosterEdit) return;
+    const { action, player, date, rosterVersion } = rosterEdit;
+    const removing = action === 'removePlayer';
+    if (!removing && (displayName.length < 2 || displayName.length > 80)) {
+      setRosterError('Enter a walk-on name or callsign of 2–80 characters.');
+      return;
+    }
+    void run(async signal => {
+      setRosterError('');
+      try {
+        const data = await request(path, { method: 'POST', signal, body: {
+          action, date, playerId: player.playerId, rosterVersion, revision: player.revision,
+          ...(!removing && { displayName }),
+        } });
+        if (signal.aborted) return;
+        setRosterEdit(null);
+        setBoard(current => putResult(current, data));
+        setCheckInRevision(value => value + 1);
+        setMatches(current => removing ? current.filter(row => row.playerId !== player.playerId) :
+          current.map(row => row.playerId === player.playerId ? { ...row, displayName: data.player.displayName } : row));
+        if (removing && checkInSelection(window.location.search)?.playerId === player.playerId) clearReturnSelection();
+        if (selected?.player.playerId === player.playerId) {
+          if (removing) {
+            setSelected(null);
+            setRentalRequested(false);
+            setStatus('');
+          } else applyAssignment(data, selected.player);
+        } else if (removing && selected?.date === date && selected.rosterVersion === rosterVersion) {
+          // Removing one player rotates the board version. Keep an unrelated,
+          // still-current selection usable without asking staff to scan again.
+          const row = data.players.find(entry => entry.playerId === selected.player.playerId);
+          if (selected.player.side ? row?.revision === selected.player.revision : !row) {
+            setSelected({ ...selected, rosterVersion: data.rosterVersion });
+          }
+        }
+        setRosterNotice(removing ? `${player.displayName} removed from today’s check-in roster.` : `Walk-on name saved as ${data.player.displayName}.`);
+      } catch (failure) {
+        if (signal.aborted) return;
+        if (failure.status === 409 || failure.status === 404) {
+          setRosterEdit(null);
+          if (failure.data?.players && failure.data.counts) setBoard(current => putResult(current, failure.data));
+          if (selected?.player.playerId === player.playerId) { setSelected(null); setStatus(''); }
+        }
+        setRosterError(failure.message || 'Could not update this check-in. Refresh the roster and try again.');
+      }
+    });
+  }
+
+  function rosterActions(player) {
+    const editing = rosterEdit?.player.playerId === player.playerId;
+    const disabled = checkInLocked || !board.rosterVersion;
+    return <>
+      <div className="admin-checkin__row-actions">
+        {player.membershipStatus === 'guest' && <button className="btn btn-outline-primary" type="button" disabled={disabled}
+          aria-label={`Edit name for ${player.displayName}`} onClick={event => openRosterEdit('renameWalkOn', player, event.currentTarget)}>Edit name</button>}
+        <button className="btn btn-outline-danger admin-checkin__clear-button" type="button" disabled={disabled}
+          aria-label={`Remove ${player.displayName} from roster`} onClick={event => openRosterEdit('removePlayer', player, event.currentTarget)}>Remove</button>
+      </div>
+      {editing && (rosterEdit.action === 'removePlayer' ?
+        <section aria-label="Confirm player removal" className="admin-checkin__clear-confirmation">
+          <h3>Remove {rosterEdit.player.displayName} from today’s {sides[rosterEdit.player.side]} roster?</h3>
+          <div className="admin-checkin__buttons">
+            <button type="button" className="btn btn-outline-secondary" autoFocus disabled={working} onClick={() => setRosterEdit(null)}>Cancel</button>
+            <button type="button" className="btn btn-danger" disabled={working} onClick={() => saveRosterEdit()}>Confirm removal</button>
+          </div>
+        </section> :
+        <form className="admin-checkin__form" onSubmit={event => {
+          event.preventDefault(); saveRosterEdit(event.currentTarget.elements.displayName.value.trim());
+        }}>
+          <label>New walk-on name or callsign<input name="displayName" defaultValue={rosterEdit.player.displayName}
+            minLength={2} maxLength={80} required autoFocus readOnly={working} /></label>
+          <button type="submit" className="btn btn-primary" disabled={working}>Save name</button>
+          <button type="button" className="btn btn-outline-secondary" disabled={working} onClick={() => setRosterEdit(null)}>Cancel</button>
+        </form>)}
+    </>;
+  }
+
   function submitLookup(event) {
     event.preventDefault();
     try {
@@ -623,7 +734,7 @@ export default function AdminFieldCheckIn({ request }) {
   }
 
   const players = board?.players ?? [];
-  const checkInLocked = working || groupWorking || Boolean(clearConfirmation);
+  const checkInLocked = working || groupWorking || Boolean(clearConfirmation || rosterEdit);
   const canClear = Boolean(board?.rosterVersion && board.counts?.total > 0);
   const dateLabel = board?.date ? `${fieldDate.format(new Date(board.date + 'T00:00:00Z'))} · Pacific time` : 'Today at the field · Pacific time';
   const recommendation = selected?.date === board?.date ? recommendPlacement(board, selected?.player) : null;
@@ -680,7 +791,7 @@ export default function AdminFieldCheckIn({ request }) {
                 }}>Continue with rental</button>
             </form>
           </details>
-          <StaffGroupLookup request={request} onSelect={lookup} disabled={working || Boolean(clearConfirmation)}
+          <StaffGroupLookup request={request} onSelect={lookup} disabled={working || Boolean(clearConfirmation || rosterEdit)}
             rosterVersion={board?.rosterVersion} checkInRevision={checkInRevision} onWorking={setGroupWorking}
             onBoardRead={acceptGroupBoard} onAssigned={result => {
               acceptGroupBoard(result);
@@ -690,7 +801,7 @@ export default function AdminFieldCheckIn({ request }) {
         </section>
         <section className="admin-checkin__card" aria-labelledby="admin-checkin-roster">
           <div className="admin-checkin__heading">
-            <h2 id="admin-checkin-roster" tabIndex={-1}>Recent check-ins</h2>
+            <h2 id="admin-checkin-roster" ref={rosterHeading} tabIndex={-1}>Check-in roster</h2>
             <div className="admin-checkin__buttons">
               <button className="btn btn-outline-primary" type="button" disabled={working || refreshing} onClick={refreshRoster}>Refresh</button>
               {canClear && (
@@ -717,13 +828,15 @@ export default function AdminFieldCheckIn({ request }) {
             </section>
           )}
           {rosterError && <p className="alert alert-danger" role="alert">{rosterError}</p>}
+          {rosterNotice && <p className="admin-checkin__status" role="status">{rosterNotice}</p>}
           {!board && !rosterError && <p role="status">Loading today’s roster…</p>}
           {board?.counts?.total === 0 && <p>No players have checked in today.</p>}
           {players.length < (board?.counts?.total ?? 0) && <p>Showing the latest {players.length} of {board.counts.total} check-ins.</p>}
-          {players.length > 0 && <PlayerRows players={players} onSelect={lookup} checkedIn disabled={checkInLocked} />}
+          {players.length > 0 && <PlayerRows players={players} onSelect={lookup} checkedIn disabled={checkInLocked} rowActions={rosterActions} />}
         </section>
       </div>
       <TeamTalent board={board} />
+      <MemberWaiverSync request={request} />
     </div>
   );
 }

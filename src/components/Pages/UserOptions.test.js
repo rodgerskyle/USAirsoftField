@@ -457,3 +457,44 @@ test.each(['digital', 'paper'])('Open Waiver opens the original linked %s docume
         });
     } finally { popup.mockRestore(); }
 });
+
+test.each([false, true])('handles a linked party receipt and only shows the signer on the same account (navigate away: %s)', async navigateAway => {
+    const tab = { opener: window, location: { replace: jest.fn() }, close: jest.fn() };
+    const popup = jest.spyOn(window, 'open').mockReturnValue(tab);
+    let resolveDocument;
+    getMetadata.mockRejectedValueOnce(Object.assign(new Error(), { code: 'storage/object-not-found' }));
+    requestStaffFieldTool.mockImplementationOnce(() => new Promise(resolve => { resolveDocument = resolve; }));
+    try {
+        const { rerender } = render(page(firstId));
+        fireEvent.click(screen.getByRole('button', { name: 'Open Waiver' }));
+        await waitFor(() => expect(requestStaffFieldTool).toHaveBeenCalled());
+        if (navigateAway) rerender(page(secondId));
+        await act(async () => {
+            resolveDocument({ document: { type: 'party-receipt', name: player.name, signedAt: Date.parse('2026-05-11T01:00:00Z') } });
+        });
+        expect(tab.close).toHaveBeenCalled();
+        expect(tab.location.replace).not.toHaveBeenCalled();
+        if (navigateAway) {
+            expect(screen.queryByText(/Party waiver submission confirmed/)).toBeNull();
+        } else {
+            expect(screen.getByRole('status')).toHaveTextContent('Party waiver submission confirmed for ' + player.name + ' on May 10, 2026.');
+            expect(screen.getByRole('status')).toHaveTextContent('Search the waiver archive by name');
+        }
+    } finally { popup.mockRestore(); }
+});
+
+test('a party receipt still lets staff inspect a current, unreviewed member PDF', async () => {
+    const tab = { opener: window, location: { replace: jest.fn() }, close: jest.fn() };
+    const popup = jest.spyOn(window, 'open').mockReturnValue(tab);
+    const signedAt = Date.now() - 60000;
+    getMetadata.mockResolvedValueOnce({ generation: '42', timeCreated: new Date(signedAt).toISOString() });
+    getDownloadURL.mockResolvedValueOnce('https://example.org/member-scan');
+    requestStaffFieldTool.mockResolvedValueOnce({ document: { type: 'party-receipt', name: player.name, signedAt } });
+    try {
+        render(page(firstId));
+        fireEvent.click(screen.getByRole('button', { name: 'Open Waiver' }));
+        await waitFor(() => expect(tab.location.replace).toHaveBeenCalledWith('https://example.org/member-scan'));
+        expect(screen.getByRole('status')).toHaveTextContent('Party waiver submission confirmed');
+        expect(screen.getByRole('button', { name: /signatures/i })).toBeVisible();
+    } finally { popup.mockRestore(); }
+});
