@@ -1,6 +1,10 @@
 import React, { Component } from 'react';
-import { Page, Text, Font, Document, StyleSheet, Image } from '@react-pdf/renderer';
-import { withFirebase } from '../Firebase';
+import { Page, Text, Document, StyleSheet, Image } from '@react-pdf/renderer';
+import { waiverAge } from '../utils/waiverAge';
+
+const fieldDate = new Intl.DateTimeFormat('en-US', {
+  year: 'numeric', month: 'numeric', day: 'numeric', timeZone: 'America/Los_Angeles',
+});
 
 class SignedWaiver extends Component {
   constructor(props) {
@@ -13,12 +17,25 @@ class SignedWaiver extends Component {
 
   render() {
 
-    const { name, email, phone, address, city, state, zipcode, dob, age, participantSignature, guardian } = this.props;
-
-    // Helper function to validate image data
-    const isValidImageData = (imgData) => {
-      return imgData && imgData.startsWith('data:image');
+    // The public form nests participant details and uses separate guardian fields.
+    // Desk waivers store participant details at the top level and a guardian object.
+    const record = { ...this.props.additionalFields, ...this.props };
+    const { name, email, phone, address, city, state, zipcode, dob, participantSignature } = record;
+    const guardian = {
+      name: record.guardian?.name ?? record.guardianName,
+      signature: record.guardian?.signature ?? record.guardianSignature,
+      phone: record.guardian?.phone ?? record.guardianPhone,
     };
+    // PDF-only signup and renewal forms are rendered at signing. Archived records
+    // supply the original submission timestamp when the document is reprinted.
+    const signedAt = record.timestamp == null ? Date.now() : Number(record.timestamp);
+    const validDate = Number.isFinite(new Date(signedAt).getTime());
+    const date = validDate ? fieldDate.format(signedAt) : '';
+    const age = (validDate ? waiverAge(dob, new Date(signedAt)) : null) ?? record.age;
+    const isValidImageData = value => typeof value === 'string' && /^data:image\/(png|jpeg);base64,/.test(value);
+    const hasGuardian = isValidImageData(guardian.signature);
+    const showGuardian = (age != null && age <= 17) || hasGuardian;
+    const signingDate = <Text>Date signed: <Text>{date}</Text></Text>;
 
     // Document Rendering with state objects
     const WaiverRelease = () => (
@@ -79,23 +96,24 @@ class SignedWaiver extends Component {
           <Text style={styles.text}>
             Address: <Text style={styles.signed}>{address}</Text><Text style={styles.spacing}>{"________"}</Text>
             City: <Text style={styles.signed}>{city}</Text><Text style={styles.spacing}>{"________"}</Text>
-            State: <Text style={styles.signed}>{state + " "}</Text><Text style={styles.spacing}>{"________"}</Text>
+            State: <Text style={styles.signed}>{state}</Text><Text style={styles.spacing}>{"________"}</Text>
             Zip: <Text style={styles.signed}>{zipcode}</Text>
           </Text>
           <Text style={styles.text}>
             Age: <Text style={styles.signed}>{age}</Text><Text style={styles.spacing}>{"________"}</Text>
             Date of Birth: <Text style={styles.signed}>{dob}</Text><Text style={styles.spacing}>{"________"}</Text>
-            Phone Number: <Text style={styles.signed}>{phone + " "}</Text><Text style={styles.spacing}>{"________"}</Text>
+            Phone Number: <Text style={styles.signed}>{phone}</Text><Text style={styles.spacing}>{"________"}</Text>
             E-Mail: <Text style={styles.signed}>{email}</Text>
+            {!showGuardian && <>   {signingDate}</>}
           </Text>
-          {age <= 17 &&
+          {showGuardian &&
             <>
               <Text style={styles.text}>
                 PLAYERS AGES 8-17 MUST HAVE PARENT OR GUARDIAN SIGN BELOW AND CONSENT TO THE RELEASE OF LIABILITY, WAIVER OF CLAIM, EXPRESS ASSUMPTION OF RISK AND INDEMNITY AS OUTLINED ABOVE.
               </Text>
               <Text style={styles.text}>
                 Print Parent or Guardian Name: <Text style={styles.signed}>{guardian?.name}</Text><Text style={styles.spacing}>{"________"}</Text>
-                Signature: {isValidImageData(guardian?.signature) && (
+                Signature: {hasGuardian && (
                   <Image
                     src={guardian.signature}
                     style={{
@@ -107,21 +125,12 @@ class SignedWaiver extends Component {
                 )}
               </Text>
               <Text style={styles.text}>
-                Emergency Phone Number: <Text style={styles.text}>{guardian?.phone ? `${guardian?.phone} ` : null}</Text><Text style={styles.spacing}>{"________"}</Text>
-                Date: <Text style={styles.signed}>{(new Date().getMonth() + 1) + "-" + (new Date().getDate()) + "-" + (new Date().getFullYear())}</Text>
+                Emergency Phone Number: <Text style={styles.text}>{guardian.phone}</Text>   {signingDate}
               </Text>
             </>}
         </Page>
       </Document>
     )
-
-    //   const fontURL = URL.createObjectURL({font})
-    //    Font.register({family: "calibri", src: {fontURL}})
-    Font.register({
-      family: 'calibri',
-      src: 'https://fonts.gstatic.com/s/oswald/v13/Y_TKV6o8WovbUd3m_X9aAA.ttf'
-    });
-
 
     const styles = StyleSheet.create({
       body: {
@@ -131,12 +140,12 @@ class SignedWaiver extends Component {
       },
       text: {
         fontSize: 11,
-        fontFamily: "calibri",
+        fontFamily: 'Helvetica',
         marginBottom: 8,
       },
       signed: {
         fontSize: 11,
-        fontFamily: "calibri",
+        fontFamily: 'Helvetica',
         fontWeight: 'bold',
         borderBottomColor: 'black',
         borderBottomStyle: 'solid',
@@ -144,24 +153,24 @@ class SignedWaiver extends Component {
       },
       spacing: {
         fontSize: 11,
-        fontFamily: "calibri",
+        fontFamily: 'Helvetica',
         color: 'white',
       },
       title: {
         fontSize: 16,
-        fontFamily: 'calibri',
+        fontFamily: 'Helvetica',
         fontWeight: 'bold',
         textAlign: 'center',
         marginBottom: 15,
       },
       header: {
         fontSize: 16,
-        fontFamily: 'calibri',
+        fontFamily: 'Helvetica',
         fontWeight: 'bold',
       },
       warning: {
         fontSize: 11,
-        fontFamily: 'calibri',
+        fontFamily: 'Helvetica',
         fontWeight: 'bold',
         color: 'red',
         textAlign: 'center',
@@ -199,4 +208,4 @@ class SignedWaiver extends Component {
   }
 }
 
-export default withFirebase(SignedWaiver);
+export default SignedWaiver;

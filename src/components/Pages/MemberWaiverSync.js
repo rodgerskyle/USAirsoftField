@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
+import MemberWaiverReview from './MemberWaiverReview';
+
 const endpoint = '/api/waivers/member-sync';
 const phases = {
   accounts: 'Checking active member accounts',
@@ -48,20 +50,23 @@ export default function MemberWaiverSync({ request }) {
   const title = error ? 'Waiver matching paused' : complete ? 'Waiver matching complete' :
     phases[sync?.phase] || 'Checking waiver matching progress';
   return (
-    <details className="admin-checkin__card">
-      <summary>Active member waiver matching</summary>
-      <p>Check-in automatically attaches current signed waivers when the member’s legal name and date of birth match. Staff can review unresolved members during check-in.</p>
-      <p role="status">{title}</p>
-      {sync?.phase === 'accounts' && <p>{sync.scanned || 0} accounts checked · {sync.active || 0} active members found</p>}
-      {sync?.phase === 'waivers' && <p>{sync.waiversScanned || 0} waiver records checked</p>}
-      {sync && (complete || sync.phase === 'matching') && <p>
-        {sync.processed || 0} of {sync.active || 0} active members checked · {sync.linked || 0} newly linked · {sync.verified || 0} already verified · {sync.review || 0} need review · {sync.missing || 0} without a match
-      </p>}
-      {error && <p role="alert">{error}</p>}
-      {(error || complete) && <button type="button" className="btn btn-outline-primary"
-        onClick={() => { setError(''); setSync(null); setRun({ restart: complete && !error ? sync.startedAt : null }); }}>
-        {error ? 'Resume matching' : 'Check again'}
-      </button>}
-    </details>
+    <section className="admin-checkin__card" aria-label="Active member waivers">
+      <details>
+        <summary>Active member waiver matching</summary>
+        <p>Check-in automatically attaches current signed waivers when the member’s legal name and date of birth match. Use the review list to attach a signed waiver when a member needs staff verification.</p>
+        <p role="status">{title}</p>
+        {sync?.phase === 'accounts' && <p>{sync.scanned || 0} accounts checked · {sync.active || 0} active members found</p>}
+        {sync?.phase === 'waivers' && <p>{sync.waiversScanned || 0} waiver records checked</p>}
+        {sync && (complete || sync.phase === 'matching') && <p>
+          {complete && 'Last sweep · '}{sync.processed || 0} of {sync.active || 0} active members checked · {sync.linked || 0} newly linked · {sync.verified || 0} already verified · {sync.review || 0} need review · {sync.missing || 0} without a match
+        </p>}
+        {error && <p role="alert">{error}</p>}
+        {(error || complete) && <button type="button" className="btn btn-outline-primary"
+          onClick={() => { setError(''); setSync(null); setRun({ restart: complete && !error ? sync.startedAt : null }); }}>
+          {error ? 'Resume matching' : 'Check again'}
+        </button>}
+      </details>
+      <MemberWaiverReview request={request} scanCompletedAt={complete ? sync.completedAt || sync.startedAt : null} />
+    </section>
   );
 }
