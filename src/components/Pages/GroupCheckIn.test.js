@@ -368,7 +368,29 @@ test('a joined player can update their own experience and sees the full group co
   fireEvent.change(field, { target: { value: 'elite' } });
   fireEvent.click(screen.getByRole('button', { name: 'Save experience' }));
   expect(await screen.findByText('Experience · Highly experienced')).toBeVisible();
-  expect(JSON.parse(global.fetch.mock.calls[2][1].body)).toEqual({ action: 'setExperience', id: group.id, entryId: 'own', experienceBand: 'elite' });
+  expect(JSON.parse(global.fetch.mock.calls[2][1].body)).toEqual({ action: 'setExperience', id: group.id, entryId: 'own', experienceBand: 'elite', previousExperienceBand: 'limited' });
+});
+
+test('shows a concurrent group experience change and uses that value if the player edits again', async () => {
+  const ownEntry = { id: 'own', isYou: true, kind: 'guest', displayName: 'New member', experienceBand: 'limited' };
+  const original = { ...group, entries: [ownEntry], isOwner: false };
+  const current = { ...original, entries: [{ ...ownEntry, experienceBand: 'veteran' }] };
+  const updated = { ...original, entries: [{ ...ownEntry, experienceBand: 'regular' }] };
+  global.fetch.mockResolvedValueOnce(reply({ groups: [original] })).mockResolvedValueOnce(reply({ group: original }))
+    .mockResolvedValueOnce({ ok: false, status: 409, json: async () => ({ error: 'The experience changed. Review it and try again.', group: current }) })
+    .mockResolvedValueOnce(reply({ group: updated })).mockResolvedValueOnce(reply({ groups: [updated] }));
+  setup(false);
+  fireEvent.click(await screen.findByRole('button', { name: /Family game day/ }));
+  fireEvent.click(await screen.findByText('Edit experience'));
+  const field = () => screen.getByLabelText('Airsoft experience for New member');
+  fireEvent.change(field(), { target: { value: 'elite' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save experience' }));
+  expect(await screen.findByText('The experience changed. Review it and try again.')).toBeVisible();
+  expect(field()).toHaveValue('veteran');
+  fireEvent.change(field(), { target: { value: 'regular' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save experience' }));
+  expect(await screen.findByText('Experience · Some experience')).toBeVisible();
+  expect(JSON.parse(global.fetch.mock.calls[3][1].body)).toMatchObject({ previousExperienceBand: 'veteran', experienceBand: 'regular' });
 });
 
 test('a birthday guest can fill their own roster name after signing without losing the planned visit', async () => {

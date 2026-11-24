@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import AdminFieldCheckIn from './AdminFieldCheckIn';
 import { StaffCardScanner } from './StaffCardScanner';
 
@@ -42,7 +42,7 @@ const clearedRoster = {
   classifications: { camo: emptyTierCounts, solid: emptyTierCounts },
 };
 
-test('uses a walk-on team balance estimate while their classification stays Unrated', async () => {
+test('shows the checked-in walk-on experience while keeping the separate logged-game tier', async () => {
   const saved = { ...guest, side: 'solid', experienceBand: 'veteran', balanceScore: 125, revision: 1 };
   const withGuest = {
     ...initialRoster,
@@ -69,7 +69,7 @@ test('uses a walk-on team balance estimate while their classification stays Unra
   fireEvent.change(screen.getByLabelText('Player name or callsign'), { target: { value: 'Field Guest' } });
   fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
-  const assessment = await screen.findByLabelText('Team balance estimate');
+  const assessment = await screen.findByLabelText('Walk-on experience');
   expect(request.mock.calls[1][1].body).toEqual({ action: 'guestPreview', displayName: 'Field Guest' });
   expect(screen.getByText('0 games logged')).toBeTruthy();
   fireEvent.change(assessment, { target: { value: 'veteran' } });
@@ -80,7 +80,8 @@ test('uses a walk-on team balance estimate while their classification stays Unra
   expect(request.mock.calls[2][1].body).toEqual({
     action: 'guestCheckIn', date, side: 'solid', displayName: 'Field Guest', experienceBand: 'veteran', rosterVersion: 'initial',
   });
-  expect(within(screen.getByRole('list', { name: 'Checked-in players' })).getByText('Walk-on · Unrated')).toBeTruthy();
+  expect(within(screen.getByRole('list', { name: 'Checked-in players' })).getByText('Walk-on · Experience: Experienced')).toBeVisible();
+  expect(screen.getByText('Logged-game tier · Unrated')).toBeVisible();
   expect(screen.getByRole('progressbar', { name: 'Solid estimated strength share' })).toHaveValue(60);
 
   fireEvent.click(screen.getByRole('button', { name: 'Move to Camo' }));
@@ -88,6 +89,31 @@ test('uses a walk-on team balance estimate while their classification stays Unra
   expect(request.mock.calls[3][1].body).toEqual({
     action: 'reassign', date, side: 'camo', playerId: guest.playerId, revision: 1, experienceBand: 'veteran', rosterVersion: 'initial',
   });
+});
+
+test('saves an existing walk-on’s experience on the same side and retains it after refreshing the roster', async () => {
+  const checkedIn = { ...guest, side: 'solid', revision: 1, assignedExperienceBand: 'unrated' };
+  const saved = { ...checkedIn, experienceBand: 'elite', assignedExperienceBand: 'elite', balanceScore: 155, revision: 2 };
+  const before = { ...versionedRoster, players: [checkedIn] };
+  const after = { ...before, players: [saved] };
+  const request = jest.fn().mockResolvedValueOnce(before)
+    .mockResolvedValueOnce({ ...before, player: checkedIn })
+    .mockResolvedValueOnce({ ...after, player: saved, outcome: 'updated' })
+    .mockResolvedValueOnce(after);
+  render(<AdminFieldCheckIn request={request} />);
+  const roster = within(await screen.findByRole('list', { name: 'Checked-in players' }));
+  fireEvent.click(roster.getByRole('button', { name: /Field Guest.*Experience: No estimate/ }));
+  fireEvent.change(await screen.findByLabelText('Walk-on experience'), { target: { value: 'elite' } });
+  expect(roster.getByText('Walk-on · Experience: No estimate')).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: 'Save experience' }));
+  await screen.findByText('Walk-on experience saved for Field Guest.');
+  expect(request.mock.calls[2][1].body).toEqual({ action: 'reassign', playerId: guest.playerId,
+    revision: 1, rosterVersion: 'initial', date, side: 'solid', experienceBand: 'elite' });
+  expect(roster.getByText('Walk-on · Experience: Highly experienced')).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Refresh' })).toBeEnabled());
+  expect(request).toHaveBeenCalledTimes(4);
+  expect(roster.getByText('Walk-on · Experience: Highly experienced')).toBeVisible();
 });
 
 test('recent check-ins and search matches show their individual waiver status', async () => {
@@ -276,23 +302,29 @@ test('loads the current board when a reset races a lookup', async () => {
   expect(screen.queryByText(checkedInPlayer.displayName)).not.toBeInTheDocument();
 });
 
-test('checks the selected signed waiver before staff can admit a walk-on', async () => {
+test.each(['veteran', 'unrated'])('keeps an explicit %s walk-on estimate through waiver lookup and admission', async band => {
   const request = jest.fn().mockResolvedValueOnce(versionedRoster)
-    .mockResolvedValueOnce({ ...versionedRoster, player: { ...guest, waiverStatus: 'missing' } })
+    .mockResolvedValueOnce({ ...versionedRoster, player: { ...guest, experienceBand: 'regular', waiverStatus: 'missing' } })
     .mockResolvedValueOnce({ matches: [{ ref: 'signed-ref', name: 'Jordan Smith', signedAt: Date.now() }] })
-    .mockResolvedValueOnce({ ...versionedRoster, player: { ...guest, displayName: guest.displayName, waiverRef: 'signed-ref' } });
+    .mockImplementationOnce(async (_, { body }) => ({ ...versionedRoster, player: { ...guest, waiverRef: 'signed-ref',
+      experienceBand: body.experienceBand || 'regular' } }))
+    .mockResolvedValueOnce({ ...versionedRoster, player: { ...guest, experienceBand: band, side: 'solid' }, outcome: 'checked-in' });
   render(<AdminFieldCheckIn request={request} />);
   await screen.findByText('2 checked in');
   fireEvent.click(screen.getByText('Add a walk-on'));
   fireEvent.change(screen.getByLabelText('Player name or callsign'), { target: { value: 'Field Guest' } });
   fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
   expect(await screen.findByRole('button', { name: 'Check in as Solid' })).toBeDisabled();
+  fireEvent.change(screen.getByLabelText('Walk-on experience'), { target: { value: band } });
   fireEvent.change(screen.getByLabelText(/Participant.*(name|waiver)/i), { target: { value: 'Jordan' } });
   fireEvent.click(screen.getByRole('button', { name: 'Find a signed waiver' }));
   fireEvent.click(await screen.findByRole('button', { name: /Jordan Smith/ }));
   expect(await screen.findByText('Waiver verified')).toBeVisible();
-  expect(request.mock.calls[3][1].body).toMatchObject({ action: 'guestPreview', displayName: guest.displayName, waiverRef: 'signed-ref' });
-  expect(screen.getByRole('button', { name: 'Check in as Solid' })).toBeEnabled();
+  expect(request.mock.calls[3][1].body).toMatchObject({ action: 'guestPreview', displayName: guest.displayName, waiverRef: 'signed-ref', experienceBand: band });
+  expect(screen.getByLabelText('Walk-on experience')).toHaveValue(band);
+  fireEvent.click(screen.getByRole('button', { name: 'Check in as Solid' }));
+  await screen.findByText('Field Guest checked in as Solid.');
+  expect(request.mock.calls[4][1].body).toMatchObject({ action: 'guestCheckIn', waiverRef: 'signed-ref', experienceBand: band });
 });
 
 const waiverMatch = { ref: 'official-waiver', name: 'Jordan Smith', signedAt: 1700000000000 };
@@ -305,7 +337,7 @@ async function chooseWaiver() {
 }
 
 test('starts an individual walk-on from a waiver even when no account matches', async () => {
-  const pending = { ...guest, displayName: waiverMatch.name, waiverRef: waiverMatch.ref, waiverStatus: 'unavailable' };
+  const pending = { ...guest, displayName: waiverMatch.name, waiverRef: waiverMatch.ref, waiverStatus: 'unavailable', experienceBand: 'regular' };
   const request = jest.fn().mockResolvedValueOnce(initialRoster)
     .mockResolvedValueOnce({ date, matches: [] })
     .mockResolvedValueOnce({ matches: [waiverMatch] })
@@ -325,6 +357,7 @@ test('starts an individual walk-on from a waiver even when no account matches', 
   expect(selected.compareDocumentPosition(screen.getByText('Add a walk-on')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(selected.compareDocumentPosition(screen.getByText('Find an arriving group')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(within(selected).getByText('Verification pending')).toBeVisible();
+  expect(within(selected).getByLabelText('Walk-on experience')).toHaveValue('regular');
   expect(within(selected).getByRole('button', { name: 'Check in as Camo' })).toBeDisabled();
   fireEvent.click(within(selected).getByRole('button', { name: 'Retry waiver check' }));
   expect(await screen.findByText('Waiver verified')).toBeVisible();
@@ -333,7 +366,7 @@ test('starts an individual walk-on from a waiver even when no account matches', 
   expect(request.mock.calls.slice(3).map(([, options]) => options.body)).toEqual([
     { action: 'guestPreview', displayName: waiverMatch.name, waiverRef: waiverMatch.ref },
     { action: 'guestPreview', displayName: waiverMatch.name, waiverRef: waiverMatch.ref },
-    expect.objectContaining({ action: 'guestCheckIn', displayName: waiverMatch.name, waiverRef: waiverMatch.ref }),
+    { action: 'guestCheckIn', date, side: 'camo', displayName: waiverMatch.name, waiverRef: waiverMatch.ref },
   ]);
 });
 

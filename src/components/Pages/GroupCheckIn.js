@@ -73,6 +73,7 @@ async function groupRequest(firebase, session, query, body, signal) {
   if (!response.ok || !data) {
     const error = new Error(data?.error || 'The group service is unavailable. Try again.');
     error.status = response.status;
+    if (response.status === 409 && body?.action === 'setExperience' && data?.group?.id === body.id) error.group = data.group;
     throw error;
   }
   return data;
@@ -140,6 +141,7 @@ function GroupCheckIn({ firebase }) {
           setSelected(null);
           setGroups([]);
         }
+        if (error.group) setSelected(error.group);
         setNotice(error.message || 'Your group could not be updated.');
       }
       if (propagateError) throw error;
@@ -152,7 +154,8 @@ function GroupCheckIn({ firebase }) {
     setSelected(data.group);
     const list = await groupRequest(firebase, session, '', undefined, signal);
     setGroups(list.groups);
-    setNotice(body.action === 'create' ? 'Group created. Share the invitation code with your friends.' : 'Group updated.');
+    const message = { create: 'Group created. Share the invitation code with your friends.', setExperience: 'Experience saved.' };
+    setNotice(message[body.action] || 'Group updated.');
   }
 
   function addMember(playerId) {
@@ -250,7 +253,7 @@ function GroupCheckIn({ firebase }) {
               <a className="ph-button party-checklist-action" href={partyChecklistLink('guest', entry.preparation.guestToken)} rel="noreferrer">Open my checklist</a>}
             {selected.isOwner && <CopyPartyLink url={partyChecklistLink('guest', entry.preparation?.guestToken)} label="Copy guest checklist" context={entry.displayName} />}</div>
             {(selected.isOwner || entry.isYou) && <details className="visit-groups__experience"><summary>Edit experience<span className="visually-hidden"> for {entry.displayName}</span></summary>
-              <form key={entry.experienceBand} onSubmit={event => edit('setExperience', event, { entryId: entry.id })}><fieldset disabled={busy}>
+              <form key={entry.experienceBand} onSubmit={event => edit('setExperience', event, { entryId: entry.id, previousExperienceBand: entry.experienceBand || 'unrated' })}><fieldset disabled={busy}>
                 <ExperienceField label={'Airsoft experience for ' + entry.displayName} value={entry.experienceBand} /><button className="ph-button">Save experience</button>
               </fieldset></form></details>}
             {entry.canRemove && <button className="ph-button" disabled={busy} onClick={() => void run(signal => change({ action: 'remove', id: selected.id, entryId: entry.id }, signal))}>Remove from group</button>}</li>)}</ul>
