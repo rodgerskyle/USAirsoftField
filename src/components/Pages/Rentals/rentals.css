@@ -1312,3 +1312,18 @@ button.btn-pin-code-link {
 .rental-name-editor { margin-block: .75rem; }
 .rental-name-editor label { display: block; font-weight: 600; }
 .rental-name-editor input { margin-block: .25rem .65rem; min-height: 44px; }
+
+.rental-checkin-return {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .75rem 1rem;
+    padding: .75rem 0;
+}
+.participant-card-checkin {
+    outline: 2px solid var(--admin-accent, #2275ab);
+}
+.participant-checkin-label {
+    margin: 0 0 .4rem;
+    font-weight: 700;
+}

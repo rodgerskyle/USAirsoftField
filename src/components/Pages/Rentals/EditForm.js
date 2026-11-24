@@ -101,19 +101,21 @@ class EditForm extends Component {
                 ) : (
                     <div>
                         <div className="edit-form-header">
-                            <MUIButton
+                            {!this.props.checkedInPlayer && <MUIButton
                                 variant="outlined"
                                 startIcon={<ArrowBackIos />}
                                 onClick={() => this.setState({ selectedKey: null, manualSelection: true })}
                                 className="back-button"
                             >
                                 Back to Forms
-                            </MUIButton>
+                            </MUIButton>}
                             {form && <h3>Editing: {form.name}</h3>}
                         </div>
                         {form && !form.returned ? <EditSelectedForm key={form.key} index={form.key}
                             form={{ ...form, participants: rentalParticipants(form.participants), available: rentalRows(form.available) }}
                             firebase={firebase} uid={uid} canImportGroup={canImportGroup} initialGroupId={initialGroupId}
+                            returnToCheckIn={this.props.returnToCheckIn}
+                            checkedInPlayer={this.props.checkedInPlayer} verifyCheckedInPlayer={this.props.verifyCheckedInPlayer}
                             showAP={this.props.showAP} /> : <p role="status">This rental form is no longer open.</p>}
                     </div>
                 )}

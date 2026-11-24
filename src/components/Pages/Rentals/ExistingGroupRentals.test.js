@@ -283,3 +283,22 @@ test('lets staff correct a legacy name-only renter and an unnumbered item stays 
     await screen.findByText('Rental name saved.');
     expect(current.participants).toEqual({ 3: { ...legacy, name: 'Guest One' } });
 });
+
+test('a scanned party member can join their open rental, find their gear card first and return to their exact check-in', async () => {
+    current.checkInGroup = group;
+    const player = { playerId: 'memberABC123', date: group.date, groupId: group.id, groupEntryId: 'two', displayName: 'Walk-on' };
+    const returnToCheckIn = '/admin/field/check-in?player=memberABC123&date=' + group.date;
+    const verifyCheckedInPlayer = jest.fn().mockResolvedValue(player);
+    const props = () => ({ ...formProps(), checkedInPlayer: player, verifyCheckedInPlayer, returnToCheckIn });
+    const view = render(<EditForm {...props()} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Add checked-in player to this rental' }));
+    await waitFor(() => expect(current.participants).toHaveLength(2));
+    expect(verifyCheckedInPlayer).toHaveBeenCalledTimes(1);
+    expect(current.participants[0]).toEqual(handEntered);
+    expect(current.participants[1]).toMatchObject({ ref: player.playerId, groupEntryId: 'two', name: 'Walk-on' });
+    view.rerender(<EditForm {...props()} />);
+    const selected = (await screen.findByText('Selected at check-in')).closest('.participant-card');
+    expect(document.querySelector('.participant-card')).toBe(selected);
+    expect(within(selected).getByRole('link', { name: 'Return to this player’s check-in' })).toHaveAttribute('href', returnToCheckIn);
+    expect(screen.queryByRole('button', { name: 'Add checked-in player to this rental' })).toBeNull();
+});
