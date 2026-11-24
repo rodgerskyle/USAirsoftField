@@ -87,10 +87,25 @@ test('has one active step across rerenders and ignores a late response after lea
 });
 
 test('clears a scheduled step when staff leave check-in before it starts', async () => {
-  const request = jest.fn().mockResolvedValue({ sync: running });
+  const request = jest.fn().mockResolvedValue({ sync: running, retryAfterMs: 3000 });
   const { unmount } = render(<MemberWaiverSync request={request} />);
   await tick(0);
   unmount();
   await tick(60000);
   expect(request).toHaveBeenCalledTimes(1);
+});
+
+
+test('shows account discovery and waiver indexing counts and advances without delay when the service is ready', async () => {
+  const request = jest.fn().mockResolvedValueOnce({ sync: { status: 'running', phase: 'accounts', scanned: 24, active: 8 } })
+    .mockResolvedValueOnce({ sync: { status: 'running', phase: 'waivers', waiversScanned: 17 } })
+    .mockResolvedValueOnce({ sync: completed });
+  render(<MemberWaiverSync request={request} />);
+  await tick(0);
+  fireEvent.click(screen.getByText('Active member waiver matching'));
+  expect(screen.getByText('24 accounts checked · 8 active members found')).toBeVisible();
+  await tick(0);
+  expect(screen.getByText('17 waiver records checked')).toBeVisible();
+  await tick(0);
+  expect(screen.getByRole('status')).toHaveTextContent('Waiver matching complete');
 });

@@ -482,3 +482,19 @@ test.each([false, true])('handles a linked party receipt and only shows the sign
         }
     } finally { popup.mockRestore(); }
 });
+
+test('a party receipt still lets staff inspect a current, unreviewed member PDF', async () => {
+    const tab = { opener: window, location: { replace: jest.fn() }, close: jest.fn() };
+    const popup = jest.spyOn(window, 'open').mockReturnValue(tab);
+    const signedAt = Date.now() - 60000;
+    getMetadata.mockResolvedValueOnce({ generation: '42', timeCreated: new Date(signedAt).toISOString() });
+    getDownloadURL.mockResolvedValueOnce('https://example.org/member-scan');
+    requestStaffFieldTool.mockResolvedValueOnce({ document: { type: 'party-receipt', name: player.name, signedAt } });
+    try {
+        render(page(firstId));
+        fireEvent.click(screen.getByRole('button', { name: 'Open Waiver' }));
+        await waitFor(() => expect(tab.location.replace).toHaveBeenCalledWith('https://example.org/member-scan'));
+        expect(screen.getByRole('status')).toHaveTextContent('Party waiver submission confirmed');
+        expect(screen.getByRole('button', { name: /signatures/i })).toBeVisible();
+    } finally { popup.mockRestore(); }
+});
