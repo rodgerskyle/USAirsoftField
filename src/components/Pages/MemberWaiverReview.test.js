@@ -1,6 +1,7 @@
 import React from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import MemberWaiverReview from './MemberWaiverReview';
+import { requestStaffFieldTool } from '../constants/fieldStaffApi';
 
 const listPath = '/api/waivers/member-sync';
 const matchPath = '/api/waivers/membership';
@@ -122,5 +123,35 @@ test('refreshes a building list and retries directory failures', async () => {
     expect(request).toHaveBeenCalledTimes(3);
   } finally {
     jest.useRealTimers();
+  }
+});
+
+test('uses the staff authorization token for search and attach, and displays the server conflict message', async () => {
+  const previousFetch = global.fetch;
+  const account = { uid: 'staff-test', getIdToken: jest.fn().mockResolvedValue('test-only-id-token') };
+  const firebase = { auth: { currentUser: account } };
+  const request = (path, options) => requestStaffFieldTool(firebase, account.uid, path, options);
+  global.fetch = jest.fn(async (url, opts) => {
+    const { action, memberId } = JSON.parse(opts.body);
+    expect(opts.method).toBe('POST');
+    expect(opts.credentials).toBe('omit');
+    expect(opts.cache).toBe('no-store');
+    expect(opts.headers.Authorization).toBe('Bearer test-only-id-token');
+    expect(url).toBe('https://app.usairsoftfield.com' + (action === 'list' ? listPath : matchPath));
+    if (action === 'list') return { ok: true, json: async () => page([ali]) };
+    expect(memberId).toBe(ali.playerId);
+    if (action === 'reviewSearch') return { ok: true, json: async () => ({ matches: [waiver] }) };
+    expect(action).toBe('reviewLink');
+    return { ok: false, status: 409, json: async () => ({ error: 'The selected signature changed or expired. Search for the waiver again.' }) };
+  });
+  try {
+    await openMatch(request);
+    verifySigner();
+    fireEvent.click(button('Attach waiver to profile'));
+    expect(await screen.findByRole('alert')).toHaveTextContent('The selected signature changed or expired.');
+    expect(account.getIdToken).toHaveBeenCalledTimes(3);
+    expect(screen.getByText('@ali-one')).toBeVisible();
+  } finally {
+    global.fetch = previousFetch;
   }
 });
