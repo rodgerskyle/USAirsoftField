@@ -37,7 +37,7 @@ function fixture({ canImportGroup = true, groups = {}, loseFirstReceipt = false,
         return { committed: true, snapshot: snapshot() };
     });
     const open = jest.fn();
-    const openDesk = () => render(<CreateRentalForm walkOn={walkOn} verifyWalkOn={verifyWalkOn} firebase={{ rentals: () => 'rentals' }} canImportGroup={canImportGroup}
+    const openDesk = () => render(<CreateRentalForm checkedInPlayer={walkOn} verifyCheckedInPlayer={verifyWalkOn} firebase={{ rentals: () => 'rentals' }} canImportGroup={canImportGroup}
         uid="staff" onOpenExisting={open} rentalOptions={[equipment]} rentalForms={[]} />);
     return { data: () => rentals, open, openDesk, desk: openDesk() };
 }
@@ -164,4 +164,20 @@ test('two desks creating a rental for one walk-on on the same day reserve gear o
     expect(Object.keys(data().group)).toEqual(['0']);
     expect(data().options[0].stock).toBe(1);
     expect(open).toHaveBeenCalledWith('0', walkOn.playerId);
+});
+
+test('verified member starts the party rental once; a second desk reuses its gear reservation', async () => {
+    const member = { playerId: 'officialABC12', displayName: 'Riley West', date: walkOn.date, groupId: 'party-1', groupName: 'Saturday party', groupKind: 'party', groupEntryId: 'member-row' };
+    const { data, openDesk, open } = fixture({ walkOn: member, verifyWalkOn: jest.fn().mockResolvedValue(member) });
+    reserveAndPay();
+    expect(await screen.findByRole('button', { name: 'Assign rental gear' })).toBeVisible();
+    const form = data().group[0];
+    expect(form.checkInGroup).toEqual({ id: member.groupId, name: member.groupName, date: member.date, kind: 'party' });
+    expect(form.playerCheckIn).toEqual({ playerId: member.playerId, date: member.date });
+    expect(form.participants[0]).toMatchObject({ ref: member.playerId, groupId: member.groupId, groupEntryId: member.groupEntryId });
+    const second = within(openDesk().container);
+    reserveAndPay(1, second);
+    fireEvent.click(await second.findByRole('button', { name: 'Open existing rental form' }));
+    expect(open).toHaveBeenCalledWith('0', member.playerId);
+    expect(data().options[0].stock).toBe(1);
 });

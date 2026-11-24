@@ -8,6 +8,7 @@ import { groupExperienceLabels } from '../constants/groupExperience';
 import { mountGroupMemberPicker } from '../constants/group-member-picker';
 import WaiverStatus from './WaiverStatus';
 import GroupPartySchedule from './GroupPartySchedule';
+import { PartyReadinessSummary, PartyEntryReadiness, CopyPartyLink, partyChecklistLink } from './PartyReadiness';
 import './GroupCheckIn.css';
 
 const Waiver = React.lazy(() => import('./Waiver'));
@@ -45,7 +46,7 @@ function RosterName({ label, onSign }) {
   const input = useRef(null);
   return <div>
     <label>{label}<input name="displayName" required minLength={2} maxLength={80} ref={input} /></label>
-    <button className="ph-button" type="button" onClick={() => onSign(input.current)}>Sign waiver and fill name</button>
+    {onSign && <button className="ph-button" type="button" onClick={() => onSign(input.current)}>Sign waiver and fill name</button>}
   </div>;
 }
 
@@ -191,8 +192,8 @@ function GroupCheckIn({ firebase }) {
 
   return <main className="visit-groups">
     <Helmet><title>Group Check-in | US Airsoft Field</title></Helmet>
-    <header className="visit-groups__heading"><div><p>Arrive together</p><h1>Group check-in</h1><p>Prepare your roster up to five days before your visit.</p></div><Link className="ph-button" to="/player-hub">Player Hub</Link></header>
-    <p className="visit-groups__note">Use the group list for your visit, birthday or private event. Each player can <Link to="/waiver">sign the waiver</Link> ahead of time. Staff verify each waiver at arrival.</p>
+    <header className="visit-groups__heading"><div><p>Arrive together</p><h1>Group check-in</h1><p>Prepare your roster and check what each guest needs before arrival.</p></div><Link className="ph-button" to="/player-hub">Player Hub</Link></header>
+    <p className="visit-groups__note">For a birthday or private event, send each player their personal checklist to complete their waiver and choose gear. For other visits, players can <Link to="/waiver">sign the field waiver</Link> before arrival.</p>
     {!session ? <p role="status">Loading group check-in…</p> : <>
       {session.guest && <p className="visit-groups__guest-access"><strong>Continue as a guest.</strong>{' '}
         {session.guest.persistent ? 'Return to this website in the same browser to manage your group. Use your own device.' : 'This browser can only remember your guest access until this page is closed or reloaded.'}{' '}
@@ -208,7 +209,7 @@ function GroupCheckIn({ firebase }) {
           <label>Game-day date<input type="date" name="date" required min={fieldToday()} defaultValue={fieldToday()} /></label>
           <label>Group name<input name="name" maxLength={80} placeholder={visitKind === 'party' ? 'Your party or event' : 'Family or friends'} /></label>
           <label>Expected group size, including you<input name="headcount" type="number" min={1} max={30} defaultValue={1} required /></label>
-          <p className="visit-groups__help">Your group name and size form your code, for example rebels-8. Groups expire five days after creation.</p>
+          <p className="visit-groups__help">Your group name and size form your code, for example rebels-8. {visitKind === 'party' ? 'Your party checklist stays available through the event date.' : 'Plan a regular visit within five days of arrival.'}</p>
           <button className="ph-button ph-button-primary">Create group</button>
         </fieldset></form><h2>Join friends</h2><form onSubmit={join}><fieldset disabled={busy}>
           {session.guest && <RosterName label="Your name or callsign" onSign={setWaiverInput} />}
@@ -222,6 +223,17 @@ function GroupCheckIn({ firebase }) {
         <section className="visit-groups__panel">{selected ? <>
           <h2>{selected.name}</h2><p>{dateLabel(selected.date)} · {selected.memberCount ?? selected.entries.length} / {selected.capacity} players</p>
           <GroupPartySchedule group={selected} />
+          {selected.readiness && <>
+            <PartyReadinessSummary readiness={selected.readiness} />
+            <button className="ph-button party-checklist-action" type="button" disabled={busy} onClick={() => void run(async signal => {
+              const data = await groupRequest(firebase, session, '?id=' + encodeURIComponent(selected.id), undefined, signal);
+              setSelected(data.group);
+            })}>Refresh readiness</button>
+            {selected.isOwner && partyChecklistLink('organizer', selected.organizerToken) && <>
+              <a className="ph-button party-checklist-action" href={partyChecklistLink('organizer', selected.organizerToken)} rel="noreferrer">Open organizer checklist</a>
+              <CopyPartyLink url={partyChecklistLink('organizer', selected.organizerToken)} label="Copy organizer link" />
+              <p>Keep the organizer link private. Send each player their own checklist to complete their waiver and choose rental gear.</p></>}
+          </>}
           <div className="visit-groups__code"><span>Invitation code</span><strong>{selected.code}</strong><button className="ph-button" type="button" onClick={() => {
             if (navigator.clipboard) navigator.clipboard.writeText(selected.code).then(() => setNotice('Invitation code copied.')).catch(() => setNotice('Select the invitation code to copy it.'));
             else setNotice('Select the invitation code to copy it.');
@@ -233,7 +245,10 @@ function GroupCheckIn({ firebase }) {
               ? <a href={profileHref(entry.playerId)} target="_blank" rel="noopener noreferrer">{entry.displayName}</a> : entry.displayName}</strong><small>{entry.isYou ? 'You' : entry.kind === 'guest' ? 'Guest player' : 'USAW player'}</small>
             {entry.pending && <small>Added by organizer</small>}
             <small>Experience · {groupExperienceLabels[entry.experienceBand] || groupExperienceLabels.unrated}</small>
-            {entry.waiverStatus && <WaiverStatus status={entry.waiverStatus} />}</div>
+            {entry.preparation ? <PartyEntryReadiness preparation={entry.preparation} /> : entry.waiverStatus && <WaiverStatus status={entry.waiverStatus} />}
+            {entry.isYou && partyChecklistLink('guest', entry.preparation?.guestToken) &&
+              <a className="ph-button party-checklist-action" href={partyChecklistLink('guest', entry.preparation.guestToken)} rel="noreferrer">Open my checklist</a>}
+            {selected.isOwner && <CopyPartyLink url={partyChecklistLink('guest', entry.preparation?.guestToken)} label="Copy guest checklist" context={entry.displayName} />}</div>
             {(selected.isOwner || entry.isYou) && <details className="visit-groups__experience"><summary>Edit experience<span className="visually-hidden"> for {entry.displayName}</span></summary>
               <form key={entry.experienceBand} onSubmit={event => edit('setExperience', event, { entryId: entry.id })}><fieldset disabled={busy}>
                 <ExperienceField label={'Airsoft experience for ' + entry.displayName} value={entry.experienceBand} /><button className="ph-button">Save experience</button>
@@ -241,7 +256,7 @@ function GroupCheckIn({ firebase }) {
             {entry.canRemove && <button className="ph-button" disabled={busy} onClick={() => void run(signal => change({ action: 'remove', id: selected.id, entryId: entry.id }, signal))}>Remove from group</button>}</li>)}</ul>
           {selected.isOwner ? <><form onSubmit={event => edit('rename', event)} key={selected.id + selected.name}><fieldset disabled={busy}><label>Group name<input name="name" required maxLength={80} defaultValue={selected.name} /></label><button className="ph-button">Save name</button></fieldset></form>
             <OrganizerMemberPicker key={selected.id} group={selected} busy={busy} onAdd={addMember} />
-            <form onSubmit={event => edit('addGuest', event)}><fieldset disabled={busy}><RosterName label="Guest name or callsign" onSign={setWaiverInput} /><ExperienceField /><button className="ph-button ph-button-primary">Add guest</button></fieldset></form>
+            <form onSubmit={event => edit('addGuest', event)}><fieldset disabled={busy}><RosterName label={selected.readiness ? "Guest first and last name" : "Guest name or callsign"} onSign={selected.readiness ? undefined : setWaiverInput} />{selected.readiness && <p>Add the name from the guest’s waiver, then share their personal checklist.</p>}<ExperienceField /><button className="ph-button ph-button-primary">Add guest</button></fieldset></form>
             <button className="ph-button" disabled={busy} onClick={() => { if (window.confirm('Cancel this planned group and remove its preparation list? Field check-ins and player scores are kept.')) void run(signal => change({ action: 'cancel', id: selected.id }, signal)); }}>Cancel this group</button>
           </> : <button className="ph-button" disabled={busy} onClick={() => void run(signal => change({ action: 'leave', id: selected.id }, signal))}>Leave group</button>}
         </> : <><h2>Get your group ready</h2><p>Select a group or create one to share an invitation code and prepare your party’s list.</p></>}</section>

@@ -18,6 +18,7 @@ import { v4 as uuid } from 'uuid';
 
 import { withFirebase } from '../../Firebase';
 import GroupRentalPicker from './GroupRentalPicker';
+import { isCheckInRenter } from './utils/checkInRenter';
 import { editRentalInventory } from './utils/editRentalInventory';
 import { importRentalParticipants, changeOpenRental, renameRentalParticipant, rentalIdentity, rentalParticipants, rentalRows } from './utils/openRental';
 
@@ -408,7 +409,7 @@ function EquipmentNumberField({ rental, label, canIssue, onSave, onRemove }) {
     </li>;
 }
 
-const ParticipantCard = ({ participant, index, canIssue, onDelete, onRemoveRental, onAddRental, availableRentals, onEditRentalNumber, onRename }) => {
+const ParticipantCard = ({ participant, fromCheckIn, returnToCheckIn, index, canIssue, onDelete, onRemoveRental, onAddRental, availableRentals, onEditRentalNumber, onRename }) => {
     const [nameEdit, setNameEdit] = useState(null);
     const [savingName, setSavingName] = useState(false);
     const [nameMessage, setNameMessage] = useState(null);
@@ -460,7 +461,8 @@ const ParticipantCard = ({ participant, index, canIssue, onDelete, onRemoveRenta
     };
 
     return (
-        <Paper className="participant-card" elevation={2} key={index}>
+        <Paper className={'participant-card' + (fromCheckIn ? ' participant-card-checkin' : '')} elevation={2} key={index}>
+            {fromCheckIn && <p className="participant-checkin-label">Selected at check-in</p>}
             <div className="participant-header">
                 <Typography variant="h6">{participant.name}</Typography>
                 <div className="participant-actions">
@@ -527,6 +529,7 @@ const ParticipantCard = ({ participant, index, canIssue, onDelete, onRemoveRenta
                     </div>
                 </Paper>
             </Collapse>
+            {fromCheckIn && returnToCheckIn && <a className="btn btn-outline-primary mt-2" href={returnToCheckIn}>Return to this player’s check-in</a>}
         </Paper>
     );
 };
@@ -1226,6 +1229,25 @@ class EditSelectedForm extends Component {
         return changeOpenRental(firebase.rentalGroup(form.key), current => ({ ...current, ...fields }), rentalIdentity(form));
     };
 
+    addCheckedInRenter = async () => {
+        const { checkedInPlayer, verifyCheckedInPlayer, form } = this.props;
+        if (this.addingCheckedInRenter || !checkedInPlayer || !form.checkInGroup?.id) return;
+        this.addingCheckedInRenter = true;
+        this.setState({ addingFromCheckIn: true, error: null });
+        try {
+            const player = await verifyCheckedInPlayer();
+            if (player.groupId !== form.checkInGroup.id || player.groupEntryId !== checkedInPlayer.groupEntryId) {
+                throw new Error('The player’s group changed. Return to check-in to refresh their record.');
+            }
+            await this.importGroup(form.checkInGroup, [{ id: player.groupEntryId, playerId: player.playerId, displayName: player.displayName }]);
+        } catch (error) {
+            this.setState({ error: error.message || 'Could not add this player. Please retry.' });
+        } finally {
+            this.addingCheckedInRenter = false;
+            this.setState({ addingFromCheckIn: false });
+        }
+    };
+
     importGroup = async (group, entries) => {
         const { firebase, uid, canImportGroup, form } = this.props;
         if (!canImportGroup || !uid || uid !== firebase.auth.currentUser?.uid) throw new Error('Sign in to the rental desk again.');
@@ -1707,6 +1729,10 @@ class EditSelectedForm extends Component {
         }
 
         const filteredWaivers = this.getFilteredWaivers();
+        const player = this.props.checkedInPlayer;
+        const displayed = (this.props.form.participants || []).map((participant, index) =>
+            ({ participant, index, selected: isCheckInRenter(participant, player) }));
+        if (player) displayed.sort((a, b) => Number(b.selected) - Number(a.selected));
 
         return (
             <div className="rental-management">
@@ -1788,12 +1814,21 @@ class EditSelectedForm extends Component {
                     linkedGroupId={this.props.form.checkInGroup?.id} initialGroupId={this.props.form.checkInGroup?.id || this.props.initialGroupId}
                     existingEntries={this.props.form.participants || []} onAdd={this.importGroup} />}
 
+                {player && this.props.canImportGroup && player.groupEntryId && player.groupId === this.props.form.checkInGroup?.id &&
+                    !displayed.some(row => row.selected) && <section className="rental-checkin-return">
+                        <strong>{player.displayName}</strong>
+                        <button type="button" className="btn btn-primary" disabled={this.state.addingFromCheckIn}
+                            onClick={this.addCheckedInRenter}>{this.state.addingFromCheckIn ? 'Adding player…' : 'Add checked-in player to this rental'}</button>
+                    </section>}
+
                 {/* Participants Grid */}
                 <div className="participant-grid">
-                    {this.props.form?.participants?.map((participant, index) => (
+                    {displayed.map(({ participant, index, selected }) => (
                         <ParticipantCard
                             key={participant.groupEntryId || participant.ref || index}
                             participant={participant}
+                            fromCheckIn={selected}
+                            returnToCheckIn={this.props.returnToCheckIn}
                             canIssue={Boolean(this.props.form.complete)}
                             index={index}
                             onDelete={this.handleDeleteParticipant}

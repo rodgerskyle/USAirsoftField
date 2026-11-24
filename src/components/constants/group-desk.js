@@ -69,9 +69,26 @@ function experienceOptions(current = 'unrated') {
     `<option value="${band}"${band === current ? ' selected' : ''}>${label}</option>`).join('');
 }
 
+function guestPreparation(prep) {
+  if (!prep) return '';
+  const rental = prep.rentalIntent === 'requested' ? 'Rental gear requested' : prep.rentalIntent === 'bringing' ? 'Bringing own gear' : 'Rental choice needed';
+  return `<small>${prep.ready ? 'Ready for arrival' : 'Needs attention'} · ${rental}</small>`;
+}
+
+function arrivalSummary(group) {
+  if (!group.readiness) return '';
+  const {ready, expected, unlisted, rentalsRequested} = group.readiness;
+  const organizerUrl = /^[a-f0-9]{64}$/.test(group.organizerToken || '') ? 'https://app.usairsoftfield.com/#group-check-in/organizer/' + group.organizerToken : null;
+  return `<section aria-label="Party readiness"><h3>Party readiness</h3>
+    <p><strong>${escape(ready)} of ${escape(expected)} ready</strong> · ${escape(rentalsRequested)} rental ${rentalsRequested === 1 ? 'request' : 'requests'}</p>
+    ${unlisted ? `<p>${escape(unlisted)} expected ${unlisted === 1 ? 'guest still needs' : 'guests still need'} to be added to the roster.</p>` : ''}
+    <button type="button" class="btn btn-secondary" data-refresh-party>Refresh party readiness</button>
+    ${organizerUrl ? `<a class="btn btn-secondary" href="${organizerUrl}" rel="noreferrer" target="_blank">Open organizer readiness link</a>` : ''}</section>`;
+}
+
 function rosterRow(entry) {
   const kind = entry.kind === 'guest' ? 'Guest player' : 'USAW player';
-  return `<li><div><strong>${escape(entry.displayName)}</strong><small>${kind}${entry.isOrganizer ? ' · Organizer' : ''} · ${groupExperienceLabels[entry.experienceBand] || groupExperienceLabels.unrated}</small>${waiverStatusMarkup(entry.waiverStatus)}</div>
+  return `<li><div><strong>${escape(entry.displayName)}</strong><small>${kind}${entry.isOrganizer ? ' · Organizer' : ''} · ${groupExperienceLabels[entry.experienceBand] || groupExperienceLabels.unrated}</small>${waiverStatusMarkup(entry.waiverStatus)}${guestPreparation(entry.preparation)}</div>
     ${entry.waiverStatus !== 'signed' ? `<details data-waiver-entry="${escape(entry.id)}"><summary>Link signed waiver<span class="visually-hidden"> for ${escape(entry.displayName)}</span></summary>${waiverPickerMarkup({ name: entry.displayName })}</details>` : ''}
     ${entry.playerId ? `<a href="${escape(memberProfileHref(entry.playerId))}" target="_blank" rel="noopener noreferrer" aria-label="View profile for ${escape(entry.displayName)}">View profile</a>` : ''}
     ${entry.pending && entry.playerId ? `<button class="btn btn-secondary" type="button" data-confirm-member="${escape(entry.playerId)}">Confirm member<span class="visually-hidden"> ${escape(entry.displayName)}</span></button>` : ''}
@@ -96,6 +113,7 @@ function detailMarkup(group, confirmDelete) {
     <div class="group-desk__code"><label>Invitation code<input readonly data-invite value="${escape(group.code)}" autocomplete="off"></label>
       <button class="btn btn-secondary" type="button" data-copy>Copy code</button></div>
     ${group.expiresAt ? `<p>Expires ${escape(new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', dateStyle: 'medium', timeStyle: 'short' }).format(new Date(group.expiresAt)))} Pacific</p>` : ''}
+        ${arrivalSummary(group)}
     <h3>Group roster</h3>
     ${group.entries.length ? `<p>${group.entries.filter(entry => entry.waiverStatus === 'signed').length} of ${group.entries.length} waivers verified</p>
       ${group.entries.some(entry => entry.waiverStatus === 'unavailable' || !entry.waiverStatus) ? '<button type="button" class="btn btn-secondary" data-refresh-waivers>Retry waiver verification</button>' : ''}
@@ -300,10 +318,10 @@ export function bindGroupDesk(root, { request, signal, initialId }) {
     } else if (!selected) return;
     else if (button.dataset.confirmMember) {
       void run(() => change('addMember', { playerId: button.dataset.confirmMember }, 'Member confirmed on the group roster.'));
-    } else if (button.hasAttribute('data-refresh-waivers')) {
+    } else if (button.hasAttribute('data-refresh-waivers') || button.hasAttribute('data-refresh-party')) {
       void run(async () => {
         await open(selected.id);
-        if (!signal.aborted) status.textContent = 'Waiver statuses refreshed.';
+        if (!signal.aborted) status.textContent = button.hasAttribute('data-refresh-party') ? 'Party readiness refreshed.' : 'Waiver statuses refreshed.';
       });
     } else if (button.hasAttribute('data-copy')) {
       const field = detail.querySelector('[data-invite]');

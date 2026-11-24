@@ -166,3 +166,17 @@ test('if the signature changes between check and renewal the update is held', as
     expect(await screen.findByRole('alert')).toHaveTextContent('The waiver changed');
     expect(update).not.toHaveBeenCalled();
 });
+
+test.each([
+  ['companion', 'https://app.usairsoftfield.com/#staff-check-in/player/RegisteredMember1/2026-11-24'],
+  ['check-in', '/admin/field/check-in?player=RegisteredMember1&date=2026-11-24'],
+])('renewal from %s keeps the original player and day before and after saving', async (from, expected) => {
+  const signedAt = Date.now() - 86_400_000;
+  requestStaffFieldTool.mockResolvedValue({check:{status:'signed',signedAt}});
+  const {loadUsers} = renderRenewal('/admin/renewal/RegisteredMember1?from=' + from + '&date=2026-11-24');
+  loadUsers({RegisteredMember1:{name:'Known Player'}});
+  expect(screen.getByRole('link',{name:'Back to player check-in'})).toHaveAttribute('href',expected);
+  fireEvent.click(await screen.findByRole('button',{name:'Renew with this waiver'}));
+  expect(await screen.findByRole('link',{name:'Return to player check-in'})).toHaveAttribute('href',expected);
+  expect(update).toHaveBeenCalledWith('users/RegisteredMember1', { renewal: expect.any(String) });
+});

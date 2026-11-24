@@ -17,7 +17,7 @@ jest.mock('../session', () => ({
 jest.mock('../constants/pincode', () => () => null);
 jest.mock('./Rentals/RentalOptions', () => () => null);
 jest.mock('./Rentals/ReturnForm', () => () => null);
-jest.mock('./Rentals/CreateRentalForm', () => ({ initialGroupId, canImportGroup, onOpenExisting, walkOn }) => (
+jest.mock('./Rentals/CreateRentalForm', () => ({ initialGroupId, canImportGroup, onOpenExisting, checkedInPlayer: walkOn }) => (
     <section aria-label="New rental">
         <p>Group {initialGroupId}</p>
         {walkOn && <p>Renter {walkOn.displayName}</p>}
@@ -134,7 +134,7 @@ test('a walk-on handoff retries a mismatched roster record before opening the na
     const url = new URL(path, 'https://example.test');
     expect(url.pathname).toBe('/api/rental-groups');
     expect(Object.fromEntries(url.searchParams)).toEqual({ walkOn: walkOn.playerId, date: walkOn.date });
-    expect(screen.getByRole('link', { name: 'Back to player check-in' })).toHaveAttribute('href', '/admin/field/check-in');
+    expect(screen.getByRole('link', { name: 'Back to player check-in' })).toHaveAttribute('href', '/admin/field/check-in?' + new URLSearchParams({ player: walkOn.playerId, date: walkOn.date }));
 });
 
 test('reopens the open walk-on rental for this day and keeps the Companion check-in return link', async () => {
@@ -147,7 +147,7 @@ test('reopens the open walk-on rental for this day and keeps the Companion check
     ]);
     expect(await screen.findByText('Rental key 3')).toBeVisible();
     expect(screen.queryByRole('region', { name: 'New rental' })).toBeNull();
-    expect(screen.getByRole('link', { name: 'Back to player check-in' })).toHaveAttribute('href', 'https://app.usairsoftfield.com/#staff-check-in');
+    expect(screen.getByRole('link', { name: 'Back to player check-in' })).toHaveAttribute('href', 'https://app.usairsoftfield.com/#staff-check-in/player/' + encodeURIComponent(walkOn.playerId) + '/' + walkOn.date);
     expect(Object.fromEntries(new URLSearchParams(screen.getByLabelText('Current query').textContent))).toEqual({
         view: 'edit', walkOn: walkOn.playerId, date: walkOn.date, form: '3', from: 'companion',
     });
@@ -171,4 +171,45 @@ test('hiding and showing navigation keeps an authorized walk-on rental draft int
     fireEvent.click(screen.getByRole('button', { name: 'Show navigation' }));
     expect(screen.getByLabelText('Draft name')).toHaveValue('Riley Weston');
     expect(screen.getByRole('link', { name: 'Back to player check-in' })).toBeVisible();
+});
+
+test('a member handoff verifies the visit and opens the existing party rental with the exact player retained', async () => {
+    const player = { playerId: 'officialABC12', displayName: 'Rebel', date: walkOn.date, groupId, groupEntryId: 'guest1' };
+    requestStaffFieldTool.mockResolvedValue({ member: player });
+    open('view=new&member=' + player.playerId + '&date=' + player.date + '&from=companion', [
+        { key: '0', name: 'Previous day', playerCheckIn: { ...player, date: '2026-11-20' } },
+        { key: '2', name: 'Unrelated', checkInGroup: { id: otherGroupId, date: player.date } },
+        { key: '4', name: 'Party', checkInGroup: { id: groupId, date: player.date } },
+    ]);
+    expect(await screen.findByText('Rental key 4')).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Back to player check-in' })).toHaveAttribute('href',
+        'https://app.usairsoftfield.com/#staff-check-in/player/' + player.playerId + '/' + player.date);
+    expect(requestStaffFieldTool.mock.calls.at(-1)[2]).toBe('/api/rental-groups?' + new URLSearchParams({ member: player.playerId, date: player.date }));
+});
+
+test('a removed or stale check-in cannot open an existing rental from an edit deep link', async () => {
+    const member = 'officialABC12';
+    requestStaffFieldTool.mockRejectedValue(new Error('This player is no longer on today’s roster.'));
+    open('view=edit&member=' + member + '&date=' + walkOn.date + '&form=0', [
+        { key: '0', name: 'Open rental', playerCheckIn: { playerId: member, date: walkOn.date } },
+    ]);
+    expect(await screen.findByRole('alert')).toHaveTextContent('no longer on');
+    expect(screen.queryByRole('region', { name: 'Edit rental' })).toBeNull();
+});
+
+test('mixed identities do not start a manual draft', async () => {
+    open('view=new&member=officialABC12&' + handoff);
+    expect(await screen.findByRole('alert')).toHaveTextContent('incomplete');
+    expect(screen.queryByRole('region', { name: 'New rental' })).toBeNull();
+});
+
+test('recognizes a member on an older manual rental by exact ID and Pacific visit date', async () => {
+    const player = { playerId: 'officialABC12', displayName: 'Raven', date: '2026-11-22' };
+    requestStaffFieldTool.mockResolvedValue({ member: player });
+    open('view=new&member=' + player.playerId + '&date=' + player.date, [
+        { key: '0', participants: [{ ref: player.playerId, isMember: true, date: '2026-11-21T22:00:00.000Z' }] },
+        { key: '1', participants: [{ ref: player.playerId, isDigital: true, date: player.date }] },
+        { key: '2', participants: [{ ref: player.playerId, isMember: true, date: '2026-11-23T02:30:00.000Z' }] },
+    ]);
+    expect(await screen.findByText('Rental key 2')).toBeVisible();
 });

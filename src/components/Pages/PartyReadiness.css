@@ -1,0 +1,10 @@
+.party-readiness-summary { margin-block: 1rem; padding: .8rem 1rem; border-inline-start: 4px solid var(--usaw-accent, #296fa1); background: var(--usaw-surface-alt, rgba(96,144,190,.09)); }
+.party-readiness-summary h3 { margin: 0 0 .45rem; font-size: 1.15rem; }
+.party-readiness-summary p { margin: .2rem 0; }
+.party-readiness-summary strong { font-size: 1.3rem; }
+.party-entry-readiness, .party-copy-link { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; margin-block: .35rem; }
+.party-copy-link label { display: grid; gap: .25rem; min-width: 0; }
+.party-copy-link input { width: 100%; min-width: 0; }
+.party-copy-link button, .party-checklist-action { min-height: 44px; }
+.party-waiver-intro { width: min(100% - 2rem, 68rem); margin: 1.25rem auto; }
+.party-waiver-intro a, .party-waiver-intro button { display: inline-flex; align-items: center; min-height: 44px; }

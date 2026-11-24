@@ -252,7 +252,7 @@ test('staff can find groups by name, confirm the right one, assign everyone and 
   expect(screen.getByRole('link', { name: 'Open rental form' })).toHaveAttribute('href', '/admin/rentalform?view=new&group=' + group.id);
   expect(screen.getByText(/Experienced · Awaiting check-in/)).toBeVisible();
   fireEvent.click(screen.getByRole('button', { name: 'Verify Member' }));
-  expect(onSelect).toHaveBeenCalledWith({ playerId: 'OfficialMemberID' }, false, group.date);
+  expect(onSelect).toHaveBeenCalledWith({ playerId: 'OfficialMemberID' }, false, group.date, false);
   fireEvent.click(all);
   await waitFor(() => expect(onAssigned).toHaveBeenCalledWith(allCamo));
   expect(request.mock.calls[3][1].body).toEqual({
@@ -416,4 +416,22 @@ test('opens a group sent from group management without another lookup', async ()
     expect(request.mock.calls[0][0]).toEqual('/api/check-in-groups?staff=1&id='+group.id+'&arrival=1');
     expect(screen.getByRole('link',{name:'Edit group roster'})).toHaveAttribute('href','/admin/field/groups?group='+group.id);
   } finally { window.history.replaceState(null,'',initial); }
+});
+
+test('organizer checks expected headcount, missing waiver and equipment choices, and shares only the selected guest link', async () => {
+  const organizerToken = 'a'.repeat(64), guestToken = 'b'.repeat(64);
+  const prepared = { ...group, readiness: { ready: 1, expected: 4, unlisted: 2, rentalsRequested: 1 }, organizerToken,
+    entries: [{ ...group.entries[0], preparation: { waiverStatus: 'signed', rentalIntent: 'requested', ready: true } },
+      { ...group.entries[1], preparation: { waiverStatus: 'missing', rentalIntent: 'unknown', ready: false, guestToken } }] };
+  global.fetch.mockResolvedValueOnce(reply({groups:[prepared]})).mockResolvedValueOnce(reply({group:prepared}));
+  setup();
+  fireEvent.click(await screen.findByRole('button', {name: /Family game day/}));
+  expect(await screen.findByText('1 of 4 ready')).toBeVisible();
+  expect(screen.getByText('2 expected players still need a roster entry.')).toBeVisible();
+  const guest = screen.getByText('New Friend').closest('li');
+  expect(within(guest).getByText('Rental choice needed')).toBeVisible();
+  expect(within(guest).getByText(/Waiver needed/)).toBeVisible();
+  fireEvent.click(within(guest).getByRole('button', {name:'Copy guest checklist for New Friend'}));
+  expect(await within(guest).findByLabelText('Copy this private link')).toHaveValue('https://app.usairsoftfield.com/#group-check-in/guest/' + guestToken);
+  expect(screen.getByRole('link',{name:'Open organizer checklist'})).toHaveAttribute('href','https://app.usairsoftfield.com/#group-check-in/organizer/' + organizerToken);
 });

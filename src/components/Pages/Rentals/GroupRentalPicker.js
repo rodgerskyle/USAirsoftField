@@ -130,13 +130,19 @@ export default function GroupRentalPicker({ firebase, uid, initialGroupId, linke
                         <input type="checkbox" checked={selected.length === eligible.length}
                             onChange={event => setExcluded(event.target.checked ? [] : eligible.map(entry => entry.id))} /> Select all available
                     </label>}
+                    {eligible.some(entry => entry.rentalIntent === 'requested') && <button type="button" className="btn btn-outline-primary"
+                        onClick={() => setExcluded(eligible.filter(entry => entry.rentalIntent !== 'requested').map(entry => entry.id))}>
+                        Select players who requested rentals
+                    </button>}
                     {group.entries.map(entry => {
                         const present = rentalHasGroupEntry(existingEntries, group, entry);
                         return <label key={entry.id}>
                             <input type="checkbox" disabled={present} checked={present || !excluded.includes(entry.id)}
                                 onChange={() => setExcluded(current => current.includes(entry.id)
                                     ? current.filter(id => id !== entry.id) : [...current, entry.id])} />
-                            <span>{entry.displayName}</span>{present && <small> Already on form</small>}
+                            <span>{entry.displayName}</span>
+                            {entry.rentalIntent && <small>{entry.rentalIntent === 'requested' ? 'Rental requested' : 'Bringing own gear'}</small>}
+                            {present && <small> Already on form</small>}
                         </label>;
                     })}
                 </fieldset>

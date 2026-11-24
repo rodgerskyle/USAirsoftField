@@ -2,6 +2,7 @@ import { groupRentalLink } from '../constants/groupRentalLink';
 import React, { useEffect, useRef, useState } from 'react';
 import { isGroupCode } from '../constants/groupCode';
 import { groupExperienceLabels } from '../constants/groupExperience';
+import { PartyReadinessSummary, PartyEntryReadiness } from './PartyReadiness';
 import WaiverStatus from './WaiverStatus';
 import StaffWaiverPicker from './StaffWaiverPicker';
 import GroupPartySchedule, { bookingTime } from './GroupPartySchedule';
@@ -142,7 +143,8 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
         if (signal.aborted) return;
         setAssignments({ ...result.groupAssignments, rosterVersion: result.rosterVersion, revision: checkInRevision });
         onBoardRead?.(result);
-        setNotice('Signed waiver linked to ' + entry.displayName + '.');
+        if (group.readiness) await openById(group.id, signal);
+        if (!signal.aborted) setNotice('Signed waiver linked to ' + entry.displayName + '.');
       } catch (error) {
         if (error.status === 409 && !signal.aborted) await openById(group.id, signal);
         throw error;
@@ -212,6 +214,8 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
         <button type="button" disabled={locked || search.page >= search.totalPages} onClick={() => find(search.query, search.page + 1, search.todayOnly)}>Next</button></nav>}</div>}
     {group && <><h3>{group.name}</h3><p>{group.date} · <a href={'/admin/field/groups?group=' + encodeURIComponent(group.id)}>Edit group roster</a></p>{!current && <p>This group is planned for a different date.</p>}
       <GroupPartySchedule group={group} staff />
+      {group.readiness && <div><PartyReadinessSummary readiness={group.readiness} />
+        <button type="button" className="btn btn-outline-secondary" disabled={locked} onClick={() => void run(signal => openById(group.id, signal))}>Refresh party readiness</button></div>}
       {group.id && !busy && group.partyStatus !== 'review' && !missingBooking && !data.partyCalendarUnavailable &&
         (!hint || (hint.date === group.date && (!hint.key || hint.key === group.partyKey))) &&
         <p><a className="btn btn-secondary" href={groupRentalLink(group.id)} target="_blank" rel="noopener noreferrer">Open rental form</a></p>}
@@ -256,7 +260,7 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
           const experience = position?.experienceBand ?? entry.experienceBand;
           return <li className="group-placement__player" key={entry.id}>
             <strong>{playerName}</strong><small>{groupExperienceLabels[experience] || groupExperienceLabels.unrated}{position && ' · ' + (position.otherGroup ? 'On another group today' : teamLabels[position.side] || 'Awaiting check-in')}</small>
-            <WaiverStatus status={waiverStatus} />
+            {entry.preparation ? <PartyEntryReadiness preparation={position ? { ...entry.preparation, waiverStatus } : entry.preparation} /> : <WaiverStatus status={waiverStatus} />}
             {current && position && !position.otherGroup && !position.side && waiverStatus !== 'signed' &&
               <StaffWaiverPicker request={request} disabled={locked} name={entry.displayName} onChoose={match => linkWaiver(entry, match)} />}
             {current && <div className="group-placement__actions">
@@ -264,7 +268,7 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
                 key={side} data-team={side} aria-label={'Assign ' + playerName + ' to ' + label}
                 disabled={locked || !cleared(position) || position.side === side} onClick={() => assign(side, entry)}>{label}</button>)}
               {playerId && <button type="button" className="btn btn-outline-secondary" disabled={locked}
-                aria-label={'Verify ' + playerName} onClick={() => onSelect({ playerId }, false, group.date)}>Verify player</button>}
+                aria-label={'Verify ' + playerName} onClick={() => onSelect({ playerId }, false, group.date, entry.preparation?.rentalIntent === 'requested')}>Verify player</button>}
             </div>}
           </li>;
         })}</ul>

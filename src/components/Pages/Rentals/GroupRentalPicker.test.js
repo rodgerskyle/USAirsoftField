@@ -113,3 +113,15 @@ it('prefills the draft on a direct group link without submitting a rental or req
     expect(requestStaffFieldTool).toHaveBeenCalledTimes(1);
     expect(add).not.toHaveBeenCalled();
 });
+
+it('uses party rental requests to select renters while keeping other guests available', async () => {
+    const group = { ...party, entries: party.entries.map((entry, i) => ({ ...entry, rentalIntent: i ? 'bringing' : 'requested' })) };
+    const add = jest.fn();
+    requestStaffFieldTool.mockResolvedValue({ group });
+    render(<GroupRentalPicker {...props} linkedGroupId={group.id} onAdd={add} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Select players who requested rentals' }));
+    expect(screen.getByLabelText(/Bringing own gear/)).not.toBeChecked();
+    expect(screen.getByLabelText(/Rental requested/)).toBeChecked();
+    fireEvent.click(screen.getByRole('button', { name: 'Add selected players (1)' }));
+    await waitFor(() => expect(add).toHaveBeenCalledWith(group, [group.entries[0]]));
+});
