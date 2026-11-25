@@ -1,0 +1,9 @@
+.gear-desk { text-align:left; padding:1rem; color:var(--admin-text,inherit); }
+.gear-desk label, .rental-form-search label { display:block; font-weight:600; margin:.6rem 0; }
+.gear-desk input.form-control, .rental-form-search input { max-width:32rem; font-size:1rem; }
+.gear-lines { list-style:none; padding:0; margin:.7rem 0; }
+.gear-lines > li { display:flex; justify-content:space-between; align-items:center; gap:.7rem; flex-wrap:wrap; padding:.65rem 0; border-bottom:1px solid var(--admin-border,#8795a5); }
+.gear-actions { display:flex; gap:.5rem; flex-wrap:wrap; }
+.gear-desk button, .rental-form-search button { min-height:44px; }
+.gear-review { padding:.75rem; border:1px solid var(--admin-border,#8795a5); border-radius:.4rem; }
+.gear-desk details { margin-top:1rem; }

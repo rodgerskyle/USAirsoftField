@@ -3,8 +3,8 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import AdminFieldCheckIn from './AdminFieldCheckIn';
 import { StaffCardScanner } from './StaffCardScanner';
 
-jest.mock('./StaffCardScanner', () => ({ StaffCardScanner: jest.fn() }), { virtual: true });
-jest.mock('./MemberWaiverSync', () => () => null, { virtual: true });
+jest.mock('./StaffCardScanner', () => ({ StaffCardScanner: jest.fn() }));
+jest.mock('./MemberWaiverSync', () => () => null);
 
 beforeEach(() => { StaffCardScanner.mockReturnValue(null); });
 
@@ -648,4 +648,26 @@ test('a changed check-in closes the old confirmation and requires staff to revie
   fireEvent.click(remove);
   expect(screen.getByRole('heading', { name: 'Remove Field Guest from today’s Camo roster?' })).toBeVisible();
   expect(request).toHaveBeenCalledTimes(2);
+});
+
+test('staff round actions from a roster row refresh the playing headcounts while retaining both check-ins', async () => {
+  const player = { ...checkedInPlayer, side: 'camo', revision: 1 };
+  const buddy = { ...guest, displayName: 'Walk-on teammate', side: 'solid', revision: 2 };
+  const round = { id: 'round-example', title: 'Round example' };
+  const before = { ...versionedRoster, players: [player, buddy], playingCounts: { camo: 1, solid: 1, total: 2 } };
+  const after = { ...before, players: [{ ...player, sittingOut: true, revision: 2 }, buddy], playingCounts: { camo: 0, solid: 1, total: 1 } };
+  const request = jest.fn().mockResolvedValueOnce(before)
+    .mockResolvedValueOnce({ ...before, round })
+    .mockResolvedValueOnce({ ...after, round })
+    .mockResolvedValueOnce(after);
+  render(<AdminFieldCheckIn request={request} />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Round status and Battle Buddy for ' + player.displayName }));
+  expect(await screen.findByText(round.title)).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: 'Sit out this round' }));
+  expect(await screen.findByText('1 playing · 1 sitting out this round')).toBeVisible();
+  expect(screen.getByText('2 checked in')).toBeVisible();
+  expect(request.mock.calls[2][1].body).toEqual({ rosterVersion: 'initial', action: 'availability', date, gameId: round.id, playerId: player.playerId, revision: 1, sittingOut: true });
+  expect(screen.getByRole('button', { name: 'Back in this round' })).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: 'Close round controls' }));
+  expect(screen.queryByText(round.title)).toBeNull();
 });

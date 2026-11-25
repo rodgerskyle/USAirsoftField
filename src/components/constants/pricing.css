@@ -19,6 +19,39 @@
     max-width: 1180px;
 }
 
+.party-estimator {
+    margin-bottom: 1.5rem;
+    padding: 1.25rem;
+    border: 1px solid var(--pricing-border);
+    border-radius: 16px;
+    background: var(--pricing-surface-soft);
+}
+
+.party-estimator-fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.party-estimator-fields label {
+    display: grid;
+    max-width: 100%;
+    gap: .35rem;
+    font-weight: 600;
+}
+
+.party-estimator-fields input,
+.party-estimator-fields select {
+    max-width: 100%;
+    min-height: 44px;
+    padding: .5rem;
+    border: 1px solid var(--pricing-border);
+    border-radius: .5rem;
+    color: var(--pricing-text);
+    background: var(--pricing-surface);
+}
+
 .pricing-modern-hero {
     margin-bottom: 1rem;
     padding: 1.75rem 2rem;

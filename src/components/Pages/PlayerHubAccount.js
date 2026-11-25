@@ -9,6 +9,7 @@ import { teamPagePath, usePlayerTeam } from '../constants/teamDirectory';
 import rankImages from '../constants/rankimgs';
 import rankNames from '../constants/ranks';
 import { PrestigeEmblem } from './PlayerPrestige';
+import { PlayerRoundCard } from './RoundParticipation';
 import { PlayerGameDayRecap } from './PlayerGameDayRecap';
 
 const numberFormat = new Intl.NumberFormat('en-US');
@@ -138,6 +139,7 @@ function PlayerHubAccount({ firebase }) {
   if (account) return (
     <>
       <PlayerCard account={account} />
+      <PlayerRoundCard key={'round-' + account.uid} firebase={firebase} uid={account.uid} />
       <PlayerGameDayRecap key={account.uid} firebase={firebase} playerId={account.uid} />
     </>
   );

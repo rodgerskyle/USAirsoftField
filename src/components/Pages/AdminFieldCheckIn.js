@@ -8,6 +8,7 @@ import StaffWaiverPicker from './StaffWaiverPicker';
 import StaffGroupLookup from './StaffGroupLookup';
 import FieldSectionLinks from './FieldSectionLinks';
 import MemberWaiverSync from './MemberWaiverSync';
+import { RoundParticipation } from './RoundParticipation';
 import { checkInRentalLink } from '../constants/groupRentalLink';
 import { checkInSelection, renewalFromCheckIn } from '../constants/checkInHandoff';
 import './AdminFieldCheckIn.css';
@@ -23,6 +24,7 @@ const memberships = {
 };
 const classifications = { a: 'A Tier', b: 'B Tier', c: 'C Tier', d: 'D Tier', unrated: 'Unrated' };
 const reasons = {
+  buddy: 'keeps Battle Buddies together',
   headcount: 'closer headcounts',
   tierA: 'spreads A Tier players',
   topTiers: 'spreads A and B Tier players',
@@ -45,13 +47,19 @@ function smallestGap(gap, contribution, reason) {
 // Use the same order as the Companion check-in recommendation.
 function recommendPlacement(board, player) {
   if (!board || !player) return null;
+  const row = board.players?.find(item => item.playerId === player.playerId);
+  if (sides[row?.buddySide]) return { side: row.buddySide, reason: 'buddy' };
+  if (row?.sittingOut) return null;
   const currentSide = player.side === 'camo' ? 1 : player.side === 'solid' ? -1 : 0;
-  const headcount = board.counts?.camo - board.counts?.solid - currentSide;
-  const camo = board.classifications?.camo;
-  const solid = board.classifications?.solid;
+  const counts = board.playingCounts || board.counts;
+  const classifications = board.playingClassifications || board.classifications;
+  const balance = board.playingBalance || board.balance;
+  const headcount = counts?.camo - counts?.solid - currentSide;
+  const camo = classifications?.camo;
+  const solid = classifications?.solid;
   const tierA = camo?.a - solid?.a - (player.assignedClassificationBand === 'a' ? currentSide : 0);
   const tierB = camo?.b - solid?.b - (player.assignedClassificationBand === 'b' ? currentSide : 0);
-  const strength = board.balance?.camo?.strength - board.balance?.solid?.strength
+  const strength = balance?.camo?.strength - balance?.solid?.strength
     - currentSide * (player.assignedBalanceScore ?? 100);
   const isTierA = player.classificationBand === 'a';
   const isTopTier = isTierA || player.classificationBand === 'b';
@@ -85,7 +93,12 @@ function putResult(board, data) {
   const sameDay = date === board?.date;
   const rosterVersion = data.rosterVersion ?? (sameDay ? board.rosterVersion : undefined);
   const previousPlayers = sameDay && rosterVersion === board.rosterVersion ? board.players : [];
-  return { date, counts, balance, classifications, rosterVersion, players: data.players ?? previousPlayers };
+  const current = sameDay && rosterVersion === board?.rosterVersion ? board : null;
+  return { date, counts, balance, classifications, rosterVersion, players: data.players ?? previousPlayers,
+    playingCounts: data.playingCounts || current?.playingCounts,
+    playingBalance: data.playingBalance || current?.playingBalance,
+    playingClassifications: data.playingClassifications || current?.playingClassifications,
+  };
 }
 
 function assignmentMessage({ outcome, player }) {
@@ -106,24 +119,28 @@ const checkInSections = [
 ];
 
 function TeamTalent({ board }) {
-  const totalStrength = board ? (board.balance?.camo?.strength ?? 0) + (board.balance?.solid?.strength ?? 0) : 0;
-  const camoShare = totalStrength > 0 ? Math.round(board.balance.camo.strength / totalStrength * 100) : null;
+  const counts = board?.playingCounts || board?.counts;
+  const balance = board?.playingBalance || board?.balance;
+  const tiers = board?.playingClassifications || board?.classifications;
+  const totalStrength = (balance?.camo?.strength ?? 0) + (balance?.solid?.strength ?? 0);
+  const camoShare = totalStrength > 0 ? Math.round(balance.camo.strength / totalStrength * 100) : null;
   return (
     <section aria-labelledby="admin-checkin-talent">
       <div className="admin-checkin__heading">
         <h2 id="admin-checkin-talent" tabIndex={-1}>Team talent</h2>
         <span>{board?.counts?.total ?? '—'} checked in</span>
       </div>
+      {board?.playingCounts && <p>{counts.total} playing · {board.counts.total - counts.total} sitting out this round</p>}
       <div className="admin-checkin__teams">
         {Object.entries(sides).map(([side, name]) => {
           const share = camoShare === null ? null : side === 'camo' ? camoShare : 100 - camoShare;
-          const tierCounts = board?.classifications?.[side];
-          const unverified = tierCounts ? board.counts[side] - Object.values(tierCounts).reduce((total, count) => total + count, 0) : 0;
+          const tierCounts = tiers?.[side];
+          const unverified = tierCounts ? counts[side] - Object.values(tierCounts).reduce((total, count) => total + count, 0) : 0;
           return (
             <section className="admin-checkin__team" data-side={side} key={side}>
               <div className="admin-checkin__heading">
                 <h3>{name}</h3>
-                <span>{board?.counts?.[side] ?? '—'} players</span>
+                <span>{counts?.[side] ?? '—'} players</span>
               </div>
               <span>Estimated strength share {share === null ? '—' : `${share}%`}</span>
               <progress aria-label={`${name} estimated strength share`} value={share ?? 0} max={100} />
@@ -173,6 +190,8 @@ function PlayerRows({ players, onSelect, checkedIn, disabled, rowActions }) {
             <span>
               <strong>{player.displayName}</strong>
               <small>{checkedIn ? rosterPlayerLabel(player) : player.membershipStatus === 'guest' ? 'Walk-on · ' + sides[player.side] : player.playerId}</small>
+              {checkedIn && player.sittingOut && <small>Sitting out this round</small>}
+              {checkedIn && player.buddyName && <small>Battle Buddy · {player.buddyName}</small>}
               <WaiverStatus status={player.waiverStatus ?? 'unavailable'} />
             </span>
             <span className={checkedIn ? 'admin-checkin__pill' : undefined} data-side={checkedIn ? player.side : undefined} aria-hidden={checkedIn ? undefined : true}>
@@ -191,7 +210,7 @@ function savedRentalLink(player, date) {
     ? checkInRentalLink(player.playerId, date) : null;
 }
 
-function SelectedPlayer({ player, date, suggestion, working, rentalRequested, onRentalChange, onAssessment, onAssign, request, onWaiver, onRetry, onRename, onNext }) {
+function SelectedPlayer({ player, date, suggestion, working, rentalRequested, onRentalChange, onAssessment, onAssign, request, onWaiver, onRetry, onRename, onNext, onRound }) {
   const { side, membershipStatus, experienceBand, assignedExperienceBand, canSetExperience, gamesLogged } = player;
   const heading = useRef(null);
   useEffect(() => { heading.current?.focus(); }, [player.playerId]);
@@ -234,7 +253,7 @@ function SelectedPlayer({ player, date, suggestion, working, rentalRequested, on
         </label>
       )}
       <p className="admin-checkin__suggestion" aria-live="polite">
-        {suggestion ? `${suggestion.side === side ? 'Current side fits' : 'Suggested side'} · ${sides[suggestion.side]} · ${reasons[suggestion.reason]}` : 'Either side fits the current balance.'}
+        {player.sittingOut ? 'Sitting out this round. Today’s check-in is saved.' : suggestion ? `${suggestion.side === side ? 'Current side fits' : 'Suggested side'} · ${sides[suggestion.side]} · ${reasons[suggestion.reason]}` : 'Either side fits the current balance.'}
       </p>
       {membershipStatus !== 'active' && <p className="admin-checkin__hint">Confirm admission at the desk. Check-in records attendance and team assignment only.</p>}
       {renewLink && !working && <p><a className="btn btn-outline-primary" href={renewLink}>Renew this membership</a></p>}
@@ -245,10 +264,12 @@ function SelectedPlayer({ player, date, suggestion, working, rentalRequested, on
       <div className="admin-checkin__buttons">
         {choices.map(choice => (
           <button className={`btn btn-${side ? 'outline-primary' : 'primary'}`} type="button" key={choice} disabled={working || (!side && player.waiverStatus !== 'signed')} onClick={() => onAssign(choice)}>
-            {side ? 'Move to ' : 'Check in as '}{sides[choice]}{!side && rentalRequested ? ' & open rental' : ''}
+            {side ? (player.buddyName ? 'Move both buddies to ' : 'Move to ') : 'Check in as '}{sides[choice]}{!side && rentalRequested ? ' & open rental' : ''}
           </button>
         ))}
-        {rentalLink && !working && <a className="btn btn-outline-primary" href={rentalLink}>Open rental form</a>}
+        {rentalLink && !working && <><a className="btn btn-outline-primary" href={rentalLink}>Open rental form</a>{' '}
+          <a className="btn btn-outline-primary" href={checkInRentalLink(player.playerId, date, true, false, 'return')}>Swaps &amp; returns</a></>}
+        {side && <button type="button" className="btn btn-outline-primary" disabled={working} onClick={onRound}>Round status &amp; Battle Buddy</button>}
         {side && <button type="button" className="btn btn-primary" disabled={working} onClick={onNext}>Check in next player</button>}
         {side && canSetExperience && ratingChanged && (
           <button type="button" className="btn btn-primary" disabled={working} onClick={() => onAssign(side)}>{membershipStatus === 'guest' ? 'Save experience' : 'Save balance estimate'}</button>
@@ -274,6 +295,10 @@ export default function AdminFieldCheckIn({ request }) {
   const [clearConfirmation, setClearConfirmation] = useState(null);
   const [rosterEdit, setRosterEdit] = useState(null);
   const [rosterNotice, setRosterNotice] = useState('');
+  const [roundTarget, setRoundTarget] = useState(null);
+  const roundHeading = useRef(null);
+  const roundTrigger = useRef(null);
+  useEffect(() => { if (roundTarget) roundHeading.current?.focus(); }, [roundTarget]);
   const rosterTrigger = useRef(null);
   const rosterHeading = useRef(null);
   const lifecycle = useRef(null);
@@ -696,11 +721,32 @@ export default function AdminFieldCheckIn({ request }) {
     });
   }
 
+  function openRound(player, button) {
+    if (working || groupWorking || clearConfirmation || rosterEdit) return;
+    roundTrigger.current = button;
+    setRoundTarget({ playerId: player.playerId, displayName: player.displayName, date: board.date });
+  }
+
+  function roundSaved(data) {
+    const row = data.players?.find(player => player.playerId === selected?.player.playerId);
+    if (row && selected.date === data.date) {
+      setSelected({ ...selected, player: { ...selected.player, side: row.side, revision: row.revision, buddyName: row.buddyName, sittingOut: row.sittingOut } });
+    }
+    void refreshRoster();
+  }
+
+  function closeRound() {
+    setRoundTarget(null);
+    (roundTrigger.current?.isConnected ? roundTrigger.current : rosterHeading.current)?.focus();
+  }
+
   function rosterActions(player) {
     const editing = rosterEdit?.player.playerId === player.playerId;
     const disabled = checkInLocked || !board.rosterVersion;
     return <>
       <div className="admin-checkin__row-actions">
+        <button type="button" className="btn btn-outline-primary" disabled={disabled} onClick={event => openRound(player, event.currentTarget)}
+          aria-label={`Round status and Battle Buddy for ${player.displayName}`}>Round &amp; buddy</button>
         {player.membershipStatus === 'guest' && <button className="btn btn-outline-primary" type="button" disabled={disabled}
           aria-label={`Edit name for ${player.displayName}`} onClick={event => openRosterEdit('renameWalkOn', player, event.currentTarget)}>Edit name</button>}
         <button className="btn btn-outline-danger admin-checkin__clear-button" type="button" disabled={disabled}
@@ -747,7 +793,9 @@ export default function AdminFieldCheckIn({ request }) {
   const checkInLocked = working || groupWorking || Boolean(clearConfirmation || rosterEdit);
   const canClear = Boolean(board?.rosterVersion && board.counts?.total > 0);
   const dateLabel = board?.date ? `${fieldDate.format(new Date(board.date + 'T00:00:00Z'))} · Pacific time` : 'Today at the field · Pacific time';
-  const recommendation = selected?.date === board?.date ? recommendPlacement(board, selected?.player) : null;
+  const selectedRow = selected?.player.side && board?.players?.find(row => row.playerId === selected.player.playerId);
+  const visibleSelection = selectedRow ? { ...selected.player, buddyName: selectedRow.buddyName, sittingOut: selectedRow.sittingOut } : selected?.player;
+  const recommendation = selected?.date === board?.date ? recommendPlacement(board, visibleSelection) : null;
 
   return (
     <div className="admin-checkin">
@@ -775,7 +823,7 @@ export default function AdminFieldCheckIn({ request }) {
           {status && <p className="admin-checkin__status" role="status">{status}</p>}
           {error && <p className="alert alert-danger" role="alert">{error}</p>}
           {matches.length > 0 && <PlayerRows players={matches} onSelect={lookup} disabled={checkInLocked} />}
-          {selected && <SelectedPlayer player={selected.player} date={selected.date} rentalRequested={rentalRequested} onRentalChange={setRentalRequested} suggestion={recommendation} working={checkInLocked} request={request}
+          {selected && <SelectedPlayer player={visibleSelection} date={selected.date} rentalRequested={rentalRequested} onRentalChange={setRentalRequested} suggestion={recommendation} working={checkInLocked} request={request} onRound={event => openRound(selected.player, event.currentTarget)}
             onWaiver={match => verifySelected(match.ref)} onRetry={() => verifySelected()} onAssessment={updateAssessment} onAssign={assign} onRename={renameWalkOn} onNext={nextPlayer} />}
           {walkOnWaiverQuery !== null && !selected && <section id="admin-checkin-waiver-search" aria-labelledby="admin-checkin-waiver-title">
             <h3 id="admin-checkin-waiver-title">Check in a walk-on by waiver</h3>
@@ -822,6 +870,11 @@ export default function AdminFieldCheckIn({ request }) {
               )}
             </div>
           </div>
+          {roundTarget && board?.date === roundTarget.date && <section key={roundTarget.playerId} className="admin-checkin__selection" aria-labelledby="admin-round-selection">
+            <h3 ref={roundHeading} tabIndex={-1} id="admin-round-selection">{roundTarget.displayName} · Round &amp; buddy</h3>
+            <RoundParticipation request={request} playerId={roundTarget.playerId} onSaved={roundSaved} />
+            <button type="button" className="btn btn-secondary" onClick={closeRound}>Close round controls</button>
+          </section>}
           {clearConfirmation && (
             <section className="admin-checkin__clear-confirmation" aria-labelledby="admin-checkin-clear-title" aria-describedby="admin-checkin-clear-description">
               <h3 id="admin-checkin-clear-title">Clear today’s check-ins?</h3>

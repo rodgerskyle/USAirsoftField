@@ -14,15 +14,15 @@ jest.mock('../Firebase', () => {
 });
 jest.mock('./AdminFieldCheckIn', () => ({ request }) => (
   <button type="button" onClick={() => void request('/api/game-day-check-in').catch(() => {})}>Load test roster</button>
-), { virtual: true });
+));
 jest.mock('./AdminFieldMembership', () => ({ request }) => (
   <button type="button" onClick={() => void request('/api/member-card/verify?staff=1', {
     method: 'POST', body: { playerId: 'fixture-player' },
   }).catch(() => {})}>
     Verify test membership
   </button>
-), { virtual: true });
-jest.mock('./AdminFieldReports', () => () => null, { virtual: true });
+));
+jest.mock('./AdminFieldReports', () => () => null);
 
 const admin = { uid: 'field-admin', roles: { ADMIN: true } };
 const sessionEndpoint = 'https://app.usairsoftfield.com/api/staff-session';

@@ -218,7 +218,8 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
         <button type="button" className="btn btn-outline-secondary" disabled={locked} onClick={() => void run(signal => openById(group.id, signal))}>Refresh party readiness</button></div>}
       {group.id && !busy && group.partyStatus !== 'review' && !missingBooking && !data.partyCalendarUnavailable &&
         (!hint || (hint.date === group.date && (!hint.key || hint.key === group.partyKey))) &&
-        <p><a className="btn btn-secondary" href={groupRentalLink(group.id)} target="_blank" rel="noopener noreferrer">Open rental form</a></p>}
+        <p><a className="btn btn-secondary" href={groupRentalLink(group.id)} target="_blank" rel="noopener noreferrer">Open rental form</a>{' '}
+          <a className="btn btn-secondary" href={groupRentalLink(group.id, true, 'return')} target="_blank" rel="noopener noreferrer">Swaps &amp; returns</a></p>}
       <div className="visit-party-tools">
         <button className="btn btn-secondary" type="button" disabled={locked} onClick={() => void run(signal => loadBookings(group, signal))}>{parties ? 'Refresh Party Calendar bookings' : 'Find bookings in the Party Calendar'}</button>
         {missingBooking && <p role="alert">The last confirmed booking no longer matches the Party Calendar for this date. Review the reservation and confirm the updated booking or unlink it.</p>}

@@ -53,20 +53,21 @@ function loadQRReader() {
     return qrDecoder;
 }
 
-export function createReader(verifyLegacyCards = false) {
+export function createReader(verifyLegacyCards = false, parseEquipmentTag) {
     return cameraFrameReader({
-        parse: (raw, format) => scannedValue(raw, format, verifyLegacyCards),
-        readBarcode: image => readPlayerIdBarcode(image, verifyLegacyCards ? isLegacyCardName : undefined),
+        parse: parseEquipmentTag || ((raw, format) => scannedValue(raw, format, verifyLegacyCards)),
+        readBarcode: image => readPlayerIdBarcode(image, parseEquipmentTag || (verifyLegacyCards ? isLegacyCardName : undefined)),
         loadQR: loadQRReader,
     });
 }
 
-export function StaffCardScanner({ disabled = false, onScan, verifyLegacyCards = false, manualFallback }) {
+export function StaffCardScanner({ disabled = false, onScan, verifyLegacyCards = false, manualFallback, parseEquipmentTag }) {
     const video = useRef(null);
     const camera = useRef(null);
     const callback = useRef(onScan);
     const [open, setOpen] = useState(false);
     const [status, setStatus] = useState('');
+    const subject = parseEquipmentTag ? 'an equipment tag' : 'a member card';
     callback.current = onScan;
 
     const release = useCallback(() => {
@@ -88,7 +89,7 @@ export function StaffCardScanner({ disabled = false, onScan, verifyLegacyCards =
         const suspend = () => {
             if (!camera.current) return;
             stop();
-            setStatus('Open the camera again to scan a member card.');
+            setStatus('Open the camera again to scan ' + subject + '.');
         };
         const onVisibility = () => { if (document.hidden) suspend(); };
         window.addEventListener('pagehide', suspend);
@@ -98,7 +99,7 @@ export function StaffCardScanner({ disabled = false, onScan, verifyLegacyCards =
             document.removeEventListener('visibilitychange', onVisibility);
             release();
         };
-    }, [release, stop]);
+    }, [release, stop, subject]);
     useEffect(() => {
         if (disabled && camera.current) {
             stop();
@@ -126,13 +127,13 @@ export function StaffCardScanner({ disabled = false, onScan, verifyLegacyCards =
             const onEnd = () => {
                 if (camera.current === current) {
                     stop();
-                    setStatus('Camera stopped. Open it again to scan a member card.');
+                    setStatus('Camera stopped. Open it again to scan ' + subject + '.');
                 }
             };
             const track = stream.getVideoTracks?.()[0];
             track?.addEventListener('ended', onEnd, { once: true });
             current.removeEnded = () => track?.removeEventListener('ended', onEnd);
-            const read = createReader(verifyLegacyCards);
+            const read = createReader(verifyLegacyCards, parseEquipmentTag);
             await playCardCamera(video.current, stream);
             if (camera.current !== current) return;
             setStatus('Center the whole QR code or barcode in the frame. Move closer until the bars are sharp.');
@@ -144,7 +145,7 @@ export function StaffCardScanner({ disabled = false, onScan, verifyLegacyCards =
                 if (camera.current !== current) return;
                 if (value) {
                     stop();
-                    setStatus('Card scanned.');
+                    setStatus(parseEquipmentTag ? 'Equipment tag scanned.' : 'Card scanned.');
                     callback.current?.(value);
                     return;
                 }
@@ -166,7 +167,7 @@ export function StaffCardScanner({ disabled = false, onScan, verifyLegacyCards =
                 stop();
                 setStatus('');
             } : start}>{open ? 'Close camera' : 'Scan with camera'}</button>
-            <video ref={video} className="field-staff-scanner__video" hidden={!open} muted playsInline aria-label="Scan a USAW member card" />
+            <video ref={video} className="field-staff-scanner__video" hidden={!open} muted playsInline aria-label={parseEquipmentTag ? 'Scan an equipment tag' : 'Scan a USAW member card'} />
             <p role="status" className="field-staff-scanner__status" hidden={!status}>{status}</p>
         </div>
     );

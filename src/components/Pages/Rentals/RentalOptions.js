@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { withFirebase } from '../../Firebase';
 import * as ROLES from '../../constants/roles';
 import { withAuthorization } from '../../session';
-import { set } from 'firebase/database';
+import { runTransaction } from 'firebase/database';
+import { clearRepair, heldCount } from './utils/rentalGear';
+import { rentalRows } from './utils/openRental';
 import '../FrontDeskForms.css';
 
 const RentalOptions = (props) => {
     const { firebase, rentalOptions } = props;
-    const [localOptions, setLocalOptions] = useState(rentalOptions);
+    const [localOptions, setLocalOptions] = useState(rentalRows(rentalOptions));
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
 
@@ -25,7 +27,7 @@ const RentalOptions = (props) => {
     }, [firebase]);
 
     useEffect(() => {
-        setLocalOptions(rentalOptions);
+        setLocalOptions(rentalRows(rentalOptions));
     }, [rentalOptions]);
 
     const handleMaxChange = (index, value) => {
@@ -47,7 +49,27 @@ const RentalOptions = (props) => {
                     return;
                 }
             }
-            await set(firebase.rentalOptions(), localOptions);
+            const changes = localOptions.filter(option =>
+                rentalRows(rentalOptions).some(original => original.value === option.value && Number(original.max) !== Number(option.max)));
+            if (changes.length) {
+                const result = await runTransaction(firebase.rentalOptions(), current => {
+                    if (current === null) return null;
+                    const next = Array.isArray(current) ? [...current] : { ...current };
+                    for (const change of changes) {
+                        const matches = Object.entries(current).filter(([, option]) => option?.value === change.value);
+                        if (matches.length !== 1) throw new Error('Inventory changed. Review the current options.');
+                        const [key, row] = matches[0];
+                        const previous = rentalRows(rentalOptions).find(option => option.value === row.value);
+                        const max = Number(change.max);
+                        if (Number(previous.max) !== Number(row.max) || !Number.isSafeInteger(max) || max < Number(row.stock || 0)) {
+                            throw new Error('Inventory changed. Review the current stock and maximum.');
+                        }
+                        next[key] = { ...row, max };
+                    }
+                    return next;
+                }, { applyLocally: false });
+                if (!result.committed || !result.snapshot.exists()) throw new Error('Inventory unavailable.');
+            }
             setSuccess("Rental inventory successfully updated.");
         } catch (err) {
             setError("Failed to update rental inventory.");
@@ -58,12 +80,15 @@ const RentalOptions = (props) => {
         setError(null);
         setSuccess(null);
         try {
-            const resetOptions = localOptions.map(option => ({
-                ...option,
-                stock: 0
-            }));
-            await set(firebase.rentalOptions(), resetOptions);
-            setLocalOptions(resetOptions);
+            const result = await runTransaction(firebase.rentals(), desk => {
+                if (desk === null) return null;
+                const options = Array.isArray(desk.options) ? [...desk.options] : { ...desk.options };
+                for (const [key, option] of Object.entries(options)) {
+                    if (option) options[key] = { ...option, stock: heldCount(desk.group, option) };
+                }
+                return { ...desk, options };
+            }, { applyLocally: false });
+            if (!result.committed || !result.snapshot.exists()) throw new Error('Inventory unavailable.');
             setSuccess("Rental inventory successfully reset.");
         } catch (err) {
             setError("Failed to reset rental inventory.");
@@ -73,6 +98,19 @@ const RentalOptions = (props) => {
     return (
         <section className="desk-inventory" aria-labelledby="rental-inventory-title">
             <h3 id="rental-inventory-title">Rental inventory</h3>
+            {localOptions.some(option => Object.keys(option.repairHolds || {}).length > 0) && <section aria-label="Items awaiting inspection">
+                <h4>Items awaiting inspection</h4>
+                <ul>{localOptions.flatMap(option => Object.entries(option.repairHolds || {}).map(([id, item]) => <li key={id}>
+                    {option.label} #{item.number} <button type="button" className="btn btn-outline-primary" onClick={async () => {
+                        setError(null); setSuccess(null);
+                        try {
+                            await clearRepair(firebase, option.value, id);
+                            setSuccess(option.label + ' #' + item.number + ' released for rental.');
+                        } catch (reason) {
+                            setError(reason.message || 'Could not release this equipment.');
+                        }
+                    }}>Release after inspection</button></li>))}</ul>
+            </section>}
             {localOptions?.length ? (
                 <form onSubmit={handleSubmit}>
                     <table>
@@ -98,7 +136,7 @@ const RentalOptions = (props) => {
                         {authUser?.roles[ROLES.SUPER] && (
                             <button type="button" onClick={handleReset} className="btn btn-outline-danger"
                                 disabled={localOptions.some(option => option.max === '' || !Number.isInteger(Number(option.max)) || Number(option.max) < 0)}>
-                                Reset in-use counts
+                                Recount reserved equipment
                             </button>
                         )}
                     </div>

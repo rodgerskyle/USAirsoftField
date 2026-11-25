@@ -1,9 +1,9 @@
 const guestId = /^guest:[0-9a-f]{64}$/;
 const memberId = /^[A-Za-z0-9_-]{10,128}$/;
 
-export function groupRentalLink(id, isAdmin = true) {
+export function groupRentalLink(id, isAdmin = true, view = 'new') {
   const path = isAdmin ? '/admin/rentalform' : '/dashboard/rentalform';
-  return path + '?' + new URLSearchParams({ view: 'new', group: id });
+  return path + '?' + new URLSearchParams({ view, group: id });
 }
 
 function validDate(date) {
@@ -34,10 +34,10 @@ export function rentalCheckInParams(params) {
   return { playerId, date, key };
 }
 
-export function checkInRentalLink(playerId, date, isAdmin = true, fromCompanion = false) {
+export function checkInRentalLink(playerId, date, isAdmin = true, fromCompanion = false, view = 'new') {
   if (!validCheckInSelection(playerId, date)) return null;
   const path = isAdmin ? '/admin/rentalform' : '/dashboard/rentalform';
-  const params = new URLSearchParams({ view: 'new', [guestId.test(playerId) ? 'walkOn' : 'member']: playerId, date });
+  const params = new URLSearchParams({ view, [guestId.test(playerId) ? 'walkOn' : 'member']: playerId, date });
   if (fromCompanion) params.set('from', 'companion');
   return path + '?' + params;
 }

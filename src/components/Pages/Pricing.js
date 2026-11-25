@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faClock, faUsers, faShieldAlt, faTicketAlt } from '@fortawesome/free-solid-svg-icons';
 import '../../components/constants/pricing.css';
 import useFieldResources from '../constants/useFieldResources';
+import { bookingPath, breakdown, estimateParty, money, partyPackages } from '../constants/partyEstimate';
 
 const PRICING_SECTIONS = {
     GAMEPLAY: 'gameplay',
@@ -116,8 +117,37 @@ const MembershipSection = ({ membership }) => (
     </div>
 );
 
+const BirthdayCalculator = ({ parties }) => {
+    const packages = partyPackages(parties);
+    const defaultPackage = packages.find(pack => pack.included === 10) || packages[0];
+    const [choice, setChoice] = useState(defaultPackage?.name || '');
+    const [players, setPlayers] = useState(String(defaultPackage?.included || ''));
+    const pack = packages.find(option => option.name === choice);
+    const quote = estimateParty(pack, players);
+
+    return <section className="party-estimator" aria-labelledby="party-estimator-title">
+        <h3 id="party-estimator-title">Birthday price calculator</h3>
+        {!packages.length ? <p>Contact the field for a party estimate.</p> : <>
+            <div className="party-estimator-fields">
+                <label>Package<select value={choice} onChange={event => setChoice(event.target.value)}>
+                    {packages.map(option => <option key={option.name} value={option.name}>{option.name} · {option.included} players</option>)}
+                </select></label>
+                <label>Number of players<input type="number" min="1" step="1" inputMode="numeric" value={players}
+                    onChange={event => setPlayers(event.target.value)} aria-invalid={!quote} /></label>
+            </div>
+            <div aria-live="polite">{quote ? <>
+                <p><strong>Estimated total {money(quote.total)}</strong></p>
+                <p>{breakdown(pack, quote)}</p>
+            </> : <p>Enter a whole number of players greater than zero.</p>}</div>
+            {pack?.inclusions.length > 0 && <p>{pack.inclusions.join(' · ')}</p>}
+            {quote && <Link className="btn btn-primary" to={bookingPath(pack, quote)}>Request this party</Link>}
+        </>}
+    </section>;
+};
+
 const PartiesSection = ({ parties }) => (
     <div className="pricing-modern-section-body">
+        <BirthdayCalculator parties={parties} />
         <div className="pricing-modern-callout">
             <div className="pricing-modern-callout-copy">
                 <p className="pricing-modern-callout-eyebrow">Nerf Arena</p>
@@ -175,9 +205,9 @@ const ContactCta = () => (
 );
 
 const Pricing = () => {
-    const [params] = useSearchParams();
-    const [activeSection, setActiveSection] = useState(() =>
-        params.get('section') === PRICING_SECTIONS.MEMBERSHIP ? PRICING_SECTIONS.MEMBERSHIP : null);
+    const [params, setParams] = useSearchParams();
+    const requested = params.get('section');
+    const activeSection = Object.values(PRICING_SECTIONS).includes(requested) ? requested : null;
     const activeMeta = SECTION_META[activeSection];
     const { resources, failed } = useFieldResources();
 
@@ -221,7 +251,7 @@ const Pricing = () => {
                             key={section.key}
                             type="button"
                             className={activeSection === section.key ? 'pricing-modern-tab active' : 'pricing-modern-tab'}
-                            onClick={() => setActiveSection(section.key)}
+                            onClick={() => setParams({ section: section.key }, { replace: true })}
                             aria-pressed={activeSection === section.key}
                             aria-controls="pricing-details"
                         >

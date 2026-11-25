@@ -7,6 +7,18 @@
     max-width: 1100px;
 }
 
+.contact-party-inquiry {
+    margin-bottom: 1.5rem;
+    padding: 1.25rem;
+    border: 1px solid var(--usaw-line);
+    border-radius: 16px;
+    color: var(--usaw-text);
+    background: var(--usaw-raised);
+}
+
+.contact-party-inquiry label { display: grid; gap: .35rem; max-width: 16rem; margin-bottom: 1rem; }
+.contact-party-inquiry input { min-height: 44px; padding: .5rem; }
+
 .contact-card {
     height: 100%;
 }

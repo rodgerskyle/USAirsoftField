@@ -115,7 +115,7 @@ class EditForm extends Component {
                             form={{ ...form, participants: rentalParticipants(form.participants), available: rentalRows(form.available) }}
                             firebase={firebase} uid={uid} canImportGroup={canImportGroup} initialGroupId={initialGroupId}
                             returnToCheckIn={this.props.returnToCheckIn}
-                            checkedInPlayer={this.props.checkedInPlayer} verifyCheckedInPlayer={this.props.verifyCheckedInPlayer}
+                            checkedInPlayer={this.props.checkedInPlayer} verifyCheckedInPlayer={this.props.verifyCheckedInPlayer} onOpenReturns={this.props.onOpenReturns}
                             showAP={this.props.showAP} /> : <p role="status">This rental form is no longer open.</p>}
                     </div>
                 )}
