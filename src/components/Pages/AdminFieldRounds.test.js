@@ -544,3 +544,37 @@ test('round shortcuts focus the chosen controls without submitting an action', a
     expect(screen.getByRole('heading', { name: 'Barracks TV countdown' })).toHaveFocus();
     expect(request.mock.calls.some(([, options]) => options?.method === 'POST')).toBe(false);
 });
+
+test('one-screen desk runs the selected game and opens its MVP ballot after confirmation', async () => {
+    const other = { ...scheduled, id: 'c92cb5f1-47d7-4788-8e1f-40ac0ab72812', title: 'Second field game' };
+    let selected = other;
+    const writes = [];
+    const request = mockStaffRequest({ current: () => [scheduled, selected], onWrite: body => {
+        writes.push(body);
+        if (body.phase === 'start') selected = { ...other, ...playing, id: other.id, title: other.title };
+        if (body.phase === 'finish') selected = { ...selected, status: 'ended' };
+        return { ok: true, commandId: body.commandId };
+    } });
+    const oldCrypto = window.crypto;
+    if (!window.crypto?.randomUUID) Object.defineProperty(window, 'crypto', { configurable: true, value: { ...oldCrypto,
+        randomUUID: () => 'ca19b898-de43-479b-a8e2-f18eb5fa2b88' } });
+    const confirm = jest.spyOn(window, 'confirm').mockReturnValue(false);
+    try {
+        render(<AdminFieldRounds request={request} />);
+        const panel = within(await screen.findByRole('region', { name: 'Run the next round' }));
+        fireEvent.change(panel.getByRole('combobox'), { target: { value: other.id } });
+        fireEvent.click(panel.getByRole('button', { name: 'Start game' }));
+        await waitFor(() => expect(panel.getByRole('button', { name: 'End game & open MVP vote' })).toBeEnabled());
+        expect(writes[0]).toEqual(expect.objectContaining({ action: 'runRoundConsole', phase: 'start', gameId: other.id, revision: 6 }));
+        fireEvent.click(panel.getByRole('button', { name: 'End game & open MVP vote' }));
+        expect(writes).toHaveLength(1);
+        confirm.mockReturnValue(true);
+        fireEvent.click(panel.getByRole('button', { name: 'End game & open MVP vote' }));
+        await waitFor(() => expect(writes).toHaveLength(2));
+        expect(writes[1]).toEqual(expect.objectContaining({ phase: 'finish', gameId: other.id, revision: 7 }));
+        await screen.findByText('Round ended and MVP voting is open.');
+    } finally {
+        confirm.mockRestore();
+        if (window.crypto !== oldCrypto) Object.defineProperty(window, 'crypto', { value: oldCrypto, configurable: true });
+    }
+});

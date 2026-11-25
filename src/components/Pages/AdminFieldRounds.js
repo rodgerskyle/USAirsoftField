@@ -7,6 +7,7 @@ import { FieldPinPicker, readMapPins, roundPinLocation } from './FieldRoundMap';
 import { RoundBriefingEditor } from './RoundBriefing';
 import { fieldStaffPaths } from '../constants/fieldStaffApi';
 import FieldSectionLinks from './FieldSectionLinks';
+import { mountRoundConsole, roundConsoleNotices } from './round-console';
 import './FieldRounds.css';
 
 const roundSections = [
@@ -33,6 +34,22 @@ const actions = {
     setBarracksClock: 'Countdown sent to Barracks TV.',
     clearBarracksClock: 'TV countdown stopped.',
 };
+
+function RoundConsole({ board, now, disabled, save }) {
+    const root = useRef(null);
+    const panel = useRef(null);
+    const saver = useRef(save);
+    saver.current = save;
+    useEffect(() => {
+        panel.current = mountRoundConsole(root.current, {
+            save: body => saver.current(body),
+            timingUrl: 'https://app.usairsoftfield.com/#staff/tool/game-timing',
+        });
+        return () => panel.current.destroy();
+    }, []);
+    useEffect(() => panel.current.update(board, now, disabled), [board, now, disabled]);
+    return <div ref={root} />;
+}
 
 function BarracksClockControls({ clock, now, disabled, onSave }) {
     const form = useRef(null);
@@ -63,7 +80,7 @@ function BarracksClockControls({ clock, now, disabled, onSave }) {
                 <button type="button" className="btn btn-primary" disabled={disabled} onClick={() => startPreset('break', 5)}>5-minute break</button>
                 <button type="button" className="btn btn-primary" disabled={disabled} onClick={() => startPreset('lunch', 30)}>30-minute lunch</button>
                 <button type="button" className="btn btn-primary" disabled={disabled} onClick={() => startPreset('safetyBrief', 60)}>60 min to safety brief</button>
-                {active && <button type="button" className="btn btn-outline-danger" disabled={disabled}
+                {clock?.kind && <button type="button" className="btn btn-outline-danger" disabled={disabled}
                     onClick={() => void onSave({ action: 'clearBarracksClock', revision })}>Stop timer</button>}
             </div>
             <form ref={form} className="field-rounds-form" onSubmit={setCustom}>
@@ -410,9 +427,9 @@ export default function AdminFieldRounds({ request }) {
         try {
             const result = await request(LIVE_ROUNDS_PATH, { method: 'POST', body, signal: controller.signal });
             if (controller.signal.aborted) throw new Error('The update was not confirmed. Check the board before trying again.');
-            if (result?.ok !== true) throw new Error('The field board did not confirm the action.');
+            if (result?.ok !== true || (body.action === 'runRoundConsole' && result.commandId !== body.commandId)) throw new Error('The field board did not confirm the action.');
             saved = true;
-            setNotice({ text: actions[body.action] });
+            setNotice({ text: body.action === 'runRoundConsole' ? roundConsoleNotices[body.phase] : actions[body.action] });
         } catch (failure) {
             if (mutation.current === controller) setNotice({
                 error: true,
@@ -461,6 +478,7 @@ export default function AdminFieldRounds({ request }) {
             {error && <p className="field-rounds-error" role="alert">{error} {board && 'Round controls will resume when the board reconnects.'}</p>}
             {notice && <p role={notice.error ? 'alert' : 'status'} className={notice.error ? 'field-rounds-error' : 'field-rounds-success'}>{notice.text}</p>}
             {board && <>
+                <RoundConsole board={board} now={now} disabled={disabled} save={save} />
                 <BarracksClockControls clock={board.barracksClock} now={now} disabled={disabled} onSave={save} />
                 <section className="field-rounds-panel" aria-labelledby="field-rounds-current">
                     <div className="field-rounds-card-header">
