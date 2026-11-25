@@ -8,8 +8,8 @@ const date = '2026-11-25';
 const round = { id: 'round-2', title: 'Battle Flag' };
 const adult = { playerId: 'member-parent-fixture', displayName: 'River', side: 'camo', revision: 4, sittingOut: false, buddyId: null };
 const child = { playerId: 'guest-child-fixture', displayName: 'Brook', side: 'solid', revision: 2, sittingOut: false, buddyId: null };
-const staffView = { date, round, players: [adult, child], counts: { total: 2, camo: 1, solid: 1 }, checkedInTotal: 2 };
-const self = { date, round, player: { side: 'solid', revision: 2, sittingOut: false, buddyName: 'River' } };
+const staffView = { date, rosterVersion: 'initial', round, players: [adult, child], counts: { total: 2, camo: 1, solid: 1 }, checkedInTotal: 2 };
+const self = { date, rosterVersion: 'initial', round, player: { side: 'solid', revision: 2, sittingOut: false, buddyName: 'River' } };
 function response(data, status = 200) { return { ok: status === 200, status, json: async () => data }; }
 afterEach(() => { global.fetch = originalFetch; });
 
@@ -26,11 +26,11 @@ test('staff can keep a checked-in walk-on with a member using both revisions and
   fireEvent.click(screen.getByRole('button', { name: 'Pair both on Solid' }));
   await screen.findByText('Battle Buddies paired on Solid.');
   expect(request.mock.calls[0][0]).toBe('/api/round-roster?staff=1');
-  expect(request.mock.calls[1][1].body).toEqual({ action: 'pair', date, playerId: adult.playerId, buddyId: child.playerId, revision: 4, buddyRevision: 2 });
+  expect(request.mock.calls[1][1].body).toEqual({ rosterVersion: 'initial', action: 'pair', date, playerId: adult.playerId, buddyId: child.playerId, revision: 4, buddyRevision: 2 });
   expect(saved).toHaveBeenCalledWith(paired);
   fireEvent.click(screen.getByRole('button', { name: 'Unpair Battle Buddies' }));
   await screen.findByText('Battle Buddy pair removed.');
-  expect(request.mock.calls[2][1].body).toEqual({ action: 'unpair', date, playerId: adult.playerId, buddyId: child.playerId, revision: 5 });
+  expect(request.mock.calls[2][1].body).toEqual({ rosterVersion: 'initial', action: 'unpair', date, playerId: adult.playerId, buddyId: child.playerId, revision: 5 });
 });
 
 test('stale round responses refresh the controls without silently sitting someone out of the next game', async () => {
@@ -41,7 +41,7 @@ test('stale round responses refresh the controls without silently sitting someon
   fireEvent.click(await screen.findByRole('button', { name: 'Sit out this round' }));
   expect(await screen.findByRole('alert')).toHaveTextContent('This round changed');
   expect(screen.getByText('Next round')).toBeVisible();
-  expect(request.mock.calls[1][1].body).toEqual({ action: 'availability', date, gameId: round.id, playerId: adult.playerId, revision: adult.revision, sittingOut: true });
+  expect(request.mock.calls[1][1].body).toEqual({ rosterVersion: 'initial', action: 'availability', date, gameId: round.id, playerId: adult.playerId, revision: adult.revision, sittingOut: true });
   expect(request.mock.calls.filter(([, options]) => options.method === 'POST')).toHaveLength(1);
 });
 
@@ -60,8 +60,8 @@ test('member round card operates only on the signed-in player, supports a return
   expect(screen.queryByText('Unpair Battle Buddies')).toBeNull();
   expect(global.fetch.mock.calls[0][0]).toBe('https://app.usairsoftfield.com/api/round-roster');
   expect(global.fetch.mock.calls[0][1]).toMatchObject({ credentials: 'omit', headers: { Authorization: 'Bearer fixture-token' } });
-  expect(JSON.parse(global.fetch.mock.calls[1][1].body)).toEqual({ action: 'availability', date, gameId: round.id, revision: 2, sittingOut: true });
-  expect(JSON.parse(global.fetch.mock.calls[2][1].body)).toEqual({ action: 'availability', date, gameId: round.id, revision: 3, sittingOut: false });
+  expect(JSON.parse(global.fetch.mock.calls[1][1].body)).toEqual({ rosterVersion: 'initial', action: 'availability', date, gameId: round.id, revision: 2, sittingOut: true });
+  expect(JSON.parse(global.fetch.mock.calls[2][1].body)).toEqual({ rosterVersion: 'initial', action: 'availability', date, gameId: round.id, revision: 3, sittingOut: false });
 });
 
 test('self lookup drops a stale identity before contacting the service and signed-out sessions cannot access it', async () => {

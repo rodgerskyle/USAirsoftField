@@ -45,7 +45,7 @@ function useRoundRoster(request, staff, onSaved) {
     ++sequence.current;
     writing.current = true; setBusy(true); setError(''); setNotice('');
     try {
-      const fresh = await request(endpoint, { method: 'POST', body, signal });
+      const fresh = await request(endpoint, { method: 'POST', body: { ...body, rosterVersion: data.rosterVersion }, signal });
       if (!signal.aborted) { setData(fresh); setNotice(message); onSaved?.(fresh); }
     } catch (failure) {
       if (!signal.aborted) {

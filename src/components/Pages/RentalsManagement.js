@@ -36,7 +36,7 @@ const VIEW_KEYS = ['new', 'edit', 'return', 'inventory'];
 const VIEW_CONFIG = {
     new: { label: 'New Form', icon: <AddBox fontSize="small" /> },
     edit: { label: 'Edit Form', icon: <EditNote fontSize="small" /> },
-    return: { label: 'Return Form', icon: <AssignmentReturn fontSize="small" /> },
+    return: { label: 'Swaps & returns', icon: <AssignmentReturn fontSize="small" /> },
     inventory: { label: 'Inventory', icon: <Inventory2 fontSize="small" /> }
 };
 
@@ -95,6 +95,13 @@ function RentalsManagement(props) {
         } else if (canImportGroup && key != null && GROUP_ID.test(id)) {
             setSearchParams({ view: 'edit', group: id, form: String(key) });
         }
+    };
+
+    const openReturns = formKey => {
+        const params = new URLSearchParams(searchParams);
+        params.set('view', 'return');
+        params.set('form', String(formKey));
+        setSearchParams(params);
     };
 
     useEffect(() => {
@@ -324,6 +331,7 @@ function RentalsManagement(props) {
                                             {...props}
                                             uid={authUser?.uid}
                                             canImportGroup={canImportGroup}
+                                            onOpenReturns={canImportGroup ? openReturns : null}
                                             checkedInPlayer={renter.player}
                                             verifyCheckedInPlayer={renter.verify}
                                             returnToCheckIn={!isNavHidden && returnPath}
@@ -342,10 +350,15 @@ function RentalsManagement(props) {
                                         }}>{linkedForm ? 'Open current rental' : 'Start a rental for this player'}</button>
                                     </section>}
 
-                                    {!loading && !waitingForPlayer && activeView === 'return' ? (
+                                    {!loading && activeView === 'return' && !canImportGroup && <p role="status">
+                                        Open the staff rental desk to manage swaps and returns.
+                                    </p>}
+                                    {!loading && !waitingForPlayer && canImportGroup && activeView === 'return' ? (
                                         <ReturnForm
+                                            key={JSON.stringify([location.key, linkedForm?.key])}
                                             {...props}
-                                            rentalForms={rentalForms}
+                                            initialFormKey={linkedForm?.key ?? searchParams.get('form')}
+                                            rentalForms={handoff || groupId ? (linkedForm ? [linkedForm] : []) : rentalForms}
                                             rentalOptions={rentalOptions}
                                         />
                                     ) : null}

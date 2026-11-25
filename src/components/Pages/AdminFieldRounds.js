@@ -81,7 +81,8 @@ function BarracksClockControls({ clock, now, disabled, onSave }) {
                 <button type="button" className="btn btn-primary" disabled={disabled} onClick={() => startPreset('lunch', 30)}>30-minute lunch</button>
                 <button type="button" className="btn btn-primary" disabled={disabled} onClick={() => startPreset('safetyBrief', 60)}>60 min to safety brief</button>
                 {clock?.kind && <button type="button" className="btn btn-outline-danger" disabled={disabled}
-                    onClick={() => void onSave({ action: 'clearBarracksClock', revision })}>Stop timer</button>}
+                    onClick={() => void onSave({ action: 'clearBarracksClock', revision, ...(!active && { observedEndsAt: clock.endsAt }) })}>
+                    {active ? 'Stop timer' : 'Mark countdown finished'}</button>}
             </div>
             <form ref={form} className="field-rounds-form" onSubmit={setCustom}>
                 <fieldset className="field-break-custom" disabled={disabled}>

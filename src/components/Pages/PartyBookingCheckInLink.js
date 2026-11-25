@@ -101,7 +101,8 @@ function CodeControls({ firebase, uid, date, partyKey, isAdmin }) {
         {group.readiness && <button type="button" className="btn btn-outline-primary" onClick={() => request('load')}>Refresh party readiness</button>}
       </>}
       {group.id && group.date === date && !needsReview && !error && !busy &&
-        <a href={groupRentalLink(group.id, isAdmin)} target="_blank" rel="noopener noreferrer">Open rental form</a>}
+        <><a href={groupRentalLink(group.id, isAdmin)} target="_blank" rel="noopener noreferrer">Open rental form</a>{' '}
+        <a href={groupRentalLink(group.id, isAdmin, 'return')} target="_blank" rel="noopener noreferrer">Swaps &amp; returns</a></>}
       {isAdmin && group.id && <a href={`/admin/field/groups?group=${encodeURIComponent(group.id)}`} target="_blank" rel="noopener noreferrer">Manage this group <span className="visually-hidden">(opens in a new tab)</span></a>}
     </>}
     {group === null && <>

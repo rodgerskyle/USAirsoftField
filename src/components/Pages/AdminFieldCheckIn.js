@@ -267,7 +267,8 @@ function SelectedPlayer({ player, date, suggestion, working, rentalRequested, on
             {side ? (player.buddyName ? 'Move both buddies to ' : 'Move to ') : 'Check in as '}{sides[choice]}{!side && rentalRequested ? ' & open rental' : ''}
           </button>
         ))}
-        {rentalLink && !working && <a className="btn btn-outline-primary" href={rentalLink}>Open rental form</a>}
+        {rentalLink && !working && <><a className="btn btn-outline-primary" href={rentalLink}>Open rental form</a>{' '}
+          <a className="btn btn-outline-primary" href={checkInRentalLink(player.playerId, date, true, false, 'return')}>Swaps &amp; returns</a></>}
         {side && <button type="button" className="btn btn-outline-primary" disabled={working} onClick={onRound}>Round status &amp; Battle Buddy</button>}
         {side && <button type="button" className="btn btn-primary" disabled={working} onClick={onNext}>Check in next player</button>}
         {side && canSetExperience && ratingChanged && (
