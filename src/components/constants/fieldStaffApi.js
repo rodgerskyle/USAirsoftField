@@ -19,6 +19,7 @@ const staffEndpoints = new Set([
   '/api/staff-player-accounts',
   '/api/staff-player-accounts/email-service',
   '/api/game-day-check-in',
+  '/api/round-roster',
   '/api/live-games',
   '/api/member-card/verify',
   '/api/member-card/waiver-name',
@@ -136,4 +137,28 @@ export async function requestPlayerPoll(user, { vote, mvpVote, signal } = {}) {
     signal,
   });
   return readResponse(response);
+}
+
+// Member requests use the signed-in identity only. A member cannot submit a target player ID.
+export async function requestMyRound(firebase, uid, { body, signal } = {}) {
+  const user = firebase.auth.currentUser;
+  const checkSession = () => {
+    if (signal?.aborted) throw new DOMException('Request canceled', 'AbortError');
+    if (!user || user.uid !== uid || firebase.auth.currentUser !== user) {
+      throw new FieldStaffError('Sign in to your USAW account to see your round.', 401);
+    }
+  };
+  checkSession();
+  const token = await user.getIdToken();
+  checkSession();
+  const payload = body && { action: 'availability', date: body.date, gameId: body.gameId, sittingOut: body.sittingOut, revision: body.revision };
+  const response = await fetch(companionEndpoint('/api/round-roster').href, {
+    method: payload ? 'POST' : 'GET', credentials: 'omit', cache: 'no-store', redirect: 'error', signal,
+    headers: { Accept: 'application/json', Authorization: 'Bearer ' + token, ...(payload && { 'Content-Type': 'application/json' }) },
+    ...(payload && { body: JSON.stringify(payload) }),
+  });
+  checkSession();
+  const result = await readResponse(response);
+  checkSession();
+  return result;
 }
