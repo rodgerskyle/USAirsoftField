@@ -209,7 +209,8 @@
         },
         {
           "name": "Weekend Package #2",
-          "price": "$400",
+          "revision": 2,
+          "price": "$500",
           "accent": "blue",
           "description": "Balanced option for a medium-sized group.",
           "items": [
@@ -218,7 +219,7 @@
             "2 large pizzas",
             "2 sodas (2 liter)",
             "1 US Airsoft birthday patch",
-            "Additional players are $40 each"
+            "Additional players are $50 each"
           ]
         },
         {
