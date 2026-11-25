@@ -151,7 +151,10 @@ export async function requestMyRound(firebase, uid, { body, signal } = {}) {
   checkSession();
   const token = await user.getIdToken();
   checkSession();
-  const payload = body && { action: 'availability', date: body.date, gameId: body.gameId, sittingOut: body.sittingOut, revision: body.revision };
+  const payload = body && {
+    action: 'availability', date: body.date, gameId: body.gameId, sittingOut: body.sittingOut,
+    revision: body.revision, rosterVersion: body.rosterVersion,
+  };
   const response = await fetch(companionEndpoint('/api/round-roster').href, {
     method: payload ? 'POST' : 'GET', credentials: 'omit', cache: 'no-store', redirect: 'error', signal,
     headers: { Accept: 'application/json', Authorization: 'Bearer ' + token, ...(payload && { 'Content-Type': 'application/json' }) },
