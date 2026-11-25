@@ -125,7 +125,10 @@ async function saveRentalForm(firebase, form, reservations, player) {
                 return undefined;
             }
             options[index] = { ...option, stock: stock + itemIds.length };
-            available.push(...itemIds.map(id => ({ ...option, id })));
+            // Service holds describe the catalog, not an individual reservation.
+            const unit = { ...option };
+            delete unit.repairHolds;
+            available.push(...itemIds.map(id => ({ ...unit, id })));
         }
         const indexes = Object.keys(groups).filter(id => /^(0|[1-9]\d*)$/.test(id)).map(Number);
         key = indexes.reduce((largest, value) => Math.max(largest, value), -1) + 1;

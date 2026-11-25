@@ -1,63 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import '../../../App.css';
 import { withFirebase } from '../../Firebase';
-import { Avatar, List, ListItem, ListItemAvatar, ListItemSecondaryAction, ListItemText, TextField, Typography, Button, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableFooter, TableHead, TableRow, CircularProgress, Snackbar, Chip } from '@mui/material';
-import { Contacts, AssignmentTurnedIn, ArrowBack, VerifiedUser, Warning, Delete, CheckCircle } from '@mui/icons-material';
+import { Avatar, List, ListItem, ListItemAvatar, ListItemText, TextField, Typography, Button, IconButton, Paper, CircularProgress, Snackbar } from '@mui/material';
+import { Contacts, AssignmentTurnedIn, ArrowBack, VerifiedUser, Warning, Delete } from '@mui/icons-material';
 import MuiAlert from '@mui/lab/Alert';
 import logo from '../../../assets/usairsoft-small-logo.png';
 import { runTransaction } from 'firebase/database';
 import EmptyState from './components/EmptyState';
-import { changeOpenRental, matchesRental, rentalIdentity, rentalParticipants, rentalRows } from './utils/openRental';
+import { GearScan, QuickGearDesk } from './QuickGearDesk';
+import { gearRows, reservationCounts } from './utils/rentalGear';
+import { matchesRental, rentalIdentity, rentalParticipants, rentalRows } from './utils/openRental';
 
 const Alert = React.forwardRef((props, ref) => (
     <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />
 ));
-
-const RentalRow = ({ rental, onCheckNumber, formKey }) => {
-    return (
-        <TableRow>
-            <TableCell>{rental.label}</TableCell>
-            <TableCell>
-                <div className="rental-numbers">
-                    {rental.numbers?.map((number, idx) => (
-                        <Chip
-                            key={idx}
-                            label={number}
-                            color={rental.checkedStates[number] ? "success" : "default"}
-                            onClick={() => onCheckNumber(rental.value, number, !rental.checkedStates[number], formKey)}
-                            icon={rental.checkedStates[number] ? <CheckCircle /> : undefined}
-                            className="rental-number-chip"
-                        />
-                    )) || 'N/A'}
-                </div>
-            </TableCell>
-            <TableCell align="right">
-                {rental.numbers?.length > 0 && (
-                    <Typography variant="body2" color="textSecondary" className="rental-check-count">
-                        {Object.values(rental.checkedStates).filter(Boolean).length} / {rental.numbers.length} checked
-                    </Typography>
-                )}
-            </TableCell>
-        </TableRow>
-    );
-};
-
-// Current forms reserve one item per row. Older forms kept an unassigned
-// quantity in a single catalog row with the catalog option's own ID.
-function reservationCounts(form, optionsByValue) {
-    const counts = new Map();
-    function add(item, unassigned) {
-        const option = optionsByValue.get(item.value);
-        if (!option) return;
-        const amount = Number(item.amount);
-        const bulk = unassigned && !form.createRequestId && (!item.id || item.id === option.id) &&
-            Number.isSafeInteger(amount) && amount > 0;
-        counts.set(item.value, (counts.get(item.value) || 0) + (bulk ? amount : 1));
-    }
-    rentalRows(form.available).forEach(item => add(item, true));
-    rentalParticipants(form.participants).forEach(person => person.rentals.forEach(item => add(item, false)));
-    return counts;
-}
 
 async function closeRental(firebase, key, expected, discard) {
     let receipt;
@@ -108,7 +64,7 @@ async function closeRental(firebase, key, expected, discard) {
                 const stock = Number(option.stock) || 0;
                 // Historical inventory can be undercounted. Never release units
                 // held by another form or inflate stock while closing this one.
-                const heldElsewhere = otherHolds.get(option.value) || 0;
+                const heldElsewhere = (otherHolds.get(option.value) || 0) + rentalRows(option.repairHolds).length;
                 const released = Math.min(count, Math.max(0, stock - heldElsewhere));
                 if (released) options[index] = { ...option, stock: stock - released };
             }
@@ -123,9 +79,13 @@ async function closeRental(firebase, key, expected, discard) {
 
 const ReturnForm = (props) => {
     const { firebase, rentalForms } = props;
-    const [selection, setSelection] = useState(null);
+    const [selection, setSelection] = useState(() => {
+        const form = rentalForms.find(form => props.initialFormKey != null && String(form.key) === String(props.initialFormKey));
+        return form ? { key: form.key, identity: rentalIdentity(form) } : null;
+    });
+    const [query, setQuery] = useState('');
+    const [numberFilter, setNumberFilter] = useState('');
     const index = rentalForms.findIndex(form => form.key === selection?.key && matchesRental(form, selection?.identity));
-    const [combinedList, setCombinedList] = useState([]);
     const submitting = useRef(false);
     const [error, setError] = useState(null);
     const [complete, setComplete] = useState(false);
@@ -134,35 +94,11 @@ const ReturnForm = (props) => {
     const [successMessage, setSuccessMessage] = useState('');
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        if (index !== -1) {
-            const selectedForm = rentalForms[index];
-            const combined = [];
-            rentalParticipants(selectedForm.participants).forEach(participant => {
-                participant.rentals && participant?.rentals?.forEach(rental => {
-                    const existingRental = combined.find(r => r.value === rental.value);
-                    if (existingRental) {
-                        if (rental.number) {
-                            existingRental.numbers.push(rental.number);
-                            existingRental.checkedStates[rental.number] = rental.checked || false;
-                        }
-                    } else {
-                        combined.push({
-                            ...rental,
-                            numbers: rental.number ? [rental.number] : [],
-                            checkedStates: rental.number ? { [rental.number]: rental.checked || false } : {}
-                        });
-                    }
-                });
-            });
-            setCombinedList(combined);
-        }
-    }, [index, rentalForms]);
-
     const handleFormSelect = (selectedIndex) => {
         setComplete(false);
         setEmail('');
-        setCombinedList([]);
+        const matched = gearRows(rentalForms[selectedIndex]).some(row => row.number && row.number.toLowerCase() === query.trim().toLowerCase());
+        setNumberFilter(matched ? query.trim() : '');
         setSelection({ key: rentalForms[selectedIndex].key, identity: rentalIdentity(rentalForms[selectedIndex]) });
     };
 
@@ -201,35 +137,8 @@ const ReturnForm = (props) => {
         }
     };
 
-    const handleCheckRentalNumber = async (rentalValue, number, isChecked, formKey) => {
-        try {
-            await changeOpenRental(firebase.rentalGroup(formKey), current => {
-                let found = false;
-                const participants = rentalParticipants(current.participants).map(participant => {
-                    if (!Array.isArray(participant.rentals)) return participant;
-                    return { ...participant, rentals: participant.rentals.map(rental => {
-                        if (rental.value !== rentalValue || rental.number !== number) return rental;
-                        found = true;
-                        return { ...rental, checked: isChecked };
-                    }) };
-                });
-                return found ? { ...current, participants } : undefined;
-            }, selection.identity);
-        } catch (error) {
-            console.error('Error updating rental check status:', error);
-            setError('Failed to update rental check status');
-        }
-    };
-
     const handleValidateAndComplete = () => {
-        // Check if all rentals in combinedList have been checked
-        const allChecked = combinedList.every(rental => {
-            // Check if all numbers for this rental are checked
-            return rental.numbers.every(number => {
-                return rental.checkedStates[number] === true;
-            });
-        });
-
+        const allChecked = gearRows(rentalForms[index]).every(row => !row.number || row.checked);
         if (!allChecked) {
             setError('Please check all rental numbers before completing');
             return;
@@ -239,18 +148,25 @@ const ReturnForm = (props) => {
     };
 
     // Main render for form list
-    const RentalFormList = () => (
+    const term = query.trim().toLowerCase();
+    const filteredForms = rentalForms.filter(form => !term || String(form.name || '').toLowerCase().includes(term) ||
+        gearRows(form).some(row => row.name.toLowerCase().includes(term) || row.number.toLowerCase() === term));
+    const renderFormList = () => (
         <div className="rental-return-container">
-            <h2 className="section-header">Return Rental Forms</h2>
+            <h2 className="section-header">Rental swaps &amp; returns</h2>
+            <div className="rental-form-search"><label>Find group, renter, or equipment number
+                <input className="form-control" autoComplete="off" value={query} onChange={event => setQuery(event.target.value)} /></label>
+                <GearScan onScan={setQuery} />
+            </div>
+            {term && !filteredForms.length && <p role="status">No matching open rentals.</p>}
             {rentalForms?.length > 0 ? (
                 <Paper elevation={3} className="return-rental-forms-list">
                     <List>
-                        {rentalForms.map((form, i) => (
+                        {filteredForms.map(form => (
                             <RentalFormListItem
                                 key={form.key}
                                 form={form}
-                                index={i}
-                                onSelect={() => handleFormSelect(i)}
+                                onSelect={() => handleFormSelect(rentalForms.indexOf(form))}
                                 onDelete={() => finish(form, true)}
                             />
                         ))}
@@ -263,7 +179,7 @@ const ReturnForm = (props) => {
     );
 
     // Individual form list item
-    const RentalFormListItem = ({ form, index, onSelect, onDelete }) => {
+    const RentalFormListItem = ({ form, onSelect, onDelete }) => {
         // if (!form.complete && form.size) return null;
 
         if (form.size == null) {
@@ -339,7 +255,7 @@ const ReturnForm = (props) => {
     );
 
     // Return form details view
-    const ReturnFormDetails = () => (
+    const renderReturnFormDetails = () => (
         <div className="return-form-details">
             <div className="header-actions">
                 <Button
@@ -358,41 +274,10 @@ const ReturnForm = (props) => {
                 <Typography variant="h6" className="group-name">
                     Group: {rentalForms[index]?.name}
                 </Typography>
-                <TableContainer>
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>Rental</TableCell>
-                                <TableCell>Numbers Rented Out</TableCell>
-                                <TableCell align="right">Checked</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {combinedList?.map((row, i) => (
-                                <RentalRow
-                                    key={i}
-                                    rental={row}
-                                    onCheckNumber={handleCheckRentalNumber}
-                                    formKey={rentalForms[index]?.key}
-                                />
-                            ))}
-                        </TableBody>
-                        <TableFooter>
-                            <TableRow>
-                                <TableCell colSpan={3} align="right">
-                                    <Button
-                                        variant="contained"
-                                        color="primary"
-                                        endIcon={<VerifiedUser />}
-                                        onClick={handleValidateAndComplete}
-                                    >
-                                        Complete Form
-                                    </Button>
-                                </TableCell>
-                            </TableRow>
-                        </TableFooter>
-                    </Table>
-                </TableContainer>
+                <QuickGearDesk key={JSON.stringify(selection)} form={rentalForms[index]} firebase={firebase} initialTag={numberFilter} />
+                <Button variant="contained" color="primary" endIcon={<VerifiedUser />} onClick={handleValidateAndComplete}>
+                    Complete Form
+                </Button>
             </Paper>
         </div>
     );
@@ -401,11 +286,11 @@ const ReturnForm = (props) => {
         <div className="return-form-root">
             <>
                 {index === -1 ? (
-                    <RentalFormList />
+                    renderFormList()
                 ) : complete ? (
                     renderCompletion()
                 ) : (
-                    <ReturnFormDetails />
+                    renderReturnFormDetails()
                 )}
                 <Snackbar
                     open={!!error || success}

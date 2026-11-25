@@ -14,7 +14,7 @@ jest.mock('firebase/database', () => ({
     query: jest.fn(), ref: jest.fn(), orderByChild: jest.fn(), startAt: jest.fn(), startAfter: jest.fn(), endAt: jest.fn(), limitToFirst: jest.fn(), limitToLast: jest.fn(),
 }));
 
-const firebase = { auth: { currentUser: { uid: 'staff' } }, rentalGroups: () => 'forms', rentalGroup: key => key, rentalOptions: () => 'options', digitalWaivers: () => 'waivers' };
+const firebase = { rentals: () => 'rental-desk', auth: { currentUser: { uid: 'staff' } }, rentalGroups: () => 'forms', rentalGroup: key => key, rentalOptions: () => 'options', digitalWaivers: () => 'waivers' };
 const group = { id: 'party', name: 'Birthday', date: '2026-11-20', kind: 'party' };
 const entries = [{ id: 'one', displayName: 'Rebel' }, { id: 'two', displayName: 'Rebel' }];
 const gear = { label: 'Vest', value: 'vest', id: 'vest-8', number: '8', checked: false };
@@ -30,8 +30,9 @@ beforeEach(() => {
     get.mockResolvedValue({ exists: () => false, val: () => null });
     onValue.mockImplementation(() => () => {});
     runTransaction.mockImplementation(async (key, transform) => {
-        const next = transform(key === 'forms' ? { ...others, '0': current } : current);
-        if (next !== undefined) current = key === 'forms' ? next['0'] : next;
+        const groups = { ...others, '0': current };
+        const next = transform(key === 'rental-desk' ? { group: groups, options: [] } : key === 'forms' ? groups : current);
+        if (next !== undefined) current = key === 'rental-desk' ? next.group['0'] : key === 'forms' ? next['0'] : next;
         return { committed: next !== undefined, snapshot: { val: () => current } };
     });
     GroupRentalPicker.mockImplementation(({ onAdd }) => <button onClick={() => onAdd(group, entries)}>Import arrivals</button>);
@@ -86,7 +87,7 @@ test('numbers each issued unit directly and keeps a canceled edit separate', asy
     expect(secondBox).toHaveValue('0042');
     expect(runTransaction).not.toHaveBeenCalled();
     fireEvent.click(within(secondBox.closest('form')).getByRole('button', { name: 'Save number' }));
-    await waitFor(() => expect(current.participants[0].rentals).toEqual([gear, { ...second, number: '0042' }]));
+    await waitFor(() => expect(current.participants[0].rentals).toMatchObject([gear, { ...second, number: '0042' }]));
     view.rerender(<EditForm {...formProps()} />);
     expect(secondBox).toHaveValue('0042');
     expect(within(list).queryByRole('button', { name: 'Save number' })).toBeNull();
@@ -157,10 +158,11 @@ test('a return check preserves imported identity, manual fields and arrivals add
     current = { ...current, participants: [{ ...handEntered, groupId: group.id, groupEntryId: 'one' }] };
     const view = render(<ReturnForm firebase={firebase} rentalForms={[{ ...current, key: '0' }]} />);
     fireEvent.click(within(screen.getByText(current.name).closest('li')).getByRole('button'));
-    const number = await screen.findByRole('button', { name: '8' });
+    const number = await screen.findByRole('button', { name: 'Return' });
     const late = { name: 'New player', groupId: group.id, groupEntryId: 'two' };
     current = { ...current, participants: [...current.participants, late] };
     fireEvent.click(number);
+    fireEvent.click(screen.getByRole('button', {name:'Confirm return'}));
     await waitFor(() => expect(current.participants[0].rentals[0].checked).toBe(true));
     expect(current.participants[0]).toMatchObject({ ref: 'legacy-waiver', note: 'Left-handed', groupId: group.id, groupEntryId: 'one' });
     expect(current.participants[1]).toMatchObject(late);

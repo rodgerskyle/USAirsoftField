@@ -20,6 +20,7 @@ import { withFirebase } from '../../Firebase';
 import GroupRentalPicker from './GroupRentalPicker';
 import { isCheckInRenter } from './utils/checkInRenter';
 import { editRentalInventory } from './utils/editRentalInventory';
+import { changeEquipment, gearRows } from './utils/rentalGear';
 import { importRentalParticipants, changeOpenRental, renameRentalParticipant, rentalIdentity, rentalParticipants, rentalRows } from './utils/openRental';
 
 import '../../../App.css';
@@ -346,7 +347,8 @@ const TransactionDialog = ({ open, onClose, onSubmit, error, value, onChange }) 
     );
 };
 
-function EquipmentNumberField({ rental, label, canIssue, onSave, onRemove }) {
+function EquipmentNumberField({ rental, label, canIssue: active, onSave, onRemove }) {
+    const canIssue = active && !rental.checked;
     const savedNumber = String(rental.number ?? '');
     const [draft, setDraft] = useState(null);
     const [saving, setSaving] = useState(false);
@@ -381,7 +383,7 @@ function EquipmentNumberField({ rental, label, canIssue, onSave, onRemove }) {
         <div className="rental-unit-heading">
             <strong>{label}</strong>
             {rental.checked && <CheckCircle titleAccess="Returned" fontSize="small" color="success" />}
-            {canIssue && <IconButton type="button" className="rental-unit-remove"
+            {canIssue && !savedNumber && <IconButton type="button" className="rental-unit-remove"
                 aria-label={'Remove ' + label} disabled={saving} onClick={onRemove}>
                 <Close fontSize="small" />
             </IconButton>}
@@ -1338,6 +1340,11 @@ class EditSelectedForm extends Component {
         const { participants, available } = this.props.form;
         const updatedParticipants = copyParticipants(participants);
         const removedParticipant = updatedParticipants[index];
+        if (participants[index]?.rentals?.some(item => item.number)) {
+            this.setState({ error: 'Keep this participant on the form to preserve their issued equipment history.' });
+            return;
+        }
+
 
         // Return all rentals back to availableList
         const updatedAvailableList = available ? [...available] : [];
@@ -1374,6 +1381,10 @@ class EditSelectedForm extends Component {
             return;
         }
 
+        if (participants[participantIndex].rentals[rentalIndex].number) {
+            this.setState({ error: 'Use Swaps & returns for issued equipment.' });
+            return;
+        }
         try {
             const updatedParticipants = copyParticipants(participants);
             let updatedAvailableList = available ? [...available] : [];
@@ -1407,14 +1418,10 @@ class EditSelectedForm extends Component {
     };
 
     handleEditRentalNumber = (participantIndex, rentalIndex, number) => {
-        const { participants } = this.props.form;
-        const updatedParticipants = copyParticipants(participants);
-
-        // Update the rental number
-        updatedParticipants[participantIndex].rentals[rentalIndex].number = number;
-
-        // Update state and firebase
-        return this.saveRoster({ participants: updatedParticipants });
+        const { form, firebase } = this.props;
+        const row = gearRows(form).find(item => item.personKey === String(participantIndex) && item.unitKey === String(rentalIndex));
+        if (!row || !form.complete) throw new Error('Reopen the activated rental form to number this item.');
+        return changeEquipment(firebase, form, [row], 'assign', number);
     };
 
     getAvailableItemsSummary = () => {
@@ -1741,7 +1748,8 @@ class EditSelectedForm extends Component {
                         <Typography variant="h6" style={{ marginLeft: '1rem' }}>
                             Rental Form
                         </Typography>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                            {this.props.onOpenReturns && <MUIButton variant="contained" onClick={() => this.props.onOpenReturns(this.props.form.key)}>Swaps &amp; returns</MUIButton>}
                             <MUIButton
                                 startIcon={<Edit />}
                                 onClick={() => this.setState({ showSizeEdit: true })}
