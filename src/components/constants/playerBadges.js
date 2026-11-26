@@ -83,6 +83,34 @@ async function callBadgeApi({ query, firebase, body, staffToken, signal, endpoin
     return result;
 }
 
+const publicKnifeUrl = 'https://app.usairsoftfield.com/api/knife-kills';
+const staffKnifeUrl = 'https://app.usairsoftfield.com/api/staff-knife-kills';
+const countIsValid = count => Number.isSafeInteger(count) && count >= 0;
+
+export async function getKnifeStandings(page, signal) {
+    const data = await callBadgeApi({ endpoint: publicKnifeUrl, query: { page }, signal });
+    if (data.page !== page || typeof data.hasMore !== 'boolean' || !Array.isArray(data.standings)
+        || !data.standings.every(row => row && countIsValid(row.rank) && row.rank > 0
+            && typeof row.playerId === 'string' && row.playerId && typeof row.displayName === 'string'
+            && row.displayName.trim() && countIsValid(row.total))) {
+        throw new Error('Knife kill standings could not be verified.');
+    }
+    return data;
+}
+
+export async function staffKnifeKills(firebase, staffToken, playerId, { body, signal } = {}) {
+    if (!firebase?.auth?.currentUser || !staffToken) throw new Error('Unlock staff controls to continue.');
+    const data = await callBadgeApi({ endpoint: staffKnifeUrl, firebase, staffToken, signal,
+        ...(body ? { body: { ...body, playerId } } : { query: { playerId } }) });
+    if (data.playerId !== playerId || !countIsValid(data.total) || !countIsValid(data.recorded)
+        || !(data.openingTotal === null || countIsValid(data.openingTotal))
+        || typeof data.eligibleForPatches !== 'boolean' || !Array.isArray(data.pendingPatches)
+        || !Array.isArray(data.history) || (body && !Array.isArray(data.newlyEarned))) {
+        throw new Error('The player record could not be verified. Try again.');
+    }
+    return data;
+}
+
 export async function getFeaturedBadges(playerIds, { signal } = {}) {
     return (await getFeaturedBadgeDetails(playerIds, { signal })).featured;
 }

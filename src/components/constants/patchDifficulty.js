@@ -12,11 +12,12 @@ const specialistPatches = new Set([
   'broken-arrow', 'level-4-biohazard', 'operation-first-strike', 'detonation',
   'fuel-depot-demolition', 'progressive-countdown', 'blackout-protocol',
   'ribbon-flag', 'fallout', 'hvt', 'human-decoy', 'wrong-pocket', 'pocket-bbs',
+  'ninja-warrior-50',
 ]);
 
 const elitePatches = new Set([
   'ambassador', 'community-builder', 'objective-mvp', 'buzzer-beater',
-  'return-to-sender', 'second-wind', 'no-shots-fired',
+  'return-to-sender', 'second-wind', 'no-shots-fired', 'bayonet-100',
 ]);
 
 export function patchDifficulty(badgeId) {

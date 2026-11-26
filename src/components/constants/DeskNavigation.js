@@ -79,6 +79,7 @@ export default function DeskNavigation({ admin = false, base = '/admin' }) {
             <Link to={overviewPath}><FontAwesomeIcon icon={faHouse} aria-hidden="true" />{admin ? 'Staff overview' : 'Waiver dashboard'}</Link>
             {admin && <>
               <Link to="/admin#staff-directory"><FontAwesomeIcon icon={faUsers} aria-hidden="true" />Find a player</Link>
+              <Link to="/admin#admin-knife-kills"><FontAwesomeIcon icon={faMedal} aria-hidden="true" />Knife kill recorder</Link>
               <Link to="/admin#admin-badges-title"><FontAwesomeIcon icon={faMedal} aria-hidden="true" />Award badges</Link>
             </>}
           </div>
