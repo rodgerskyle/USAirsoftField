@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
+import SearchOutlined from '@mui/icons-material/SearchOutlined';
+import WarningAmberOutlined from '@mui/icons-material/WarningAmberOutlined';
 import { requestStaffFieldTool } from '../../constants/fieldStaffApi';
 
 export default function RentalPickupChoice({ firebase, uid, onSaved, disabled }) {
@@ -49,18 +51,19 @@ export default function RentalPickupChoice({ firebase, uid, onSaved, disabled })
         });
     }
 
-    return <details className="mt-3"><summary>Change a checked-in player’s gear choice</summary>
-        <form onSubmit={find}><label>Checked-in player name
-            <input className="form-control" value={name} maxLength={80} disabled={disabled || loading}
+    return <details className="rental-pickup__choice"><summary>Change a checked-in player’s gear choice</summary>
+        <form className="rental-pickup__search" onSubmit={find}><label>Checked-in player name
+            <input className="form-control" autoComplete="off" value={name} maxLength={80} disabled={disabled || loading}
                 onChange={event => { setName(event.target.value); setResult(null); setError(''); }} /></label>{' '}
-            <button type="submit" className="btn btn-outline-primary" disabled={disabled || loading || name.trim().length < 2}>Find checked-in player</button>
+            <button type="submit" className="btn btn-outline-primary" disabled={disabled || loading || name.trim().length < 2}><SearchOutlined fontSize="small" aria-hidden="true" /> Find checked-in player</button>
         </form>
-        {error && <p role="alert">{error}</p>}
+        {loading && <p role="status">Updating gear choices…</p>}
+        {error && <p className="rental-pickup__message" data-tone="attention" role="alert"><WarningAmberOutlined aria-hidden="true" />{error}</p>}
         {result?.players.length === 0 && <p>No matching players waiting for a gear decision.</p>}
-        {result?.players.map(row => <article key={row.playerId} className="rental-pickup-row">
+        {result?.players.map(row => <article key={row.playerId} className="rental-pickup__result">
             <strong>{row.displayName}</strong> {row.groupName && <span>· {row.groupName}</span>}
             <p>Checked in {new Date(row.checkedInAt).toLocaleTimeString('en-US', {hour:'numeric',minute:'2-digit', timeZone:'America/Los_Angeles'})} · ID ending {row.playerId.slice(-6)}</p>
-            <div className="d-flex flex-wrap gap-2">
+            <div className="rental-pickup__actions">
                 <button className="btn btn-outline-primary" disabled={disabled || loading} onClick={() => choose(row, true)}>Needs rental gear</button>
                 <button className="btn btn-outline-primary" disabled={disabled || loading} onClick={() => choose(row, false)}>Bringing own gear</button>
             </div>

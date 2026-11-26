@@ -1317,16 +1317,25 @@ button.btn-pin-code-link {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: .75rem 1rem;
-    padding: .75rem 0;
+    justify-content: space-between;
+    gap: .7rem 1rem;
+    margin: .8rem 0;
+    padding: .85rem 1rem;
+    background: var(--usaw-subtle);
+    color: var(--usaw-text);
+    border-radius: .65rem;
 }
-.participant-card-checkin {
-    outline: 2px solid var(--admin-accent, #2275ab);
-}
+.rental-checkin-return > div { display: grid; min-width: 0; gap: .15rem; }
+.rental-checkin-return span { display: flex; align-items: center; gap: .45rem; color: var(--usaw-accent); }
+.rental-checkin-return strong { font-size: 1.14rem; overflow-wrap: anywhere; }
+.rental-checkin-return button { min-height: 46px; }
+.participant-card-checkin { outline: 2px solid var(--usaw-accent); }
 .participant-checkin-label {
-    margin: 0 0 .4rem;
+    width: fit-content;
+    margin: 0 0 .5rem;
+    padding: .3rem .6rem;
+    border-radius: .4rem;
+    color: var(--usaw-accent);
+    background: var(--usaw-subtle);
     font-weight: 700;
 }
-
-.rental-pickup-row { padding: 1rem 0; border-top: 1px solid var(--admin-border, #67778a); }
-.rental-pickup-row p { margin-bottom: .5rem; }

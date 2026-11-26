@@ -26,3 +26,9 @@
 .group-rental-picker fieldset label { display: flex; align-items: center; gap: .6rem; min-height: 2.25rem; overflow-wrap: anywhere; }
 .group-rental-picker__select-all { border-bottom: 1px solid var(--admin-border); }
 .group-rental-picker [role="alert"] { color: var(--admin-danger, #a02a24); }
+.group-rental-picker label, .group-rental-picker fieldset { min-width: 0; }
+.group-rental-picker fieldset label, .group-rental-picker .btn, .group-rental-picker .form-control { min-height: 46px; }
+.group-rental-picker fieldset label { flex-wrap: wrap; border-bottom: 1px solid var(--usaw-line); padding: .4rem .2rem; }
+.group-rental-picker fieldset label span { min-width: 0; overflow-wrap: anywhere; }
+.group-rental-picker fieldset label small { color: var(--usaw-muted); }
+.group-rental-picker :is(button, input):focus-visible { outline: 3px solid var(--usaw-focus); outline-offset: 3px; }

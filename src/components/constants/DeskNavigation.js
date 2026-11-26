@@ -1,16 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronDown, faGrip, faHouse, faMedal, faUser, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { adminToolGroups, waiverToolGroups } from './deskTools';
 
 const waiverShortcuts = ['waiverlookup', 'signup', 'renewal', 'rentalform'];
 
-function ToolLink({ tool }) {
-  return <NavLink to={tool.path}>
+function ToolLink({ tool, current }) {
+  return <Link to={tool.path} aria-current={tool === current ? 'page' : undefined} className={tool === current ? 'active' : undefined}>
     <FontAwesomeIcon icon={tool.icon} fixedWidth aria-hidden="true" />
     <span>{tool.shortTitle || tool.title}</span>
-  </NavLink>;
+  </Link>;
 }
 
 export default function DeskNavigation({ admin = false, base = '/admin' }) {
@@ -22,7 +22,9 @@ export default function DeskNavigation({ admin = false, base = '/admin' }) {
   const tools = groups.flatMap(group => group.actions);
   const quick = admin ? groups[0].actions : waiverShortcuts.map(route =>
     tools.find(tool => tool.path === base + '/' + route));
-  const current = tools.find(tool => location.pathname === tool.path || location.pathname.startsWith(tool.path + '/'));
+  const view = new URLSearchParams(location.search).get('view');
+  const current = tools.find(tool => tool.path === location.pathname + '?view=' + view)
+    || tools.find(tool => location.pathname === tool.path || location.pathname.startsWith(tool.path + '/'));
   const title = current?.shortTitle || current?.title || (location.pathname.startsWith('/admin/useroptions/') ? 'Player account' : 'Staff tools');
   const quickSelected = quick.includes(current);
   const overviewPath = admin ? '/admin' : '/dashboard';
@@ -54,7 +56,7 @@ export default function DeskNavigation({ admin = false, base = '/admin' }) {
       <div className="desk-navigation__inner">
         <div className="desk-navigation__bar">
           <div className="desk-navigation__quick">
-            {quick.map(tool => <ToolLink key={tool.path} tool={tool} />)}
+            {quick.map(tool => <ToolLink key={tool.path} tool={tool} current={current} />)}
           </div>
           <span className="desk-navigation__current">
             <FontAwesomeIcon icon={current?.icon || faUser} fixedWidth aria-hidden="true" />
@@ -72,7 +74,7 @@ export default function DeskNavigation({ admin = false, base = '/admin' }) {
           <div className="desk-navigation__groups">
             {groups.map(group => <div key={group.id} className="desk-navigation__group">
               <h2>{group.title}</h2>
-              <ul>{group.actions.map(tool => <li key={tool.path}><ToolLink tool={tool} /></li>)}</ul>
+              <ul>{group.actions.map(tool => <li key={tool.path}><ToolLink tool={tool} current={current} /></li>)}</ul>
             </div>)}
           </div>
           <div className="desk-navigation__footer">

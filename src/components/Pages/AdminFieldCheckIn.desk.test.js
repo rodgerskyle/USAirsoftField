@@ -35,6 +35,11 @@ test('after side confirmation the camera immediately accepts the next card and r
   render(<AdminFieldCheckIn request={request}/>);
   await act(async()=>{lastScan().onScan({playerId:member.playerId});});
   expect(lastScan().paused).toBe(true);
+  fireEvent.click(screen.getByRole('button',{name:'Back to search'}));
+  expect(lastScan().paused).toBe(false);
+  expect(screen.getByLabelText('Member name, ID or card link')).toHaveFocus();
+  expect(admissions).toBe(0);
+  await act(async()=>{lastScan().onScan({playerId:member.playerId});});
   fireEvent.click(await screen.findByRole('button',{name:'Check in as Blue / Solid'}));
   await screen.findByText(/Next stop · Barracks for briefing. Ready for the next card/);
   expect(lastScan().paused).toBe(false);

@@ -27,7 +27,7 @@ import {
     Chip,
     Button
 } from '@mui/material';
-import { AddBox, EditNote, AssignmentReturn, Inventory2, Lock, LockOpen } from '@mui/icons-material';
+import { AddBox, EditNote, AssignmentReturn, Inventory2, Lock, LockOpen, ArrowBack, HowToRegOutlined } from '@mui/icons-material';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import '../constants/admin.css';
 
@@ -303,9 +303,14 @@ function RentalsManagement(props) {
                                         </Row>
                                     ) : null}
 
-                                    {handoff && !isNavHidden && <section className="rental-checkin-return">
-                                        {renter.player && <strong>{renter.player.displayName}</strong>}
-                                        <a className="btn btn-outline-primary" href={returnPath}>Back to player check-in</a>
+                                    {!isNavHidden && (handoff || (groupId && searchParams.get('pickup') === 'arrived')) && <section className="rental-checkin-return" aria-label="Rental handoff">
+                                        <div>
+                                            <span><HowToRegOutlined fontSize="small" aria-hidden="true" /> {handoff ? 'From player check-in' : 'From party pickup'}</span>
+                                            {renter.player && <strong>{renter.player.displayName}</strong>}
+                                        </div>
+                                        {searchParams.get('pickup') === 'arrived' ?
+                                            <button className="btn btn-outline-primary" onClick={() => setView('pickup')}><ArrowBack fontSize="small" aria-hidden="true" /> Back to rental pickup</button> :
+                                            <a className="btn btn-outline-primary" href={returnPath}><ArrowBack fontSize="small" aria-hidden="true" /> Back to player check-in</a>}
                                     </section>}
                                     {!loading && requestedPlayer && !handoff && <p role="alert">This {searchParams.has('walkOn') ? 'walk-on' : 'member'} rental link is incomplete. Reopen the player in check-in.</p>}
                                     {handoff && !renter.player && (renter.error ? <section className="admin-panel-card p-3">

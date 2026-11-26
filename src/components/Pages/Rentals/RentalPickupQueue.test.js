@@ -74,3 +74,16 @@ it('records a changed choice for the selected admission before sending the walk-
     });
     await screen.findByRole('link', {name:'Open player rental'});
 });
+
+it('shows the next action for each player and keeps the pickup context through sign-in', async () => {
+    const unassigned = {...row, playerId:'guest:'+'f'.repeat(64), displayName:'Morgan Rivera'};
+    requestStaffFieldTool.mockResolvedValue({players:[row, unassigned]});
+    render(queue([form]));
+    expect(await screen.findByText('Ready to hand over')).toBeVisible();
+    expect(screen.getByText('Gear assignment needed')).toBeVisible();
+    expect(screen.getByRole('button', { name:'Confirm gear handed to Riley Bell' })).toHaveClass('btn-primary');
+    const [issued, waiting] = screen.getAllByRole('link', {name:'Open player rental'});
+    expect(issued).toHaveClass('btn-outline-primary');
+    expect(waiting).toHaveClass('btn-primary');
+    expect(walkOnAfterLogin(waiting.search, false)).toBe(waiting.pathname + waiting.search);
+});

@@ -1,0 +1,59 @@
+.service-time-panel {
+  --timing-ink: var(--usaw-text);
+  --timing-secondary: var(--usaw-muted);
+  --timing-accent: var(--usaw-accent);
+  --timing-raised: var(--usaw-raised);
+  --timing-outline: var(--usaw-line);
+  min-inline-size: 0;
+}
+.service-time-panel > summary {
+  align-content: center;
+  color: var(--timing-ink);
+  font-size: 1.15rem;
+  font-weight: 700;
+  min-height: 44px;
+  cursor: pointer;
+}
+.service-time-panel > summary::marker { color: var(--timing-accent); }
+.service-time-panel .timing-controls {
+  display: flex; flex-wrap: wrap; align-items: end; gap: .75rem;
+  margin-block: .5rem .85rem;
+}
+.service-time-panel .timing-controls label { display: grid; gap: .3rem; font-weight: 600; }
+.service-time-panel :is(input,button) { min-height: 44px; max-width: 100%; }
+.service-time-panel input {
+  padding: .45rem .65rem;
+  border: 1px solid var(--timing-secondary);
+  border-radius: .45rem;
+  background: var(--timing-raised);
+  color: var(--timing-ink);
+  font: inherit;
+}
+.service-time-panel :is(summary,input,button):focus-visible { outline: 3px solid var(--timing-accent); outline-offset: 3px; }
+.service-time-panel .timing-context { margin-block: .5rem .85rem; }
+.service-time-panel .service-time-stats {
+  display: grid; gap: .75rem; margin: 0;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11.5rem), 1fr));
+}
+.service-time-panel .timing-stat {
+  display: flex; flex-direction: column; min-width: 0; padding: 1rem;
+  color: var(--timing-ink); background: var(--timing-raised);
+  border: 1px solid var(--timing-outline); border-radius: .65rem;
+  overflow-wrap: anywhere;
+}
+.service-time-panel .timing-stat dt { margin: 0; font-size: 1rem; font-weight: 650; }
+.service-time-panel .timing-stat dd { display: grid; gap: .2rem; margin: .6rem 0 0; }
+.service-time-panel .timing-value {
+  font-size: clamp(1.45rem, 2.4vw, 1.9rem); line-height: 1.2;
+  color: var(--timing-accent); font-variant-numeric: tabular-nums;
+}
+.service-time-panel [data-empty='true'] .timing-value { font-size: 1.1rem; font-weight: 600; color: var(--timing-secondary); }
+.service-time-panel :is(.timing-sample,.timing-context,.timing-incomplete) { color: var(--timing-secondary); font-size: .95rem; }
+.service-time-panel .timing-incomplete { margin-top: .45rem; border-top: 1px solid var(--timing-outline); padding-top: .45rem; }
+@media (min-width: 34.01rem) {
+  .service-time-panel .timing-stat dt { min-block-size: 3em; }
+}
+@media (max-width: 34rem) {
+  .service-time-panel .service-time-stats { grid-template-columns: 1fr; }
+  .service-time-panel .timing-controls > * { width: 100%; }
+}

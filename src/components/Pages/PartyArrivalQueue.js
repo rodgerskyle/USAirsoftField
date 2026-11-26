@@ -20,13 +20,15 @@ export default function PartyArrivalQueue({ request, onOpen, disabled, refresh }
     timer = setTimeout(poll, 1500);
     return () => { controller.abort(); clearTimeout(timer); };
   }, [request, refresh]);
-  return rows.length > 0 && <section className="group-placement party-return-queue" aria-label="Waiting party guests">
-    <h4>Finish party check-in</h4>
-    <ul>{rows.map(row => <li key={row.entryId}><strong>{row.name}</strong> · {row.groupName}{' '}
-      {row.ready ? 'Waiver received' : 'Waiting for waiver'}{' '}
-      <button type="button" disabled={disabled} className="btn btn-outline-primary" onClick={() => onOpen(row.groupId, row.entryId)}>
-        {row.ready ? 'Finish check-in' : 'Open party'}
-      </button>
+  return rows.length > 0 && <section className="party-desk party-tray" aria-label="Waiting party guests">
+    <div className="party-tray-heading"><h4>Finish party check-in</h4><span>{rows.length} {rows.length === 1 ? 'guest' : 'guests'}</span></div>
+    <ul className="party-tray-list">{rows.map(row => <li key={row.entryId}>
+      <div className="party-tray-person"><strong>{row.name}</strong><small>{row.groupName}</small></div>
+      <span className="party-guest-state" data-kind={row.ready ? 'ready' : 'waiting'}>
+        {row.ready ? 'Waiver received' : 'Waiting for waiver'}
+      </span>
+      <button type="button" disabled={disabled} className={row.ready ? 'btn btn-primary party-main' : 'btn btn-outline-primary'}
+        onClick={() => onOpen(row.groupId, row.entryId)}>{row.ready ? 'Finish check-in' : 'Open party'}</button>
     </li>)}</ul>
   </section>;
 }

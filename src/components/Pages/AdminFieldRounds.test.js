@@ -570,8 +570,12 @@ test.each([false, true])('one-screen desk ends the selected game with optional n
         render(<AdminFieldRounds request={request} />);
         const panel = within(await screen.findByRole('region', { name: 'Run the next round' }));
         fireEvent.change(panel.getByRole('combobox'), { target: { value: other.id } });
+        expect(panel.getByText('Next on deck')).toBeVisible();
+        expect(panel.queryByRole('button', { name: 'End game' })).not.toBeInTheDocument();
         fireEvent.click(panel.getByRole('button', { name: 'Start game' }));
         await waitFor(() => expect(panel.getByRole('button', { name: finishButton })).toBeEnabled());
+        expect(panel.getByText('In play')).toBeVisible();
+        expect(panel.queryByRole('button', { name: 'Start game' })).not.toBeInTheDocument();
         expect(writes[0]).toEqual(expect.objectContaining({ action: 'runRoundConsole', phase: 'start', gameId: other.id, revision: 6 }));
         fireEvent.click(panel.getByRole('button', { name: finishButton }));
         expect(writes).toHaveLength(1);
@@ -628,7 +632,9 @@ test('ending a game opens its saved lineup and requires separate winner review a
         render(<AdminFieldRounds request={request} />);
         fireEvent.click(await screen.findByRole('button',{name:'End round'}));
         const desk = within(await screen.findByRole('region',{name:'Round lineup and result'}));
-        fireEvent.click(await desk.findByRole('button',{name:'Review Yellow / Camo win'}));
+        const winnerButton = await desk.findByRole('button',{name:'Review Yellow / Camo win'});
+        expect(desk.getByRole('heading', {name:'Round lineup and result'})).toHaveFocus();
+        fireEvent.click(winnerButton);
         expect(desk.getByText(/1 member win.*0 member loss.*1 walk-on/)).toBeVisible();
         expect(request.mock.calls.filter(([,options]) => options.body?.action === 'lineupResult')).toHaveLength(0);
         fireEvent.click(desk.getByRole('button',{name:'Confirm round result'}));
@@ -660,7 +666,12 @@ test('one result confirmation saves a 40-member lineup across ten score requests
     render(<AdminFieldRounds request={request} />);
     const desk = within(await screen.findByRole('region',{name:'Round lineup and result'}));
     fireEvent.click(desk.getByRole('button',{name:'Review lineup'}));
-    fireEvent.click(await desk.findByRole('button',{name:'Review Blue / Solid win'}));
+    const blue = await desk.findByRole('button',{name:'Review Blue / Solid win'});
+    const teams = [...desk.getByRole('heading', {name:'Players in this round'}).closest('[data-roster]').querySelectorAll('.lineup-teams summary')];
+    expect(teams.map(row => row.textContent)).toEqual(['Yellow / Camo 24', 'Blue / Solid 16']);
+    expect(desk.getByText('Adjust players in this round').closest('details')).not.toHaveAttribute('open');
+    fireEvent.click(blue);
+    expect(desk.getByRole('button',{name:'Confirm round result'})).toHaveFocus();
     expect(desk.getByText(/16 member wins.*24 member losses/)).toBeVisible();
     expect(batches).toHaveLength(0);
     fireEvent.click(desk.getByRole('button',{name:'Confirm round result'}));

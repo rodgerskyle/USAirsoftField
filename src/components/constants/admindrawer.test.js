@@ -37,6 +37,7 @@ function openPage(path, user) {
           <Routes>
             <Route path="/admin" element={<AdminLayout />}>
               <Route path="renewal/:id" element={<Page name="Renew member" />} />
+              <Route path="rentalform" element={<Page name="Rental form" />} />
               <Route path="field/:tool" element={<Page name="Round controls" />} />
             </Route>
             <Route path="/dashboard" element={<DashboardDeskLayout />}>
@@ -138,7 +139,7 @@ test('keeps every waiver desk link under the dashboard alias and hides admin-onl
   const routes = menu.getAllByRole('link').map(link => link.getAttribute('href'));
   expect(routes.slice().sort()).toEqual([
     '/dashboard', '/dashboard/birthday', '/dashboard/freegames', '/dashboard/renewal',
-    '/dashboard/rentalform', '/dashboard/scanwaiver', '/dashboard/signup', '/dashboard/waiverform', '/dashboard/waiverlookup',
+    '/dashboard/rentalform', '/dashboard/rentalform?view=pickup', '/dashboard/scanwaiver', '/dashboard/signup', '/dashboard/waiverform', '/dashboard/waiverlookup',
   ]);
   expect(menu.queryByRole('link', { name: /Award badges|Wins & Losses/ })).toBeNull();
 });
@@ -147,4 +148,11 @@ test('shows no tool switcher to an account without a staff role', () => {
   openPage('/admin/field/rounds', { roles: {} });
   expect(screen.queryByRole('navigation', { name: 'Desk shortcuts' })).toBeNull();
   expect(screen.queryByRole('link', { name: /Staff desk/ })).toBeNull();
+});
+
+test('identifies rental pickup separately from the rental form in the staff shortcuts', () => {
+  openPage('/admin/rentalform?view=pickup', { roles: { ADMIN: true } });
+  const shortcuts = screen.getByRole('navigation', { name: 'Desk shortcuts' });
+  expect(within(shortcuts).getByRole('link', { name: 'Rental Pickup' })).toHaveAttribute('aria-current', 'page');
+  expect(within(shortcuts).getByRole('link', { name: 'Rentals' })).not.toHaveAttribute('aria-current');
 });

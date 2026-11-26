@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import './GameDayServiceTimes.css';
 
 const fieldDay = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' });
 const metrics = [
@@ -8,10 +9,12 @@ const metrics = [
 ];
 
 function elapsed(milliseconds) {
-  if (milliseconds === null) return '—';
+  if (milliseconds === null) return 'No average yet';
   const seconds = Math.round(milliseconds / 1000);
   if (seconds < 60) return seconds + ' sec';
-  return Math.floor(seconds / 60) + ' min' + (seconds % 60 ? ' ' + (seconds % 60) + ' sec' : '');
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return minutes + ' min' + (seconds % 60 ? ' ' + (seconds % 60) + ' sec' : '');
+  return Math.floor(minutes / 60) + ' hr' + (minutes % 60 ? ' ' + (minutes % 60) + ' min' : '');
 }
 
 function valid(value) {
@@ -43,22 +46,27 @@ export default function GameDayServiceTimes({ request }) {
     return () => controller.abort();
   }, [open, request, date, today, revision]);
   const result = state?.date === date && state.revision === revision ? state : null;
-  return <details className="field-rounds-panel" onToggle={event => setOpen(event.currentTarget.open)}>
+  return <details className="field-rounds-panel service-time-panel" onToggle={event => setOpen(event.currentTarget.open)}>
     <summary>Game-day service times</summary>
     {open && <>
-      <div className="field-rounds-actions">
+      <div className="timing-controls">
         <label>Field date (Pacific)<input type="date" value={date} max={today} onChange={event => setDate(event.target.value)} /></label>
         <button type="button" className="btn btn-outline-secondary" onClick={() => refresh(v => v + 1)}>Refresh service times</button>
       </div>
       {!date || date > today ? <p role="status">Choose today or an earlier field date.</p> : result?.error ?
         <p role="alert" className="field-rounds-error">{result.error}</p> : !result ?
         <p role="status">Loading service times…</p> : <>
-          <p>Averages use recorded starts and finishes. Party timing includes rental guests who have arrived.</p>
+          <p className="timing-context">Average for the selected day. Party timing counts guests who have arrived and requested gear.</p>
           <dl className="service-time-stats">{metrics.map(([key,label,one,many]) => {
             const metric = result.totals[key];
-            return <div key={key}><dt>{label}</dt><dd><strong>{elapsed(metric.meanMs)}</strong><br />
-              <small>{metric.samples} measured {metric.samples === 1 ? one : many} · {metric.unpaired} without a finish</small>
-            </dd></div>;
+            return <div key={key} className="timing-stat" data-empty={metric.samples === 0}>
+              <dt>{label}</dt>
+              <dd>
+                <strong className="timing-value">{elapsed(metric.meanMs)}</strong>
+                <span className="timing-sample">{metric.samples} completed {metric.samples === 1 ? one : many}</span>
+                {metric.unpaired > 0 && <span className="timing-incomplete">{metric.unpaired} without a recorded finish</span>}
+              </dd>
+            </div>;
           })}</dl>
         </>}
     </>}

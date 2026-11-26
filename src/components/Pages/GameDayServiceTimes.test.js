@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import GameDayServiceTimes from './GameDayServiceTimes';
 
 const noObservation = { samples: 0, meanMs: null, unpaired: 0 };
@@ -16,8 +16,13 @@ test('staff open the timing report on demand and see measured samples and incomp
   section.open = true;
   fireEvent(section, new Event('toggle'));
   expect(await screen.findByText('1 min 15 sec')).toBeInTheDocument();
-  expect(screen.getByText('2 measured check-ins · 1 without a finish')).toBeInTheDocument();
-  expect(screen.getByText('0 measured parties · 0 without a finish')).toBeInTheDocument();
+  const scan = within(screen.getByText('First scan to check-in').parentElement);
+  expect(scan.getByText('2 completed check-ins')).toBeInTheDocument();
+  expect(scan.getByText('1 without a recorded finish')).toBeInTheDocument();
+  const party = within(screen.getByText('Party arrival to last rental handout').parentElement);
+  expect(party.getByText('No average yet')).toBeInTheDocument();
+  expect(party.getByText('0 completed parties')).toBeInTheDocument();
+  expect(party.queryByText(/without a recorded finish/)).not.toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Field date (Pacific)'), { target: { value: '2024-04-14' } });
   await waitFor(() => expect(request).toHaveBeenCalledWith('/api/staff-game-timing?date=2024-04-14', expect.objectContaining({ signal: expect.anything() })));
 });

@@ -33,11 +33,14 @@ function ActionGroup({ group, featured = false }) {
       aria-labelledby={`staff-${group.id}`}>
       <h2 id={`staff-${group.id}`}>{group.title}</h2>
       <ul className="staff-dashboard__actions">
-        {group.actions.map(({ title, path, icon }) => (
+        {group.actions.map(({ title, path, icon, description }) => (
           <li key={path}>
-            <Link to={path} className="staff-dashboard__action">
+            <Link to={path} className="staff-dashboard__action" aria-label={title}
+              aria-describedby={featured ? `staff-action-${title.replace(/\W+/g, "-")}` : undefined}>
               <span className="staff-dashboard__action-icon"><FontAwesomeIcon icon={icon} aria-hidden="true" /></span>
-              <span>{title}</span>
+              <span className="staff-dashboard__action-text">{title}
+                {featured && <small id={`staff-action-${title.replace(/\W+/g, "-")}`}>{description}</small>}
+              </span>
               <FontAwesomeIcon className="staff-dashboard__action-arrow"
                 icon={featured ? faArrowRight : faChevronRight} aria-hidden="true" />
             </Link>

@@ -463,7 +463,3 @@
     box-shadow: 0 1rem 4rem #040914c9;
   }
 }
-
-.field-rounds .service-time-stats { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
-.field-rounds .service-time-stats dd { margin: .3rem 0 0; }
-.field-rounds .service-time-stats strong { font-size: 1.25rem; }

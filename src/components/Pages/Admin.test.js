@@ -73,6 +73,7 @@ test('links each native field tool once and keeps website scoring, scheduling, w
   }
   const websiteTools = [
     ['Party Calendar', '/admin/birthday'],
+    ['Rental Pickup', '/admin/rentalform?view=pickup'],
     ['Manage Groups', '/admin/field/groups'],
     ['Field Game Days', '/schedule'],
     ['Wins & Losses', '/admin/scores'],
@@ -86,11 +87,11 @@ test('links each native field tool once and keeps website scoring, scheduling, w
   expect(screen.getByRole('heading', { name: 'Player directory' })).toBeInTheDocument();
 });
 
-test('places the five game-day desks together and exposes player and badge shortcuts', () => {
+test('places the game-day desks together and exposes player and badge shortcuts', () => {
   openAdmin(admin)();
   const desks = within(screen.getByRole('region', { name: 'Game day' })).getAllByRole('link');
-  expect(desks.map(link => link.textContent)).toEqual([
-    'Player Check-In', 'Manage Groups', 'Rental Form', 'Wins & Losses', 'Round Controls',
+  expect(desks.map(link => link.getAttribute('aria-label'))).toEqual([
+    'Player Check-In', 'Manage Groups', 'Rental Pickup', 'Rental Form', 'Round Controls', 'Wins & Losses',
   ]);
   for (const name of ['Membership', 'Waivers & parties', 'Field operations']) {
     expect(within(screen.getByRole('region', { name })).getAllByRole('link').length).toBeGreaterThan(0);

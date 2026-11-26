@@ -26,17 +26,19 @@ function sideList(players, side, byId) {
     const info = [!player.member && 'Walk-on', buddy && 'Buddy: ' + buddy.displayName].filter(Boolean);
     return '<li>' + escape(player.displayName) + (info.length ? ' <small>' + escape(info.join(' · ')) + '</small>' : '') + '</li>';
   }).join('');
-  return '<details data-team="' + side + '"><summary>' + sides[side] + ' · ' + team.length
-    + '</summary>' + (names ? '<ul>' + names + '</ul>' : '<p>No players on this side.</p>') + '</details>';
+  return '<details data-team="' + side + '"><summary><span>' + sides[side] + '</span> <strong>' + team.length
+    + '</strong></summary>' + (names ? '<ul>' + names + '</ul>' : '<p>No players on this side.</p>') + '</details>';
 }
 
 export function mountRoundLineup(root, { request, scoresUrl }) {
   const box = document.createElement('section');
   box.className = 'field-rounds-panel card lg-round-ops round-lineup-desk';
   box.setAttribute('aria-label', 'Round lineup and result');
-  box.innerHTML = '<h2>Round lineup and result</h2><button type="button" class="btn btn-secondary" data-open>Review lineup</button>'
-    + '<div data-panel hidden><fieldset><label class="field">Played round<select data-game></select></label>'
-    + '<button type="button" class="btn btn-secondary" data-refresh>Refresh lineup</button> <button type="button" class="btn btn-secondary" data-latest hidden>Show recent lineups</button><div data-roster></div></fieldset>'
+  box.innerHTML = '<header class="round-desk-heading"><h2 tabindex="-1">Round lineup and result</h2>'
+    + '<button type="button" class="btn btn-secondary" data-open>Review lineup</button></header>'
+    + '<div data-panel hidden><fieldset><div class="lineup-picker"><label class="field">Played round<select data-game></select></label>'
+    + '<button type="button" class="btn btn-secondary" data-refresh>Refresh lineup</button>'
+    + '<button type="button" class="btn btn-secondary" data-latest hidden>Show recent lineups</button></div><div data-roster></div></fieldset>'
     + '<p role="status" aria-live="polite" data-status></p></div>';
   root.append(box);
   const find = selector => box.querySelector(selector);
@@ -68,24 +70,14 @@ export function mountRoundLineup(root, { request, scoresUrl }) {
     const players = model.players, byId = new Map(players.map(player => [player.playerId, player]));
     const members = players.filter(player => player.member).length;
     const walkOns = players.length - members;
-    let html = '<div class="lineup-teams">' + sideList(players, 'camo', byId) + sideList(players, 'solid', byId)
-      + '</div><p>' + amount(members, 'member') + ' · ' + amount(walkOns, 'walk-on') + '</p>';
-    if (!model.winner && model.candidates.length) {
-      html += '<label class="field">Add someone who played<select data-late><option value="">Choose a player outside this lineup</option>'
-        + model.candidates.map(person => '<option value="' + escape(person.playerId) + '">' + escape(person.displayName + ' · ' + sides[person.side]) + '</option>').join('')
-        + '</select></label><button type="button" class="btn btn-secondary" data-add disabled>Add to this round</button>';
-    }
-    if (!model.winner && players.length) {
-      html += '<details data-team="changes"><summary>Adjust the lineup</summary>'
-        + '<label class="field">Player to exclude<select data-exclude><option value="">Choose a player</option>'
-        + players.map(person => '<option value="' + escape(person.playerId) + '">' + escape(person.displayName + ' · ' + sides[person.side]) + '</option>').join('')
-        + '</select></label><p>Exclude anyone who left before play or already received an individual score for this round.</p>'
-        + '<button type="button" class="btn btn-secondary" data-remove disabled>Exclude from this round</button></details>';
-    }
+    let html = '<div class="lineup-summary"><h3>Players in this round</h3><p>' + amount(members, 'member') + ' · ' + amount(walkOns, 'walk-on') + '</p></div>'
+      + '<div class="lineup-teams">' + sideList(players, 'camo', byId) + sideList(players, 'solid', byId) + '</div>';
+    const selectedSide = model.winner || review;
+    html += '<div class="lineup-result"' + (selectedSide ? ' data-side="' + selectedSide + '"' : '') + '>';
     if (model.winner) {
       const progress = model.progress;
       const unfinished = progress.remaining > 0 || progress.failed > 0;
-      html += '<h3>' + sides[model.winner] + ' won</h3><p>' + (unfinished
+      html += '<h3 tabindex="-1" data-recorded>' + sides[model.winner] + ' won</h3><p>' + (unfinished
         ? progress.saved + ' saved · ' + progress.remaining + ' remaining' : 'Round result recorded.') + '</p>';
       if (progress.failed) {
         html += '<ul aria-label="Players needing a retry">' + model.failures.map(row => '<li>' + escape(row.displayName) + ' · ' + escape(row.error) + '</li>').join('') + '</ul>';
@@ -100,15 +92,32 @@ export function mountRoundLineup(root, { request, scoresUrl }) {
       const winCount = players.filter(player => player.side === review && player.member).length;
       html += '<h3>' + sides[review] + ' wins</h3><p>' + amount(winCount, 'member win') + ' · ' + (members - winCount)
         + (members - winCount === 1 ? ' member loss · ' : ' member losses · ') + amount(walkOns, 'walk-on') + ' in this lineup</p>'
-        + '<div class="field-rounds-actions lg-head-actions"><button type="button" class="btn btn-primary" data-confirm>Confirm round result</button>'
+        + '<div class="field-rounds-actions"><button type="button" class="btn btn-primary" data-confirm>Confirm round result</button>'
         + '<button type="button" class="btn btn-secondary" data-back>Change winner</button></div>';
     } else {
-      html += '<h3>Who won?</h3><div class="field-rounds-actions lg-head-actions">'
+      html += '<h3>Who won?</h3><div class="field-rounds-actions">'
         + Object.entries(sides).map(([side, label]) => '<button type="button" class="btn btn-secondary" data-win="' + side + '">Review ' + label + ' win</button>').join('')
         + '</div>';
     }
+    html += '</div>';
+    if (!model.winner && (model.candidates.length || players.length)) {
+      html += '<details class="lineup-adjustments" data-team="changes"><summary>Adjust players in this round</summary>';
+      if (model.candidates.length) {
+        html += '<div class="lineup-adjust"><label class="field">Add someone who played<select data-late><option value="">Choose a player outside this lineup</option>'
+          + model.candidates.map(person => '<option value="' + escape(person.playerId) + '">' + escape(person.displayName + ' · ' + sides[person.side]) + '</option>').join('')
+          + '</select></label><button type="button" class="btn btn-secondary" data-add disabled>Add to this round</button></div>';
+      }
+      if (players.length) {
+        html += '<div class="lineup-adjust"><label class="field">Player to exclude<select data-exclude><option value="">Choose a player</option>'
+          + players.map(person => '<option value="' + escape(person.playerId) + '">' + escape(person.displayName + ' · ' + sides[person.side]) + '</option>').join('')
+          + '</select></label><button type="button" class="btn btn-secondary" data-remove disabled>Exclude from this round</button>'
+          + '<p>Exclude anyone who left before play or already received an individual score for this round.</p></div>';
+      }
+      html += '</details>';
+    }
     roster.innerHTML = html;
     for (const el of roster.querySelectorAll('details')) el.open = expanded.has(el.dataset.team);
+    if (!model.winner && !players.length && model.candidates.length) find('.lineup-adjustments').open = true;
     const scoreLink = find('[data-scores]');
     if (scoreLink) scoreLink.href = scoresUrl;
   }
@@ -116,12 +125,15 @@ export function mountRoundLineup(root, { request, scoresUrl }) {
     if (!allowed || locked || loading || disposed) return;
     const current = new AbortController();
     controller = current;
+    const restoreFocus = box.contains(document.activeElement);
     loading = true;
     lockControls();
     const resultCommand = body.action === 'lineupResult';
     let timeout, timedOut = false;
     const abortOnTimeout = () => { timedOut = true; current.abort(); };
-    status.textContent = resultCommand ? 'Saving round results…' : body.action === 'lineupAdd' ? 'Adding player…' : 'Loading lineup…';
+    const pending = {lineupAdd:'Adding player…', lineupRemove:'Excluding player…', lineupResult:'Saving round results…'};
+    status.dataset.tone = 'busy';
+    status.textContent = pending[body.action] || 'Loading lineup…';
     try {
       let previousUntried = Infinity;
       for (;;) {
@@ -139,11 +151,13 @@ export function mountRoundLineup(root, { request, scoresUrl }) {
         previousUntried = untried;
         status.textContent = 'Saving round results… ' + data.progress.saved + ' saved.';
       }
+      status.dataset.tone = resultCommand && model.progress.failed ? 'error' : 'done';
       status.textContent = body.action === 'lineupAdd' ? 'Player added to this round.' : body.action === 'lineupRemove' ? 'Player excluded from this round.'
         : resultCommand && model.progress.failed ? 'Some results still need attention. Review the players above and retry.' : '';
     } catch (error) {
       if (controller !== current || (current.signal.aborted && !timedOut)) return;
       // An interrupted submission may already have saved some scores. Read it again before offering any write.
+      status.dataset.tone = 'error';
       model = null;
       review = null;
       roster.replaceChildren();
@@ -155,16 +169,26 @@ export function mountRoundLineup(root, { request, scoresUrl }) {
         controller = null;
         loading = false;
         lockControls();
+        if (restoreFocus && !locked && (document.activeElement === document.body || !document.activeElement)) {
+          const intended = !model ? '[data-refresh]' : resultCommand ? (model.progress.remaining ? '[data-resume]' : '[data-recorded]')
+            : body.action === 'lineupAdd' ? '[data-late]' : body.action === 'lineupRemove' ? '[data-exclude]' : '[data-game]';
+          (find(intended) || find('.lineup-adjustments summary'))?.focus();
+        }
         if (queuedGame && !locked) {
           const id = queuedGame; queuedGame = null; open(id);
         }
       }
     }
   }
-  function open(gameId) {
+  function open(gameId, focusHeading = false) {
     if (!allowed || disposed) return;
     panel.hidden = false;
     openButton.hidden = true;
+    if (focusHeading) {
+      const heading = find('h2');
+      heading.focus({preventScroll:true});
+      heading.scrollIntoView?.({block:'nearest'});
+    }
     if (locked || loading) { queuedGame = gameId || null; return; }
     chosen = gameId;
     review = null;
@@ -179,7 +203,7 @@ export function mountRoundLineup(root, { request, scoresUrl }) {
     const button = event.target.closest('button');
     if (!button || locked || loading) return;
     if (button.hasAttribute('data-latest')) { open(); return; }
-    if (button === openButton || button.hasAttribute('data-refresh')) { open(chosen); return; }
+    if (button === openButton || button.hasAttribute('data-refresh')) { open(chosen, button === openButton); return; }
     if (!model?.game || model.game.id !== chosen) return;
     if (button.hasAttribute('data-add')) {
       const playerId = find('[data-late]').value;

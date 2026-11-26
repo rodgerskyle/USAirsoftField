@@ -142,7 +142,7 @@ function TeamTalent({ board }) {
             <section className="admin-checkin__team" data-side={side} key={side}>
               <div className="admin-checkin__heading">
                 <h3>{name}</h3>
-                <span>{counts?.[side] ?? '—'} players</span>
+                <span>{counts?.[side] ?? '—'} {counts?.[side] === 1 ? 'player' : 'players'}</span>
               </div>
               <span>Estimated strength share {share === null ? '—' : `${share}%`}</span>
               <progress aria-label={`${name} estimated strength share`} value={share ?? 0} max={100} />
@@ -234,14 +234,8 @@ function SelectedPlayer({ player, date, suggestion, working, rentalRequested, on
   const membership = memberships[membershipStatus] || memberships.unconfirmed;
   const ratingChanged = experienceBand !== (assignedExperienceBand || 'unrated');
   return (
-    <section className="admin-checkin__selection" aria-labelledby="admin-checkin-selection">
+    <section className="admin-checkin__selection admin-checkin__participant" aria-labelledby="admin-checkin-selection">
       <h3 id="admin-checkin-selection" tabIndex={-1} ref={heading}>{player.displayName}</h3>
-      {membershipStatus === 'guest' && <details className="admin-checkin__edit-name" key={player.playerId + player.displayName}><summary>Edit walk-on name</summary>
-        <form className="admin-checkin__form" onSubmit={event => { event.preventDefault(); onRename(event.currentTarget.elements.displayName.value.trim()); }}>
-          <label>Walk-on name or callsign<input name="displayName" defaultValue={player.displayName} minLength={2} maxLength={80} required readOnly={working} /></label>
-          <button type="submit" className="btn btn-secondary" disabled={working}>Save walk-on name</button>
-        </form></details>}
-      {membershipStatus !== 'guest' && <p className="admin-checkin__id">{player.playerId}</p>}
       <div className="admin-checkin__badges">
         <span className="admin-checkin__pill" data-membership={membershipStatus}>{membership}</span>
         <span className="admin-checkin__pill" data-side={side || undefined}>
@@ -253,6 +247,12 @@ function SelectedPlayer({ player, date, suggestion, working, rentalRequested, on
           {countFormat.format(gamesLogged)} {gamesLogged === 1 ? 'game' : 'games'} logged
         </span>}
       </div>
+      {membershipStatus === 'guest' && <details className="admin-checkin__edit-name" key={player.playerId + player.displayName}><summary>Edit walk-on name</summary>
+        <form className="admin-checkin__form" onSubmit={event => { event.preventDefault(); onRename(event.currentTarget.elements.displayName.value.trim()); }}>
+          <label>Walk-on name or callsign<input name="displayName" defaultValue={player.displayName} minLength={2} maxLength={80} required readOnly={working} /></label>
+          <button type="submit" className="btn btn-secondary" disabled={working}>Save walk-on name</button>
+        </form></details>}
+      {membershipStatus !== 'guest' && <p className="admin-checkin__id">{player.playerId}</p>}
       {player.waiverStatus !== 'signed' && <div id="admin-checkin-selected-waiver">
         <button type="button" className="btn btn-outline-secondary" onClick={onRetry} disabled={working}>Retry waiver check</button>
         {!side && <button type="button" className="btn btn-outline-primary" disabled={working} onClick={onPause}>Finish later</button>}
@@ -275,17 +275,20 @@ function SelectedPlayer({ player, date, suggestion, working, rentalRequested, on
         <input type="checkbox" checked={rentalRequested} disabled={working} onChange={event => onRentalChange(event.target.checked)} />
         Open rental form after check-in
       </label>}
-      <div className="admin-checkin__buttons">
-        {choices.map(choice => (
-          <button className={`btn btn-${side ? 'outline-primary' : 'primary'}`} type="button" key={choice} disabled={working || (!side && player.waiverStatus !== 'signed')} onClick={() => onAssign(choice)}>
+      {side && <p className="admin-checkin__destination">{deskSide(side)}{admissionTime(player.checkedInAt)}{nextStop && <> · Next stop · <strong>{nextStop}</strong></>}</p>}
+      <div className="admin-checkin__buttons admin-checkin__decisions">
+        <div className={side ? 'admin-checkin__move' : 'admin-checkin__team-actions'}>
+          {choices.map(choice => (
+          <button className={`btn btn-${side ? 'outline-primary' : 'primary'}`} type="button" data-team-choice={!side ? choice : undefined} key={choice} disabled={working || (!side && player.waiverStatus !== 'signed')} onClick={() => onAssign(choice)}>
             {side ? (player.buddyName ? 'Move both buddies to ' : 'Move to ') : 'Check in as '}{rapid && !side ? deskSide(choice) : sides[choice]}{!side && rentalRequested ? ' & open rental' : ''}
           </button>
-        ))}
+          ))}
+        </div>
         {rentalLink && !working && <><a className="btn btn-outline-primary" href={rentalLink}>Open rental form</a>{' '}
           <a className="btn btn-outline-primary" href={checkInRentalLink(player.playerId, date, true, false, 'return')}>Swaps &amp; returns</a></>}
-        {side && <p>{deskSide(side)}{admissionTime(player.checkedInAt)}{nextStop && ' · Next stop · ' + nextStop}</p>}
+
         {side && <button type="button" className="btn btn-outline-primary" disabled={working} onClick={onRound}>Round status &amp; Battle Buddy</button>}
-        {side && <button type="button" className="btn btn-primary" disabled={working} onClick={onNext}>Check in next player</button>}
+        <button type="button" className={side ? 'btn btn-primary' : 'btn btn-outline-secondary'} disabled={working} onClick={onNext}>{side ? 'Check in next player' : 'Back to search'}</button>
         {side && canSetExperience && ratingChanged && (
           <button type="button" className="btn btn-primary" disabled={working} onClick={() => onAssign(side)}>{membershipStatus === 'guest' ? 'Save experience' : 'Save balance estimate'}</button>
         )}
@@ -862,26 +865,28 @@ export default function AdminFieldCheckIn({ request }) {
       <div className="admin-checkin__columns">
         <section className="admin-checkin__card" aria-labelledby="admin-checkin-find">
           <h2 id="admin-checkin-find" tabIndex={-1}>Member search</h2>
-          <form className="admin-checkin__form" role="search" aria-labelledby="admin-checkin-find" onSubmit={submitLookup}>
+          <form className="admin-checkin__form admin-checkin__member-form" role="search" aria-labelledby="admin-checkin-find" onSubmit={submitLookup}>
             <label htmlFor="admin-checkin-player">
               Member name, ID or card link
               <input id="admin-checkin-player" ref={memberInput} type="search" enterKeyHint="search" maxLength={500} autoCapitalize="none" autoComplete="off" autoCorrect="off" spellCheck={false} required readOnly={checkInLocked} onChange={resetLookup} />
             </label>
             <button className="btn btn-primary" type="submit" disabled={checkInLocked}>Search members</button>
-            {!selected && <button type="button" className="btn btn-outline-primary" disabled={checkInLocked}
+          </form>
+          <div className="admin-checkin__scan-tools">
+            <StaffCardScanner verifyLegacyCards continuous disabled={checkInLocked} paused={Boolean(selected || matches.length || walkOnWaiverQuery !== null)}
+              onScan={input => lookup({ ...input, deskScan: true })} />
+            {!selected && <button type="button" className="btn btn-outline-secondary admin-checkin__find-waiver" disabled={checkInLocked}
               aria-expanded={walkOnWaiverQuery !== null} aria-controls="admin-checkin-waiver-search"
               onClick={() => {
                 const open = walkOnWaiverQuery === null;
                 resetLookup();
                 if (open) setWalkOnWaiverQuery(memberInput.current.value.trim());
               }}>Find a waiver</button>}
-          </form>
-          <StaffCardScanner verifyLegacyCards continuous disabled={checkInLocked} paused={Boolean(selected || matches.length || walkOnWaiverQuery !== null)}
-            onScan={input => lookup({ ...input, deskScan: true })} />
-          <p className="admin-checkin__hint">Point the camera at the QR code or barcode on the member’s USAW card. You can also type their name or scan into the search field.</p>
+          </div>
           {status && <p className="admin-checkin__status" role="status">{status}</p>}
           {error && <p className="alert alert-danger" role="alert">{error}</p>}
-          {matches.length > 0 && <PlayerRows players={matches} onSelect={input => lookup({ ...input, ...(arrival.current.rapid && { deskScan: true }) })} disabled={checkInLocked} />}
+          {matches.length > 0 && <><PlayerRows players={matches} onSelect={input => lookup({ ...input, ...(arrival.current.rapid && { deskScan: true }) })} disabled={checkInLocked} />
+            <button className="btn btn-outline-secondary" type="button" disabled={checkInLocked} onClick={nextPlayer}>Back to search</button></>}
           {selected && <SelectedPlayer player={visibleSelection} date={selected.date} rentalRequested={rentalRequested} onRentalChange={setRentalRequested} suggestion={recommendation} working={checkInLocked} request={request} onRound={event => openRound(selected.player, event.currentTarget)}
             onPause={pauseVisit} rapid={arrival.current.rapid} nextStop={selected.nextStop} onWaiver={match => verifySelected(match.ref)} onRetry={() => verifySelected()} onAssessment={updateAssessment} onAssign={assign} onRename={renameWalkOn} onNext={nextPlayer} />}
           {walkOnWaiverQuery !== null && !selected && <section id="admin-checkin-waiver-search" aria-labelledby="admin-checkin-waiver-title">
@@ -901,7 +906,7 @@ export default function AdminFieldCheckIn({ request }) {
                 <input id="admin-checkin-guest" ref={guestInput} type="text" minLength={2} maxLength={80} autoComplete="off" required readOnly={checkInLocked}
                   onChange={resetLookup} />
               </label>
-              <button className="btn btn-outline-primary" type="submit" disabled={checkInLocked}>Continue</button>
+              <button className="btn btn-primary" type="submit" disabled={checkInLocked}>Continue</button>
               <button className="btn btn-outline-primary" type="button" disabled={checkInLocked}
                 onClick={event => {
                   if (event.currentTarget.form.reportValidity()) lookup({ displayName: guestInput.current.value.trim() }, true, undefined, true);

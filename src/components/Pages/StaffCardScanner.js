@@ -138,7 +138,7 @@ export function StaffCardScanner({ disabled = false, onScan, verifyLegacyCards =
             const read = createReader(verifyLegacyCards, parseEquipmentTag);
             await playCardCamera(video.current, stream);
             if (camera.current !== current) return;
-            setStatus('Center the whole QR code or barcode in the frame. Move closer until the bars are sharp.');
+            setStatus(continuous ? 'Camera ready. Center the member card’s QR code or barcode.' : 'Center the whole QR code or barcode in the frame. Move closer until the bars are sharp.');
 
             async function scanFrame() {
                 if (camera.current !== current || !video.current) return;
@@ -180,13 +180,13 @@ export function StaffCardScanner({ disabled = false, onScan, verifyLegacyCards =
     }
 
     return (
-        <div className="field-staff-scanner">
-            <button type="button" className="btn btn-outline-secondary" disabled={disabled && !open} onClick={open ? () => {
+        <div className="field-staff-scanner" data-session={continuous && open ? (paused || disabled ? 'review' : 'scan') : undefined}>
+            <button type="button" className="btn btn-outline-secondary" aria-expanded={open} disabled={disabled && !open} onClick={open ? () => {
                 stop();
                 setStatus('');
             } : start}>{open ? 'Close camera' : 'Scan with camera'}</button>
             <video ref={video} className="field-staff-scanner__video" hidden={!open} muted playsInline aria-label={parseEquipmentTag ? 'Scan an equipment tag' : 'Scan a USAW member card'} />
-            <p role="status" className="field-staff-scanner__status" hidden={!status}>{status}</p>
+            <p role="status" className="field-staff-scanner__status" hidden={!status}>{open && continuous && (paused || disabled) ? 'Camera paused for player review.' : status}</p>
         </div>
     );
 }

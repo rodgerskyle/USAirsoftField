@@ -155,3 +155,15 @@ test('organizer sees destination counts for checked-in guests separately from gu
   expect(stops).toHaveTextContent('1 guest to the barracks for briefing');
   expect(screen.getByText('Check in with staff when you arrive.')).toBeInTheDocument();
 });
+
+test('the admitted guest sees their destination before waiver and gear details', async () => {
+  const view = guestView({ rentalIntent: 'requested', requestedGear: 'Mask and vest', waiverStatus: 'signed' });
+  view.group.entries[0].nextStop = 'rentals';
+  fetch.mockResolvedValue(response(view));
+  render(portal('guest', guest));
+  const direction = await screen.findByText('Go to rental pickup for your gear.');
+  const equipment = screen.getByText('Mask and vest');
+  expect(direction.compareDocumentPosition(equipment) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(screen.queryByRole('button', { name:'Save rental choice' })).not.toBeInTheDocument();
+  expect(screen.getByText('Your signed waiver is verified for this visit.')).toBeVisible();
+});

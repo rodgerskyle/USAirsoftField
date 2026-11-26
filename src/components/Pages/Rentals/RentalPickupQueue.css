@@ -1,0 +1,74 @@
+.rental-pickup {
+  --pickup-ready: #205842;
+  --pickup-ready-bg: #e3f2e9;
+  --pickup-attention: #744215;
+  --pickup-attention-bg: #fff1dc;
+  background: var(--usaw-surface);
+  color: var(--usaw-text);
+  border: 1px solid var(--usaw-line);
+  border-radius: .9rem;
+  padding: clamp(.9rem, 2.5vw, 1.65rem);
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+:root[data-bs-theme="dark"] .rental-pickup {
+  --pickup-ready: #afe8c8;
+  --pickup-ready-bg: #183c34;
+  --pickup-attention: #ffd19b;
+  --pickup-attention-bg: #453524;
+}
+.rental-pickup__header, .rental-pickup__identity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: .55rem 1rem;
+}
+.rental-pickup__header { align-items: center; margin-bottom: 1.05rem; }
+.rental-pickup h3, .rental-pickup h4, .rental-pickup h5 { color: var(--usaw-text); line-height: 1.22; margin: 0; }
+.rental-pickup h3 { font-size: clamp(1.65rem, 3.2vw, 2.25rem); }
+.rental-pickup__header p { margin: .35rem 0 0; color: var(--usaw-muted); }
+.rental-pickup h4 { display: flex; align-items: center; gap: .6rem; font-size: 1.13rem; margin: .7rem 0; }
+.rental-pickup__list-title span { display: inline-grid; min-width: 1.9rem; place-items: center; border-radius: .45rem; padding: .15rem .42rem; color: var(--usaw-accent); background: var(--usaw-subtle); font: 700 1rem var(--usaw-font-body); }
+.rental-pickup__player { background: var(--usaw-raised); border: 1px solid var(--usaw-line); border-radius: .65rem; padding: clamp(.85rem, 2vw, 1.2rem); margin: .65rem 0; }
+.rental-pickup h5 { flex: 1 1 13rem; min-width: 0; font-size: clamp(1.2rem, 2.9vw, 1.5rem); }
+.rental-pickup__group { margin: .35rem 0 0; color: var(--usaw-muted); }
+.rental-pickup__state { display: inline-flex; align-items: center; gap: .35rem; padding: .3rem .55rem; border-radius: .4rem; font-weight: 650; font-size: .94rem; }
+.rental-pickup__state svg { font-size: 1.1rem; flex: none; }
+.rental-pickup [data-tone="ready"] { background: var(--pickup-ready-bg); color: var(--pickup-ready); }
+.rental-pickup [data-tone="attention"], .rental-pickup [data-tone="pending"] { background: var(--pickup-attention-bg); color: var(--pickup-attention); }
+.rental-pickup__message { display: flex; align-items: flex-start; gap: .55rem; margin: .6rem 0; border-radius: .55rem; padding: .9rem; background: var(--usaw-subtle); color: var(--usaw-accent); }
+.rental-pickup__message svg { flex: none; }
+.rental-pickup__gear { display: flex; flex-wrap: wrap; gap: .6rem 2rem; padding: .75rem 0; margin: .3rem 0 .7rem; border-bottom: 1px solid var(--usaw-line); }
+.rental-pickup__gear > div { min-width: 0; }
+.rental-pickup__gear dt { font-size: .92rem; color: var(--usaw-muted); font-weight: 600; }
+.rental-pickup__gear dd { margin: .12rem 0 0; font-size: 1.05rem; }
+.rental-pickup__actions, .rental-pickup__search { display: flex; flex-wrap: wrap; gap: .6rem; }
+.rental-pickup .btn, .rental-checkin-return .btn, .rental-pickup__choice summary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  min-height: 46px;
+  max-width: 100%;
+  padding: .55rem .85rem;
+  white-space: normal;
+  line-height: 1.3;
+  border-radius: .48rem;
+}
+.rental-pickup .btn svg { flex: none; }
+.rental-pickup :is(a, button, summary, input):focus-visible, .rental-checkin-return a:focus-visible {
+  outline: 3px solid var(--usaw-focus); outline-offset: 3px;
+}
+.rental-pickup__choice { margin-top: 1.1rem; border-top: 1px solid var(--usaw-line); padding-top: .55rem; }
+.rental-pickup__choice summary { width: fit-content; display: list-item; cursor: pointer; color: var(--usaw-accent); font-weight: 700; padding: .75rem .2rem; }
+.rental-pickup__search { align-items: flex-end; margin: .4rem 0 .8rem; }
+.rental-pickup__search label { flex: 1 1 14rem; max-width: 29rem; min-width: 0; }
+.rental-pickup__search .form-control { min-height: 46px; margin-top: .3rem; font-size: 1rem; color: var(--usaw-text); border-color: var(--usaw-muted); background: var(--usaw-surface); }
+.rental-pickup__result { padding: .8rem 0; border-top: 1px solid var(--usaw-line); }
+.rental-pickup__result p { color: var(--usaw-muted); margin: .25rem 0 .5rem; }
+@media (max-width: 520px) {
+  .rental-pickup__actions > .btn, .rental-pickup__search > .btn { flex: 1 1 100%; }
+  .rental-pickup__state { max-width: 100%; }
+}

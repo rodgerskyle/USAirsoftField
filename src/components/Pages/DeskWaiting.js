@@ -7,12 +7,13 @@ function WaiverCode({ url, name }) {
   const code = qrCode(0, 'M');
   code.addData(url, 'Byte');
   code.make();
-  return <div><p>Ask the player or guardian to scan this code, sign, and return to the desk.</p><img src={code.createDataURL(4, 16)} alt={'Waiver QR code for ' + name} />
-    <p><a href={url} target="_blank" rel="noreferrer">Open this player’s waiver</a></p></div>;
+  return <div className="admin-checkin__waiver-qr"><img src={code.createDataURL(4, 16)} alt={'Waiver QR code for ' + name} />
+    <div><p>Ask the player or guardian to scan, sign, and return to the desk.</p><a className="btn btn-outline-secondary" href={url} target="_blank" rel="noreferrer">Open this player’s waiver</a></div></div>;
 }
 
 export default function DeskWaiting({ request, ticket, onResume, disabled, revision }) {
   const [rows, setRows] = useState([]);
+  const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState('');
   const [show, setShow] = useState(null);
   const [reload, setReload] = useState(0);
@@ -35,6 +36,7 @@ export default function DeskWaiting({ request, ticket, onResume, disabled, revis
         const data = await request('/api/game-day-check-in?waiting=1', { signal: controller.signal });
         if (!controller.signal.aborted && Array.isArray(data.waiting)) {
           setRows(data.waiting);
+          setLoaded(true);
           setError('');
         }
       } catch {
@@ -45,19 +47,31 @@ export default function DeskWaiting({ request, ticket, onResume, disabled, revis
     const timer = setInterval(() => { if (!document.hidden) void read(); }, 20000);
     return () => { controller.abort(); clearInterval(timer); };
   }, [request, ticket, reload, revision]);
-  return <section aria-labelledby="admin-checkin-waiting" className="admin-checkin__walk-on">
-    <h3 id="admin-checkin-waiting">Finish later · {rows.length}</h3>
-    <button type="button" className="btn btn-outline-primary" onClick={() => setReload(n => n + 1)}>Refresh waiting list</button>
+  return <section aria-labelledby="admin-checkin-waiting" className="admin-checkin__waiting">
+    <div className="admin-checkin__heading">
+      <h3 id="admin-checkin-waiting">Finish later · {loaded ? rows.length : '…'}</h3>
+      <button type="button" className="btn btn-outline-secondary" onClick={() => setReload(n => n + 1)}>Refresh waiting list</button>
+    </div>
     {error && <p role="alert">{error}</p>}
-    {rows.map(row => <article key={row.id} tabIndex={-1} ref={row.id === ticket?.id ? focusRow : null}>
-      <strong>{row.displayName}</strong>{' · '}{row.waiverStatus === 'signed' ? 'Waiver verified' : row.waiverStatus === 'unavailable' ? 'Waiver check unavailable' : 'Waiting for waiver'}
-      {row.needsRental && ' · Rental requested'}
-      <div className="admin-checkin__buttons">
-        <button type="button" disabled={disabled} className="btn btn-primary" onClick={() => onResume(row)}>{row.waiverStatus === 'signed' ? 'Finish check-in' : 'Review player'}</button>
-        {row.waiverStatus !== 'signed' && <button type="button" className="btn btn-outline-primary" aria-expanded={show === row.id}
-          onClick={() => setShow(show === row.id ? null : row.id)}>Waiver QR</button>}
-      </div>
-      {show === row.id && row.waiverStatus !== 'signed' && <WaiverCode name={row.displayName} url={row.waiverUrl} />}
-    </article>)}
+    {rows.map(row => {
+      const signed = row.waiverStatus === 'signed';
+      const qrId = 'desk-qr-' + row.id;
+      return <article key={row.id} tabIndex={-1} ref={row.id === ticket?.id ? focusRow : null}>
+        <div className="admin-checkin__ticket-title">
+          <h4>{row.displayName}</h4>
+          <span className="admin-checkin__waiver-state" data-signed={signed}>
+            {signed ? 'Waiver verified' : row.waiverStatus === 'unavailable' ? 'Waiver check unavailable' : 'Waiting for waiver'}
+          </span>
+        </div>
+        {row.needsRental && <p className="admin-checkin__hint">Rental requested</p>}
+        <div className="admin-checkin__buttons">
+          {!signed && <button type="button" className="btn btn-primary" aria-expanded={show === row.id}
+            aria-controls={show === row.id ? qrId : undefined} onClick={() => setShow(show === row.id ? null : row.id)}>Waiver QR</button>}
+          <button type="button" disabled={disabled} className={signed ? 'btn btn-primary' : 'btn btn-outline-secondary'}
+            onClick={() => onResume(row)}>{signed ? 'Finish check-in' : 'Review player'}</button>
+        </div>
+        {show === row.id && !signed && <div id={qrId}><WaiverCode name={row.displayName} url={row.waiverUrl} /></div>}
+      </article>;
+    })}
   </section>;
 }
