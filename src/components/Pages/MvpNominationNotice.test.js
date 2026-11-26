@@ -60,8 +60,10 @@ test('drops stale requests after a newer refresh and suppresses elapsed, closed 
   }
 });
 
-test('avoids loading the separate notice on the ballot page', async () => {
-  render(desk(null,'/live-polls?mvp=' + id + '#round-mvp'));
+test.each(['/live-polls?mvp=' + id + '#round-mvp', '/dashboard/birthday', '/admin/field/rounds',
+  '/login', '/forgotpassword', '/account', '/profilesettings', '/waiver', '/group-check-in', '/emailoptout/invitation'])(
+  'keeps account, desk and ballot workflows clear on %s', async path => {
+  render(desk(null,path));
   await act(async () => {});
   expect(requestPublicFieldTool).not.toHaveBeenCalled();
   expect(screen.queryByRole('link')).toBeNull();
