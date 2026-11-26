@@ -157,6 +157,12 @@ test('loads only the selected patch standings and keeps the full catalog visible
   expect(screen.getByRole('heading', { name: 'Power Rush' })).toHaveFocus();
   expect(getBadgeStandings).toHaveBeenLastCalledWith('power-rush', expect.objectContaining({ page: 1 }));
   expect(container.querySelector('.virtual-patches__brief img')).toHaveAttribute('src', '/badges/power-rush.png');
+  for (const [name, id] of [['Ninja Warrior 25', 'ninja-warrior-25'], ['Ninja Warrior 50', 'ninja-warrior-50'], ['Bayonet 100', 'bayonet-100']]) {
+    fireEvent.click(tileTitle(name).closest('button'));
+    expect(await screen.findByText('No players have earned this patch yet.')).toBeVisible();
+    expect(getBadgeStandings).toHaveBeenLastCalledWith(id, expect.objectContaining({ page: 1 }));
+    expect(container.querySelector('.virtual-patches__brief img')).toHaveAttribute('src', `/badges/${id}.png`);
+  }
   fireEvent.change(difficultyFilter, { target: { value: '2' } });
   const specialistWall = screen.getByRole('region', { name: 'Factor 2 · Specialist' });
   expect(specialistWall).toContainElement(tileTitle('Blackout Protocol'));
@@ -339,6 +345,9 @@ test('offers the expanded patch collection in the unlocked staff award picker', 
   expect(picker).toHaveValue('');
   const patchIds = within(picker).getAllByRole('option').map(option => option.value).filter(Boolean);
   expect(patchIds).toHaveLength(69);
+  for (const milestone of ['ninja-warrior-25', 'ninja-warrior-50', 'bayonet-100']) {
+    expect(patchIds).not.toContain(milestone);
+  }
   for (const retired of ['first-game', 'team-death-match', 'bb-confetti', 'tactical-click']) {
     expect(patchIds).not.toContain(retired);
   }

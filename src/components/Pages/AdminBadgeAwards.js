@@ -6,16 +6,18 @@ import {
 } from '../constants/playerBadges';
 import { gameModeIds } from './Gametypes';
 import StaffBattleBadges from './StaffBattleBadges';
+import StaffKnifeKills from './StaffKnifeKills';
 import AdminAccountUnlock from './AdminAccountUnlock';
 import './AdminBadgeAwards.css';
 
 const MAX_RESULTS = 8;
 const PLAYER_ID = /^[A-Za-z0-9_-]{10,128}$/;
 const badgeNames = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
+const awardablePatches = BADGE_CATALOG.filter(badge => !badge.knifeKills);
 const awardGroups = [
-  { label: 'Game modes', patches: BADGE_CATALOG.filter(badge => gameModeIds.has(badge.id))
+  { label: 'Game modes', patches: awardablePatches.filter(badge => gameModeIds.has(badge.id))
     .sort((a, b) => badgeNames.compare(a.name, b.name)) },
-  { label: 'Other patches', patches: BADGE_CATALOG.filter(badge => !gameModeIds.has(badge.id)) },
+  { label: 'Other patches', patches: awardablePatches.filter(badge => !gameModeIds.has(badge.id)) },
 ];
 const expiresFormat = new Intl.DateTimeFormat('en-US', {
   month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
@@ -71,7 +73,7 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
   const counts = playerCounts?.counts;
   const retiredAwards = RETIRED_BADGES.filter(badge => counts?.[badge.id] > 0);
   const retiredBadge = retiredAwards.find(badge => badge.id === badgeId);
-  const selectedBadge = retiredBadge || BADGE_CATALOG.find(badge => badge.id === badgeId);
+  const selectedBadge = retiredBadge || awardablePatches.find(badge => badge.id === badgeId);
   const earnedCount = counts?.[badgeId] || 0;
   const isRepeat = earnedCount > 0;
   const query = search.trim();
@@ -493,6 +495,8 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
           {feedback && <p className="admin-badge-awards__feedback" role={feedback.error ? 'alert' : 'status'}>{feedback.text}</p>}
         </form>
       )}
+      {badgeServiceConfigured && <StaffKnifeKills id="admin-knife-kills" firebase={firebase} token={staffToken} player={selectedPlayer} onLock={lock}
+        onRequestUnlock={() => document.getElementById('admin-badges-email')?.focus()} />}
       {badgeServiceConfigured && <StaffBattleBadges allowOverride firebase={firebase} token={staffToken}
         player={selectedPlayer} onLock={lock} />}
     </section>

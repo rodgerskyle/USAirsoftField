@@ -70,7 +70,7 @@ function AdminPage({ firebase }) {
 
   // Direct links from another desk can arrive before the admin guard finishes.
   useEffect(() => {
-    if (hash === '#staff-directory' || hash === '#admin-badges-title') {
+    if (['#staff-directory', '#admin-badges-title', '#admin-knife-kills'].includes(hash)) {
       document.getElementById(hash.slice(1))?.scrollIntoView?.({ block: 'start' });
     }
   }, [hash]);
@@ -95,6 +95,7 @@ function AdminPage({ firebase }) {
             <h1>Staff operations</h1>
             <nav className="staff-dashboard__jump" aria-label="Staff shortcuts">
               <a href="#staff-directory"><FontAwesomeIcon icon={faSearch} aria-hidden="true" />Find a player</a>
+              <a href="#admin-knife-kills"><FontAwesomeIcon icon={faAward} aria-hidden="true" />Knife kill recorder</a>
               <a href="#admin-badges-title"><FontAwesomeIcon icon={faAward} aria-hidden="true" />Award badges</a>
             </nav>
           </div>

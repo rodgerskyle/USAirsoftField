@@ -19,6 +19,7 @@ const FIELD_LINKS = [
   { to: '/information/gametypes', icon: 'flag', title: 'Game modes', copy: 'Learn the objectives for each game.' },
   { to: '/leaderboard', icon: 'trophy', title: 'Leaderboard', copy: 'Look up official player standings.' },
   { to: '/team-leaderboard', icon: 'trophy', title: 'Team leaderboard', copy: 'See casual and competitive team standings.' },
+  { to: '/knife-kill-leaderboard', icon: 'patch', title: 'Knife kill leaderboard', copy: 'See referee-recorded totals and member patch milestones.' },
   { to: '/player-comparison', icon: 'trophy', title: 'Compare players', copy: 'Compare points, results, patches, and Prestige.' },
   { to: '/group-check-in', icon: 'team', title: 'Group check-in', copy: 'Prepare your family or friends for arrival together.' },
   { to: '/teams', icon: 'team', title: 'Teams', copy: 'Explore the USAW team directory.' },
