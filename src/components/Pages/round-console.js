@@ -1,12 +1,17 @@
 // Shared with the field website's round desk. Both desks submit the displayed revisions.
 const day = new Intl.DateTimeFormat('en-CA', {timeZone:'America/Los_Angeles',year:'numeric',month:'2-digit',day:'2-digit'});
 const time = new Intl.DateTimeFormat('en-US', {timeZone:'America/Los_Angeles',hour:'numeric',minute:'2-digit'});
-export const roundConsoleNotices = {
+const roundConsoleNotices = {
   break:'Five-minute break started on Barracks TV.',
   briefing:'The selected briefing map is on Barracks TV.',
   start:'Round started. The field clock is running.',
-  finish:'Round ended and MVP voting is open.',
+  finish:'Round ended.',
 };
+
+export function roundConsoleNotice(body) {
+  return body.phase === 'finish' && body.openMvpVote
+    ? 'Round ended and MVP nominations are open.' : roundConsoleNotices[body.phase];
+}
 
 export function mountRoundConsole(root, { save, timingUrl }) {
   const section = document.createElement('section');
@@ -19,7 +24,8 @@ export function mountRoundConsole(root, { save, timingUrl }) {
       <button type="button" class="btn btn-secondary" data-phase="break">Start 5-minute break</button>
       <button type="button" class="btn btn-secondary" data-phase="briefing">Start briefing on TV</button>
       <button type="button" class="btn btn-primary" data-phase="start">Start game</button>
-      <button type="button" class="btn btn-primary" data-phase="finish">End game &amp; open MVP vote</button>
+      <button type="button" class="btn btn-primary" data-phase="finish">End game</button>
+      <button type="button" class="btn btn-secondary" data-phase="finish" data-open-mvp>End game &amp; open MVP nominations</button>
     </div><p><a data-console-timing>See where game time goes</a></p>`;
   section.querySelector('[data-console-timing]').href = timingUrl;
   root.append(section);
@@ -52,7 +58,7 @@ export function mountRoundConsole(root, { save, timingUrl }) {
     }
     if(selected) picker.value = selected.id;
     const hasStarted = selected && started(selected);
-    const otherPoll = board.mvpPoll && !board.mvpPoll.closed && Date.parse(board.mvpPoll.closesAt)>now && board.mvpPoll.gameId!==selected?.id;
+    const openPoll = board.mvpPoll && !board.mvpPoll.closed && Date.parse(board.mvpPoll.closesAt)>now;
     const selectedFinishedVote = board.mvpPastResults?.some(result => result.gameId === selected?.id) ||
       (board.mvpPoll?.gameId === selected?.id && board.mvpPoll && (board.mvpPoll.closed || Date.parse(board.mvpPoll.closesAt)<=now));
     const onMap = !!selected && board.briefingGameId === selected.id;
@@ -60,17 +66,18 @@ export function mountRoundConsole(root, { save, timingUrl }) {
       break: !running && !(board.barracksClock?.kind==='break' && Date.parse(board.barracksClock.endsAt)>now),
       briefing: selected && !hasStarted && !running && !onMap,
       start: selected && !hasStarted && !running,
-      finish: hasStarted && !otherPoll && !selectedFinishedVote,
+      finish: hasStarted,
     };
-    for(const button of buttons) button.disabled = sending || disabled || !allowed[button.dataset.phase];
+    for(const button of buttons) button.disabled = sending || disabled || !allowed[button.dataset.phase] ||
+      (button.hasAttribute('data-open-mvp') && Boolean(openPoll || selectedFinishedVote));
     picker.disabled = sending || disabled || !rounds.length;
     const info = [];
     if(board.barracksClock?.kind && Date.parse(board.barracksClock.endsAt)>now)
       info.push('TV countdown ends at ' + time.format(new Date(board.barracksClock.endsAt)) + '.');
     if(onMap) info.push('This briefing map is on TV.');
     if(hasStarted) info.push(Date.parse(selected.endsAt)>now ? 'This game is in play.' : 'The game timer elapsed. Confirm when play has finished.');
-    if(otherPoll && hasStarted) info.push('Close the previous MVP vote below before ending this game with voting.');
-    else if(selectedFinishedVote && hasStarted) info.push('Voting already finished for this game. Use the separate End round control.');
+    if(openPoll && hasStarted) info.push('An MVP vote is already open. You can end this game now.');
+    else if(selectedFinishedVote && hasStarted) info.push('Nominations for this game are closed.');
     if(!info.length) info.push(selected?'Ready for the selected round.':'You can start a break while the next round is being scheduled.');
     if(state.textContent!==info.join(' ')) state.textContent=info.join(' ');
   }
@@ -82,7 +89,11 @@ export function mountRoundConsole(root, { save, timingUrl }) {
     const body={action:'runRoundConsole',phase,commandId:crypto.randomUUID(),
       clockRevision:board.barracksClock?.revision ?? 0, displayRevision:board.briefingDisplayRevision ?? 0};
     if(phase!=='break') Object.assign(body,{gameId:selected.id,revision:selected.revision});
-    if(phase==='finish' && !window.confirm('End '+selected.title+' and open MVP voting for this round?')) return;
+    if(phase==='finish') {
+      const openMvpVote = button.hasAttribute('data-open-mvp');
+      if(!window.confirm('End '+selected.title+(openMvpVote ? ' and invite players to nominate an MVP?' : '?'))) return;
+      if(openMvpVote) body.openMvpVote = true;
+    }
     sending=true;update(board,now,disabled);
     try { await save(body); }
     finally {sending=false; if(root.isConnected)update(board,now,disabled);}

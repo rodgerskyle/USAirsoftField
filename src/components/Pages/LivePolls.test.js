@@ -20,10 +20,10 @@ const poll = {
 };
 const board = { poll, canVote: true, serverNow: '2099-06-15T20:45:00Z', games: [] };
 
-function renderFor(user) {
+function renderFor(user, route = "/live-polls") {
   const firebase = { auth: { onAuthStateChanged: callback => { callback(user); return jest.fn(); } } };
   render(
-    <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <MemoryRouter initialEntries={[route]} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <FirebaseContext.Provider value={firebase}><HelmetProvider><LivePolls /></HelmetProvider></FirebaseContext.Provider>
     </MemoryRouter>,
   );
@@ -98,7 +98,7 @@ const mvpPoll = {
 };
 
 test.each([null, {uid:'member-id', getIdToken:async () => 'signed-token'}])(
-  'a player can cast and update an independent, two-part round MVP write-in', async user => {
+  'a player can cast and update an independent round MVP name or description', async user => {
     let current = mvpPoll;
     const posts = [];
     global.fetch.mockImplementation(async (_, options) => {
@@ -107,27 +107,26 @@ test.each([null, {uid:'member-id', getIdToken:async () => 'signed-token'}])(
         posts.push(body);
         expect(options.credentials).toBe('include');
         expect(options.headers.Authorization).toBe(user ? 'Bearer signed-token' : undefined);
-        current = {...current, myVote:{firstName:body.firstName, lastName:body.lastName}};
+        current = {...current, myVote:{nomination:body.nomination}};
         return reply({ok:true, pollId:current.id, myVote:current.myVote});
       }
-      return reply({...board, mvpPoll:{...current, nominations:[{firstName:'Private', lastName:'Aggregate'}]}});
+      return reply({...board, mvpPoll:{...current, nominees:[{nomination:'Private Aggregate'}]}});
     });
     renderFor(user);
-    const first = await screen.findByLabelText('First name');
-    const last = screen.getByLabelText('Last name');
+    const field = await screen.findByRole('textbox', { name:'Player name or description' });
     expect(screen.queryByText(/Private Aggregate/)).not.toBeInTheDocument();
     expect(screen.getByRole('radio', {name:/Countdown/})).toBeEnabled();
-    fireEvent.change(first, {target:{value:' María José '}});
+    fireEvent.change(field, {target:{value:'  '}});
     expect(screen.getByRole('button', {name:'Submit MVP vote'})).toBeDisabled();
-    fireEvent.change(last, {target:{value:'O’Neil-Santos'}});
+    fireEvent.change(field, {target:{value:'  Blue team, white helmet #21  '}});
     fireEvent.click(screen.getByRole('button', {name:'Submit MVP vote'}));
-    expect(await screen.findByText('María José O’Neil-Santos')).toBeInTheDocument();
-    expect(posts).toEqual([{action:'voteMvp', pollId:current.id, firstName:'María José', lastName:'O’Neil-Santos'}]);
+    expect(await screen.findByText('Blue team, white helmet #21')).toBeInTheDocument();
+    expect(posts).toEqual([{action:'voteMvp', pollId:current.id, nomination:'Blue team, white helmet #21'}]);
     await act(async () => {});
     expect(screen.getByRole('button', {name:'Update my MVP vote'})).toBeDisabled();
-    fireEvent.change(first, {target:{value:'Al'}});
+    fireEvent.change(field, {target:{value:'María José O’Neil-Santos'}});
     fireEvent.click(screen.getByRole('button', {name:'Update my MVP vote'}));
-    expect(await screen.findByText('Al O’Neil-Santos')).toBeInTheDocument();
+    expect(await screen.findByText('María José O’Neil-Santos')).toBeInTheDocument();
     expect(posts).toHaveLength(2);
   },
 );
@@ -139,24 +138,31 @@ test('MVP draft and focus survive board refreshes, then reset when staff change 
     global.fetch.mockImplementation(async () => reply({...board, poll:null, canVote:false, mvpPoll:current}));
     renderFor(null);
     await act(async () => {});
-    fireEvent.change(screen.getByLabelText('First name'), {target:{value:'Dee'}});
-    const last = screen.getByLabelText('Last name');
-    last.focus();
-    fireEvent.change(last, {target:{value:'Li'}});
+    const field = screen.getByLabelText('Player name or description');
+    field.focus();
+    fireEvent.change(field, {target:{value:'Li'}});
     await act(async () => { jest.advanceTimersByTime(10000); });
-    expect(last).toHaveFocus();
-    expect(last).toHaveValue('Li');
+    expect(field).toHaveFocus();
+    expect(field).toHaveValue('Li');
     expect(screen.getByRole('button',{name:'Submit MVP vote'})).toBeEnabled();
 
     current = {...current, closed:true};
     await act(async () => { jest.advanceTimersByTime(10000); });
     expect(screen.getByText('MVP voting is closed for this round.')).toBeInTheDocument();
-    expect(screen.queryByLabelText('First name')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Player name or description')).not.toBeInTheDocument();
     current = null;
     await act(async () => { jest.advanceTimersByTime(10000); });
     expect(screen.queryByRole('heading', {name:'Round MVP'})).not.toBeInTheDocument();
     current = {...mvpPoll, id:'mvp-poll-2', roundTitle:'Countdown'};
     await act(async () => { jest.advanceTimersByTime(10000); });
-    expect(screen.getByLabelText('First name')).toHaveValue('');
+    expect(screen.getByLabelText('Player name or description')).toHaveValue('');
   } finally { jest.useRealTimers(); }
+});
+
+test('an older nomination invitation cannot vote in a different round', async () => {
+  global.fetch.mockImplementation(async () => reply({...board, mvpPoll}));
+  renderFor(null, '/live-polls?mvp=older-round#round-mvp');
+  expect(await screen.findByText('Nominations for this round are closed.')).toBeInTheDocument();
+  expect(screen.queryByLabelText('Player name or description')).not.toBeInTheDocument();
+  expect(screen.getByRole('radio', {name:/Countdown/})).toBeInTheDocument();
 });

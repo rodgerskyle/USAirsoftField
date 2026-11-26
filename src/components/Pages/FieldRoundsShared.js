@@ -1,6 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { roundPinLocation } from './FieldRoundMap';
 
+export function mvpNominationText(vote) {
+  return vote?.nomination ?? [vote?.firstName, vote?.lastName].filter(Boolean).join(' ');
+}
+
 export const LIVE_ROUNDS_PATH = '/api/live-games';
 export const STAFF_ROUNDS_PATH = LIVE_ROUNDS_PATH + '?staff=1';
 export const ROUND_CATALOG_PATH = LIVE_ROUNDS_PATH + '?catalog=1';

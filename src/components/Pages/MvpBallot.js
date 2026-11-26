@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { requestPlayerPoll } from '../constants/fieldStaffApi';
-import { formatFieldTime, isOpenVote } from './FieldRoundsShared';
+import { formatFieldTime, isOpenVote, mvpNominationText } from './FieldRoundsShared';
 
 export default function MvpBallot({ poll, user, now, error, refresh, submitting, setSubmitting, submission }) {
   const [draft, setDraft] = useState(null);
@@ -8,11 +8,11 @@ export default function MvpBallot({ poll, user, now, error, refresh, submitting,
   const [feedback, setFeedback] = useState(null);
   const heading = useRef(null);
   const saved = receipt || poll.myVote;
-  const values = draft || saved || { firstName: '', lastName: '' };
-  const firstName = values.firstName.trim(), lastName = values.lastName.trim();
+  const savedText = mvpNominationText(saved);
+  const value = draft ?? savedText;
+  const nomination = value.trim();
   const open = isOpenVote(poll, now);
-  const canSubmit = open && !error && !submitting && firstName && lastName &&
-    (firstName !== saved?.firstName || lastName !== saved?.lastName);
+  const canSubmit = open && !error && !submitting && nomination && nomination !== savedText;
 
   useEffect(() => setReceipt(null), [poll]);
   useEffect(() => {
@@ -20,7 +20,7 @@ export default function MvpBallot({ poll, user, now, error, refresh, submitting,
   }, []);
 
   function edit(event) {
-    setDraft({ ...values, [event.target.name]: event.target.value });
+    setDraft(event.target.value);
     setFeedback(null);
   }
 
@@ -32,12 +32,12 @@ export default function MvpBallot({ poll, user, now, error, refresh, submitting,
     setSubmitting(true);
     setFeedback(null);
     try {
-      const result = await requestPlayerPoll(user, { mvpVote: { pollId: poll.id, firstName, lastName }, signal: controller.signal });
+      const result = await requestPlayerPoll(user, { mvpVote: { pollId: poll.id, nomination }, signal: controller.signal });
       if (controller.signal.aborted) return;
-      if (result.ok !== true || result.pollId !== poll.id || typeof result.myVote?.firstName !== 'string' ||
-          typeof result.myVote.lastName !== 'string') throw new Error('The MVP vote could not be confirmed.');
+      if (result.ok !== true || result.pollId !== poll.id || typeof result.myVote?.nomination !== 'string' || !result.myVote.nomination.trim()) throw new Error('The MVP vote could not be confirmed.');
       setDraft(null);
       setReceipt(result.myVote);
+      window.dispatchEvent(new CustomEvent('usaw:mvp-voted', { detail: { pollId: poll.id } }));
       setFeedback({ message: 'Your MVP vote was recorded.' });
       await refresh();
     } catch (failure) {
@@ -60,15 +60,15 @@ export default function MvpBallot({ poll, user, now, error, refresh, submitting,
     {open ? <form className="live-polls__form" onSubmit={vote} aria-busy={submitting}>
       <fieldset disabled={submitting || Boolean(error)} className="live-polls__names">
         <legend>Who was the MVP of this round?</legend>
-        <label>First name<input name="firstName" value={values.firstName} onChange={edit} required maxLength={60} autoComplete="off" /></label>
-        <label>Last name<input name="lastName" value={values.lastName} onChange={edit} required maxLength={60} autoComplete="off" /></label>
+        <label>Player name or description<input name="nomination" value={value} onChange={edit} required maxLength={160}
+          autoComplete="off" placeholder="e.g. Blue team, green helmet, carried the flag" /></label>
       </fieldset>
-      <p>Vote for one player. You can change your pick until {formatFieldTime(poll.closesAt)} Pacific.</p>
+      <p>Refs choose the MVP. You can change your nomination until {formatFieldTime(poll.closesAt)} Pacific.</p>
       <button type="submit" className="field-schedule__action field-schedule__action--primary" disabled={!canSubmit}>
         {saved ? 'Update my MVP vote' : 'Submit MVP vote'}
       </button>
     </form> : <p>MVP voting is closed for this round.</p>}
-    {saved && <p>Your MVP vote · <strong>{saved.firstName} {saved.lastName}</strong></p>}
+    {saved && <p>Your MVP vote · <strong>{savedText}</strong></p>}
     {feedback && <p className={feedback.error ? 'live-polls__error' : undefined} role={feedback.error ? 'alert' : 'status'}>{feedback.message}</p>}
   </section>;
 }

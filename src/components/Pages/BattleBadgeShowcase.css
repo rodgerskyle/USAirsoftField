@@ -102,3 +102,13 @@ body:not(.night-mode) .player-hero-card .battle-showcase {
 .daily-battle-notice img { object-fit: contain; }
 .daily-battle-notice small, .daily-battle-notice strong { display: block; }
 .daily-battle-notice a { color: #ffe19b; font-weight: 700; text-decoration: underline; }
+
+.mvp-nomination-notice button {
+  min-height: 2.75rem;
+  padding: .3rem .8rem;
+  border: 1px solid currentColor;
+  border-radius: .35rem;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
