@@ -84,6 +84,7 @@ label.live-polls__option { cursor: pointer; }
 }
 .live-polls__winner { color: var(--usaw-accent); font-size: .75rem; }
 
+#round-mvp p { overflow-wrap: anywhere; }
 .live-polls__names { display: flex; flex-wrap: wrap; gap: .75rem; }
 .live-polls__names label { display: grid; flex: 1 1 12rem; min-width: 0; gap: .3rem; font-weight: 700; }
 .live-polls__names input {

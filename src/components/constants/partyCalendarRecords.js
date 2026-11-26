@@ -1,8 +1,8 @@
 import { runTransaction } from 'firebase/database';
-import { normalizePartyBooking, partyBookingIdentity } from './partyBookingKey';
+import { isPartyType, normalizePartyBooking, partyBookingIdentity } from './partyBookingKey';
 
 const bookingIdPattern = /^[a-f0-9]{64}$/;
-const editableFields = ['title', 'start', 'end', 'size', 'receipt', 'deposit', 'depositAmt', 'notes'];
+const editableFields = ['title', 'start', 'end', 'size', 'partyType', 'receipt', 'deposit', 'depositAmt', 'notes'];
 const changedMessage = 'This booking changed or could not be identified. Reopen it on the calendar and try again.';
 const rowObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const validId = value => typeof value === 'string' && bookingIdPattern.test(value);
@@ -92,6 +92,7 @@ export async function mutatePartyCalendar(calendarRef, { action, index, original
   const creating = action === 'create';
   const selection = creating ? null : makeSelection(index, original, originalCalendar);
   const fields = action === 'remove' ? null : editedFields(values);
+  if (fields && 'partyType' in fields && !isPartyType(fields.partyType)) throw new Error('Choose Airsoft or Nerf as the party type.');
   if (fields && !normalizePartyBooking({ ...original, ...fields })) {
     throw new Error('Enter a booking title and an end time after the start.');
   }

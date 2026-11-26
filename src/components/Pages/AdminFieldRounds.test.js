@@ -321,8 +321,13 @@ test('the staff device can prepare and present a round while a separate TV follo
     fireEvent.click(await staff.findByRole('button', { name: 'Open briefing map' }));
     const editor = within(staff.getByRole('region', { name: 'Briefing map for Countdown' }));
     const stage = editor.getByRole('img', { name: 'Official field map' });
+    fireEvent.click(editor.getByRole('button', { name: 'Circle' }));
     fireEvent.keyDown(stage, { key: 'Enter' });
-    await waitFor(() => expect(game.briefingMap.marks).toHaveLength(1));
+    await waitFor(() => expect(game.briefingMap.marks).toEqual([{type:'circle',color:'yellow',x:.5,y:.5}]));
+    fireEvent.click(editor.getByRole('button', { name: 'X' }));
+    fireEvent.keyDown(stage, { key: 'ArrowRight' });
+    fireEvent.keyDown(stage, { key: 'Enter' });
+    await waitFor(() => expect(game.briefingMap.marks[1]).toEqual({type:'x',color:'yellow',x:.515,y:.5}));
     expect(tv.queryByRole('region', { name: 'Round briefing' })).not.toBeInTheDocument();
     fireEvent.click(editor.getByRole('button', { name: 'Show on Barracks TV' }));
     await editor.findByRole('button', { name: 'Stop showing on TV' });
@@ -330,7 +335,8 @@ test('the staff device can prepare and present a round while a separate TV follo
     const display = within(tv.getByRole('region', { name: 'Round briefing' }));
     expect(display.getByRole('heading', { name: game.title })).toBeVisible();
     const screenMap = display.getByRole('img', { name: 'Official field map' });
-    expect(screenMap.querySelector('[data-layer="drawings"]').childElementCount).toBeGreaterThan(0);
+    expect(screenMap.querySelector('[data-layer="drawings"] circle')).toHaveAttribute('r', '36');
+    expect(screenMap.querySelector('[data-layer="drawings"] path')).toBeVisible();
     expect(tv.getByRole('button', { name: 'Full screen' })).toBeVisible();
     expect(tv.queryByRole('heading', { name: 'No round on the board' })).not.toBeInTheDocument();
     expect(tv.queryByRole('button', { name: 'Zoom in' })).not.toBeInTheDocument();
@@ -478,8 +484,8 @@ test('staff open an MVP write-in vote for a specific played round and review tie
             expect(path).toBe(STAFF_ROUNDS_PATH);
             if (locked) throw new Error('Staff access expired.');
             return { isStaff: true, serverNow, games: [], mvpRounds: available, mvpPoll: poll, mvpPastResults: [
-                {id:'past', roundTitle:'Opening round', startsAt:serverNow, totalVotes:6,
-                    leaders:[{firstName:'Quinn',lastName:'River',votes:3},{firstName:'Cruz',lastName:'Jones',votes:3}]},
+                {id:'past', roundTitle:'Opening round', startsAt:serverNow, totalVotes:4,
+                    leaders:[{nomination:'Quinn River',votes:3}], nominees:[{nomination:'Quinn River',votes:3},{nomination:'Blue scarf',votes:1}]},
                 {id:'first', roundTitle:'Warmup', startsAt:serverNow, totalVotes:0, leaders:[]},
             ] };
         }
@@ -489,7 +495,7 @@ test('staff open an MVP write-in vote for a specific played round and review tie
             available = [];
             poll = { id: 'mvp-first', gameId: body.gameId, roundTitle: game.title, startsAt: serverNow,
                 closesAt: body.closesAt, closed: false, totalVotes: 2,
-                nominees: [{firstName: 'Alex', lastName: 'Smith', votes: 1}, {firstName: 'Alex', lastName: 'Soto', votes: 1}] };
+                nominees: [{nomination: 'Alex Smith', votes: 1}, {nomination: 'Player in the blue vest', votes: 1}] };
         } else if (body.action === 'closeMvpPoll') poll = {...poll, closed: true};
         else if (body.action === 'clearMvpPoll') { poll = null; available = [game]; }
         return { ok: true, pollId: 'mvp-first' };
@@ -501,12 +507,12 @@ test('staff open an MVP write-in vote for a specific played round and review tie
     fireEvent.click(panel.getByRole('button', {name: 'Open MVP voting'}));
     await panel.findByRole('heading', {name: game.title});
     expect(saved).toEqual([{action: 'createMvpPoll', gameId: game.id, closesAt: '2026-11-16T18:22:00.000Z'}]);
-    expect(panel.getByText('Alex Smith · Tied for first')).toBeInTheDocument();
-    expect(panel.getByText('Alex Soto · Tied for first')).toBeInTheDocument();
+    expect(panel.getByText('Alex Smith')).toBeInTheDocument();
+    expect(panel.getByText('Player in the blue vest')).toBeInTheDocument();
     const earlier = panel.getByText('Earlier round results').closest('details');
     expect(earlier.open).toBe(false);
     fireEvent.click(panel.getByText('Earlier round results'));
-    expect(within(earlier).getByText(/Quinn River, Cruz Jones · 3 votes each/)).toBeInTheDocument();
+    expect(within(earlier).getByText('Blue scarf · 1 vote')).toBeInTheDocument();
     expect(within(earlier).getByText('No votes')).toBeInTheDocument();
     expect(screen.getByRole('button', {name: 'Open voting'})).toBeInTheDocument();
     const confirm = jest.spyOn(window, 'confirm').mockReturnValue(false);
@@ -520,11 +526,11 @@ test('staff open an MVP write-in vote for a specific played round and review tie
         locked = true;
         fireEvent.click(screen.getByRole('button', {name: 'Refresh board'}));
         await screen.findByRole('alert');
-        expect(screen.queryByText('Alex Smith · Tied for first')).not.toBeInTheDocument();
+        expect(screen.queryByText('Alex Smith')).not.toBeInTheDocument();
         locked = false;
         fireEvent.click(screen.getByRole('button', {name: 'Refresh board'}));
         fireEvent.click(await screen.findByRole('button', {name: 'Clear MVP vote'}));
-        await waitFor(() => expect(screen.queryByText('Alex Smith · Tied for first')).not.toBeInTheDocument());
+        await waitFor(() => expect(screen.queryByText('Alex Smith')).not.toBeInTheDocument());
         expect(saved.at(-1)).toEqual({action: 'clearMvpPoll', pollId: 'mvp-first'});
         expect(screen.queryByRole('button', {name: 'Clear MVP vote'})).not.toBeInTheDocument();
         expect(screen.getByLabelText('Round for MVP voting').querySelector('option[value="' + game.id + '"]')).toBeInTheDocument();
@@ -545,7 +551,8 @@ test('round shortcuts focus the chosen controls without submitting an action', a
     expect(request.mock.calls.some(([, options]) => options?.method === 'POST')).toBe(false);
 });
 
-test('one-screen desk runs the selected game and opens its MVP ballot after confirmation', async () => {
+test.each([false, true])('one-screen desk ends the selected game with optional nominations (%s)', async openVote => {
+    const finishButton = openVote ? 'End game & open MVP nominations' : 'End game';
     const other = { ...scheduled, id: 'c92cb5f1-47d7-4788-8e1f-40ac0ab72812', title: 'Second field game' };
     let selected = other;
     const writes = [];
@@ -564,17 +571,30 @@ test('one-screen desk runs the selected game and opens its MVP ballot after conf
         const panel = within(await screen.findByRole('region', { name: 'Run the next round' }));
         fireEvent.change(panel.getByRole('combobox'), { target: { value: other.id } });
         fireEvent.click(panel.getByRole('button', { name: 'Start game' }));
-        await waitFor(() => expect(panel.getByRole('button', { name: 'End game & open MVP vote' })).toBeEnabled());
+        await waitFor(() => expect(panel.getByRole('button', { name: finishButton })).toBeEnabled());
         expect(writes[0]).toEqual(expect.objectContaining({ action: 'runRoundConsole', phase: 'start', gameId: other.id, revision: 6 }));
-        fireEvent.click(panel.getByRole('button', { name: 'End game & open MVP vote' }));
+        fireEvent.click(panel.getByRole('button', { name: finishButton }));
         expect(writes).toHaveLength(1);
         confirm.mockReturnValue(true);
-        fireEvent.click(panel.getByRole('button', { name: 'End game & open MVP vote' }));
+        fireEvent.click(panel.getByRole('button', { name: finishButton }));
         await waitFor(() => expect(writes).toHaveLength(2));
         expect(writes[1]).toEqual(expect.objectContaining({ phase: 'finish', gameId: other.id, revision: 7 }));
-        await screen.findByText('Round ended and MVP voting is open.');
+        expect(writes[1].openMvpVote).toBe(openVote || undefined);
+        await screen.findByText(openVote ? 'Round ended and MVP nominations are open.' : 'Round ended.');
     } finally {
         confirm.mockRestore();
         if (window.crypto !== oldCrypto) Object.defineProperty(window, 'crypto', { value: oldCrypto, configurable: true });
     }
+});
+
+test('an existing nomination vote only disables the optional end-and-nominate action', async () => {
+    const request = jest.fn(async path => path === ROUND_CATALOG_PATH ? catalog : {
+        isStaff: true, serverNow, games: [playing], mvpPoll: {
+            id: 'earlier-vote', gameId: 'previous-round', closesAt: playing.endsAt, closed: false,
+        },
+    });
+    render(<AdminFieldRounds request={request} />);
+    const panel = within(await screen.findByRole('region', { name: 'Run the next round' }));
+    expect(panel.getByRole('button', { name: 'End game' })).toBeEnabled();
+    expect(panel.getByRole('button', { name: 'End game & open MVP nominations' })).toBeDisabled();
 });

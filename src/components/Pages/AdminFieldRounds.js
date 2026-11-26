@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-    barracksClockTitles, fieldTimeInput, fieldTimeISO, formatFieldTime, formatRoundCountdown, isOpenVote, liveRounds,
+    barracksClockTitles, fieldTimeInput, fieldTimeISO, formatFieldTime, formatRoundCountdown, isOpenVote, liveRounds, mvpNominationText,
     LIVE_ROUNDS_PATH, ROUND_CATALOG_PATH, STAFF_ROUNDS_PATH, RoundRespawns, runningBarracksClock, useLiveFieldBoard,
 } from './FieldRoundsShared';
 import { FieldPinPicker, readMapPins, roundPinLocation } from './FieldRoundMap';
 import { RoundBriefingEditor } from './RoundBriefing';
 import { fieldStaffPaths } from '../constants/fieldStaffApi';
 import FieldSectionLinks from './FieldSectionLinks';
-import { mountRoundConsole, roundConsoleNotices } from './round-console';
+import { mountRoundConsole, roundConsoleNotice } from './round-console';
 import './FieldRounds.css';
 
 const roundSections = [
@@ -251,8 +251,6 @@ function RoundMvpControls({ poll, rounds, pastResults = [], now, disabled, onSav
     const [error, setError] = useState('');
     const open = isOpenVote(poll, now);
     const nominees = poll?.nominees || [];
-    const topVotes = nominees[0]?.votes;
-    const tied = topVotes > 0 && nominees[1]?.votes === topVotes;
     function startVote(event) {
         event.preventDefault();
         const form = new FormData(event.currentTarget);
@@ -271,14 +269,15 @@ function RoundMvpControls({ poll, rounds, pastResults = [], now, disabled, onSav
     return (
         <section className="field-rounds-panel" aria-labelledby="field-round-mvp">
             <h2 id="field-round-mvp" tabIndex={-1}>Round MVP voting</h2>
+            <p>Player nominations are optional. Refs make the final MVP decision.</p>
             {poll && <div className="field-rounds-vote-results">
                 <h3>{poll.roundTitle}</h3>
                 <p>{formatFieldTime(poll.startsAt)} · {open ? 'Voting closes ' + formatFieldTime(poll.closesAt) : 'Voting closed'}
                     {' · '}{poll.totalVotes} {poll.totalVotes === 1 ? 'vote' : 'votes'}</p>
-                {nominees.length ? <ul aria-label="MVP write-in results">{nominees.map(({ firstName, lastName, votes }) =>
-                    <li key={JSON.stringify([firstName, lastName])}>
-                        <span>{firstName} {lastName}{tied && votes === topVotes && ' · Tied for first'}</span>
-                        <strong>{votes} {votes === 1 ? 'vote' : 'votes'}</strong>
+                {nominees.length ? <ul aria-label="MVP write-in results">{nominees.map(entry =>
+                    <li key={mvpNominationText(entry)}>
+                        <span>{mvpNominationText(entry)}</span>
+                        <strong>{entry.votes} {entry.votes === 1 ? 'vote' : 'votes'}</strong>
                     </li>)}</ul> : <p>No nominations yet.</p>}
                 <div className="field-rounds-actions">
                     {open && <button type="button" className="btn btn-outline-secondary" disabled={disabled} onClick={() => finishVote('closeMvpPoll')}>Close MVP voting</button>}
@@ -295,16 +294,16 @@ function RoundMvpControls({ poll, rounds, pastResults = [], now, disabled, onSav
                     <label>MVP voting closes · California<input name="closesAt" type="datetime-local" defaultValue={fieldTimeInput(now + 10 * 60000)} required /></label>
                     <button className="btn btn-primary" type="submit">Open MVP voting</button>
                 </fieldset>{error && <p className="field-rounds-error" role="alert">{error}</p>}
-            </form> : poll ? null : <p>No rounds are available for a new MVP vote. Start a round in Round Controls or use <strong>Save played game</strong> under Battle Badges in <a href="/admin/scores">Wins &amp; Losses</a>.</p>)}
+            </form> : poll ? null : <p>End a round in Round Controls to open nominations, or use <strong>Save played game</strong> under Battle Badges in <a href="/admin/scores">Wins &amp; Losses</a>.</p>)}
             {pastResults.length > 0 && <details>
                 <summary>Earlier round results</summary>
                 <ul>{pastResults.map(result => <li key={result.id}>
                     <strong>{result.roundTitle} · {formatFieldTime(result.startsAt)}</strong>
-                    <div>{result.leaders.length ? <>
-                        {result.leaders.length > 1 ? 'Tied for first · ' : 'Most votes · '}
-                        {result.leaders.map(person => person.firstName + ' ' + person.lastName).join(', ')}
-                        {' · '}{result.leaders[0].votes} {result.leaders[0].votes === 1 ? 'vote' : 'votes'}{result.leaders.length > 1 && ' each'}
-                    </> : 'No votes'}</div>
+                    {(result.nominees ?? result.leaders ?? []).length ? <ul>
+                        {(result.nominees ?? result.leaders).map(entry => <li key={mvpNominationText(entry)}>
+                            {mvpNominationText(entry)} · {entry.votes} {entry.votes === 1 ? 'vote' : 'votes'}
+                        </li>)}
+                    </ul> : <span>No votes</span>}
                 </li>)}</ul>
             </details>}
         </section>
@@ -430,7 +429,7 @@ export default function AdminFieldRounds({ request }) {
             if (controller.signal.aborted) throw new Error('The update was not confirmed. Check the board before trying again.');
             if (result?.ok !== true || (body.action === 'runRoundConsole' && result.commandId !== body.commandId)) throw new Error('The field board did not confirm the action.');
             saved = true;
-            setNotice({ text: body.action === 'runRoundConsole' ? roundConsoleNotices[body.phase] : actions[body.action] });
+            setNotice({ text: body.action === 'runRoundConsole' ? roundConsoleNotice(body) : actions[body.action] });
         } catch (failure) {
             if (mutation.current === controller) setNotice({
                 error: true,

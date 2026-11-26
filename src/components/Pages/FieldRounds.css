@@ -177,6 +177,7 @@
 .field-rounds-mode-list > div + div { margin-top: .65rem; }
 .field-rounds-mode-list .field-rounds-option { min-height: 1.8rem; font-weight: 500; }
 
+.field-rounds-panel[aria-labelledby="field-round-mvp"] li { overflow-wrap: anywhere; }
 .field-rounds-vote-results ul,
 .field-barracks-votes { display: grid; gap: .4rem; margin: .55rem 0; padding: 0; list-style: none; }
 .field-rounds-vote-results li,
@@ -371,4 +372,94 @@
 }
 @media (max-width: 780px) {
   .field-rounds--staff .field-rounds-workbench { grid-template-columns: 1fr; }
+}
+
+@media (min-width: 760px) and (orientation: landscape) {
+  /* Keep all signage inside a 4% title-safe margin, including in fullscreen. */
+  .tv-frame.tv-frame {
+    position: fixed;
+    inset: 0;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    padding: 4vh 4vw;
+    overflow: hidden;
+  }
+  .tv-frame > * { flex: none; min-width: 0; }
+  .tv-frame > .tv-frame-board, .tv-frame > .tv-frame-briefing {
+    position: relative;
+    width: 100%;
+    min-height: 0;
+  }
+  .tv-frame-board:not([hidden]) { flex: 1 1 0; }
+  .tv-frame-board[hidden] { display: none; }
+  .tv-frame-content {
+    position: absolute;
+    inset: 0 0 auto;
+    display: flow-root;
+    transform-origin: center top;
+    transform: scale(var(--tv-board-scale, 1));
+  }
+  .tv-frame[data-briefing="true"] > .tv-frame-briefing,
+  .tv-frame.presenting-briefing > .tv-frame-briefing { flex: 1 1 0; }
+  .tv-frame .round-brief-tv:not([hidden]) {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  .tv-frame .round-brief-tv h2 { flex: none; margin: .25em 0; font-size: clamp(1.6rem, 3.2vh, 4.5rem); }
+  .tv-frame .round-brief-tv-note { flex: none; }
+  .tv-frame .round-brief-tv-map {
+    flex: 1 1 0;
+    display: grid;
+    place-items: center;
+    width: 100%;
+    max-width: none;
+    min-height: 0;
+    grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+  }
+  .tv-frame .round-brief-tv-map .rbm { width: var(--tv-map-width, 100%); max-width: 100%; }
+}
+
+@media (min-width: 760px) and (orientation: landscape) {
+  .field-barracks { font-size: clamp(1rem, 1.75vh, 2.5rem); }
+  .field-barracks .field-barracks-header { padding-bottom: .45em; }
+  .field-barracks .field-barracks-header h1 { font-size: clamp(1.7rem, 4.4vh, 6rem); }
+  .field-barracks .field-barracks-brand img { max-height: 5.5vh; width: auto; }
+  .field-barracks .field-barracks-controls :is(a, button) { min-height: 2em; padding: .25em .65em; }
+  .field-barracks-grid { margin-top: .7em; gap: .8em; }
+  .field-barracks-grid[data-side='true'] { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); }
+  .field-barracks-side { gap: .65em; }
+  .field-barracks-main, .field-barracks-support { gap: .36em; padding: .8em 1em; }
+  .field-barracks-main h2 { font-size: clamp(2rem, 6.5vh, 9rem); }
+  .field-barracks-support h2 { font-size: clamp(1.4rem, 3.5vh, 5rem); }
+  .field-barracks-break { margin-top: .55em; padding: .45em 1em; }
+  .field-barracks-break h2 { font-size: clamp(1.65rem, 4vh, 5rem); }
+  .field-barracks-break strong { font-size: clamp(2.75rem, 7.5vh, 10rem); }
+  .field-barracks-break p { font-size: 1em; margin: 0; }
+  .field-barracks .field-barracks-count strong { font-size: clamp(2rem, 6.5vh, 9rem); }
+  .field-barracks :is(.field-round-respawns, .field-barracks-locations) dd { font-size: 1.24em; }
+  .field-barracks .round-map-control { min-height: 2em; padding: .2em .45em; }
+  .field-barracks .round-map { margin: .25em 0; }
+  .field-barracks-mvp { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+  .field-barracks-mvp-link { grid-column: 2; grid-row: 1 / span 3; gap: .15em; }
+  .field-barracks-mvp-link img { width: clamp(6rem, 14vh, 19rem); }
+  .field-barracks-votes { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 1em; margin: 0; }
+  .field-barracks-votes li { padding: .2em 0; align-items: baseline; }
+  .field-barracks-round-note { white-space: normal; }
+  .field-barracks-update { font-size: .85em; margin-top: .45em; }
+  .field-barracks-award {
+    position: absolute;
+    z-index: 2;
+    top: 40%;
+    left: 8%;
+    right: 8%;
+    margin: 0;
+    transform: translateY(-40%);
+    box-shadow: 0 1rem 4rem #040914c9;
+  }
 }

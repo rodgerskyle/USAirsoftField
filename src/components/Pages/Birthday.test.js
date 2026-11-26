@@ -17,9 +17,9 @@ jest.mock('../constants/fieldStaffApi', () => ({ ...jest.requireActual('../const
 jest.mock('react-big-calendar', () => ({
   Views: { MONTH: 'month' },
   momentLocalizer: () => ({}),
-  Calendar: ({ events, onSelectSlot, onSelectEvent }) => <>
+  Calendar: ({ events, onSelectSlot, onSelectEvent, titleAccessor }) => <>
     <button type="button" onClick={() => onSelectSlot({ start: new Date('2026-12-05T20:00:00.000Z'), end: new Date('2026-12-06T00:00:00.000Z') })}>Select game-day slot</button>
-    {events.map(event => <button type="button" key={event.index} onClick={() => onSelectEvent(event)}>{event.title}</button>)}
+    {events.map(event => <button type="button" key={event.index} title={titleAccessor(event)} onClick={() => onSelectEvent(event)}>{event.title}</button>)}
   </>,
 }));
 
@@ -65,6 +65,8 @@ test('starts a booking from a date and saves the selected start and end times', 
   fireEvent.change(await screen.findByLabelText('Booking date'), { target: { value: '2026-12-12' } });
   fireEvent.click(screen.getByRole('button', { name: 'Add booking' }));
   fireEvent.change(screen.getByLabelText('Group Name'), { target: { value: 'Saturday party' } });
+  expect(screen.getByLabelText('Party type')).toHaveValue('airsoft');
+  fireEvent.change(screen.getByLabelText('Party type'), { target: { value: 'nerf' } });
   const start = within(screen.getByRole('group', { name: 'Start time' }));
   const end = within(screen.getByRole('group', { name: 'End time' }));
   fireEvent.change(start.getByLabelText('Hour'), { target: { value: '13' } });
@@ -74,6 +76,16 @@ test('starts a booking from a date and saves the selected start and end times', 
   fireEvent.click(screen.getByRole('button', { name: 'Create' }));
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   const [booking] = Object.values(records);
+  expect(booking.partyType).toBe('nerf');
+  expect(screen.getByRole('button', { name: 'Saturday party' })).toHaveAttribute('title', 'Nerf · Saturday party');
+  fireEvent.click(screen.getByRole('button', { name: 'Saturday party' }));
+  expect(screen.getByLabelText('Party type')).toHaveValue('nerf');
+  fireEvent.change(screen.getByLabelText('Party type'), { target: { value: 'airsoft' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Update' }));
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  expect(records[0].bookingId).toBe(booking.bookingId);
+  expect(records[0].partyType).toBe('airsoft');
+  expect(screen.getByRole('button', { name: 'Saturday party' })).toHaveAttribute('title', 'Airsoft · Saturday party');
   expect(new Date(booking.start)).toEqual(new Date(2026, 11, 12, 13, 20));
   expect(new Date(booking.end)).toEqual(new Date(2026, 11, 12, 15, 40));
 });
@@ -99,10 +111,12 @@ test('edits the selected saved booking, retries group refresh alone, and rejects
   requestStaffFieldTool.mockRejectedValueOnce(new Error('Offline'));
   openPage();
   fireEvent.click(await screen.findByRole('button', { name: 'November party' }));
+  expect(screen.getByLabelText('Party type')).toHaveValue('');
   fireEvent.change(screen.getByLabelText('Group Name'), { target: { value: 'Updated party' } });
   fireEvent.click(screen.getByRole('button', { name: 'Update' }));
   const retry = await screen.findByRole('button', { name: 'Retry group update' });
   expect(records[4]).toMatchObject({ title: 'Updated party', staffOnly: 'fixture', bookingId: booking.bookingId });
+  expect(records[4]).not.toHaveProperty('partyType');
   expect(records[9].title).toBe('Other group');
   const writes = runTransaction.mock.calls.length;
   fireEvent.click(retry);

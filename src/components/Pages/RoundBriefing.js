@@ -49,5 +49,5 @@ export function RoundBriefingDisplay({ request, onActiveChange }) {
         return () => receiver.destroy();
     }, [request, onActiveChange]);
 
-    return <div className="field-barracks-briefing" ref={host} />;
+    return <div className="field-barracks-briefing tv-frame-briefing" ref={host} />;
 }

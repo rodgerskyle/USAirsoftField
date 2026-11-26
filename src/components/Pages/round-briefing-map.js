@@ -2,7 +2,8 @@
 const WIDTH = 1600, HEIGHT = 900, MAX_MARKS = 80;
 const colors = { yellow: '#ffdf50', red: '#ff6469', blue: '#6dcfff', white: '#ffffff' };
 const pinStyles = { briefing: ['B', '#ffc675'], camo: ['C', '#b9df82'], solid: ['S', '#a8ceff'] };
-const drawingTools = ['mark', 'circle', 'arrow'];
+const drawingTools = ['mark', 'circle', 'x', 'arrow'];
+const CIRCLE_RADIUS = 36, X_HALF_SIZE = 18;
 const clamp = (n, low, high) => Math.min(high, Math.max(low, n));
 const rounded = n => Math.round(n * 100000) / 100000;
 const unit = n => rounded(clamp(n, 0, 1));
@@ -21,7 +22,8 @@ function readMap(map) {
   for (const m of Array.isArray(map?.marks) ? map.marks.slice(0, MAX_MARKS) : []) {
     if (!validPoint(m) || !drawingTools.includes(m.type) || !Object.hasOwn(colors, m.color)) continue;
     const item = { type: m.type, x: m.x, y: m.y, color: m.color };
-    if (m.type !== 'mark') {
+    // Older circles carry an edge point and retain their authored radius.
+    if (m.type === 'arrow' || (m.type === 'circle' && (m.x2 !== undefined || m.y2 !== undefined))) {
       if (!validUnit(m.x2) || !validUnit(m.y2)) continue;
       item.x2 = m.x2;
       item.y2 = m.y2;
@@ -34,6 +36,7 @@ function readMap(map) {
 const iconPaths = {
   mark: '<circle cx="12" cy="12" r="6"/><path d="M12 2v5m0 10v5M2 12h5m10 0h5"/>',
   circle: '<circle cx="12" cy="12" r="8"/>',
+  x: '<path d="m5 5 14 14m0-14L5 19"/>',
   arrow: '<path d="M4 19 20 5m-9 0h9v9"/>',
   pan: '<path d="M12 2v20M2 12h20m-14-6 4-4 4 4m-8 12 4 4 4-4M6 8l-4 4 4 4m12-8 4 4-4 4"/>',
   undo: '<path d="m9 5-6 6 6 6m-5-6h10a5 5 0 0 1 5 5v3"/>',
@@ -68,7 +71,7 @@ const CSS = `
 `;
 
 function controls() {
-  const toolButtons = ['mark', 'circle', 'arrow', 'pan'].map(tool => button(tool,
+  const toolButtons = [...drawingTools, 'pan'].map(tool => button(tool,
     tool.charAt(0).toUpperCase() + tool.slice(1), tool)).join('');
   const swatches = Object.entries(colors).map(([name, hex]) =>
     '<button type="button" data-rbm-color="' + name + '" aria-label="' + name + ' ink" title="' + name +
@@ -88,15 +91,20 @@ function svg(tag, attrs) {
 
 function drawSymbol(layer, mark, zoom) {
   const x = mark.x * WIDTH, y = mark.y * HEIGHT;
-  const x2 = mark.x2 * WIDTH, y2 = mark.y2 * HEIGHT;
   let tag = 'path', attrs;
   if (mark.type === 'mark') {
     const r = 14 / zoom, w = 7 / zoom;
     attrs = { d: `M${x-r},${y}a${r} ${r} 0 1 0 ${2*r} 0a${r} ${r} 0 1 0 ${-2*r} 0 M${x},${y-r-w}v${w} M${x},${y+r}v${w} M${x-r-w},${y}h${w} M${x+r},${y}h${w}` };
   } else if (mark.type === 'circle') {
     tag = 'circle';
-    attrs = { cx: x, cy: y, r: Math.hypot(x2-x, y2-y) };
+    const radius = mark.x2 === undefined ? CIRCLE_RADIUS / zoom :
+      Math.hypot(mark.x2 * WIDTH - x, mark.y2 * HEIGHT - y);
+    attrs = { cx: x, cy: y, r: radius };
+  } else if (mark.type === 'x') {
+    const r = X_HALF_SIZE / zoom;
+    attrs = { d: `M${x-r} ${y-r}L${x+r} ${y+r}M${x+r} ${y-r}L${x-r} ${y+r}` };
   } else {
+    const x2 = mark.x2 * WIDTH, y2 = mark.y2 * HEIGHT;
     const dx = x2 - x, dy = y2 - y, distance = Math.hypot(dx, dy);
     if (!distance) return;
     const head = Math.min(26 / zoom, distance * .45), ux = dx / distance, uy = dy / distance;
@@ -124,7 +132,8 @@ function drawPins(layer, pins, zoom) {
 
 const hints = {
   mark: 'Tap the map to place a mark.',
-  circle: 'Drag from the center to the edge, or tap those two points.',
+  circle: 'Tap the center of the area to place a circle.',
+  x: 'Tap the map to place an X.',
   arrow: 'Drag from the start to the tip, or tap those two points.',
   pan: 'Zoom in, then drag to move the view. Pinch with two fingers to zoom.',
 };
@@ -234,14 +243,14 @@ export function mountBriefingMap(container, { imageUrl, map, pins, editable = fa
   }
   function complete(p) {
     if (state.marks.length >= MAX_MARKS) { stopDrawing(); instructions('Map is full. Undo a drawing to make room.'); paint(); return; }
-    if (tool !== 'mark' && !anchor) {
-      anchor = p; instructions(tool === 'circle' ? 'Choose the circle’s edge.' : 'Choose the arrow’s tip.');
+    if (tool === 'arrow' && !anchor) {
+      anchor = p; instructions('Choose the arrow’s tip.');
       paint(); return;
     }
     const start = anchor || p;
-    if (tool !== 'mark' && Math.hypot((p.x-start.x)*WIDTH,(p.y-start.y)*HEIGHT) < 3/state.view.zoom) { paint(); return; }
+    if (tool === 'arrow' && Math.hypot((p.x-start.x)*WIDTH,(p.y-start.y)*HEIGHT) < 3/state.view.zoom) { paint(); return; }
     const shape = { type: tool, color, x: start.x, y: start.y };
-    if (tool !== 'mark') { shape.x2 = p.x; shape.y2 = p.y; }
+    if (tool === 'arrow') { shape.x2 = p.x; shape.y2 = p.y; }
     state = { ...state, marks: [...state.marks, shape] };
     stopDrawing(); instructions(); paint(); commit();
   }
@@ -283,7 +292,7 @@ export function mountBriefingMap(container, { imageUrl, map, pins, editable = fa
       applyView(camera(view.zoom, view.x + (start.x-p.x)/view.zoom, view.y + (start.y-p.y)/view.zoom), false); return;
     }
     cursor = toMap(p);
-    if (gesture.dragged && (tool === 'circle' || tool === 'arrow')) {
+    if (gesture.dragged && tool === 'arrow') {
       const from = anchor || gesture.world;
       preview = { type:tool,color,x:from.x,y:from.y,x2:cursor.x,y2:cursor.y };
     }
@@ -304,8 +313,8 @@ export function mountBriefingMap(container, { imageUrl, map, pins, editable = fa
     } else {
       const p = position(event);
       if (p) {
-        cursor = toMap(p);
-        if (current.dragged && !current.hadAnchor && (tool === 'circle' || tool === 'arrow')) anchor = current.world;
+        cursor = tool === 'circle' || tool === 'x' ? current.world : toMap(p);
+        if (current.dragged && !current.hadAnchor && tool === 'arrow') anchor = current.world;
         complete(cursor);
       }
     }

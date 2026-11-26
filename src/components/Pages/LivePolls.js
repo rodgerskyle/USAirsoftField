@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { withFirebase } from '../Firebase';
 import { requestPlayerPoll } from '../constants/fieldStaffApi';
 import { formatRoundCountdown, isOpenVote, useLiveFieldBoard } from './FieldRoundsShared';
@@ -18,6 +18,9 @@ function PollBallot({ user }) {
 
   useEffect(() => () => submission.current?.abort(), []);
 
+  const location = useLocation();
+  const requestedMvp = new URLSearchParams(location.search).get('mvp');
+  const mvpPoll = requestedMvp === null || board?.mvpPoll?.id === requestedMvp ? board?.mvpPoll : null;
   const poll = board?.poll;
   const open = isOpenVote(poll, now);
   const canVote = open && board.canVote && !error;
@@ -55,10 +58,10 @@ function PollBallot({ user }) {
 
   return (
     <>
-      {board?.mvpPoll && <MvpBallot key={board.mvpPoll.id} poll={board.mvpPoll} user={user} now={now} error={error}
+      {mvpPoll && <MvpBallot key={mvpPoll.id} poll={mvpPoll} user={user} now={now} error={error}
         refresh={refresh} submitting={submitting} setSubmitting={setSubmitting} submission={submission} />}
-      {board && !board.mvpPoll && window.location.hash === '#round-mvp' && <section id="round-mvp" className="field-schedule__section">
-        <h2>Round MVP</h2><p>No MVP vote is open right now.</p>
+      {board && !mvpPoll && (requestedMvp !== null || location.hash === '#round-mvp') && <section id="round-mvp" className="field-schedule__section">
+        <h2>Round MVP</h2><p>{requestedMvp !== null ? 'Nominations for this round are closed.' : 'No MVP vote is open right now.'}</p>
       </section>}
       <section className="field-schedule__section live-polls__ballot" aria-labelledby="live-poll-heading">
         <header className="field-schedule__section-header live-polls__poll-header">
@@ -123,6 +126,7 @@ function LivePolls({ firebase }) {
       </header>
       {user === undefined ? <p className="field-schedule__empty" role="status">Loading the live poll…</p>
         : <PollBallot key={user?.uid ?? 'guest'} user={user} />}
+      <p><a href="https://app.usairsoftfield.com/#profile/mvp-nomination-notifications">Set up MVP nomination phone alerts in the Companion</a></p>
     </main>
   );
 }

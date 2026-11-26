@@ -23,10 +23,21 @@ import {
 import { Add, Delete, Save } from '@mui/icons-material';
 import PartyBookingCheckInLink from './PartyBookingCheckInLink';
 import { requestStaffFieldTool } from '../constants/fieldStaffApi';
+import { isPartyType, partyTypeLabel } from '../constants/partyBookingKey';
 import { mutatePartyCalendar, newPartyBookingId } from '../constants/partyCalendarRecords';
 
 function samePartyBooking(left, right) {
     return Boolean(left && right && ['bookingId', 'title', 'size', 'start', 'end'].every(field => left[field] === right[field]));
+}
+
+function PartyTypeSelect({ value, onChange }) {
+    return <label className="desk-party-type">Party type
+        <select className="form-select" value={value} onChange={event => onChange(event.target.value)}>
+            {!value && <option value="" disabled>Type not set</option>}
+            <option value="airsoft">Airsoft</option>
+            <option value="nerf">Nerf</option>
+        </select>
+    </label>;
 }
 
 function BookingTime({ label, hour, minute, onHour, onMinute }) {
@@ -70,6 +81,7 @@ class Birthday extends Component {
             editDialog: false,
             title: '',
             size: '',
+            partyType: 'airsoft',
             receipt: null,
             deposit: false,
             depositAmt: 0,
@@ -89,7 +101,7 @@ class Birthday extends Component {
         opens.setHours(6, 0, 0, 0);
         closes.setHours(20, 0, 0, 0);
         this.setState({
-            lastSaved: null, start: opens, end: closes, startTimeHours: 6, startTimeMinutes: 0,
+            lastSaved: null, partyType: 'airsoft', start: opens, end: closes, startTimeHours: 6, startTimeMinutes: 0,
             endTimeHours: 20, endTimeMinutes: 0, showDialog: true, saveError: '',
         });
     }
@@ -100,6 +112,7 @@ class Birthday extends Component {
         this.setState({
             lastSaved: null, index: event.index,
             title: event.title ?? '',
+            partyType: isPartyType(event.partyType) ? event.partyType : '',
             size: event.size ?? '',
             notes: event.notes ?? '',
             receipt: event.receipt ?? null,
@@ -143,13 +156,13 @@ class Birthday extends Component {
 
     saveBooking = async action => {
         if (this.writePending) return;
-        const { index, savedBooking, originalCalendar, title, size, receipt, deposit, depositAmt, notes, start, end } = this.state;
+        const { index, savedBooking, originalCalendar, title, size, partyType, receipt, deposit, depositAmt, notes, start, end } = this.state;
         const uid = this.props.firebase.auth.currentUser?.uid;
         if (!uid) {
             this.setState({ saveError: 'Sign in again to update the Party Calendar.' });
             return;
         }
-        const values = { title, size, receipt, deposit, depositAmt, notes, start: start?.toJSON(), end: end?.toJSON() };
+        const values = { title, size, ...(partyType && { partyType }), receipt, deposit, depositAmt, notes, start: start?.toJSON(), end: end?.toJSON() };
         this.writePending = true;
         this.setState({ saving: true, saveError: '' });
         try {
@@ -161,7 +174,7 @@ class Birthday extends Component {
             if (this.mounted) {
                 this.resetDialog();
                 if (action !== 'remove') this.setState({ lastSaved: {
-                    bookingId: savedId, title, size, start: values.start, end: values.end,
+                    bookingId: savedId, title, size, ...(partyType && { partyType }), start: values.start, end: values.end,
                 } });
             }
             for (const bookingId of refreshBookingIds) await this.refreshLinkedGroups(bookingId, uid);
@@ -183,7 +196,7 @@ class Birthday extends Component {
         this.draftBookingId = null;
         this.setState({
             showDialog: false, editDialog: false, savedBooking: null, originalCalendar: null, saveError: '',
-            title: '', size: '', receipt: null, deposit: false, depositAmt: 0, notes: '',
+            title: '', size: '', partyType: 'airsoft', receipt: null, deposit: false, depositAmt: 0, notes: '',
             index: null, start: null, end: null,
             startTimeHours: '', startTimeMinutes: '', endTimeHours: '', endTimeMinutes: '',
         });
@@ -325,7 +338,7 @@ class Birthday extends Component {
                                 defaultDate={new Date()}
                                 onSelectEvent={event => this.handleEdit(event)}
                                 onSelectSlot={this.handleSelect}
-                                titleAccessor={event => { return `(${event.size}) ${event.title}` }}
+                                titleAccessor={event => `${partyTypeLabel(event.partyType)} · ${event.title}${event.size ? ' (' + event.size + ')' : ''}`}
                                 startAccessor="start"
                                 endAccessor="end"
                                 popup
@@ -341,6 +354,7 @@ class Birthday extends Component {
                                 </DialogTitle>
                                 <DialogContent className="content-create-birthday">
                                     {this.state.saveError && <p role="alert" className="alert alert-warning">{this.state.saveError}</p>}
+                                    <PartyTypeSelect value={this.state.partyType} onChange={partyType => this.setState({ partyType })} />
                                     <div className="desk-booking-times">
                                         <BookingTime label="Start time" hour={startTimeHours} minute={startTimeMinutes}
                                             onHour={this.handleStartHour} onMinute={this.handleStartMinutes} />
@@ -436,6 +450,7 @@ class Birthday extends Component {
                                     {editDialog && (samePartyBooking(this.state.savedBooking, this.state.obj?.[this.state.index])
                                         ? <PartyBookingCheckInLink firebase={this.props.firebase} booking={this.state.savedBooking} />
                                         : <p role="status">The saved party changed. Reopen it on the calendar to manage its group code.</p>)}
+                                    <PartyTypeSelect value={this.state.partyType} onChange={partyType => this.setState({ partyType })} />
                                     <div className="desk-booking-times">
                                         <BookingTime label="Start time" hour={startTimeHours} minute={startTimeMinutes}
                                             onHour={this.handleStartHour} onMinute={this.handleStartMinutes} />
