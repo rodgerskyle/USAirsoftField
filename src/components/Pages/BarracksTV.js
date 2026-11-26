@@ -12,6 +12,7 @@ import {
 import { RoundMapViewer, roundPinLocation } from './FieldRoundMap';
 import { RoundBriefingDisplay } from './RoundBriefing';
 import BarracksPatchCelebrations from './BarracksPatchCelebrations';
+import { fitBarracksScreen } from './barracks-tv-frame';
 import './FieldRounds.css';
 
 function VotingDisplay({ poll, now }) {
@@ -54,6 +55,8 @@ export default function BarracksTV({ request = requestPublicFieldTool }) {
     const showClock = runningBarracksClock(clock, displayTime);
     const safetyBrief = clock?.kind === 'safetyBrief';
 
+    useEffect(() => fitBarracksScreen(display.current), [request]);
+
     useEffect(() => {
         function updateFullscreen() {
             setFullscreen(document.fullscreenElement === display.current);
@@ -75,7 +78,7 @@ export default function BarracksTV({ request = requestPublicFieldTool }) {
     }
 
     return (
-        <main className="field-barracks" data-briefing={briefingActive} ref={display}>
+        <main className="field-barracks tv-frame" data-briefing={briefingActive} ref={display}>
             <Helmet>
                 <title>USAW Barracks TV</title>
                 <meta name="robots" content="noindex, nofollow" />
@@ -90,7 +93,8 @@ export default function BarracksTV({ request = requestPublicFieldTool }) {
             </header>
             {fullscreenError && <p className="field-barracks-notice" role="status">{fullscreenError}</p>}
             <RoundBriefingDisplay request={request} onActiveChange={setBriefingActive} />
-            <div hidden={briefingActive}>
+            <div hidden={briefingActive} className="tv-frame-board">
+            <div className="tv-frame-content">
             {error && <div className="field-barracks-notice" role="alert">
                 <span>{board ? 'Live updates interrupted. Showing the last field update.' : 'The field board is temporarily unavailable.'}</span>
                 <button type="button" onClick={() => void refresh()}>Retry</button>
@@ -101,11 +105,9 @@ export default function BarracksTV({ request = requestPublicFieldTool }) {
                     <p>{safetyBrief ? 'Safety brief starts at' : 'Return at'} {formatFieldTime(clock.endsAt)} Pacific</p></div>
                 <strong role="timer" aria-label={safetyBrief ? 'Time until safety brief' : 'Time until break ends'}>{error ? '—' : formatRoundCountdown(Date.parse(clock.endsAt) - now)}</strong>
             </section>}
-            {Number.isSafeInteger(board?.celebrationCursor) && board.celebrationCursor >= 0 &&
-                <BarracksPatchCelebrations initialCursor={board.celebrationCursor} request={request} />}
             {board && <div className="field-barracks-grid" data-side={Boolean(next || poll || mvp)}>
                 <section className="field-barracks-main" data-live={Boolean(current)} aria-labelledby="barracks-round">
-                    <div className="field-barracks-kicker">{current ? 'Now playing' : round ? 'Up next' : 'Field schedule'}</div>
+                    <div className="field-barracks-kicker">{current ? 'Now playing' : round ? 'Next on deck' : 'Field schedule'}</div>
                     <h2 id="barracks-round">{round?.title || 'No round on the board'}</h2>
                     {round ? <>
                         <div className="field-barracks-count">
@@ -138,7 +140,7 @@ export default function BarracksTV({ request = requestPublicFieldTool }) {
                         <p>Voting closes {formatFieldTime(mvp.closesAt)} Pacific</p>
                     </section>}
                     {next && <section className="field-barracks-support" aria-labelledby="barracks-next-round">
-                        <div className="field-barracks-kicker">{current ? 'Next round' : 'Then on the field'}</div>
+                        <div className="field-barracks-kicker">{current ? 'Next on deck' : 'Then on the field'}</div>
                         <h2 id="barracks-next-round">{next.title}</h2>
                         <p>{formatFieldTime(next.startsAt)} · {roundPinLocation(next, 'briefing')}</p>
                         <p>{Date.parse(next.startsAt) <= displayTime ? 'Awaiting staff start' : <>
@@ -153,6 +155,9 @@ export default function BarracksTV({ request = requestPublicFieldTool }) {
                 </aside>}
             </div>}
             {board && <p className="field-barracks-update">Last field update · {formatFieldTime(board.serverNow)} Pacific</p>}
+            </div>
+            {Number.isSafeInteger(board?.celebrationCursor) && board.celebrationCursor >= 0 &&
+                <BarracksPatchCelebrations initialCursor={board.celebrationCursor} request={request} />}
             </div>
         </main>
     );
