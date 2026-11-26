@@ -3,6 +3,15 @@ const fieldDate = new Intl.DateTimeFormat('en-CA', {
   timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit',
 });
 
+/** @param {unknown} value @returns {value is 'airsoft' | 'nerf'} */
+export function isPartyType(value) {
+  return value === 'airsoft' || value === 'nerf';
+}
+
+export function partyTypeLabel(value) {
+  return value === 'airsoft' ? 'Airsoft' : value === 'nerf' ? 'Nerf' : 'Type not set';
+}
+
 function calendarInstant(value) {
   if (!(value instanceof Date) && (typeof value !== 'string' || !/(?:Z|[+-]\d\d:\d\d)$/i.test(value))) return null;
   const time = value instanceof Date ? value.getTime() : Date.parse(value);
@@ -35,7 +44,7 @@ export async function partyBookingReference(booking) {
   const fingerprint = await digest([value.title, value.start, value.end, value.size]);
   const bookingId = typeof booking.bookingId === 'string' && durableId.test(booking.bookingId) ? booking.bookingId : fingerprint;
   const key = bookingId === fingerprint ? fingerprint : await digest([bookingId, fingerprint]);
-  return { ...value, bookingId, key };
+  return { ...value, bookingId, key, ...(isPartyType(booking.partyType) && { partyType: booking.partyType }) };
 }
 
 export async function partyBookingKey(booking) {
