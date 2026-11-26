@@ -82,3 +82,11 @@ test('without an eligible game a player stays checked in and cannot accidentally
   await waitFor(() => expect(screen.getByText('No round selected')).toBeVisible());
   expect(screen.queryByRole('button', { name: /Sit out this round/ })).toBeNull();
 });
+
+test('a captured lineup reports late arrivals outside the round and directs changes to the ref', async () => {
+  const request = jest.fn().mockResolvedValue({...self, round:{...round,locked:true},player:{...self.player,sittingOut:true}});
+  render(<RoundParticipation request={request} />);
+  expect(await screen.findByText(/Outside this round’s lineup/)).toBeVisible();
+  expect(screen.getByText(/Ask a ref/)).toBeVisible();
+  expect(screen.queryByRole('button',{name:/back in|sit out/i})).toBeNull();
+});

@@ -48,8 +48,18 @@ export function walkOnRentalLink(playerId, date, isAdmin = true, fromCompanion =
 
 export function walkOnAfterLogin(search, isAdmin) {
   const params = new URLSearchParams(search);
+  if ([...params.keys()].length === 1 && params.get('view') === 'pickup') {
+    return (isAdmin ? '/admin/rentalform' : '/dashboard/rentalform') + '?view=pickup';
+  }
   const player = rentalCheckInParams(params);
-  return player && checkInRentalLink(player.playerId, player.date, isAdmin, params.get('from') === 'companion');
+  if (player) return checkInRentalLink(player.playerId, player.date, isAdmin, params.get('from') === 'companion') +
+    (params.get('pickup') === 'arrived' ? '&pickup=arrived' : '');
+  const group = params.get('group');
+  if (params.get('view') === 'new' && params.size === 3 && params.get('pickup') === 'arrived' &&
+      /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(group || '')) {
+    return groupRentalLink(group, isAdmin) + '&pickup=arrived';
+  }
+  return null;
 }
 
 export function returnToPlayerCheckIn({ playerId, date }, companion) {

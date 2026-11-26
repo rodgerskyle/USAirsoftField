@@ -1,5 +1,5 @@
 import {
-  faCalendar, faCalendarDays, faClipboardList, faComments, faGift, faIdCard,
+  faBoxOpen, faCalendar, faCalendarDays, faClipboardList, faComments, faGift, faIdCard,
   faPeopleGroup, faQrcode, faSearch, faStopwatch, faTrophy, faTv, faUserCheck,
   faUserGear, faUserPen, faUserPlus,
 } from '@fortawesome/free-solid-svg-icons';
@@ -10,11 +10,12 @@ export const adminToolGroups = [
     id: 'game-day',
     title: 'Game day',
     actions: [
-      { title: 'Player Check-In', path: fieldStaffPaths.checkIn, icon: faUserCheck },
-      { title: 'Manage Groups', path: fieldStaffPaths.groups, icon: faPeopleGroup },
-      { title: 'Rental Form', shortTitle: 'Rentals', path: '/admin/rentalform', icon: faClipboardList, waiverDesk: true },
-      { title: 'Wins & Losses', path: '/admin/scores', icon: faTrophy },
-      { title: 'Round Controls', path: fieldStaffPaths.rounds, icon: faStopwatch },
+      { title: 'Player Check-In', description: 'Scan members, check in walk-ons or welcome a party.', path: fieldStaffPaths.checkIn, icon: faUserCheck },
+      { title: 'Manage Groups', description: 'Find a booking and update its guest list.', path: fieldStaffPaths.groups, icon: faPeopleGroup },
+      { title: 'Rental Pickup', description: 'See who is waiting and hand out numbered gear.', path: '/admin/rentalform?view=pickup', icon: faBoxOpen, waiverDesk: true },
+      { title: 'Rental Form', shortTitle: 'Rentals', description: 'Open a form to assign, swap or return gear.', path: '/admin/rentalform', icon: faClipboardList, waiverDesk: true },
+      { title: 'Round Controls', description: 'Run the briefing, review the lineup and score the round.', path: fieldStaffPaths.rounds, icon: faStopwatch },
+      { title: 'Wins & Losses', description: 'Look up or correct an individual player’s result.', path: '/admin/scores', icon: faTrophy },
     ],
   },
   {

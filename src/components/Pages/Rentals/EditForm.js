@@ -111,7 +111,7 @@ class EditForm extends Component {
                             </MUIButton>}
                             {form && <h3>Editing: {form.name}</h3>}
                         </div>
-                        {form && !form.returned ? <EditSelectedForm key={form.key} index={form.key}
+                        {form && !form.returned ? <EditSelectedForm pickupOnly={this.props.pickupOnly} key={form.key} index={form.key}
                             form={{ ...form, participants: rentalParticipants(form.participants), available: rentalRows(form.available) }}
                             firebase={firebase} uid={uid} canImportGroup={canImportGroup} initialGroupId={initialGroupId}
                             returnToCheckIn={this.props.returnToCheckIn}

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { isLegacyCardName, readScannedMemberCard, readScannedPlayerProfile } from '../constants/scoreCards';
+import DeskWaiting from './DeskWaiting';
 import { StaffCardScanner } from './StaffCardScanner';
 import { groupExperienceLabels } from '../constants/groupExperience';
 import WaiverStatus from './WaiverStatus';
@@ -113,6 +114,7 @@ function assignmentMessage({ outcome, player }) {
 const checkInSections = [
   ['admin-checkin-find', 'Members'],
   ['admin-checkin-walk-on', 'Walk-ons'],
+  ['admin-checkin-waiting', 'Finish later'],
   ['admin-checkin-arrivals', 'Arriving groups'],
   ['admin-checkin-roster', 'Roster'],
   ['admin-checkin-talent', 'Team balance'],
@@ -140,7 +142,7 @@ function TeamTalent({ board }) {
             <section className="admin-checkin__team" data-side={side} key={side}>
               <div className="admin-checkin__heading">
                 <h3>{name}</h3>
-                <span>{counts?.[side] ?? '—'} players</span>
+                <span>{counts?.[side] ?? '—'} {counts?.[side] === 1 ? 'player' : 'players'}</span>
               </div>
               <span>Estimated strength share {share === null ? '—' : `${share}%`}</span>
               <progress aria-label={`${name} estimated strength share`} value={share ?? 0} max={100} />
@@ -210,7 +212,18 @@ function savedRentalLink(player, date) {
     ? checkInRentalLink(player.playerId, date) : null;
 }
 
-function SelectedPlayer({ player, date, suggestion, working, rentalRequested, onRentalChange, onAssessment, onAssign, request, onWaiver, onRetry, onRename, onNext, onRound }) {
+function deskSide(side) {
+  return side === 'camo' ? 'Yellow / Camo' : 'Blue / Solid';
+}
+
+function admissionTime(stamp) {
+  const value = Date.parse(stamp);
+  return Number.isFinite(value) ? ' at ' + new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Los_Angeles', hour: 'numeric', minute: '2-digit',
+  }).format(value) : '';
+}
+
+function SelectedPlayer({ player, date, suggestion, working, rentalRequested, onRentalChange, onAssessment, onAssign, request, onWaiver, onRetry, onRename, onNext, onRound, onPause, rapid, nextStop }) {
   const { side, membershipStatus, experienceBand, assignedExperienceBand, canSetExperience, gamesLogged } = player;
   const heading = useRef(null);
   useEffect(() => { heading.current?.focus(); }, [player.playerId]);
@@ -221,14 +234,8 @@ function SelectedPlayer({ player, date, suggestion, working, rentalRequested, on
   const membership = memberships[membershipStatus] || memberships.unconfirmed;
   const ratingChanged = experienceBand !== (assignedExperienceBand || 'unrated');
   return (
-    <section className="admin-checkin__selection" aria-labelledby="admin-checkin-selection">
+    <section className="admin-checkin__selection admin-checkin__participant" aria-labelledby="admin-checkin-selection">
       <h3 id="admin-checkin-selection" tabIndex={-1} ref={heading}>{player.displayName}</h3>
-      {membershipStatus === 'guest' && <details className="admin-checkin__edit-name" key={player.playerId + player.displayName}><summary>Edit walk-on name</summary>
-        <form className="admin-checkin__form" onSubmit={event => { event.preventDefault(); onRename(event.currentTarget.elements.displayName.value.trim()); }}>
-          <label>Walk-on name or callsign<input name="displayName" defaultValue={player.displayName} minLength={2} maxLength={80} required readOnly={working} /></label>
-          <button type="submit" className="btn btn-secondary" disabled={working}>Save walk-on name</button>
-        </form></details>}
-      {membershipStatus !== 'guest' && <p className="admin-checkin__id">{player.playerId}</p>}
       <div className="admin-checkin__badges">
         <span className="admin-checkin__pill" data-membership={membershipStatus}>{membership}</span>
         <span className="admin-checkin__pill" data-side={side || undefined}>
@@ -240,8 +247,15 @@ function SelectedPlayer({ player, date, suggestion, working, rentalRequested, on
           {countFormat.format(gamesLogged)} {gamesLogged === 1 ? 'game' : 'games'} logged
         </span>}
       </div>
+      {membershipStatus === 'guest' && <details className="admin-checkin__edit-name" key={player.playerId + player.displayName}><summary>Edit walk-on name</summary>
+        <form className="admin-checkin__form" onSubmit={event => { event.preventDefault(); onRename(event.currentTarget.elements.displayName.value.trim()); }}>
+          <label>Walk-on name or callsign<input name="displayName" defaultValue={player.displayName} minLength={2} maxLength={80} required readOnly={working} /></label>
+          <button type="submit" className="btn btn-secondary" disabled={working}>Save walk-on name</button>
+        </form></details>}
+      {membershipStatus !== 'guest' && <p className="admin-checkin__id">{player.playerId}</p>}
       {player.waiverStatus !== 'signed' && <div id="admin-checkin-selected-waiver">
         <button type="button" className="btn btn-outline-secondary" onClick={onRetry} disabled={working}>Retry waiver check</button>
+        {!side && <button type="button" className="btn btn-outline-primary" disabled={working} onClick={onPause}>Finish later</button>}
         <StaffWaiverPicker request={request} name={membershipStatus === 'guest' ? player.displayName : player.legalName || ''} disabled={working} onChoose={onWaiver} />
       </div>}
       {canSetExperience && (
@@ -261,16 +275,20 @@ function SelectedPlayer({ player, date, suggestion, working, rentalRequested, on
         <input type="checkbox" checked={rentalRequested} disabled={working} onChange={event => onRentalChange(event.target.checked)} />
         Open rental form after check-in
       </label>}
-      <div className="admin-checkin__buttons">
-        {choices.map(choice => (
-          <button className={`btn btn-${side ? 'outline-primary' : 'primary'}`} type="button" key={choice} disabled={working || (!side && player.waiverStatus !== 'signed')} onClick={() => onAssign(choice)}>
-            {side ? (player.buddyName ? 'Move both buddies to ' : 'Move to ') : 'Check in as '}{sides[choice]}{!side && rentalRequested ? ' & open rental' : ''}
+      {side && <p className="admin-checkin__destination">{deskSide(side)}{admissionTime(player.checkedInAt)}{nextStop && <> · Next stop · <strong>{nextStop}</strong></>}</p>}
+      <div className="admin-checkin__buttons admin-checkin__decisions">
+        <div className={side ? 'admin-checkin__move' : 'admin-checkin__team-actions'}>
+          {choices.map(choice => (
+          <button className={`btn btn-${side ? 'outline-primary' : 'primary'}`} type="button" data-team-choice={!side ? choice : undefined} key={choice} disabled={working || (!side && player.waiverStatus !== 'signed')} onClick={() => onAssign(choice)}>
+            {side ? (player.buddyName ? 'Move both buddies to ' : 'Move to ') : 'Check in as '}{rapid && !side ? deskSide(choice) : sides[choice]}{!side && rentalRequested ? ' & open rental' : ''}
           </button>
-        ))}
+          ))}
+        </div>
         {rentalLink && !working && <><a className="btn btn-outline-primary" href={rentalLink}>Open rental form</a>{' '}
           <a className="btn btn-outline-primary" href={checkInRentalLink(player.playerId, date, true, false, 'return')}>Swaps &amp; returns</a></>}
+
         {side && <button type="button" className="btn btn-outline-primary" disabled={working} onClick={onRound}>Round status &amp; Battle Buddy</button>}
-        {side && <button type="button" className="btn btn-primary" disabled={working} onClick={onNext}>Check in next player</button>}
+        <button type="button" className={side ? 'btn btn-primary' : 'btn btn-outline-secondary'} disabled={working} onClick={onNext}>{side ? 'Check in next player' : 'Back to search'}</button>
         {side && canSetExperience && ratingChanged && (
           <button type="button" className="btn btn-primary" disabled={working} onClick={() => onAssign(side)}>{membershipStatus === 'guest' ? 'Save experience' : 'Save balance estimate'}</button>
         )}
@@ -295,6 +313,8 @@ export default function AdminFieldCheckIn({ request }) {
   const [clearConfirmation, setClearConfirmation] = useState(null);
   const [rosterEdit, setRosterEdit] = useState(null);
   const [rosterNotice, setRosterNotice] = useState('');
+  const arrival = useRef({ rapid: false, holdId: null });
+  const [pausedTicket, setPausedTicket] = useState(null);
   const [roundTarget, setRoundTarget] = useState(null);
   const roundHeading = useRef(null);
   const roundTrigger = useRef(null);
@@ -440,6 +460,7 @@ export default function AdminFieldCheckIn({ request }) {
   }
 
   function resetLookup() {
+    arrival.current = { rapid: false, holdId: null };
     clearReturnSelection();
     setRentalRequested(false);
     setSelected(null);
@@ -457,7 +478,7 @@ export default function AdminFieldCheckIn({ request }) {
     try {
       const data = await request(path, {
         method: 'POST', signal,
-        body: guest ? { action: 'guestPreview', ...input } : { action: 'lookup', includeBalance: true, ...input },
+        body: guest ? { action: 'guestPreview', ...input, ...(input.waiverRef && arrival.current.holdId && { holdId: arrival.current.holdId }) } : { action: 'lookup', includeBalance: true, ...input },
       });
       if (signal.aborted) return;
       if (expectedPlayerId && (data.date !== expectedGroupDate || data.player?.playerId !== expectedPlayerId)) {
@@ -466,6 +487,12 @@ export default function AdminFieldCheckIn({ request }) {
       if (expectedGroupDate && data.date !== expectedGroupDate) throw new Error('The field day changed. Find the group again before checking in.');
       if (data.counts && data.balance) setBoard(current => putResult(current, data));
       if (data.player) {
+        if (arrival.current.rapid && data.player.side) {
+          resetLookup();
+          setStatus(data.player.displayName + ' already checked in · ' + deskSide(data.player.side) + admissionTime(data.player.checkedInAt) + '. Ready for the next card.');
+          return;
+        }
+        if (data.player.membershipStatus !== 'active') arrival.current.rapid = false;
         setSelected({ date: data.date, rosterVersion: data.rosterVersion, player: data.player, experienceEdited: guest && input.experienceBand !== undefined });
         setStatus(data.player.side ? 'This player is already checked in.' : data.player.waiverStatus === 'signed' ? 'Choose a side to check in.' : 'Verify the player’s signed waiver below.');
       } else if (data.matches?.length) {
@@ -486,9 +513,10 @@ export default function AdminFieldCheckIn({ request }) {
     }
   }
 
-  function lookup(input, guest = false, expectedGroupDate, withRental = false) {
+  function lookup(input, guest = false, expectedGroupDate, withRental = false, desk = null) {
     if (clearConfirmation || rosterEdit || operation.current) return;
     if (!input.playerId || input.playerId !== checkInSelection(window.location.search)?.playerId) clearReturnSelection();
+    arrival.current = desk || { rapid: input.deskScan === true, holdId: null };
     setRentalRequested(withRental);
     void run(signal => loadLookup(signal, input, guest, expectedGroupDate));
   }
@@ -523,15 +551,40 @@ export default function AdminFieldCheckIn({ request }) {
       ...(isNewGuest ? { displayName: player.displayName } : { playerId: player.playerId }),
       ...(isNewGuest && selected.experienceEdited ? { experienceBand: player.experienceBand } : {}),
       ...(!player.side && proof ? { waiverRef: proof } : {}),
-    }, isNewGuest, undefined, rentalRequested);
+    }, isNewGuest, undefined, rentalRequested, arrival.current);
   }
 
-  function applyAssignment(data, player) {
+  function pauseVisit() {
+    if (!selected || selected.player.side) return;
+    const { date, player } = selected;
+    const desk = arrival.current;
+    void run(async signal => {
+      if (!desk.holdId) desk.holdId = crypto.randomUUID();
+      const result = await request(path, { method: 'POST', signal, body: {
+        action: 'pauseDesk', date, holdId: desk.holdId, displayName: player.displayName,
+        ...(player.membershipStatus !== 'guest' && { playerId: player.playerId }),
+        experienceBand: player.experienceBand || 'unrated', needsRental: rentalRequested,
+      } });
+      if (signal.aborted) return;
+      nextPlayer();
+      setPausedTicket({ id: result.id });
+      setStatus(player.displayName + ' is in Finish later. Show them their waiver QR below.');
+    });
+  }
+
+  function resumeVisit(row) {
+    const guest = !row.playerId;
+    lookup({ ...(guest ? { displayName: row.displayName, experienceBand: row.experienceBand } : { playerId: row.playerId }),
+      ...(row.waiverRef && { waiverRef: row.waiverRef }) }, guest, undefined, row.needsRental, { rapid: false, holdId: row.id });
+  }
+
+  function applyAssignment(data, player, nextStop) {
     if (data.counts && data.players) setBoard(current => putResult(current, data));
     if (data.player) {
       setSelected({
         date: data.date,
         rosterVersion: data.rosterVersion,
+        nextStop,
         player: {
           canSetExperience: player.canSetExperience, experienceOptions: player.experienceOptions, ...data.player,
           assignedBalanceScore: data.player.balanceScore, assignedExperienceBand: data.player.experienceBand,
@@ -584,6 +637,9 @@ export default function AdminFieldCheckIn({ request }) {
           method: 'POST', signal,
           body: {
             action, date, side,
+            ...(!player.side && rentalRequested && { needsRental: true }),
+            ...(!player.side && arrival.current.holdId && { holdId: arrival.current.holdId }),
+            ...(!player.side && arrival.current.rapid && player.membershipStatus === 'active' && { rapid: true }),
             ...(!player.side && player.waiverRef ? { waiverRef: player.waiverRef } : {}),
             ...(rosterVersion ? { rosterVersion } : {}),
             ...(newGuest ? { displayName: player.displayName } : { playerId: player.playerId, revision: player.revision }),
@@ -591,7 +647,7 @@ export default function AdminFieldCheckIn({ request }) {
           },
         });
         if (signal.aborted) return;
-        applyAssignment(data, player);
+        applyAssignment(data, player, !player.side && (rentalRequested ? 'Rental pickup' : 'Barracks for briefing'));
         setCheckInRevision(value => value + 1);
         setStatus(assignmentMessage(data));
         if (!player.side && rentalRequested) {
@@ -601,6 +657,11 @@ export default function AdminFieldCheckIn({ request }) {
             return;
           }
           setStatus(assignmentMessage(data) + ' Reopen this player to verify their waiver and start the rental.');
+        }
+        if (arrival.current.rapid && data.player?.side && !rentalRequested) {
+          nextPlayer();
+          setStatus(assignmentMessage(data) + ' ' + deskSide(data.player.side) + admissionTime(data.player.checkedInAt) + ' · Next stop · Barracks for briefing. Ready for the next card.');
+          return;
         }
         const input = newGuest ? guestInput.current : memberInput.current;
         if (input) {
@@ -804,27 +865,30 @@ export default function AdminFieldCheckIn({ request }) {
       <div className="admin-checkin__columns">
         <section className="admin-checkin__card" aria-labelledby="admin-checkin-find">
           <h2 id="admin-checkin-find" tabIndex={-1}>Member search</h2>
-          <form className="admin-checkin__form" role="search" aria-labelledby="admin-checkin-find" onSubmit={submitLookup}>
+          <form className="admin-checkin__form admin-checkin__member-form" role="search" aria-labelledby="admin-checkin-find" onSubmit={submitLookup}>
             <label htmlFor="admin-checkin-player">
               Member name, ID or card link
               <input id="admin-checkin-player" ref={memberInput} type="search" enterKeyHint="search" maxLength={500} autoCapitalize="none" autoComplete="off" autoCorrect="off" spellCheck={false} required readOnly={checkInLocked} onChange={resetLookup} />
             </label>
             <button className="btn btn-primary" type="submit" disabled={checkInLocked}>Search members</button>
-            {!selected && <button type="button" className="btn btn-outline-primary" disabled={checkInLocked}
+          </form>
+          <div className="admin-checkin__scan-tools">
+            <StaffCardScanner verifyLegacyCards continuous disabled={checkInLocked} paused={Boolean(selected || matches.length || walkOnWaiverQuery !== null)}
+              onScan={input => lookup({ ...input, deskScan: true })} />
+            {!selected && <button type="button" className="btn btn-outline-secondary admin-checkin__find-waiver" disabled={checkInLocked}
               aria-expanded={walkOnWaiverQuery !== null} aria-controls="admin-checkin-waiver-search"
               onClick={() => {
                 const open = walkOnWaiverQuery === null;
                 resetLookup();
                 if (open) setWalkOnWaiverQuery(memberInput.current.value.trim());
               }}>Find a waiver</button>}
-          </form>
-          <StaffCardScanner verifyLegacyCards disabled={checkInLocked} onScan={lookup} />
-          <p className="admin-checkin__hint">Point the camera at the QR code or barcode on the member’s USAW card. You can also type their name or scan into the search field.</p>
+          </div>
           {status && <p className="admin-checkin__status" role="status">{status}</p>}
           {error && <p className="alert alert-danger" role="alert">{error}</p>}
-          {matches.length > 0 && <PlayerRows players={matches} onSelect={lookup} disabled={checkInLocked} />}
+          {matches.length > 0 && <><PlayerRows players={matches} onSelect={input => lookup({ ...input, ...(arrival.current.rapid && { deskScan: true }) })} disabled={checkInLocked} />
+            <button className="btn btn-outline-secondary" type="button" disabled={checkInLocked} onClick={nextPlayer}>Back to search</button></>}
           {selected && <SelectedPlayer player={visibleSelection} date={selected.date} rentalRequested={rentalRequested} onRentalChange={setRentalRequested} suggestion={recommendation} working={checkInLocked} request={request} onRound={event => openRound(selected.player, event.currentTarget)}
-            onWaiver={match => verifySelected(match.ref)} onRetry={() => verifySelected()} onAssessment={updateAssessment} onAssign={assign} onRename={renameWalkOn} onNext={nextPlayer} />}
+            onPause={pauseVisit} rapid={arrival.current.rapid} nextStop={selected.nextStop} onWaiver={match => verifySelected(match.ref)} onRetry={() => verifySelected()} onAssessment={updateAssessment} onAssign={assign} onRename={renameWalkOn} onNext={nextPlayer} />}
           {walkOnWaiverQuery !== null && !selected && <section id="admin-checkin-waiver-search" aria-labelledby="admin-checkin-waiver-title">
             <h3 id="admin-checkin-waiver-title">Check in a walk-on by waiver</h3>
             <p>Choose the participant’s signed waiver to review their walk-on check-in.</p>
@@ -842,13 +906,14 @@ export default function AdminFieldCheckIn({ request }) {
                 <input id="admin-checkin-guest" ref={guestInput} type="text" minLength={2} maxLength={80} autoComplete="off" required readOnly={checkInLocked}
                   onChange={resetLookup} />
               </label>
-              <button className="btn btn-outline-primary" type="submit" disabled={checkInLocked}>Continue</button>
+              <button className="btn btn-primary" type="submit" disabled={checkInLocked}>Continue</button>
               <button className="btn btn-outline-primary" type="button" disabled={checkInLocked}
                 onClick={event => {
                   if (event.currentTarget.form.reportValidity()) lookup({ displayName: guestInput.current.value.trim() }, true, undefined, true);
                 }}>Continue with rental</button>
             </form>
           </details>
+          <DeskWaiting request={request} ticket={pausedTicket} disabled={checkInLocked} onResume={resumeVisit} revision={checkInRevision} />
           <StaffGroupLookup request={request} onSelect={lookup} disabled={working || Boolean(clearConfirmation || rosterEdit)}
             rosterVersion={board?.rosterVersion} checkInRevision={checkInRevision} onWorking={setGroupWorking}
             onBoardRead={acceptGroupBoard} onAssigned={result => {

@@ -570,8 +570,12 @@ test.each([false, true])('one-screen desk ends the selected game with optional n
         render(<AdminFieldRounds request={request} />);
         const panel = within(await screen.findByRole('region', { name: 'Run the next round' }));
         fireEvent.change(panel.getByRole('combobox'), { target: { value: other.id } });
+        expect(panel.getByText('Next on deck')).toBeVisible();
+        expect(panel.queryByRole('button', { name: 'End game' })).not.toBeInTheDocument();
         fireEvent.click(panel.getByRole('button', { name: 'Start game' }));
         await waitFor(() => expect(panel.getByRole('button', { name: finishButton })).toBeEnabled());
+        expect(panel.getByText('In play')).toBeVisible();
+        expect(panel.queryByRole('button', { name: 'Start game' })).not.toBeInTheDocument();
         expect(writes[0]).toEqual(expect.objectContaining({ action: 'runRoundConsole', phase: 'start', gameId: other.id, revision: 6 }));
         fireEvent.click(panel.getByRole('button', { name: finishButton }));
         expect(writes).toHaveLength(1);
@@ -597,4 +601,82 @@ test('an existing nomination vote only disables the optional end-and-nominate ac
     const panel = within(await screen.findByRole('region', { name: 'Run the next round' }));
     expect(panel.getByRole('button', { name: 'End game' })).toBeEnabled();
     expect(panel.getByRole('button', { name: 'End game & open MVP nominations' })).toBeDisabled();
+});
+
+test('ending a game opens its saved lineup and requires separate winner review and confirmation', async () => {
+    let ended = false;
+    const lineup = {
+        game: { ...playing, status:'ended', startedAt:serverNow }, recentGames: [{ ...playing, startedAt:serverNow }],
+        players:[{playerId:'member-a',displayName:'Avery',side:'camo',member:true},
+            {playerId:'guest-b',displayName:'Jordan',side:'solid',member:false}],
+        candidates:[], revision:4, winner:null, progress:{saved:0,remaining:0,failed:0}, failures:[],
+    };
+    const request = jest.fn(async (path, options) => {
+        if (path === ROUND_CATALOG_PATH) return catalog;
+        if (path === '/api/round-roster') {
+            if (options.body.action === 'lineupResult') {
+                expect(options.body).toEqual({action:'lineupResult',gameId:playing.id,winner:'camo',revision:4});
+                return {...lineup, winner:'camo', progress:{saved:1,remaining:0,failed:0}};
+            }
+            expect(options.body).toEqual({action:'lineup',gameId:playing.id});
+            return lineup;
+        }
+        if (options.method === 'POST') {
+            ended = true;
+            return {ok:true,gameId:playing.id};
+        }
+        return {serverNow,isStaff:true,games:ended ? [] : [playing]};
+    });
+    const confirm = jest.spyOn(window, 'confirm').mockReturnValue(true);
+    try {
+        render(<AdminFieldRounds request={request} />);
+        fireEvent.click(await screen.findByRole('button',{name:'End round'}));
+        const desk = within(await screen.findByRole('region',{name:'Round lineup and result'}));
+        const winnerButton = await desk.findByRole('button',{name:'Review Yellow / Camo win'});
+        expect(desk.getByRole('heading', {name:'Round lineup and result'})).toHaveFocus();
+        fireEvent.click(winnerButton);
+        expect(desk.getByText(/1 member win.*0 member loss.*1 walk-on/)).toBeVisible();
+        expect(request.mock.calls.filter(([,options]) => options.body?.action === 'lineupResult')).toHaveLength(0);
+        fireEvent.click(desk.getByRole('button',{name:'Confirm round result'}));
+        expect(await desk.findByText('Round result recorded.')).toBeVisible();
+        expect(desk.getByRole('link',{name:'Individual score corrections and MVP awards'})).toHaveAttribute('href','/admin/scores');
+    } finally { confirm.mockRestore(); }
+});
+
+test('one result confirmation saves a 40-member lineup across ten score requests', async () => {
+    const game = { ...playing, status:'ended', startedAt:serverNow };
+    const players = Array.from({length:40}, (_, i) => ({
+        playerId:'member-' + i, displayName:'Member ' + i, side:i < 24 ? 'camo' : 'solid', member:true,
+    }));
+    const scored = [];
+    const batches = [];
+    const request = jest.fn(async (path, options) => {
+        if (path === ROUND_CATALOG_PATH) return catalog;
+        if (path !== '/api/round-roster') return { serverNow, isStaff:true, games:[] };
+        const { body } = options;
+        if (body.action === 'lineupResult') {
+            batches.push(body);
+            const page = players.slice(scored.length, scored.length + 4);
+            if (!page.length) throw Error('Unexpected request after the final score');
+            scored.push(...page.map(player => player.playerId));
+        }
+        return { game, recentGames:[game], players, candidates:[], revision:9, winner:scored.length ? 'solid' : null,
+            progress:{saved:scored.length, remaining:players.length - scored.length, failed:0}, failures:[] };
+    });
+    render(<AdminFieldRounds request={request} />);
+    const desk = within(await screen.findByRole('region',{name:'Round lineup and result'}));
+    fireEvent.click(desk.getByRole('button',{name:'Review lineup'}));
+    const blue = await desk.findByRole('button',{name:'Review Blue / Solid win'});
+    const teams = [...desk.getByRole('heading', {name:'Players in this round'}).closest('[data-roster]').querySelectorAll('.lineup-teams summary')];
+    expect(teams.map(row => row.textContent)).toEqual(['Yellow / Camo 24', 'Blue / Solid 16']);
+    expect(desk.getByText('Adjust players in this round').closest('details')).not.toHaveAttribute('open');
+    fireEvent.click(blue);
+    expect(desk.getByRole('button',{name:'Confirm round result'})).toHaveFocus();
+    expect(desk.getByText(/16 member wins.*24 member losses/)).toBeVisible();
+    expect(batches).toHaveLength(0);
+    fireEvent.click(desk.getByRole('button',{name:'Confirm round result'}));
+    expect(await desk.findByText('Round result recorded.')).toBeVisible();
+    expect(batches).toEqual(Array(10).fill({action:'lineupResult',gameId:game.id,winner:'solid',revision:9}));
+    expect(scored).toEqual(players.map(player => player.playerId));
+    expect(desk.queryByRole('button',{name:'Resume saving results'})).not.toBeInTheDocument();
 });

@@ -97,8 +97,10 @@ export function RoundParticipation({ request, playerId, onSaved }) {
     {error && <p role="alert">{error}</p>}
     {!data && !error && <p role="status">Loading round status…</p>}
     {data && (!player ? <p>{staff ? 'This player is no longer on today’s roster.' : 'Check in at the field to join today’s round roster.'}</p> : <>
-      <p><strong>{round?.title || 'No round selected'}</strong> · {teams[player.side]}{round && (player.sittingOut ? ' · Sitting out this round' : ' · Playing this round')}</p>
-      {round && <button type="button" className={staff ? 'btn btn-outline-primary' : 'ph-button ph-button-primary'}
+      <p><strong>{round?.title || 'No round selected'}</strong> · {teams[player.side]}{round?.locked && (player.sittingOut ? ' · Outside this round’s lineup' : ' · In this round’s lineup')}{round && !round.locked && (player.sittingOut ? ' · Sitting out this round' : ' · Playing this round')}</p>
+      {round?.locked && <p>{staff ? <a href="/admin/field/rounds">Adjust this player's participation in Round controls</a>
+        : 'The lineup is set for this round. Ask a ref if your participation changes.'}</p>}
+      {round && !round.locked && <button type="button" className={staff ? 'btn btn-outline-primary' : 'ph-button ph-button-primary'}
         disabled={busy} onClick={() => save({
           action: 'availability', date: data.date, gameId: round.id, sittingOut: !player.sittingOut, revision: player.revision, ...(staff && { playerId }),
         }, player.sittingOut ? 'Back in this round.' : 'Sitting out this round. Check-in is saved for the day.')}>

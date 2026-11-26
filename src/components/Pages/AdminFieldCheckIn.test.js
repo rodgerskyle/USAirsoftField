@@ -5,6 +5,7 @@ import { StaffCardScanner } from './StaffCardScanner';
 
 jest.mock('./StaffCardScanner', () => ({ StaffCardScanner: jest.fn() }));
 jest.mock('./MemberWaiverSync', () => () => null);
+jest.mock('./DeskWaiting', () => () => null);
 
 beforeEach(() => { StaffCardScanner.mockReturnValue(null); });
 
@@ -176,7 +177,7 @@ test('opens staff check-in from a connected member ID, a legacy printed name or 
   const scanner = StaffCardScanner.mock.calls.at(-1)[0];
   expect(scanner.verifyLegacyCards).toBe(true);
   await act(async () => { scanner.onScan({ barcodeValue: 'FoxRiver' }); });
-  expect(request.mock.calls.at(-1)[1].body).toEqual({ action: 'lookup', includeBalance: true, barcodeValue: 'FoxRiver' });
+  expect(request.mock.calls.at(-1)[1].body).toEqual({ action: 'lookup', includeBalance: true, barcodeValue: 'FoxRiver', deskScan: true });
 
 });
 
@@ -527,7 +528,7 @@ test('a scanned member carries directly into rentals after a confirmed assignmen
     act(() => StaffCardScanner.mock.calls.at(-1)[0].onScan({playerId:saved.playerId}));
     const choice = await screen.findByLabelText('Open rental form after check-in');
     fireEvent.click(choice);
-    fireEvent.click(screen.getByRole('button',{name:'Check in as Camo & open rental'}));
+    fireEvent.click(screen.getByRole('button',{name:'Check in as Yellow / Camo & open rental'}));
     await screen.findByText('Registered Member checked in as Camo.');
     expect(assign).toHaveBeenCalledWith('/admin/rentalform?view=new&member=' + saved.playerId + '&date=' + date);
     expect(request.mock.calls.map(([,opts])=>opts.body?.action)).toEqual([undefined,'lookup','checkIn']);
@@ -549,7 +550,7 @@ test('browser Back from renewal rechecks the selected member before resuming', a
   await screen.findByText('Membership active', {selector:'span'});
   expect(screen.queryByRole('link',{name:'Renew this membership'})).toBeNull();
   expect(request.mock.calls.slice(1).map(([,opts])=>opts.body)).toEqual([
-    {action:'lookup',includeBalance:true,playerId:player.playerId},
+    {action:'lookup',includeBalance:true,playerId:player.playerId,deskScan:true},
     {action:'lookup',includeBalance:true,playerId:player.playerId},
   ]);
 });
