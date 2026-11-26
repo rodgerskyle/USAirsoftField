@@ -105,7 +105,9 @@ export async function staffKnifeKills(firebase, staffToken, playerId, { body, si
     if (data.playerId !== playerId || !countIsValid(data.total) || !countIsValid(data.recorded)
         || !(data.openingTotal === null || countIsValid(data.openingTotal))
         || typeof data.eligibleForPatches !== 'boolean' || !Array.isArray(data.pendingPatches)
-        || !Array.isArray(data.history) || (body && !Array.isArray(data.newlyEarned))) {
+        || !Array.isArray(data.history) || !data.history.every(entry => entry && (entry.type === 'reconcile'
+            || (['record', 'opening'].includes(entry.type) && countIsValid(entry.count))))
+        || (body && !Array.isArray(data.newlyEarned))) {
         throw new Error('The player record could not be verified. Try again.');
     }
     return data;
