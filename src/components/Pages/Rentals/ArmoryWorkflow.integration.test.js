@@ -1,6 +1,6 @@
 import React from 'react';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { get, runTransaction } from 'firebase/database';
+import { get, onValue, runTransaction } from 'firebase/database';
 import { requestStaffFieldTool } from '../../constants/fieldStaffApi';
 import CreateRentalForm from './CreateRentalForm';
 import ReturnForm from './ReturnForm';
@@ -12,7 +12,7 @@ import { changeEquipment, gearRows, issueRentalGear } from './utils/rentalGear';
 
 jest.mock('../../Firebase', () => ({ withFirebase: component => component }));
 jest.mock('../../constants/fieldStaffApi');
-jest.mock('firebase/database', () => ({runTransaction:jest.fn(), get:jest.fn(), child:(_ref,path) => path}));
+jest.mock('firebase/database', () => ({runTransaction:jest.fn(), get:jest.fn(), onValue:jest.fn(), child:(_ref,path) => path}));
 jest.mock('../StaffCardScanner', () => ({StaffCardScanner:() => null}));
 const member = {playerId:'member-example-37', date:rentalFieldDay(), displayName:'Morgan Archer'};
 const catalog = {id:'mask',value:'mask',label:'Mask',cost:5,stock:0,max:8};
@@ -82,7 +82,9 @@ test('a check-in rental becomes active before pickup, and two refs issue, swap a
     const admission = {...member, checkedInAt:new Date().toISOString()};
     let receipt = null;
     const handoffs = [];
-    get.mockResolvedValue({val:() => null});
+    const archiveSnapshot = path => ({val:() => path.split('/').reduce((row,key) => row?.[key],desk.read())});
+    get.mockImplementation(async path => archiveSnapshot(path));
+    onValue.mockImplementation((path,listener) => {listener(archiveSnapshot(path)); return () => {};});
     requestStaffFieldTool.mockImplementation(async (_firebase,_uid,path,options) => {
         if (path.startsWith('/api/rental-groups?pickup=today')) {
             return {date:member.date,players:receipt ? [] : [admission],admitted:[admission],issued:receipt ? [receipt] : []};
@@ -136,7 +138,7 @@ test('a check-in rental becomes active before pickup, and two refs issue, swap a
     expect(desk.read().options[0].stock).toBe(1);
     first.unmount();
 
-    render(<ReturnForm firebase={desk.firebase} rentalForms={[desk.form()]} initialFormKey="0" />);
+    const returnsDesk = render(<ReturnForm firebase={desk.firebase} rentalForms={[desk.form()]} initialFormKey="0" />);
     fireEvent.click(screen.getByRole('button',{name:'Complete Form'}));
     await screen.findByLabelText('Email Address');
     fireEvent.click(screen.getByRole('button',{name:'Complete Form'}));
@@ -147,6 +149,14 @@ test('a check-in rental becomes active before pickup, and two refs issue, swap a
     expect(archive[0].participants[0]).not.toHaveProperty('waiverProof');
     expect(Object.values(archive[0].gearHistory).map(event => event.action).sort()).toEqual(['issue','return','swap']);
     expect(desk.read().options[0].stock).toBe(1);
+    returnsDesk.unmount();
+    render(<MemoryRouter future={{v7_startTransition:true,v7_relativeSplatPath:true}}>
+        <RentalPickupQueue firebase={desk.firebase} uid="ref-one" isAdmin rentalForms={[]} />
+    </MemoryRouter>);
+    fireEvent.click(await screen.findByRole('button',{name:/Returned 1/}));
+    const completed = within(await screen.findByRole('article',{name:'Rental for ' + member.displayName}));
+    expect(completed.getByText('#C-039')).toBeVisible();
+    expect(completed.queryByRole('button',{name:'Swap or return gear'})).toBeNull();
 });
 
 test.each(['missing','expired'])('%s waiver status holds pickup until the current signed waiver is attached', async status => {
