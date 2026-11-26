@@ -1,7 +1,7 @@
 import React from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { HelmetProvider } from 'react-helmet-async';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
 import { get, onValue } from 'firebase/database';
 import { getDownloadURL } from 'firebase/storage';
 import { FirebaseContext } from '../Firebase';
@@ -18,15 +18,20 @@ import AdminBadgeAwards from './AdminBadgeAwards';
 import Pricing from './Pricing';
 import VirtualPatches from './VirtualPatches';
 import PlayerProfileView from './PlayerProfileView';
+import ProfileLookup from './Profilelookup';
 import Leaderboard from './leaderboard';
 
 jest.mock('../constants/playerExperience', () => {
   const actual = jest.requireActual('../constants/playerExperience');
   return {
     ...actual,
-    requestPlayerExperience: (path, signal) => path.startsWith('/api/battle-badges?')
-      ? Promise.resolve({ progress: { totalAwards: 0, colorBadgeCount: 0, towerOfPower: false, silverStars: 0, goldStars: 0 } })
-      : actual.requestPlayerExperience(path, signal),
+    requestPlayerExperience: (path, signal) => {
+      if (path.startsWith('/api/knife-kills?')) return mockKnifeLookup(path, signal);
+      if (path.startsWith('/api/battle-badges?')) return Promise.resolve({
+        progress: { totalAwards: 0, colorBadgeCount: 0, towerOfPower: false, silverStars: 0, goldStars: 0 },
+      });
+      return actual.requestPlayerExperience(path, signal);
+    },
   };
 });
 
@@ -63,6 +68,7 @@ jest.mock('../constants/playerPrestige', () => ({
 }));
 
 const playerId = 'test-player-123';
+const mockKnifeLookup = jest.fn();
 const firebase = {
   user: id => `users/${id}`,
   users: () => 'users',
@@ -95,6 +101,7 @@ function renderPage(page, { path = '/virtual-patches', authUser = null } = {}) {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockKnifeLookup.mockResolvedValue({ playerId, total: 0 });
   global.fetch = jest.fn(url => new URL(url).pathname === '/api/player-team'
     ? Promise.resolve(teamResponse(null))
     : respondToPrestigeBatch(url));
@@ -488,6 +495,47 @@ test('shows a public featured count without loading private badge records or a l
   expect(await screen.findByText('×4')).toBeVisible();
   expect(screen.queryByText('All-time leaderboard')).not.toBeInTheDocument();
   expect(getMyBadges).not.toHaveBeenCalled();
+});
+
+test.each([[true, 0], [false, 107]])('shows the verified knife kill total on a profile with account=%s', async (account, total) => {
+  mockKnifeLookup.mockResolvedValue({ playerId, total });
+  renderPage(<PlayerProfileView firebase={firebase} user={user} playerId={playerId} account={account} />);
+  const box = within(screen.getByText('Knife kills').parentElement);
+  expect(box.getByText('Loading…')).toBeVisible();
+  expect(await box.findByText(String(total))).toBeVisible();
+  expect(mockKnifeLookup.mock.calls[0][0]).toBe('/api/knife-kills?playerId=' + playerId);
+});
+
+test('ignores a late knife total when switching members and rejects an unverified response', async () => {
+  const otherId = 'other-player-123';
+  let finishFirst;
+  mockKnifeLookup.mockImplementationOnce(() => new Promise(resolve => { finishFirst = resolve; }))
+    .mockResolvedValueOnce({ playerId, total: 107 });
+  const loadMember = (ref, next) => { next({ val: () => user }); return () => {}; };
+  onValue.mockImplementationOnce(loadMember).mockImplementationOnce(loadMember);
+  renderPage(<><Link to={'/profilelookup/' + otherId}>Other member</Link>
+    <Routes><Route path="/profilelookup/:id" element={<ProfileLookup />} /></Routes></>, { path: '/profilelookup/' + playerId });
+  await screen.findByText('Knife kills');
+  fireEvent.click(screen.getByRole('link', { name: 'Other member' }));
+  const box = within((await screen.findByText('Knife kills')).parentElement);
+  expect(await box.findByText('Unavailable')).toBeVisible();
+  await act(async () => finishFirst({ playerId, total: 250 }));
+  expect(mockKnifeLookup.mock.calls[0][1].aborted).toBe(true);
+  expect(box.getByText('Unavailable')).toBeVisible();
+});
+
+test('a failed knife lookup keeps the game record visible', async () => {
+  mockKnifeLookup.mockRejectedValueOnce(new Error('offline'));
+  renderPage(<PlayerProfileView firebase={firebase} user={{ ...user, wins: 38 }} playerId={playerId} />);
+  expect(await within(screen.getByText('Knife kills').parentElement).findByText('Unavailable')).toBeVisible();
+  expect(within(screen.getByText('Wins').parentElement).getByText('38')).toBeVisible();
+});
+
+test('waiver-only profiles do not show or request a knife kill stat', async () => {
+  renderPage(<PlayerProfileView firebase={firebase} user={{ ...user, roles: { WAIVER: true } }} playerId={playerId} />);
+  await screen.findByText('Unaffiliated');
+  expect(screen.queryByText('Knife kills')).toBeNull();
+  expect(mockKnifeLookup).not.toHaveBeenCalled();
 });
 
 test.each([false, true])('shows the registered name beneath the display name on a profile with account=%s', async account => {
