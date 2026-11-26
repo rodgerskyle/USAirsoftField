@@ -124,7 +124,7 @@ export async function requestPlayerPoll(user, { vote, mvpVote, signal } = {}) {
   const headers = { Accept: 'application/json' };
   if (user) headers.Authorization = `Bearer ${await user.getIdToken()}`;
   if (signal?.aborted) throw new DOMException('Request canceled', 'AbortError');
-  const body = mvpVote ? { action: 'voteMvp', pollId: mvpVote.pollId, firstName: mvpVote.firstName, lastName: mvpVote.lastName }
+  const body = mvpVote ? { action: 'voteMvp', pollId: mvpVote.pollId, nomination: mvpVote.nomination }
     : vote ? { action: 'vote', pollId: vote.pollId, modeId: vote.modeId } : null;
   if (body) headers['Content-Type'] = 'application/json';
   const response = await fetch(companionEndpoint('/api/live-games').href, {
