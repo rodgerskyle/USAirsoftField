@@ -1340,3 +1340,40 @@ button.btn-pin-code-link {
     background: var(--usaw-subtle);
     font-weight: 700;
 }
+
+.rental-intake-editor { display: grid; gap: .8rem; }
+.rental-intake-editor > * { min-width: 0; }
+.rental-intake-editor > a, .rental-intake-editor summary { min-height: 44px; padding-block: .5rem; }
+.rental-roster-review .rental-request-quantity { display: inline-flex; align-items: center; gap: .5rem; margin: .35rem .8rem .35rem 0; }
+.rental-request-quantity input { max-width: 5rem; min-height: 44px; padding: .45rem; border: 1px solid var(--admin-border-strong,#8094a9); border-radius: .45rem; color: inherit; background: var(--admin-surface,#fff); }
+
+.card-rental-form, .card-rental-form .card-body, .card-rental-form .rental-form-fields,
+.card-rental-form .rental-options-group { min-width: 0; max-width: 100%; }
+.card-rental-form .rental-option-item { flex-wrap: wrap; gap: .35rem .6rem; min-width: 0; }
+.card-rental-form .rental-option-item > .MuiFormControlLabel-root {
+    flex: 1 1 9rem; min-width: 0; margin: 0; min-height: 44px; overflow-wrap: anywhere;
+}
+.card-rental-form .rental-quantity-controls { flex-wrap: wrap; margin: 0; gap: .25rem; }
+.card-rental-form .rental-quantity-controls button { min-width: 44px; min-height: 44px; }
+.card-rental-form .rental-roster-review { min-width: 0; overflow-wrap: anywhere; }
+.card-rental-form .rental-roster-review :is(button,summary,a) { min-height: 44px; }
+@media (max-width: 575px) {
+    .card-rental-form { padding: .35rem; }
+    .card-rental-form .rental-form { padding: 0; }
+    .card-rental-form .rental-option-item > .MuiTypography-caption { flex-basis: 100%; }
+    .card-rental-form .rental-quantity-controls { margin-inline-start: auto; }
+    .card-rental-form .rental-option-label { gap: .4rem; flex-wrap: wrap; }
+}
+
+.card-rental-form .rccs, .card-rental-form .rccs__card, .rental-intake-editor .rccs, .rental-intake-editor .rccs__card {
+    width: min(290px,100%); min-width: 0; max-width: 100%;
+}
+.card-rental-form .rccs__card, .rental-intake-editor .rccs__card { height: auto; aspect-ratio: 1.5858; }
+.card-rental-form .rental-roster-review .form-control,
+.card-rental-form .rental-roster-review .btn, .card-rental-form .rental-roster-review summary,
+.card-rental-form .rental-roster-review a, .card-rental-form .rental-roster-review button,
+.card-rental-form .rental-quantity-controls .MuiIconButton-root { box-sizing: border-box; min-height: 44px; }
+.card-rental-form .rental-roster-review summary, .card-rental-form .rental-roster-review a { align-content: center; padding-block: .55rem; }
+.card-rental-form .rental-roster-review a { display: inline-flex; align-items: center; }
+.card-rental-form .rental-roster-review input[data-waiver-name],
+.rental-intake-editor input[data-waiver-name] { min-height: 44px; box-sizing: border-box; max-width: 100%; }

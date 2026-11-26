@@ -1,6 +1,7 @@
 import { runTransaction } from 'firebase/database';
 import { v4 as uuid } from 'uuid';
 import { matchesRental, rentalRows } from './openRental';
+import { heldCount, reservationQuantity } from './rentalGear';
 
 const copyCollection = collection => Array.isArray(collection) ? [...collection] : { ...collection };
 
@@ -26,19 +27,18 @@ export async function editRentalInventory(rentalsRef, review, quantities) {
         const form = desk.group?.[review.key];
         if (!matchesRental(form, review.identity) || inventorySignature(form.available) !== signature) return undefined;
         const available = rentalRows(form.available);
+        const options = copyCollection(desk.options);
+        const byType = new Map(rentalRows(options).map(option => [String(option.value),option]));
         const counts = new Map();
+        const nextAvailable = [];
         for (const item of available) {
             const type = String(item.value);
-            counts.set(type, (counts.get(type) || 0) + 1);
+            const count = reservationQuantity(form, item, byType.get(type));
+            const alreadyCounted = counts.get(type) || 0;
+            const keep = Math.min(count, Math.max(0,(desired.get(type) || 0) - alreadyCounted));
+            if (keep) nextAvailable.push(keep === count ? item : {...item,amount:keep});
+            counts.set(type, alreadyCounted + count);
         }
-        const retained = new Map();
-        const nextAvailable = available.filter(item => {
-            const type = String(item.value);
-            const count = (retained.get(type) || 0) + 1;
-            retained.set(type, count);
-            return count <= (desired.get(type) || 0);
-        });
-        const options = copyCollection(desk.options);
         for (const type of new Set([...counts.keys(), ...desired.keys()])) {
             const delta = (desired.get(type) || 0) - (counts.get(type) || 0);
             if (!delta) continue;
@@ -47,7 +47,7 @@ export async function editRentalInventory(rentalsRef, review, quantities) {
             const [optionKey, option] = matches[0];
             const stock = Number(option.stock ?? 0);
             const max = Number(option.max);
-            const nextStock = stock + delta;
+            const nextStock = Math.max(stock,heldCount(desk.group, option)) + delta;
             if (!Number.isSafeInteger(stock) || stock < 0 || !Number.isSafeInteger(nextStock) || nextStock < 0) {
                 throw new Error('The in-use count for ' + type + ' needs review.');
             }

@@ -71,3 +71,19 @@ it.each([
     });
     await expect(editRentalInventory(rentalsRef,review,{mask:3})).rejects.toThrow(/reopen edit inventory/i);
 });
+
+it('keeps legacy bulk reservation quantities and other forms held stock consistent during an inventory edit', async () => {
+    const item={value:'mask',id:'catalog-mask',amount:3};
+    const form={name:'Older party',available:[item]};
+    let desk={group:{old:form,other:{available:[{value:'mask',id:'catalog-mask',amount:2}]}},
+        options:{mask:{value:'mask',id:'catalog-mask',max:5,stock:2}}};
+    runTransaction.mockImplementation(async (_, update) => {
+        desk=update(desk);
+        return {committed:true,snapshot:snapshot(desk)};
+    });
+    await expect(editRentalInventory(rentalsRef,{key:'old',identity:rentalIdentity(form),available:[item]},{mask:4})).rejects.toThrow(/stock/i);
+    await editRentalInventory(rentalsRef,{key:'old',identity:rentalIdentity(form),available:[item]},{mask:1});
+    expect(desk.group.old.available).toEqual([{...item,amount:1}]);
+    expect(desk.group.other.available[0].amount).toBe(2);
+    expect(desk.options.mask.stock).toBe(3);
+});

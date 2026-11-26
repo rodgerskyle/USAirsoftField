@@ -31,3 +31,10 @@ test('keeps inventory edits local until save and identifies the equipment and re
     expect(await screen.findByRole('alert')).toHaveTextContent('Failed');
     expect(screen.queryByRole('status')).toBeNull();
 });
+
+test('an inspection hold shows the malfunction and the number to pull', () => {
+    const options = [{ value:'mask', label:'Mask', stock:1, max:12, repairHolds:{inspection:{number:'M-14',reason:'Missing buckle'}}}];
+    const firebase = { onAuthUserListener: callback => { callback({roles:{ADMIN:true}}); return () => {}; } };
+    render(<RentalOptions firebase={firebase} rentalOptions={options} />);
+    expect(screen.getByRole('region', {name:'Items awaiting inspection'})).toHaveTextContent('Mask #M-14 · Missing buckle');
+});

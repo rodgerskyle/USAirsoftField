@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { requestStaffFieldTool } from '../../constants/fieldStaffApi';
 
-function useCheckedInRenter(firebase, uid, handoff) {
+function useCheckedInRenter(firebase, uid, handoff, staffOpen = true) {
     const { key, playerId, date } = handoff || {};
     const visit = [uid, key, playerId, date].join('/');
     const [record, setRecord] = useState(null);
@@ -16,16 +16,15 @@ function useCheckedInRenter(firebase, uid, handoff) {
         return row;
     }, [firebase, uid, key, playerId, date]);
     useEffect(() => {
-        if (!uid || !playerId) return;
+        if (!staffOpen || !uid || !playerId) return;
         const controller = new AbortController();
-        setRecord(null);
         verify(controller.signal).then(player => {
             if (!controller.signal.aborted) setRecord({ visit, player });
         }).catch(failure => {
             if (!controller.signal.aborted) setRecord({ visit, error: failure.message || 'Could not load this check-in. Please retry.' });
         });
         return () => controller.abort();
-    }, [uid, playerId, visit, verify, attempt]);
+    }, [uid, playerId, visit, verify, attempt, staffOpen]);
     return { ...(record?.visit === visit ? record : {}), verify, retry: () => setAttempt(value => value + 1) };
 }
 

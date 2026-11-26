@@ -11,6 +11,11 @@ import PaymentForm from './components/creditcard';
 import * as ROLES from '../../constants/roles';
 import { runTransaction } from 'firebase/database';
 import GroupRentalPicker from './GroupRentalPicker';
+import StaffWaiverPicker from '../StaffWaiverPicker';
+import { searchRentalWaivers } from './utils/rentalWaiverProof';
+import RenterGearChoices from './RenterGearChoices';
+import { activateVerifiedRental, depositErrors, readRentalProofs, rentalFieldDay, rentalDraftProblem, pendingRentalMessage } from './utils/rentalActivation';
+import { heldCount } from './utils/rentalGear';
 import { playerRentalMatch } from './utils/checkInRenter';
 import { mergeRentalRoster, rentalGroupSource } from './utils/groupRentalRoster';
 import {
@@ -69,6 +74,8 @@ const INITIAL_STATE = {
     excludedEntries: [],
     clearedInitialGroup: false,
     existingRental: null,
+    receipt: '',
+    manualName: '',
 };
 
 const StyledToggle = styled(FormControlLabel)({
@@ -95,16 +102,22 @@ class RentalReservationError extends Error {}
 
 // Form keys are numeric on existing desks. Allocate a key and reserve the
 // inventory together so competing creates retry against the updated stock.
-async function saveRentalForm(firebase, form, reservations, player) {
+async function saveRentalForm(firebase, form, reservations, player, proofReview) {
     const rentalRef = firebase.rentals();
     let existing;
     let key;
     let problem;
+    let pendingMessage;
     const result = await runTransaction(rentalRef, current => {
         // A cold RTDB cache can call this with null before comparing against
         // the server. A null proposal performs that comparison without
         // creating inventory or resurrecting records if the desk is empty.
         if (current === null) return null;
+        if (current.closedGear?.[form.createRequestId]) {
+            problem = 'This rental was already returned. Open a new rental to reserve gear again.';
+            existing = null;
+            return undefined;
+        }
         const groups = current.group || {};
         existing = Object.entries(groups).find(([, row]) => row?.createRequestId === form.createRequestId ||
             (!row?.returned && ((form.checkInGroup && row?.checkInGroup?.id === form.checkInGroup.id) ||
@@ -119,8 +132,8 @@ async function saveRentalForm(firebase, form, reservations, player) {
                 return undefined;
             }
             const [index, option] = optionEntry;
-            const stock = Number(option.stock || 0);
-            if (!Number.isFinite(stock) || (option.max != null && stock + itemIds.length > Number(option.max))) {
+            const stock = Math.max(Number(option.stock || 0),heldCount(groups,option));
+            if (!Number.isSafeInteger(stock) || stock<0 || (option.max != null && (!Number.isSafeInteger(Number(option.max)) || stock+itemIds.length>Number(option.max)))) {
                 problem = 'There is no longer enough ' + option.label + ' available. Adjust the quantity and try again.';
                 return undefined;
             }
@@ -128,7 +141,7 @@ async function saveRentalForm(firebase, form, reservations, player) {
             // Service holds describe the catalog, not an individual reservation.
             const unit = { ...option };
             delete unit.repairHolds;
-            available.push(...itemIds.map(id => ({ ...unit, id })));
+            available.push(...itemIds.map(id => ({ ...unit, id, number:'', checked:false })));
         }
         const indexes = Object.keys(groups).filter(id => /^(0|[1-9]\d*)$/.test(id)).map(Number);
         key = indexes.reduce((largest, value) => Math.max(largest, value), -1) + 1;
@@ -136,10 +149,15 @@ async function saveRentalForm(firebase, form, reservations, player) {
             problem = 'Unable to allocate a rental form number.';
             return undefined;
         }
-        return { ...current, options, group: { ...groups, [key]: { ...form, available } } };
+        const draft = {...form,available};
+        const saved = activateVerifiedRental(draft,proofReview);
+        pendingMessage = saved.complete ? '' : pendingRentalMessage(draft,proofReview);
+        return { ...current, options, group: { ...groups, [key]: saved } };
     }, { applyLocally: false });
-    if (result.committed && key !== undefined && result.snapshot.child('group/' + key + '/createRequestId').val() === form.createRequestId) return { key };
-    if (existing) return { key: existing[0], duplicate: existing[1].createRequestId !== form.createRequestId };
+    if (result.committed && key !== undefined && result.snapshot.child('group/' + key + '/createRequestId').val() === form.createRequestId) {
+        return { key, pendingMessage, active:result.snapshot.child('group/' + key + '/complete').val() === true };
+    }
+    if (existing) return { key: existing[0], duplicate: existing[1].createRequestId !== form.createRequestId, active:existing[1].complete === true };
     throw new RentalReservationError(problem || 'The form could not be saved. Try again.');
 }
 
@@ -201,11 +219,40 @@ class CreateRentalForm extends Component {
         this.setState(state => ({ participants: state.participants.map(row => row.groupEntryId === entryId ? { ...row, name } : row) }));
     };
 
+    searchWaivers = (name,signal) => searchRentalWaivers(this.props.firebase,this.props.uid,name,signal);
+
+    addSignedRenter = match => {
+        if (!this.props.canImportGroup || this.saving || !match?.ref || !match.name?.trim()) return;
+        this.setState(state => {
+            if (state.participants.some(person => person.ref === match.ref)) return {rentalsError:'This renter is already on the form.'};
+            const participants = [...state.participants,{name:match.name.trim(),ref:match.ref,waiverRef:match.ref,waiverName:match.name.trim(),isDigital:true,rentals:[]}];
+            return {participants,numParticipants:Math.max(Number(state.numParticipants)||0,participants.length),rentalsError:null};
+        });
+    };
+
+    requestOptions = () => Object.values(this.props.rentalOptions || {}).filter(Boolean)
+        .filter(option => Number(this.state.rentalQuantities[option.id]) > 0)
+        .map(option=>({value:option.value,label:option.label,quantity:Number(this.state.rentalQuantities[option.id])}));
+
+    includedRenters = () => {
+        const included = this.state.participants.filter(row=>!this.state.excludedEntries.includes(row.groupEntryId));
+        if (included.length === 1 && Number(this.state.numParticipants) === 1) {
+            return [{...included[0],requestedItems:this.requestOptions().map(({value,quantity})=>({value,quantity}))}];
+        }
+        return included;
+    };
+
+    setGearChoices = (index,requestedItems) => {
+        const selected = this.includedRenters()[index];
+        this.setState(state=>({participants:state.participants.map(row=>row.renterKey===selected.renterKey && row.ref===selected.ref && row.groupEntryId===selected.groupEntryId
+            ? {...row,requestedItems} : row)}));
+    };
+
     createForm = async event => {
         event.preventDefault();
         if (this.saving || !this.validateCreateForm()) return;
         const { cvc, number, expiry, name, zipcode, rentalName, numParticipants, rentalQuantities, checkInGroup } = this.state;
-        const participants = this.state.participants.filter(row => !this.state.excludedEntries.includes(row.groupEntryId))
+        const participants = this.includedRenters()
             .map(row => ({ ...row, name: row.name.trim() }));
         if ((checkInGroup || this.props.checkedInPlayer) && (!participants.length || participants.some(row => !row.name))) {
             this.setState({ rentalsError: 'Select at least one renter and enter a name for each selected player.' });
@@ -228,7 +275,9 @@ class CreateRentalForm extends Component {
         }));
         const form = {
             name: rentalName.trim(), size, cc: { cvc, number, expiry, name, zipcode },
-            complete: false, createRequestId: this.createRequestId,
+            complete:false, createRequestId:this.createRequestId, armoryVersion:1, playDate:rentalFieldDay(),
+            ...(this.state.receipt.trim() && {transaction:this.state.receipt.trim()}),
+            ...(participants.length && {participants}),
             ...(checkInGroup && { checkInGroup, participants }),
             ...(this.props.checkedInPlayer && {
                 [this.props.checkedInPlayer.playerId.startsWith('guest:') ? 'walkOnCheckIn' : 'playerCheckIn']:
@@ -249,7 +298,18 @@ class CreateRentalForm extends Component {
                     throw new RentalReservationError('The player’s group changed. Reopen their check-in before creating the rental.');
                 }
             }
-            const result = await saveRentalForm(this.props.firebase, form, reservations, this.props.checkedInPlayer);
+            const deskOptions = Object.values(this.props.rentalOptions || {}).filter(Boolean);
+            const available = reservations.flatMap(({optionId,itemIds})=>{
+                const option=deskOptions.find(row=>String(row.id)===optionId);
+                return option ? itemIds.map(id=>({id,value:option.value,label:option.label})) : [];
+            });
+            const preview = {...form,available};
+            let review = null;
+            if (!rentalDraftProblem(preview)) {
+                try { review=await readRentalProofs(this.props.firebase,this.props.uid,preview); }
+                catch { /* Keep the paid reservation pending if waiver verification is offline. */ }
+            }
+            const result = await saveRentalForm(this.props.firebase, form, reservations, this.props.checkedInPlayer,review);
             if (result.duplicate) {
                 this.setState({
                     existingRental: { key: result.key, groupId: checkInGroup?.id || this.props.checkedInPlayer?.playerId },
@@ -260,7 +320,7 @@ class CreateRentalForm extends Component {
             this.setState({
                 ...INITIAL_STATE, rentalQuantities: {}, selectedRentals: {}, totalPrice: 0,
                 success: true, createdIndex: result.key, checkInGroup,
-                successMessage: 'Rental form created successfully! Please let a US Airsoft staff member know that you are done.',
+                successMessage: result.active ? 'Active and ready for armory pickup.' : 'Rental saved. ' + (result.pendingMessage || 'Open the form to finish verification for armory pickup.'),
             });
         } catch (error) {
             this.setState({ rentalsError: error instanceof RentalReservationError ? error.message :
@@ -272,29 +332,9 @@ class CreateRentalForm extends Component {
 
     // Validate text field for createform
     validateCreateForm() {
-        const { cvc, number, expiry, name, zipcode } = this.state
-        let check = true
-        if (cvc === "" || (cvc.length < 3 && cvc.length > 4)) {
-            this.setState({ cvcError: "Enter a valid CVC." })
-            check = false
-        }
-        if (number === "" || number.length < 15) {
-            this.setState({ numberError: "Enter a valid card number." })
-            check = false
-        }
-        if (expiry === "" || expiry.length !== 5) {
-            this.setState({ expiryError: "Enter in MM/YY format." })
-            check = false
-        }
-        if (name === "") {
-            this.setState({ nameError: "Enter the name on card." })
-            check = false
-        }
-        if (zipcode === "" || zipcode.length !== 5) {
-            this.setState({ zipcodeError: "Enter valid US Zipcode." })
-            check = false
-        }
-        return check
+        const errors = depositErrors(this.state);
+        this.setState({cvcError:null,numberError:null,expiryError:null,nameError:null,zipcodeError:null,...errors});
+        return !Object.keys(errors).length;
     }
 
     // Add this method to handle credit card input changes
@@ -394,8 +434,9 @@ class CreateRentalForm extends Component {
 
         if (success) {
             const sourceId = this.state.checkInGroup?.id || this.props.checkedInPlayer?.playerId;
-            const assignGear = this.props.canImportGroup && this.props.onOpenExisting && sourceId
-                ? () => this.props.onOpenExisting(this.state.createdIndex, sourceId) : null;
+            const assignGear = this.props.canImportGroup && this.props.onOpenExisting
+                ? () => sourceId ? this.props.onOpenExisting(this.state.createdIndex,sourceId) :
+                    this.props.onOpenExisting(this.state.createdIndex,undefined,this.createRequestId) : null;
             return <SuccessScreen message={successMessage} onAssignGear={assignGear} fromCheckIn={Boolean(this.props.checkedInPlayer)} />;
         }
 
@@ -417,6 +458,29 @@ class CreateRentalForm extends Component {
                                 firebase={this.props.firebase} uid={this.props.uid} initialGroupId={this.state.clearedInitialGroup ? null : this.props.initialGroupId}
                                 existingEntries={this.state.participants} disabled={submitting} onAdd={this.importRoster} onPrefill={this.importRoster}
                             />}
+                            {!this.props.checkedInPlayer && !this.state.checkInGroup && <section className="rental-roster-review" aria-label="Rental participants">
+                                <h2>Renters</h2>
+                                <label>Renter name<input className="form-control" type="text" maxLength={120} autoComplete="off"
+                                    value={this.state.manualName} disabled={submitting} onChange={e=>this.setState({manualName:e.target.value})}/></label>
+                                <button type="button" className="btn btn-outline-primary" disabled={submitting || !this.state.manualName.trim()}
+                                    onClick={()=>{
+                                        const renterKey=uuid();
+                                        this.setState(state=>{
+                                            const participants=[...state.participants,{name:state.manualName.trim(),renterKey,rentals:[]}];
+                                            return {participants,manualName:'',numParticipants:Math.max(Number(state.numParticipants)||0,participants.length)};
+                                        });
+                                    }}>Add renter</button>
+                                {this.props.canImportGroup && <details>
+                                    <summary>Add a renter from a signed waiver</summary>
+                                    <StaffWaiverPicker searchWaivers={this.searchWaivers} disabled={submitting} onChoose={this.addSignedRenter}/>
+                                </details>}
+                                {this.state.participants.map((person,i)=><div className="rental-roster-line" key={person.ref || person.renterKey}>
+                                    <strong>{person.name}</strong><button type="button" className="btn btn-outline-secondary" disabled={submitting}
+                                      onClick={()=>this.setState(state=>({participants:state.participants.filter((_,index)=>index!==i),
+                                          numParticipants:Math.max(1,(Number(state.numParticipants)||1)-1)}))}>
+                                      Remove {person.name}</button></div>)}
+                                <a href="/waiver" target="_blank" rel="noreferrer">Open the field waiver</a>
+                            </section>}
                             {this.props.canImportGroup && this.state.checkInGroup && <section className="rental-roster-review" aria-label="Imported check-in group">
                                 <h2>{this.state.checkInGroup.name}</h2>
                                 <p>{includedCount} {includedCount === 1 ? 'player' : 'players'} on this rental form</p>
@@ -511,7 +575,7 @@ class CreateRentalForm extends Component {
                                                         {selectedRentals[option.id] && (
                                                             <div className="rental-quantity-controls">
                                                                 <IconButton
-                                                                    size="small"
+                                                                    size="small" aria-label={'Remove one ' + option.label}
                                                                     onClick={() => this.handleRentalSelect(option, -1)}
                                                                     disabled={submitting}
                                                                 >
@@ -521,7 +585,7 @@ class CreateRentalForm extends Component {
                                                                     {rentalQuantities[option.id] || 0}
                                                                 </Typography>
                                                                 <IconButton
-                                                                    size="small"
+                                                                    size="small" aria-label={'Add one ' + option.label}
                                                                     onClick={() => this.handleRentalSelect(option, 1)}
                                                                     disabled={
                                                                         submitting ||
@@ -547,6 +611,12 @@ class CreateRentalForm extends Component {
                                             </Typography>
                                         </div>
                                     </Paper>
+                                    {this.includedRenters().length > 0 && Number(numParticipants)>1 &&
+                                        <RenterGearChoices people={this.includedRenters()} options={this.requestOptions()}
+                                            onChange={this.setGearChoices} disabled={submitting}/>}
+                                    <TextField label="Receipt / transaction number" value={this.state.receipt} disabled={submitting}
+                                        onChange={event=>this.setState({receipt:event.target.value})} inputProps={{maxLength:120}}
+                                        helperText="A receipt and a current signed waiver for every renter release the form to the armory." />
                                     <PaymentForm
                                         handleInputChange={this.handleInputChange}
                                         cvc={cvc}

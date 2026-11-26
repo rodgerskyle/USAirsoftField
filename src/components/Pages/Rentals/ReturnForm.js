@@ -5,17 +5,27 @@ import { Avatar, List, ListItem, ListItemAvatar, ListItemText, TextField, Typogr
 import { Contacts, AssignmentTurnedIn, ArrowBack, VerifiedUser, Warning, Delete } from '@mui/icons-material';
 import MuiAlert from '@mui/lab/Alert';
 import logo from '../../../assets/usairsoft-small-logo.png';
+import { v4 as uuid } from 'uuid';
 import { runTransaction } from 'firebase/database';
 import EmptyState from './components/EmptyState';
 import { GearScan, QuickGearDesk } from './QuickGearDesk';
 import { gearRows, reservationCounts } from './utils/rentalGear';
-import { matchesRental, rentalIdentity, rentalParticipants, rentalRows } from './utils/openRental';
+import { archiveClosedGear, reservedGearReview } from './utils/closedGearReceipt';
+import { matchesRental, rentalIdentity, rentalRows } from './utils/openRental';
 
 const Alert = React.forwardRef((props, ref) => (
     <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />
 ));
 
-async function closeRental(firebase, key, expected, discard) {
+const returnIdentity = form => ({ ...rentalIdentity(form), transaction: form.transaction || null });
+const isSelected = (form, identity) => matchesRental(form, identity) && (!identity?.transaction || identity.transaction === form.transaction);
+const hasPickupHistory = (form, rows = gearRows(form)) => rows.some(row => row.physicallyIssued || row.checked) ||
+    rentalRows(form.gearHistory).some(entry => ['issue', 'swap', 'return'].includes(entry.action));
+const owesGear = rows => rows.some(row => row.physicallyIssued && !row.checked);
+
+async function closeRental(firebase, key, expected, discard, reviewedReservations) {
+    const fallbackId = uuid();
+    const closedAt = new Date().toISOString();
     let receipt;
     let reason;
     const result = await runTransaction(firebase.rentals(), rentals => {
@@ -24,20 +34,25 @@ async function closeRental(firebase, key, expected, discard) {
         // Null on a cold client still needs a compare against the server.
         if (rentals === null) return null;
         const form = rentals.group?.[key];
-        if (!matchesRental(form, expected)) {
+        if (!isSelected(form, expected)) {
             reason = 'This rental form changed or was already closed. Reopen the rental desk.';
             return undefined;
         }
-        const assigned = rentalParticipants(form.participants).flatMap(person => person.rentals);
-        if (discard && form.size != null && (form.complete || assigned.some(item => item.number))) {
+        const assigned = gearRows(form);
+        if (discard && (hasPickupHistory(form, assigned) || (form.size != null && form.complete))) {
             reason = 'This rental has been issued. Open it to check the equipment before returning it.';
             return undefined;
         }
-        if (!discard && assigned.some(item => item.number && item.checked !== true)) {
+        if (!discard && owesGear(assigned)) {
             reason = 'Check all rental numbers before completing the return.';
             return undefined;
         }
 
+        if (reservedGearReview(form).signature !== reviewedReservations) {
+            reason = 'The unissued reservations changed. Review them before releasing equipment.';
+            return undefined;
+        }
+        const archive = discard ? {} : archiveClosedGear(rentals, form, key, fallbackId, closedAt);
         const groups = { ...rentals.group };
         delete groups[key];
         const options = { ...rentals.options };
@@ -70,8 +85,8 @@ async function closeRental(firebase, key, expected, discard) {
             }
         }
         receipt = { name: form.name || '', receipt: form.transaction || '',
-            last4: String(form.cc?.number || '').replace(/\D/g, '').slice(-4) || null };
-        return { ...rentals, group: groups, ...(release.size && { options }) };
+            last4: String(form.cc?.last4 || form.cc?.number || '').replace(/\D/g, '').slice(-4) || null };
+        return { ...rentals, ...archive, group: groups, ...(release.size && { options }) };
     }, { applyLocally: false });
     if (!result.committed || !receipt) throw new Error(reason || 'The rental form could not be closed. Refresh the rental desk.');
     return receipt;
@@ -81,25 +96,28 @@ const ReturnForm = (props) => {
     const { firebase, rentalForms } = props;
     const [selection, setSelection] = useState(() => {
         const form = rentalForms.find(form => props.initialFormKey != null && String(form.key) === String(props.initialFormKey));
-        return form ? { key: form.key, identity: rentalIdentity(form) } : null;
+        return form ? { key: form.key, identity: returnIdentity(form) } : null;
     });
     const [query, setQuery] = useState('');
     const [numberFilter, setNumberFilter] = useState('');
-    const index = rentalForms.findIndex(form => form.key === selection?.key && matchesRental(form, selection?.identity));
+    const index = rentalForms.findIndex(form => form.key === selection?.key && isSelected(form, selection?.identity));
     const submitting = useRef(false);
     const [error, setError] = useState(null);
     const [complete, setComplete] = useState(false);
+    const [reviewedRelease, setReviewedRelease] = useState(null);
+    const unissued = index >= 0 ? reservedGearReview(rentalForms[index]) : null;
     const [email, setEmail] = useState('');
     const [success, setSuccess] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [loading, setLoading] = useState(false);
 
     const handleFormSelect = (selectedIndex) => {
+        setReviewedRelease(null);
         setComplete(false);
         setEmail('');
         const matched = gearRows(rentalForms[selectedIndex]).some(row => row.number && row.number.toLowerCase() === query.trim().toLowerCase());
         setNumberFilter(matched ? query.trim() : '');
-        setSelection({ key: rentalForms[selectedIndex].key, identity: rentalIdentity(rentalForms[selectedIndex]) });
+        setSelection({ key: rentalForms[selectedIndex].key, identity: returnIdentity(rentalForms[selectedIndex]) });
     };
 
     const finish = async (form, discard) => {
@@ -110,7 +128,8 @@ const ReturnForm = (props) => {
         setError(null);
         setSuccess(false);
         try {
-            const receipt = await closeRental(firebase, form.key, discard ? rentalIdentity(form) : selection.identity, discard);
+            const release = discard ? reservedGearReview(form).signature : (reviewedRelease || '');
+            const receipt = await closeRental(firebase, form.key, discard ? returnIdentity(form) : selection.identity, discard, release);
             setSelection(null);
             setComplete(false);
             setEmail('');
@@ -138,12 +157,12 @@ const ReturnForm = (props) => {
     };
 
     const handleValidateAndComplete = () => {
-        const allChecked = gearRows(rentalForms[index]).every(row => !row.number || row.checked);
-        if (!allChecked) {
-            setError('Please check all rental numbers before completing');
+        if (owesGear(gearRows(rentalForms[index]))) {
+            setError('Return the equipment still with players before closing this form.');
             return;
         }
 
+        setReviewedRelease(null);
         setComplete(true);
     };
 
@@ -182,7 +201,7 @@ const ReturnForm = (props) => {
     const RentalFormListItem = ({ form, onSelect, onDelete }) => {
         // if (!form.complete && form.size) return null;
 
-        if (form.size == null) {
+        if (form.size == null && !hasPickupHistory(form)) {
             return (
                 <ListItem className="corrupted-form-item">
                     <ListItemAvatar>
@@ -192,7 +211,7 @@ const ReturnForm = (props) => {
                     </ListItemAvatar>
                     <ListItemText
                         primary={form.name}
-                        secondary="Corrupted Rental Form, please delete"
+                        secondary="Incomplete rental form"
                     />
                     <IconButton aria-label="Discard damaged rental form" disabled={loading} onClick={onDelete} color="error">
                         <Delete />
@@ -210,9 +229,9 @@ const ReturnForm = (props) => {
                 </ListItemAvatar>
                 <ListItemText
                     primary={form.name}
-                    secondary={`${form.size} Participants`}
+                    secondary={form.size == null ? 'Review issued equipment' : `${form.size} participants`}
                 />
-                {!form.complete && !rentalParticipants(form.participants).some(person => person.rentals.some(item => item.number)) &&
+                {!form.complete && !hasPickupHistory(form) &&
                     <IconButton aria-label={'Discard rental reservation for ' + form.name} disabled={loading} onClick={onDelete} color="error">
                         <Delete />
                     </IconButton>}
@@ -232,6 +251,11 @@ const ReturnForm = (props) => {
             <Typography variant="body1" className="completion-text">
                 Enter an email to send a receipt (optional).
             </Typography>
+            {unissued?.signature && <label className="rental-reserve-confirm"><input type="checkbox"
+                checked={reviewedRelease === unissued.signature}
+                onChange={event => setReviewedRelease(event.target.checked ? unissued.signature : null)} />
+                Release unissued reservations ({unissued.labels.join(', ')}).
+            </label>}
             <TextField
                 fullWidth
                 variant="outlined"
@@ -246,7 +270,7 @@ const ReturnForm = (props) => {
                 color="primary"
                 onClick={() => finish(rentalForms[index], false)}
                 className="complete-button"
-                disabled={loading}
+                disabled={loading || Boolean(unissued?.signature && reviewedRelease !== unissued.signature)}
             >
                 {loading ? <CircularProgress size={32} color="inherit" /> : 'Complete Form'}
             </Button>

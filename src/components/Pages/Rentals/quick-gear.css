@@ -6,4 +6,13 @@
 .gear-actions { display:flex; gap:.5rem; flex-wrap:wrap; }
 .gear-desk button, .rental-form-search button { min-height:44px; }
 .gear-review { padding:.75rem; border:1px solid var(--admin-border,#8795a5); border-radius:.4rem; }
+.gear-review > label, .gear-review input:not([type="checkbox"]) { min-height:44px; }
+.gear-review > .gear-inspection-toggle { display:flex; align-items:center; gap:.6rem; cursor:pointer; }
+.gear-inspection-toggle input { width:1.25rem; height:1.25rem; flex:none; }
+.gear-review input:focus-visible { outline:3px solid var(--usaw-focus,#174a87); outline-offset:2px; }
 .gear-desk details { margin-top:1rem; }
+
+.gear-status { display:inline-block; font-weight:650; padding:.15rem .45rem; border:1px solid var(--admin-border,#8795a5); border-radius:.4rem; }
+.gear-history > summary { min-height:44px; align-content:center; cursor:pointer; }
+.rental-reserve-confirm { display:block; padding:1rem 0; cursor:pointer; }
+.rental-reserve-confirm input { margin-inline-end:.5rem; }

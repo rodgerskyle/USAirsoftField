@@ -31,7 +31,7 @@ beforeEach(() => {
     onValue.mockImplementation(() => () => {});
     runTransaction.mockImplementation(async (key, transform) => {
         const groups = { ...others, '0': current };
-        const next = transform(key === 'rental-desk' ? { group: groups, options: [] } : key === 'forms' ? groups : current);
+        const next = transform(key === 'rental-desk' ? { group: groups, options: [{id:'vest',value:'vest',label:'Vest',stock:4,max:20},{id:'mask',value:'mask',label:'Mask',stock:2,max:10}] } : key === 'forms' ? groups : current);
         if (next !== undefined) current = key === 'rental-desk' ? next.group['0'] : key === 'forms' ? next['0'] : next;
         return { committed: next !== undefined, snapshot: { val: () => current } };
     });
@@ -60,6 +60,7 @@ test('reopens the linked rental by key, imports later arrivals and retains issue
 });
 
 test('keeps current stock assignments when a second desk adds a renter during equipment numbering', async () => {
+    current.participants=[{...handEntered,rentals:[{...gear,number:''}]}];
     render(<EditForm {...formProps()} />);
     await screen.findByRole('button', { name: 'Import arrivals' });
     const late = { name: 'Arrival', ref: 'walk-on-late' };
@@ -69,6 +70,15 @@ test('keeps current stock assignments when a second desk adds a renter during eq
     fireEvent.submit(input.closest('form'));
     await waitFor(() => expect(current.participants[0].rentals[0].number).toBe('12'));
     expect(current.participants[1]).toMatchObject(late);
+});
+
+test('an issued legacy number requires a swap and cannot be overwritten as a new assignment', async () => {
+    render(<EditForm {...formProps()} />);
+    const input=await screen.findByRole('textbox',{name:'Vest equipment number'});
+    fireEvent.change(input,{target:{value:'12'}});
+    fireEvent.submit(input.closest('form'));
+    await screen.findByText(/Use an equipment swap to change an issued number/i);
+    expect(current.participants[0].rentals[0].number).toBe('8');
 });
 
 test('numbers each issued unit directly and keeps a canceled edit separate', async () => {
@@ -303,4 +313,12 @@ test('a scanned party member can join their open rental, find their gear card fi
     expect(document.querySelector('.participant-card')).toBe(selected);
     expect(within(selected).getByRole('link', { name: 'Return to this player’s check-in' })).toHaveAttribute('href', returnToCheckIn);
     expect(screen.queryByRole('button', { name: 'Add checked-in player to this rental' })).toBeNull();
+});
+
+test('customer kiosk deep links do not expose rental records or staff waiver searches',()=>{
+    render(<EditForm {...formProps()} canImportGroup={false}/>);
+    expect(screen.getByText(/Unlock the staff rental desk/)).toBeVisible();
+    expect(screen.queryByText(current.name)).toBeNull();
+    expect(screen.queryByRole('button',{name:'Add Participant'})).toBeNull();
+    expect(get).not.toHaveBeenCalled();
 });

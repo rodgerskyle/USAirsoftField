@@ -46,6 +46,7 @@ class EditForm extends Component {
     }
 
     render() {
+        if (this.props.canImportGroup === false) return <p>Unlock the staff rental desk to edit a rental.</p>;
         const { selectedKey, rentalsError, rentalsSuccess } = this.state;
         const { rentalForms = [], firebase, uid, canImportGroup, initialGroupId } = this.props;
         const form = selectedKey != null && !this.state.selectionClosed
