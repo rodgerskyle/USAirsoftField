@@ -147,3 +147,35 @@ it('samples the whole tablet image and then the center at its original resolutio
         [video, 360, 202, 1200, 675, 0, 0, 1200, 675],
     ]);
 });
+
+it('retains one camera stream across distinct cards in a rapid session and releases it when closed', async () => {
+    const stop = jest.fn();
+    const media = jest.fn().mockResolvedValue({ getTracks: () => [{ stop }] });
+    installCamera(media);
+    jest.spyOn(window.HTMLMediaElement.prototype, 'play').mockResolvedValue();
+    let current = 'PlayerCard101';
+    Object.defineProperty(window, 'BarcodeDetector', { configurable: true, value: class {
+        static async getSupportedFormats() { return ['code_128']; }
+        async detect() { return [{ rawValue: current, format: 'code_128' }]; }
+    } });
+    const onScan = jest.fn();
+    const scanner = paused => <StaffCardScanner onScan={onScan} continuous paused={paused} />;
+    const { container, rerender } = render(scanner(false));
+    Object.defineProperties(container.querySelector('video'), {
+        readyState: {value: 2}, videoWidth: {value: 1280}, videoHeight: {value: 720},
+    });
+    fireEvent.click(screen.getByRole('button', {name: 'Scan with camera'}));
+    await waitFor(() => expect(onScan).toHaveBeenCalledTimes(1));
+    rerender(scanner(true));
+    current = 'PlayerCard102';
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 250)); });
+    expect(onScan).toHaveBeenCalledTimes(1);
+    rerender(scanner(false));
+    await waitFor(() => expect(onScan).toHaveBeenLastCalledWith({playerId: 'PlayerCard102'}));
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 250)); });
+    expect(onScan).toHaveBeenCalledTimes(2);
+    expect(media).toHaveBeenCalledTimes(1);
+    expect(stop).toHaveBeenCalledTimes(0);
+    fireEvent.click(screen.getByRole('button', {name: 'Close camera'}));
+    expect(stop).toHaveBeenCalledTimes(1);
+});

@@ -1,3 +1,5 @@
+import { mountRoundLineup } from './round-lineup-desk.js';
+
 // Shared with the field website's round desk. Both desks submit the displayed revisions.
 const day = new Intl.DateTimeFormat('en-CA', {timeZone:'America/Los_Angeles',year:'numeric',month:'2-digit',day:'2-digit'});
 const time = new Intl.DateTimeFormat('en-US', {timeZone:'America/Los_Angeles',hour:'numeric',minute:'2-digit'});
@@ -13,7 +15,7 @@ export function roundConsoleNotice(body) {
     ? 'Round ended and MVP nominations are open.' : roundConsoleNotices[body.phase];
 }
 
-export function mountRoundConsole(root, { save, timingUrl }) {
+export function mountRoundConsole(root, { save, timingUrl, requestLineup, scoresUrl }) {
   const section = document.createElement('section');
   section.className = 'card lg-round-ops field-rounds-panel';
   section.setAttribute('aria-label', 'Run the next round');
@@ -29,12 +31,14 @@ export function mountRoundConsole(root, { save, timingUrl }) {
     </div><p><a data-console-timing>See where game time goes</a></p>`;
   section.querySelector('[data-console-timing]').href = timingUrl;
   root.append(section);
+  const lineup = requestLineup && mountRoundLineup(root, {request:requestLineup, scoresUrl});
   const picker = section.querySelector('select'), state = section.querySelector('[data-console-state]');
   const buttons = Array.from(section.querySelectorAll('[data-phase]'));
   let board, now, disabled, selected, optionsKey, sending = false;
   function update(nextBoard, currentTime, locked = false) {
     board = nextBoard; now = currentTime; disabled = locked;
     section.hidden = !board?.isStaff;
+    lineup?.update(board?.isStaff, locked || sending);
     if(section.hidden) return;
     const rounds = (board.games || []).filter(game => day.format(new Date(game.startsAt)) === day.format(new Date(now)) &&
       ['queued','scheduled','delayed','live'].includes(game.status));
@@ -98,5 +102,5 @@ export function mountRoundConsole(root, { save, timingUrl }) {
     try { await save(body); }
     finally {sending=false; if(root.isConnected)update(board,now,disabled);}
   });
-  return { update, destroy:()=>section.remove() };
+  return { update, reviewLineup: gameId => lineup?.open(gameId), destroy() { lineup?.destroy(); section.remove(); } };
 }

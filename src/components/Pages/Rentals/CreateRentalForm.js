@@ -413,7 +413,7 @@ class CreateRentalForm extends Component {
                                         onChange={event => this.setState({ participants: [{ ...this.state.participants[0], name: event.target.value }] })} />
                                 </label>
                             </section>}
-                            {this.props.canImportGroup && !this.props.checkedInPlayer && !this.state.checkInGroup && <GroupRentalPicker
+                            {this.props.canImportGroup && !this.props.checkedInPlayer && !this.state.checkInGroup && <GroupRentalPicker pickupOnly={this.props.pickupOnly}
                                 firebase={this.props.firebase} uid={this.props.uid} initialGroupId={this.state.clearedInitialGroup ? null : this.props.initialGroupId}
                                 existingEntries={this.state.participants} disabled={submitting} onAdd={this.importRoster} onPrefill={this.importRoster}
                             />}

@@ -1818,7 +1818,7 @@ class EditSelectedForm extends Component {
                 </div>
 
                 {this.state.error && <p role="alert">{this.state.error}</p>}
-                {this.props.canImportGroup && <GroupRentalPicker firebase={this.props.firebase} uid={this.props.uid}
+                {this.props.canImportGroup && <GroupRentalPicker pickupOnly={this.props.pickupOnly} firebase={this.props.firebase} uid={this.props.uid}
                     linkedGroupId={this.props.form.checkInGroup?.id} initialGroupId={this.props.form.checkInGroup?.id || this.props.initialGroupId}
                     existingEntries={this.props.form.participants || []} onAdd={this.importGroup} />}
 

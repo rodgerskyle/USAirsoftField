@@ -21,12 +21,23 @@ function checklistGroup(data, role, token) {
   return group.readiness && (!group.organizerToken || group.organizerToken === token) ? group : null;
 }
 
+const directions = {
+  'check-in': 'Check in with staff when you arrive.',
+  rentals: 'Go to rental pickup for your gear.',
+  briefing: 'Head to the barracks for briefing.',
+  'ask-staff': 'Tell the desk whether you need rental gear.',
+};
+
 function GuestChecklist({ entry, token, busy, load }) {
   const { preparation } = entry;
+  const [gearChoice, setGearChoice] = useState(preparation.rentalIntent);
+  useEffect(() => setGearChoice(preparation.rentalIntent), [preparation.rentalIntent]);
+  const admitted = entry.nextStop && entry.nextStop !== 'check-in';
   const signed = preparation.waiverStatus === 'signed';
   const pending = ['pending', 'review', 'confirmed'].includes(preparation.waiverSubmissionStatus);
   return <section className="party-checklist__card">
     <h2>{entry.displayName}</h2>
+    {entry.nextStop && <p><strong>Your next stop</strong> · {directions[entry.nextStop]}</p>}
     <PartyEntryReadiness preparation={preparation} />
     <h3>Field waiver</h3>
     {signed ? <p>Your signed waiver is verified for this visit.</p> :
@@ -35,13 +46,18 @@ function GuestChecklist({ entry, token, busy, load }) {
         <a className="btn btn-primary" href={'/waiver#party/' + token} rel="noreferrer">Complete my waiver</a></>}
     <form onSubmit={event => {
       event.preventDefault();
-      const rentalIntent = new FormData(event.currentTarget).get('rental');
-      if (['requested', 'bringing'].includes(rentalIntent)) load({ action: 'setRental', rentalIntent }, 'Rental choice saved.');
+      const data = new FormData(event.currentTarget);
+      const rentalIntent = data.get('rental');
+      const requestedGear = String(data.get('requestedGear') || '').trim();
+      if (['requested', 'bringing'].includes(rentalIntent)) load({ action: 'setRental', rentalIntent,
+        ...(rentalIntent === 'requested' && (requestedGear || preparation.requestedGear) && { requestedGear }) }, 'Rental choice saved.');
     }}>
-      <fieldset disabled={busy} key={preparation.rentalIntent}>
+      <fieldset disabled={busy || admitted} key={preparation.rentalIntent}>
         <legend>Will you need rental gear?</legend>
-        <label className="party-checklist__choice"><input type="radio" name="rental" value="requested" required defaultChecked={preparation.rentalIntent === 'requested'} /> I need rental gear</label>
-        <label className="party-checklist__choice"><input type="radio" name="rental" value="bringing" required defaultChecked={preparation.rentalIntent === 'bringing'} /> I’m bringing my own gear</label>
+        <label className="party-checklist__choice"><input type="radio" name="rental" value="requested" required onChange={event => setGearChoice(event.target.value)} defaultChecked={preparation.rentalIntent === 'requested'} /> I need rental gear</label>
+        <label className="party-checklist__choice"><input type="radio" name="rental" value="bringing" required onChange={event => setGearChoice(event.target.value)} defaultChecked={preparation.rentalIntent === 'bringing'} /> I’m bringing my own gear</label>
+        {gearChoice === 'requested' && <label>Requested equipment (optional)
+          <input name="requestedGear" maxLength={120} defaultValue={preparation.requestedGear || ''} placeholder="e.g. mask and vest" /></label>}
         <button className="btn btn-primary">Save rental choice</button>
       </fieldset>
     </form>
@@ -70,9 +86,16 @@ function OrganizerChecklist({ group, busy, load }) {
       load({ action: 'setExpected', expected }, 'Expected guest count saved.');
     }
   }
+  const arrived = group.entries.filter(entry => entry.nextStop && entry.nextStop !== 'check-in');
+  const destinations = [['rentals','rental pickup'], ['briefing','the barracks for briefing'], ['ask-staff','the desk to confirm gear']];
   return <div className="party-checklist__layout">
     <section className="party-checklist__card" aria-label={group.kind === 'visit' ? 'Group overview' : 'Party overview'}>
       {group.readiness.expected ? <PartyReadinessSummary readiness={group.readiness} kind={group.kind} /> : <h2>How many guests are coming?</h2>}
+      {arrived.length > 0 && <section aria-label="Next stops"><h3>Next stops for checked-in guests</h3>
+        {destinations.map(([key, label]) => {
+          const count = arrived.filter(entry => entry.nextStop === key).length;
+          return count > 0 && <p key={key}><strong>{count}</strong> {count === 1 ? 'guest' : 'guests'} to {label}</p>;
+        })}</section>}
       {group.canSetExpected && <form onSubmit={setExpected}><fieldset disabled={busy}>
         <label>Expected guests<input type="number" name="expected" inputMode="numeric" min="1" max="30" key={group.readiness.expected} defaultValue={group.readiness.expected || ''} required /></label>
         <button className="btn btn-outline-primary">Save expected count</button>
@@ -83,6 +106,7 @@ function OrganizerChecklist({ group, busy, load }) {
       <h2>Guest checklist</h2>
       {group.entries.length ? <ul>{group.entries.map(entry => <li key={entry.id}>
         <h3>{entry.displayName}</h3><PartyEntryReadiness preparation={entry.preparation} />
+        {entry.nextStop && <p>{directions[entry.nextStop]}</p>}
         <CopyPartyLink url={websiteInvitationLink('guest', entry.preparation.guestToken)} label="Copy guest checklist" context={entry.displayName} />
       </li>)}</ul> : <p>Add a guest to share their personal checklist.</p>}
       <form onSubmit={add}><fieldset disabled={busy}>
@@ -99,13 +123,16 @@ function Checklist({ role, token }) {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const operation = useRef(null);
-  const load = useCallback(async (action, message) => {
-    if (operation.current) return false;
+  const backgroundRead = useRef(false);
+  const load = useCallback(async (action, message, background = false) => {
+    if (operation.current) {
+      if (background || !backgroundRead.current) return false;
+      operation.current.abort();
+    }
+    backgroundRead.current = background;
     const controller = new AbortController();
     operation.current = controller;
-    setBusy(true);
-    setError('');
-    setNotice('');
+    if (!background) { setBusy(true); setError(''); setNotice(''); }
     try {
       const headers = { Accept: 'application/json', Authorization: 'Party ' + token };
       if (action) headers['Content-Type'] = 'application/json';
@@ -122,7 +149,8 @@ function Checklist({ role, token }) {
       const next = checklistGroup(data, role, token);
       if (!next) { setGroup(null); throw new Error(accessError); }
       setGroup(next);
-      setNotice(message || '');
+      setError('');
+      if (!background) setNotice(message || '');
       return true;
     } catch (failure) {
       if (!controller.signal.aborted) setError(failure.message || 'Could not reach your checklist. Refresh and try again.');
@@ -143,6 +171,17 @@ function Checklist({ role, token }) {
       operation.current = null;
     };
   }, [load]);
+
+  const hasDayOfDirections = group?.entries.some(entry => entry.nextStop);
+  useEffect(() => {
+    if (!hasDayOfDirections) return;
+    const refresh = () => {
+      if (!document.hidden && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)) load(null, '', true);
+    };
+    const timer = setInterval(refresh, 20000);
+    window.addEventListener('focus', refresh);
+    return () => { clearInterval(timer); window.removeEventListener('focus', refresh); };
+  }, [hasDayOfDirections, load]);
 
   // Older readiness responses were issued only for booked or self-organized parties.
   const isParty = group && group.kind !== 'visit';

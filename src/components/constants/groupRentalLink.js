@@ -48,6 +48,9 @@ export function walkOnRentalLink(playerId, date, isAdmin = true, fromCompanion =
 
 export function walkOnAfterLogin(search, isAdmin) {
   const params = new URLSearchParams(search);
+  if ([...params.keys()].length === 1 && params.get('view') === 'pickup') {
+    return (isAdmin ? '/admin/rentalform' : '/dashboard/rentalform') + '?view=pickup';
+  }
   const player = rentalCheckInParams(params);
   return player && checkInRentalLink(player.playerId, player.date, isAdmin, params.get('from') === 'companion');
 }

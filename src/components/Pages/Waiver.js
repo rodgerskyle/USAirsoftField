@@ -1,3 +1,4 @@
+import { sendDeskReceipt } from './DeskWaiverReceipt';
 import { waiverAge } from '../utils/waiverAge';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { AuthUserContext } from '../session';
@@ -80,6 +81,16 @@ const WaiverForm = (props) => {
     const guardianSigRef = useRef();
     const [saveButton2, setSaveButton2] = useState(true);
     const [acceptEmailSubscription, setAcceptEmailSubscription] = useState(true);
+    const [deskNotice,setDeskNotice] = useState('');
+    async function notifyDesk(form) {
+        if (!props.deskToken) return;
+        try {
+            await sendDeskReceipt(props.deskToken,form);
+            if (active.current) setDeskNotice('Your waiver confirmation was sent. Return to the check-in desk for your team assignment.');
+        } catch {
+            if (active.current) setDeskNotice('Your waiver was submitted. Show this confirmation to staff so they can finish check-in.');
+        }
+    }
     const [loading, setLoading] = useState(false);
     const [errorWaiver, setErrorWaiver] = useState(null);
     const [agecheck, setAgecheck] = useState(true);
@@ -247,6 +258,7 @@ const WaiverForm = (props) => {
                     throw error;
                 }
                 if (!active.current) return;
+                await notifyDesk(pending.current.waiver);
                 pending.current = null;
                 setRetryMember(false);
                 setLinked(true);
@@ -258,6 +270,7 @@ const WaiverForm = (props) => {
             if (!active.current) return;
 
             if (result.data.success) {
+                await notifyDesk(waiverData);
                 if (props.onSigned) props.onSigned(waiverData.name.trim());
                 else setShowSuccessScreen(true);
             } else {
@@ -348,7 +361,7 @@ const WaiverForm = (props) => {
                                 <div className="success-screen waiver-success-screen p-4 mt-4">
                                     <FontAwesomeIcon icon={faCheckCircle} style={{ fontSize: '32px' }} />
                                     <h3 className="mb-3">Waiver Submitted Successfully!</h3>
-                                    <p>Thank you for submitting your waiver. You're now ready to play at US Airsoft Field!</p>
+                                    <p>{deskNotice || "Thank you for submitting your waiver. You're now ready to play at US Airsoft Field!"}</p>
                                     {linked && <p>Signed waiver attached to your member profile.</p>}
                                     {acceptEmailSubscription && (
                                         <p className="mt-2">You've been added to our mailing list and will receive updates about events and promotions.</p>
@@ -748,7 +761,8 @@ function Waiver(props) {
     if (party) return <PartyGuestWaiver token={party.token} key={party.token}>
         {signPartyWaiver => <WaiverForm {...props} partyToken={party.token} signPartyWaiver={signPartyWaiver} />}
     </PartyGuestWaiver>;
-    return <WaiverForm {...props} />;
+    const desk = !props.onSigned && /^#desk\/([a-f0-9]{64})$/.exec(hash);
+    return <WaiverForm {...props} key={desk?.[1] || 'waiver'} deskToken={desk?.[1]} />;
 }
 
 export default withFirebase(Waiver);

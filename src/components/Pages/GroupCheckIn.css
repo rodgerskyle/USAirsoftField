@@ -35,3 +35,18 @@
 .group-placement button[data-team=solid] { border-inline-start: 4px solid #488fda; }
 
 .visit-groups__invite-layout { max-width: 48rem; }
+
+.admin-group-lookup .group-placement__player .party-here,
+.group-assignment-row .party-here {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: .5rem;
+  min-height: 44px;
+  margin: 0;
+  cursor: pointer;
+}
+.admin-group-lookup .party-here input[type=checkbox] { width: 1.2rem; height: 1.2rem; margin: 0; accent-color: #2875ba; }
+.party-return-queue ul { list-style: none; padding: 0; }
+.party-return-queue li { padding-block: .5rem; border-bottom: 1px solid var(--usaw-line, #8599b45e); }
+.party-return-queue button { min-height: 44px; margin-inline-start: .5rem; }

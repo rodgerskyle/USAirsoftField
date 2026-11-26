@@ -1327,3 +1327,6 @@ button.btn-pin-code-link {
     margin: 0 0 .4rem;
     font-weight: 700;
 }
+
+.rental-pickup-row { padding: 1rem 0; border-top: 1px solid var(--admin-border, #67778a); }
+.rental-pickup-row p { margin-bottom: .5rem; }

@@ -4,6 +4,7 @@ import { withFirebase } from '../Firebase';
 import { withAuthorization } from '../session';
 import * as ROLES from '../constants/roles';
 import ReturnForm from './Rentals/ReturnForm';
+import RentalPickupQueue from './Rentals/RentalPickupQueue';
 import RentalOptions from './Rentals/RentalOptions';
 import { Helmet } from 'react-helmet-async';
 import { Breadcrumb } from 'react-bootstrap';
@@ -31,9 +32,10 @@ import { useLocation, useSearchParams } from 'react-router-dom';
 import '../constants/admin.css';
 
 const GROUP_ID = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
-const VIEW_KEYS = ['new', 'edit', 'return', 'inventory'];
+const VIEW_KEYS = ['pickup', 'new', 'edit', 'return', 'inventory'];
 
 const VIEW_CONFIG = {
+    pickup: { label: 'Rental pickup', icon: <Inventory2 fontSize="small" /> },
     new: { label: 'New Form', icon: <AddBox fontSize="small" /> },
     edit: { label: 'Edit Form', icon: <EditNote fontSize="small" /> },
     return: { label: 'Swaps & returns', icon: <AssignmentReturn fontSize="small" /> },
@@ -93,7 +95,7 @@ function RentalsManagement(props) {
             next.set('form', String(key));
             setSearchParams(next);
         } else if (canImportGroup && key != null && GROUP_ID.test(id)) {
-            setSearchParams({ view: 'edit', group: id, form: String(key) });
+            setSearchParams({ view: 'edit', group: id, form: String(key), ...(searchParams.get('pickup') === 'arrived' && { pickup: 'arrived' }) });
         }
     };
 
@@ -169,7 +171,7 @@ function RentalsManagement(props) {
     };
 
     const setView = (view) => {
-        if (!handoff) return setSearchParams({ view });
+        if (!handoff || view === 'pickup') return setSearchParams({ view });
         const next = new URLSearchParams(searchParams);
         next.set('view', view);
         if (view === 'edit' && linkedForm) next.set('form', String(linkedForm.key));
@@ -281,7 +283,7 @@ function RentalsManagement(props) {
                                                 }
                                             }}
                                         >
-                                            {VIEW_KEYS.map((key) => (
+                                            {VIEW_KEYS.filter(key => key !== 'pickup' || canImportGroup).map((key) => (
                                                 <Tab
                                                     key={key}
                                                     value={key}
@@ -310,9 +312,12 @@ function RentalsManagement(props) {
                                         <p role="alert">{renter.error}</p>
                                         <button className="btn btn-outline-primary" onClick={renter.retry}>Retry {handoff.key === 'walkOn' ? 'walk-on' : 'member'} lookup</button>
                                     </section> : <p role="status">Loading the checked-in player…</p>)}
+                                    {!loading && activeView === 'pickup' && canImportGroup && <RentalPickupQueue firebase={props.firebase} uid={authUser.uid}
+                                        isAdmin={!!roles.ADMIN} rentalForms={rentalForms} />}
                                     {!loading && !waitingForPlayer && activeView === 'new' ? (
                                         <CreateRentalForm
                                             key={draftKey}
+                                            pickupOnly={searchParams.get('pickup') === 'arrived'}
                                             checkedInPlayer={renter.player}
                                             verifyCheckedInPlayer={renter.verify}
                                             {...props}
@@ -328,6 +333,7 @@ function RentalsManagement(props) {
                                     {!loading && !waitingForPlayer && activeView === 'edit' && (!handoff || (linkedForm && String(linkedForm.key) === searchParams.get('form'))) ? (
                                         <EditForm
                                             key={draftKey}
+                                            pickupOnly={searchParams.get('pickup') === 'arrived'}
                                             {...props}
                                             uid={authUser?.uid}
                                             canImportGroup={canImportGroup}

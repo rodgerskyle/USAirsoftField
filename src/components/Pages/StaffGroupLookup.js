@@ -5,12 +5,31 @@ import { isGroupCode } from '../constants/groupCode';
 import { groupExperienceLabels } from '../constants/groupExperience';
 import { PartyReadinessSummary, PartyEntryReadiness } from './PartyReadiness';
 import WaiverStatus from './WaiverStatus';
+import PartyArrivalQueue from './PartyArrivalQueue';
+import { websiteInvitationLink } from '../constants/groupInvitationLinks';
+import qrcode from '../../vendor/qrcode-generator.mjs';
 import StaffWaiverPicker from './StaffWaiverPicker';
 import GroupPartySchedule, { bookingTime } from './GroupPartySchedule';
 import './GroupCheckIn.css';
 
 const endpoint = '/api/check-in-groups';
 const assignmentPath = '/api/game-day-check-in';
+function WaiverQr({ token, name }) {
+  const link = websiteInvitationLink('guest', token);
+  const [open, setOpen] = useState(false);
+  if (!link) return null;
+  let image;
+  if (open) {
+    const qr = qrcode(0, 'M');
+    qr.addData(link, 'Byte'); qr.make(); image = qr.createDataURL(4, 16);
+  }
+  return <details onToggle={event => setOpen(event.currentTarget.open)}>
+    <summary>Show waiver QR for {name}</summary>
+    {open && <div><img src={image} alt={'Scan to open the waiver for ' + name} />
+      <p><a href={link} rel="noreferrer" target="_blank">Open guest checklist</a></p></div>}
+  </details>;
+}
+
 const teamLabels = { camo: 'Camo', solid: 'Solid' };
 const fieldToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 
@@ -38,9 +57,18 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
   const [parties, setParties] = useState(null);
   const [chosenKey, setChosenKey] = useState('');
   const [confirmUnlink, setConfirmUnlink] = useState(false);
+  const [here, setHere] = useState([]);
+  const [refreshQueue, setRefreshQueue] = useState(0);
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
   const operation = useRef(null);
+  const returningGuest = useRef(null);
+  useEffect(() => {
+    if (!busy && returningGuest.current) {
+      document.getElementById('party-present-' + returningGuest.current)?.focus();
+      returningGuest.current = null;
+    }
+  }, [busy]);
   useEffect(() => () => operation.current?.abort(), []);
 
   function clearChoices() {
@@ -79,7 +107,7 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
 
   async function openGroup(result, signal) {
     if (signal.aborted) return;
-    setData(result); setAssignments(null); clearChoices();
+    setData(result); setAssignments(null); clearChoices(); setHere([]);
     if (hint && result.group.date === hint.date) await loadBookings(result.group, signal);
     else if (hint) setNotice('This group is on a different date from the selected Party Calendar booking. Check the group before linking.');
     if (!signal.aborted && result.group.date === result.today) await loadAssignments(result.group, signal);
@@ -131,7 +159,6 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
     && group?.entries.length === positions.size && group.entries.every(entry => positions.has(entry.id));
 
   const cleared = position => position && !position.otherGroup && (position.side || position.waiverStatus === 'signed');
-  const groupCleared = fresh && group.entries.length > 0 && group.entries.every(entry => cleared(positions.get(entry.id)));
 
   function linkWaiver(entry, match) {
     if (!current || !fresh) return;
@@ -153,19 +180,43 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
     });
   }
 
-  const readyCount = fresh ? [...positions.values()].filter(row => !row.otherGroup && !row.side && row.waiverStatus === 'signed').length : 0;
-  function assign(side, entry, readyOnly = false) {
-    if (!current || !fresh || !(readyOnly ? readyCount : entry ? cleared(positions.get(entry.id)) : groupCleared)) return;
+  const rentalPickup = current && fresh && group.entries.some(entry =>
+    entry.preparation?.rentalIntent === 'requested' && positions.get(entry.id)?.side);
+  const expected = group?.party?.start && Date.parse(group.party.start) < Date.now()
+    ? 'Late · Not here yet' : 'Expected · Not here yet';
+  const selectedHere = fresh ? here.filter(id => positions.has(id) && !positions.get(id).side && !positions.get(id).otherGroup) : [];
+  const readyCount = selectedHere.filter(id => positions.get(id).waiverStatus === 'signed').length;
+  function arrive(side) {
+    if (!fresh || !selectedHere.length) return;
+    void run(async signal => {
+      try {
+        const result = await request(assignmentPath, { method: 'POST', signal, body: {
+          action: 'arriveGroup', groupId: group.id, date: group.date, entryIds: selectedHere, ...(side && {side}),
+          rosterVersion: assignments.rosterVersion, assignmentVersion: assignments.version,
+        }});
+        if (signal.aborted) return;
+        setAssignments({ ...result.groupAssignments, rosterVersion: result.rosterVersion, revision: checkInRevision });
+        setHere([]); setRefreshQueue(n => n + 1); onAssigned?.(result);
+        const waiting = result.groupAssignments.entries.filter(e => selectedHere.includes(e.entryId) && !e.side).length;
+        setNotice([side && result.checkedInCount + ' checked in to ' + teamLabels[side], waiting > 0 && waiting + ' saved for later'].filter(Boolean).join(' · ') || 'Arrival saved.');
+      } catch (error) {
+        if (!signal.aborted && error.status === 409) await openById(group.id, signal);
+        throw error;
+      }
+    });
+  }
+  function assign(side, entry) {
+    if (!current || !fresh || !cleared(positions.get(entry.id))) return;
     void run(async signal => {
       try {
         const result = await request(assignmentPath, { method: 'POST', signal, body: {
           action: 'assignGroup', groupId: group.id, date: group.date, side,
-          rosterVersion: assignments.rosterVersion, assignmentVersion: assignments.version, ...(entry && { entryId: entry.id }), ...(readyOnly && { readyOnly: true }),
+          rosterVersion: assignments.rosterVersion, assignmentVersion: assignments.version, entryId: entry.id,
         } });
         if (signal.aborted) return;
         setAssignments({ ...result.groupAssignments, rosterVersion: result.rosterVersion, revision: checkInRevision });
         onAssigned?.(result);
-        setNotice((readyOnly ? result.checkedInCount + (result.checkedInCount === 1 ? ' ready player' : ' ready players') : entry ? entry.displayName : group.name) + ' assigned to ' + teamLabels[side] + '.');
+        setNotice(entry.displayName + ' assigned to ' + teamLabels[side] + '.');
       } catch (error) {
         if (signal.aborted) return;
         setAssignments(null);
@@ -201,7 +252,14 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
     });
   }
 
-  return <details id="arriving-group" className="admin-group-lookup" open><summary id="admin-checkin-arrivals">Find an arriving group</summary>
+  return <><PartyArrivalQueue request={request} refresh={refreshQueue} disabled={locked} onOpen={(id, entryId) => void run(async signal => {
+    await openById(id, signal);
+    if (!signal.aborted) {
+      document.getElementById('arriving-group').open = true;
+      setHere([entryId]);
+      returningGuest.current = entryId;
+    }
+  })} /><details id="arriving-group" className="admin-group-lookup" open><summary id="admin-checkin-arrivals">Find an arriving group</summary>
     {hint && <p>Party Calendar booking for {hint.date}. Find the group by its name or invitation code.</p>}
     <p>Search by group name or invitation code. <a href="/admin/field/groups">Manage groups</a></p>
     <form onSubmit={lookup}><label>Group name or code<input name="group" minLength={1} maxLength={80} autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} required disabled={locked} /></label><button className="btn btn-secondary" disabled={locked}>{busy ? 'Working…' : 'Find group'}</button><button type="button" className="btn btn-outline-primary" disabled={locked} onClick={() => find('', 1, true)}>Show today’s groups</button></form>
@@ -219,7 +277,8 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
         <button type="button" className="btn btn-outline-secondary" disabled={locked} onClick={() => void run(signal => openById(group.id, signal))}>Refresh party readiness</button></div>}
       {group.id && !busy && group.partyStatus !== 'review' && !missingBooking && !data.partyCalendarUnavailable &&
         (!hint || (hint.date === group.date && (!hint.key || hint.key === group.partyKey))) &&
-        <p><a className="btn btn-secondary" href={groupRentalLink(group.id)} target="_blank" rel="noopener noreferrer">Open rental form</a>{' '}
+        <p><a className="btn btn-secondary" href={groupRentalLink(group.id) + (rentalPickup ? '&pickup=arrived' : '')} target="_blank" rel="noopener noreferrer">
+          {rentalPickup ? 'Rental pickup for checked-in guests' : 'Open rental form'}</a>{' '}
           <a className="btn btn-secondary" href={groupRentalLink(group.id, true, 'return')} target="_blank" rel="noopener noreferrer">Swaps &amp; returns</a></p>}
       <div className="visit-party-tools">
         <button className="btn btn-secondary" type="button" disabled={locked} onClick={() => void run(signal => loadBookings(group, signal))}>{parties ? 'Refresh Party Calendar bookings' : 'Find bookings in the Party Calendar'}</button>
@@ -239,15 +298,14 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
       </div>
       <section className="group-placement" aria-label="Group team assignments"><h4>Team assignments</h4>
         {current && <>
-          <p>{fresh ? readyCount + ' of ' + group.entries.length + ' ready for check-in.' : 'Checking group waivers and team assignments…'}</p>
-          {readyCount > 0 && readyCount < group.entries.length && <div className="group-placement__actions">
-            {Object.entries(teamLabels).map(([side, label]) => <button type="button" key={side} className="btn btn-primary"
-              disabled={locked} onClick={() => assign(side, null, true)}>Check in {readyCount} ready to {label}</button>)}
-          </div>}
-          <div className="group-placement__actions">{Object.entries(teamLabels).map(([side, label]) =>
-            <button key={side} type="button" className="btn btn-outline-primary" data-team={side}
-              disabled={locked || !groupCleared}
-              onClick={() => assign(side)}>Assign group to {label}</button>)}
+          <p>Select the guests who are here. Guests still on the way stay on this roster.</p>
+          <div className="group-placement__actions">
+            {readyCount > 0 && Object.entries(teamLabels).map(([side,label]) =>
+              <button type="button" key={side} data-team={side} className="btn btn-primary" disabled={locked} onClick={() => arrive(side)}>
+                Check in {readyCount} ready to {label}
+              </button>)}
+            {selectedHere.length > 0 && <button type="button" className="btn btn-secondary" disabled={locked}
+              onClick={() => arrive()}>Finish later ({selectedHere.length})</button>}
             <button type="button" className="btn btn-outline-secondary" disabled={locked}
               onClick={() => void run(signal => openById(group.id, signal))}>Refresh group</button></div>
           {!busy && !fresh && <p role="status">Refresh the group to see current teams.</p>}
@@ -261,12 +319,19 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
           const playerName = position?.displayName ?? entry.displayName;
           const experience = position?.experienceBand ?? entry.experienceBand;
           return <li className="group-placement__player" key={entry.id}>
-            <strong>{playerName}</strong><small>{groupExperienceLabels[experience] || groupExperienceLabels.unrated}{position && ' · ' + (position.otherGroup ? 'On another group today' : teamLabels[position.side] || 'Awaiting check-in')}</small>
+            {current && position && !position.side && !position.otherGroup && <label className="party-here">
+              <input id={'party-present-' + entry.id} type="checkbox" checked={here.includes(entry.id)} disabled={locked} onChange={event => {
+                const checked = event.target.checked;
+                setHere(ids => checked ? [...ids,entry.id] : ids.filter(id => id !== entry.id));
+              }} /> Here now<span className="visually-hidden"> · {playerName}</span>
+            </label>}
+            <strong>{playerName}</strong><small>{groupExperienceLabels[experience] || groupExperienceLabels.unrated}{position && ' · ' + (position.otherGroup ? 'On another group today' : teamLabels[position.side] || (position.arrivedAt ? (waiverStatus === 'signed' ? 'Waiver received · Finish check-in' : 'Here · Waiting for waiver') : expected))}</small>
             {entry.preparation ? <PartyEntryReadiness preparation={position ? { ...entry.preparation, waiverStatus } : entry.preparation} /> : <WaiverStatus status={waiverStatus} />}
-            {current && position && !position.otherGroup && !position.side && waiverStatus !== 'signed' &&
-              <StaffWaiverPicker request={request} disabled={locked} name={entry.displayName} onChoose={match => linkWaiver(entry, match)} />}
+            {current && position && !position.otherGroup && !position.side && waiverStatus !== 'signed' && <>
+              <WaiverQr token={entry.preparation?.guestToken} name={playerName} />
+              <StaffWaiverPicker request={request} disabled={locked} name={entry.displayName} onChoose={match => linkWaiver(entry, match)} /></>}
             {current && <div className="group-placement__actions">
-              {Object.entries(teamLabels).map(([side, label]) => <button type="button" className="btn btn-outline-primary"
+              {(position?.side || position?.arrivedAt) && Object.entries(teamLabels).map(([side, label]) => <button type="button" className="btn btn-outline-primary"
                 key={side} data-team={side} aria-label={'Assign ' + playerName + ' to ' + label}
                 disabled={locked || !cleared(position) || position.side === side} onClick={() => assign(side, entry)}>{label}</button>)}
               {playerId && <button type="button" className="btn btn-outline-secondary" disabled={locked}
@@ -276,5 +341,5 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
         })}</ul>
       </section></>}
     {notice && <p role="status">{notice}</p>}
-  </details>;
+  </details></>;
 }

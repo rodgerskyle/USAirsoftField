@@ -230,9 +230,9 @@ const boardFor = (version, entries) => ({ date: group.date, rosterVersion: 'rost
 const emptyAssignments = boardFor('initial', []);
 
 test('staff can find groups by name, confirm the right one, assign everyone and then switch one player', async () => {
-  const entries = [{ id: 'mem', playerId: 'OfficialMemberID', displayName: 'Member', experienceBand: 'veteran' }, { id: 'guest', displayName: 'New player' }];
+  const entries = [{ id: 'mem', playerId: 'OfficialMemberID', displayName: 'Member', experienceBand: 'veteran', preparation: {rentalIntent:'requested',waiverStatus:'signed'} }, { id: 'guest', displayName: 'New player' }];
   const positions = side => entries.map(entry => ({ entryId: entry.id, side, waiverStatus: 'signed' }));
-  const allCamo = boardFor('v2', positions('camo'));
+  const allCamo = { ...boardFor('v2', positions('camo')), checkedInCount: 2 };
   const split = boardFor('v3', [{ entryId: 'mem', side: 'camo', waiverStatus: 'signed' }, { entryId: 'guest', side: 'solid', waiverStatus: 'unavailable' }]);
   const result = { group: { ...group, entries }, today: group.date };
   const request = jest.fn().mockResolvedValueOnce({ groups: [
@@ -245,18 +245,21 @@ test('staff can find groups by name, confirm the right one, assign everyone and 
   fireEvent.change(screen.getByLabelText('Group name or code'), { target: { value: 'Family' } });
   fireEvent.click(screen.getByRole('button', { name: 'Find group' }));
   fireEvent.click(await screen.findByRole('button', { name: /Family game day/ }));
-  const all = await screen.findByRole('button', { name: 'Assign group to Camo' });
+  fireEvent.click(await screen.findByRole('checkbox', { name: /Here now · Member/ }));
+  fireEvent.click(screen.getByRole('checkbox', { name: /Here now · New player/ }));
+  const all = screen.getByRole('button', { name: 'Check in 2 ready to Camo' });
   await waitFor(() => expect(all).toBeEnabled());
   expect(request.mock.calls[0][0]).toMatch(/staff-groups.*q=Family/);
   expect(request.mock.calls[1][0]).toContain('staff=1&id=' + group.id);
   expect(screen.getByRole('link', { name: 'Open rental form' })).toHaveAttribute('href', '/admin/rentalform?view=new&group=' + group.id);
-  expect(screen.getByText(/Experienced · Awaiting check-in/)).toBeVisible();
+  expect(screen.getByText(/Experienced · Expected · Not here yet/)).toBeVisible();
   fireEvent.click(screen.getByRole('button', { name: 'Verify Member' }));
-  expect(onSelect).toHaveBeenCalledWith({ playerId: 'OfficialMemberID' }, false, group.date, false);
+  expect(onSelect).toHaveBeenCalledWith({ playerId: 'OfficialMemberID' }, false, group.date, true);
   fireEvent.click(all);
   await waitFor(() => expect(onAssigned).toHaveBeenCalledWith(allCamo));
+  expect(screen.getByRole('link',{name:'Rental pickup for checked-in guests'})).toHaveAttribute('href','/admin/rentalform?view=new&group='+group.id+'&pickup=arrived');
   expect(request.mock.calls[3][1].body).toEqual({
-    action: 'assignGroup', groupId: group.id, date: group.date, rosterVersion: 'roster-one', assignmentVersion: 'v1', side: 'camo' });
+    action: 'arriveGroup', entryIds: ['mem', 'guest'], groupId: group.id, date: group.date, rosterVersion: 'roster-one', assignmentVersion: 'v1', side: 'camo' });
   fireEvent.click(screen.getByRole('button', { name: 'Assign New player to Solid' }));
   await waitFor(() => expect(onAssigned).toHaveBeenCalledWith(split));
   expect(request.mock.calls[4][1].body).toMatchObject({ assignmentVersion: 'v2', entryId: 'guest', side: 'solid' });
@@ -417,15 +420,17 @@ test('shows today’s groups without a search and checks in just the ready playe
     .mockResolvedValueOnce({...boardFor('after',[{...positions[0],side:'camo'},positions[1],positions[2]]),checkedInCount:1});
   render(<StaffGroupLookup request={request} />);
   fireEvent.click(screen.getByRole('button',{name:'Show today’s groups'}));
-  const button=await screen.findByRole('button',{name:'Check in 1 ready to Camo'});
+  fireEvent.click(await screen.findByRole('checkbox',{name:/Here now · One/}));
+  fireEvent.click(screen.getByRole('checkbox',{name:/Here now · Two/}));
+  const button=screen.getByRole('button',{name:'Check in 1 ready to Camo'});
   await waitFor(()=>expect(button).toBeEnabled());
   expect(screen.getByText(/On another group today/)).toBeInTheDocument();
-  expect(screen.getByRole('button',{name:'Assign Other party to Camo'})).toBeDisabled();
-  expect(screen.getByRole('button',{name:'Assign group to Camo'})).toBeDisabled();
+  expect(screen.queryByRole('checkbox',{name:/Here now · Other party/})).toBeNull();
+  expect(screen.queryByRole('button',{name:'Assign group to Camo'})).toBeNull();
   fireEvent.click(button);
   await waitFor(()=>expect(request).toHaveBeenCalledTimes(4));
   expect(request.mock.calls[0][0]).toMatch(/staff-groups\?date=/);
-  expect(request.mock.calls[3][1].body).toMatchObject({action:'assignGroup',groupId:group.id,side:'camo',readyOnly:true,assignmentVersion:'before'});
+  expect(request.mock.calls[3][1].body).toMatchObject({action:'arriveGroup',groupId:group.id,side:'camo',entryIds:['one','two'],assignmentVersion:'before'});
 });
 
 test('opens a group sent from group management without another lookup', async () => {
@@ -520,4 +525,34 @@ test('a recognized ordinary-group organizer opens the existing roster without a 
   expect(screen.getByRole('link', { name: 'Open organizer checklist' })).toHaveAttribute('href',
     'https://www.usairsoftfield.com/group-check-in#organizer/' + organizerToken);
   expect(fetch).toHaveBeenCalledTimes(1);
+});
+
+test('a paused party guest has a personal website waiver QR and resumes on the same booking', async () => {
+  const token = 'c'.repeat(64);
+  const waitingGuest = {id:'waiting',displayName:'Jordan Fox',preparation:{guestToken:token,waiverStatus:'missing',rentalIntent:'bringing'}};
+  const late = {id:'late',displayName:'Morgan Park'};
+  const party = {...group,kind:'party',party:{start:'2020-01-01T18:30:00Z'},entries:[waitingGuest,late]};
+  let signed = false;
+  const request = jest.fn(async (path,options) => {
+    if (path.includes('waiting=1')) return {waiting:[{groupId:party.id,groupName:party.name,entryId:waitingGuest.id,name:waitingGuest.displayName,ready:signed}]};
+    if (path.startsWith('/api/staff-groups')) return {groups:[party],page:1,totalPages:1};
+    if (path.startsWith('/api/check-in-groups')) return {group:party,today:group.date};
+    const positions = [{entryId:'waiting',arrivedAt:'2026-12-05T16:00:00Z',waiverStatus:signed?'signed':'missing'},{entryId:'late',waiverStatus:'signed'}];
+    return boardFor(options.body.action,positions);
+  });
+  render(<StaffGroupLookup request={request} />);
+  fireEvent.click(screen.getByRole('button',{name:'Show today’s groups'}));
+  const details = (await screen.findByText('Show waiver QR for Jordan Fox')).closest('details');
+  details.open = true;
+  fireEvent(details, new Event('toggle'));
+  const personal = await within(details).findByRole('link',{name:'Open guest checklist'});
+  expect(personal).toHaveAttribute('href','https://www.usairsoftfield.com/group-check-in#guest/'+token);
+  expect(within(details).getByRole('img',{name:/waiver for Jordan Fox/}).src).toMatch(/^data:image\//);
+  expect(screen.getByText(/Here · Waiting for waiver/)).toBeVisible();
+  expect(screen.getByText(/Late · Not here yet/)).toBeVisible();
+  signed=true;
+  fireEvent.click(await screen.findByRole('button',{name:'Finish check-in'},{timeout:4000}));
+  await waitFor(()=>expect(screen.getByRole('checkbox',{name:/Here now · Jordan Fox/})).toBeChecked());
+  expect(screen.getByRole('checkbox',{name:/Here now · Morgan Park/})).not.toBeChecked();
+  expect(screen.getByRole('button',{name:'Check in 1 ready to Camo'})).toBeEnabled();
 });

@@ -6,7 +6,7 @@ import './GroupRentalPicker.css';
 const endpoint = '/api/rental-groups';
 const kindLabel = group => group.kind === 'party' ? 'Birthday / private event' : 'Check-in group';
 
-export default function GroupRentalPicker({ firebase, uid, initialGroupId, linkedGroupId, existingEntries = [], onAdd, onPrefill, disabled = false }) {
+export default function GroupRentalPicker({ firebase, uid, initialGroupId, linkedGroupId, existingEntries = [], onAdd, onPrefill, pickupOnly = false, disabled = false }) {
     const [query, setQuery] = useState('');
     const [date, setDate] = useState('');
     const [results, setResults] = useState(null);
@@ -31,7 +31,7 @@ export default function GroupRentalPicker({ firebase, uid, initialGroupId, linke
         setExcluded([]);
         if (!params.id) setResults(null);
         try {
-            const data = await requestStaffFieldTool(firebase, uid, endpoint + '?' + new URLSearchParams(params), {
+            const data = await requestStaffFieldTool(firebase, uid, endpoint + '?' + new URLSearchParams(pickupOnly && params.id ? { ...params, pickup: 'arrived' } : params), {
                 signal: operation.signal,
             });
             if (operation.signal.aborted) return;
@@ -51,7 +51,7 @@ export default function GroupRentalPicker({ firebase, uid, initialGroupId, linke
                 setLoading(false);
             }
         }
-    }, [firebase, uid, onPrefill]);
+    }, [firebase, uid, onPrefill, pickupOnly]);
 
     useEffect(() => {
         setResults(null);
@@ -140,7 +140,7 @@ export default function GroupRentalPicker({ firebase, uid, initialGroupId, linke
                             <input type="checkbox" disabled={present} checked={present || !excluded.includes(entry.id)}
                                 onChange={() => setExcluded(current => current.includes(entry.id)
                                     ? current.filter(id => id !== entry.id) : [...current, entry.id])} />
-                            <span>{entry.displayName}</span>
+                            <span>{entry.displayName}</span>{entry.requestedGear && <small>{entry.requestedGear}</small>}
                             {entry.rentalIntent && <small>{entry.rentalIntent === 'requested' ? 'Rental requested' : 'Bringing own gear'}</small>}
                             {present && <small> Already on form</small>}
                         </label>;
@@ -149,7 +149,7 @@ export default function GroupRentalPicker({ firebase, uid, initialGroupId, linke
                 {eligible.length > 0 ? <button type="button" className="btn btn-primary" disabled={locked || !selected.length} onClick={add}>
                     {adding ? 'Adding players…' : `Add selected players (${selected.length})`}
                 </button> : <p>All players are already on this form.</p>}
-            </> : <p>This group has no players yet.</p>}
+            </> : <p>{pickupOnly ? 'No checked-in guests are waiting for rental gear.' : 'This group has no players yet.'}</p>}
         </div>}
         {!group && error && targetId && <button type="button" className="btn btn-outline-secondary" disabled={locked}
             onClick={() => load({ id: targetId }, true)}>Retry linked roster</button>}

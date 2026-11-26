@@ -61,7 +61,7 @@ export function createReader(verifyLegacyCards = false, parseEquipmentTag) {
     });
 }
 
-export function StaffCardScanner({ disabled = false, onScan, verifyLegacyCards = false, manualFallback, parseEquipmentTag }) {
+export function StaffCardScanner({ disabled = false, onScan, verifyLegacyCards = false, manualFallback, parseEquipmentTag, continuous = false, paused = false }) {
     const video = useRef(null);
     const camera = useRef(null);
     const callback = useRef(onScan);
@@ -69,6 +69,8 @@ export function StaffCardScanner({ disabled = false, onScan, verifyLegacyCards =
     const [status, setStatus] = useState('');
     const subject = parseEquipmentTag ? 'an equipment tag' : 'a member card';
     callback.current = onScan;
+    const blocked = useRef(false);
+    blocked.current = disabled || paused;
 
     const release = useCallback(() => {
         const current = camera.current;
@@ -101,11 +103,11 @@ export function StaffCardScanner({ disabled = false, onScan, verifyLegacyCards =
         };
     }, [release, stop, subject]);
     useEffect(() => {
-        if (disabled && camera.current) {
+        if (disabled && !continuous && camera.current) {
             stop();
             setStatus('');
         }
-    }, [disabled, stop]);
+    }, [disabled, continuous, stop]);
 
     async function start() {
         if (disabled || camera.current) return;
@@ -140,9 +142,25 @@ export function StaffCardScanner({ disabled = false, onScan, verifyLegacyCards =
 
             async function scanFrame() {
                 if (camera.current !== current || !video.current) return;
+                if (continuous && blocked.current) {
+                    current.timer = setTimeout(scanFrame, 180);
+                    return;
+                }
                 let value;
                 try { value = await read(video.current); } catch { /* Read the next frame. */ }
                 if (camera.current !== current) return;
+                if (continuous) {
+                    if (!blocked.current && value) {
+                        const key = JSON.stringify(value);
+                        current.blank = 0;
+                        if (key !== current.last) {
+                            current.last = key;
+                            callback.current?.(value);
+                        }
+                    } else if (!blocked.current && (current.blank = (current.blank || 0) + 1) >= 3) current.last = null;
+                    current.timer = setTimeout(scanFrame, 180);
+                    return;
+                }
                 if (value) {
                     stop();
                     setStatus(parseEquipmentTag ? 'Equipment tag scanned.' : 'Card scanned.');
@@ -163,7 +181,7 @@ export function StaffCardScanner({ disabled = false, onScan, verifyLegacyCards =
 
     return (
         <div className="field-staff-scanner">
-            <button type="button" className="btn btn-outline-secondary" disabled={disabled} onClick={open ? () => {
+            <button type="button" className="btn btn-outline-secondary" disabled={disabled && !open} onClick={open ? () => {
                 stop();
                 setStatus('');
             } : start}>{open ? 'Close camera' : 'Scan with camera'}</button>

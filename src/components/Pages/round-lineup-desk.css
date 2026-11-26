@@ -1,0 +1,12 @@
+.round-lineup-desk fieldset { min-width: 0; padding: 0; margin: 0; border: 0; }
+.round-lineup-desk [data-panel] { margin-top: .75rem; }
+.round-lineup-desk label { display: grid; gap: .35rem; margin: .8rem 0 .45rem; }
+.round-lineup-desk select { width: 100%; min-height: 44px; }
+.round-lineup-desk button { min-height: 44px; }
+.round-lineup-desk .lineup-teams { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: .65rem; margin: 1rem 0 .45rem; }
+.round-lineup-desk details { margin: .7rem 0; }
+.round-lineup-desk .lineup-teams details { margin: 0; border-inline-start: .25rem solid #c69518; padding-inline-start: .65rem; }
+.round-lineup-desk .lineup-teams [data-team="solid"] { border-color: #3379c4; }
+.round-lineup-desk summary { cursor: pointer; padding: .6rem 0; font-weight: 650; }
+.round-lineup-desk li { margin: .3rem 0; overflow-wrap: anywhere; }
+.round-lineup-desk [data-status]:empty { display: none; }

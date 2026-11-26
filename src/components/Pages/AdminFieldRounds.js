@@ -7,8 +7,10 @@ import { FieldPinPicker, readMapPins, roundPinLocation } from './FieldRoundMap';
 import { RoundBriefingEditor } from './RoundBriefing';
 import { fieldStaffPaths } from '../constants/fieldStaffApi';
 import FieldSectionLinks from './FieldSectionLinks';
+import GameDayServiceTimes from './GameDayServiceTimes';
 import { mountRoundConsole, roundConsoleNotice } from './round-console';
 import './FieldRounds.css';
+import './round-lineup-desk.css';
 
 const roundSections = [
     ['field-break-title', 'TV countdown'],
@@ -35,7 +37,7 @@ const actions = {
     clearBarracksClock: 'TV countdown stopped.',
 };
 
-function RoundConsole({ board, now, disabled, save }) {
+function RoundConsole({ board, now, disabled, save, request, finishedRound }) {
     const root = useRef(null);
     const panel = useRef(null);
     const saver = useRef(save);
@@ -44,10 +46,13 @@ function RoundConsole({ board, now, disabled, save }) {
         panel.current = mountRoundConsole(root.current, {
             save: body => saver.current(body),
             timingUrl: 'https://app.usairsoftfield.com/#staff/tool/game-timing',
+            scoresUrl: '/admin/scores',
+            requestLineup: (body, signal) => request('/api/round-roster', {method:'POST',body,signal}),
         });
         return () => panel.current.destroy();
-    }, []);
+    }, [request]);
     useEffect(() => panel.current.update(board, now, disabled), [board, now, disabled]);
+    useEffect(() => { if (finishedRound) panel.current.reviewLineup(finishedRound); }, [finishedRound]);
     return <div ref={root} />;
 }
 
@@ -390,6 +395,7 @@ export default function AdminFieldRounds({ request }) {
     const [busy, setBusy] = useState(false);
     const [notice, setNotice] = useState(null);
     const mutation = useRef(null);
+    const [finishedRound, setFinishedRound] = useState(null);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -429,6 +435,7 @@ export default function AdminFieldRounds({ request }) {
             if (controller.signal.aborted) throw new Error('The update was not confirmed. Check the board before trying again.');
             if (result?.ok !== true || (body.action === 'runRoundConsole' && result.commandId !== body.commandId)) throw new Error('The field board did not confirm the action.');
             saved = true;
+            if (body.action === 'endRound' || (body.action === 'runRoundConsole' && body.phase === 'finish')) setFinishedRound(body.gameId);
             setNotice({ text: body.action === 'runRoundConsole' ? roundConsoleNotice(body) : actions[body.action] });
         } catch (failure) {
             if (mutation.current === controller) setNotice({
@@ -478,7 +485,7 @@ export default function AdminFieldRounds({ request }) {
             {error && <p className="field-rounds-error" role="alert">{error} {board && 'Round controls will resume when the board reconnects.'}</p>}
             {notice && <p role={notice.error ? 'alert' : 'status'} className={notice.error ? 'field-rounds-error' : 'field-rounds-success'}>{notice.text}</p>}
             {board && <>
-                <RoundConsole board={board} now={now} disabled={disabled} save={save} />
+                <RoundConsole board={board} now={now} disabled={disabled} save={save} request={request} finishedRound={finishedRound} />
                 <BarracksClockControls clock={board.barracksClock} now={now} disabled={disabled} onSave={save} />
                 <section className="field-rounds-panel" aria-labelledby="field-rounds-current">
                     <div className="field-rounds-card-header">
@@ -523,6 +530,7 @@ export default function AdminFieldRounds({ request }) {
                             !catalogError && <p role="status">Loading game modes…</p>)}
                     </section>
                 </div>
+                {board.isStaff && <GameDayServiceTimes request={request} />}
                 {showMvp && <RoundMvpControls
                     poll={board.mvpPoll} rounds={board.mvpRounds} pastResults={board.mvpPastResults} now={now} disabled={disabled} onSave={save} />}
             </>}

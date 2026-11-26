@@ -143,3 +143,15 @@ test('regular groups support scoped organizer and guest checklists without reser
   expect(screen.getByRole('button', { name: 'Save rental choice' })).toBeVisible();
   expect(screen.queryByRole('button', { name: 'Add guest' })).not.toBeInTheDocument();
 });
+
+test('organizer sees destination counts for checked-in guests separately from guests still due at the desk', async () => {
+  const entries = ['rentals','rentals','briefing','check-in'].map((nextStop, index) => ({
+    ...first, id:'entry-' + index, displayName:'Party guest ' + index, nextStop,
+  }));
+  fetch.mockResolvedValue(response(organizerView({entries})));
+  render(portal('organizer', organizer));
+  const stops = await screen.findByRole('region', {name:'Next stops'});
+  expect(stops).toHaveTextContent('2 guests to rental pickup');
+  expect(stops).toHaveTextContent('1 guest to the barracks for briefing');
+  expect(screen.getByText('Check in with staff when you arrive.')).toBeInTheDocument();
+});
