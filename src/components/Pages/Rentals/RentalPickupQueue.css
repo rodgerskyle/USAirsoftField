@@ -69,6 +69,6 @@
 .rental-pickup__result { padding: .8rem 0; border-top: 1px solid var(--usaw-line); }
 .rental-pickup__result p { color: var(--usaw-muted); margin: .25rem 0 .5rem; }
 @media (max-width: 520px) {
-  .rental-pickup__actions > .btn, .rental-pickup__search > .btn { flex: 1 1 100%; }
+  .rental-pickup__actions, .rental-pickup__search { display: grid; grid-template-columns: minmax(0, 1fr); }
   .rental-pickup__state { max-width: 100%; }
 }

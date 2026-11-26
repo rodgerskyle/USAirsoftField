@@ -56,7 +56,7 @@
 .party-checklist input:not([type=radio]) { width: 100%; min-width: 0; min-height: 46px; padding: .6rem .8rem; color: var(--usaw-text); background: var(--usaw-surface); border: 1px solid var(--usaw-muted); border-radius: .45rem; font-size: 1rem; }
 .party-checklist input[type=number] { max-width: 8rem; }
 .party-checklist fieldset > button { justify-self: start; }
-.party-checklist :is(.btn, .ph-button) { display: inline-flex; gap: .45rem; justify-content: center; align-items: center; max-width: 100%; min-height: 46px; padding: .55rem .9rem; line-height: 1.3; border-radius: .45rem; text-align: center; white-space: normal; }
+.party-checklist .btn, .party-checklist .ph-button { display: inline-flex; gap: .45rem; justify-content: center; align-items: center; max-width: 100%; min-height: 46px; padding: .55rem .9rem; line-height: 1.3; border-radius: .45rem; text-align: center; white-space: normal; }
 .party-checklist .party-copy-link .ph-button { background: var(--usaw-surface); color: var(--usaw-accent); border: 1px solid var(--usaw-accent); font-weight: 650; }
 .party-checklist .party-copy-link .ph-button:hover { background: var(--usaw-subtle); }
 .party-checklist :is(a, button, input):focus-visible { outline: 3px solid var(--usaw-focus); outline-offset: 3px; }
