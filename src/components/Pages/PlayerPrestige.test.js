@@ -28,6 +28,7 @@ function profileFetch(prestigeHandler) {
   return jest.fn((url, options) => {
     const path = new URL(url).pathname;
     if (path === '/api/player-team') return respond({ team: null });
+    if (path === '/api/knife-kills') return respond({ playerId, total: 0 });
     if (path === '/api/battle-badges') return respond({
       progress: { totalAwards: 0, colorBadgeCount: 0, towerOfPower: false, silverStars: 0, goldStars: 0 },
     });

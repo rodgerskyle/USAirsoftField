@@ -13,6 +13,7 @@ import rankIncrements from '../constants/rankincrements';
 import * as ROLES from '../constants/roles';
 import { badgeById, getFeaturedBadgeDetails, getMyBadges, setFeaturedBadge } from '../constants/playerBadges';
 import { getPlayerDisplayNames } from '../constants/playerDisplayNames';
+import { playerIdPattern, requestPlayerExperience } from '../constants/playerExperience';
 import { canEarnPrestige, profileRank, usePlayerPrestige } from '../constants/playerPrestige';
 import { teamPagePath, usePlayerTeam, useTeamLogo } from '../constants/teamDirectory';
 import SharePageLink from '../constants/SharePageLink';
@@ -196,6 +197,29 @@ export function ProfileState({ loading, missing }) {
       </div>
     </main>
   );
+}
+
+function KnifeKillStat({ playerId }) {
+  const [value, setValue] = useState('Loading…');
+  useEffect(() => {
+    if (!playerIdPattern.test(playerId)) {
+      setValue('Unavailable');
+      return;
+    }
+    const controller = new AbortController();
+    requestPlayerExperience('/api/knife-kills?' + new URLSearchParams({ playerId }), controller.signal)
+      .then(({ playerId: returnedId, total }) => {
+        if (!controller.signal.aborted) {
+          setValue(returnedId === playerId && Number.isSafeInteger(total) && total >= 0 ? total : 'Unavailable');
+        }
+      })
+      .catch(() => { if (!controller.signal.aborted) setValue('Unavailable'); });
+    return () => controller.abort();
+  }, [playerId]);
+  return <div>
+    <dt>Knife kills</dt>
+    <dd aria-live="polite">{typeof value === 'number' ? numberFormat.format(value) : <span className="player-profile__muted">{value}</span>}</dd>
+  </div>;
 }
 
 function RankProgress({ points, rank, completedPrestiges, unavailable }) {
@@ -472,6 +496,7 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
                     <dd>{typeof value === 'number' ? numberFormat.format(value) : value}</dd>
                   </div>
                 ))}
+                {badgeEligible && <KnifeKillStat key={playerId} playerId={playerId} />}
               </dl>
             </section>
             <RankProgress points={points} rank={rank} completedPrestiges={completedPrestiges} unavailable={rankProgressUnavailable} />
