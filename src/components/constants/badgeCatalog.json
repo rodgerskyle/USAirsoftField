@@ -7,42 +7,42 @@
   {
     "id": "countdown",
     "name": "Countdown",
-    "description": "Recognized by staff for an achievement in Countdown."
+    "description": "Recognized by staff for taking control of the clock or holding it while the opposing timer runs down."
   },
   {
     "id": "three-flag",
     "name": "3 Flag",
-    "description": "Recognized by staff for an achievement in 3 Flag."
+    "description": "Recognized by staff for securing a station with your team’s flag or keeping it under your team’s control."
   },
   {
     "id": "downed-pilot",
     "name": "Downed Pilot",
-    "description": "Recognized by staff for an achievement in Save the Downed Pilot."
+    "description": "Recognized by staff for locating the pilot and vehicle, escorting the pilot to extraction, or holding the extraction point."
   },
   {
     "id": "ring-the-bell",
     "name": "Ring the Bell",
-    "description": "Recognized by staff for an achievement in Ring the Bell."
+    "description": "Recognized by staff for ringing the church bell, helping a teammate reach it, or preventing the attackers from ringing it."
   },
   {
     "id": "power-struggle",
     "name": "Power Struggle",
-    "description": "Recognized by staff for an achievement in Power Struggle."
+    "description": "Recognized by staff for taking an active objective for your team or keeping control of it during a scoring push."
   },
   {
     "id": "sticky-bomb",
     "name": "Sticky Bomb",
-    "description": "Recognized by staff for an achievement in Sticky Bomb."
+    "description": "Recognized by staff for placing your team’s game prop on the opposing cannon or helping hold it there for the three-minute count."
   },
   {
     "id": "three-bomb",
     "name": "3 Bomb",
-    "description": "Recognized by staff for an achievement in 3 Bomb."
+    "description": "Recognized by staff for securing an assigned prop objective or coordinating teammates to cover several objectives at once."
   },
   {
     "id": "community-builder",
     "name": "Community Builder",
-    "description": "Recognized for helping the USAW community grow."
+    "description": "Recognized for helping the USAW community grow, such as welcoming new players or bringing players together for a field event."
   },
   {
     "id": "objective-mvp",
@@ -207,12 +207,12 @@
   {
     "id": "battle-flag",
     "name": "Battle Flag",
-    "description": "Recognized by staff for a decisive flag play or coordinated support in Battle Flag."
+    "description": "Recognized by staff for delivering a flag to your team’s scoring square or helping a teammate complete the return."
   },
   {
     "id": "scrambled-eggs",
     "name": "Scrambled Eggs",
-    "description": "Recognized by staff for a standout objective play or coordinated team effort in Scrambled Eggs."
+    "description": "Recognized by staff for capturing a contested flag station or helping your team hold a majority of the three stations when the round ends."
   },
   {
     "id": "progressive-countdown",
@@ -247,7 +247,7 @@
   {
     "id": "horseshoes-and-hand-grenades",
     "name": "Horseshoes and Hand Grenades",
-    "description": "Staff draft game mode. Recognized by staff for a standout contribution in Horseshoes and Hand Grenades."
+    "description": "Staff draft game mode. Recognized by staff for landing a scoring ring on the pole or in the marked circle, or helping a ring carrier score."
   },
   {
     "id": "flag-procurement",

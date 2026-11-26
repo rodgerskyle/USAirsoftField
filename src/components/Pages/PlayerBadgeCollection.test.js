@@ -17,7 +17,8 @@ test('retains earlier awards on the player record and allows only current earned
   expect(chooser).toHaveValue('');
   expect(within(chooser).getAllByRole('option').map(option => option.value)).toEqual(['', 'wrong-pocket']);
   expect(screen.getAllByText('Retired patch')).toHaveLength(4);
-  expect(screen.getAllByText('An earlier award.')).toHaveLength(4);
+  for (const badge of RETIRED_BADGES) expect(screen.getByText(badge.description)).toBeInTheDocument();
+  expect(screen.queryByText('An earlier award.')).not.toBeInTheDocument();
   expect(screen.getAllByText('×3')).toHaveLength(4);
   expect(screen.getAllByRole('listitem')).toHaveLength(5);
   expect(screen.queryByText('Featured', { exact: true })).toBeNull();

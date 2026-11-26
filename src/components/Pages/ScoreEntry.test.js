@@ -638,7 +638,8 @@ test('patches follow the selected player, survive a pending loss, and are awarde
     await scan(firstId);
     expect(patch).toHaveAttribute('aria-pressed', 'false');
     fireEvent.click(screen.getByRole('button', { name: 'Objective MVP' }));
-    fireEvent.change(screen.getByLabelText(/award reason/i), { target: { value: 'Held the objective.' } });
+    expect(screen.queryByLabelText(/award reason/i)).toBeNull();
+    expect(screen.getByText(badgeById['objective-mvp'].description)).toBeVisible();
     await unlockRoundPatches();
     recordPlayerResult.mockRejectedValueOnce(new Error('Waiting for a confirmed score'));
     checkScoreOperation.mockResolvedValueOnce({ confirmed: false }).mockResolvedValueOnce({ confirmed: true, eventId, day });
@@ -647,16 +648,16 @@ test('patches follow the selected player, survive a pending loss, and are awarde
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Check saved status' })));
     expect(awardRoundPatch).toHaveBeenCalledTimes(1);
     expect(awardRoundPatch).toHaveBeenCalledWith(page.firebase, {
-        playerId: firstId, eventId, day, badgeId: 'objective-mvp', reason: 'Held the objective.',
+        playerId: firstId, eventId, day, badgeId: 'objective-mvp',
     }, 'staff-test-token', expect.any(AbortSignal));
     expect(screen.getByText('Objective MVP awarded to River Lane.')).toBeInTheDocument();
     expect(recordPlayerResult).toHaveBeenCalledTimes(1);
 });
 
-test('a first-award reason can be supplied after reload without awarding successful patches or writing the win again', async () => {
+test('a pending patch from an older score desk retries after reload without replaying successful awards or the score', async () => {
     const eventId = '1f0424db-e3d6-4982-95c7-3843a46243fd';
     recordPlayerResult.mockResolvedValue({ eventId, day: '2026-10-19' });
-    awardRoundPatch.mockResolvedValueOnce({ earnedCount: 2 }).mockRejectedValueOnce(new Error('Add a reason for this first award.'));
+    awardRoundPatch.mockResolvedValueOnce({ earnedCount: 2 }).mockRejectedValueOnce(new Error('Badge service temporarily unavailable.'));
     let page = renderScore();
     await page.verify(admin);
     selectRound();
@@ -665,15 +666,21 @@ test('a first-award reason can be supplied after reload without awarding success
     fireEvent.click(screen.getByRole('button', { name: 'Objective MVP', pressed: false }));
     await unlockRoundPatches();
     await record('win');
-    expect(screen.getByText('Add a reason for this first award.')).toBeInTheDocument();
+    expect(screen.getByText('Badge service temporarily unavailable.')).toBeInTheDocument();
     expect(awardRoundPatch.mock.calls.map(([, body]) => body.badgeId)).toEqual(['countdown', 'objective-mvp']);
     page.unmount();
+    const key = 'usaw-score-desk-v2:' + admin.uid;
+    const savedDesk = JSON.parse(sessionStorage.getItem(key));
+    savedDesk.patchJobs[0].reason = 'A previous staff note';
+    savedDesk.patchJobs[0].error = 'Enter a reason of 3–160 characters for the first award.';
+    sessionStorage.setItem(key, JSON.stringify(savedDesk));
     page = renderScore();
     await page.verify(admin);
     await unlockRoundPatches();
-    fireEvent.change(screen.getByLabelText('First-award reason for Objective MVP'), { target: { value: 'Captured the timer.' } });
+    expect(screen.queryByText(/reason.*first award/i)).toBeNull();
+    expect(screen.getByText('Retry to finish this patch award.')).toBeVisible();
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Retry patch' })));
-    expect(awardRoundPatch.mock.calls[2][1]).toEqual({ ...awardRoundPatch.mock.calls[1][1], reason: 'Captured the timer.' });
+    expect(awardRoundPatch.mock.calls[2][1]).toEqual(awardRoundPatch.mock.calls[1][1]);
     expect(recordPlayerResult).toHaveBeenCalledTimes(1);
     expect(screen.getByText('Objective MVP awarded to River Lane.')).toBeInTheDocument();
 });

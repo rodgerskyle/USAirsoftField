@@ -261,7 +261,7 @@ function ScoreEntry({ firebase, actor }) {
             const next = { ...old, round: { ...old.round, scored }, pending: old.pending.filter(item => item.id !== op.id) };
             if (!removing && !op.sourceEventId && op.patches?.badgeIds.length) {
                 const job = { id: op.id, playerId: op.uid, playerName: op.registeredName, mode: op.mode,
-                    day: saved.day, eventId: saved.eventId, ...op.patches };
+                    day: saved.day, eventId: saved.eventId, badgeIds: op.patches.badgeIds };
                 next.patchJobs = [...(old.patchJobs || []).filter(item => item.id !== op.id), job];
             }
             return next;
@@ -391,7 +391,7 @@ function ScoreEntry({ firebase, actor }) {
         if (!canRecord || active.current) return;
         saveScore({ uid: selected.uid, registeredName: registeredName(selected.name, selected.uid),
             outcome, mode: round.mode, side: round.side, roundId: round.id, id: newScoreId(), at: Date.now(),
-            ...(patchSelection.badgeIds.length > 0 && { patches: { ...patchSelection, reason: patchSelection.reason.trim() } }) });
+            ...(patchSelection.badgeIds.length > 0 && { patches: patchSelection }) });
     }
 
     function startRound() {
