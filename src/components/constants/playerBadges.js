@@ -87,6 +87,11 @@ const publicKnifeUrl = 'https://app.usairsoftfield.com/api/knife-kills';
 const staffKnifeUrl = 'https://app.usairsoftfield.com/api/staff-knife-kills';
 const countIsValid = count => Number.isSafeInteger(count) && count >= 0;
 
+function validOptionalPatchCounts(counts) {
+    return counts === undefined || (counts !== null && typeof counts === 'object' && !Array.isArray(counts)
+        && Object.values(counts).every(countIsValid));
+}
+
 export async function getKnifeStandings(page, signal) {
     const data = await callBadgeApi({ endpoint: publicKnifeUrl, query: { page }, signal });
     if (data.page !== page || typeof data.hasMore !== 'boolean' || !Array.isArray(data.standings)
@@ -107,7 +112,8 @@ export async function staffKnifeKills(firebase, staffToken, playerId, { body, si
         || typeof data.eligibleForPatches !== 'boolean' || !Array.isArray(data.pendingPatches)
         || !Array.isArray(data.history) || !data.history.every(entry => entry && (entry.type === 'reconcile'
             || (['record', 'opening'].includes(entry.type) && countIsValid(entry.count))))
-        || (body && !Array.isArray(data.newlyEarned))) {
+        || !validOptionalPatchCounts(data.earnedPatchCounts)
+        || (body && (!Array.isArray(data.newlyEarned) || !validOptionalPatchCounts(data.newlyEarnedCounts)))) {
         throw new Error('The player record could not be verified. Try again.');
     }
     return data;

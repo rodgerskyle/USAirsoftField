@@ -372,7 +372,8 @@
     "id": "bayonet-100",
     "name": "Bayonet 100",
     "label": "KNIFE KILL MILESTONE",
-    "description": "Earned by USAW members who reach 100 referee-recorded knife kills in airsoft games.",
-    "knifeKills": 100
+    "description": "Earned by USAW members for every 100 referee-recorded knife kills in airsoft games.",
+    "knifeKills": 100,
+    "repeatEvery": 100
   }
 ]
