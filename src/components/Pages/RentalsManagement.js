@@ -5,6 +5,7 @@ import { withAuthorization } from '../session';
 import * as ROLES from '../constants/roles';
 import ReturnForm from './Rentals/ReturnForm';
 import RentalPickupQueue from './Rentals/RentalPickupQueue';
+import RentalActivationMonitor from './Rentals/RentalActivationMonitor';
 import RentalOptions from './Rentals/RentalOptions';
 import { Helmet } from 'react-helmet-async';
 import { Breadcrumb } from 'react-bootstrap';
@@ -35,7 +36,7 @@ const GROUP_ID = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
 const VIEW_KEYS = ['pickup', 'new', 'edit', 'return', 'inventory'];
 
 const VIEW_CONFIG = {
-    pickup: { label: 'Rental pickup', icon: <Inventory2 fontSize="small" /> },
+    pickup: { label: 'Armory pickup', icon: <Inventory2 fontSize="small" /> },
     new: { label: 'New Form', icon: <AddBox fontSize="small" /> },
     edit: { label: 'Edit Form', icon: <EditNote fontSize="small" /> },
     return: { label: 'Swaps & returns', icon: <AssignmentReturn fontSize="small" /> },
@@ -46,7 +47,7 @@ function RentalsManagement(props) {
     const [searchParams, setSearchParams] = useSearchParams();
     const location = useLocation();
     const handledLocation = useRef(null);
-    const [loading, setLoading] = useState(true);
+    const [formsLoadedFor, setFormsLoadedFor] = useState(null);
     const [rentalForms, setRentalForms] = useState([]);
     const [rentalOptions, setRentalOptions] = useState([]);
     const [isNavHidden, setIsNavHidden] = useState(false);
@@ -62,14 +63,20 @@ function RentalsManagement(props) {
     const roles = ROLES.officialAccountRoles(authUser?.roles);
     const rentalDesk = Boolean(authUser?.uid && ROLES.canUseRentalDesk(roles));
     const canImportGroup = rentalDesk && !isNavHidden;
+    const loading = !authUser || (canImportGroup && formsLoadedFor !== authUser.uid);
     const requestedGroup = searchParams.get('group');
     const requestedPlayer = searchParams.has('walkOn') || searchParams.has('member');
     const handoff = rentalDesk && requestedPlayer ? rentalCheckInParams(searchParams) : null;
-    const renter = useCheckedInRenter(props.firebase, authUser?.uid, handoff);
+    const renter = useCheckedInRenter(props.firebase, authUser?.uid, handoff, canImportGroup);
     const groupId = canImportGroup && !requestedPlayer && GROUP_ID.test(requestedGroup) ? requestedGroup : null;
     const returnPath = handoff && returnToPlayerCheckIn(handoff, searchParams.get('from') === 'companion' || !roles.ADMIN);
     const linkedForm = handoff ? linkedPlayerRental(rentalForms, renter.player) :
         rentalForms.find(form => !form.returned && groupId && form.checkInGroup?.id === groupId);
+    const requestedFormKey = searchParams.get('form');
+    const requestedInstance = searchParams.get('instance');
+    const standaloneEdit = canImportGroup && activeView === 'edit' && !requestedPlayer && !searchParams.has('group') && requestedFormKey !== null;
+    const selectedForEdit = standaloneEdit ? rentalForms.find(form => !form.returned && String(form.key) === requestedFormKey &&
+        (!requestedInstance || form.createRequestId === requestedInstance)) : linkedForm;
     const draftKey = [authUser?.uid, handoff ? handoff.playerId + handoff.date : groupId || 'manual'].join('/');
     const waitingForPlayer = requestedPlayer && (!handoff || !renter.player);
 
@@ -88,7 +95,7 @@ function RentalsManagement(props) {
         }
     }, [loading, waitingForPlayer, authUser?.uid, location.key, activeView, linkedForm, searchParams, setSearchParams]);
 
-    const openExisting = (key, id) => {
+    const openExisting = (key, id, instance) => {
         if (key != null && handoff && (id === handoff.playerId || id === renter.player?.groupId)) {
             const next = new URLSearchParams(searchParams);
             next.set('view', 'edit');
@@ -96,6 +103,9 @@ function RentalsManagement(props) {
             setSearchParams(next);
         } else if (canImportGroup && key != null && GROUP_ID.test(id)) {
             setSearchParams({ view: 'edit', group: id, form: String(key), ...(searchParams.get('pickup') === 'arrived' && { pickup: 'arrived' }) });
+        } else if (canImportGroup && key != null && !id && !handoff) {
+            const requestId = instance || rentalForms.find(form => String(form.key) === String(key))?.createRequestId;
+            setSearchParams({ view: 'edit', form: String(key), ...(requestId && { instance: requestId }) });
         }
     };
 
@@ -115,38 +125,27 @@ function RentalsManagement(props) {
     }, [props.firebase]);
 
     useEffect(() => {
-        const formsRef = props.firebase.rentalGroups();
-        const optionsRef = props.firebase.rentalOptions();
-
-        const unsubscribeForms = onValue(formsRef, snapshot => {
-            if (snapshot.exists()) {
-                const forms = [];
-                snapshot.forEach(child => {
-                    forms.push({
-                        ...child.val(),
-                        key: child.key
-                    });
-                });
-                setRentalForms(forms);
-            } else {
-                setRentalForms([]);
-            }
-            setLoading(false);
+        if (!canImportGroup) {
+            setRentalForms([]); setFormsLoadedFor(null);
+            return;
+        }
+        let active = true;
+        const stop = onValue(props.firebase.rentalGroups(), snapshot => {
+            if (!active) return;
+            const forms = [];
+            if (snapshot.exists()) snapshot.forEach(child => { forms.push({ ...child.val(), key: child.key }); });
+            setRentalForms(forms);
+            setFormsLoadedFor(authUser.uid);
         });
+        return () => {active=false; stop();};
+    }, [props.firebase,canImportGroup,authUser?.uid]);
 
-        const unsubscribeOptions = onValue(optionsRef, snapshot => {
-            if (snapshot.exists()) {
-                setRentalOptions(snapshot.val());
-            } else {
-                setRentalOptions([]);
-            }
+    useEffect(() => {
+        if (!authUser?.uid) return;
+        return onValue(props.firebase.rentalOptions(), snapshot => {
+            setRentalOptions(snapshot.exists() ? snapshot.val() : []);
         });
-
-        return () => {
-            unsubscribeForms();
-            unsubscribeOptions();
-        };
-    }, [props.firebase]);
+    }, [props.firebase,authUser?.uid]);
 
     const verifyPin = (val) => {
         if (authUser?.pin === parseInt(val, 10)) {
@@ -189,6 +188,7 @@ function RentalsManagement(props) {
                     <Helmet>
                         <title>US Airsoft Field: Rental Forms</title>
                     </Helmet>
+                    {canImportGroup && <RentalActivationMonitor key={authUser.uid} firebase={props.firebase} uid={authUser.uid} forms={rentalForms} />}
                     <div className="admin-content">
                     <Container fluid className="p-0">
                         <div className="admin-page-header">
@@ -250,7 +250,7 @@ function RentalsManagement(props) {
                                             <Chip label={`${pendingFormsCount} pending`} size="small" sx={{ backgroundColor: 'var(--admin-warning-bg)', color: 'var(--admin-warning)' }} />
                                         </Box>
 
-                                        <Button
+                                        {rentalDesk && <Button
                                             aria-expanded={!isNavHidden}
                                             startIcon={isNavHidden ? <LockOpen /> : <Lock />}
                                             onClick={toggleNavVisibility}
@@ -258,10 +258,10 @@ function RentalsManagement(props) {
                                             sx={{ border: '1px solid var(--admin-border)', color: 'var(--admin-subtext)', backgroundColor: 'var(--admin-surface-muted)' }}
                                         >
                                             {isNavHidden ? 'Show navigation' : 'Hide navigation'}
-                                        </Button>
+                                        </Button>}
                                     </Box>
 
-                                    {!isNavHidden && (
+                                    {canImportGroup && (
                                         <Tabs
                                             value={activeView}
                                             onChange={(event, newValue) => setView(newValue)}
@@ -317,9 +317,9 @@ function RentalsManagement(props) {
                                         <p role="alert">{renter.error}</p>
                                         <button className="btn btn-outline-primary" onClick={renter.retry}>Retry {handoff.key === 'walkOn' ? 'walk-on' : 'member'} lookup</button>
                                     </section> : <p role="status">Loading the checked-in player…</p>)}
-                                    {!loading && activeView === 'pickup' && canImportGroup && <RentalPickupQueue firebase={props.firebase} uid={authUser.uid}
+                                    {!loading && activeView === 'pickup' && canImportGroup && <RentalPickupQueue key={authUser.uid} firebase={props.firebase} uid={authUser.uid}
                                         isAdmin={!!roles.ADMIN} rentalForms={rentalForms} />}
-                                    {!loading && !waitingForPlayer && activeView === 'new' ? (
+                                    {(!loading || (handoff && renter.player)) && !waitingForPlayer && activeView === 'new' ? (
                                         <CreateRentalForm
                                             key={draftKey}
                                             pickupOnly={searchParams.get('pickup') === 'arrived'}
@@ -335,7 +335,7 @@ function RentalsManagement(props) {
                                         />
                                     ) : null}
 
-                                    {!loading && !waitingForPlayer && activeView === 'edit' && (!handoff || (linkedForm && String(linkedForm.key) === searchParams.get('form'))) ? (
+                                    {!loading && canImportGroup && !waitingForPlayer && activeView === 'edit' && (!standaloneEdit || selectedForEdit) && (!handoff || (linkedForm && String(linkedForm.key) === searchParams.get('form'))) ? (
                                         <EditForm
                                             key={draftKey}
                                             pickupOnly={searchParams.get('pickup') === 'arrived'}
@@ -347,13 +347,18 @@ function RentalsManagement(props) {
                                             verifyCheckedInPlayer={renter.verify}
                                             returnToCheckIn={!isNavHidden && returnPath}
                                             initialLinkedGroupId={groupId}
-                                            initialFormKey={linkedForm && String(linkedForm.key) === searchParams.get('form') ? linkedForm.key : null}
+                                            initialFormKey={selectedForEdit && String(selectedForEdit.key) === requestedFormKey ? selectedForEdit.key : null}
                                             rentalForms={rentalForms}
                                             rentalOptions={rentalOptions}
                                         />
                                     ) : null}
 
-                                    {!loading && handoff && renter.player && activeView === 'edit' && (!linkedForm || String(linkedForm.key) !== searchParams.get('form')) && <section role="status">
+                                    {!loading && standaloneEdit && !selectedForEdit && <section role="status">
+                                        <p>This rental form has closed or changed.</p>
+                                        <button className="btn btn-outline-primary" onClick={() => setView('edit')}>Find an open rental</button>
+                                    </section>}
+
+                                    {!loading && canImportGroup && handoff && renter.player && activeView === 'edit' && (!linkedForm || String(linkedForm.key) !== searchParams.get('form')) && <section role="status">
                                         <p>This player’s selected rental is no longer open.</p>
                                         <button className="btn btn-outline-primary" onClick={() => {
                                             if (linkedForm) openExisting(linkedForm.key, handoff.playerId);
@@ -361,12 +366,12 @@ function RentalsManagement(props) {
                                         }}>{linkedForm ? 'Open current rental' : 'Start a rental for this player'}</button>
                                     </section>}
 
-                                    {!loading && activeView === 'return' && !canImportGroup && <p role="status">
-                                        Open the staff rental desk to manage swaps and returns.
+                                    {!loading && activeView !== 'new' && !canImportGroup && <p role="status">
+                                        Open this tool from the unlocked staff rental desk.
                                     </p>}
                                     {!loading && !waitingForPlayer && canImportGroup && activeView === 'return' ? (
                                         <ReturnForm
-                                            key={JSON.stringify([location.key, linkedForm?.key])}
+                                            key={location.key}
                                             {...props}
                                             initialFormKey={linkedForm?.key ?? searchParams.get('form')}
                                             rentalForms={handoff || groupId ? (linkedForm ? [linkedForm] : []) : rentalForms}
@@ -374,7 +379,7 @@ function RentalsManagement(props) {
                                         />
                                     ) : null}
 
-                                    {!loading && !waitingForPlayer && activeView === 'inventory' ? (
+                                    {!loading && canImportGroup && !waitingForPlayer && activeView === 'inventory' ? (
                                         <RentalOptions
                                             {...props}
                                             rentalOptions={rentalOptions}

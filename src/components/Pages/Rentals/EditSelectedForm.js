@@ -7,6 +7,8 @@ import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import { Add, CheckCircle, Delete, Edit, Close, AutoAwesome } from '@mui/icons-material';
 import React, { Component, useState, useEffect } from 'react';
+import RentalIntakeEditor from './RentalIntakeEditor';
+import { activateReadyRental, needsRentalIntake, canUpgradeRental } from './utils/rentalActivation';
 import { Button, Spinner } from 'react-bootstrap/';
 import * as ROLES from '../../constants/roles';
 import { withAuthorization } from '../../session';
@@ -20,7 +22,7 @@ import { withFirebase } from '../../Firebase';
 import GroupRentalPicker from './GroupRentalPicker';
 import { isCheckInRenter } from './utils/checkInRenter';
 import { editRentalInventory } from './utils/editRentalInventory';
-import { changeEquipment, gearRows } from './utils/rentalGear';
+import { changeEquipment, gearRows, reservationQuantity } from './utils/rentalGear';
 import { importRentalParticipants, changeOpenRental, renameRentalParticipant, rentalIdentity, rentalParticipants, rentalRows } from './utils/openRental';
 
 import '../../../App.css';
@@ -575,7 +577,7 @@ const SizeEditModal = ({ open, onClose, currentSize, onSave }) => {
     );
 };
 
-const InventoryEditModal = ({ open, onClose, available, onSave, currentOptions, saving }) => {
+const InventoryEditModal = ({ open, onClose, available, onSave, currentOptions, createRequestId, saving }) => {
     const [inventory, setInventory] = useState({});
     const [selectedRental, setSelectedRental] = useState('');
 
@@ -587,11 +589,11 @@ const InventoryEditModal = ({ open, onClose, available, onSave, currentOptions, 
         }
 
         const grouped = available.reduce((acc, item) => {
-            acc[item.value] = (acc[item.value] || 0) + 1;
+            acc[item.value] = (acc[item.value] || 0) + reservationQuantity({createRequestId},item,rentalRows(currentOptions).find(option=>option.value===item.value));
             return acc;
         }, Object.create(null));
         setInventory(grouped);
-    }, [available]);
+    }, [available,createRequestId,currentOptions]);
 
     // Get rental options that aren't in inventory
     const getAvailableOptions = () => {
@@ -1214,15 +1216,17 @@ class EditSelectedForm extends Component {
             return;
         }
 
-        this.saveForm({
-            complete: true,
-            transaction: transaction.trim()
-        }).then(() => {
-            this.setState({
-                showTransactionDialog: false,
-            });
-        }).catch(() => {
-            this.setState({ transactionError: 'Failed to update transaction' });
+        const {form,firebase,uid}=this.props;
+        const receipt=transaction.trim();
+        changeOpenRental(firebase.rentalGroup(form.key), current=>{
+            if (current.complete) return current;
+            if (current.transaction && current.transaction!==receipt) return undefined;
+            return {...current,armoryVersion:1,transaction:receipt};
+        },rentalIdentity(form)).then(async current=>{
+            const message=await activateReadyRental(firebase,uid,{...current,key:form.key});
+            this.setState({showTransactionDialog:false,transactionError:null,error:message || null});
+        }).catch(error=>{
+            this.setState({transactionError:error.message || 'Failed to save the transaction.'});
         });
     }
 
@@ -1340,7 +1344,7 @@ class EditSelectedForm extends Component {
         const { participants, available } = this.props.form;
         const updatedParticipants = copyParticipants(participants);
         const removedParticipant = updatedParticipants[index];
-        if (participants[index]?.rentals?.some(item => item.number)) {
+        if (participants[index]?.armoryIssuedAt || participants[index]?.rentals?.some(item => item.number || item.issuedAt || item.checked)) {
             this.setState({ error: 'Keep this participant on the form to preserve their issued equipment history.' });
             return;
         }
@@ -1353,7 +1357,7 @@ class EditSelectedForm extends Component {
             removedParticipant.rentals.forEach(rental => {
                 updatedAvailableList.push({
                     ...rental,
-                    id: uuid(), // Generate new ID to avoid conflicts
+                    id: rental.id || uuid(),
                     number: '', // Reset number
                     checked: false // Reset checked status
                 });
@@ -1381,7 +1385,7 @@ class EditSelectedForm extends Component {
             return;
         }
 
-        if (participants[participantIndex].rentals[rentalIndex].number) {
+        if (participants[participantIndex].armoryIssuedAt || participants[participantIndex].rentals[rentalIndex].number || participants[participantIndex].rentals[rentalIndex].checked) {
             this.setState({ error: 'Use Swaps & returns for issued equipment.' });
             return;
         }
@@ -1398,7 +1402,7 @@ class EditSelectedForm extends Component {
             // Reset rental properties and add back to available list
             const returnedRental = {
                 ...removedRental,
-                id: uuid(), // Generate new ID
+                id: removedRental.id || uuid(),
                 number: '', // Reset number
                 checked: false // Reset checked status
             };
@@ -1452,6 +1456,10 @@ class EditSelectedForm extends Component {
 
     handleAddRental = async (participantIndex, rental) => {
         const { participants, available } = this.props.form;
+        if (participants?.[participantIndex]?.armoryIssuedAt) {
+            this.setState({error:'Use Swaps & returns for a renter whose equipment has been handed out.'});
+            return;
+        }
 
         // Create updated participants array
         const updatedParticipants = copyParticipants(participants);
@@ -1472,7 +1480,7 @@ class EditSelectedForm extends Component {
             // Add to participant's rentals
             participant.rentals.push({
                 ...removedRental,
-                id: uuid(),
+                id: removedRental.id || uuid(),
                 number: '',
                 checked: false
             });
@@ -1492,6 +1500,10 @@ class EditSelectedForm extends Component {
     };
 
     handleApplyToAll = async () => {
+        if (this.props.form.participants?.some(person=>person.armoryIssuedAt)) {
+            this.setState({error:'Assign new requests individually. Issued equipment can be changed through Swaps & returns.'});
+            return;
+        }
         const { participants, available } = this.props.form;
         const { rentalOptions } = this.state;
 
@@ -1541,7 +1553,7 @@ class EditSelectedForm extends Component {
                         // Add to participant's rentals
                         updatedParticipants[participantIndex].rentals.push({
                             ...removedRental,
-                            id: uuid(),
+                            id: removedRental.id || uuid(),
                             number: '',
                             checked: false
                         });
@@ -1784,39 +1796,17 @@ class EditSelectedForm extends Component {
                     </div>
                 </Paper>
 
-                {/* Action Buttons */}
+                {this.props.canImportGroup && (needsRentalIntake(this.props.form) || canUpgradeRental(this.props.form)) &&
+                    <RentalIntakeEditor form={this.props.form} firebase={this.props.firebase} uid={this.props.uid}/>}
                 <div className="edit-form-actions">
-                    {!this.props.form.complete ? (
-                        <MUIButton
-                            variant="contained"
-                            color="success"
-                            onClick={() => this.setState({ showTransactionDialog: true })}
-                        >
-                            Activate Form
-                        </MUIButton>
-                    ) : (
-                        <>
-                            <MUIButton
-                                variant="contained"
-                                color="primary"
-                                startIcon={<Add />}
-                                onClick={() => this.setState({ showAddParticipant: true })}
-                            >
-                                Add Participant
-                            </MUIButton>
-                            <MUIButton
-                                variant="contained"
-                                color="secondary"
-                                startIcon={<AutoAwesome />}
-                                onClick={this.handleApplyToAll}
-                                disabled={!this.props.form?.available?.length || !this.props.form?.participants?.length}
-                            >
-                                Apply to All
-                            </MUIButton>
-                        </>
-                    )}
+                    {!this.props.form.complete && this.props.form.armoryVersion!==1 && <MUIButton variant="outlined"
+                        onClick={() => this.setState({showTransactionDialog:true})}>Activate Form</MUIButton>}
+                    <MUIButton variant="contained" color="primary" startIcon={<Add />} disabled={!this.props.canImportGroup}
+                        onClick={() => this.setState({showAddParticipant:true})}>Add Participant</MUIButton>
+                    {this.props.form.complete && <MUIButton variant="contained" color="secondary" startIcon={<AutoAwesome />}
+                        onClick={this.handleApplyToAll} disabled={!this.props.form?.available?.length || !this.props.form?.participants?.length}>
+                        Apply to All</MUIButton>}
                 </div>
-
                 {this.state.error && <p role="alert">{this.state.error}</p>}
                 {this.props.canImportGroup && <GroupRentalPicker pickupOnly={this.props.pickupOnly} firebase={this.props.firebase} uid={this.props.uid}
                     linkedGroupId={this.props.form.checkInGroup?.id} initialGroupId={this.props.form.checkInGroup?.id || this.props.initialGroupId}
@@ -1837,7 +1827,7 @@ class EditSelectedForm extends Component {
                             participant={participant}
                             fromCheckIn={selected}
                             returnToCheckIn={this.props.returnToCheckIn}
-                            canIssue={Boolean(this.props.form.complete)}
+                            canIssue={Boolean(this.props.form.complete && !participant.armoryIssuedAt && (this.props.form.armoryVersion!==1 || participant.waiverProof))}
                             index={index}
                             onDelete={this.handleDeleteParticipant}
                             onRename={this.props.canImportGroup ? this.handleRenameParticipant : null}
@@ -1904,6 +1894,7 @@ class EditSelectedForm extends Component {
                     saving={this.state.savingInventory}
                     available={this.state.inventoryReview?.available}
                     onSave={this.handleInventoryUpdate}
+                    createRequestId={this.props.form.createRequestId}
                     currentOptions={this.state.rentalOptions}
                 />
             </div>

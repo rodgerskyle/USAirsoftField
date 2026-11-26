@@ -181,3 +181,13 @@ test('verified member starts the party rental once; a second desk reuses its gea
     expect(open).toHaveBeenCalledWith('0', member.playerId);
     expect(data().options[0].stock).toBe(1);
 });
+
+test('customer kiosk can enter their own renter names without looking up other signed waivers',()=>{
+    fixture({canImportGroup:false});
+    expect(screen.queryByText('Add a renter from a signed waiver')).toBeNull();
+    fireEvent.change(screen.getByLabelText('Renter name',{exact:true}),{target:{value:'Jordan Fox'}});
+    fireEvent.click(screen.getByRole('button',{name:'Add renter'}));
+    expect(screen.getByText('Jordan Fox')).toBeVisible();
+    expect(screen.getByRole('link',{name:'Open the field waiver'})).toHaveAttribute('href','/waiver');
+    expect(runTransaction).not.toHaveBeenCalled();
+});

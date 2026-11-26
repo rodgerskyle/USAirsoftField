@@ -91,3 +91,15 @@
   .rental-pickup__actions, .rental-pickup__search { display: grid; grid-template-columns: minmax(0, 1fr); }
   .rental-pickup__state { max-width: 100%; }
 }
+.armory-stages { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%, 9rem),1fr)); gap: .55rem; margin: .8rem 0 1.1rem; }
+.rental-pickup .armory-stages button[aria-pressed="true"] { color: var(--pickup-primary-text); background: var(--pickup-primary); border-color: var(--pickup-primary); font-weight: 700; }
+.armory-stages button span { margin-inline-start: .5rem; font-variant-numeric: tabular-nums; }
+.armory-filter { display: grid; gap: .35rem; max-width: 32rem; margin: .6rem 0 1rem; color: var(--usaw-muted); }
+.armory-filter .form-control, .armory-numbers .form-control { min-width: 0; width: 100%; min-height: 46px; background: var(--usaw-surface); color: var(--usaw-text); border-color: var(--usaw-muted); font-size: 1rem; }
+.armory-numbers { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,12rem),1fr)); gap: .65rem 1rem; border: 0; border-block: 1px solid var(--usaw-line); min-width: 0; padding: .65rem 0 1rem; margin: .65rem 0 1rem; }
+.armory-numbers legend { float: none; width: auto; font-weight: 700; font-size: 1rem; margin: 0; }
+.armory-numbers label { display: grid; gap: .25rem; min-width: 0; overflow-wrap: anywhere; }
+.armory-issued-list { list-style: none; margin: .65rem 0; padding: 0; }
+.armory-issued-list li { display: flex; align-items: center; justify-content: space-between; border-block-start: 1px solid var(--usaw-line); padding: .5rem 0; }
+.armory-returned { color: var(--pickup-ready); }
+.armory-sync { padding: .65rem; margin-block: .65rem; background: var(--usaw-subtle); border-radius: .55rem; }

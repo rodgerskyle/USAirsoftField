@@ -36,6 +36,7 @@ const staffEndpoints = new Set([
   '/api/staff-groups',
   '/api/rental-groups',
   '/api/rental-pickups',
+  '/api/rental-waivers',
   '/api/staff-waivers',
   '/api/party-check-in',
 ]);
@@ -98,7 +99,7 @@ export async function requestStaffFieldTool(firebase, uid, path, { method = 'GET
     method,
     headers,
     body: body === undefined ? undefined : JSON.stringify(body),
-    credentials: ['/api/staff-player-accounts/email-service', '/api/party-check-in', '/api/rental-groups', '/api/rental-pickups', '/api/staff-round-result-receipts', '/api/staff-score-overrides', '/api/member-card/waiver-name', '/api/waivers/review-paper', '/api/waivers/retained-members', '/api/waivers/membership', '/api/waivers/member-pdf', '/api/waivers/member-sync'].includes(endpoint.pathname) ? 'omit' : 'include',
+    credentials: ['/api/staff-player-accounts/email-service', '/api/party-check-in', '/api/rental-groups', '/api/rental-pickups', '/api/rental-waivers', '/api/staff-round-result-receipts', '/api/staff-score-overrides', '/api/member-card/waiver-name', '/api/waivers/review-paper', '/api/waivers/retained-members', '/api/waivers/membership', '/api/waivers/member-pdf', '/api/waivers/member-sync'].includes(endpoint.pathname) ? 'omit' : 'include',
     cache: 'no-store',
     redirect: 'error',
     signal,

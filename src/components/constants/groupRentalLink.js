@@ -52,6 +52,19 @@ export function walkOnAfterLogin(search, isAdmin) {
     return (isAdmin ? '/admin/rentalform' : '/dashboard/rentalform') + '?view=pickup';
   }
   const player = rentalCheckInParams(params);
+  if (params.get('view') === 'edit') {
+    const key = /^[A-Za-z0-9_-]{1,128}$/;
+    const form = params.get('form'), instance = params.get('instance');
+    const allowed = ['view','form','instance','walkOn','member','date','from','group','pickup'];
+    if (!key.test(form || '') || (instance !== null && !key.test(instance)) ||
+        [...params.keys()].some(name => !allowed.includes(name) || params.getAll(name).length !== 1)) return null;
+    if ((params.has('member') || params.has('walkOn') || params.has('date')) && !player) return null;
+    const group = params.get('group');
+    if (group !== null && !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(group)) return null;
+    if ((params.has('pickup') && params.get('pickup') !== 'arrived') ||
+        (params.has('from') && params.get('from') !== 'companion')) return null;
+    return (isAdmin ? '/admin/rentalform' : '/dashboard/rentalform') + '?' + params;
+  }
   if (player) return checkInRentalLink(player.playerId, player.date, isAdmin, params.get('from') === 'companion') +
     (params.get('pickup') === 'arrived' ? '&pickup=arrived' : '');
   const group = params.get('group');

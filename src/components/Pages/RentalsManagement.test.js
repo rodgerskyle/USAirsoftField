@@ -213,3 +213,23 @@ test('recognizes a member on an older manual rental by exact ID and Pacific visi
     ]);
     expect(await screen.findByText('Rental key 2')).toBeVisible();
 });
+
+test('a standalone rental opens directly and retains the selected form identity if its slot is reused', async () => {
+    const refresh = open('view=edit&form=0&instance=original-booking', [
+        { key: '0', name: 'Original renter', createRequestId: 'original-booking' },
+    ]);
+    expect(await screen.findByText('Rental key 0')).toBeVisible();
+    refresh([{ key: '0', name: 'New renter', createRequestId: 'new-booking' }]);
+    expect(screen.queryByRole('region', { name: 'Edit rental' })).toBeNull();
+    expect(await screen.findByText('This rental form has closed or changed.')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Find an open rental' }));
+    expect(await screen.findByRole('region', { name: 'Edit rental' })).toBeVisible();
+});
+
+test('customer-kiosk deep links never subscribe to private forms or open the rental editor', async () => {
+    open('view=edit&form=0', [{key:'0',name:'Private roster'}], {...staff,roles:{STATIC:'STATIC',WAIVER:'WAIVER'}});
+    expect(await screen.findByText('Open this tool from the unlocked staff rental desk.')).toBeVisible();
+    expect(onValue.mock.calls.filter(([ref])=>ref==='forms')).toHaveLength(0);
+    expect(screen.queryByRole('region',{name:'Edit rental'})).toBeNull();
+    expect(screen.queryByRole('button',{name:'Hide navigation'})).toBeNull();
+});

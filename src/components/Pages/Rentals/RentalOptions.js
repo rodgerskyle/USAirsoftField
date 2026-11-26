@@ -101,7 +101,7 @@ const RentalOptions = (props) => {
             {localOptions.some(option => Object.keys(option.repairHolds || {}).length > 0) && <section aria-label="Items awaiting inspection">
                 <h4>Items awaiting inspection</h4>
                 <ul>{localOptions.flatMap(option => Object.entries(option.repairHolds || {}).map(([id, item]) => <li key={id}>
-                    {option.label} #{item.number} <button type="button" className="btn btn-outline-primary" onClick={async () => {
+                    {option.label} #{item.number}{item.reason && ' · ' + item.reason} <button type="button" className="btn btn-outline-primary" onClick={async () => {
                         setError(null); setSuccess(null);
                         try {
                             await clearRepair(firebase, option.value, id);

@@ -27,12 +27,34 @@ test('staff can swap a broken unit, then return all remaining gear while the par
     fireEvent.click(within(unit).getByRole('button', {name:'Swap'}));
     fireEvent.click(screen.getByRole('button', {name:'Fixture camera'}));
     expect(screen.getByLabelText('Replacement equipment number')).toHaveValue('27');
+    expect(screen.getByRole('button', {name:'Save swap'})).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('What is wrong with Mask #14?'), {target:{value:'Strap buckle broke'}});
     fireEvent.click(screen.getByRole('button', {name:'Save swap'}));
     expect(await screen.findByText('Mask #14 swapped for #27. Original item held for inspection.')).toBeVisible();
-    expect(screen.getByText('2 outstanding · 0 returned')).toBeVisible();
+    expect(screen.getByText('2 picked up · 0 awaiting pickup · 0 returned')).toBeVisible();
     fireEvent.click(screen.getByRole('button', {name:'Return all 2 outstanding items'}));
     fireEvent.click(screen.getByRole('button', {name:'Confirm return'}));
-    expect(await screen.findByText('0 outstanding · 2 returned')).toBeVisible();
+    expect(await screen.findByText('0 picked up · 0 awaiting pickup · 2 returned')).toBeVisible();
     expect(desk.group[0].cc).toEqual({last4:'1234'});
     expect(desk.options[0].stock).toBe(1);
+    expect(Object.values(desk.options[0].repairHolds)[0]).toMatchObject({number:'14', reason:'Strap buckle broke'});
+    fireEvent.click(screen.getByText('Equipment history'));
+    expect(screen.getByText(/sent for inspection.*Strap buckle broke/)).toBeVisible();
+});
+
+test('a single-renter view only offers swaps and returns for that player’s collected items', () => {
+    const unit = (id, issued, checked=false) => ({
+        id, value:'mask', label:'Mask', number:id, ...(issued && {issuedAt:1700000000000}), checked,
+    });
+    const form = {key:'0', complete:true, armoryVersion:1, participants:{
+        first:{name:'Avery', rentals:[unit('A1',true),unit('A2',false),unit('A3',true,true)]},
+        second:{name:'Toby', rentals:[unit('T4',true)]},
+    }, gearHistory:{other:{action:'return',at:1,items:[{name:'Toby',label:'Mask',from:'T4'}]}}};
+    render(<QuickGearDesk form={form} firebase={{}} personKey="first" />);
+    expect(screen.getByText('1 picked up · 1 awaiting pickup · 1 returned')).toBeVisible();
+    expect(screen.getAllByRole('button', {name:'Swap'})).toHaveLength(1);
+    expect(screen.getAllByRole('button', {name:'Return'})).toHaveLength(1);
+    expect(within(screen.getByText('Awaiting pickup').closest('li')).queryByRole('button')).toBeNull();
+    expect(within(screen.getByText('Returned').closest('li')).queryByRole('button')).toBeNull();
+    expect(screen.queryByText(/Toby|T4|Equipment history|Return all/)).toBeNull();
 });

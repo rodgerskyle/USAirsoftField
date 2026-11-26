@@ -6,6 +6,7 @@ const entries = value => Object.entries(value || {}).filter(([, entry]) => entry
 const copy = value => Array.isArray(value) ? [...value] : { ...value };
 export const tag = number => String(number ?? '').trim();
 const folded = number => tag(number).toUpperCase();
+const timestamp = value => Number.isSafeInteger(value) && value > 0;
 export function validGearTag(number) {
     return typeof number === 'string' && !!number.trim() && number.trim().length <= 80 &&
         Array.from(number).every(character => character.charCodeAt(0) >= 32 && character.charCodeAt(0) !== 127);
@@ -16,9 +17,86 @@ const owner = person => JSON.stringify([person.groupId || '', person.groupEntryI
 export function gearRows(form) {
     return entries(form?.participants).flatMap(([personKey, person]) => entries(person.rentals).map(([unitKey, unit]) => ({
         personKey, unitKey, owner: owner(person), name: person.name || 'Unnamed participant',
-        id: unit.id || '', value: unit.value, label: unit.label || unit.value, number: tag(unit.number),
-        checked: unit.checked === true, operation: unit.gearOperation || '',
+        id: unit.id || '', value: unit.value || '', label: unit.label || unit.value || 'Equipment', number: tag(unit.number),
+        checked: unit.checked === true || unit.stockReleased === true || timestamp(unit.returnedAt), operation: unit.gearOperation || '',
+        issuedAt: timestamp(unit.issuedAt) ? unit.issuedAt : null,
+        returnedAt: timestamp(unit.returnedAt) ? unit.returnedAt : null,
+        physicallyIssued: Boolean(tag(unit.number)) && (timestamp(unit.issuedAt) || form.armoryVersion !== 1),
     })));
+}
+
+export function isArmoryReady(form, personKey, now = Date.now()) {
+    const proof = form?.participants?.[personKey]?.waiverProof;
+    return Boolean(form?.complete && !form.returned && proof?.status === 'signed' &&
+        typeof proof.ref === 'string' && proof.ref.trim() && timestamp(proof.signedAt) && proof.signedAt <= now &&
+        timestamp(proof.expiresAt) && proof.expiresAt > now);
+}
+
+export function armoryPeople(form) {
+    const byPerson = new Map();
+    for (const row of gearRows(form)) {
+        if (!byPerson.has(row.personKey)) byPerson.set(row.personKey, []);
+        byPerson.get(row.personKey).push(row);
+    }
+    return entries(form?.participants).map(([personKey, person]) => {
+        const assigned = byPerson.get(personKey) || [];
+        const returned = assigned.filter(row => row.checked).length;
+        const issuedAt = timestamp(person.armoryIssuedAt) ? person.armoryIssuedAt : null;
+        const state = returned ? (returned === assigned.length ? 'returned' : 'partial-return') :
+            (issuedAt || (assigned.length > 0 && assigned.every(row => row.physicallyIssued))) ? 'issued' : 'requested';
+        return {personKey, name: person.name || 'Unnamed participant', ref: person.ref,
+            groupId:person.groupId, groupEntryId:person.groupEntryId, state, rows:assigned, issuedAt};
+    });
+}
+
+// A reservation already owns its share of stock. Activation only moves those
+// units from the shared form inventory to the requested person's inventory.
+export function allocateRequestedGear(form, options = []) {
+    const optionsByValue = new Map(rentalRows(options).map(option => [option.value, option]));
+    const available = rentalRows(form.available).flatMap(item => {
+        const count = reservationQuantity(form, item, optionsByValue.get(item.value));
+        if (count === 1) return [item];
+        if (count > 10000) throw new Error('Review the quantity on this older reservation.');
+        return Array.from({length:count}, () => ({...item, amount:1}));
+    });
+    const participants = copy(form.participants);
+    if (!entries(participants).length) throw new Error('Add a renter before activating this form.');
+    for (const [personKey, person] of entries(participants)) {
+        const name = person.name || 'this renter';
+        const assigned = rentalRows(person.rentals);
+        const requested = rentalRows(person.requestedItems);
+        if (!requested.length && !assigned.length) throw new Error('Choose requested gear for ' + name + '.');
+        if (!requested.length) continue;
+        const remaining = new Map();
+        for (const {value, quantity} of requested) {
+            if (!value || !Number.isSafeInteger(quantity) || quantity < 1 || remaining.has(value)) {
+                throw new Error('Review the requested equipment quantities for ' + name + '.');
+            }
+            remaining.set(value, quantity);
+        }
+        for (const item of assigned) {
+            const need = remaining.get(item.value) || 0;
+            if (!need) throw new Error('The requested quantities do not match the equipment already assigned to ' + name + '.');
+            remaining.set(item.value, need - 1);
+        }
+        const rentals = copy(person.rentals || []);
+        let nextKey = entries(rentals).reduce((max,[key]) => /^\d+$/.test(key) ? Math.max(max,Number(key)+1) : max, 0);
+        for (const [value, quantity] of remaining) {
+            const selected = available.filter(unit => unit.value === value && !unit.checked && !unit.stockReleased && !tag(unit.number)).slice(0, quantity);
+            if (selected.length !== quantity) throw new Error('Not enough reserved ' + value + ' for ' + name + '. Review the requested gear.');
+            for (const unit of selected) {
+                rentals[nextKey++] = unit;
+                available.splice(available.indexOf(unit), 1);
+            }
+        }
+        participants[personKey] = {...person, rentals};
+    }
+    return {participants, available};
+}
+
+export function reservationQuantity(form, item, option) {
+    const count = Number(item.amount);
+    return !form.createRequestId && (!item.id || item.id === option?.id) && Number.isSafeInteger(count) && count > 0 ? count : 1;
 }
 
 // Older reservations can hold a quantity on one unassigned row. Checked legacy
@@ -28,10 +106,7 @@ export function reservationCounts(form, optionsByValue) {
     function add(item, unassigned) {
         const option = optionsByValue.get(item.value);
         if (!option || item.stockReleased) return;
-        const amount = Number(item.amount);
-        const bulk = unassigned && !form.createRequestId && (!item.id || item.id === option.id) &&
-            Number.isSafeInteger(amount) && amount > 0;
-        counts.set(item.value, (counts.get(item.value) || 0) + (bulk ? amount : 1));
+        counts.set(item.value, (counts.get(item.value) || 0) + (unassigned ? reservationQuantity(form, item, option) : 1));
     }
     rentalRows(form.available).forEach(item => add(item, true));
     rentalParticipants(form.participants).forEach(person => person.rentals.forEach(item => add(item, false)));
@@ -48,11 +123,167 @@ const sameUnit = (a, b) => a.owner === b.owner && a.id === b.id && a.value === b
     (a.id && a.owner ? true : a.personKey === b.personKey && a.unitKey === b.unitKey);
 const sameIssue = (a, b) => sameUnit(a, b) && a.number === b.number && a.operation === b.operation && a.checked === b.checked;
 
-export async function changeEquipment(firebase, form, rows, action, replacement = '', needsRepair = false) {
-    const identity = rentalIdentity(form);
+function confirmIdentity(current, form) {
+    if (!matchesRental(current, rentalIdentity(form)) ||
+        (!form.createRequestId && form.transaction && form.transaction !== current.transaction)) {
+        throw new Error('This rental form changed or closed. Reopen it before continuing.');
+    }
+}
+
+function operationKey(value = uuid()) {
+    if (typeof value !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(value) ||
+        Object.prototype.hasOwnProperty.call(Object.prototype, value) || value === 'prototype') throw new Error('Invalid equipment operation.');
+    return value;
+}
+
+function isReplay(form, operation, signature) {
+    const prior = form.gearHistory?.[operation];
+    if (!prior) return false;
+    if (prior.signature !== signature) throw new Error('This operation was already used for a different equipment change.');
+    return true;
+}
+
+function catalogOption(options, type) {
+    const catalog = entries(options).filter(([, option]) => option.value === type);
+    if (catalog.length > 1) throw new Error('This equipment type has duplicate catalog entries. Review inventory.');
+    return catalog[0] || [];
+}
+
+function checkNumber(desk, formKey, row, number, option) {
+    const inUse = entries(desk.group).some(([key, form]) => !form.returned && gearRows(form).some(unit =>
+        !(key === String(formKey) && row.personKey === unit.personKey && row.unitKey === unit.unitKey) &&
+        unit.value === row.value && !unit.checked && folded(unit.number) === folded(number)));
+    if (inUse) throw new Error('That equipment number is already issued on an open form.');
+    if (rentalRows(option?.repairHolds).some(hold => folded(hold.number) === folded(number))) throw new Error('That item is waiting for inspection.');
+}
+
+function resolveReviewedRow(rows, review) {
+    const matches = rows.filter(row => sameUnit(row, review));
+    return matches.length === 1 ? matches[0] : matches.find(row => row.personKey === review.personKey && row.unitKey === review.unitKey);
+}
+
+function logItem(row, extra) {
+    return {personKey:row.personKey, unitKey:row.unitKey, id:row.id, name:row.name, value:row.value, label:row.label, from:row.number, ...extra};
+}
+
+function visitInfo(form, person, admission) {
+    const linked = form.playerCheckIn || form.walkOnCheckIn;
+    const memberId = !person.isDigital && person.isMember !== false && !String(person.ref || '').startsWith('group:') ? person.ref : null;
+    const direct = Boolean(linked && linked.playerId === person.ref);
+    const group = person.groupId && person.groupEntryId && person.groupId === form.checkInGroup?.id;
+    const date = (direct && linked.date) || (group && form.checkInGroup.date);
+    const exactGroup = group && admission?.groupId === person.groupId && admission?.groupEntryId === person.groupEntryId;
+    if (admission && (!/^\d{4}-\d\d-\d\d$/.test(admission.date) || !admission.playerId ||
+        !Number.isFinite(Date.parse(admission.checkedInAt)) || (date && admission.date !== date) ||
+        (group && admission.groupId && !exactGroup) ||
+        !(exactGroup || memberId === admission.playerId || (direct && linked.playerId === admission.playerId)) ||
+        (direct && linked.checkedInAt && linked.checkedInAt !== admission.checkedInAt))) {
+        throw new Error('This admission does not match the reviewed renter. Refresh the pickup queue.');
+    }
+    const day = date || admission?.date;
+    if (!day || !/^\d{4}-\d\d-\d\d$/.test(day)) return null;
+    const playerId = admission?.playerId || (direct && linked.playerId) || memberId;
+    const checkedInAt = admission?.checkedInAt || (direct && linked.checkedInAt) || null;
+    return {date:day, ...(playerId && {playerId}), ...(checkedInAt && {checkedInAt}),
+        ...(group && {groupId:person.groupId,groupEntryId:person.groupEntryId})};
+}
+
+function claimAdmission(desk, form, issue, visit) {
+    if (!visit) return null;
+    const keys = [];
+    if (visit.playerId) keys.push(['player',visit.playerId]);
+    if (visit.groupEntryId) keys.push(['group',visit.groupId,visit.groupEntryId]);
+    const oldClaims = desk.armoryHandoffs || {};
+    const claims = {...oldClaims[visit.date]};
+    for (const parts of keys) {
+        const key = encodeURIComponent(JSON.stringify(parts)).replace(/\./g,'%2E');
+        if (key.length > 700) throw new Error('The rental visit identifier is too long. Review the admission.');
+        const prior = claims[key];
+        if (prior) {
+            const distinctVisit = prior.checkedInAt && visit.checkedInAt && Date.parse(visit.checkedInAt) > Date.parse(prior.checkedInAt);
+            const oldForm = desk.group?.[prior.formKey];
+            const oldPerson = rentalRows(oldForm?.participants).find(person => person.armoryIssueId === prior.operation);
+            if (!distinctVisit || (oldPerson && rentalRows(oldPerson.rentals).some(item => !item.checked))) {
+                throw new Error('This arrival already received equipment on a rental form. Review that handoff.');
+            }
+        }
+        claims[key] = {formKey:String(form.key), operation:issue, ...(visit.checkedInAt && {checkedInAt:visit.checkedInAt})};
+    }
+    return {...oldClaims,[visit.date]:claims};
+}
+
+export async function issueRentalGear(firebase, form, personKey, numbers, operationId, admission) {
+    const reviewed = gearRows(form).filter(row => row.personKey === String(personKey));
+    if (!reviewed.length || !numbers || Object.keys(numbers).length !== reviewed.length ||
+        reviewed.some(row => !Object.prototype.hasOwnProperty.call(numbers,row.unitKey) || !validGearTag(numbers[row.unitKey]))) {
+        throw new Error('Enter the equipment number for every requested item before handing it over.');
+    }
+    const operation = operationKey(operationId);
+    const at = Date.now();
+    const signature = JSON.stringify(['issue', reviewed.map(row => [row.owner,row.id,row.unitKey,row.value,folded(numbers[row.unitKey])]),
+        admission ? [admission.date,admission.playerId,admission.checkedInAt] : null]);
+    let issuedAt;
+    const result = await runTransaction(firebase.rentals(), desk => {
+        issuedAt = null;
+        if (desk === null) return null;
+        const current = desk.group?.[form.key];
+        confirmIdentity(current, form);
+        if (isReplay(current, operation, signature)) { issuedAt = current.gearHistory[operation].at; return desk; }
+        const currentRows = gearRows(current);
+        const rows = reviewed.map(review => resolveReviewedRow(currentRows, review));
+        const targetKey = rows[0]?.personKey;
+        const person = current.participants?.[targetKey];
+        if (!person || rows.some((row,index) => !row || row.personKey !== targetKey || !sameIssue(row,reviewed[index]) || row.checked) ||
+            rows.length !== rentalRows(person.rentals).length || new Set(rows.map(row => row.unitKey)).size !== rows.length) {
+            throw new Error('The requested equipment changed or was returned. Refresh the rental form.');
+        }
+        if (timestamp(person.armoryIssuedAt) || rows.some(row => row.issuedAt)) throw new Error('This renter has already received their gear.');
+        if (!admission && current.armoryVersion !== 1 && rows.every(row => row.physicallyIssued)) {
+            throw new Error('This older rental already has issued numbers. Use swaps or returns for its gear.');
+        }
+        if (!isArmoryReady(current, targetKey)) throw new Error('Activate the form and verify this renter’s current signed waiver before handout.');
+        const visit = visitInfo(current, person, admission);
+        const claims = claimAdmission(desk, form, operation, visit);
+        const rentals = copy(person.rentals);
+        const assigned = new Set();
+        const history = [];
+        for (const [index,row] of rows.entries()) {
+            const number = tag(numbers[reviewed[index].unitKey]);
+            const [,option] = catalogOption(desk.options, row.value);
+            if (!option) throw new Error('Restore this equipment type in inventory before issuing it.');
+            const max = Number(option.max);
+            const stock = Number(option.stock ?? 0);
+            const held = heldCount(desk.group, option);
+            if (option.max == null || !Number.isSafeInteger(max) || !Number.isSafeInteger(stock) || stock < held ||
+                stock > max) throw new Error('The reserved inventory count needs review before handout.');
+            if (row.number && folded(row.number) !== folded(number)) throw new Error('Confirm the existing equipment number or review a swap.');
+            const identifier = JSON.stringify([row.value, folded(number)]);
+            if (assigned.has(identifier)) throw new Error('The same equipment number was entered twice for this equipment type.');
+            assigned.add(identifier);
+            checkNumber(desk, form.key, row, number, option);
+            rentals[row.unitKey] = {...rentals[row.unitKey], number, issuedAt:at, gearOperation:operation, checked:false};
+            history.push(logItem(row, {to:number}));
+        }
+        const participants = copy(current.participants);
+        participants[targetKey] = {...person, rentals, armoryIssuedAt:at, armoryIssueId:operation, ...(visit && {armoryAdmission:visit})};
+        const group = copy(desk.group);
+        group[form.key] = {...current, participants, gearHistory:{...current.gearHistory,
+            [operation]:{action:'issue',at,signature,items:history}}};
+        issuedAt = at;
+        return {...desk,group,...(claims && {armoryHandoffs:claims})};
+    }, {applyLocally:false});
+    if (!result.committed || !issuedAt) throw new Error('The handoff was not confirmed. Refresh the rental form.');
+    return {issuedAt, operationId:operation};
+}
+
+export async function changeEquipment(firebase, form, rows, action, replacement = '', needsRepair = false, details) {
     if (!rows.length || !['assign', 'swap', 'return'].includes(action) ||
         (action !== 'return' && (rows.length !== 1 || !validGearTag(replacement)))) throw new Error('Choose the equipment and enter a valid number.');
-    const operation = uuid();
+    const reason = String(details?.reason ?? (needsRepair && !details ? 'Reported malfunction' : '')).trim();
+    if ((needsRepair && !reason) || reason.length > 200) throw new Error('Enter a malfunction reason of up to 200 characters.');
+    const operation = operationKey(details?.operationId);
+    const signature = JSON.stringify([action, rows.map(row => [row.owner,row.id,row.value,row.personKey,row.unitKey,row.number,row.operation]),
+        folded(replacement),Boolean(needsRepair),reason]);
     const at = Date.now();
     const newNumber = tag(replacement);
     let saved = false;
@@ -60,9 +291,9 @@ export async function changeEquipment(firebase, form, rows, action, replacement 
         saved = false;
         if (desk === null) return null;
         const current = desk.group?.[form.key];
-        if (!matchesRental(current, identity) || (!identity.requestId && form.transaction && form.transaction !== current.transaction)) throw new Error('This rental form changed or closed. Reopen it before continuing.');
+        confirmIdentity(current, form);
         if (action === 'assign' && !current.complete) throw new Error('Activate the rental form before issuing equipment.');
-        if (current.gearHistory?.[operation]) { saved = true; return desk; }
+        if (isReplay(current, operation, signature)) { saved = true; return desk; }
         const currentRows = gearRows(current);
         const participants = copy(current.participants);
         const group = copy(desk.group);
@@ -71,30 +302,24 @@ export async function changeEquipment(firebase, form, rows, action, replacement 
         const changes = [];
 
         for (const review of rows) {
-            const candidates = currentRows.filter(row => sameUnit(row, review));
-            // Older items may reuse their catalog ID. Match the reviewed slot
-            // and its issue version in that case, never every equal number.
-            const row = candidates.length === 1 ? candidates[0] :
-                candidates.find(item => item.personKey === review.personKey && item.unitKey === review.unitKey);
-            if (!row || !sameIssue(row, review) || row.checked || (action !== 'assign' && !row.number) ||
+            const row = resolveReviewedRow(currentRows, review);
+            if (!row || !sameIssue(row, review) || row.checked || (action !== 'assign' && !row.physicallyIssued) ||
                 touched.has(JSON.stringify([row.personKey, row.unitKey]))) throw new Error('The selected equipment was returned or changed. Refresh the outstanding list.');
             touched.add(JSON.stringify([row.personKey, row.unitKey]));
-            const catalog = entries(options).filter(([, option]) => option.value === row.value);
-            if (catalog.length > 1) throw new Error('This equipment type has duplicate catalog entries. Review inventory.');
-            const [catalogKey, option] = catalog[0] || [];
+            const [catalogKey, option] = catalogOption(options, row.value);
             if (action !== 'return') {
+                if (!option) throw new Error('Restore this equipment type in inventory before assigning a number.');
                 if (row.number && folded(row.number) === folded(newNumber)) throw new Error('Enter a different replacement number.');
-                if (rentalRows(desk.group).filter(f => !f.returned).some(f => gearRows(f).some(unit =>
-                    unit.value === row.value && !unit.checked && folded(unit.number) === folded(newNumber)))) {
-                    throw new Error('That equipment number is already issued on an open form.');
+                checkNumber(desk, form.key, row, newNumber, option);
+                if (action === 'assign' && (row.issuedAt || row.physicallyIssued)) {
+                    throw new Error('Use an equipment swap to change an issued number.');
                 }
-                if (rentalRows(option?.repairHolds).some(item => folded(item.number) === folded(newNumber))) throw new Error('That item is waiting for inspection.');
             }
             const person = participants[row.personKey];
             const rentals = copy(person.rentals);
             const original = rentals[row.unitKey];
             if (action === 'return') {
-                rentals[row.unitKey] = { ...original, checked: true, stockReleased: true, gearOperation: operation };
+                rentals[row.unitKey] = { ...original, checked: true, stockReleased: true, returnedAt:at, gearOperation: operation };
             } else {
                 rentals[row.unitKey] = { ...original, number: newNumber, checked: false, gearOperation: operation };
             }
@@ -106,17 +331,16 @@ export async function changeEquipment(firebase, form, rows, action, replacement 
                 if (release) options[catalogKey] = { ...option, stock: stock - release };
             }
             if (action === 'swap' && needsRepair) {
-                if (!option) throw new Error('Restore this equipment type in inventory before setting a repair hold.');
+                if (option.repairHolds?.[operation]) throw new Error('This service hold was already used. Reopen the swap.');
                 const stock = Math.max(Number(option.stock) || 0, heldCount(group, option));
-                if (option.max != null && stock >= Number(option.max)) throw new Error('No spare unit is available. Check the inventory maximum.');
+                if (option.max == null || !Number.isSafeInteger(Number(option.max)) || stock >= Number(option.max)) throw new Error('No spare unit is available. Check the inventory maximum.');
                 options[catalogKey] = { ...option, stock: stock + 1, repairHolds: { ...option.repairHolds,
-                    [operation]: { number: row.number, at } } };
+                    [operation]: { number: row.number, at, reason } } };
             }
-            changes.push({ name: row.name, value: row.value, label: row.label, from: row.number,
-                ...(action !== 'return' && { to: newNumber }) });
+            changes.push(logItem(row, action !== 'return' ? {to:newNumber} : {}));
         }
         group[form.key] = { ...current, participants, gearHistory: { ...current.gearHistory,
-            [operation]: { action, at, needsRepair: action === 'swap' && needsRepair, items: changes } } };
+            [operation]: { action, at, signature, ...(reason && {reason}), needsRepair: action === 'swap' && needsRepair, items: changes } } };
         saved = true;
         return { ...desk, group, options };
     }, { applyLocally: false });
