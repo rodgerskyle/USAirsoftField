@@ -1326,7 +1326,8 @@ button.btn-pin-code-link {
     border-radius: .65rem;
 }
 .rental-checkin-return > div { display: grid; min-width: 0; gap: .15rem; }
-.rental-checkin-return span { display: flex; align-items: center; gap: .45rem; color: var(--usaw-accent); }
+.rental-checkin-return span { display: flex; align-items: center; color: var(--usaw-accent); }
+.rental-checkin-return span svg { margin-inline-end: .45rem; }
 .rental-checkin-return strong { font-size: 1.14rem; overflow-wrap: anywhere; }
 .rental-checkin-return button { min-height: 46px; }
 .participant-card-checkin { outline: 2px solid var(--usaw-accent); }

@@ -1,4 +1,7 @@
 .rental-pickup {
+  --pickup-primary: #174a87;
+  --pickup-primary-text: #ffffff;
+  --pickup-primary-hover: #123b6c;
   --pickup-ready: #205842;
   --pickup-ready-bg: #e3f2e9;
   --pickup-attention: #744215;
@@ -13,6 +16,9 @@
   line-height: 1.5;
 }
 :root[data-bs-theme="dark"] .rental-pickup {
+  --pickup-primary: #a9cef9;
+  --pickup-primary-text: #0d2338;
+  --pickup-primary-hover: #c4ddfa;
   --pickup-ready: #afe8c8;
   --pickup-ready-bg: #183c34;
   --pickup-attention: #ffd19b;
@@ -34,22 +40,22 @@
 .rental-pickup__player { background: var(--usaw-raised); border: 1px solid var(--usaw-line); border-radius: .65rem; padding: clamp(.85rem, 2vw, 1.2rem); margin: .65rem 0; }
 .rental-pickup h5 { flex: 1 1 13rem; min-width: 0; font-size: clamp(1.2rem, 2.9vw, 1.5rem); }
 .rental-pickup__group { margin: .35rem 0 0; color: var(--usaw-muted); }
-.rental-pickup__state { display: inline-flex; align-items: center; gap: .35rem; padding: .3rem .55rem; border-radius: .4rem; font-weight: 650; font-size: .94rem; }
-.rental-pickup__state svg { font-size: 1.1rem; flex: none; }
+.rental-pickup__state { display: inline-flex; align-items: center; padding: .3rem .55rem; border-radius: .4rem; font-weight: 650; font-size: .94rem; }
+.rental-pickup__state svg { font-size: 1.1rem; flex: none; margin-inline-end: .35rem; }
 .rental-pickup [data-tone="ready"] { background: var(--pickup-ready-bg); color: var(--pickup-ready); }
 .rental-pickup [data-tone="attention"], .rental-pickup [data-tone="pending"] { background: var(--pickup-attention-bg); color: var(--pickup-attention); }
-.rental-pickup__message { display: flex; align-items: flex-start; gap: .55rem; margin: .6rem 0; border-radius: .55rem; padding: .9rem; background: var(--usaw-subtle); color: var(--usaw-accent); }
+.rental-pickup__message { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: .55rem; margin: .6rem 0; border-radius: .55rem; padding: .9rem; background: var(--usaw-subtle); color: var(--usaw-accent); }
 .rental-pickup__message svg { flex: none; }
-.rental-pickup__gear { display: flex; flex-wrap: wrap; gap: .6rem 2rem; padding: .75rem 0; margin: .3rem 0 .7rem; border-bottom: 1px solid var(--usaw-line); }
+.rental-pickup__gear { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: .6rem 2rem; padding: .75rem 0; margin: .3rem 0 .7rem; border-bottom: 1px solid var(--usaw-line); }
 .rental-pickup__gear > div { min-width: 0; }
 .rental-pickup__gear dt { font-size: .92rem; color: var(--usaw-muted); font-weight: 600; }
 .rental-pickup__gear dd { margin: .12rem 0 0; font-size: 1.05rem; }
-.rental-pickup__actions, .rental-pickup__search { display: flex; flex-wrap: wrap; gap: .6rem; }
+.rental-pickup__actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(8rem, max-content)); gap: .6rem; }
+.rental-pickup__search { display: flex; flex-wrap: wrap; gap: .6rem; }
 .rental-pickup .btn, .rental-checkin-return .btn, .rental-pickup__choice summary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: .5rem;
   min-height: 46px;
   max-width: 100%;
   padding: .55rem .85rem;
@@ -57,7 +63,20 @@
   line-height: 1.3;
   border-radius: .48rem;
 }
-.rental-pickup .btn svg { flex: none; }
+.rental-pickup .btn svg, .rental-checkin-return .btn svg { flex: none; margin-inline-end: .45rem; }
+.admin-compact-page .rental-pickup .btn-primary, .rental-pickup .btn.btn-primary {
+  color: var(--pickup-primary-text);
+  background: var(--pickup-primary);
+  border-color: var(--pickup-primary);
+  font-weight: 700;
+}
+.admin-compact-page .rental-pickup .btn-primary:hover, .rental-pickup .btn.btn-primary:hover {
+  color: var(--pickup-primary-text);
+  background: var(--pickup-primary-hover);
+  border-color: var(--pickup-primary-hover);
+}
+.rental-pickup .btn-outline-primary { color: var(--usaw-accent); border-color: var(--usaw-accent); background: var(--usaw-surface); }
+.rental-pickup .btn-outline-primary:hover { color: var(--usaw-accent); background: var(--usaw-subtle); }
 .rental-pickup :is(a, button, summary, input):focus-visible, .rental-checkin-return a:focus-visible {
   outline: 3px solid var(--usaw-focus); outline-offset: 3px;
 }
