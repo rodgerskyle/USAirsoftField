@@ -353,5 +353,26 @@
     "name": "Pocket BBs",
     "label": "FIELD ANTICS",
     "description": "During a USAW game, eliminate an opposing player by tossing BBs from a full pocket. Either a referee or the player you eliminated can report it to staff."
+  },
+  {
+    "id": "ninja-warrior-25",
+    "name": "Ninja Warrior 25",
+    "label": "KNIFE KILL MILESTONE",
+    "description": "Earned by USAW members who reach 25 referee-recorded knife kills in airsoft games.",
+    "knifeKills": 25
+  },
+  {
+    "id": "ninja-warrior-50",
+    "name": "Ninja Warrior 50",
+    "label": "KNIFE KILL MILESTONE",
+    "description": "Earned by USAW members who reach 50 referee-recorded knife kills in airsoft games.",
+    "knifeKills": 50
+  },
+  {
+    "id": "bayonet-100",
+    "name": "Bayonet 100",
+    "label": "KNIFE KILL MILESTONE",
+    "description": "Earned by USAW members who reach 100 referee-recorded knife kills in airsoft games.",
+    "knifeKills": 100
   }
 ]

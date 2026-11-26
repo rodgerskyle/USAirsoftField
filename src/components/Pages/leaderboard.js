@@ -333,6 +333,7 @@ function Leaderboard({ firebase }) {
                     )}
                     <div className="field-lb-view-controls">
                         <Link className="field-lb-share" to="/team-leaderboard">Team leaderboard</Link>
+                        <Link className="field-lb-share" to="/knife-kill-leaderboard">Knife kill leaderboard</Link>
                         {tvControl}
                     </div>
                 </div>

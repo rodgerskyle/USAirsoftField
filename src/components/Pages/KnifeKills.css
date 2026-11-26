@@ -1,0 +1,33 @@
+.knife-milestones, .knife-desk {
+    padding: 1.15rem clamp(1rem, 3vw, 1.75rem);
+    color: var(--usaw-text, #e8eef5);
+    background: var(--usaw-surface, #152638);
+    border: 1px solid var(--usaw-line, #36495b);
+    border-radius: .75rem;
+}
+.knife-milestones h2, .knife-desk h3, .knife-record h4 { color: inherit; margin: 0 0 .55rem; }
+.knife-milestones p, .knife-milestones small { color: var(--usaw-muted, #b0bfd0); }
+.knife-milestones ul {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+    gap: 1rem; padding: 0; margin: 1rem 0 0; list-style: none;
+}
+.knife-milestones li { display: flex; gap: .75rem; align-items: center; }
+.knife-milestones img { object-fit: contain; flex: 0 0 auto; }
+.knife-milestones small, .knife-milestones strong { display: block; }
+.knife-desk { color: var(--admin-text); background: var(--admin-surface); border-color: var(--admin-border-strong); scroll-margin-top: 5rem; display: grid; justify-items: start; gap: .55rem; margin-block: 1rem; }
+.knife-desk p { margin: .5rem 0; }
+.knife-record { width: 100%; }
+.knife-record__totals, .knife-record__row { display: flex; flex-wrap: wrap; align-items: end; gap: .75rem 1.5rem; margin: .75rem 0; }
+.knife-record__totals dt { color: var(--admin-subtext); font-size: .9rem; }
+.knife-record__totals dd { margin: .2rem 0 0; font-size: 1.3rem; font-weight: bold; }
+.knife-record label { display: grid; gap: .25rem; margin: 0; }
+.knife-record input { width: 8rem; min-height: 42px; padding: .45rem; border: 1px solid #77899b; border-radius: .4rem; }
+.knife-desk button {
+    min-height: 42px; border: 1px solid #728da5; border-radius: .45rem; padding: .4rem .9rem;
+    color: #f7fafc; background: #23435d; font-weight: 650; cursor: pointer;
+}
+.knife-desk button:disabled { opacity: .55; cursor: default; }
+.knife-desk :is(button,input,summary):focus-visible { outline: 3px solid #93d4ff; outline-offset: 2px; }
+.knife-desk details { border-top: 1px solid #4b6072; margin-top: .75rem; padding-block: .5rem; }
+.knife-desk summary { cursor: pointer; font-weight: 650; padding-block: .35rem; }
+.knife-record__pending { margin-block: .65rem; }
