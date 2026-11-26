@@ -189,8 +189,8 @@ export function getStaffBadgeCounts(firebase, playerId, staffToken, { signal } =
     return callBadgeApi({ firebase, staffToken, query: { playerId, awardCounts: '1' }, signal });
 }
 
-export function grantPlayerBadge(firebase, { playerId, badgeId, reason, grantId }, staffToken) {
-    return callBadgeApi({ firebase, staffToken, body: { action: 'award', playerId, badgeId, reason, grantId } });
+export function grantPlayerBadge(firebase, { playerId, badgeId, grantId }, staffToken) {
+    return callBadgeApi({ firebase, staffToken, body: { action: 'award', playerId, badgeId, grantId } });
 }
 
 export async function getRoundPatchOptions(mode, signal) {

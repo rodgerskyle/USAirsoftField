@@ -4,19 +4,18 @@ import StaffKnifeKills from './StaffKnifeKills';
 import AdminAccountUnlock from './AdminAccountUnlock';
 import { awardRoundPatch, badgeById, getRoundPatchOptions, unlockBadgeAdminAccount, unlockBadgeStaff } from '../constants/playerBadges';
 
-export const emptyPatchSelection = { badgeIds: [], reason: '' };
+export const emptyPatchSelection = { badgeIds: [] };
 
 function PatchDelivery({ job, firebase, token, updateJob, lock, report }) {
     const badgeId = job.badgeIds[0];
     const patchName = badgeById[badgeId]?.name || 'Patch';
     const player = job.playerName || 'this player';
-    const [reason, setReason] = useState(job.reason);
     useEffect(() => {
         if (!token || job.error) return undefined;
         const controller = new AbortController();
         let mounted = true;
         const timer = setTimeout(() => controller.abort(), 15000);
-        awardRoundPatch(firebase, { playerId: job.playerId, eventId: job.eventId, day: job.day, badgeId, reason: job.reason }, token, controller.signal)
+        awardRoundPatch(firebase, { playerId: job.playerId, eventId: job.eventId, day: job.day, badgeId }, token, controller.signal)
             .then(() => {
                 if (!mounted) return;
                 report(patchName + ' awarded to ' + player + '.');
@@ -35,13 +34,11 @@ function PatchDelivery({ job, firebase, token, updateJob, lock, report }) {
         <strong>{player} · {job.mode}</strong>
         <p>Score saved. {job.badgeIds.map(id => badgeById[id]?.name || id).join(', ')} pending.</p>
         {job.error && <>
-            <p role="alert">{job.error}</p>
-            <label>First-award reason for {patchName}
-                <input className="form-control" maxLength={160} value={reason} onChange={event => setReason(event.target.value)} />
-            </label>
+            <p role="alert">{job.error === 'Enter a reason of 3–160 characters for the first award.'
+                ? 'Retry to finish this patch award.' : job.error}</p>
             <div className="score-entry-mode">
                 <button type="button" className="btn btn-outline-secondary" disabled={!token}
-                    onClick={() => updateJob(job.id, old => ({ ...old, reason: reason.trim(), error: '' }))}>Retry patch</button>
+                    onClick={() => updateJob(job.id, old => ({ ...old, error: '' }))}>Retry patch</button>
                 <button type="button" className="btn btn-outline-secondary" onClick={() => {
                     if (window.confirm('Stop retrying ' + patchName + ' for ' + player + '? The recorded score will be kept.')) {
                         updateJob(job.id, old => ({ ...old, badgeIds: old.badgeIds.slice(1), error: '' }));
@@ -104,7 +101,7 @@ export function ScorePatchAwards({ firebase, mode, player, member, roundSide, di
     }
     function toggle(id) {
         const ids = selection.badgeIds.includes(id) ? selection.badgeIds.filter(value => value !== id) : [...selection.badgeIds, id];
-        onChange(ids.length ? { ...selection, badgeIds: ids } : emptyPatchSelection);
+        onChange({ badgeIds: ids });
     }
     const current = options?.mode === mode ? options : null;
     return <>
@@ -122,11 +119,12 @@ export function ScorePatchAwards({ firebase, mode, player, member, roundSide, di
                             <span>{patch.name}</span>
                         </button>)}
                     </div>}
-            {selection.badgeIds.length > 0 && <label className="score-patch-reason">Award reason
-                <input className="form-control" value={selection.reason} maxLength={160} disabled={disabled}
-                    onChange={event => onChange({ ...selection, reason: event.target.value })} />
-                <small>Enter 3–160 characters for a first award. Repeat awards can be left blank.</small>
-            </label>}
+            {selection.badgeIds.length > 0 && <dl className="score-patch-criteria">
+                {selection.badgeIds.map(id => <div key={id}>
+                    <dt>{badgeById[id].name}</dt>
+                    <dd>{badgeById[id].description}</dd>
+                </div>)}
+            </dl>}
         </>}
         {jobs.map(job => <PatchDelivery key={job.id} job={job} firebase={firebase} token={token} updateJob={updateJob}
             lock={lock} report={setNotice} />)}

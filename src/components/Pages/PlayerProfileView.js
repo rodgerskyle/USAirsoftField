@@ -456,7 +456,7 @@ export default function PlayerProfileView({ firebase, user, playerId, account = 
                   </span>
                   <div>
                     <p className="player-profile__label">Featured badge</p>
-                    <strong>{featuredBadge.name}</strong>
+                    <strong><Link to={`/virtual-patches?badge=${featuredBadge.id}`}>{featuredBadge.name}</Link></strong>
                   </div>
                 </div>
               )}

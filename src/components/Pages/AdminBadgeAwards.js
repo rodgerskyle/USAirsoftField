@@ -42,7 +42,6 @@ function profileIdFromSearch(search) {
 
 const named = value => typeof value === 'string' && value.trim();
 const displayName = player => named(player.name) || named(player.username) || player.uid;
-const normalizeReason = reason => reason.trim().replace(/\s+/g, ' ');
 const grantDate = awardedAt => Number.isFinite(Date.parse(awardedAt))
   ? grantDateFormat.format(new Date(awardedAt)) : 'Award date unavailable';
 
@@ -50,7 +49,6 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
   const [search, setSearch] = useState('');
   const [playerId, setPlayerId] = useState('');
   const [badgeId, setBadgeId] = useState('');
-  const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(null);
   const [feedback, setFeedback] = useState(null);
   const [staffSession, setStaffSession] = useState(null);
@@ -84,9 +82,8 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
       typeof value === 'string' && value.toLowerCase().includes(normalizedQuery)
     )
   );
-  const cleanReason = normalizeReason(reason);
   const canGrant = !!staffToken && !!selectedPlayer && !!selectedBadge && !retiredBadge && !!counts &&
-    (isRepeat || (cleanReason.length >= 3 && cleanReason.length <= 160)) && !busy && !grantHistory?.loading;
+    !busy && !grantHistory?.loading;
 
   useEffect(() => () => historyRequest.current?.abort(), []);
 
@@ -98,7 +95,6 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
       setCountLookup(null);
       historyRequest.current?.abort();
       setGrantHistory(null);
-      setReason('');
       setFeedback({ text: 'Badge access expired. Unlock the controls to continue.' });
     }, Math.max(0, staffSession.expiresAt - Date.now()));
     return () => clearTimeout(timer);
@@ -208,7 +204,6 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
 
   function selectBadge(id) {
     setBadgeId(id);
-    setReason('');
     setFeedback(null);
     closeHistory();
   }
@@ -217,7 +212,6 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
     if (retiredBadge) setBadgeId('');
     setPlayerId(player?.uid || '');
     setCountLookup(null);
-    setReason('');
     setFeedback(null);
     closeHistory();
     setSearch(player ? displayName(player) : '');
@@ -272,7 +266,7 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
     setFeedback(null);
     try {
       const { award } = await grantPlayerBadge(firebase, {
-        playerId: selectedPlayerId, badgeId, reason: isRepeat ? '' : cleanReason, grantId,
+        playerId: selectedPlayerId, badgeId, grantId,
       }, staffToken);
       const count = award?.earnedCount;
       if (!Number.isSafeInteger(count) || count < 1) throw new Error('The award could not be confirmed.');
@@ -280,10 +274,8 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
       closeHistory();
       updateCount(selectedPlayerId, badgeId, count);
       setFeedback({ text: `${selectedBadge.name} awarded to ${displayName(selectedPlayer)}. Earned ${count} ${count === 1 ? 'time' : 'times'}.` });
-      setReason('');
     } catch (error) {
       if (error?.status === 401) setStaffSession(null);
-      if (error?.code === 'FIRST_AWARD_REASON_REQUIRED') updateCount(selectedPlayerId, badgeId, 0);
       if (error?.code === 'GRANT_REVOKED') {
         pendingGrants.current.delete(target);
         closeHistory();
@@ -329,7 +321,6 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
                   setSearch(event.target.value);
                   setPlayerId('');
                   setCountLookup(null);
-                  setReason('');
                   setFeedback(null);
                   closeHistory();
                 }} />
@@ -412,17 +403,9 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
                   </div>
                 </div>
               )}
-              {counts && selectedBadge && !retiredBadge && (isRepeat ? (
+              {isRepeat && !retiredBadge && (
                 <p>Granting again adds one to this player’s count.</p>
-              ) : (
-                <>
-                  <label htmlFor="admin-badges-reason">Reason for first award</label>
-                  <textarea id="admin-badges-reason" value={reason} required minLength={3} maxLength={160}
-                    aria-describedby="admin-badges-reason-length"
-                    rows={3} onChange={event => setReason(event.target.value)} />
-                  <small id="admin-badges-reason-length">3–160 characters. Visible to the player and staff.</small>
-                </>
-              ))}
+              )}
               <div className="admin-badge-awards__actions">
                 {!retiredBadge && (
                   <button type="submit" disabled={!canGrant}>

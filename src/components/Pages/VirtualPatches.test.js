@@ -1,4 +1,5 @@
 import React from 'react';
+import { webcrypto } from 'crypto';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { HelmetProvider } from 'react-helmet-async';
 import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -8,7 +9,7 @@ import { FirebaseContext } from '../Firebase';
 import { AuthUserContext } from '../session';
 import {
   BADGE_CATALOG, getBadgeStandings, getFeaturedBadges, getFeaturedBadgeDetails, getMyBadges, getStaffBadgeCounts,
-  getStaffBadgeGrantHistory, revokePlayerBadgeGrant, setFeaturedBadge, staffBattleBadgeDay, unlockBadgeStaff,
+  getStaffBadgeGrantHistory, grantPlayerBadge, revokePlayerBadgeGrant, setFeaturedBadge, staffBattleBadgeDay, unlockBadgeStaff,
 } from '../constants/playerBadges';
 import { getAllPlayerDisplayNames, getPlayerDisplayNames } from '../constants/playerDisplayNames';
 import { PATCH_DIFFICULTIES } from '../constants/patchDifficulty';
@@ -53,6 +54,7 @@ jest.mock('../constants/playerBadges', () => ({
   getMyBadges: jest.fn(),
   getStaffBadgeCounts: jest.fn(),
   getStaffBadgeGrantHistory: jest.fn(),
+  grantPlayerBadge: jest.fn(),
   revokePlayerBadgeGrant: jest.fn(),
   setFeaturedBadge: jest.fn(),
   staffBattleBadgeDay: jest.fn(),
@@ -370,6 +372,37 @@ test('offers the expanded patch collection in the unlocked staff award picker', 
   expect(screen.getByText('Pocket BBs', { selector: 'strong' })).toBeVisible();
 });
 
+test('grants a first badge and a repeat using the selected badge criteria', async () => {
+  const previousCrypto = Object.getOwnPropertyDescriptor(globalThis, 'crypto');
+  Object.defineProperty(globalThis, 'crypto', { configurable: true, value: webcrypto });
+  try {
+    unlockBadgeStaff.mockResolvedValue({ staffToken: 'test-staff-token', expiresAt: new Date(Date.now() + 60_000).toISOString() });
+    getStaffBadgeCounts.mockResolvedValue({ counts: {} });
+    grantPlayerBadge.mockResolvedValueOnce({ award: { earnedCount: 1 } }).mockResolvedValueOnce({ award: { earnedCount: 2 } });
+    renderPage(<AdminBadgeAwards firebase={firebase} players={[user]} loading={false} directoryUnavailable={false} />);
+    fireEvent.change(screen.getByLabelText('Staff email'), { target: { value: 'staff@example.com' } });
+    fireEvent.change(screen.getByLabelText('Staff password'), { target: { value: 'test-password' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Unlock badge controls' }));
+    fireEvent.change(await screen.findByRole('searchbox', { name: 'Find a player' }), { target: { value: user.username } });
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(user.username) }));
+    const badge = BADGE_CATALOG.find(item => item.id === 'ambassador');
+    fireEvent.change(await screen.findByRole('combobox', { name: 'Badge' }), { target: { value: badge.id } });
+    expect(screen.getByText(badge.description)).toBeVisible();
+    expect(screen.queryByLabelText(/reason/i)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Grant badge' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Grant again' }));
+    expect(await screen.findByText('Earned 2 times')).toBeVisible();
+    expect(grantPlayerBadge).toHaveBeenCalledTimes(2);
+    for (const args of grantPlayerBadge.mock.calls) {
+      expect(args).toEqual([firebase, { playerId, badgeId: badge.id, grantId: expect.any(String) }, 'test-staff-token']);
+    }
+    expect(grantPlayerBadge.mock.calls[0][1].grantId).not.toBe(grantPlayerBadge.mock.calls[1][1].grantId);
+  } finally {
+    if (previousCrypto) Object.defineProperty(globalThis, 'crypto', previousCrypto);
+    else delete globalThis.crypto;
+  }
+});
+
 test('badge awards uses the selected member for MVP and reconciles another staff desk’s daily award', async () => {
   const date = '2026-11-20';
   jest.spyOn(scoreHistory, 'newScoreId')
@@ -493,6 +526,7 @@ test('shows a public featured count without loading private badge records or a l
   });
   renderPage(<PlayerProfileView firebase={firebase} user={user} playerId={playerId} />);
   expect(await screen.findByText('×4')).toBeVisible();
+  expect(screen.getByRole('link', { name: 'USAW Ambassador' })).toHaveAttribute('href', '/virtual-patches?badge=ambassador');
   expect(screen.queryByText('All-time leaderboard')).not.toBeInTheDocument();
   expect(getMyBadges).not.toHaveBeenCalled();
 });
@@ -710,7 +744,7 @@ test('updates profile rank and Prestige without moving a player on the all-time 
   expect(global.fetch).toHaveBeenCalledTimes(2);
 });
 
-test('shows one earned patch with its count and preserves the first award reason', async () => {
+test('shows the catalog description and earned count for a badge with a legacy award note', async () => {
   getMyBadges.mockResolvedValue({
     awards: [{
       id: 'award-123',
@@ -728,7 +762,8 @@ test('shows one earned patch with its count and preserves the first award reason
   expect(within(wall).getByRole('heading', { name: 'Earned badges' })).toHaveFocus();
   expect(within(wall).getByText('×3')).toBeVisible();
   expect(within(wall).getAllByRole('listitem')).toHaveLength(1);
-  expect(within(wall).getByText('First award for sportsmanship.')).toBeInTheDocument();
+  expect(within(wall).getByText(BADGE_CATALOG.find(badge => badge.id === 'ambassador').description)).toBeInTheDocument();
+  expect(within(wall).queryByText('First award for sportsmanship.')).not.toBeInTheDocument();
 });
 
 test('features an earned badge from the profile shortcut and shows it when the leaderboard is revisited', async () => {

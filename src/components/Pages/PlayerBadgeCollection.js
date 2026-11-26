@@ -65,7 +65,7 @@ function EarnedBadge({ award, badge, featured }) {
           {badge.retired && <span className="player-profile__badge-featured-label">Retired patch</span>}
         </summary>
         <div className="player-profile__badge-detail">
-          <p>{award.reason || badge.description}</p>
+          <p>{badge.description}</p>
           {awardDate && <time dateTime={award.awardedAt}>First awarded {awardDate}</time>}
         </div>
       </details>

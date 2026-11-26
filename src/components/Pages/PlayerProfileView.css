@@ -256,6 +256,11 @@
   overflow-wrap: anywhere;
 }
 
+.player-profile__featured-badge strong a {
+  color: inherit;
+  text-underline-offset: .16em;
+}
+
 .player-profile__body {
   padding-block: clamp(21px, 4vw, 36px) 48px;
 }
