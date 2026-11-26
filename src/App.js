@@ -15,6 +15,7 @@ import LivePolls from './components/Pages/LivePolls';
 import AnonymousSuggestions from './components/Pages/AnonymousSuggestions';
 import PlayerComparison from './components/Pages/PlayerComparison';
 import PlayerMilestones from './components/Pages/PlayerMilestones';
+import MvpNominationNotice from './components/Pages/MvpNominationNotice';
 import DailyBattleBadgeNotice from './components/Pages/DailyBattleBadgeNotice';
 import GroupCheckIn from './components/Pages/GroupCheckIn';
 import VirtualPatches from './components/Pages/VirtualPatches';
@@ -195,7 +196,7 @@ function CookieConsentRoute() {
 function NavigationRoute() {
   const tvDisplay = useTvDisplay();
   const admin = useMatch('/admin/*');
-  return tvDisplay || admin ? null : <><Navigation /><DailyBattleBadgeNotice /></>;
+  return tvDisplay || admin ? null : <><Navigation /><MvpNominationNotice /><DailyBattleBadgeNotice /></>;
 }
 
 function FooterRoute() {
