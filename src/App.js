@@ -33,6 +33,7 @@ import FreeGames from './components/Pages/freegames';
 // import Migration from './components/Pages/migrate';
 import Leaderboard, { LegacyLeaderboardTvRedirect, LEGACY_LEADERBOARD_TV_PATH } from './components/Pages/leaderboard';
 import TeamLeaderboard from './components/Pages/TeamLeaderboard';
+import KnifeKillLeaderboard from './components/Pages/KnifeKillLeaderboard';
 import ProfileLookup from './components/Pages/Profilelookup';
 import Pricing from './components/Pages/Pricing';
 import Teams from './components/Pages/Teams';
@@ -148,6 +149,7 @@ const App = () => (
       <Route exact path="/leaderboard" element={<Leaderboard />} />
       <Route path="/leaderboard/:view" element={<Leaderboard />} />
       <Route path="/team-leaderboard" element={<TeamLeaderboard />} />
+      <Route path="/knife-kill-leaderboard" element={<KnifeKillLeaderboard />} />
       <Route exact path="/pricing" element={<Pricing />} />
       <Route exact path="/information/pricing" element={<Navigate to="/pricing" replace />} />
       <Route exact path="/home" element={<Home />} />
