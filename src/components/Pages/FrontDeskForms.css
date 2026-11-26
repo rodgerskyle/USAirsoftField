@@ -6,6 +6,15 @@
     margin-block: 1rem;
 }
 
+.desk-party-type {
+    display: grid;
+    gap: .35rem;
+    margin-block: .25rem 1rem;
+    font-weight: 600;
+}
+
+.desk-party-type select { min-height: 44px; }
+
 .desk-booking-times {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));

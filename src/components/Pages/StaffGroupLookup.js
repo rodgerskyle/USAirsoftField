@@ -1,3 +1,4 @@
+import { partyTypeLabel } from '../constants/partyBookingKey';
 import { groupRentalLink } from '../constants/groupRentalLink';
 import React, { useEffect, useRef, useState } from 'react';
 import { isGroupCode } from '../constants/groupCode';
@@ -227,7 +228,7 @@ export default function StaffGroupLookup({ request, onSelect, onAssigned, onBoar
         {parties?.length > 0 && <form onSubmit={event => { event.preventDefault(); if (chosenKey) updateBooking('linkParty'); }}>
           <label>Party Calendar booking<select required value={chosenKey} disabled={locked} onChange={event => setChosenKey(event.target.value)}>
             <option value="">Choose a birthday or event</option>
-            {parties.map(party => <option key={party.key} value={party.key} disabled={Boolean(party.ambiguous)}>{party.title} · {bookingTime(party)}{party.size > 0 && ' · ' + party.size + ' people'}{party.ambiguous && ' · duplicate'}</option>)}
+            {parties.map(party => <option key={party.key} value={party.key} disabled={Boolean(party.ambiguous)}>{partyTypeLabel(party.partyType)} · {party.title} · {bookingTime(party)}{party.size > 0 && ' · ' + party.size + ' people'}{party.ambiguous && ' · duplicate'}</option>)}
           </select></label><button className="btn btn-primary" disabled={locked || !chosenKey}>Confirm booking for group</button>
         </form>}
         {parties?.some(party => party.ambiguous) && <p>Duplicate bookings need different titles or times in the Party Calendar before you can link them.</p>}
