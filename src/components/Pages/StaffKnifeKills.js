@@ -71,7 +71,11 @@ function RecordForm({ firebase, token, player, onLock }) {
         try {
             const data = await staffKnifeKills(firebase, token, playerId, { body: item, signal: controller.signal });
             if (controller.signal.aborted) return;
-            const names = data.newlyEarned.map(id => badgeById[id]?.name || id);
+            const names = data.newlyEarned.map(id => {
+                const patchName = badgeById[id]?.name || id;
+                const copies = data.newlyEarnedCounts?.[id] ?? 1;
+                return copies > 1 ? `${patchName} ×${format(copies)}` : patchName;
+            });
             const message = item.action === 'opening' ? 'Opening total saved.' : item.action === 'reconcile'
                 ? 'Patch record checked.' : 'Knife kills recorded.';
             setRecord(data);
@@ -110,6 +114,7 @@ function RecordForm({ firebase, token, player, onLock }) {
                 <div><dt>Knife kills</dt><dd>{format(record.total)}</dd></div>
                 <div><dt>Recorded here</dt><dd>{format(record.recorded)}</dd></div>
                 <div><dt>Opening total</dt><dd>{record.openingTotal === null ? 'Not entered' : format(record.openingTotal)}</dd></div>
+                {record.earnedPatchCounts && <div><dt>Bayonets earned</dt><dd>{format(record.earnedPatchCounts['bayonet-100'] ?? 0)}</dd></div>}
             </dl>
             <p>{record.eligibleForPatches ? 'Eligible for member patches.' : 'Kills count toward the standings. Patches can be awarded once membership is active.'}</p>
             {pending ? <div className="knife-record__pending" role="status">

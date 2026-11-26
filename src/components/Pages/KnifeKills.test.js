@@ -46,6 +46,7 @@ test('shows member milestones and public tied standings with profile links and s
     expect(screen.getByText('Ninja Warrior 25')).toBeInTheDocument();
     expect(screen.getByText('Ninja Warrior 50')).toBeInTheDocument();
     expect(screen.getByText('Bayonet 100')).toBeInTheDocument();
+    expect(screen.getByText('Every 100 kills')).toBeInTheDocument();
     expect(global.fetch.mock.calls[0][1]).toMatchObject({ credentials: 'omit', headers: { Accept: 'application/json' } });
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
     expect(await screen.findByText('No more players on this page.')).toBeInTheDocument();
@@ -111,4 +112,17 @@ test('locked desk never requests a staff record or allows entries', () => {
     recorder('');
     expect(screen.queryByRole('button', { name: 'Open player record' })).toBeNull();
     expect(global.fetch).not.toHaveBeenCalled();
+});
+
+test('shows the Bayonets awarded by this entry separately from the member’s lifetime count', async () => {
+    const current = { ...staffState, recorded: 199, total: 199, earnedPatchCounts: { 'bayonet-100': 1 } };
+    global.fetch = jest.fn().mockResolvedValueOnce(response(current)).mockResolvedValueOnce(response({
+        ...current, recorded: 305, total: 305, newlyEarned: ['bayonet-100'],
+        newlyEarnedCounts: { 'bayonet-100': 2 }, earnedPatchCounts: { 'bayonet-100': 3 },
+    }));
+    recorder();
+    fireEvent.change(await screen.findByLabelText('New knife kills'), { target: { value: '106' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Record knife kills' }));
+    expect(await screen.findByText('Knife kills recorded. Rook now has 305. Earned Bayonet 100 ×2.')).toBeInTheDocument();
+    expect(screen.getByText('Bayonets earned').nextElementSibling).toHaveTextContent('3');
 });

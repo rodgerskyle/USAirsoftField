@@ -39,11 +39,11 @@ export default function KnifeKillLeaderboard() {
         </header>
         <div className="field-lb-wrap field-lb-content">
             <section aria-label="Member patch milestones" className="knife-milestones">
-                <div><h2>Member patches</h2><p>Active members earn each patch once.</p></div>
+                <div><h2>Member patches</h2><p>Active members earn each Ninja Warrior patch once and a new Bayonet for every 100 knife kills.</p></div>
                 <ul>{BADGE_CATALOG.filter(patch => patch.knifeKills).sort((a,b) => a.knifeKills - b.knifeKills).map(patch =>
                     <li key={patch.id}>
                         <img src={patch.thumbUrl} width="68" height="68" alt="" />
-                        <span><strong>{patch.name}</strong><small>{patch.knifeKills} kills</small></span>
+                        <span><strong>{patch.name}</strong><small>{patch.repeatEvery ? `Every ${patch.repeatEvery}` : patch.knifeKills} kills</small></span>
                     </li>)}</ul>
             </section>
             <section aria-labelledby="knife-standings-title" className="field-lb-standings" aria-busy={!current}>
