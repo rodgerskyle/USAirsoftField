@@ -495,7 +495,7 @@ export default function AdminBadgeAwards({ firebase, players, loading, directory
           {feedback && <p className="admin-badge-awards__feedback" role={feedback.error ? 'alert' : 'status'}>{feedback.text}</p>}
         </form>
       )}
-      {badgeServiceConfigured && <StaffKnifeKills id="admin-knife-kills" firebase={firebase} token={staffToken} player={selectedPlayer} onLock={lock}
+      {badgeServiceConfigured && <StaffKnifeKills id="admin-knife-kills" playerSearchId="admin-badges-player" firebase={firebase} token={staffToken} player={selectedPlayer} onLock={lock}
         onRequestUnlock={() => document.getElementById('admin-badges-email')?.focus()} />}
       {badgeServiceConfigured && <StaffBattleBadges allowOverride firebase={firebase} token={staffToken}
         player={selectedPlayer} onLock={lock} />}

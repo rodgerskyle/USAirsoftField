@@ -3,13 +3,16 @@ import { badgeById, staffKnifeKills } from '../constants/playerBadges';
 import { newSubmissionId } from '../utils/submissionId';
 import './KnifeKills.css';
 
-const actions = { record: 'Record knife kills', opening: 'Save opening total', reconcile: 'Award earned patches' };
+const countIsValid = n => Number.isSafeInteger(n) && n >= 0;
 const format = number => number.toLocaleString('en-US');
 
 function readPending(key) {
     try {
         const saved = JSON.parse(sessionStorage.getItem(key));
-        return saved && Object.prototype.hasOwnProperty.call(actions, saved.action) && typeof saved.requestId === 'string' ? saved : null;
+        if (!saved || !/^[a-f0-9-]{36}$/i.test(saved.requestId)) return null;
+        if (saved.action === 'reconcile') return saved;
+        if (saved.action === 'opening' && countIsValid(saved.count)) return saved;
+        return saved.action === 'record' && countIsValid(saved.count) && saved.count > 0 ? saved : null;
     } catch { return null; }
 }
 
@@ -133,8 +136,9 @@ function RecordForm({ firebase, token, player, onLock }) {
             {record.history.length > 0 && <details><summary>Recent entries</summary>
                 <ul>{record.history.map((row, index) => {
                     const date = new Date(row.recordedAt);
-                    return <li key={row.recordedAt + ':' + index}>{row.type === 'opening' ? 'Opening total ' : 'Recorded +'}{format(row.count)}
-                        {!Number.isNaN(date.valueOf()) && ' · ' + date.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })}</li>;
+                    const entry = row.type === 'reconcile' ? 'Patch review' : (row.type === 'opening' ? 'Opening total ' : 'Recorded +') + format(row.count);
+                    return <li key={row.recordedAt + ':' + index}>{entry}
+                        {row.recordedAt && !Number.isNaN(date.valueOf()) && ' · ' + date.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }) + ' PT'}</li>;
                 })}</ul>
             </details>}
         </>}
@@ -143,7 +147,7 @@ function RecordForm({ firebase, token, player, onLock }) {
     </div>;
 }
 
-export default function StaffKnifeKills({ firebase, token, player, onLock, onRequestUnlock, id }) {
+export default function StaffKnifeKills({ firebase, token, player, onLock, onRequestUnlock, id, playerSearchId }) {
     const [open, setOpen] = useState(false);
     const [expired, setExpired] = useState(false);
     return <section id={id} className="knife-desk" aria-label="Knife kill recorder">
@@ -151,7 +155,8 @@ export default function StaffKnifeKills({ firebase, token, player, onLock, onReq
         {token ? <>
             <button type="button" aria-expanded={open} onClick={() => setOpen(value => !value)}>{open ? 'Close player record' : 'Open player record'}</button>
             {open && (player?.uid ? <RecordForm key={JSON.stringify([firebase.auth.currentUser?.uid, token, player.uid])} {...{ firebase, token, player }}
-                onLock={() => { setExpired(true); onLock(); }} /> : <p>Select a registered player above to open their knife kill record.</p>)}
+                onLock={() => { setExpired(true); onLock(); }} /> : <p>Select a registered player to open their knife kill record.{' '}
+                    {playerSearchId && <button type="button" onClick={() => document.getElementById(playerSearchId)?.focus()}>Go to player search</button>}</p>)}
         </> : <>
             <p>{expired ? 'Staff access expired. Unlock staff controls again to continue.' : 'Unlock badge controls and select a player to record knife kills.'}</p>
             {onRequestUnlock && <button type="button" onClick={() => { setOpen(true); onRequestUnlock(); }}>Unlock knife kill recorder</button>}
