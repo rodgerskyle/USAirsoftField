@@ -53,6 +53,18 @@ function reserveAndPay(quantity = 1, scope = screen) {
 }
 beforeEach(() => runTransaction.mockReset());
 
+test('distinguishes missing inventory setup from gear that is fully reserved', () => {
+    fixture({catalog: [
+        { value: 'mask', label: 'Mask', cost: 5, stock: 0 },
+        { value: 'vest', label: 'Vest', cost: 5, max: 2, stock: 'unknown' },
+        { value: 'helmet', label: 'Helmet', cost: 5, max: 1, stock: 1 }
+    ]});
+    expect(screen.getByText('Inventory maximum needed')).toBeVisible();
+    expect(screen.getByText('Inventory recount needed')).toBeVisible();
+    expect(screen.getByText('Out of stock')).toBeVisible();
+    expect(screen.getAllByRole('checkbox').filter(box => !box.disabled)).toHaveLength(0);
+});
+
 test.each(['mask', 42])('reads string counts and prices and reserves keyed item %s without a catalog id', async value => {
     const catalog = {
         2: {value:'vest', label:'Vest', cost:'2.50', max:'3'},

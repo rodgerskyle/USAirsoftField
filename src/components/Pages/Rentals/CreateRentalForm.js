@@ -557,6 +557,12 @@ class CreateRentalForm extends Component {
                                                 {options.map(option => {
                                                     const remaining = availableRentalUnits(option);
                                                     const price = rentalPrice(option);
+                                                    let availability = remaining ? remaining + ' available' : 'Out of stock';
+                                                    if (rentalInventoryCount(option.max) === null) {
+                                                        availability = 'Inventory maximum needed';
+                                                    } else if (rentalInventoryCount(option.stock ?? 0) === null) {
+                                                        availability = 'Inventory recount needed';
+                                                    }
                                                     return <div key={option.value} className="rental-option-item">
                                                         <FormControlLabel
                                                             control={
@@ -600,7 +606,7 @@ class CreateRentalForm extends Component {
                                                             </div>
                                                         )}
                                                         <Typography variant="caption" color="textSecondary">
-                                                            {remaining ? `${remaining} available` : 'Out of stock'}
+                                                            {availability}
                                                         </Typography>
                                                     </div>;
                                                 })}
