@@ -115,6 +115,7 @@ class EditForm extends Component {
                         </div>
                         {form && !form.returned ? <EditSelectedForm pickupOnly={this.props.pickupOnly} key={form.key} index={form.key}
                             form={{ ...form, participants: rentalParticipants(form.participants), available: rentalRows(form.available) }}
+                            rentalOptions={this.props.rentalOptions} catalogPending={this.props.catalogPending}
                             equipmentByParticipant={armoryPeople(form).map(person => person.rows)}
                             firebase={firebase} uid={uid} canImportGroup={canImportGroup} initialGroupId={initialGroupId}
                             returnToCheckIn={this.props.returnToCheckIn}

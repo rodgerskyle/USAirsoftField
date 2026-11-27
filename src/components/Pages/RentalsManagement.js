@@ -47,9 +47,10 @@ function RentalsManagement(props) {
     const [searchParams, setSearchParams] = useSearchParams();
     const location = useLocation();
     const handledLocation = useRef(null);
-    const [formsLoadedFor, setFormsLoadedFor] = useState(null);
-    const [rentalForms, setRentalForms] = useState([]);
-    const [rentalOptions, setRentalOptions] = useState([]);
+    const [forms, setForms] = useState(null);
+    const [catalog, setCatalog] = useState(null);
+    const [formsAttempt, setFormsAttempt] = useState(0);
+    const [catalogAttempt, setCatalogAttempt] = useState(0);
     const [isNavHidden, setIsNavHidden] = useState(false);
     const [showPinInput, setShowPinInput] = useState(false);
     const [error, setError] = useState(null);
@@ -63,12 +64,20 @@ function RentalsManagement(props) {
     const roles = ROLES.officialAccountRoles(authUser?.roles);
     const rentalDesk = Boolean(authUser?.uid && ROLES.canUseRentalDesk(roles));
     const canImportGroup = rentalDesk && !isNavHidden;
-    const loading = !authUser || (canImportGroup && formsLoadedFor !== authUser.uid);
+    const formsReady = canImportGroup && forms?.uid === authUser.uid && forms.status === 'ready';
+    const formsFailed = canImportGroup && forms?.uid === authUser.uid && forms.status === 'failed';
+    const catalogReady = !!authUser?.uid && catalog?.uid === authUser.uid && catalog.status === 'ready';
+    const catalogFailed = !!authUser?.uid && catalog?.uid === authUser.uid && catalog.status === 'failed';
+    const rentalForms = formsReady ? forms.rows : [];
+    const rentalOptions = catalogReady ? catalog.options : [];
     const requestedGroup = searchParams.get('group');
     const requestedPlayer = searchParams.has('walkOn') || searchParams.has('member');
     const handoff = rentalDesk && requestedPlayer ? rentalCheckInParams(searchParams) : null;
     const renter = useCheckedInRenter(props.firebase, authUser?.uid, handoff, canImportGroup);
     const groupId = canImportGroup && !requestedPlayer && GROUP_ID.test(requestedGroup) ? requestedGroup : null;
+    const needsForms = canImportGroup && (['edit', 'pickup', 'return'].includes(activeView) || (activeView === 'new' && (groupId || requestedPlayer)));
+    const needsCatalog = activeView === 'new' || (canImportGroup && ['inventory', 'edit'].includes(activeView));
+    const loading = !authUser || (needsForms && !formsReady);
     const returnPath = handoff && returnToPlayerCheckIn(handoff, searchParams.get('from') === 'companion' || !roles.ADMIN);
     const linkedForm = handoff ? linkedPlayerRental(rentalForms, renter.player) :
         rentalForms.find(form => !form.returned && groupId && form.checkInGroup?.id === groupId);
@@ -126,7 +135,7 @@ function RentalsManagement(props) {
 
     useEffect(() => {
         if (!canImportGroup) {
-            setRentalForms([]); setFormsLoadedFor(null);
+            setForms(null);
             return;
         }
         let active = true;
@@ -134,18 +143,26 @@ function RentalsManagement(props) {
             if (!active) return;
             const forms = [];
             if (snapshot.exists()) snapshot.forEach(child => { forms.push({ ...child.val(), key: child.key }); });
-            setRentalForms(forms);
-            setFormsLoadedFor(authUser.uid);
+            setForms({ uid: authUser.uid, status: 'ready', rows: forms });
+        }, () => {
+            if (active) setForms({ uid: authUser.uid, status: 'failed' });
         });
         return () => {active=false; stop();};
-    }, [props.firebase,canImportGroup,authUser?.uid]);
+    }, [props.firebase,canImportGroup,authUser?.uid,formsAttempt]);
 
     useEffect(() => {
-        if (!authUser?.uid) return;
-        return onValue(props.firebase.rentalOptions(), snapshot => {
-            setRentalOptions(snapshot.exists() ? snapshot.val() : []);
+        if (!authUser?.uid) {
+            setCatalog(null);
+            return;
+        }
+        let active = true;
+        const stop = onValue(props.firebase.rentalOptions(), snapshot => {
+            if (active) setCatalog({ uid: authUser.uid, status: 'ready', options: snapshot.exists() ? snapshot.val() : [] });
+        }, () => {
+            if (active) setCatalog({ uid: authUser.uid, status: 'failed' });
         });
-    }, [props.firebase,authUser?.uid]);
+        return () => { active = false; stop(); };
+    }, [props.firebase,authUser?.uid,catalogAttempt]);
 
     const verifyPin = (val) => {
         if (authUser?.pin === parseInt(val, 10)) {
@@ -188,7 +205,7 @@ function RentalsManagement(props) {
                     <Helmet>
                         <title>US Airsoft Field: Rental Forms</title>
                     </Helmet>
-                    {canImportGroup && <RentalActivationMonitor key={authUser.uid} firebase={props.firebase} uid={authUser.uid} forms={rentalForms} />}
+                    {formsReady && <RentalActivationMonitor key={authUser.uid} firebase={props.firebase} uid={authUser.uid} forms={rentalForms} />}
                     <div className="admin-content">
                     <Container fluid className="p-0">
                         <div className="admin-page-header">
@@ -245,9 +262,11 @@ function RentalsManagement(props) {
                                             <Typography variant="h6" sx={{ fontWeight: 700, color: 'var(--admin-text)', fontSize: '1.2rem' }}>
                                                 Rental Operations
                                             </Typography>
-                                            <Chip label={`${rentalForms.length} total`} size="small" sx={{ backgroundColor: 'var(--admin-accent-soft)', color: 'var(--admin-accent-text)' }} />
-                                            <Chip label={`${activeFormsCount} active`} size="small" sx={{ backgroundColor: 'var(--admin-success-bg)', color: 'var(--admin-success)' }} />
-                                            <Chip label={`${pendingFormsCount} pending`} size="small" sx={{ backgroundColor: 'var(--admin-warning-bg)', color: 'var(--admin-warning)' }} />
+                                            {formsReady && <>
+                                                <Chip label={`${rentalForms.length} total`} size="small" sx={{ backgroundColor: 'var(--admin-accent-soft)', color: 'var(--admin-accent-text)' }} />
+                                                <Chip label={`${activeFormsCount} active`} size="small" sx={{ backgroundColor: 'var(--admin-success-bg)', color: 'var(--admin-success)' }} />
+                                                <Chip label={`${pendingFormsCount} pending`} size="small" sx={{ backgroundColor: 'var(--admin-warning-bg)', color: 'var(--admin-warning)' }} />
+                                            </>}
                                         </Box>
 
                                         {rentalDesk && <Button
@@ -297,11 +316,25 @@ function RentalsManagement(props) {
                                 </Paper>
 
                                 <Box sx={{ minHeight: 420, mt: 1 }}>
-                                    {loading ? (
+                                    {loading && !formsFailed ? (
                                         <Row className="spinner-standard">
                                             <Spinner animation="border" />
                                         </Row>
                                     ) : null}
+                                    {needsForms && formsFailed && <div role="alert">
+                                        <p>Couldn’t load rental forms.</p>
+                                        <button className="btn btn-outline-primary" onClick={() => {
+                                            setForms(null);
+                                            setFormsAttempt(attempt => attempt + 1);
+                                        }}>Retry rental forms</button>
+                                    </div>}
+                                    {authUser && needsCatalog && !catalogReady && (catalogFailed ? <div role="alert">
+                                        <p>Couldn’t load rental inventory.</p>
+                                        <button className="btn btn-outline-primary" onClick={() => {
+                                            setCatalog(null);
+                                            setCatalogAttempt(attempt => attempt + 1);
+                                        }}>Retry inventory</button>
+                                    </div> : <p role="status">Loading rental inventory…</p>)}
 
                                     {!isNavHidden && (handoff || (groupId && searchParams.get('pickup') === 'arrived')) && <section className="rental-checkin-return" aria-label="Rental handoff">
                                         <div>
@@ -332,6 +365,7 @@ function RentalsManagement(props) {
                                             onOpenExisting={openExisting}
                                             rentalForms={rentalForms}
                                             rentalOptions={rentalOptions}
+                                            catalogPending={!catalogReady}
                                         />
                                     ) : null}
 
@@ -350,6 +384,7 @@ function RentalsManagement(props) {
                                             initialFormKey={selectedForEdit && String(selectedForEdit.key) === requestedFormKey ? selectedForEdit.key : null}
                                             rentalForms={rentalForms}
                                             rentalOptions={rentalOptions}
+                                            catalogPending={!catalogReady}
                                         />
                                     ) : null}
 
@@ -379,7 +414,7 @@ function RentalsManagement(props) {
                                         />
                                     ) : null}
 
-                                    {!loading && canImportGroup && !waitingForPlayer && activeView === 'inventory' ? (
+                                    {canImportGroup && catalogReady && activeView === 'inventory' ? (
                                         <RentalOptions
                                             {...props}
                                             rentalOptions={rentalOptions}

@@ -154,6 +154,29 @@ test('rejects duplicate serials and conflicting admission claims across forms wi
     expect(db.group[1].participants.alpha.rentals.v.number).toBeUndefined();
 });
 
+test('hands out previously reserved gear with no catalog maximum without changing stock', async () => {
+    seed();
+    delete db.options.m.max;
+    db.options.m.stock = '1';
+    const catalog = db.options;
+    await issueRentalGear(firebase, form(), 'alpha', numbers, 'legacy-reservation', visit);
+    expect(db.group[0].participants.alpha.rentals.m.number).toBe(numbers.m);
+    expect(db.options).toBe(catalog);
+    expect(db.options.m).toEqual({value: 'mask', stock: '1'});
+});
+
+test('pickup without a catalog maximum still requires recorded stock and an outstanding reservation', async () => {
+    seed();
+    delete db.options.m.max;
+    db.options.m.stock = 0;
+    await expect(issueRentalGear(firebase, form(), 'alpha', numbers, 'missing-stock', visit)).rejects.toThrow(/inventory/);
+    db.options.m.stock = 1;
+    db.group[0].participants.alpha.rentals.m.stockReleased = true;
+    await expect(issueRentalGear(firebase, form(), 'alpha', numbers, 'released-stock', visit)).rejects.toThrow(/returned/);
+    expect(db.group[0].gearHistory).toBeUndefined();
+    expect(db.group[0].participants.alpha.rentals.v.number).toBeUndefined();
+});
+
 test('expired/changed waiver, stock limit, repair holds or duplicated same-type serials abort the entire handoff',async()=>{
     seed();
     const selected=form();

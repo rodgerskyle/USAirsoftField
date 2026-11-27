@@ -207,6 +207,20 @@ export function heldCount(groups, option) {
         total + (reservationCounts(form, options).get(option.value) || 0), rentalRows(option.repairHolds).length);
 }
 
+// Older catalog entries store whole-number counts as strings.
+export function rentalInventoryCount(value) {
+    if (typeof value !== 'number' && (typeof value !== 'string' || !value.trim())) return null;
+    const count = Number(value);
+    return Number.isSafeInteger(count) && count >= 0 ? count : null;
+}
+
+export function availableRentalUnits(option, reserved = option?.stock ?? 0) {
+    const maximum = rentalInventoryCount(option?.max);
+    const inUse = rentalInventoryCount(reserved);
+    if (maximum === null || inUse === null) return 0;
+    return Math.max(0, maximum - inUse);
+}
+
 const sameUnit = (a, b) => a.owner === b.owner && a.id === b.id && a.value === b.value &&
     (a.id && a.owner ? true : a.personKey === b.personKey && a.unitKey === b.unitKey);
 const sameIssue = (a, b) => sameUnit(a, b) && a.number === b.number && a.operation === b.operation && a.checked === b.checked;
@@ -337,11 +351,15 @@ export async function issueRentalGear(firebase, form, personKey, numbers, operat
             const number = tag(numbers[reviewed[index].unitKey]);
             const [,option] = catalogOption(desk.options, row.value);
             if (!option) throw new Error('Restore this equipment type in inventory before issuing it.');
-            const max = Number(option.max);
-            const stock = Number(option.stock ?? 0);
+            const maximum = rentalInventoryCount(option.max);
+            const stock = rentalInventoryCount(option.stock);
             const held = heldCount(desk.group, option);
-            if (option.max == null || !Number.isSafeInteger(max) || !Number.isSafeInteger(stock) || stock < held ||
-                stock > max) throw new Error('The reserved inventory count needs review before handout.');
+            // Older forms could reserve units before a maximum was configured. Pickup
+            // consumes that recorded reservation without allocating additional stock.
+            if (rentals[row.unitKey].stockReleased || held < 1 || stock === null || stock < held ||
+                (option.max != null && (maximum === null || stock > maximum))) {
+                throw new Error('The reserved inventory count needs review before handout.');
+            }
             if (row.number && folded(row.number) !== folded(number)) throw new Error('Confirm the existing equipment number or review a swap.');
             const identifier = JSON.stringify([row.value, folded(number)]);
             if (assigned.has(identifier)) throw new Error('The same equipment number was entered twice for this equipment type.');

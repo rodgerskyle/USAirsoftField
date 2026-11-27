@@ -6,7 +6,7 @@ import IconButton from '@mui/material/IconButton';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import { Add, CheckCircle, Delete, Edit, Close, AutoAwesome } from '@mui/icons-material';
-import React, { Component, useState, useEffect } from 'react';
+import React, { Component, useState } from 'react';
 import RentalIntakeEditor from './RentalIntakeEditor';
 import { activateReadyRental, needsRentalIntake, canUpgradeRental } from './utils/rentalActivation';
 import { Button, Spinner } from 'react-bootstrap/';
@@ -23,11 +23,11 @@ import GroupRentalPicker from './GroupRentalPicker';
 import { isCheckInRenter } from './utils/checkInRenter';
 import { editRentalInventory } from './utils/editRentalInventory';
 import { GearMovementTimes } from './GearMovementTimes';
-import { armoryPeople, changeEquipment, gearRows, reservationQuantity } from './utils/rentalGear';
+import { armoryPeople, availableRentalUnits, changeEquipment, gearRows, reservationQuantity } from './utils/rentalGear';
 import { importRentalParticipants, changeOpenRental, renameRentalParticipant, rentalIdentity, rentalParticipants, rentalRows } from './utils/openRental';
 
 import '../../../App.css';
-import { get, onValue, query, orderByKey, startAt, startAfter, endAt, orderByChild, limitToFirst, limitToLast, ref as dbRef } from "firebase/database";
+import { get, query, orderByKey, startAt, startAfter, endAt, orderByChild, limitToFirst, limitToLast, ref as dbRef } from "firebase/database";
 import TablePagination from '@mui/material/TablePagination';
 import Modal from '@mui/material/Modal';
 import TextField from '@mui/material/TextField';
@@ -579,33 +579,22 @@ const SizeEditModal = ({ open, onClose, currentSize, onSave }) => {
     );
 };
 
-const InventoryEditModal = ({ open, onClose, available, onSave, currentOptions, createRequestId, saving }) => {
-    const [inventory, setInventory] = useState({});
-    const [selectedRental, setSelectedRental] = useState('');
-
-    useEffect(() => {
-        // Group available items by type
-        if (!available || !Array.isArray(available)) {
-            setInventory({});
-            return;
+const InventoryEditModal = ({ onClose, available, onSave, currentOptions, createRequestId, saving, catalogPending }) => {
+    const options = rentalRows(currentOptions);
+    const [inventory, setInventory] = useState(() => {
+        const grouped = Object.create(null);
+        for (const item of rentalRows(available)) {
+            const option = options.find(entry => entry.value === item.value);
+            grouped[item.value] = (grouped[item.value] || 0) + reservationQuantity({ createRequestId }, item, option);
         }
-
-        const grouped = available.reduce((acc, item) => {
-            acc[item.value] = (acc[item.value] || 0) + reservationQuantity({createRequestId},item,rentalRows(currentOptions).find(option=>option.value===item.value));
-            return acc;
-        }, Object.create(null));
-        setInventory(grouped);
-    }, [available,createRequestId,currentOptions]);
-
-    // Get rental options that aren't in inventory
-    const getAvailableOptions = () => {
-        return rentalRows(currentOptions).filter(option =>
-            !Object.prototype.hasOwnProperty.call(inventory, option.value)
-        );
-    };
+        return grouped;
+    });
+    const [selectedRental, setSelectedRental] = useState('');
+    const otherOptions = options.filter(option => !Object.prototype.hasOwnProperty.call(inventory, option.value));
+    const canAdd = !catalogPending && otherOptions.some(option => option.value === selectedRental && availableRentalUnits(option) > 0);
 
     const handleAddRental = () => {
-        if (!selectedRental) return;
+        if (!canAdd) return;
 
         // Add new rental type with initial count of 1
         setInventory(prev => ({
@@ -622,13 +611,13 @@ const InventoryEditModal = ({ open, onClose, available, onSave, currentOptions, 
     };
 
     return (
-        <Modal open={open} onClose={onClose}>
+        <Modal open onClose={onClose}>
             <Paper className="inventory-edit-modal" sx={{
                 position: 'absolute',
                 top: '50%',
                 left: '50%',
                 transform: 'translate(-50%, -50%)',
-                width: '400px',
+                width: 'min(400px, 94vw)',
                 p: 3,
                 maxHeight: '90vh',
                 overflow: 'auto',
@@ -644,18 +633,20 @@ const InventoryEditModal = ({ open, onClose, available, onSave, currentOptions, 
                         fullWidth
                         value={selectedRental}
                         onChange={(e) => setSelectedRental(e.target.value)}
+                        disabled={catalogPending || !otherOptions.length}
                         label="Add Rental Type"
                         size="small"
                     >
-                        {getAvailableOptions().map((option) => (
-                            <MenuItem key={option.value} value={option.value}>
-                                {option.label}
+                        {otherOptions.map((option) => (
+                            <MenuItem key={option.value} value={option.value} disabled={!availableRentalUnits(option)}>
+                                {option.label || option.value} · {availableRentalUnits(option)} available
                             </MenuItem>
                         ))}
                     </TextField>
                     <IconButton
                         onClick={handleAddRental}
-                        disabled={!selectedRental}
+                        disabled={!canAdd}
+                        aria-label="Add rental type"
                         color="primary"
                     >
                         <Add />
@@ -664,7 +655,7 @@ const InventoryEditModal = ({ open, onClose, available, onSave, currentOptions, 
 
                 {/* Inventory List */}
                 {Object.entries(inventory).map(([value, count]) => {
-                    const label = rentalRows(currentOptions).find(opt => opt.value === value)?.label || value;
+                    const label = options.find(opt => String(opt.value) === value)?.label || value;
 
                     return (
                         <Box key={value} sx={{ mb: 2 }}>
@@ -683,12 +674,12 @@ const InventoryEditModal = ({ open, onClose, available, onSave, currentOptions, 
                             <TextField
                                 fullWidth
                                 type="number"
+                                inputProps={{ min: 0, 'aria-label': label + ' quantity' }}
                                 value={count}
                                 onChange={(e) => setInventory(prev => ({
                                     ...prev,
                                     [value]: Math.max(0, parseInt(e.target.value) || 0)
                                 }))}
-                                InputProps={{ inputProps: { min: 0 } }}
                                 size="small"
                             />
                         </Box>
@@ -697,7 +688,7 @@ const InventoryEditModal = ({ open, onClose, available, onSave, currentOptions, 
 
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 2 }}>
                     <Button onClick={onClose} disabled={saving}>Cancel</Button>
-                    <Button variant="contained" disabled={saving} onClick={() => onSave(inventory)}>Save Changes</Button>
+                    <Button variant="contained" disabled={saving || catalogPending} onClick={() => onSave(inventory)}>Save Changes</Button>
                 </Box>
             </Paper>
         </Modal>
@@ -745,7 +736,6 @@ class EditSelectedForm extends Component {
             digitalRangeEnd: null,
             showSizeEdit: false,
             showInventoryEdit: false,
-            rentalOptions: [], // Add this to track rental options
             form: this.props.form,
             activeMonth: new Date().getMonth() + 1, // Current month (1-12)
             activeDay: 32,  // 32 represents "All Days" 
@@ -808,51 +798,10 @@ class EditSelectedForm extends Component {
         try {
             this.setState({ loading: true });
             this.initializeDates();
-            // Set up real-time listener for form data
-            // this.formListener = onValue(this.props.firebase.rentalGroup(this.props.index),
-            //     (snapshot) => {
-            //         const form = snapshot.val();
-            //         console.log(form)
-            //         if (form) {
-            //             console.log(form)
-            //             this.setState({
-            //                 participants: form.participants || [],
-            //                 availableList: form.available || [],
-            //                 isComplete: form.complete || false,
-            //                 transaction: form.transaction || '',
-            //                 size: form.size || 0,
-            //                 name: form.name || '',
-            //                 loading: false
-            //             });
-            //         } else {
-            //             this.setState({
-            //                 loading: false,
-            //                 error: 'Form not found'
-            //             });
-            //         }
-            //     },
-            //     (error) => {
-            //         console.error('Error loading form data:', error);
-            //         this.setState({
-            //             error: 'Failed to load form data',
-            //             loading: false
-            //         });
-            //     }
-            // );
-
             // Load digital waivers with current date filters
             const { activeMonth, activeDay, activeYear } = this.state;
             const dateRange = this.calculateDateRange(activeMonth, activeDay, activeYear);
             await this.loadDigitalWaivers(dateRange.startDate, dateRange.endDate);
-
-            // Add listener for rental options
-            this.optionsListener = onValue(this.props.firebase.rentalOptions(),
-                (snapshot) => {
-                    if (snapshot.exists()) {
-                        this.setState({ rentalOptions: snapshot.val() });
-                    }
-                }
-            );
 
             this.setState({ loading: false })
         } catch (error) {
@@ -865,16 +814,6 @@ class EditSelectedForm extends Component {
     };
 
     componentWillUnmount = () => {
-        // Remove the listener when component unmounts
-        if (this.formListener) {
-            this.formListener();
-        }
-        if (this.waiversListener) {
-            this.waiversListener();
-        }
-        if (this.optionsListener) {
-            this.optionsListener();
-        }
         if (this.memberSearchDebounce) {
             clearTimeout(this.memberSearchDebounce);
         }
@@ -1380,7 +1319,6 @@ class EditSelectedForm extends Component {
 
     handleRemoveRental = async (participantIndex, rentalIndex) => {
         const { participants, available } = this.props.form;
-        const { rentalOptions } = this.state;
 
         if (!participants?.[participantIndex]?.rentals?.[rentalIndex]) {
             console.error('Invalid rental removal attempt');
@@ -1507,7 +1445,6 @@ class EditSelectedForm extends Component {
             return;
         }
         const { participants, available } = this.props.form;
-        const { rentalOptions } = this.state;
 
         if (!participants || !available || participants.length === 0 || available.length === 0) {
             console.log('No participants or available rentals to distribute');
@@ -1773,6 +1710,7 @@ class EditSelectedForm extends Component {
                             </MUIButton>
                             <MUIButton
                                 startIcon={<Edit />}
+                                disabled={this.props.catalogPending}
                                 onClick={() => this.setState({ showInventoryEdit: true, inventoryReview: {
                                     key: this.props.form.key, identity: rentalIdentity(this.props.form),
                                     available: rentalRows(this.props.form.available),
@@ -1892,15 +1830,15 @@ class EditSelectedForm extends Component {
                     onSave={this.handleSizeUpdate}
                 />
 
-                <InventoryEditModal
-                    open={this.state.showInventoryEdit}
+                {this.state.showInventoryEdit && <InventoryEditModal
+                    catalogPending={this.props.catalogPending}
                     onClose={() => { if (!this.savingInventory) this.setState({ showInventoryEdit: false, inventoryReview: null }); }}
                     saving={this.state.savingInventory}
                     available={this.state.inventoryReview?.available}
                     onSave={this.handleInventoryUpdate}
                     createRequestId={this.props.form.createRequestId}
-                    currentOptions={this.state.rentalOptions}
-                />
+                    currentOptions={this.props.rentalOptions}
+                />}
             </div>
         );
     }

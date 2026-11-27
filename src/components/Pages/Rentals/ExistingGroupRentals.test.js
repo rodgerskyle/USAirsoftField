@@ -345,3 +345,23 @@ test('the editor shows legacy swap dates against the right renter when a sparse 
     expect(lee.getByText('Time not recorded')).toBeVisible();
     expect(lee.queryByText('Replaced gear (1)')).toBeNull();
 });
+
+test('editing inventory uses the shared catalog and preserves the quantity draft on a live stock update', async () => {
+    current.available = [{ value: 'vest', id: 'vest-type', amount: 2 }];
+    const options = {
+        catalogVest: { id: 'vest-type', value: 'vest', label: 'Vest', max: '20', stock: '9' },
+        catalogMask: { value: 'mask', label: 'Mask', max: '10', stock: '2' }
+    };
+    const view = render(<EditForm {...formProps()} rentalOptions={options} catalogPending />);
+    const edit = await screen.findByRole('button', { name: 'Edit Inventory' });
+    expect(edit).toBeDisabled();
+    view.rerender(<EditForm {...formProps()} rentalOptions={options} />);
+    fireEvent.click(edit);
+    const quantity = await screen.findByRole('spinbutton', { name: 'Vest quantity' });
+    expect(quantity).toHaveValue(2);
+    fireEvent.change(quantity, { target: { value: '3' } });
+    view.rerender(<EditForm {...formProps()} rentalOptions={{ ...options, catalogMask: { ...options.catalogMask, stock: '3' } }} />);
+    expect(quantity).toHaveValue(3);
+    fireEvent.mouseDown(screen.getByRole('combobox'));
+    expect(await screen.findByRole('option', { name: 'Mask · 7 available' })).toBeEnabled();
+});
