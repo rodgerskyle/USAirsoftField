@@ -4,6 +4,7 @@ import Inventory2Outlined from '@mui/icons-material/Inventory2Outlined';
 import CheckCircleOutline from '@mui/icons-material/CheckCircleOutline';
 import AssignmentOutlined from '@mui/icons-material/AssignmentOutlined';
 import { v4 as uuid } from 'uuid';
+import { GearMovementTimes } from './GearMovementTimes';
 import { QuickGearDesk } from './QuickGearDesk';
 import { validGearTag } from './utils/rentalGear';
 
@@ -62,10 +63,12 @@ export function ArmoryPlayer({ card, formLink, formLabel, onIssue, onSync, fireb
                 {formLink && <Link className="btn btn-outline-primary" to={formLink}>{formLabel}</Link>}
             </div>
         </form> : <>
-            <ul className="armory-issued-list">{person.rows.map(row => <li key={row.unitKey}>
-                <span>{row.label || row.value || 'Item'} {row.number && <strong>#{row.number}</strong>}</span>
+            {!(serviceOpen && stage === 'out' && !archived) && <ul className="armory-issued-list">{person.rows.map(row => <li key={row.unitKey}>
+                <div><span>{row.label || row.value || 'Item'} {row.number && <strong>#{row.number}</strong>}</span>
+                    <GearMovementTimes row={row} />
+                </div>
                 {row.checked && <span className="armory-returned"><CheckCircleOutline fontSize="small" aria-hidden="true" /> Returned</span>}
-            </li>)}</ul>
+            </li>)}</ul>}
             {conflict && <p role="alert">This check-in has a pickup receipt for another rental. Review both forms before handing over additional equipment.</p>}
             {syncRequired && <div className="armory-sync"><p>Pickup is saved. Update check-in to send this player to briefing.</p>
                 <button type="button" className="btn btn-outline-primary" onClick={save} disabled={working}>{working ? 'Updating…' : 'Update check-in'}</button>

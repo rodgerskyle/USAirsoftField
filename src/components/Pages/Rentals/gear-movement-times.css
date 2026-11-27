@@ -1,0 +1,10 @@
+.gear-movement { text-align: start; min-width: 0; overflow-wrap: anywhere; }
+.gear-movement-dates { display: grid; gap: .2rem; margin: .3rem 0 0; font-size: .94rem; line-height: 1.45; }
+.gear-movement-dates > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: .1rem .6rem; }
+.gear-movement-dates dt { font: inherit; font-weight: 600; }
+.gear-movement-dates dd { margin: 0; font-variant-numeric: tabular-nums; }
+.gear-movement details { margin: .2rem 0 0; }
+.gear-movement summary { width: fit-content; min-height: 44px; padding-block: .65rem; cursor: pointer; font-weight: 600; }
+.gear-movement summary:focus-visible { outline: 3px solid var(--usaw-focus, #3279ce); outline-offset: 2px; }
+.gear-movement-previous { margin: .25rem 0 .6rem; padding-inline-start: .7rem; border-inline-start: 2px solid var(--usaw-line, currentColor); }
+.gear-movement-previous .gear-movement-dates { margin: .1rem 0 0; }

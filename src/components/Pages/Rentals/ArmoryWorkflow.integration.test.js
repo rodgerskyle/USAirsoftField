@@ -1,6 +1,6 @@
 import React from 'react';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { get, onValue, runTransaction } from 'firebase/database';
+import { get, onValue, runTransaction, update } from 'firebase/database';
 import { requestStaffFieldTool } from '../../constants/fieldStaffApi';
 import CreateRentalForm from './CreateRentalForm';
 import ReturnForm from './ReturnForm';
@@ -12,7 +12,7 @@ import { changeEquipment, gearRows, issueRentalGear } from './utils/rentalGear';
 
 jest.mock('../../Firebase', () => ({ withFirebase: component => component }));
 jest.mock('../../constants/fieldStaffApi');
-jest.mock('firebase/database', () => ({runTransaction:jest.fn(), get:jest.fn(), onValue:jest.fn(), child:(_ref,path) => path}));
+jest.mock('firebase/database', () => ({ serverTimestamp: () => Date.now(),runTransaction:jest.fn(), get:jest.fn(), onValue:jest.fn(), update:jest.fn(), child:(_ref,path) => path}));
 jest.mock('../StaffCardScanner', () => ({StaffCardScanner:() => null}));
 const member = {playerId:'member-example-37', date:rentalFieldDay(), displayName:'Morgan Archer'};
 const catalog = {id:'mask',value:'mask',label:'Mask',cost:5,stock:0,max:8};
@@ -84,7 +84,27 @@ test('a check-in rental becomes active before pickup, and two refs issue, swap a
     const handoffs = [];
     const archiveSnapshot = path => ({val:() => path.split('/').reduce((row,key) => row?.[key],desk.read())});
     get.mockImplementation(async path => archiveSnapshot(path));
-    onValue.mockImplementation((path,listener) => {listener(archiveSnapshot(path)); return () => {};});
+    const boardListeners = new Map();
+    const clearedReturns = {};
+    onValue.mockImplementation((path, listener) => {
+        if (!path.startsWith('returnListClears/')) {
+            listener(archiveSnapshot(path));
+            return () => {};
+        }
+        if (!boardListeners.has(path)) boardListeners.set(path, new Set());
+        boardListeners.get(path).add(listener);
+        listener({ val: () => clearedReturns[path] || null });
+        return () => boardListeners.get(path).delete(listener);
+    });
+    update.mockImplementation(async (root, paths) => {
+        expect(root).toBe('returnListClears');
+        for (const [dayAndId, flag] of Object.entries(paths)) {
+            const [day, id] = dayAndId.split('/');
+            const path = root + '/' + day;
+            clearedReturns[path] = { ...clearedReturns[path], [id]: flag };
+            for (const listener of boardListeners.get(path) || []) listener({ val: () => clearedReturns[path] });
+        }
+    });
     requestStaffFieldTool.mockImplementation(async (_firebase,_uid,path,options) => {
         if (path.startsWith('/api/rental-groups?pickup=today')) {
             return {date:member.date,players:receipt ? [] : [admission],admitted:[admission],issued:receipt ? [receipt] : []};
@@ -125,6 +145,10 @@ test('a check-in rental becomes active before pickup, and two refs issue, swap a
     await waitFor(() => expect(gearRows(desk.form())[0].number).toBe('C-039'));
     const swapped = gearRows(desk.form())[0];
     expect(swapped).toMatchObject({number:'C-039',checked:false,id:unit.id});
+    expect(issued.pickedUpAt).toEqual(expect.any(Number));
+    expect(swapped.previousNumbers).toContainEqual(expect.objectContaining({
+        number: issued.number, pickedUpAt: issued.pickedUpAt, returnedAt: swapped.pickedUpAt,
+    }));
     expect(Object.values(desk.read().options[0].repairHolds)).toEqual([expect.objectContaining({number:issued.number})]);
     first.rerender(queue('ref-one'));
     const sameReview = desk.form();
@@ -157,6 +181,19 @@ test('a check-in rental becomes active before pickup, and two refs issue, swap a
     const completed = within(await screen.findByRole('article',{name:'Rental for ' + member.displayName}));
     expect(completed.getByText('#C-039')).toBeVisible();
     expect(completed.queryByRole('button',{name:'Swap or return gear'})).toBeNull();
+    const archivedUnit = gearRows(archive[0])[0];
+    expect(archivedUnit.pickedUpAt).toBe(swapped.pickedUpAt);
+    expect(archivedUnit.returnedAt).toEqual(expect.any(Number));
+    expect(archivedUnit.previousNumbers).toEqual(swapped.previousNumbers);
+
+    const beforeClear = JSON.parse(JSON.stringify(desk.read().closedGear));
+    fireEvent.click(await screen.findByRole('button',{name:/Clear returned list/i}));
+    fireEvent.click(await screen.findByRole('button',{name:/Confirm clear/i}));
+    await waitFor(() => expect(screen.queryByRole('article',{name:'Rental for '+member.displayName})).toBeNull());
+    expect(desk.read().closedGear).toEqual(beforeClear);
+    expect(desk.read().options[0].stock).toBe(1);
+    fireEvent.click(await screen.findByRole('button',{name:/Show cleared returns/i}));
+    expect(await screen.findByRole('article',{name:'Rental for '+member.displayName})).toBeVisible();
 });
 
 test.each(['missing','expired'])('%s waiver status holds pickup until the current signed waiver is attached', async status => {

@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { v4 as uuid } from 'uuid';
+import { GearMovementTimes, GearTime } from './GearMovementTimes';
 import { StaffCardScanner } from '../StaffCardScanner';
 import { changeEquipment, gearRows, tag, validGearTag } from './utils/rentalGear';
 import { rentalIdentity } from './utils/openRental';
@@ -37,8 +38,12 @@ function RentalGearReview({ form, firebase, initialTag = '', personKey }) {
     const outstanding = rows.filter(row => row.physicallyIssued && !row.checked);
     const returned = rows.filter(row => row.checked).length;
     const search = filter.trim().toLowerCase();
-    const displayed = rows.filter(row => !search || row.number.toLowerCase().includes(search) ||
-        row.name.toLowerCase().includes(search) || String(row.label).toLowerCase().includes(search));
+    const matchesCurrent = row => !search || row.number.toLowerCase().includes(search) ||
+        row.name.toLowerCase().includes(search) || String(row.label).toLowerCase().includes(search);
+    const canService = row => row.physicallyIssued && !row.checked && matchesCurrent(row) &&
+        (row.number.toLowerCase() === search || !row.previousNumbers?.some(item => item.number.toLowerCase() === search));
+    const displayed = rows.filter(row => matchesCurrent(row) ||
+        row.previousNumbers?.some(item => item.number.toLowerCase().includes(search)));
 
     function choose(action, items) {
         setMessage(''); setError(''); setReplacement(''); setRepair(true); setReason(''); select({ action, items, operationId: uuid() });
@@ -86,8 +91,10 @@ function RentalGearReview({ form, firebase, initialTag = '', personKey }) {
                     onChange={event => setFilter(event.target.value)} /></label>
                 <GearScan onScan={setFilter} />
                 {displayed.length ? <ul className="gear-lines">{displayed.map(row => <li key={keyOf(row)}>
-                    <span><strong>{row.name}</strong> · {labelOf(row)} <small className="gear-status">{row.checked ? 'Returned' : row.physicallyIssued ? 'Picked up' : 'Awaiting pickup'}</small></span>
-                    {row.physicallyIssued && !row.checked && <div className="gear-actions"><button type="button" className="btn btn-outline-primary" onClick={() => choose('swap', [row])}>Swap</button>
+                    <div><span><strong>{row.name}</strong> · {labelOf(row)} <small className="gear-status">{row.checked ? 'Returned' : row.physicallyIssued ? 'Picked up' : 'Awaiting pickup'}</small></span>
+                        <GearMovementTimes row={row} search={search} />
+                    </div>
+                    {canService(row) && <div className="gear-actions"><button type="button" className="btn btn-outline-primary" onClick={() => choose('swap', [row])}>Swap</button>
                         <button type="button" className="btn btn-primary" onClick={() => choose('return', [row])}>Return</button></div>}
                 </li>)}</ul> : <p>No equipment matches that search.</p>}
                 {outstanding.length > 1 && !filter && <button type="button" className="btn btn-outline-primary"
@@ -104,7 +111,7 @@ export function EquipmentHistory({ entries }) {
     const history = Object.entries(entries || {}).filter(([, entry]) => entry).sort(([, a], [, b]) => b.at - a.at);
     const actions = { swap: 'Swap', return: 'Return', issue: 'Picked up', assign: 'Number assigned' };
     return history.length > 0 && <details className="gear-history"><summary>Equipment history</summary><ul>
-        {history.map(([id, entry]) => <li key={id}>{new Date(entry.at).toLocaleString()} · {actions[entry.action] || 'Equipment updated'}
+        {history.map(([id, entry]) => <li key={id}><GearTime value={entry.at} /> · {actions[entry.action] || 'Equipment updated'}
             {entry.needsRepair && ' · sent for inspection'}{entry.reason && ' · ' + entry.reason}
             <ul>{Object.values(entry.items || {}).map((item, i) => <li key={i}>{item.name} · {item.label || item.value} {item.from && '#' + item.from}{item.to && (item.from ? ' → #' : '#') + item.to}</li>)}</ul>
         </li>)}

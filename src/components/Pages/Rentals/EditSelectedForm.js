@@ -22,7 +22,8 @@ import { withFirebase } from '../../Firebase';
 import GroupRentalPicker from './GroupRentalPicker';
 import { isCheckInRenter } from './utils/checkInRenter';
 import { editRentalInventory } from './utils/editRentalInventory';
-import { changeEquipment, gearRows, reservationQuantity } from './utils/rentalGear';
+import { GearMovementTimes } from './GearMovementTimes';
+import { armoryPeople, changeEquipment, gearRows, reservationQuantity } from './utils/rentalGear';
 import { importRentalParticipants, changeOpenRental, renameRentalParticipant, rentalIdentity, rentalParticipants, rentalRows } from './utils/openRental';
 
 import '../../../App.css';
@@ -349,7 +350,7 @@ const TransactionDialog = ({ open, onClose, onSubmit, error, value, onChange }) 
     );
 };
 
-function EquipmentNumberField({ rental, label, canIssue: active, onSave, onRemove }) {
+function EquipmentNumberField({ rental, movement, label, canIssue: active, onSave, onRemove }) {
     const canIssue = active && !rental.checked;
     const savedNumber = String(rental.number ?? '');
     const [draft, setDraft] = useState(null);
@@ -410,10 +411,11 @@ function EquipmentNumberField({ rental, label, canIssue: active, onSave, onRemov
             </div>}
             {error && <p role="alert">{error}</p>}
         </form>
+        <GearMovementTimes row={movement} />
     </li>;
 }
 
-const ParticipantCard = ({ participant, fromCheckIn, returnToCheckIn, index, canIssue, onDelete, onRemoveRental, onAddRental, availableRentals, onEditRentalNumber, onRename }) => {
+const ParticipantCard = ({ participant, equipment, fromCheckIn, returnToCheckIn, index, canIssue, onDelete, onRemoveRental, onAddRental, availableRentals, onEditRentalNumber, onRename }) => {
     const [nameEdit, setNameEdit] = useState(null);
     const [savingName, setSavingName] = useState(false);
     const [nameMessage, setNameMessage] = useState(null);
@@ -503,7 +505,7 @@ const ParticipantCard = ({ participant, fromCheckIn, returnToCheckIn, index, can
                         const label = units.length > 1
                             ? rental.label + ' (' + (units.indexOf(rental) + 1) + ' of ' + units.length + ')' : rental.label;
                         return <EquipmentNumberField key={rental.id || rental.value + '-' + rentalIndex}
-                            rental={rental} label={label} canIssue={canIssue}
+                            rental={rental} movement={equipment[rentalIndex]} label={label} canIssue={canIssue}
                             onSave={number => onEditRentalNumber(index, rentalIndex, number)}
                             onRemove={() => onRemoveRental(index, rentalIndex)} />;
                     })}
@@ -1749,6 +1751,7 @@ class EditSelectedForm extends Component {
 
         const filteredWaivers = this.getFilteredWaivers();
         const player = this.props.checkedInPlayer;
+        const equipment = this.props.equipmentByParticipant || armoryPeople(this.props.form).map(person => person.rows);
         const displayed = (this.props.form.participants || []).map((participant, index) =>
             ({ participant, index, selected: isCheckInRenter(participant, player) }));
         if (player) displayed.sort((a, b) => Number(b.selected) - Number(a.selected));
@@ -1825,6 +1828,7 @@ class EditSelectedForm extends Component {
                         <ParticipantCard
                             key={participant.groupEntryId || participant.ref || index}
                             participant={participant}
+                            equipment={equipment[index]}
                             fromCheckIn={selected}
                             returnToCheckIn={this.props.returnToCheckIn}
                             canIssue={Boolean(this.props.form.complete && !participant.armoryIssuedAt && (this.props.form.armoryVersion!==1 || participant.waiverProof))}

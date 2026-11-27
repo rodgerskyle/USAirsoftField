@@ -94,10 +94,15 @@ export function armoryQueue(forms, desk, closed = []) {
             else if (checkInRequired && !admission && fieldDate && desk?.date && fieldDate !== desk.date) stage = 'scheduled';
             else if (!ready) stage = 'desk';
             else if (checkInRequired && !admission) stage = 'arrival';
+            const syncRequired = Boolean(person.issuedAt && storedVisit && admission && !handedHere && !prior);
+            const conflict = Boolean(prior && !handedHere);
+            // Open forms can span several days. A completed renter belongs on
+            // the board for their return day, even if the whole party is still open.
+            if (!archived && stage === 'returned' && !syncRequired && !conflict && !pending && desk?.date &&
+                person.rows.every(row => row.returnedAt && armoryFieldDay(row.returnedAt) !== desk.date)) continue;
             cards.push({key, form, person: archived && returnedToday.length ? {...person,rows:returnedToday} : person,
                 admission, pending, archived, checkInRequired, pickedUp, fieldDate, stage,
-                syncRequired: Boolean(person.issuedAt && storedVisit && admission && !handedHere && !prior),
-                conflict: Boolean(prior && !handedHere),
+                syncRequired, conflict,
                 name: form.participants?.[person.personKey]?.name || pending?.displayName || person.name,
                 group: pending?.groupName || form.checkInGroup?.name || form.name || 'Rental form',
             });

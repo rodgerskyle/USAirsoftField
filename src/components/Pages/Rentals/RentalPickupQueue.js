@@ -7,6 +7,8 @@ import WarningAmberOutlined from '@mui/icons-material/WarningAmberOutlined';
 import RentalPickupChoice from './RentalPickupChoice';
 import { ArmoryPlayer } from './ArmoryPlayer';
 import { armoryFieldDay, armoryQueries, armoryQueue, mergeAdmissionPages } from './utils/armoryQueue';
+import { ReturnedListControls, useReturnMarkers } from './ReturnedListControls';
+import { matchesArmorySearch, returnMarkers } from './utils/returnedBoard';
 import { issueRentalGear } from './utils/rentalGear';
 import { requestStaffFieldTool } from '../../constants/fieldStaffApi';
 import { checkInRentalLink, groupRentalLink } from '../../constants/groupRentalLink';
@@ -23,6 +25,7 @@ export default function RentalPickupQueue({ firebase, uid, isAdmin, rentalForms 
     const [notice, setNotice] = useState('');
     const [actionError, setActionError] = useState('');
     const [stage, setStage] = useState('waiting');
+    const [historyDay, setHistoryDay] = useState(null);
     const [query, setQuery] = useState('');
     const [revision, setRevision] = useState(0);
     const [archiveRetry, setArchiveRetry] = useState(0);
@@ -160,21 +163,34 @@ export default function RentalPickupQueue({ firebase, uid, isAdmin, rentalForms 
     }
 
     const terms = query.trim().toLowerCase();
-    const visible = queue.cards.filter(card => card.stage === stage && (!terms ||
-        [card.name,card.group,card.form.transaction,...card.person.rows.map(row=>row.number)].some(value=>String(value || '').toLowerCase().includes(terms))));
+    const returns = useMemo(() => queue.cards.filter(card => card.stage === 'returned')
+        .map(card => ({card, markers:returnMarkers(card, date)})), [queue, date]);
+    const hasUndated = returns.some(entry => entry.markers.some(key => key.startsWith('undated/')));
+    const cleared = useReturnMarkers(firebase, uid, date, hasUndated, archiveRetry);
+    const clearedCards = new Set(returns.filter(({markers}) => markers.length &&
+        markers.every(key => cleared?.markers.has(key))).map(({card}) => card));
+    const history = historyDay === date;
+    const visible = queue.cards.filter(card => card.stage === stage &&
+        (stage !== 'returned' || history === clearedCards.has(card)) && matchesArmorySearch(card, terms));
+    const clearable = returns.filter(({card, markers}) => markers.length && !clearedCards.has(card) && matchesArmorySearch(card, terms));
     const unassigned = stage === 'waiting' ? queue.unassigned.filter(row => !terms || [row.displayName,row.groupName].join(' ').toLowerCase().includes(terms)) : [];
-    const counts = Object.fromEntries(stages.map(([key])=>[key,queue.cards.filter(card=>card.stage===key).length + (key === 'waiting' ? queue.unassigned.length : 0)]));
+    const counts = Object.fromEntries(stages.map(([key]) => [key, queue.cards.filter(card => card.stage === key && !clearedCards.has(card)).length +
+        (key === 'waiting' ? queue.unassigned.length : 0)]));
     return <section className="rental-pickup" aria-label="Rental pickup queue">
         <header className="rental-pickup__header"><div><h3>Armory pickup</h3><p>Enter the equipment numbers when the player collects their gear.</p></div>
-            <button className="btn btn-outline-primary" onClick={() => {setRevision(value=>value+1);if (archiveError) setArchiveRetry(value=>value+1);}}><Refresh fontSize="small" aria-hidden="true" /> Refresh pickups</button>
+            <button className="btn btn-outline-primary" onClick={() => {setRevision(value=>value+1);if (archiveError || cleared?.error) setArchiveRetry(value=>value+1);}}><Refresh fontSize="small" aria-hidden="true" /> Refresh pickups</button>
         </header>
         {(actionError || error) && <p className="rental-pickup__message" data-tone="attention" role="alert"><WarningAmberOutlined aria-hidden="true" />{actionError || error}</p>}
         {archiveError && stage === 'returned' && <p role="alert" className="rental-pickup__message" data-tone="attention">{archiveError}</p>}
+        {cleared?.error && stage === 'returned' && <p role="alert" className="rental-pickup__message" data-tone="attention">{cleared.error}</p>}
         {notice && <p className="rental-pickup__message" data-tone="ready" role="status"><CheckCircleOutline aria-hidden="true" />{notice}</p>}
         <div className="armory-stages" role="group" aria-label="Rental status">{stages.filter(([key]) => ['waiting','out','returned'].includes(key) || counts[key] || stage === key).map(([key,label])=>
             <button type="button" aria-pressed={key === stage} className="btn btn-outline-primary" key={key}
-                onClick={()=>{setStage(key);setQuery('');}}>{label} <span>{counts[key]}</span></button>)}</div>
-        {(counts[stage] > 0 || query) && <label className="armory-filter">Find a player, party, or equipment number
+                onClick={()=>{setStage(key);setQuery('');setHistoryDay(null);}}>{label} <span>{counts[key]}</span></button>)}</div>
+        {stage === 'returned' && <ReturnedListControls key={JSON.stringify([date, uid])} firebase={firebase} day={date}
+            clearable={clearable} enabled={Boolean(cleared?.ready && desk && !error)} filtered={Boolean(terms)}
+            clearedCount={clearedCards.size} history={history} setHistory={show => setHistoryDay(show ? date : null)} />}
+        {(counts[stage] > 0 || query || (stage === 'returned' && history && clearedCards.size > 0)) && <label className="armory-filter">Find a player, party, or equipment number
             <input className="form-control" type="search" autoComplete="off" value={query} onChange={event=>setQuery(event.target.value)} /></label>}
         {visible.map(card => {
             const {form,admission} = card;

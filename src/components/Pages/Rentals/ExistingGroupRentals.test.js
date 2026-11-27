@@ -9,7 +9,7 @@ import { importRentalParticipants, rentalIdentity } from './utils/openRental';
 jest.mock('../../Firebase', () => ({ withFirebase: component => component }));
 jest.mock('../../session', () => ({ withAuthorization: () => component => component }));
 jest.mock('./GroupRentalPicker', () => jest.fn());
-jest.mock('firebase/database', () => ({
+jest.mock('firebase/database', () => ({ serverTimestamp: () => Date.now(),
     get: jest.fn(), onValue: jest.fn(), runTransaction: jest.fn(), set: jest.fn(),
     query: jest.fn(), ref: jest.fn(), orderByChild: jest.fn(), startAt: jest.fn(), startAfter: jest.fn(), endAt: jest.fn(), limitToFirst: jest.fn(), limitToLast: jest.fn(),
 }));
@@ -321,4 +321,27 @@ test('customer kiosk deep links do not expose rental records or staff waiver sea
     expect(screen.queryByText(current.name)).toBeNull();
     expect(screen.queryByRole('button',{name:'Add Participant'})).toBeNull();
     expect(get).not.toHaveBeenCalled();
+});
+
+test('the editor shows legacy swap dates against the right renter when a sparse roster shares catalog IDs', async () => {
+    const original = Date.parse('2026-11-26T17:00:00Z');
+    const swap = Date.parse('2026-11-26T21:20:00Z');
+    const item = {id:gear.id,value:'vest',personKey:'renter-a',unitKey:'left'};
+    current = {...current,participants:{
+        'renter-a':{...handEntered,name:'Avery',rentals:{left:{...gear,number:'8',issuedAt:original}}},
+        'renter-b':{...handEntered,name:'Lee',ref:'different',rentals:{other:{...gear,number:'9'}}},
+    },gearHistory:{
+        first:{action:'issue',at:original,items:[{...item,to:'4'}]},
+        second:{action:'swap',at:swap,items:[{...item,from:'4',to:'8'}]},
+    }};
+    render(<EditForm {...formProps()} />);
+    const avery = within(await screen.findByRole('list',{name:'Equipment for Avery'}));
+    const currentDates = avery.getByRole('textbox',{name:'Vest equipment number'}).closest('li').querySelector('.gear-movement-dates');
+    expect(within(currentDates).getByText(/Nov 26, 2026.*1:20 PM PST/)).toBeVisible();
+    fireEvent.click(avery.getByText('Replaced gear (1)'));
+    expect(avery.getByText('#4')).toBeVisible();
+    expect(avery.getByText(/Nov 26, 2026.*9:00 AM PST/)).toBeVisible();
+    const lee = within(screen.getByRole('list',{name:'Equipment for Lee'}));
+    expect(lee.getByText('Time not recorded')).toBeVisible();
+    expect(lee.queryByText('Replaced gear (1)')).toBeNull();
 });

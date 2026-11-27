@@ -3,7 +3,7 @@ import { render, screen, fireEvent, within } from '@testing-library/react';
 import { runTransaction } from 'firebase/database';
 import { QuickGearDesk } from './QuickGearDesk';
 
-jest.mock('firebase/database', () => ({ runTransaction: jest.fn() }));
+jest.mock('firebase/database', () => ({ serverTimestamp: () => Date.now(), runTransaction: jest.fn() }));
 jest.mock('../StaffCardScanner', () => ({
     StaffCardScanner: ({ onScan, parseEquipmentTag }) => <button type="button" onClick={() => onScan(parseEquipmentTag('27', 'code_128'))}>Fixture camera</button>,
 }));
