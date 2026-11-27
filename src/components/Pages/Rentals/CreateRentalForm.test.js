@@ -20,8 +20,8 @@ jest.mock('./GroupRentalPicker', () => ({ onAdd }) => {
 
 const equipment = { id: 'mask', value: 'mask', label: 'Mask', stock: 0, max: 6, cost: 5 };
 
-function fixture({ canImportGroup = true, groups = {}, loseFirstReceipt = false, stock = 0, walkOn, verifyWalkOn } = {}) {
-    let rentals = { group: groups, options: [{ ...equipment, stock }], unrelated: { active: true } };
+function fixture({ canImportGroup = true, groups = {}, loseFirstReceipt = false, stock = 0, walkOn, verifyWalkOn, catalog } = {}) {
+    let rentals = { group: groups, options: catalog || [{ ...equipment, stock }], unrelated: { active: true } };
     const snapshot = () => ({ child: path => ({ val: () => path.split('/').reduce((value, key) => value?.[key], rentals) }) });
     runTransaction.mockImplementation(async (path, apply, options) => {
         expect(path).toBe('rentals');
@@ -38,7 +38,7 @@ function fixture({ canImportGroup = true, groups = {}, loseFirstReceipt = false,
     });
     const open = jest.fn();
     const openDesk = () => render(<CreateRentalForm checkedInPlayer={walkOn} verifyCheckedInPlayer={verifyWalkOn} firebase={{ rentals: () => 'rentals' }} canImportGroup={canImportGroup}
-        uid="staff" onOpenExisting={open} rentalOptions={[equipment]} rentalForms={[]} />);
+        uid="staff" onOpenExisting={open} rentalOptions={catalog || [equipment]} rentalForms={[]} />);
     return { data: () => rentals, open, openDesk, desk: openDesk() };
 }
 
@@ -52,6 +52,39 @@ function reserveAndPay(quantity = 1, scope = screen) {
     fireEvent.click(scope.getByRole('button', { name: /Create Rental \(/ }));
 }
 beforeEach(() => runTransaction.mockReset());
+
+test('distinguishes missing inventory setup from gear that is fully reserved', () => {
+    fixture({catalog: [
+        { value: 'mask', label: 'Mask', cost: 5, stock: 0 },
+        { value: 'vest', label: 'Vest', cost: 5, max: 2, stock: 'unknown' },
+        { value: 'helmet', label: 'Helmet', cost: 5, max: 1, stock: 1 }
+    ]});
+    expect(screen.getByText('Inventory maximum needed')).toBeVisible();
+    expect(screen.getByText('Inventory recount needed')).toBeVisible();
+    expect(screen.getByText('Out of stock')).toBeVisible();
+    expect(screen.getAllByRole('checkbox').filter(box => !box.disabled)).toHaveLength(0);
+});
+
+test.each(['mask', 42])('reads string counts and prices and reserves keyed item %s without a catalog id', async value => {
+    const catalog = {
+        2: {value:'vest', label:'Vest', cost:'2.50', max:'3'},
+        8: {value, label:'Mask', cost:'5.50', max:'10', stock:'9'},
+    };
+    const {data} = fixture({catalog});
+    expect(screen.getByText('3 available')).toBeVisible();
+    expect(screen.getByText('1 available')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Import reviewed members' }));
+    fireEvent.click(screen.getByRole('checkbox', {name: /Mask/}));
+    expect(screen.getByRole('button', {name: 'Add one Mask'})).toBeDisabled();
+    expect(screen.getByRole('checkbox', {name: /Vest/})).not.toBeChecked();
+    expect(screen.getByRole('button', {name: 'Create Rental ($5.50)'})).toBeEnabled();
+    reserveAndPay();
+    await screen.findByText('Success!');
+    expect(data().options[2]).toEqual(catalog[2]);
+    expect(data().options[8].stock).toBe(10);
+    expect(data().group[0].available).toHaveLength(1);
+    expect(data().group[0].available[0].value).toBe(value);
+});
 
 test('a reviewed birthday roster is saved with distinct stable participant IDs and no assigned gear', async () => {
     const old = { name: 'Previous rental', complete: true };

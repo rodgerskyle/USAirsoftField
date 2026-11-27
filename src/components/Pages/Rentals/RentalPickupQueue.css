@@ -103,3 +103,9 @@
 .armory-issued-list li { display: flex; align-items: center; justify-content: space-between; border-block-start: 1px solid var(--usaw-line); padding: .5rem 0; }
 .armory-returned { color: var(--pickup-ready); }
 .armory-sync { padding: .65rem; margin-block: .65rem; background: var(--usaw-subtle); border-radius: .55rem; }
+.armory-return-controls { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; }
+.armory-return-controls:not(:empty) { margin-bottom: .85rem; }
+.armory-return-controls p { margin: 0; }
+.armory-return-confirm { flex-basis: 100%; background: var(--usaw-subtle); border-radius: .55rem; padding: 1rem; }
+.armory-return-confirm p { margin-bottom: .65rem; }
+.armory-return-confirm button { margin: 0 .5rem .25rem 0; }

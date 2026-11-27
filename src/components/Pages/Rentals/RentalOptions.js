@@ -3,12 +3,13 @@ import { withFirebase } from '../../Firebase';
 import * as ROLES from '../../constants/roles';
 import { withAuthorization } from '../../session';
 import { runTransaction } from 'firebase/database';
-import { clearRepair, heldCount } from './utils/rentalGear';
+import { availableRentalUnits, clearRepair, heldCount, rentalInventoryCount } from './utils/rentalGear';
 import { rentalRows } from './utils/openRental';
 import '../FrontDeskForms.css';
 
 const RentalOptions = (props) => {
     const { firebase, rentalOptions } = props;
+    const savedByValue = new Map(rentalRows(rentalOptions).map(option => [option.value, option]));
     const [localOptions, setLocalOptions] = useState(rentalRows(rentalOptions));
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
@@ -43,14 +44,19 @@ const RentalOptions = (props) => {
         setError(null);
         setSuccess(null);
         try {
-            for (let option of localOptions) {
-                if (option.stock > option.max) {
-                    setError(`The maximum for ${option.value} cannot be less than current stock.`);
+            const changes = localOptions.filter(option => option.max !== savedByValue.get(option.value)?.max);
+            for (const option of changes) {
+                const max = rentalInventoryCount(option.max);
+                const inUse = rentalInventoryCount(option.stock ?? 0);
+                if (inUse === null) {
+                    setError(`Recount reserved equipment before changing the maximum for ${option.label}.`);
+                    return;
+                }
+                if (max === null || max < inUse) {
+                    setError(`Enter a whole-number maximum of at least ${inUse} for ${option.label}.`);
                     return;
                 }
             }
-            const changes = localOptions.filter(option =>
-                rentalRows(rentalOptions).some(original => original.value === option.value && Number(original.max) !== Number(option.max)));
             if (changes.length) {
                 const result = await runTransaction(firebase.rentalOptions(), current => {
                     if (current === null) return null;
@@ -59,9 +65,10 @@ const RentalOptions = (props) => {
                         const matches = Object.entries(current).filter(([, option]) => option?.value === change.value);
                         if (matches.length !== 1) throw new Error('Inventory changed. Review the current options.');
                         const [key, row] = matches[0];
-                        const previous = rentalRows(rentalOptions).find(option => option.value === row.value);
-                        const max = Number(change.max);
-                        if (Number(previous.max) !== Number(row.max) || !Number.isSafeInteger(max) || max < Number(row.stock || 0)) {
+                        const previous = savedByValue.get(row.value);
+                        const max = rentalInventoryCount(change.max);
+                        const inUse = rentalInventoryCount(row.stock ?? 0);
+                        if (!previous || previous.max !== row.max || max === null || inUse === null || max < inUse) {
                             throw new Error('Inventory changed. Review the current stock and maximum.');
                         }
                         next[key] = { ...row, max };
@@ -82,6 +89,7 @@ const RentalOptions = (props) => {
         try {
             const result = await runTransaction(firebase.rentals(), desk => {
                 if (desk === null) return null;
+                if (!rentalRows(desk.options).length) return undefined;
                 const options = Array.isArray(desk.options) ? [...desk.options] : { ...desk.options };
                 for (const [key, option] of Object.entries(options)) {
                     if (option) options[key] = { ...option, stock: heldCount(desk.group, option) };
@@ -89,9 +97,9 @@ const RentalOptions = (props) => {
                 return { ...desk, options };
             }, { applyLocally: false });
             if (!result.committed || !result.snapshot.exists()) throw new Error('Inventory unavailable.');
-            setSuccess("Rental inventory successfully reset.");
+            setSuccess("Inventory recounted from open rentals and items awaiting inspection.");
         } catch (err) {
-            setError("Failed to reset rental inventory.");
+            setError("Failed to recount rental inventory.");
         }
     };
 
@@ -112,30 +120,38 @@ const RentalOptions = (props) => {
                     }}>Release after inspection</button></li>))}</ul>
             </section>}
             {localOptions?.length ? (
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} noValidate>
                     <table>
                         <thead>
-                            <tr><th scope="col">Equipment</th><th scope="col">In use</th><th scope="col">Maximum</th></tr>
+                            <tr><th scope="col">Equipment</th><th scope="col">In use</th><th scope="col">Available</th><th scope="col">Maximum</th></tr>
                         </thead>
                         <tbody>
-                            {localOptions.map((rental, index) => (
-                                <tr key={rental.value || index}>
-                                    <th scope="row">{rental.label}</th>
-                                    <td>{rental.stock}</td>
-                                    <td>
-                                        <input className="form-control" type="number" min={Math.max(0, Number(rental.stock) || 0)} step="1"
-                                            inputMode="numeric" required aria-label={`Maximum for ${rental.label}`}
-                                            value={rental.max ?? ''} onChange={event => handleMaxChange(index, event.target.value)} />
-                                    </td>
-                                </tr>
-                            ))}
+                            {localOptions.map((rental, index) => {
+                                const saved = savedByValue.get(rental.value);
+                                const inUse = rentalInventoryCount(saved?.stock ?? 0);
+                                const configured = rentalInventoryCount(saved?.max) !== null;
+                                let available = availableRentalUnits(saved);
+                                if (inUse === null) available = 'Recount needed';
+                                if (!configured) available = 'Set maximum';
+                                return (
+                                    <tr key={rental.value || index}>
+                                        <th scope="row">{rental.label}</th>
+                                        <td>{inUse ?? 'Recount needed'}</td>
+                                        <td>{available}</td>
+                                        <td>
+                                            <input className="form-control" type="number" min={inUse ?? 0} step="1"
+                                                inputMode="numeric" required aria-label={`Maximum for ${rental.label}`}
+                                                value={rental.max ?? ''} onChange={event => handleMaxChange(index, event.target.value)} />
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                     <div className="desk-inventory-actions">
                         <button type="submit" className="btn btn-primary">Save changes</button>
                         {authUser?.roles[ROLES.SUPER] && (
-                            <button type="button" onClick={handleReset} className="btn btn-outline-danger"
-                                disabled={localOptions.some(option => option.max === '' || !Number.isInteger(Number(option.max)) || Number(option.max) < 0)}>
+                            <button type="button" onClick={handleReset} className="btn btn-outline-danger">
                                 Recount reserved equipment
                             </button>
                         )}

@@ -1,4 +1,4 @@
-import { runTransaction } from 'firebase/database';
+import { runTransaction, serverTimestamp } from 'firebase/database';
 import { v4 as uuid } from 'uuid';
 import { matchesRental, rentalIdentity, rentalParticipants, rentalRows } from './openRental';
 
@@ -14,15 +14,103 @@ export function validGearTag(number) {
 const owner = person => JSON.stringify([person.groupId || '', person.groupEntryId || '', person.ref || '', !!person.isDigital,
     person.groupEntryId || person.ref ? '' : person.name || '']);
 
+const knownTime = value => timestamp(value) && Number.isFinite(new Date(value).getTime()) ? value : null;
+
+// Historical swaps kept the original handoff stamp on the slot. Match their movement
+// records to the rental unit, including old forms that shared a catalog ID across units.
+function movementHistory(form) {
+    const byEquipment = new Map();
+    for (const [operation, { action, at, items }] of entries(form?.gearHistory)) {
+        if (!knownTime(at)) continue;
+        for (const item of rentalRows(items)) {
+            const equipment = JSON.stringify([item.value, item.id || '']);
+            const slot = JSON.stringify([String(item.personKey), String(item.unitKey)]);
+            if (!byEquipment.has(equipment)) byEquipment.set(equipment, new Map());
+            const slots = byEquipment.get(equipment);
+            if (!slots.has(slot)) slots.set(slot, []);
+            slots.get(slot).push({ operation, action, at, from: tag(item.from), to: tag(item.to) });
+        }
+    }
+    return (unit, personKey, unitKey) => {
+        const slots = byEquipment.get(JSON.stringify([unit.value, unit.id || '']));
+        if (!slots) return [];
+        const exact = slots.get(JSON.stringify([personKey, unitKey])) || [];
+        if (!unit.gearOperation || exact.some(event => event.operation === unit.gearOperation)) return exact;
+
+        // Editing an older roster could compact its Firebase numeric keys. The last
+        // operation identifies a moved unit only when it points to one history slot.
+        const matches = [...slots.values()].filter(events => events.some(event => event.operation === unit.gearOperation));
+        return matches.length === 1 ? matches[0] : exact;
+    };
+}
+
+function serialMovements(unit, events, armoryVersion) {
+    let number = tag(unit.number);
+    let returnedAt = knownTime(unit.returnedAt);
+    if (!number) return { pickedUpAt: null, returnedAt, previousNumbers: [] };
+
+    const savedNumbers = rentalRows(unit.previousNumbers).filter(item => tag(item.number)).map(item => ({
+        number: tag(item.number), pickedUpAt: knownTime(item.pickedUpAt), returnedAt: knownTime(item.returnedAt),
+    }));
+    if (unit.movementOperation && unit.movementOperation === unit.gearOperation) {
+        return { pickedUpAt: knownTime(unit.pickedUpAt), returnedAt, previousNumbers: savedNumbers };
+    }
+
+    // A cached desk can swap an item without updating the physical-serial snapshot.
+    // Follow the logged serial changes backwards to the last known pickup or snapshot.
+    const newestFirst = events.slice().sort((a, b) => b.at - a.at ||
+        Number(b.operation === unit.gearOperation) - Number(a.operation === unit.gearOperation) ||
+        Number(b.action === 'swap') - Number(a.action === 'swap'));
+    const returned = newestFirst.find(event => event.action === 'return' && folded(event.from) === folded(number));
+    if (unit.checked === true || unit.stockReleased === true) returnedAt ??= returned?.at || null;
+    const sequence = [{ number, pickedUpAt: null, returnedAt }];
+    const handoffs = newestFirst.filter(event => event.action === 'issue' || event.action === 'swap' ||
+        (event.action === 'assign' && armoryVersion !== 1));
+    let end = Infinity;
+    let prefix = [];
+    for (;;) {
+        const latestTime = end;
+        const serial = folded(number);
+        const index = handoffs.findIndex(event => event.at <= latestTime && folded(event.to) === serial);
+        const current = sequence[sequence.length - 1];
+        if (index === -1) {
+            current.pickedUpAt = knownTime(unit.issuedAt);
+            break;
+        }
+        const [event] = handoffs.splice(index, 1);
+        current.pickedUpAt = event.at;
+        if (event.operation === unit.movementOperation) {
+            prefix = savedNumbers;
+            break;
+        }
+        if (event.action !== 'swap' || !event.from) break;
+        number = event.from;
+        end = event.at;
+        sequence.push({ number, pickedUpAt: null, returnedAt: event.at });
+    }
+    const latest = sequence.shift();
+    return { pickedUpAt: latest.pickedUpAt, returnedAt, previousNumbers: prefix.concat(sequence.reverse()) };
+}
+
 export function gearRows(form) {
-    return entries(form?.participants).flatMap(([personKey, person]) => entries(person.rentals).map(([unitKey, unit]) => ({
-        personKey, unitKey, owner: owner(person), name: person.name || 'Unnamed participant',
-        id: unit.id || '', value: unit.value || '', label: unit.label || unit.value || 'Equipment', number: tag(unit.number),
-        checked: unit.checked === true || unit.stockReleased === true || timestamp(unit.returnedAt), operation: unit.gearOperation || '',
-        issuedAt: timestamp(unit.issuedAt) ? unit.issuedAt : null,
-        returnedAt: timestamp(unit.returnedAt) ? unit.returnedAt : null,
-        physicallyIssued: Boolean(tag(unit.number)) && (timestamp(unit.issuedAt) || form.armoryVersion !== 1),
-    })));
+    const units = entries(form?.participants).flatMap(([personKey, person]) => entries(person.rentals)
+        .map(([unitKey, unit]) => ({ personKey, unitKey, person, unit })));
+    let history;
+    return units.map(({ personKey, unitKey, person, unit }) => {
+        let events = [];
+        if (tag(unit.number) && (!unit.movementOperation || unit.movementOperation !== unit.gearOperation) && form.gearHistory) {
+            history ??= movementHistory(form);
+            events = history(unit, personKey, unitKey);
+        }
+        const movements = serialMovements(unit, events, form.armoryVersion);
+        return {
+            personKey, unitKey, owner: owner(person), name: person.name || 'Unnamed participant',
+            id: unit.id || '', value: unit.value || '', label: unit.label || unit.value || 'Equipment', number: tag(unit.number),
+            checked: unit.checked === true || unit.stockReleased === true || knownTime(unit.returnedAt) !== null,
+            operation: unit.gearOperation || '', issuedAt: knownTime(unit.issuedAt), ...movements,
+            physicallyIssued: Boolean(tag(unit.number)) && (movements.pickedUpAt !== null || form.armoryVersion !== 1),
+        };
+    });
 }
 
 export function isArmoryReady(form, personKey, now = Date.now()) {
@@ -117,6 +205,20 @@ export function heldCount(groups, option) {
     const options = new Map([[option.value, option]]);
     return rentalRows(groups).filter(form => !form.returned).reduce((total, form) =>
         total + (reservationCounts(form, options).get(option.value) || 0), rentalRows(option.repairHolds).length);
+}
+
+// Older catalog entries store whole-number counts as strings.
+export function rentalInventoryCount(value) {
+    if (typeof value !== 'number' && (typeof value !== 'string' || !value.trim())) return null;
+    const count = Number(value);
+    return Number.isSafeInteger(count) && count >= 0 ? count : null;
+}
+
+export function availableRentalUnits(option, reserved = option?.stock ?? 0) {
+    const maximum = rentalInventoryCount(option?.max);
+    const inUse = rentalInventoryCount(reserved);
+    if (maximum === null || inUse === null) return 0;
+    return Math.max(0, maximum - inUse);
 }
 
 const sameUnit = (a, b) => a.owner === b.owner && a.id === b.id && a.value === b.value &&
@@ -219,16 +321,14 @@ export async function issueRentalGear(firebase, form, personKey, numbers, operat
         throw new Error('Enter the equipment number for every requested item before handing it over.');
     }
     const operation = operationKey(operationId);
-    const at = Date.now();
+    const at = serverTimestamp();
     const signature = JSON.stringify(['issue', reviewed.map(row => [row.owner,row.id,row.unitKey,row.value,folded(numbers[row.unitKey])]),
         admission ? [admission.date,admission.playerId,admission.checkedInAt] : null]);
-    let issuedAt;
     const result = await runTransaction(firebase.rentals(), desk => {
-        issuedAt = null;
         if (desk === null) return null;
         const current = desk.group?.[form.key];
         confirmIdentity(current, form);
-        if (isReplay(current, operation, signature)) { issuedAt = current.gearHistory[operation].at; return desk; }
+        if (isReplay(current, operation, signature)) return desk;
         const currentRows = gearRows(current);
         const rows = reviewed.map(review => resolveReviewedRow(currentRows, review));
         const targetKey = rows[0]?.personKey;
@@ -251,17 +351,21 @@ export async function issueRentalGear(firebase, form, personKey, numbers, operat
             const number = tag(numbers[reviewed[index].unitKey]);
             const [,option] = catalogOption(desk.options, row.value);
             if (!option) throw new Error('Restore this equipment type in inventory before issuing it.');
-            const max = Number(option.max);
-            const stock = Number(option.stock ?? 0);
+            const maximum = rentalInventoryCount(option.max);
+            const stock = rentalInventoryCount(option.stock);
             const held = heldCount(desk.group, option);
-            if (option.max == null || !Number.isSafeInteger(max) || !Number.isSafeInteger(stock) || stock < held ||
-                stock > max) throw new Error('The reserved inventory count needs review before handout.');
+            // Older forms could reserve units before a maximum was configured. Pickup
+            // consumes that recorded reservation without allocating additional stock.
+            if (rentals[row.unitKey].stockReleased || held < 1 || stock === null || stock < held ||
+                (option.max != null && (maximum === null || stock > maximum))) {
+                throw new Error('The reserved inventory count needs review before handout.');
+            }
             if (row.number && folded(row.number) !== folded(number)) throw new Error('Confirm the existing equipment number or review a swap.');
             const identifier = JSON.stringify([row.value, folded(number)]);
             if (assigned.has(identifier)) throw new Error('The same equipment number was entered twice for this equipment type.');
             assigned.add(identifier);
             checkNumber(desk, form.key, row, number, option);
-            rentals[row.unitKey] = {...rentals[row.unitKey], number, issuedAt:at, gearOperation:operation, checked:false};
+            rentals[row.unitKey] = {...rentals[row.unitKey], number, issuedAt:at, pickedUpAt:row.pickedUpAt || at, movementOperation:operation, gearOperation:operation, checked:false};
             history.push(logItem(row, {to:number}));
         }
         const participants = copy(current.participants);
@@ -269,10 +373,10 @@ export async function issueRentalGear(firebase, form, personKey, numbers, operat
         const group = copy(desk.group);
         group[form.key] = {...current, participants, gearHistory:{...current.gearHistory,
             [operation]:{action:'issue',at,signature,items:history}}};
-        issuedAt = at;
         return {...desk,group,...(claims && {armoryHandoffs:claims})};
     }, {applyLocally:false});
-    if (!result.committed || !issuedAt) throw new Error('The handoff was not confirmed. Refresh the rental form.');
+    const issuedAt = result.committed && result.snapshot.child('group/' + form.key + '/gearHistory/' + operation + '/at').val();
+    if (!knownTime(issuedAt)) throw new Error('The handoff was not confirmed. Refresh the rental form.');
     return {issuedAt, operationId:operation};
 }
 
@@ -284,7 +388,7 @@ export async function changeEquipment(firebase, form, rows, action, replacement 
     const operation = operationKey(details?.operationId);
     const signature = JSON.stringify([action, rows.map(row => [row.owner,row.id,row.value,row.personKey,row.unitKey,row.number,row.operation]),
         folded(replacement),Boolean(needsRepair),reason]);
-    const at = Date.now();
+    const at = serverTimestamp();
     const newNumber = tag(replacement);
     let saved = false;
     const result = await runTransaction(firebase.rentals(), desk => {
@@ -319,9 +423,15 @@ export async function changeEquipment(firebase, form, rows, action, replacement 
             const rentals = copy(person.rentals);
             const original = rentals[row.unitKey];
             if (action === 'return') {
-                rentals[row.unitKey] = { ...original, checked: true, stockReleased: true, returnedAt:at, gearOperation: operation };
+                rentals[row.unitKey] = { ...original, checked: true, stockReleased: true, returnedAt:at,
+                    pickedUpAt: row.pickedUpAt, previousNumbers: row.previousNumbers, movementOperation: operation, gearOperation: operation };
+            } else if (action === 'swap') {
+                const previousNumbers = [...row.previousNumbers, { number: row.number, pickedUpAt: row.pickedUpAt, returnedAt: at }];
+                rentals[row.unitKey] = { ...original, number: newNumber, pickedUpAt: at, previousNumbers, movementOperation: operation, checked: false, gearOperation: operation };
             } else {
-                rentals[row.unitKey] = { ...original, number: newNumber, checked: false, gearOperation: operation };
+                // Numbering a modern reservation only stages the serial for handoff.
+                rentals[row.unitKey] = { ...original, number: newNumber, ...(current.armoryVersion !== 1 && { pickedUpAt: at, movementOperation: operation }),
+                    checked: false, gearOperation: operation };
             }
             participants[row.personKey] = { ...person, rentals };
             group[form.key] = { ...current, participants };

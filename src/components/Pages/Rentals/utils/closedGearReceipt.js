@@ -7,7 +7,7 @@ const fieldDate = new Intl.DateTimeFormat('en-CA', {
 const safeKey = value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(value) &&
     value !== 'prototype' && !Object.prototype.hasOwnProperty.call(Object.prototype, value);
 const fields = (record, keys) => Object.fromEntries(keys.filter(key => record?.[key] != null).map(key => [key, record[key]]));
-const mapRows = (rows, transform) => Object.fromEntries(Object.entries(rows || {}).filter(([, row]) => row).map(([key,row]) => [key,transform(row)]));
+const mapRows = (rows, transform) => Object.fromEntries(Object.entries(rows || {}).filter(([, row]) => row).map(([key,row]) => [key,transform(row, key)]));
 
 export function reservedGearReview(form) {
     const available = rentalRows(form.available);
@@ -31,8 +31,9 @@ export function archiveClosedGear(desk, form, key, fallbackId, closedAt) {
     function noteMovement(value) {
         if (Number.isSafeInteger(value) && value > 0 && Number.isFinite(new Date(value).getTime())) dates.add(fieldDate.format(value));
     }
+    const movements = new Map(gearRows(form).map(row => [JSON.stringify([row.personKey, row.unitKey]), row]));
     const receipt = {
-        ...fields(form, ['name','createRequestId','armoryVersion','complete']),
+        ...fields(form, ['name','createRequestId','returnListId','armoryVersion','complete']),
         formKey: String(key), receiptId: id, closedAt,
         gearHistory: mapRows(form.gearHistory, entry => ({
             ...fields(entry, ['action','at','reason','needsRepair']),
@@ -43,17 +44,28 @@ export function archiveClosedGear(desk, form, key, fallbackId, closedAt) {
         if (!form[link]) continue;
         receipt[link] = fields(form[link], link === 'checkInGroup' ? ['id','date'] : ['playerId','date']);
     }
-    receipt.participants = mapRows(form.participants, person => {
+    receipt.participants = mapRows(form.participants, (person, personKey) => {
         const row = fields(person,['name','isMember','isDigital','date','groupId','groupEntryId','armoryIssuedAt']);
         if (!person.isDigital && person.isMember !== false && person.ref != null) row.ref = person.ref;
         if (person.armoryAdmission) {
             row.armoryAdmission = fields(person.armoryAdmission, ['playerId','date','checkedInAt','groupId','groupEntryId']);
         }
         noteMovement(row.armoryIssuedAt);
-        row.rentals = mapRows(person.rentals, unit => {
+        row.rentals = mapRows(person.rentals, (unit, unitKey) => {
+            const movement = movements.get(JSON.stringify([personKey, unitKey]));
             noteMovement(unit.issuedAt);
-            if (unit.checked === true) noteMovement(unit.returnedAt);
-            return fields(unit, ['id','value','label','number','checked','issuedAt','returnedAt','stockReleased','gearOperation']);
+            noteMovement(movement.pickedUpAt);
+            noteMovement(movement.returnedAt);
+            for (const previous of movement.previousNumbers) {
+                noteMovement(previous.pickedUpAt);
+                noteMovement(previous.returnedAt);
+            }
+            return { ...fields(unit, ['id','value','label','number','checked','issuedAt','stockReleased','gearOperation']),
+                ...(unit.gearOperation && { movementOperation: unit.gearOperation }),
+                ...(movement.pickedUpAt && { pickedUpAt: movement.pickedUpAt }),
+                ...(movement.returnedAt && { returnedAt: movement.returnedAt }),
+                ...(movement.previousNumbers.length > 0 && { previousNumbers: movement.previousNumbers }),
+            };
         });
         if (Number.isSafeInteger(row.armoryIssuedAt) && row.armoryIssuedAt > 0 && /^\d{4}-\d{2}-\d{2}$/.test(row.armoryAdmission?.date || '')) {
             dates.add(row.armoryAdmission.date);

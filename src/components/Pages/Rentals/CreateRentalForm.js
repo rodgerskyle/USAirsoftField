@@ -15,7 +15,7 @@ import StaffWaiverPicker from '../StaffWaiverPicker';
 import { searchRentalWaivers } from './utils/rentalWaiverProof';
 import RenterGearChoices from './RenterGearChoices';
 import { activateVerifiedRental, depositErrors, readRentalProofs, rentalFieldDay, rentalDraftProblem, pendingRentalMessage } from './utils/rentalActivation';
-import { heldCount } from './utils/rentalGear';
+import { availableRentalUnits, heldCount, rentalInventoryCount } from './utils/rentalGear';
 import { playerRentalMatch } from './utils/checkInRenter';
 import { mergeRentalRoster, rentalGroupSource } from './utils/groupRentalRoster';
 import {
@@ -100,6 +100,12 @@ const StyledToggle = styled(FormControlLabel)({
 
 class RentalReservationError extends Error {}
 
+function rentalPrice(option) {
+    if (option.cost == null || String(option.cost).trim() === '') return null;
+    const price = Number(option.cost);
+    return Number.isFinite(price) && price >= 0 ? price : null;
+}
+
 // Form keys are numeric on existing desks. Allocate a key and reserve the
 // inventory together so competing creates retry against the updated stock.
 async function saveRentalForm(firebase, form, reservations, player, proofReview) {
@@ -125,15 +131,16 @@ async function saveRentalForm(firebase, form, reservations, player, proofReview)
         if (existing) return undefined;
         const options = { ...current?.options };
         const available = [];
-        for (const { optionId, itemIds } of reservations) {
-            const optionEntry = Object.entries(options).find(([, option]) => option && String(option.id) === optionId);
-            if (!optionEntry) {
+        for (const { value, itemIds } of reservations) {
+            const matching = Object.entries(options).filter(([, option]) => option?.value != null && String(option.value) === value);
+            if (matching.length !== 1) {
                 problem = 'A selected equipment option is no longer available. Review your equipment and try again.';
                 return undefined;
             }
-            const [index, option] = optionEntry;
-            const stock = Math.max(Number(option.stock || 0),heldCount(groups,option));
-            if (!Number.isSafeInteger(stock) || stock<0 || (option.max != null && (!Number.isSafeInteger(Number(option.max)) || stock+itemIds.length>Number(option.max)))) {
+            const [index, option] = matching[0];
+            const recorded = rentalInventoryCount(option.stock ?? 0);
+            const stock = Math.max(recorded ?? 0, heldCount(groups, option));
+            if (recorded === null || availableRentalUnits(option, stock) < itemIds.length) {
                 problem = 'There is no longer enough ' + option.label + ' available. Adjust the quantity and try again.';
                 return undefined;
             }
@@ -231,8 +238,8 @@ class CreateRentalForm extends Component {
     };
 
     requestOptions = () => Object.values(this.props.rentalOptions || {}).filter(Boolean)
-        .filter(option => Number(this.state.rentalQuantities[option.id]) > 0)
-        .map(option=>({value:option.value,label:option.label,quantity:Number(this.state.rentalQuantities[option.id])}));
+        .filter(option => Number(this.state.rentalQuantities[option.value]) > 0)
+        .map(option=>({value:option.value,label:option.label,quantity:Number(this.state.rentalQuantities[option.value])}));
 
     includedRenters = () => {
         const included = this.state.participants.filter(row=>!this.state.excludedEntries.includes(row.groupEntryId));
@@ -250,7 +257,7 @@ class CreateRentalForm extends Component {
 
     createForm = async event => {
         event.preventDefault();
-        if (this.saving || !this.validateCreateForm()) return;
+        if (this.saving || this.props.catalogPending || !this.validateCreateForm()) return;
         const { cvc, number, expiry, name, zipcode, rentalName, numParticipants, rentalQuantities, checkInGroup } = this.state;
         const participants = this.includedRenters()
             .map(row => ({ ...row, name: row.name.trim() }));
@@ -270,8 +277,8 @@ class CreateRentalForm extends Component {
         this.setState({ submitting: true, rentalsError: null });
         // Keep IDs stable across transaction retries. Each physical item has
         // its own ID even when several rentals use the same equipment option.
-        const reservations = selected.map(([optionId, amount]) => ({
-            optionId, itemIds: Array.from({ length: amount }, () => uuid()),
+        const reservations = selected.map(([value, amount]) => ({
+            value, itemIds: Array.from({ length: amount }, () => uuid()),
         }));
         const form = {
             name: rentalName.trim(), size, cc: { cvc, number, expiry, name, zipcode },
@@ -299,8 +306,8 @@ class CreateRentalForm extends Component {
                 }
             }
             const deskOptions = Object.values(this.props.rentalOptions || {}).filter(Boolean);
-            const available = reservations.flatMap(({optionId,itemIds})=>{
-                const option=deskOptions.find(row=>String(row.id)===optionId);
+            const available = reservations.flatMap(({value,itemIds})=>{
+                const option=deskOptions.find(row=>row.value != null && String(row.value)===value);
                 return option ? itemIds.map(id=>({id,value:option.value,label:option.label})) : [];
             });
             const preview = {...form,available};
@@ -355,25 +362,18 @@ class CreateRentalForm extends Component {
 
     handleRentalSelect = (rental, quantity = 1) => {
         this.setState(prevState => {
-            const currentQuantity = prevState.rentalQuantities[rental.id] || 0;
-            const maxStock = rental.max - (rental.stock || 0); // Calculate available stock
-            const newQuantity = Math.max(
-                0, // Don't go below 0
-                Math.min(
-                    currentQuantity + quantity,
-                    maxStock // Don't exceed available stock
-                )
-            );
+            const currentQuantity = prevState.rentalQuantities[rental.value] || 0;
+            const newQuantity = Math.max(0, Math.min(currentQuantity + quantity, availableRentalUnits(rental)));
 
             const newQuantities = {
                 ...prevState.rentalQuantities,
-                [rental.id]: newQuantity
+                [rental.value]: newQuantity
             };
 
             // Only mark as selected if quantity > 0
             const newSelectedRentals = {
                 ...prevState.selectedRentals,
-                [rental.id]: newQuantity > 0
+                [rental.value]: newQuantity > 0
             };
 
             return {
@@ -386,9 +386,9 @@ class CreateRentalForm extends Component {
 
     calculateTotal = (selectedRentals, quantities) => {
         return Object.values(this.props.rentalOptions || {}).filter(Boolean).reduce((total, option) => {
-            if (selectedRentals[option.id]) {
-                const quantity = quantities[option.id] || 0;
-                return total + (option.cost * quantity);
+            if (selectedRentals[option.value]) {
+                const quantity = quantities[option.value] || 0;
+                return total + ((rentalPrice(option) ?? 0) * quantity);
             }
             return total;
         }, 0);
@@ -553,26 +553,35 @@ class CreateRentalForm extends Component {
                                         </Typography>
                                         <FormControl component="fieldset" className="rental-options-group">
                                             <FormGroup>
-                                                {options && options.map((option) => (
-                                                    <div key={option.id} className="rental-option-item">
+                                                {!options.length && !this.props.catalogPending && <p role="status">No rental equipment is listed.</p>}
+                                                {options.map(option => {
+                                                    const remaining = availableRentalUnits(option);
+                                                    const price = rentalPrice(option);
+                                                    let availability = remaining ? remaining + ' available' : 'Out of stock';
+                                                    if (rentalInventoryCount(option.max) === null) {
+                                                        availability = 'Inventory maximum needed';
+                                                    } else if (rentalInventoryCount(option.stock ?? 0) === null) {
+                                                        availability = 'Inventory recount needed';
+                                                    }
+                                                    return <div key={option.value} className="rental-option-item">
                                                         <FormControlLabel
                                                             control={
                                                                 <Checkbox
-                                                                    checked={!!selectedRentals[option.id]}
+                                                                    checked={!!selectedRentals[option.value]}
                                                                     onChange={() => this.handleRentalSelect(option, 1)}
-                                                                    disabled={submitting || option.stock >= option.max}
+                                                                    disabled={submitting || !remaining || price === null}
                                                                 />
                                                             }
                                                             label={
                                                                 <div className="rental-option-label">
                                                                     <span>{option.label}</span>
                                                                     <span className="rental-option-price">
-                                                                        ${option.cost.toFixed(2)}
+                                                                        {price === null ? 'Price unavailable' : '$' + price.toFixed(2)}
                                                                     </span>
                                                                 </div>
                                                             }
                                                         />
-                                                        {selectedRentals[option.id] && (
+                                                        {selectedRentals[option.value] && (
                                                             <div className="rental-quantity-controls">
                                                                 <IconButton
                                                                     size="small" aria-label={'Remove one ' + option.label}
@@ -582,14 +591,14 @@ class CreateRentalForm extends Component {
                                                                     <Remove />
                                                                 </IconButton>
                                                                 <Typography variant="body1">
-                                                                    {rentalQuantities[option.id] || 0}
+                                                                    {rentalQuantities[option.value] || 0}
                                                                 </Typography>
                                                                 <IconButton
                                                                     size="small" aria-label={'Add one ' + option.label}
                                                                     onClick={() => this.handleRentalSelect(option, 1)}
                                                                     disabled={
                                                                         submitting ||
-                                                                        rentalQuantities[option.id] >= option.max
+                                                                        rentalQuantities[option.value] >= remaining
                                                                     }
                                                                 >
                                                                     <Add />
@@ -597,12 +606,10 @@ class CreateRentalForm extends Component {
                                                             </div>
                                                         )}
                                                         <Typography variant="caption" color="textSecondary">
-                                                            {option.stock >= option.max
-                                                                ? 'Out of stock'
-                                                                : `${option.max - option.stock} available`}
+                                                            {availability}
                                                         </Typography>
-                                                    </div>
-                                                ))}
+                                                    </div>;
+                                                })}
                                             </FormGroup>
                                         </FormControl>
                                         <div className="rental-total">
@@ -637,7 +644,7 @@ class CreateRentalForm extends Component {
                                             color="primary"
                                             endIcon={<VerifiedUser />}
                                             className="submit-button"
-                                            disabled={submitting || totalPrice === 0}
+                                            disabled={submitting || this.props.catalogPending || totalPrice === 0}
                                         >
                                             {submitting ? (
                                                 <>

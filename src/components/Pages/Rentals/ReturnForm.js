@@ -22,6 +22,8 @@ const isSelected = (form, identity) => matchesRental(form, identity) && (!identi
 const hasPickupHistory = (form, rows = gearRows(form)) => rows.some(row => row.physicallyIssued || row.checked) ||
     rentalRows(form.gearHistory).some(entry => ['issue', 'swap', 'return'].includes(entry.action));
 const owesGear = rows => rows.some(row => row.physicallyIssued && !row.checked);
+const hasNumber = (row, term) => Boolean(term && (row.number.toLowerCase() === term ||
+    row.previousNumbers?.some(item => item.number.toLowerCase() === term)));
 
 async function closeRental(firebase, key, expected, discard, reviewedReservations) {
     const fallbackId = uuid();
@@ -115,7 +117,7 @@ const ReturnForm = (props) => {
         setReviewedRelease(null);
         setComplete(false);
         setEmail('');
-        const matched = gearRows(rentalForms[selectedIndex]).some(row => row.number && row.number.toLowerCase() === query.trim().toLowerCase());
+        const matched = gearRows(rentalForms[selectedIndex]).some(row => hasNumber(row, query.trim().toLowerCase()));
         setNumberFilter(matched ? query.trim() : '');
         setSelection({ key: rentalForms[selectedIndex].key, identity: returnIdentity(rentalForms[selectedIndex]) });
     };
@@ -169,7 +171,7 @@ const ReturnForm = (props) => {
     // Main render for form list
     const term = query.trim().toLowerCase();
     const filteredForms = rentalForms.filter(form => !term || String(form.name || '').toLowerCase().includes(term) ||
-        gearRows(form).some(row => row.name.toLowerCase().includes(term) || row.number.toLowerCase() === term));
+        gearRows(form).some(row => row.name.toLowerCase().includes(term) || hasNumber(row, term)));
     const renderFormList = () => (
         <div className="rental-return-container">
             <h2 className="section-header">Rental swaps &amp; returns</h2>

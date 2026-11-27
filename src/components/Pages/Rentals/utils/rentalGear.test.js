@@ -1,12 +1,14 @@
-import { runTransaction } from 'firebase/database';
+import { runTransaction, serverTimestamp } from 'firebase/database';
+import { archiveClosedGear } from './closedGearReceipt';
 import { allocateRequestedGear, armoryPeople, changeEquipment, clearRepair, gearRows, heldCount, isArmoryReady, issueRentalGear } from './rentalGear';
 
-jest.mock('firebase/database', () => ({ runTransaction: jest.fn() }));
+jest.mock('firebase/database', () => ({ runTransaction: jest.fn(), serverTimestamp: jest.fn() }));
 const firebase = { rentals: () => 'rentals' };
 const issued = (id, number) => ({ id, value: 'mask', label: 'Mask', number, checked: false });
 let db;
 const form = () => ({ ...db.group[0], key: '0' });
 beforeEach(() => {
+    serverTimestamp.mockImplementation(() => Date.now());
     db = {
         group: {
             0: { createRequestId: 'party-1', name: 'Birthday', participants: {
@@ -23,7 +25,7 @@ beforeEach(() => {
         expect(fn(null)).toBeNull();
         const next = fn(db);
         db = next;
-        return { committed: true, snapshot: { exists: () => true } };
+        return { committed: true, snapshot: { child: path => ({ val: () => path.split('/').reduce((row, key) => row[key], db) }) } };
     });
 });
 
@@ -152,6 +154,29 @@ test('rejects duplicate serials and conflicting admission claims across forms wi
     expect(db.group[1].participants.alpha.rentals.v.number).toBeUndefined();
 });
 
+test('hands out previously reserved gear with no catalog maximum without changing stock', async () => {
+    seed();
+    delete db.options.m.max;
+    db.options.m.stock = '1';
+    const catalog = db.options;
+    await issueRentalGear(firebase, form(), 'alpha', numbers, 'legacy-reservation', visit);
+    expect(db.group[0].participants.alpha.rentals.m.number).toBe(numbers.m);
+    expect(db.options).toBe(catalog);
+    expect(db.options.m).toEqual({value: 'mask', stock: '1'});
+});
+
+test('pickup without a catalog maximum still requires recorded stock and an outstanding reservation', async () => {
+    seed();
+    delete db.options.m.max;
+    db.options.m.stock = 0;
+    await expect(issueRentalGear(firebase, form(), 'alpha', numbers, 'missing-stock', visit)).rejects.toThrow(/inventory/);
+    db.options.m.stock = 1;
+    db.group[0].participants.alpha.rentals.m.stockReleased = true;
+    await expect(issueRentalGear(firebase, form(), 'alpha', numbers, 'released-stock', visit)).rejects.toThrow(/returned/);
+    expect(db.group[0].gearHistory).toBeUndefined();
+    expect(db.group[0].participants.alpha.rentals.v.number).toBeUndefined();
+});
+
 test('expired/changed waiver, stock limit, repair holds or duplicated same-type serials abort the entire handoff',async()=>{
     seed();
     const selected=form();
@@ -248,4 +273,102 @@ test('a server retry rejects a competing assignment without claiming the second 
     expect(db).toBe(competing);
     expect(db.group[0].participants.alpha.rentals.v.number).toBeUndefined();
     expect(db.armoryHandoffs).toBeUndefined();
+});
+
+test('server times follow individual numbered items through staging, pickup, repeated swaps, return and closure', async () => {
+    seed();
+    const stamp = day => Date.parse('2026-12-' + day + 'T03:15:00Z');
+    const [staging, first, second, third, last] = ['02','03','04','05','06'].map(stamp);
+    serverTimestamp.mockReturnValue(staging);
+    await changeEquipment(firebase, form(), [gearRows(form())[0]], 'assign', 'M-012');
+    expect(gearRows(form())[0].pickedUpAt).toBeNull();
+
+    serverTimestamp.mockReturnValue(first);
+    await issueRentalGear(firebase,form(),'alpha',numbers,'handed-over',visit);
+    serverTimestamp.mockReturnValue(second);
+    await changeEquipment(firebase, form(), [gearRows(form())[0]], 'swap', 'M-998', false, { operationId:'replacement' });
+    const before = form(), [selected] = gearRows(before);
+    serverTimestamp.mockReturnValue(third);
+    await changeEquipment(firebase, before, [selected], 'swap', 'M-012', false, { operationId:'reissue' });
+    serverTimestamp.mockReturnValue(last);
+    await changeEquipment(firebase, before, [selected], 'swap', 'M-012', false, { operationId:'reissue' });
+    await changeEquipment(firebase,form(),gearRows(form()),'return','',false,{operationId:'final-return'});
+    const expected = {number:'M-012',issuedAt:first,pickedUpAt:third,returnedAt:last,previousNumbers:[
+        {number:'M-012',pickedUpAt:first,returnedAt:second},{number:'M-998',pickedUpAt:second,returnedAt:third},
+    ]};
+    expect(gearRows(form())[0]).toMatchObject(expected);
+    expect(gearRows(form())[1]).toMatchObject({number:'V-014',pickedUpAt:first,returnedAt:last,previousNumbers:[]});
+    expect(form().participants.alpha.armoryIssuedAt).toBe(first);
+    const {closedGear,closedGearByDay} = archiveClosedGear(db,form(),'0','fallback',last+1000);
+    expect(gearRows(closedGear['party-1'])[0]).toMatchObject(expected);
+    expect(Object.keys(closedGearByDay)).toEqual(expect.arrayContaining(['2026-12-02','2026-12-03','2026-12-04','2026-12-05']));
+    expect(closedGearByDay['2026-12-01']).toBeUndefined();
+});
+
+test('recovers cached-client swaps after a timestamped swap, preserving the original armory receipt', async () => {
+    seed();
+    serverTimestamp.mockReturnValue(1000);
+    await issueRentalGear(firebase,form(),'alpha',numbers,'first',visit);
+    serverTimestamp.mockReturnValue(2000);
+    await changeEquipment(firebase,form(),[gearRows(form())[0]],'swap','M-020',false,{operationId:'new-desk'});
+    const current = db.group[0], mask = current.participants.alpha.rentals.m;
+    Object.assign(mask,{number:'M-030',gearOperation:'older-desk'});
+    current.gearHistory['older-desk'] = {action:'swap',at:3000,items:[{personKey:'alpha',unitKey:'m',
+        id:mask.id,value:'mask',from:'M-020',to:'M-030'}]};
+    const recovered = {number:'M-030',issuedAt:1000,pickedUpAt:3000,previousNumbers:[
+        {number:'M-012',pickedUpAt:1000,returnedAt:2000},{number:'M-020',pickedUpAt:2000,returnedAt:3000},
+    ]};
+    expect(gearRows(form())[0]).toMatchObject(recovered);
+    serverTimestamp.mockReturnValue(4000);
+    await changeEquipment(firebase,form(),[gearRows(form())[0]],'return');
+    expect(gearRows(form())[0]).toMatchObject({...recovered,returnedAt:4000});
+});
+
+test('an undated legacy serial stays undated until a physical movement is recorded', async () => {
+    const before=form(), [legacy]=gearRows(before);
+    expect(legacy.pickedUpAt).toBeNull();
+    serverTimestamp.mockReturnValue(1000);
+    await changeEquipment(firebase,before,[legacy],'swap','M-020');
+    expect(gearRows(form())[0]).toMatchObject({pickedUpAt:1000,previousNumbers:[{number:'014',pickedUpAt:null,returnedAt:1000}]});
+    db.group[1].participants[0].rentals[0].number='';
+    const oldForm={...db.group[1],key:'1'};
+    serverTimestamp.mockReturnValue(2000);
+    await changeEquipment(firebase,oldForm,gearRows(oldForm),'assign','M-08');
+    expect(gearRows(db.group[1])[0]).toMatchObject({pickedUpAt:2000,issuedAt:null,number:'M-08'});
+});
+
+test('legacy time reconstruction uses matching unit events after roster slots move and keeps unrelated items separate', () => {
+    const unit = {id:'stable-unit',value:'mask',number:'N-002',issuedAt:1000,stockReleased:true,gearOperation:'w'};
+    const old = {armoryVersion:1,participants:{moved:{name:'Sam',rentals:{moved:unit}}},
+        gearHistory:{q:{action:'swap',at:2000,items:[{id:unit.id,value:'mask',personKey:'3',unitKey:'x',from:'N-001',to:'N-002'}]},
+            w:{action:'return',at:3000,items:[{id:unit.id,value:'mask',personKey:'3',unitKey:'x',from:'N-002'}]},
+            e:{action:'return',at:4000,items:[{id:'different',value:'mask',personKey:'3',unitKey:'x',from:'N-002'}]}}};
+    expect(gearRows(old)[0]).toMatchObject({pickedUpAt:2000,returnedAt:3000,previousNumbers:[{number:'N-001',pickedUpAt:1000,returnedAt:2000}]});
+});
+
+test('committed Firebase server time supplies the shared pickup receipt independently of the ref device clock', async () => {
+    seed();
+    const serverAt = Date.UTC(2026, 11, 8, 20);
+    serverTimestamp.mockReturnValue({'.sv':'timestamp'});
+    runTransaction.mockImplementation(async (_, update) => {
+        const proposed = update(db);
+        const person = proposed.group[0].participants.alpha;
+        const placeholder = {'.sv':'timestamp'};
+        expect(person.armoryIssuedAt).toEqual(placeholder);
+        expect(person.rentals.m.issuedAt).toEqual(placeholder);
+        expect(person.rentals.m.pickedUpAt).toEqual(placeholder);
+        expect(person.rentals.v.issuedAt).toEqual(placeholder);
+        expect(proposed.group[0].gearHistory.confirmed.at).toEqual(placeholder);
+        db = JSON.parse(JSON.stringify(proposed), (key, value) => value?.['.sv'] === 'timestamp' ? serverAt : value);
+        return { committed:true, snapshot:{ child: path => ({ val: () => path.split('/').reduce((row,key) => row[key],db) }) } };
+    });
+    const result = await issueRentalGear(firebase,form(),'alpha',numbers,'confirmed',visit);
+    expect(result).toEqual({issuedAt:serverAt,operationId:'confirmed'});
+});
+
+test('a reused catalog ID or serial in a removed renter’s history cannot return the surviving renter’s gear', () => {
+    const form = { participants:{second:{rentals:[{id:'reused',value:'mask',number:'12'}]}},
+        gearHistory:{old:{action:'return',at:1000,items:[{personKey:'first',unitKey:'0',value:'mask',id:'reused',from:'12'}]},
+            staged:{action:'assign',at:2000,items:[{personKey:'second',unitKey:'0',value:'mask',id:'reused',to:'12'}]}}};
+    expect(gearRows(form)[0]).toMatchObject({checked:false,returnedAt:null,pickedUpAt:2000});
 });

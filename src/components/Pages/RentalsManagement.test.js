@@ -15,7 +15,9 @@ jest.mock('../session', () => ({
     AuthUserContext: jest.requireActual('../session/context').default,
 }));
 jest.mock('../constants/pincode', () => () => null);
-jest.mock('./Rentals/RentalOptions', () => () => null);
+jest.mock('./Rentals/RentalOptions', () => ({ rentalOptions }) => <section aria-label="Inventory list">
+    {Object.values(rentalOptions).map(option => <p key={option.value}>{option.label}</p>)}
+</section>);
 jest.mock('./Rentals/ReturnForm', () => () => null);
 jest.mock('./Rentals/CreateRentalForm', () => ({ initialGroupId, canImportGroup, onOpenExisting, checkedInPlayer: walkOn }) => (
     <section aria-label="New rental">
@@ -45,10 +47,11 @@ function Location() {
     return <output aria-label="Current query">{useLocation().search}</output>;
 }
 
-function open(query, rows = [], user = staff) {
+function open(query, rows = [], user = staff, subscribe) {
     let publish;
     const unsubscribe = () => {};
-    onValue.mockImplementation((ref, callback) => {
+    onValue.mockImplementation((ref, callback, cancel) => {
+        if (subscribe?.(ref, callback, cancel)) return unsubscribe;
         if (ref === 'forms') {
             publish = nextRows => callback(snapshot(nextRows));
             publish(rows);
@@ -69,6 +72,34 @@ function open(query, rows = [], user = staff) {
     </AuthUserContext.Provider>);
     return nextRows => act(() => publish(nextRows));
 }
+
+test('inventory recovers a failed catalog read independently of a failed forms read', async () => {
+    let attempts = 0;
+    open('view=inventory', [], staff, (ref, publish, cancel) => {
+        if (ref === 'forms' || (ref === 'options' && attempts++ === 0)) cancel(new Error('read cancelled'));
+        else publish({ exists: () => true, val: () => ({ m: { value: 'mask', label: 'Rental mask' } }) });
+        return true;
+    });
+    expect(await screen.findByText('Couldn’t load rental inventory.')).toBeVisible();
+    expect(screen.queryByRole('region', {name: 'Inventory list'})).toBeNull();
+    fireEvent.click(screen.getByRole('button', {name: 'Retry inventory'}));
+    expect(await screen.findByText('Rental mask')).toBeVisible();
+    expect(screen.queryByText('Couldn’t load rental inventory.')).toBeNull();
+});
+
+test('a slow catalog stays in a loading state until the empty inventory is confirmed', async () => {
+    let publishCatalog;
+    open('view=inventory', [], staff, (ref, publish) => {
+        if (ref !== 'options') return false;
+        publishCatalog = publish;
+        return true;
+    });
+    expect(await screen.findByText('Loading rental inventory…')).toBeVisible();
+    expect(screen.queryByRole('region', {name: 'Inventory list'})).toBeNull();
+    act(() => publishCatalog({ exists: () => false }));
+    expect(await screen.findByRole('region', {name: 'Inventory list'})).toBeVisible();
+    expect(screen.queryByText('Loading rental inventory…')).toBeNull();
+});
 
 test('a staff group link reopens its saved rental at Firebase key zero', async () => {
     open('view=new&group=' + groupId, [
