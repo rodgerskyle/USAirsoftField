@@ -80,6 +80,21 @@ test('keeps a direct field tool URL behind the verified website administrator gu
   expect(fetch).not.toHaveBeenCalled();
 });
 
+test('opens the team score desk after verifying the field session without submitting any scores', async () => {
+  fetch.mockResolvedValueOnce(reply({ available: true, accountStatus: 'staff', isStaff: false }))
+    .mockResolvedValueOnce(reply({ isStaff: true, expiresAt: expiry() }))
+    .mockResolvedValueOnce(reply({ recentGames: [], game: null }));
+  openCheckIn({ ...admin, email: 'field@example.com' }, { path: '/admin/field/team-results' });
+  const unlock = await screen.findByRole('button', { name: 'Use my admin account' });
+  expect(fetch).toHaveBeenCalledTimes(1);
+  fireEvent.click(unlock);
+  expect(await screen.findByRole('heading', { name: 'Team round results' })).toBeVisible();
+  await waitFor(() => expect(fetch).toHaveBeenCalledTimes(3));
+  const [url, options] = fetch.mock.calls[2];
+  expect(url).toBe('https://app.usairsoftfield.com/api/round-roster');
+  expect(JSON.parse(options.body)).toMatchObject({ action: 'lineup' });
+});
+
 test.each(['desk-one', 'desk-two'])('unlocks an independently authorized admin %s with their own recent sign-in', async uid => {
   fetch.mockResolvedValueOnce(reply({ available: true, accountStatus: 'staff', isStaff: false }))
     .mockResolvedValueOnce(reply({ isStaff: true, expiresAt: expiry() }));

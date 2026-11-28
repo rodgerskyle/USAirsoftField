@@ -5,6 +5,7 @@ export const fieldStaffPaths = Object.freeze({
   checkIn: '/admin/field/check-in',
   groups: '/admin/field/groups',
   rounds: '/admin/field/rounds',
+  teamResults: '/admin/field/team-results',
   missionTools: '/admin/field/mission-tools',
   membership: '/admin/field/membership',
   reports: '/admin/field/reports',

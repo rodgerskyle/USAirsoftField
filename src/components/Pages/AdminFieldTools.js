@@ -9,6 +9,7 @@ import { fieldStaffPaths, requestStaffFieldTool } from '../constants/fieldStaffA
 import AdminFieldCheckIn from './AdminFieldCheckIn';
 import AdminFieldGroups from './AdminFieldGroups';
 import AdminFieldRounds from './AdminFieldRounds';
+import { mountRoundLineup } from './round-lineup-desk';
 import AdminFieldMembership from './AdminFieldMembership';
 import AdminFieldReports from './AdminFieldReports';
 import AdminFieldFeedback from './AdminFieldFeedback';
@@ -18,10 +19,25 @@ import '../constants/admin.css';
 import './AdminDashboard.css';
 import './AdminFieldTools.css';
 
+function TeamRoundResults({ request }) {
+  const root = useRef(null);
+  useEffect(() => {
+    const desk = mountRoundLineup(root.current, {
+      request: (body, signal) => request('/api/round-roster', { method: 'POST', body, signal }),
+      scoresUrl: '/admin/scores',
+    });
+    desk.update(true, false);
+    desk.open();
+    return () => desk.destroy();
+  }, [request]);
+  return <div className="field-rounds field-rounds--staff" ref={root} />;
+}
+
 const fieldTools = [
   { id: 'check-in', title: 'Player Check-In', path: fieldStaffPaths.checkIn, Panel: AdminFieldCheckIn },
   { id: 'groups', title: 'Manage Groups', path: fieldStaffPaths.groups, Panel: AdminFieldGroups },
   { id: 'rounds', title: 'Round Controls', path: fieldStaffPaths.rounds, Panel: AdminFieldRounds },
+  { id: 'team-results', title: 'Team round results', path: fieldStaffPaths.teamResults, Panel: TeamRoundResults },
   { id: 'mission-tools', title: 'Rotation & Briefings', path: fieldStaffPaths.missionTools, Panel: AdminFieldMissionTools },
   { id: 'membership', title: 'Verify Membership', path: fieldStaffPaths.membership, Panel: AdminFieldMembership },
   { id: 'reports', title: 'Team Reports', path: fieldStaffPaths.reports, Panel: AdminFieldReports },

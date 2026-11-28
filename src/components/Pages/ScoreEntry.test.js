@@ -23,7 +23,9 @@ jest.mock('../Firebase', () => {
     return { FirebaseContext: context.default, withFirebase: context.withFirebase };
 });
 jest.mock('firebase/database', () => ({ onValue: jest.fn() }));
-jest.mock('../constants/fieldStaffApi', () => ({ requestStaffFieldTool: jest.fn() }));
+jest.mock('../constants/fieldStaffApi', () => ({
+    ...jest.requireActual('../constants/fieldStaffApi'), requestStaffFieldTool: jest.fn(),
+}));
 jest.mock('../constants/playerDisplayNames', () => ({ getAllPlayerDisplayNames: jest.fn() }));
 jest.mock('../constants/playerBadges', () => ({
     ...jest.requireActual('../constants/playerBadges'),
@@ -163,6 +165,7 @@ test.each(['/admin/enterwins', '/admin/enterlosses'])('preserves staff bookmarks
     await page.verify(admin);
     await scan(firstId);
     expect(screen.getByRole('heading', { name: /wins and losses/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Score team rounds' })).toHaveAttribute('href', '/admin/field/team-results');
     expect(recordButton('win')).toBeDisabled();
     expect(recordButton('loss')).toBeDisabled();
     const firstAction = screen.getAllByRole('button', { name: /^record (win|loss)$/i })[0];

@@ -6,6 +6,19 @@
     list-style: none;
 }
 
+.score-entry-teams {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 1rem;
+}
+
+.score-entry-teams h2 { margin: 0 0 0.25rem; font-size: 1.25rem; }
+.score-entry-teams p { margin: 0; color: var(--admin-subtext); }
+.score-entry-teams .btn { min-height: 44px; display: inline-flex; align-items: center; }
+
 .score-entry-matches button {
     display: grid;
     gap: 0.15rem;
