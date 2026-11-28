@@ -82,6 +82,19 @@
 .desk-inventory .form-control { min-height: 44px; width: 6rem; max-width: 100%; }
 .desk-inventory-actions { display: flex; gap: .75rem; flex-wrap: wrap; margin-block: 1rem; }
 .desk-inventory-actions .btn { min-height: 44px; }
+.desk-catalog-backup {
+    padding: clamp(.85rem, 2vw, 1.25rem);
+    margin-block: 1rem;
+    border: 1px solid var(--admin-border);
+    border-radius: .75rem;
+    background: var(--admin-surface-muted);
+}
+.desk-catalog-backup h4 { font-size: 1.1rem; font-weight: 700; }
+.desk-catalog-backup label { display: block; font-weight: 600; }
+.desk-inventory .desk-catalog-backup input[type="file"] { width: min(100%, 35rem); margin-block: .4rem 1rem; }
+.desk-catalog-backup details { margin-block: .65rem; }
+.desk-catalog-backup summary { display: list-item; cursor: pointer; padding-block: .65rem; font-weight: 600; }
+.desk-catalog-backup button { min-height: 44px; }
 
 .desk-freegames-list { display: grid; gap: .5rem; }
 .desk-freegames-row {

@@ -366,6 +366,7 @@ function RentalsManagement(props) {
                                             rentalForms={rentalForms}
                                             rentalOptions={rentalOptions}
                                             catalogPending={!catalogReady}
+                                            onOpenInventory={canImportGroup ? () => setView('inventory') : null}
                                         />
                                     ) : null}
 
@@ -418,6 +419,7 @@ function RentalsManagement(props) {
                                         <RentalOptions
                                             {...props}
                                             rentalOptions={rentalOptions}
+                                            rentalForms={rentalForms}
                                         />
                                     ) : null}
                                 </Box>
