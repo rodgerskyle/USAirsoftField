@@ -176,6 +176,32 @@
   font-variant-numeric: tabular-nums;
 }
 .round-lineup-desk .lineup-teams summary:focus-visible { outline-offset: -3px; }
+.round-lineup-desk .lineup-spawn, .round-lineup-desk .lineup-format small {
+  display: block;
+  font-size: .875rem;
+  font-weight: 400;
+  line-height: 1.45;
+}
+.round-lineup-desk .lineup-format {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  min-height: 46px;
+  margin: 0;
+  padding: .6rem .8rem;
+  border: 1px solid var(--desk-line);
+  border-radius: .6rem;
+  color: var(--desk-text);
+  cursor: pointer;
+  font-weight: 650;
+}
+.round-lineup-desk .lineup-format input {
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0;
+  accent-color: var(--desk-focus);
+}
 .round-lineup-desk .lineup-teams ul { padding: 0 .7rem; margin: 0; list-style: none; }
 .round-lineup-desk .lineup-teams li { padding: .5rem 0; border-top: 1px solid var(--desk-line); }
 .round-lineup-desk .lineup-teams p { padding: .65rem; }

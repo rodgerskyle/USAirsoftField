@@ -2,13 +2,13 @@ import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } 
 import { Breadcrumb, Button, Card, Container, Form } from 'react-bootstrap';
 import { Helmet } from 'react-helmet-async';
 import { LinkContainer } from 'react-router-bootstrap';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { onValue } from 'firebase/database';
 
 import { withFirebase } from '../Firebase';
 import { AuthUserContext, withAuthorization } from '../session';
 import { officialAccountRoles, WAIVER } from '../constants/roles';
-import { requestStaffFieldTool } from '../constants/fieldStaffApi';
+import { fieldStaffPaths, requestStaffFieldTool } from '../constants/fieldStaffApi';
 import ScoreOverride, { extraResultsLabel } from './ScoreOverride';
 import { getAllPlayerDisplayNames } from '../constants/playerDisplayNames';
 import { isLegacyCardName, readScannedMemberCard, readScannedPlayerProfile, verifyScannedMemberCard } from '../constants/scoreCards';
@@ -443,11 +443,18 @@ function ScoreEntry({ firebase, actor }) {
                     </Breadcrumb>
                 </div>
                 <FieldSectionLinks label="Score desk sections" items={[
-                    ['score-desk-round', 'Game setup'], ['score-desk-player', 'Player scoring'],
+                    ['score-entry-teams-heading', 'Team scoring'], ['score-desk-round', 'Individual setup'], ['score-desk-player', 'Player scoring'],
                     ['score-desk-awards', 'Awards'], ['score-desk-recent', 'Results'], ['score-desk-flags', 'Receipt flags'],
                 ]} />
+                <section className="admin-panel-card score-entry-teams" aria-labelledby="score-entry-teams-heading">
+                    <div>
+                        <h2 id="score-entry-teams-heading" tabIndex={-1}>Team round results</h2>
+                        <p>Score the Camo and Solid lineups for each round, including rounds played after switching sides.</p>
+                    </div>
+                    <Link className="btn btn-primary" to={fieldStaffPaths.teamResults}>Score team rounds</Link>
+                </section>
                 <Card className="admin-panel-card">
-                    <Card.Header as="h2" id="score-desk-round" tabIndex={-1}>Round details</Card.Header>
+                    <Card.Header as="h2" id="score-desk-round" tabIndex={-1}>Individual round details</Card.Header>
                     <Card.Body>
                         <div className="score-entry-context">
                             <Form.Group controlId="score-mode"><Form.Label>Game mode</Form.Label>

@@ -618,7 +618,7 @@ test('ending a game opens its saved lineup and requires separate winner review a
                 expect(options.body).toEqual({action:'lineupResult',gameId:playing.id,winner:'camo',revision:4});
                 return {...lineup, winner:'camo', progress:{saved:1,remaining:0,failed:0}};
             }
-            expect(options.body).toEqual({action:'lineup',gameId:playing.id});
+            expect(options.body).toEqual({action:'lineup',gameId:playing.id,roundNumber:'latest'});
             return lineup;
         }
         if (options.method === 'POST') {
@@ -633,7 +633,7 @@ test('ending a game opens its saved lineup and requires separate winner review a
         fireEvent.click(await screen.findByRole('button',{name:'End round'}));
         const desk = within(await screen.findByRole('region',{name:'Round lineup and result'}));
         const winnerButton = await desk.findByRole('button',{name:'Review Yellow / Camo win'});
-        expect(desk.getByRole('heading', {name:'Round lineup and result'})).toHaveFocus();
+        expect(desk.getByRole('heading', {name:'Team wins & losses'})).toHaveFocus();
         fireEvent.click(winnerButton);
         expect(desk.getByText(/1 member win.*0 member loss.*1 walk-on/)).toBeVisible();
         expect(request.mock.calls.filter(([,options]) => options.body?.action === 'lineupResult')).toHaveLength(0);
@@ -665,10 +665,11 @@ test('one result confirmation saves a 40-member lineup across ten score requests
     });
     render(<AdminFieldRounds request={request} />);
     const desk = within(await screen.findByRole('region',{name:'Round lineup and result'}));
-    fireEvent.click(desk.getByRole('button',{name:'Review lineup'}));
+    fireEvent.click(desk.getByRole('button',{name:'Score a game'}));
     const blue = await desk.findByRole('button',{name:'Review Blue / Solid win'});
-    const teams = [...desk.getByRole('heading', {name:'Players in this round'}).closest('[data-roster]').querySelectorAll('.lineup-teams summary')];
-    expect(teams.map(row => row.textContent)).toEqual(['Yellow / Camo 24', 'Blue / Solid 16']);
+    const teams = [...desk.getByRole('heading', {name:'Round 1 lineup'}).closest('[data-roster]').querySelectorAll('.lineup-teams summary')];
+    expect(teams[0]).toHaveTextContent(/Yellow \/ Camo.*Alpha HQ.*24/);
+    expect(teams[1]).toHaveTextContent(/Blue \/ Solid.*Foxtrot HQ.*16/);
     expect(desk.getByText('Adjust players in this round').closest('details')).not.toHaveAttribute('open');
     fireEvent.click(blue);
     expect(desk.getByRole('button',{name:'Confirm round result'})).toHaveFocus();
@@ -679,4 +680,48 @@ test('one result confirmation saves a 40-member lineup across ten score requests
     expect(batches).toEqual(Array(10).fill({action:'lineupResult',gameId:game.id,winner:'solid',revision:9}));
     expect(scored).toEqual(players.map(player => player.playerId));
     expect(desk.queryByRole('button',{name:'Resume saving results'})).not.toBeInTheDocument();
+});
+
+test('scores both legs of a live side-switch game separately and reopens the first result', async () => {
+    const game = { ...playing, startedAt: serverNow };
+    const players = [
+        { playerId: 'a', displayName: 'Avery', side: 'camo', member: true },
+        { playerId: 'b', displayName: 'Blake', side: 'solid', member: true },
+    ];
+    const rounds = [{ roundNumber: 1, winner: null }];
+    const writes = [];
+    const request = jest.fn(async (path, { body }) => {
+        if (path === ROUND_CATALOG_PATH) return catalog;
+        if (path !== '/api/round-roster') return { serverNow, isStaff: true, games: [game] };
+        const number = body.roundNumber === 'latest' ? rounds.length : body.roundNumber;
+        if (body.action === 'lineupNextRound') rounds.push({ roundNumber: number, winner: null });
+        if (body.action === 'lineupResult') {
+            writes.push(body);
+            rounds[number - 1].winner = body.winner;
+        }
+        const winner = rounds[number - 1].winner;
+        return { game, recentGames: [game], players, candidates: [], revision: 7, winner, roundNumber: number,
+            rounds: rounds.map(leg => ({ ...leg })), failures: [], progress: { saved: winner ? 2 : 0, remaining: 0, failed: 0 } };
+    });
+    render(<AdminFieldRounds request={request} />);
+    const desk = within(await screen.findByRole('region', { name: 'Round lineup and result' }));
+    fireEvent.click(desk.getByRole('button', { name: 'Score a game' }));
+    const format = await desk.findByRole('checkbox', { name: /Multiple rounds with a side switch/ });
+    expect(desk.queryByRole('button', { name: 'Review Yellow / Camo win' })).toBeNull();
+    fireEvent.click(format);
+    fireEvent.click(desk.getByRole('button', { name: 'Review Yellow / Camo win' }));
+    fireEvent.click(desk.getByRole('button', { name: 'Confirm round result' }));
+    fireEvent.click(await desk.findByRole('button', { name: 'Switch sides for round 2' }));
+    const blue = await desk.findByRole('button', { name: 'Review Blue / Solid win' });
+    expect(desk.getByText('Starts at Alpha HQ').closest('details')).toHaveTextContent('Blake');
+    expect(desk.getByText('Starts at Foxtrot HQ').closest('details')).toHaveTextContent('Avery');
+    fireEvent.click(blue);
+    fireEvent.click(desk.getByRole('button', { name: 'Confirm round result' }));
+    await desk.findByRole('heading', { name: 'Round 2 · Blue / Solid won' });
+    fireEvent.change(desk.getByRole('combobox', { name: 'Round to review' }), { target: { value: '1' } });
+    await desk.findByRole('heading', { name: 'Round 1 · Yellow / Camo won' });
+    expect(writes).toEqual([
+        { action: 'lineupResult', gameId: game.id, revision: 7, winner: 'camo', roundNumber: 1, multiRound: true },
+        { action: 'lineupResult', gameId: game.id, revision: 7, winner: 'solid', roundNumber: 2 },
+    ]);
 });
