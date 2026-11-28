@@ -1,11 +1,44 @@
 import React from 'react';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { runTransaction } from 'firebase/database';
 import RentalOptions from './RentalOptions';
 
 jest.mock('../../Firebase', () => ({ withFirebase: Component => Component }));
 jest.mock('../../session', () => ({ withAuthorization: () => Component => Component }));
 jest.mock('firebase/database', () => ({ runTransaction: jest.fn() }));
+
+test('an empty inventory lets an admin preview and restore only equipment from a backup', async () => {
+    const firebase = { rentals: () => 'rental-desk', onAuthUserListener: cb => { cb({ roles: { ADMIN: true } }); return () => {}; } };
+    const option = { id: 'r2', value: 'Mask', label: 'Full Face Mask', cost: 29.99, max: 20, stock: 9, checked: false, number: '' };
+    const current = { group: {}, returnListClears: { field: 'today' } };
+    let saved;
+    runTransaction.mockClear();
+    runTransaction.mockImplementationOnce(async (ref, update) => {
+        expect(ref).toBe('rental-desk');
+        saved = update(current);
+        return { committed: true, snapshot: { exists: () => true } };
+    });
+    const view = render(<RentalOptions firebase={firebase} rentalOptions={[]} />);
+    expect(screen.getByRole('heading', { name: 'Restore inventory from a backup' })).toBeVisible();
+    const old = { rentals: { options: { equipment: option }, group: { oldForm: true } } };
+    const backup = new File([JSON.stringify(old)], 'morning.json', { type: 'application/json' });
+    fireEvent.change(screen.getByLabelText(/Rental inventory or Firebase backup/), { target: { files: [backup] } });
+    await screen.findByText('1 equipment type');
+    expect(runTransaction).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Restore this inventory' }));
+    await waitFor(() => expect(saved).toEqual({ ...current, options: { equipment: option } }));
+    view.rerender(<RentalOptions firebase={firebase} rentalOptions={saved.options} />);
+    expect(await screen.findByRole('row', { name: /Full Face Mask/ })).toHaveTextContent('11');
+    expect(screen.getByRole('status')).toHaveTextContent('1 equipment type is listed');
+});
+
+test('a waiver desk sees who can restore the catalog and cannot initialize it', () => {
+    const firebase = { onAuthUserListener: cb => { cb({ roles: { WAIVER: true } }); return () => {}; } };
+    render(<RentalOptions firebase={firebase} rentalOptions={[]} />);
+    expect(screen.getByText(/An administrator can restore/)).toBeVisible();
+    expect(screen.queryByRole('button', { name: /manually/i })).toBeNull();
+    expect(screen.queryByLabelText(/Rental inventory or Firebase backup/)).toBeNull();
+});
 
 test('keeps inventory edits local until save and identifies the equipment and result', async () => {
     const options = [{ value: 'mask', label: 'Mask', stock: 3, max: 12 }];

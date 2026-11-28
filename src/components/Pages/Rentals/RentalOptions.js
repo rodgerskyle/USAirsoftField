@@ -5,6 +5,8 @@ import { withAuthorization } from '../../session';
 import { runTransaction } from 'firebase/database';
 import { availableRentalUnits, clearRepair, heldCount, rentalInventoryCount } from './utils/rentalGear';
 import { rentalRows } from './utils/openRental';
+import RentalBackupRestore, { downloadInventoryBackup } from './RentalBackupRestore';
+import RentalCatalogSetup from './RentalCatalogSetup';
 import '../FrontDeskForms.css';
 
 const RentalOptions = (props) => {
@@ -15,6 +17,12 @@ const RentalOptions = (props) => {
     const [success, setSuccess] = useState(null);
 
     const [authUser, setAuthUser] = useState(null);
+    const canRestore = !!ROLES.officialAccountRoles(authUser?.roles)[ROLES.ADMIN] || authUser?.roles?.[ROLES.SUPER] === true;
+    const catalogEmpty = rentalOptions == null || (typeof rentalOptions === 'object' && Object.keys(rentalOptions).length === 0);
+    const onRestored = count => {
+        setError(null);
+        setSuccess('Rental inventory saved. ' + count + ' equipment ' + (count === 1 ? 'type is' : 'types are') + ' listed.');
+    };
 
     useEffect(() => {
         const authListener = firebase.onAuthUserListener(
@@ -150,6 +158,13 @@ const RentalOptions = (props) => {
                     </table>
                     <div className="desk-inventory-actions">
                         <button type="submit" className="btn btn-primary">Save changes</button>
+                        {canRestore && <button type="button" className="btn btn-outline-primary" onClick={() => {
+                            try {
+                                downloadInventoryBackup(rentalOptions);
+                            } catch {
+                                setError('Could not download the inventory backup on this device.');
+                            }
+                        }}>Download inventory backup</button>}
                         {authUser?.roles[ROLES.SUPER] && (
                             <button type="button" onClick={handleReset} className="btn btn-outline-danger">
                                 Recount reserved equipment
@@ -159,7 +174,13 @@ const RentalOptions = (props) => {
                     {error && <p role="alert" className="alert alert-danger">{error}</p>}
                     {success && <p role="status" className="alert alert-success">{success}</p>}
                 </form>
-            ) : <p role="status">No rental equipment is listed.</p>}
+            ) : catalogEmpty ? <>
+                <p role="status">No rental equipment is listed.</p>
+                {canRestore ? <>
+                    <RentalBackupRestore firebase={firebase} onRestored={onRestored} />
+                    <RentalCatalogSetup firebase={firebase} rentalForms={props.rentalForms} onRestored={onRestored} />
+                </> : authUser && <p>An administrator can restore the equipment list from this screen.</p>}
+            </> : <p role="alert">The saved inventory has an unrecognized format. Review the existing catalog before restoring equipment.</p>}
         </section>
     );
 };

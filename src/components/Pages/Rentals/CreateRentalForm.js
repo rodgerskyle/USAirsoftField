@@ -553,7 +553,11 @@ class CreateRentalForm extends Component {
                                         </Typography>
                                         <FormControl component="fieldset" className="rental-options-group">
                                             <FormGroup>
-                                                {!options.length && !this.props.catalogPending && <p role="status">No rental equipment is listed.</p>}
+                                                {!options.length && !this.props.catalogPending && <div>
+                                                    <p role="status">No rental equipment is listed.</p>
+                                                    {this.props.onOpenInventory && <button type="button" className="btn btn-outline-primary"
+                                                        onClick={this.props.onOpenInventory}>Open rental inventory</button>}
+                                                </div>}
                                                 {options.map(option => {
                                                     const remaining = availableRentalUnits(option);
                                                     const price = rentalPrice(option);
